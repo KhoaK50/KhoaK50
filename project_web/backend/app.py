@@ -7,6 +7,7 @@ app = Flask(__name__)
 ALLOWED_ORIGINS = {
     "http://127.0.0.1:5500",
     "http://localhost:5500",
+    "https://vsv-i0ya.onrender.com",   # domain frontend Render
 }
 
 @app.before_request
@@ -202,5 +203,5 @@ def coordinates():
 
 
 if __name__ == "__main__":
-    # Frontend đang chạy tại 127.0.0.1:5500
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
