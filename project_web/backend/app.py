@@ -3,20 +3,27 @@ import numpy as np
 
 app = Flask(__name__)
 
-# ==== CORS (cho phép tất cả origin để dễ deploy) ====
+# ==== CORS (tự xử lý preflight cho mọi route /api/*) ====
+ALLOWED_ORIGINS = {
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+}
+
 @app.before_request
 def _cors_preflight():
+    # Trả về 200 cho OPTIONS để preflight không lỗi
     if request.method == "OPTIONS" and request.path.startswith("/api/"):
         return _corsify(app.make_response(("OK", 200)))
 
 @app.after_request
 def _corsify(resp):
     origin = request.headers.get("Origin", "")
-    resp.headers["Access-Control-Allow-Origin"] = "*"  # Cho phép tất cả
-    resp.headers["Vary"] = "Origin"
-    resp.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
-    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    resp.headers["Access-Control-Max-Age"] = "3600"
+    if origin in ALLOWED_ORIGINS:
+        resp.headers["Access-Control-Allow-Origin"] = origin
+        resp.headers["Vary"] = "Origin"
+        resp.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        resp.headers["Access-Control-Max-Age"] = "3600"
     return resp
 
 # ==== helpers ====
@@ -25,9 +32,17 @@ def to_vec(x):
         raise ValueError("Vector phải là list độ dài 2 hoặc 3.")
     return np.array([float(v) for v in x], dtype=float)
 
+# ==== Routes ====
+
+# Health check cho API
 @app.route("/api/health", methods=["GET"])
 def health():
     return jsonify({"ok": True})
+
+# Root route cho Render check
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"status": "ok"})
 
 # 1) add
 @app.route("/api/add_vectors", methods=["POST", "OPTIONS"])
@@ -185,6 +200,7 @@ def coordinates():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+
 if __name__ == "__main__":
-    # local test
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # Frontend đang chạy tại 127.0.0.1:5500
+    app.run(host="127.0.0.1", port=5000, debug=True)
