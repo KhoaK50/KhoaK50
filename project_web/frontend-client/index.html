@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <title>Vector Visualizer — Z-up, Projections, Big 3D Labels</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --panel-w: 380px;
+      --viewer-size: 820px;
+
+      --bg: #ffffff;
+      --fg: #121314;
+      --muted: #6b6f76;
+      --border: #dedfe3;
+      --card: #ffffff;
+      --chip-bg: #f6f7f9;
+
+      --grid-light: #e9eaee;
+      --axis: #2a2f36;
+
+      --axis-x: #e04b4b;
+      --axis-y: #2fb463;
+      --axis-z: #3a78ff;
+
+      --label-bg: rgba(255,255,255,0.82);
+      --label-fg: #121314;
+
+      --pill-bg: rgba(255,255,255,0.92);
+    }
+    body.dark{
+      --bg: #0f1116;
+      --fg: #e9e9ef;
+      --muted: #a8acb4;
+      --border: #2d3139;
+      --card: #0f1218;
+      --chip-bg: #141823;
+
+      --grid-light: #252a35;
+      --axis: #dadbe3;
+
+      --axis-x: #ff8a8a;
+      --axis-y: #7be3a0;
+      --axis-z: #9bb9ff;
+
+      --label-bg: rgba(0,0,0,0.6);
+      --label-fg: #ffffff;
+
+      --pill-bg: rgba(20,22,28,0.9);
+    }
+
+    *{ box-sizing: border-box; }
+    html, body{ height:100%; }
+    body{
+      margin: 12px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color: var(--fg);
+      background: var(--bg);
+      overscroll-behavior: none;
+    }
+
+    h2{ margin:6px 0 14px; }
+    #app{ display:flex; gap:16px; align-items:flex-start; }
+
+    /* Left panel */
+    #controls{ width: var(--panel-w); }
+    #controls .card{
+      background: var(--card);
+      border:1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    label{ display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
+
+    input, select, button{
+      font: inherit;
+      border:1px solid var(--border);
+      background: var(--card);
+      color: var(--fg);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+    input, select{ width: 100%; }
+    button{ cursor:pointer; }
+    button:hover{ filter: brightness(1.06); }
+    .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+    pre{
+      background: var(--chip-bg);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px;
+      white-space:pre-wrap;
+      line-height:1.25;
+      max-height:220px;
+      overflow:auto;
+      margin: 6px 0 0;
+    }
+
+    /* Vector list */
+    #vectorList{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; }
+    .vec-item{
+      display:flex; align-items:center; gap:10px;
+      border:1px solid var(--border); border-radius:12px;
+      padding:10px 12px; background: var(--card);
+    }
+    .vec-item .sw{ width:14px; height:14px; border-radius:4px; border:1px solid var(--border); }
+    .vec-item .tag{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      padding: 2px 6px; border-radius: 999px;
+      background: var(--chip-bg); border:1px solid var(--border);
+      font-size:12px; color:var(--muted);
+    }
+    .vec-item .lbl{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      flex: 1 1 auto;
+      overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+    }
+    .vec-item .btn{
+      padding:6px 10px;
+      border-radius:10px;
+      background: var(--chip-bg);
+      color: var(--fg);
+    }
+    .vec-item.active{ outline:2px solid var(--muted); }
+
+    /* Viewer */
+    #viewerWrap{
+      position:relative;
+      width: var(--viewer-size);
+      height: var(--viewer-size);
+      border:1px solid var(--border);
+      background: var(--card);
+      border-radius: 14px;
+      overflow: hidden;
+      user-select: none;
+    }
+    #viewer{ position:relative; width:100%; height:100%; }
+    #canvas2d{ position:absolute; inset:0; display:block; width:100%; height:100%; }
+    #threeLayer{ position:absolute; inset:0; display:none; outline:none; }
+
+    /* Pills */
+    .pill{
+      position:absolute; top:12px; z-index:60;
+      padding:8px 12px; border:1px solid var(--border);
+      background: var(--pill-bg);
+      border-radius: 999px; user-select:none; cursor:pointer;
+      backdrop-filter: blur(4px);
+    }
+    body:not(.dark) .pill{ background: rgba(255,255,255,0.92); }
+    #themeBadge{ right: 120px; }
+    #modeBadge{ right: 12px; }
+
+    .legend{
+      position:absolute; left:12px; top:12px; z-index:40;
+      background: var(--pill-bg);
+      border:1px solid var(--border);
+      border-radius: 10px;
+      padding:6px 8px; font-size:12px; color:var(--fg);
+      backdrop-filter: blur(4px);
+    }
+    body:not(.dark) .legend{ background: rgba(255,255,255,0.92); }
+
+    .kbd{
+      border:1px solid var(--border); background: var(--card);
+      border-radius:6px; padding:0 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    /* Calculator sections */
+    details.calc{
+      border:1px solid var(--border);
+      background: var(--card);
+      border-radius: 12px;
+      padding: 6px 10px 10px;
+    }
+    details.calc summary{ list-style:none; cursor:pointer; padding:6px 4px; border-radius:10px; font-weight:600; }
+    details.calc summary::marker, details.calc summary::-webkit-details-marker{ display:none; }
+    details.calc summary .chev{ margin-left:6px; opacity:.6; }
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .help{ font-size:12px; color:var(--muted); margin-top:6px; }
+    .small{ font-size:12px; }
+
+    /* Extra calc forms */
+    .extra-form{ display:none; }
+    .extra-form.active{ display:block; }
+
+    /* Checklists with checkbox at right */
+    .checklist{
+      display:flex; flex-direction:column; gap:6px;
+      max-height: 170px; overflow:auto;
+      border:1px solid var(--border);
+      background: var(--chip-bg);
+      border-radius:10px; padding:8px;
+    }
+    .checkitem{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:8px; padding:6px 8px;
+      border-radius:8px;
+      background: var(--card);
+      border:1px solid var(--border);
+    }
+    .checkitem-left{ display:flex; align-items:center; gap:8px; min-width:0; }
+    .checkitem .badge{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      padding: 2px 6px; border-radius: 999px;
+      background: var(--chip-bg); border:1px solid var(--border);
+      color: var(--muted);
+      font-size:11px; flex:0 0 auto;
+    }
+    .checkitem .vec-text{
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      font-size:13px; color: var(--fg);
+    }
+    .checkitem input[type="checkbox"]{ width:18px; height:18px; flex:0 0 auto; }
+
+    /* Tiny keypad */
+    .mini-keys{ display:flex; gap:6px; margin-top:6px; }
+    .mini-keys .kbtn{
+      padding:6px 10px; border-radius:10px; border:1px solid var(--border);
+      background: var(--chip-bg); cursor:pointer;
+    }
+
+    /* Tắt spinner cho number input */
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { appearance: textfield; }
+  </style>
+
+  <!-- Three.js r128 -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+  <h2>Vector Visualizer — Z-up, Projections, Big 3D Labels</h2>
+
+  <div id="app">
+    <div id="controls">
+
+      <!-- Nhập vector + mini keypad -->
+      <div class="card">
+        <label>Nhập vector: chấp nhận <code>[1,2]</code>, <code>[1/2, sqrt(2)]</code>, <code>[3*sqrt(5)/7, -1/2]</code></label>
+        <input id="vectorInput" placeholder='[1,2] hoặc [1/2, sqrt(2)]' value="[1,2]" />
+        <div class="mini-keys">
+          <button class="kbtn" id="btnInsertSlash">/</button>
+          <button class="kbtn" id="btnInsertSqrt">√</button>
+          
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="btnDraw" class="btn primary">Thêm vector</button>
+          <button id="btnAuto">Auto Mode: ON</button>
+          <button id="btnClearAll" title="Xóa tất cả vector">Clear All</button>
+        </div>
+      </div>
+
+      <!-- Danh sách vector -->
+      <div class="card">
+        <label>Danh sách vector</label>
+        <ul id="vectorList"></ul>
+      </div>
+
+      <!-- Phép tính tạo vector -->
+      <div class="card">
+        <details class="calc" id="calcBox" open>
+          <summary>Phép tính (tạo vector mới) <span class="chev">▾</span></summary>
+          <div class="grid2" style="margin-top:6px">
+            <div>
+              <label>Chọn phép:</label>
+              <select id="opSelect">
+                <option value="add">Cộng (v1 + v2)</option>
+                <option value="sub">Trừ (v1 – v2)</option>
+                <option value="scale">Nhân số (k·v)</option>
+                <option value="cross">Tích có hướng (v1 × v2)</option>
+                <option value="normalize">Chuẩn hoá (v1 / ‖v1‖)</option>
+              </select>
+            </div>
+            <div id="scalarBox" style="display:none">
+              <label>Hệ số k</label>
+              <input id="scalarInp" type="number" step="any" value="2" />
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:8px">
+            <div>
+              <label>Vector 1 (v1)</label>
+              <select id="v1Select"></select>
+            </div>
+            <div id="v2Box">
+              <label>Vector 2 (v2)</label>
+              <select id="v2Select"></select>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px">
+            <button id="btnCompute" class="btn primary">Tính & Thêm vào danh sách</button>
+            <button id="btnPreview" title="Chỉ xem kết quả, không thêm">Xem trước</button>
+          </div>
+
+          <div id="calcSteps" class="help">Kết quả phép tính & giải thích sẽ hiển thị ở đây.</div>
+        </details>
+      </div>
+
+      <!-- Phép tính không sinh vector -->
+      <div class="card">
+        <details class="calc" id="calcBoxExtra" open>
+          <summary>Phép tính (không sinh vector) <span class="chev">▾</span></summary>
+
+          <div class="grid2" style="margin-top:6px">
+            <div>
+              <label>Chọn phép:</label>
+              <select id="opExtraSelect">
+                <option value="angle_between">Góc giữa 2 vector</option>
+                <option value="vector_norm">Chuẩn (norm) của vector</option>
+                <option value="coordinates">Tọa độ vector theo cơ sở</option>
+                <option value="basis">Cơ sở & số chiều</option>
+                <option value="linear_independence">Độc lập tuyến tính</option>
+                <option value="rank">Hạng (rank) của hệ vector</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="extraForms" style="margin-top:8px">
+            <!-- Angle -->
+            <div id="form-angle_between" class="extra-form">
+              <label class="small"><b>Góc giữa 2 vector</b></label>
+              <div class="grid2">
+                <div>
+                  <label>Vector 1 (v1)</label>
+                  <select id="v1AngleSelect"></select>
+                </div>
+                <div>
+                  <label>Vector 2 (v2)</label>
+                  <select id="v2AngleSelect"></select>
+                </div>
+              </div>
+              <div class="row" style="margin-top:6px">
+                <button id="btnAngle">Tính góc</button>
+              </div>
+              <pre id="result_angle">—</pre>
+            </div>
+
+            <!-- Norm -->
+            <div id="form-vector_norm" class="extra-form">
+              <label class="small"><b>Chuẩn (norm) của vector</b></label>
+              <select id="vNormSelect"></select>
+              <div class="row" style="margin-top:6px">
+                <button id="btnNorm">Tính norm</button>
+              </div>
+              <pre id="result_norm">—</pre>
+            </div>
+
+            <!-- Coordinates -->
+            <div id="form-coordinates" class="extra-form">
+              <label class="small"><b>Tọa độ của vector theo cơ sở</b></label>
+              <select id="vCoordSelect"></select>
+              <div style="margin-top:8px">
+                <label>Chọn các vector làm cơ sở:</label>
+                <div id="basisCoordChecklist" class="checklist"></div>
+              </div>
+              <div class="row" style="margin-top:6px">
+                <button id="btnCoord">Đổi tọa độ</button>
+              </div>
+              <pre id="result_coord">—</pre>
+            </div>
+
+            <!-- Basis -->
+            <div id="form-basis" class="extra-form">
+              <label class="small"><b>Cơ sở & Số chiều</b> — Chọn tập vector</label>
+              <div id="basisChecklist" class="checklist"></div>
+              <div class="row" style="margin-top:6px">
+                <button id="btnBasis">Tính cơ sở</button>
+              </div>
+              <pre id="result_basis">—</pre>
+            </div>
+
+            <!-- Independence -->
+            <div id="form-linear_independence" class="extra-form">
+              <label class="small"><b>Kiểm tra độc lập tuyến tính</b></label>
+              <div id="indepChecklist" class="checklist"></div>
+              <div class="row" style="margin-top:6px">
+                <button id="btnIndep">Kiểm tra</button>
+              </div>
+              <pre id="result_indep">—</pre>
+            </div>
+
+            <!-- Rank -->
+            <div id="form-rank" class="extra-form">
+              <label class="small"><b>Hạng (rank) của hệ vector</b></label>
+              <div id="rankChecklist" class="checklist"></div>
+              <div class="row" style="margin-top:6px">
+                <button id="btnRank">Tính rank</button>
+              </div>
+              <pre id="result_rank">—</pre>
+            </div>
+          </div>
+
+          
+        </details>
+      </div>
+
+      <div class="card">
+        <label>Kết quả (vector hiện hành):</label>
+        <pre id="coordOut">—</pre>
+      </div>
+
+      <div class="card">
+        <label>Console logs</label>
+        <pre id="logOut">—</pre>
+      </div>
+
+      
+    </div>
+
+    <div id="viewerWrap">
+      <div class="legend">
+        <span class="kbd">Wheel</span> zoom
+        <span class="kbd" style="margin-left:6px">Drag</span> pan/rotate
+        <span class="kbd" style="margin-left:6px">WASD/←↑→↓</span> move (3D)
+        <span class="kbd" style="margin-left:6px">Q/E</span> fwd/back
+      </div>
+      <div id="themeBadge" class="pill">Theme: Light</div>
+      <div id="modeBadge" class="pill">Mode: 2D</div>
+      <div id="viewer">
+        <canvas id="canvas2d"></canvas>
+        <div id="threeLayer" tabindex="0" aria-label="3D viewer (keyboard enabled)"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ===== Backend base URL ===== */
+    const API_BASE = "http://127.0.0.1:5000";
+
+    /* ================= CONFIG FOR 3D LABEL SIZES ================= */
+    const AXIS_TICK_PX   = 26;
+    const AXIS_LETTER_PX = 30;
+    const TIP_PX         = 22;
+    const TEXTURE_RATIO  = 4;
+
+    /* ================= DEBUG ================= */
+    function log(s){
+      console.log(s);
+      const el = document.getElementById('logOut');
+      if(!el) return;
+      el.innerText = (el.innerText==='—'?'':el.innerText+'\\n') + String(s);
+    }
+
+    async function pingBackend(){
+      try{
+        const r = await fetch(`${API_BASE}/api/health`, { mode: "cors" });
+        const j = await r.json();
+        log(`Backend OK (${API_BASE}) — health: ${JSON.stringify(j)}`);
+      }catch(e){
+        log(`Không gọi được /api/health — ${e}`);
+        alert("Không kết nối được backend. Kiểm tra app.py đang chạy ở 127.0.0.1:5000.");
+      }
+    }
+
+    /* ============== GLOBAL STATE ============== */
+    let mode = "2D";
+    let autoMode = true;
+    let currentVector = [1,2];
+    let firstDrawForVector = true;
+    let theme = "light";
+
+    // vectorList: { id, vec, hue, colorCss, colorHex, haloCss, haloHex, highlighted }
+    let vectorList = [];
+    let nextId = 1;
+    const usedHues = new Set();
+
+    /* --------- Color helpers --------- */
+    function nearAxisHue(h){ const anchors=[0,120,240]; return anchors.some(a => Math.abs((((h-a+540)%360)-180))<14); }
+    function pickUniqueHue(){ const golden=137.508; let h=(vectorList.length*golden)%360; while([...(usedHues)].some(uh=>Math.abs(uh-h)<8)||nearAxisHue(h)){ h=(h+23)%360;} usedHues.add(h); return h; }
+
+    // HSL -> HEX cho three.js
+    function hslToHex(h, s, l){
+      s/=100; l/=100;
+      const k=n=>(n+h/30)%12;
+      const a=s*Math.min(l,1-l);
+      const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+      const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
+      return '#'+toHex(f(0))+toHex(f(8))+toHex(f(4));
+    }
+    function computeVectorColorHex(hue){ return hslToHex(hue,75,52); }
+    function computeHaloHex(hue, theme){ return theme==='dark' ? hslToHex(hue,95,80) : hslToHex(hue,80,30); }
+    function attachVectorItem(vec, hue){
+      return {
+        id: nextId++,
+        vec: vec.slice(),
+        hue,
+        colorCss: `hsl(${hue} 75% 52%)`,
+        colorHex: computeVectorColorHex(hue),
+        haloCss:  theme==='dark' ? `hsl(${hue} 95% 80%)` : `hsl(${hue} 80% 30%)`,
+        haloHex:  computeHaloHex(hue, theme),
+        highlighted: false
+      };
+    }
+    function refreshHaloColors(){ vectorList.forEach(v => { v.haloHex = computeHaloHex(v.hue, theme); v.haloCss = theme==='dark' ? `hsl(${v.hue} 95% 80%)` : `hsl(${v.hue} 80% 30%)`; }); }
+
+    /* --------- Display helpers --------- */
+    function coordOut(text){ document.getElementById('coordOut').innerText = text; }
+    function getCSS(v){ return getComputedStyle(document.body).getPropertyValue(v).trim() || '#fff'; }
+    function formatLabel(val){
+      if(val===0) return "0";
+      const abs = Math.abs(val);
+      if(abs >= 1e6 || abs < 1e-6) return val.toExponential(0).replace("+","");
+      return Number(val.toFixed(6)).toString();
+    }
+    function niceStep(unitsRange){
+      const rough = Math.max(unitsRange, 1e-12)/10;
+      const pow10 = Math.pow(10, Math.floor(Math.log10(rough)));
+      const d = rough / pow10;
+      if(d < 1.5) return 1 * pow10;
+      if(d < 3)   return 2 * pow10;
+      if(d < 7)   return 5 * pow10;
+      return 10 * pow10;
+    }
+
+    /* ===== Number formatting (fraction & surd) ===== */
+
+    function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ const t=a%b; a=b; b=t; } return a||1; }
+    function isNearly(x,y,eps=1e-10){ return Math.abs(x-y) <= eps; }
+    function isNearlyInt(x, eps=1e-10){ return isNearly(x, Math.round(x), eps); }
+
+    // Continued fraction rational approximation
+    function rationalApprox(x, maxDen=10000, eps=1e-12){
+      if(!isFinite(x)) return null;
+      const sign = x<0 ? -1 : 1;
+      x = Math.abs(x);
+      if (isNearlyInt(x, eps)) return {n: sign*Math.round(x), d: 1};
+      let a0 = Math.floor(x);
+      let p0 = 1, q0 = 0, p1 = a0, q1 = 1;
+      let frac = x - a0;
+      if (isNearly(frac, 0, eps)) return {n: sign*p1, d: q1};
+      for(let i=0;i<30;i++){
+        const a = Math.floor(1/frac);
+        const p2 = a*p1 + p0;
+        const q2 = a*q1 + q0;
+        const approx = p2/q2;
+        if(q2>maxDen) break;
+        if (Math.abs(approx - x) <= eps) return {n: sign*p2, d: q2};
+        p0=p1; q0=q1; p1=p2; q1=q2;
+        frac = 1/frac - a;
+        if(frac<=eps) break;
+      }
+      if (Math.abs(p1/q1 - x) <= eps) return {n: sign*p1, d: q1};
+      return null;
+    }
+
+    // Try represent x as (p * sqrt(n)) / m with square-free n
+    function largestSquareFactor(n){ let r=1; for(let k=2;k*k<=n;k++){ while(n%(k*k)===0){ n/=k*k; r*=k; } } return {root:r, rest:n}; }
+    function approxRadical(x, eps=1e-9){
+      if(!isFinite(x)) return null;
+      if(isNearlyInt(x, eps)) return null; // prefer integer
+      const sign = x<0 ? '-' : '';
+      const ax = Math.abs(x);
+
+      let best=null, errBest=1e9;
+
+      for(let p=1;p<=8;p++){
+        for(let n=2;n<=400;n++){
+          const s=Math.sqrt(n);
+          for(let m=1;m<=60;m++){
+            const val=(p*s)/m;
+            const err=Math.abs(val-ax);
+            if(err < errBest){
+              const {root:r, rest} = largestSquareFactor(n);
+              if(rest===1) continue;
+              let num=p*r, den=m;
+              const g=gcd(num,den); num/=g; den/=g;
+              const coef=(num===1?'':num.toString());
+              const frac=(den===1?'':`/${den}`);
+              best = `${sign}${coef}√${rest}${frac}`;
+              errBest=err;
+            }
+          }
+        }
+      }
+
+      // Special case 1/sqrt(n)
+      for(let n=2;n<=400;n++){
+        const val=1/Math.sqrt(n);
+        const err=Math.abs(val-ax);
+        if(err < errBest && err < eps){
+          const {root:r, rest}=largestSquareFactor(n);
+          const den=r*rest;
+          best = `${sign}√${rest}/${den}`;
+          errBest=err;
+        }
+      }
+
+      if(errBest < eps) return best;
+      return null;
+    }
+
+    function formatScalar(x){
+      if(!isFinite(x)) return String(x);
+      if(Math.abs(x) < 1e-12) return "0";
+      if(isNearlyInt(x)) return String(Math.round(x));
+
+      // Try rational first (strict)
+      const rat = rationalApprox(x, 10000, 1e-12);
+      if(rat){
+        const n=rat.n, d=rat.d;
+        if(d===1) return String(n);
+        return `${n}/${d}`;
+      }
+
+      // Try radical
+      const rad = approxRadical(x, 1e-9);
+      if(rad) return rad;
+
+      // Decimal fallback
+      return Number(x.toFixed(6)).toString();
+    }
+
+    function formatVectorShort(vec){ return `[${vec.map(formatScalar).join(', ')}]`; }
+    function formatTip(vec){ return `(${vec.map(formatScalar).join(', ')})`; }
+
+    /* ===== Parser cho input vector: hỗ trợ phân số & sqrt ===== */
+    function splitTopLevelByComma(s){
+      const parts=[]; let cur=''; let depth=0;
+      for(let i=0;i<s.length;i++){
+        const ch=s[i];
+        if(ch===',' && depth===0){ parts.push(cur.trim()); cur=''; continue; }
+        if(ch==='(') depth++;
+        else if(ch===')' && depth>0) depth--;
+        cur+=ch;
+      }
+      if(cur.trim()!=='') parts.push(cur.trim());
+      return parts;
+    }
+
+    function evalExprSafe(expr){
+      if(!expr || !expr.trim()) throw "Thiếu toạ độ";
+      let e = expr.trim();
+
+      // Hỗ trợ ký hiệu √2, √(3)
+      e = e.replace(/√\s*\(/g, 'sqrt(');    // √(2) -> sqrt(2)
+      e = e.replace(/√\s*([0-9.]+)/g, 'sqrt($1)'); // √2 -> sqrt(2)
+
+      // Chuẩn hoá sqrt(...) => Math.sqrt(...)
+      e = e.replace(/\bsqrt\s*\(/gi, 'Math.sqrt(');
+
+      // Chỉ cho phép số, +-*/. khoảng trắng, ngoặc, Math.sqrt
+      const safeRe = /^[0-9+\-*/.\s()a-zA-Z_]+$/;
+      if(!safeRe.test(e)) throw "Biểu thức có ký tự không hợp lệ";
+
+      // Không cho từ khoá nguy hiểm
+      if(/constructor|Function|=>|while|for|if|return|try|catch|process|window|document/i.test(e)){
+        throw "Biểu thức không hợp lệ";
+      }
+
+      // Tính giá trị
+      let val;
+      try{
+        // eslint-disable-next-line no-new-func
+        val = Function(`"use strict"; return (${e});`)();
+      }catch{
+        throw `Không tính được: ${expr}`;
+      }
+      if(!isFinite(val)) throw `Kết quả không hợp lệ: ${expr}`;
+      return Number(val);
+    }
+
+    function parseVectorExpr(raw){
+      const s = raw.trim();
+      if(!s.startsWith('[') || !s.endsWith(']')) throw 'Nhập phải dạng [a,b] hoặc [a,b,c]';
+      const inside = s.slice(1,-1);
+      const parts = splitTopLevelByComma(inside);
+      if(parts.length!==2 && parts.length!==3) throw 'Vector phải có 2 hoặc 3 toạ độ';
+      const vec = parts.map(evalExprSafe);
+      return vec;
+    }
+
+    /* ============== DOM HOOKS ============== */
+    const vectorInput = document.getElementById('vectorInput');
+    const vectorListEl = document.getElementById('vectorList');
+    const btnDraw = document.getElementById('btnDraw');
+    const btnAuto = document.getElementById('btnAuto');
+    const btnClearAll = document.getElementById('btnClearAll');
+    const themeBadge = document.getElementById('themeBadge');
+    const modeBadge = document.getElementById('modeBadge');
+    const viewerWrap = document.getElementById('viewerWrap');
+    const controlsPane = document.getElementById('controls');
+
+    // mini keypad
+    const btnInsertSlash = document.getElementById('btnInsertSlash');
+    const btnInsertSqrt  = document.getElementById('btnInsertSqrt');
+
+    // Calculator (tạo vector)
+    const opSelect = document.getElementById('opSelect');
+    const v1Select = document.getElementById('v1Select');
+    const v2Select = document.getElementById('v2Select');
+    const v2Box = document.getElementById('v2Box');
+    const scalarBox = document.getElementById('scalarBox');
+    const scalarInp = document.getElementById('scalarInp');
+    const btnCompute = document.getElementById('btnCompute');
+    const btnPreview = document.getElementById('btnPreview');
+    const calcSteps = document.getElementById('calcSteps');
+
+    // Extra calc
+    const opExtraSelect = document.getElementById('opExtraSelect');
+    const extraForms = document.getElementById('extraForms');
+
+    const v1AngleSelect = document.getElementById('v1AngleSelect');
+    const v2AngleSelect = document.getElementById('v2AngleSelect');
+    const vNormSelect   = document.getElementById('vNormSelect');
+    const vCoordSelect  = document.getElementById('vCoordSelect');
+    const basisCoordChecklist = document.getElementById('basisCoordChecklist');
+    const basisChecklist      = document.getElementById('basisChecklist');
+    const indepChecklist      = document.getElementById('indepChecklist');
+    const rankChecklist       = document.getElementById('rankChecklist');
+
+    const btnAngle = document.getElementById('btnAngle');
+    const btnNorm  = document.getElementById('btnNorm');
+    const btnCoord = document.getElementById('btnCoord');
+    const btnBasis = document.getElementById('btnBasis');
+    const btnIndep = document.getElementById('btnIndep');
+    const btnRank  = document.getElementById('btnRank');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      log(`Frontend origin: ${location.origin}`);
+      pingBackend();
+
+      // mini keypad handlers
+      btnInsertSlash.addEventListener('click', ()=> insertAtCursor(vectorInput, '/'));
+      btnInsertSqrt.addEventListener('click', ()=> insertSqrt(vectorInput));
+
+      // enter to add quickly
+      vectorInput.addEventListener('keydown', (e)=>{
+        if(e.key==='Enter'){ e.preventDefault(); onAddVector(); }
+      });
+
+      btnDraw.addEventListener('click', onAddVector);
+      btnAuto.addEventListener('click', toggleAuto);
+      btnClearAll.addEventListener('click', clearAllVectors);
+      themeBadge.addEventListener('click', toggleTheme);
+      modeBadge.addEventListener('click', toggleMode);
+
+      opSelect.addEventListener('change', refreshCalcUI);
+      btnCompute.addEventListener('click', () => runCalc(true));
+      btnPreview.addEventListener('click', () => runCalc(false));
+
+      opExtraSelect.addEventListener('change', ()=>showExtraForm(opExtraSelect.value));
+      btnAngle.addEventListener('click', angleBetweenUI);
+      btnNorm.addEventListener('click', vectorNormUI);
+      btnCoord.addEventListener('click', coordinatesUI);
+      btnBasis.addEventListener('click', basisAndDimUI);
+      btnIndep.addEventListener('click', checkIndependenceUI);
+      btnRank.addEventListener('click', rankVecUI);
+
+      init2D();
+      init3D();
+
+      viewerWrap.addEventListener('wheel', (e)=>{ e.preventDefault(); }, {passive:false});
+
+      show2D();
+      redrawAll();
+      log('Ready Z-up.');
+
+      // init selectors + checklists
+      refreshCalcVectorOptions();
+      renderExtraCalcOptions();
+
+      // form mặc định
+      showExtraForm(opExtraSelect.value);
+    });
+
+    /* ============== Mini keypad helpers ============== */
+    function insertAtCursor(inp, text){
+      const start = inp.selectionStart ?? inp.value.length;
+      const end   = inp.selectionEnd ?? inp.value.length;
+      const before = inp.value.substring(0,start);
+      const after  = inp.value.substring(end);
+      inp.value = before + text + after;
+      const pos = start + text.length;
+      inp.selectionStart = inp.selectionEnd = pos;
+      inp.focus();
+    }
+    function insertSqrt(inp){
+      const start = inp.selectionStart ?? inp.value.length;
+      insertAtCursor(inp, "sqrt()");
+      inp.selectionStart = inp.selectionEnd = start + "sqrt(".length;
+      inp.focus();
+    }
+
+    /* ============== THEME ============== */
+    function applyTheme(){
+      document.body.classList.toggle('dark', theme==='dark');
+      themeBadge.textContent = `Theme: ${theme==='dark' ? 'Dark' : 'Light'}`;
+      refreshHaloColors();
+      if(mode==='2D') draw2DAllVectors();
+      if(_scene){
+        _scene.background = new THREE.Color(getCSS('--bg'));
+        update3DHelpersBase();
+        hardRefresh3D(false); // đảm bảo tick/label cập nhật
+      }
+    }
+    function toggleTheme(){ theme = theme==='light' ? 'dark' : 'light'; applyTheme(); }
+
+    /* ============== MODE ============== */
+    function toggleAuto(){ autoMode=!autoMode; btnAuto.textContent = autoMode ? 'Auto Mode: ON' : 'Auto Mode: OFF'; }
+    function toggleMode(){
+      const to3D = (mode==='2D');
+      mode = to3D ? '3D' : '2D';
+      modeBadge.textContent = `Mode: ${mode}`;
+      if(to3D){
+        redrawAll({frame:true});     // fit ngay khi vào 3D
+        hardRefresh3D(true);         // 2-phase refresh đảm bảo tick & label đầy đủ
+      }else{
+        redrawAll({frame:false});
+      }
+    }
+
+    /* ======= Helpers to get display index (#1, #2, …) ======= */
+    function displayIndexOf(item){ return vectorList.indexOf(item) + 1; }
+
+    /* ============== VECTOR LIST ============== */
+    function onAddVector(){
+      const raw = vectorInput.value.trim();
+      let v;
+      try{
+        v = parseVectorExpr(raw); // parse phân số & sqrt
+        if(!Array.isArray(v) || (v.length!==2 && v.length!==3)) throw new Error();
+      }catch(err){
+        alert('Nhập hợp lệ: [x,y] hoặc [x,y,z], chấp nhận 1/2, sqrt(2), 3*sqrt(5)/7.\n' + (err?.message || err));
+        return;
+      }
+
+      currentVector = v.slice();
+      firstDrawForVector = true;
+
+      const hue = pickUniqueHue();
+      const item = attachVectorItem(v, hue);
+      vectorList.push(item);
+      renderVectorList();
+      refreshCalcVectorOptions();
+      renderExtraCalcOptions();
+
+      if(autoMode){ mode = (v.length===3) ? '3D' : '2D'; modeBadge.textContent = `Mode: ${mode}`; }
+
+      if(mode==='2D'){
+        redrawAll({frame:false});
+      }else{
+        // Nếu vừa thêm vector 3D đầu tiên → frame; các lần khác vẫn refresh 2 phase để ổn định tick/label
+        const shouldFrame = vectorList.length===1 || v.length===3;
+        redrawAll({frame: shouldFrame});
+        hardRefresh3D(shouldFrame);
+      }
+    }
+
+    function renderVectorList(){
+      const el = vectorListEl; el.innerHTML = '';
+      for(const item of vectorList){
+        const li = document.createElement('li');
+        li.className = 'vec-item' + (item.highlighted ? ' active' : '');
+
+        const sw  = document.createElement('div');  sw.className='sw';  sw.style.background = item.colorCss;
+        const tag = document.createElement('span'); tag.className='tag'; tag.textContent = `#${displayIndexOf(item)}`;
+        const lbl = document.createElement('div');  lbl.className='lbl'; lbl.textContent = formatVectorShort(item.vec); lbl.title = JSON.stringify(item.vec);
+
+        const haloBtn = document.createElement('button'); haloBtn.className='btn'; haloBtn.textContent = item.highlighted ? 'Halo ON' : 'Halo OFF';
+        haloBtn.onclick = (e)=>{ e.stopPropagation(); item.highlighted=!item.highlighted; haloBtn.textContent= item.highlighted?'Halo ON':'Halo OFF'; li.classList.toggle('active', item.highlighted); if(mode==='3D') hardRefresh3D(false); else redrawAll({frame:false}); };
+
+        const del = document.createElement('button'); del.className='btn'; del.textContent='Xóa';
+        del.onclick = (e)=>{ e.stopPropagation(); const idx = vectorList.findIndex(v=>v.id===item.id); if(idx>=0) vectorList.splice(idx,1); usedHues.delete(item.hue); renderVectorList(); refreshCalcVectorOptions(); renderExtraCalcOptions(); if(mode==='3D') hardRefresh3D(true); else redrawAll({frame:false}); };
+
+        li.appendChild(sw); li.appendChild(tag); li.appendChild(lbl); li.appendChild(haloBtn); li.appendChild(del);
+        el.appendChild(li);
+      }
+    }
+
+    function clearAllVectors(){ vectorList.length=0; usedHues.clear(); renderVectorList(); refreshCalcVectorOptions(); renderExtraCalcOptions(); redrawAll({frame:true}); }
+
+    function optionLabelFor(it){ return `#${displayIndexOf(it)} ${formatVectorShort(it.vec)}`; }
+
+    function refreshCalcVectorOptions(){
+      v1Select.innerHTML=''; v2Select.innerHTML='';
+      for(const it of vectorList){
+        const o1=document.createElement('option'); o1.value=it.id; o1.textContent=optionLabelFor(it);
+        const o2=document.createElement('option'); o2.value=it.id; o2.textContent=optionLabelFor(it);
+        v1Select.appendChild(o1); v2Select.appendChild(o2);
+      }
+      if(vectorList.length){ v1Select.value = vectorList[0].id; v2Select.value = (vectorList[1]?.id ?? vectorList[0].id); }
+    }
+
+    /* ===== Checkbox renderers for extra calc ===== */
+    function makeChecklist(container, name){
+      container.innerHTML = '';
+      vectorList.forEach((it)=>{
+        const id = `chk_${name}_${it.id}`;
+        const row = document.createElement('div');
+        row.className = 'checkitem';
+
+        const left = document.createElement('div');
+        left.className = 'checkitem-left';
+
+        const badge = document.createElement('span');
+        badge.className='badge';
+        badge.textContent = `#${displayIndexOf(it)}`;
+
+        const txt = document.createElement('span');
+        txt.className = 'vec-text';
+        txt.textContent = formatVectorShort(it.vec);
+
+        left.appendChild(badge);
+        left.appendChild(txt);
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.id = id;
+        cb.value = it.id;
+
+        row.appendChild(left);
+        row.appendChild(cb);
+
+        container.appendChild(row);
+      });
+    }
+
+    function addOptionsToSelect(selectEl){
+      selectEl.innerHTML='';
+      for(const it of vectorList){
+        const o=document.createElement('option');
+        o.value=it.id;
+        o.textContent=optionLabelFor(it);
+        selectEl.appendChild(o);
+      }
+    }
+
+    function renderExtraCalcOptions(){
+      addOptionsToSelect(v1AngleSelect);
+      addOptionsToSelect(v2AngleSelect);
+      addOptionsToSelect(vNormSelect);
+      addOptionsToSelect(vCoordSelect);
+      if(vectorList.length){
+        v1AngleSelect.value = vectorList[0].id;
+        v2AngleSelect.value = (vectorList[1]?.id ?? vectorList[0].id);
+        vNormSelect.value   = vectorList[0].id;
+        vCoordSelect.value  = vectorList[0].id;
+      }
+      makeChecklist(basisCoordChecklist, 'coord');
+      makeChecklist(basisChecklist, 'basis');
+      makeChecklist(indepChecklist, 'indep');
+      makeChecklist(rankChecklist,  'rank');
+    }
+
+    /* ====== BACKEND CALLER ====== */
+    async function callAPI(op, payload){
+      const url = `${API_BASE}/api/${op}`;
+      let res;
+      try{
+        res = await fetch(url, {
+          method: 'POST',
+          mode: 'cors',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload),
+          cache: 'no-store'
+        });
+      }catch(netErr){
+        throw new Error(`Network error calling ${op}: ${netErr.message}`);
+      }
+      if(!res.ok){
+        const t = await res.text().catch(()=> '');
+        throw new Error(`API ${op} failed: HTTP ${res.status} ${t}`);
+      }
+      return await res.json();
+    }
+
+    /* ================== RUN CALC (tạo vector) ================== */
+    function vectorById(id){ return vectorList.find(v=>v.id===id)?.vec ?? null; }
+
+    async function runCalc(addToList){
+      if(!vectorList.length){ alert('Chưa có vector nào.'); return; }
+      const op=opSelect.value;
+      const id1=Number(v1Select.value), id2=Number(v2Select.value);
+      const v1=vectorById(id1);
+      const v2=vectorById(id2);
+
+      let payload=null, explain='';
+      try{
+        if(op==='add'){
+          if(!v1||!v2) throw 'Chọn đủ v1, v2';
+          if(v1.length!==v2.length) throw 'Hai vector phải cùng chiều.';
+          payload={ v1, v2 }; explain=`${formatVectorShort(v1)} + ${formatVectorShort(v2)} = `;
+        }else if(op==='sub'){
+          if(!v1||!v2) throw 'Chọn đủ v1, v2';
+          if(v1.length!==v2.length) throw 'Hai vector phải cùng chiều.';
+          payload={ v1, v2 }; explain=`${formatVectorShort(v1)} − ${formatVectorShort(v2)} = `;
+        }else if(op==='scale'){
+          if(!v1) throw 'Chọn v1';
+          const k=Number(scalarInp.value); if(!isFinite(k)) throw 'k không hợp lệ';
+          payload={ v: v1, scalar: k }; explain=`${formatScalar(k)} · ${formatVectorShort(v1)} = `;
+        }else if(op==='cross'){
+          if(!v1||!v2) throw 'Chọn đủ v1, v2';
+          payload={ v1, v2 }; explain=`${formatVectorShort(v1)} × ${formatVectorShort(v2)} = `;
+        }else if(op==='normalize'){
+          if(!v1) throw 'Chọn v1';
+          payload={ v: v1 }; explain=`normalize(${formatVectorShort(v1)}) = `;
+        }
+      }catch(err){ alert(String(err)); return; }
+
+      const mapOpToApi = {
+        add: 'add_vectors',
+        sub: 'sub_vectors',
+        scale: 'scale_vector',
+        cross: 'cross_product',
+        normalize: 'normalize'
+      };
+
+      let data=null;
+      try{
+        data = await callAPI(mapOpToApi[op], payload);
+      }catch(e){
+        console.error(e);
+        alert('Gọi API thất bại. Kiểm tra backend hoặc CORS.\n' + e.message);
+        return;
+      }
+
+      const vec = Array.isArray(data?.result) ? data.result : (Array.isArray(data) ? data : null);
+      if(!vec){ alert('Kết quả không hợp lệ.'); return; }
+
+      const pretty = formatVectorShort(vec);
+      calcSteps.innerHTML = `<div><b>Kết quả:</b> <code>${pretty}</code></div><div class="help" style="margin-top:4px">${explain}${pretty}</div>`;
+
+      if(addToList){
+        const hue=pickUniqueHue();
+        const item=attachVectorItem(vec, hue);
+        item.highlighted = true;
+        vectorList.push(item);
+        renderVectorList(); refreshCalcVectorOptions(); renderExtraCalcOptions();
+        if(mode==='3D') hardRefresh3D(true); else redrawAll({frame:false});
+      }else{
+        previewVector(vec);
+      }
+    }
+
+    let _previewTemp=null;
+    function previewVector(vec){
+      currentVector = vec.slice();
+      if(mode==='2D'){
+        firstDrawForVector=false; draw2DAllVectors();
+      }else{
+        if(_previewTemp){ _scene.remove(_previewTemp); _previewTemp=null; }
+        const v3 = vec.length===3 ? vec : [vec[0], vec[1], 0];
+        const grp = buildVectorGroup3D(v3, '#bdbdbd', '#d0d0d0', false);
+        const proj= buildProjectionGroupZUp(v3, '#555');
+        const tip = buildTipLabel(v3, getCSS('--label-fg'), getCSS('--label-bg'));
+        const g = new THREE.Group(); g.add(grp); g.add(proj); g.add(tip);
+        _scene.add(g); _previewTemp=g;
+        hardRefresh3D(false);
+      }
+      coordOut(formatTip(vec));
+    }
+
+    /* ============== REDRAW ROUTER ============== */
+    function redrawAll(opts={frame:true}){ if(mode==='2D'){ show2D(); draw2DAllVectors(); } else { show3D(); draw3DAllVectors({frame:opts.frame}); } }
+
+    /* ======================= 2D LAYER ====================== */
+    const canvas2d = document.getElementById('canvas2d');
+    const ctx2d = canvas2d.getContext('2d', {alpha:false});
+
+    let S2D = { pxPerUnit:25, offsetX:0, offsetY:0, panning:false, startX:0, startY:0 };
+    let gridInfo2D = null;
+
+    function init2D(){ resize2D(); bind2DEvents(); applyTheme(); }
+    function show2D(){ canvas2d.style.display='block'; threeLayer.style.display='none'; }
+    function resize2D(){ const rect=document.getElementById('viewer').getBoundingClientRect(); canvas2d.width=Math.floor(rect.width); canvas2d.height=Math.floor(rect.height); }
+    function bind2DEvents(){
+      window.addEventListener('resize', ()=>{ resize2D(); if(mode==='2D') draw2DAllVectors(); });
+      canvas2d.addEventListener('mousedown', e=>{ S2D.panning=true; S2D.startX=e.clientX-S2D.offsetX; S2D.startY=e.clientY-S2D.offsetY; canvas2d.style.cursor='grabbing'; e.preventDefault(); });
+      window.addEventListener('mouseup', ()=>{ S2D.panning=false; canvas2d.style.cursor='default'; });
+      window.addEventListener('mousemove', e=>{ if(!S2D.panning) return; S2D.offsetX=e.clientX-S2D.startX; S2D.offsetY=e.clientY-S2D.startY; if(mode==='2D') draw2DAllVectors(); });
+      canvas2d.addEventListener('wheel', e=>{
+        const rect=canvas2d.getBoundingClientRect(); const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+        const w=canvas2d.clientWidth, h=canvas2d.clientHeight;
+        const cx=w/2+S2D.offsetX, cy=h/2+S2D.offsetY;
+        const wx=(mx-cx)/S2D.pxPerUnit, wy=(cy-my)/S2D.pxPerUnit;
+        const factor=(e.deltaY<0)?1.18:(1/1.18);
+        S2D.pxPerUnit*=factor; if(!isFinite(S2D.pxPerUnit)||S2D.pxPerUnit<=1e-12) S2D.pxPerUnit=1e-12;
+        const cxNew=mx - wx*S2D.pxPerUnit, cyNew=my + wy*S2D.pxPerUnit;
+        S2D.offsetX=cxNew-w/2; S2D.offsetY=cyNew-h/2;
+        if(mode==='2D') draw2DAllVectors(); e.preventDefault();
+      }, {passive:false});
+    }
+    function render2DGrid(){
+      const w=canvas2d.width, h=canvas2d.height;
+      const cx=w/2+S2D.offsetX, cy=h/2+S2D.offsetY, px=S2D.pxPerUnit;
+      ctx2d.fillStyle=getCSS('--card'); ctx2d.fillRect(0,0,w,h);
+      const unitsHalfX=(w/2)/px, unitsHalfY=(h/2)/px; const unitsRange=Math.max(unitsHalfX,unitsHalfY)*2;
+      const stepUnit=niceStep(unitsRange), tickPx=stepUnit*px;
+      ctx2d.strokeStyle=getCSS('--grid-light'); ctx2d.lineWidth=1;
+      for(let k=Math.floor((-cx)/tickPx)-1; k<=Math.ceil((w-cx)/tickPx)+1; k++){ const x=cx+k*tickPx; ctx2d.beginPath(); ctx2d.moveTo(x,0); ctx2d.lineTo(x,h); ctx2d.stroke(); }
+      for(let k=Math.floor((cy-h)/tickPx)-1; k<=Math.ceil((cy+h)/tickPx)+1; k++){ const y=cy-k*tickPx; ctx2d.beginPath(); ctx2d.moveTo(0,y); ctx2d.lineTo(w,y); ctx2d.stroke(); }
+      ctx2d.strokeStyle=getCSS('--axis'); ctx2d.lineWidth=2;
+      ctx2d.beginPath(); ctx2d.moveTo(0,cy); ctx2d.lineTo(w,cy); ctx2d.stroke();
+      ctx2d.beginPath(); ctx2d.moveTo(cx,0); ctx2d.lineTo(cx,h); ctx2d.stroke();
+      ctx2d.fillStyle=getCSS('--fg'); ctx2d.font='12px sans-serif';
+      ctx2d.textAlign='center'; ctx2d.textBaseline='top';
+      for(let k=Math.floor((-cx)/tickPx)-1; k<=Math.ceil((w-cx)/tickPx)+1; k++){ const unitVal=k*stepUnit; if(Math.abs(unitVal)<=1e-12) continue; const x=cx+k*tickPx; ctx2d.fillText(formatLabel(unitVal), x, cy+6); }
+      ctx2d.textAlign='left'; ctx2d.textBaseline='middle';
+      for(let k=Math.floor((cy-h)/tickPx)-1; k<=Math.ceil((cy+h)/tickPx)+1; k++){ const unitVal=k*stepUnit; if(Math.abs(unitVal)<=1e-12) continue; const y=cy-k*tickPx; ctx2d.fillText(formatLabel(unitVal), cx+6, y); }
+      ctx2d.textAlign='left'; ctx2d.textBaseline='top'; ctx2d.fillText('0', cx+4, cy+4);
+      return {cx, cy, px, stepUnit};
+    }
+    function draw2DVectorSingle(v, color, haloColor, highlighted){
+      const {cx, cy, px} = gridInfo2D;
+      const x2=cx+v[0]*px, y2=cy-v[1]*px; const angle=Math.atan2(y2-cy, x2-cx);
+      if(highlighted){
+        const layers=[{w:12,a:.18},{w:8,a:.14},{w:5,a:.10}];
+        for(const L of layers){
+          ctx2d.strokeStyle=haloColor; ctx2d.globalAlpha=L.a; ctx2d.lineWidth=L.w;
+          ctx2d.beginPath(); ctx2d.moveTo(cx,cy); ctx2d.lineTo(x2,y2); ctx2d.stroke();
+          ctx2d.beginPath(); ctx2d.moveTo(x2,y2);
+          ctx2d.lineTo(x2-(L.w+6)*Math.cos(angle-Math.PI/6), y2-(L.w+6)*Math.sin(angle-Math.PI/6));
+          ctx2d.moveTo(x2,y2);
+          ctx2d.lineTo(x2-(L.w+6)*Math.cos(angle+Math.PI/6), y2-(L.w+6)*Math.sin(angle+Math.PI/6));
+          ctx2d.stroke(); ctx2d.globalAlpha=1;
+        }
+      }
+      ctx2d.strokeStyle=color; ctx2d.lineWidth=2;
+      ctx2d.beginPath(); ctx2d.moveTo(cx,cy); ctx2d.lineTo(x2,y2); ctx2d.stroke();
+      const head=12;
+      ctx2d.beginPath(); ctx2d.moveTo(x2,y2);
+      ctx2d.lineTo(x2-head*Math.cos(angle-Math.PI/6), y2-head*Math.sin(angle-Math.PI/6));
+      ctx2d.moveTo(x2,y2);
+      ctx2d.lineTo(x2-head*Math.cos(angle+Math.PI/6), y2-head*Math.sin(angle+Math.PI/6));
+      ctx2d.stroke();
+    }
+    function draw2DAllVectors(){
+      if(firstDrawForVector && currentVector && (currentVector.length>=2)){
+        const w=canvas2d.width, h=canvas2d.height; const v=currentVector;
+        const maxComp=Math.max(Math.abs(v[0]), Math.abs(v[1]), 1);
+        S2D.pxPerUnit=Math.max((Math.min(w,h)/2)*0.6/maxComp, 1e-12);
+        S2D.offsetX=0; S2D.offsetY=0; firstDrawForVector=false;
+      }
+      gridInfo2D=render2DGrid();
+      for(const it of vectorList){
+        const v2 = it.vec.length===2 ? it.vec : [it.vec[0], it.vec[1]];
+        draw2DVectorSingle(v2, it.colorCss, it.haloCss, it.highlighted);
+      }
+      if(currentVector && currentVector.length>=2){
+        const v2=currentVector; coordOut(`[${formatScalar(v2[0])}, ${formatScalar(v2[1])}] = ${formatScalar(v2[0])}·[1,0] + ${formatScalar(v2[1])}·[0,1]`);
+      }else coordOut('—');
+    }
+
+    /* ======================= 3D LAYER ====================== */
+    const threeLayer = document.getElementById('threeLayer');
+    let _scene=null, _camera=null, _renderer=null, _controls=null, _animating=false;
+    let _hover3D=false, _pressed=new Set(), _kbAnimId=null;
+
+    const threeVecMap = new Map();
+    let _labelSprites = [];
+    let _gridHelper=null, _axesGroup=null, _axisTicks=null;
+
+    function init3D(){
+      const rect = threeLayer.getBoundingClientRect();
+      _renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+      _renderer.setSize(rect.width || 760, rect.height || 760);
+      _renderer.setPixelRatio(window.devicePixelRatio || 1);
+      threeLayer.appendChild(_renderer.domElement);
+
+      _scene = new THREE.Scene();
+      _scene.background = new THREE.Color(getCSS('--bg'));
+
+      _camera = new THREE.PerspectiveCamera(60,(rect.width||760)/(rect.height||760),0.1,1e12);
+      _camera.position.set(100,100,100);
+      _camera.up.set(0,0,1);            // Z-up
+
+      _controls = new THREE.OrbitControls(_camera, _renderer.domElement);
+      _controls.enableDamping = true; _controls.dampingFactor = 0.07;
+      _controls.rotateSpeed = 0.6; _controls.enablePan = true;
+      _controls.minDistance = 0.5; _controls.maxDistance = 1e12;
+
+      update3DHelpersBase();
+
+      window.addEventListener('resize', ()=>{
+        const r = threeLayer.getBoundingClientRect();
+        _camera.aspect = Math.max(1e-6, (r.width||760)/(r.height||760));
+        _camera.updateProjectionMatrix();
+        _renderer.setSize(r.width||760, r.height||760);
+        if(mode==='3D') hardRefresh3D(false);
+      });
+
+      _renderer.domElement.addEventListener('wheel', (e)=>{ e.preventDefault(); }, {passive:false});
+      _renderer.domElement.addEventListener('mouseenter', ()=>{ _hover3D = true; threeLayer.focus(); });
+      _renderer.domElement.addEventListener('mouseleave', ()=>{ _hover3D = false; });
+
+      document.addEventListener('keydown', (e)=>{
+        const typing = ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) || controlsPane.contains(e.target);
+        if(mode!=='3D' || !_hover3D || typing) return;
+        const key=e.key.toLowerCase(); _pressed.add(key);
+        if(['w','a','s','d','q','e','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(key)){ e.preventDefault(); e.stopPropagation(); }
+      }, {capture:true});
+      document.addEventListener('keyup', (e)=>{
+        const typing = ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) || controlsPane.contains(e.target);
+        if(typing) return; const key=e.key.toLowerCase();
+        if(_pressed.has(key)){ _pressed.delete(key); e.preventDefault(); e.stopPropagation(); }
+      }, {capture:true});
+
+      const stepLoop = ()=>{
+        if(mode==='3D' && _pressed.size && _camera && _controls){
+          const base=_camera.position.distanceTo(_controls.target);
+          const speed=(_pressed.has('shift')?0.02:0.01)*base;
+
+          const forward=new THREE.Vector3(); _camera.getWorldDirection(forward);
+          const up=new THREE.Vector3(0,0,1);
+          const right=new THREE.Vector3().crossVectors(forward, up).normalize();
+          const delta=new THREE.Vector3();
+
+          if(_pressed.has('w')||_pressed.has('arrowup'))    delta.add(up.clone().multiplyScalar(+speed));
+          if(_pressed.has('s')||_pressed.has('arrowdown'))  delta.add(up.clone().multiplyScalar(-speed));
+          if(_pressed.has('a')||_pressed.has('arrowleft'))  delta.add(right.clone().multiplyScalar(-speed));
+          if(_pressed.has('d')||_pressed.has('arrowright')) delta.add(right.clone().multiplyScalar(+speed));
+          if(_pressed.has('q')) delta.add(forward.clone().multiplyScalar(-speed));
+          if(_pressed.has('e')) delta.add(forward.clone().multiplyScalar(+speed));
+
+          if(delta.lengthSq()>0){ _camera.position.add(delta); _controls.target.add(delta); _controls.update(); }
+        }
+        _kbAnimId = requestAnimationFrame(stepLoop);
+      };
+      if(!_kbAnimId) _kbAnimId = requestAnimationFrame(stepLoop);
+    }
+
+    function show3D(){
+      canvas2d.style.display = 'none';
+      threeLayer.style.display = 'block';
+      try{ threeLayer.focus({preventScroll:true}); }catch(e){}
+      _hover3D = true;
+
+      if(!_animating){
+        _animating = true;
+        (function loop(){
+          if(!_animating) return;
+          requestAnimationFrame(loop);
+          if(_controls) _controls.update();
+          _renderer.render(_scene, _camera);
+        })();
+      }
+    }
+
+    function makeTextSprite(text, color="#fff", pxSize=18, bg='rgba(0,0,0,0.6)', depthTest=true){
+      const pad=6, fontPx=pxSize, fontSpec=`600 ${fontPx}px Arial`;
+      const tmp=document.createElement('canvas').getContext('2d'); tmp.font=fontSpec;
+      const w=Math.ceil(tmp.measureText(text).width+pad*2), h=Math.ceil(fontPx+pad*2), ratio=TEXTURE_RATIO;
+      const c=document.createElement('canvas'); c.width=w*ratio; c.height=h*ratio;
+      const ctx=c.getContext('2d'); ctx.scale(ratio,ratio); ctx.font=fontSpec; ctx.textBaseline='top';
+      if(bg){ ctx.fillStyle=bg; const r=4; ctx.beginPath(); ctx.moveTo(0+r,0); ctx.arcTo(w,0,w,h,r); ctx.arcTo(w,h,0,h,r); ctx.arcTo(0,h,0,0,r); ctx.arcTo(0,0,w,0,r); ctx.closePath(); ctx.fill(); }
+      ctx.strokeStyle='rgba(0,0,0,0.9)'; ctx.lineWidth=3.4; ctx.strokeText(text,pad,pad);
+      ctx.fillStyle=color; ctx.fillText(text,pad,pad);
+      const tex=new THREE.Texture(c); tex.needsUpdate=true;
+      const mat=new THREE.SpriteMaterial({ map:tex, transparent:true, depthTest: depthTest, depthWrite:false });
+      const sp=new THREE.Sprite(mat);
+      return sp;
+    }
+    function clear3DLabels(){ for(const sp of _labelSprites){ _scene.remove(sp); sp.material?.map?.dispose?.(); sp.material?.dispose?.(); } _labelSprites.length=0; }
+    function labelWorldScaleForPixels(distance){
+      const vFOV=_camera.fov*Math.PI/180, screenH=_renderer.domElement.clientHeight;
+      const worldH=2*Math.tan(vFOV/2)*distance; return worldH/screenH;
+    }
+
+    function buildAxesLines(L, colors){
+      const g = new THREE.Group();
+      const makeAxis = (axis) => {
+        let p1, p2, col;
+        if(axis==='x'){ p1=new THREE.Vector3(-L,0,0); p2=new THREE.Vector3(L,0,0); col=colors.x; }
+        if(axis==='y'){ p1=new THREE.Vector3(0,-L,0); p2=new THREE.Vector3(0,L,0); col=colors.y; }
+        if(axis==='z'){ p1=new THREE.Vector3(0,0,-L); p2=new THREE.Vector3(0,0,L); col=colors.z; }
+        const geo=new THREE.BufferGeometry().setFromPoints([p1,p2]);
+        const mat=new THREE.LineBasicMaterial({ color:new THREE.Color(colors[axis]) });
+        const line=new THREE.Line(geo, mat);
+        g.add(line);
+      };
+      makeAxis('x'); makeAxis('y'); makeAxis('z');
+      return g;
+    }
+
+    function update3DHelpersBase(){
+      if(_gridHelper){ _scene.remove(_gridHelper); _gridHelper=null; }
+      if(_axesGroup){ _scene.remove(_axesGroup); _axesGroup=null; }
+      if(_axisTicks){ _scene.remove(_axisTicks); _axisTicks=null; }
+      clear3DLabels();
+
+      const axisMax=50;
+      const gcol=new THREE.Color(getCSS('--grid-light'));
+      _gridHelper=new THREE.GridHelper(axisMax*2, 80, gcol.getHex(), gcol.getHex());
+      _gridHelper.rotation.x = Math.PI/2; // Oxy
+      _scene.add(_gridHelper);
+
+      _axesGroup = buildAxesLines(axisMax, { x:getCSS('--axis-x'), y:getCSS('--axis-y'), z:getCSS('--axis-z') });
+      _scene.add(_axesGroup);
+    }
+
+    function addAxisLabelsDynamic(axisMax){
+      clear3DLabels();
+      const dist=_camera.position.distanceTo(_controls.target);
+      const worldH=2*Math.tan((_camera.fov*Math.PI/180)/2)*dist;
+      const visibleRange=Math.max(worldH, axisMax*0.6);
+      const step=niceStep(visibleRange);
+      const tickStep=Math.max(step/2, axisMax/2000);
+
+      const ticks=[]; for(let t=-axisMax; t<=axisMax+1e-9; t+=tickStep){ ticks.push(Number((Math.round(t*1e6)/1e6).toFixed(6))); }
+      const labelEvery=Math.max(1, Math.round((visibleRange/tickStep)/12));
+      const fg=getCSS('--label-fg'), bg=getCSS('--label-bg');
+
+      const emit=(x,y,z,val)=>{ const sp=makeTextSprite(formatLabel(val), fg, AXIS_TICK_PX, bg, true);
+        sp.position.set(x,y,z); const d=_camera.position.distanceTo(sp.position); const s=labelWorldScaleForPixels(d)*AXIS_TICK_PX; sp.scale.set(s,s*0.56,1); _scene.add(sp); _labelSprites.push(sp); };
+      for(let i=0;i<ticks.length;i++){
+        if(i%labelEvery!==0) continue;
+        const t=ticks[i]; if(Math.abs(t)<=1e-12) continue;
+        emit(t,0,0,t);
+        emit(0,t,0,t);
+        emit(0,0,t,t);
+      }
+
+      if(_axisTicks) _scene.remove(_axisTicks);
+      const pos=[], add=(axis,t)=>{ if(Math.abs(t)<=1e-12) return;
+        const len=Math.max(axisMax*0.02,0.25);
+        if(axis==='x') pos.push(t,-len,0, t,len,0);
+        else if(axis==='y') pos.push(-len,t,0, len,t,0);
+        else pos.push(-len,0,t, len,0,t);
+      };
+      for(const t of ticks){ add('x',t); add('y',t); add('z',t); }
+      const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+      _axisTicks = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: new THREE.Color(getCSS('--grid-light')) }));
+      _scene.add(_axisTicks);
+
+      const letterOff=axisMax*1.12;
+      const addL=(txt,vec)=>{ const sp=makeTextSprite(txt, fg, AXIS_LETTER_PX, bg, true);
+        sp.position.copy(vec); const d=_camera.position.distanceTo(sp.position); const s=labelWorldScaleForPixels(d)*AXIS_LETTER_PX; sp.scale.set(s,s*0.58,1); _scene.add(sp); _labelSprites.push(sp); };
+      addL('X', new THREE.Vector3(letterOff,0,0));
+      addL('Y', new THREE.Vector3(0,letterOff,0));
+      addL('Z', new THREE.Vector3(0,0,letterOff));
+    }
+
+    function buildProjectionGroupZUp(vec3, colorCSS='#444'){
+      const g=new THREE.Group(); const [x,y,z]=vec3;
+      const mat=new THREE.LineDashedMaterial({ color:new THREE.Color(colorCSS), dashSize:0.6, gapSize:0.35 });
+      const mk=(pts)=>{ const geo=new THREE.BufferGeometry().setFromPoints(pts); const l=new THREE.Line(geo,mat); l.computeLineDistances(); return l; };
+
+      g.add(mk([ new THREE.Vector3(x,y,z), new THREE.Vector3(x,y,0) ]));
+      g.add(mk([ new THREE.Vector3(x,y,z), new THREE.Vector3(0,y,z) ]));
+      g.add(mk([ new THREE.Vector3(x,y,z), new THREE.Vector3(x,0,z) ]));
+
+      g.add(mk([ new THREE.Vector3(x,y,0), new THREE.Vector3(x,0,0) ]));
+      g.add(mk([ new THREE.Vector3(x,y,0), new THREE.Vector3(0,y,0) ]));
+      g.add(mk([ new THREE.Vector3(0,y,z), new THREE.Vector3(0,0,z) ]));
+      g.add(mk([ new THREE.Vector3(x,0,z), new THREE.Vector3(0,0,z) ]));
+
+      g.add(mk([ new THREE.Vector3(x,0,0), new THREE.Vector3(x,y,0) ]));
+      g.add(mk([ new THREE.Vector3(0,y,0), new THREE.Vector3(x,y,0) ]));
+      g.add(mk([ new THREE.Vector3(0,0,z), new THREE.Vector3(x,0,z) ]));
+      g.add(mk([ new THREE.Vector3(0,0,z), new THREE.Vector3(0,y,z) ]));
+      return g;
+    }
+
+    function buildTipLabel(vec3, fg, bg){
+      const sp=makeTextSprite(formatTip(vec3), fg, TIP_PX, bg, false);
+      sp.renderOrder = 999;
+      sp.position.set(vec3[0],vec3[1],vec3[2]);
+      const d=_camera.position.distanceTo(sp.position); const s=labelWorldScaleForPixels(d)*TIP_PX;
+      sp.scale.set(s,s*0.5,1); return sp;
+    }
+
+    function buildVectorGroup3D(vec, colorHex, haloHex, highlighted){
+      const group=new THREE.Group();
+      const v=new THREE.Vector3(vec[0],vec[1],vec[2]);
+      const len=Math.max(v.length(),1e-9);
+      const dir=v.clone().normalize();
+
+      const headLen=Math.max(0.8, Math.min(3.5, len*0.12));
+      const headRad=0.06*Math.max(1, Math.log10(1+len))*2.4;
+
+      const shaftR = headRad / 2.4;
+      const bodyLen = Math.max(len - headLen, 1e-4);
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(shaftR, shaftR, bodyLen, 16, 1, true), new THREE.MeshBasicMaterial({ color:new THREE.Color(colorHex) }));
+      shaft.position.copy(dir.clone().multiplyScalar(bodyLen/2));
+      shaft.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+      group.add(shaft);
+
+      const head = new THREE.Mesh(new THREE.ConeGeometry(headRad, headLen, 20), new THREE.MeshBasicMaterial({ color:new THREE.Color(colorHex) }));
+      head.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+      head.position.copy(v.clone().addScaledVector(dir, -headLen/2));
+      group.add(head);
+
+      if(highlighted){
+        const haloAlpha=.35, haloRad=shaftR*2.6;
+        const halo=new THREE.Mesh(new THREE.CylinderGeometry(haloRad,haloRad, bodyLen*1.02, 20, 1, true), new THREE.MeshBasicMaterial({ color:new THREE.Color(haloHex), transparent:true, opacity:haloAlpha, depthWrite:false, depthTest:false }));
+        halo.position.copy(dir.clone().multiplyScalar(bodyLen/2)); halo.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir); halo.renderOrder=500; group.add(halo);
+
+        const coneHalo=new THREE.Mesh(new THREE.ConeGeometry(headRad*1.25, headLen*1.1, 20), new THREE.MeshBasicMaterial({ color:new THREE.Color(haloHex), transparent:true, opacity:haloAlpha*0.9, depthWrite:false, depthTest:false }));
+        coneHalo.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+        coneHalo.position.copy(v.clone().addScaledVector(dir, -headLen/2));
+        coneHalo.renderOrder=500; group.add(coneHalo);
+      }
+      return group;
+    }
+
+    function draw3DAllVectors(opts={frame:true}){
+      for(const [,grp] of threeVecMap){ _scene.remove(grp); } threeVecMap.clear();
+
+      const maxComp = vectorList.length ? Math.max(...vectorList.map(it => it.vec.reduce((m,a)=>Math.max(m,Math.abs(a)),0))) : 10;
+      const axisMax = Math.max(10, maxComp*2);
+
+      if(_gridHelper) _scene.remove(_gridHelper);
+      const gcol=new THREE.Color(getCSS('--grid-light'));
+      const divisions=Math.min(500, Math.max(40, Math.round(axisMax*4)));
+      _gridHelper = new THREE.GridHelper(axisMax*2, divisions, gcol.getHex(), gcol.getHex());
+      _gridHelper.rotation.x = Math.PI/2;
+      _scene.add(_gridHelper);
+
+      if(_axesGroup) _scene.remove(_axesGroup);
+      _axesGroup = buildAxesLines(axisMax, { x:getCSS('--axis-x'), y:getCSS('--axis-y'), z:getCSS('--axis-z') });
+      _scene.add(_axesGroup);
+
+      addAxisLabelsDynamic(axisMax);
+
+      for(const it of vectorList){
+        const v3 = (it.vec.length===3)? it.vec : [it.vec[0], it.vec[1], 0];
+        const arrow = buildVectorGroup3D(v3, it.colorHex, it.haloHex, it.highlighted);
+        const proj  = buildProjectionGroupZUp(v3, getCSS('--axis'));
+        const tip   = buildTipLabel(v3, getCSS('--label-fg'), getCSS('--label-bg'));
+        const group = new THREE.Group(); group.add(arrow); group.add(proj); group.add(tip);
+        _scene.add(group); threeVecMap.set(it.id, group);
+      }
+
+      if(opts.frame){
+        const longest = vectorList.length ? Math.max(...vectorList.map(it => new THREE.Vector3(...(it.vec.length===3?it.vec:[it.vec[0],it.vec[1],0])).length())) : 1;
+        const dist = Math.max(40, longest*2.6, axisMax*1.5);
+        _camera.position.set(dist, dist, dist);
+        _controls.target.set(0,0,0); _controls.update();
+      }
+
+      const hook=()=>{ if(!_animating) return; for(const sp of _labelSprites){ const d=_camera.position.distanceTo(sp.position); const s=labelWorldScaleForPixels(d)*AXIS_TICK_PX; sp.scale.set(s,s*0.56,1); } requestAnimationFrame(hook); };
+      requestAnimationFrame(hook);
+
+      if(currentVector){
+        const v=(currentVector.length===3)? currentVector : [currentVector[0], currentVector[1], 0];
+        coordOut(formatTip(v) + ' in standard basis');
+      }else coordOut('—');
+    }
+
+    /* ---- 3D hard refresh: gọi 2 khung liên tiếp để chắc chắn tick/label & scale ổn ---- */
+    function hardRefresh3D(frameFirst=false){
+      if(mode!=='3D') return;
+      requestAnimationFrame(()=> {
+        draw3DAllVectors({frame:frameFirst});
+        _controls.update(); _renderer.render(_scene,_camera);
+        requestAnimationFrame(()=> {
+          draw3DAllVectors({frame:false});
+          _controls.update(); _renderer.render(_scene,_camera);
+        });
+      });
+    }
+
+    function show2D(){ canvas2d.style.display='block'; threeLayer.style.display='none'; }
+    (function checkLibs(){ log('three typeof: ' + (typeof THREE)); log('OrbitControls ' + (typeof THREE?.OrbitControls)); })();
+
+    /* ===== Helpers for selections ===== */
+    function getCheckedVectors(container){
+      const arr=[];
+      container.querySelectorAll('input[type="checkbox"]:checked').forEach(cb=>{
+        const id = Number(cb.value);
+        const it = vectorList.find(v=>v.id===id);
+        if(it) arr.push(it.vec.slice());
+      });
+      return arr;
+    }
+    function selectIdToVector(selectEl){
+      const id = Number(selectEl.value);
+      return vectorList.find(v=>v.id===id)?.vec ?? null;
+    }
+
+    /* ===== Toggle extra form ===== */
+    function showExtraForm(op){
+      const forms = extraForms.querySelectorAll('.extra-form');
+      forms.forEach(f => f.classList.remove('active'));
+      const active = document.getElementById(`form-${op}`);
+      if(active) active.classList.add('active');
+    }
+
+    /* ===== UI handlers (không sinh vector) ===== */
+    async function angleBetweenUI(){
+      if(vectorList.length<2){ alert('Cần ít nhất 2 vector.'); return; }
+      const v1 = selectIdToVector(v1AngleSelect);
+      const v2 = selectIdToVector(v2AngleSelect);
+      if(!v1||!v2){ alert('Chọn v1 và v2.'); return; }
+      try{
+        const data = await callAPI("angle_between", { v1, v2 });
+        const rad = (typeof data?.result==='number') ? data.result : NaN;
+        if(!isFinite(rad)){ document.getElementById("result_angle").innerText='Không đọc được góc.'; return; }
+        const deg = rad * 180 / Math.PI;
+        document.getElementById("result_angle").innerText = `${formatScalar(deg)}°`;
+      }catch(err){
+        document.getElementById("result_angle").innerText = "Lỗi: " + err.message;
+      }
+    }
+
+    async function vectorNormUI(){
+      if(!vectorList.length){ alert('Chưa có vector nào.'); return; }
+      const v = selectIdToVector(vNormSelect);
+      if(!v){ alert('Chọn vector.'); return; }
+      try{
+        const data = await callAPI("vector_norm", { v });
+        const val = (typeof data?.result==='number') ? data.result : NaN;
+        document.getElementById("result_norm").innerText = isFinite(val) ? formatScalar(val) : 'Không đọc được norm.';
+      }catch(err){
+        document.getElementById("result_norm").innerText = "Lỗi: " + err.message;
+      }
+    }
+
+    async function coordinatesUI(){
+      if(vectorList.length<1){ alert('Chưa có vector nào.'); return; }
+      const v = selectIdToVector(vCoordSelect);
+      const basis = getCheckedVectors(basisCoordChecklist);
+      if(!v){ alert('Chọn vector cần đổi tọa độ.'); return; }
+      if(!basis.length){ alert('Tick ít nhất 1 vector làm cơ sở.'); return; }
+      try{
+        const res = await fetch(`${API_BASE}/api/coordinates`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ vector: v, basis })
+        });
+        if(!res.ok){ throw new Error(`HTTP ${res.status}`); }
+        const data = await res.json();
+        const coords = Array.isArray(data?.coordinates) ? data.coordinates : null;
+        if(!coords){ document.getElementById("result_coord").innerText='Không đọc được toạ độ.'; return; }
+
+        // Hiển thị dạng: [vector gốc] = c1·[b1] + c2·[b2] + ...
+        const terms = coords.map((c,i)=>`${formatScalar(c)}·${formatVectorShort(basis[i])}`);
+        const out = `${formatVectorShort(v)} = ` + terms.join(" + ");
+        document.getElementById("result_coord").innerText = out;
+      }catch(err){
+        document.getElementById("result_coord").innerText = "Lỗi: " + err.message;
+      }
+    }
+
+    async function basisAndDimUI(){
+      const vecs = getCheckedVectors(basisChecklist);
+      if(!vecs.length){ alert('Tick ít nhất 1 vector để xét cơ sở.'); return; }
+      try{
+        const res = await fetch(`${API_BASE}/api/basis`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ vectors: vecs })
+        });
+        if(!res.ok){ throw new Error(`HTTP ${res.status}`); }
+        const data = await res.json();
+        const basis = data?.basis;
+        const dim = data?.dimension;
+        if(!Array.isArray(basis)){ document.getElementById("result_basis").innerText='Không đọc được cơ sở.'; return; }
+        const basisStr = basis.map(v=>formatVectorShort(v)).join("\n");
+        const out = `Cơ sở:\n${basisStr}\nSố chiều: ${formatScalar(dim)}`;
+        document.getElementById("result_basis").innerText = out;
+      }catch(err){
+        document.getElementById("result_basis").innerText = "Lỗi: " + err.message;
+      }
+    }
+
+    async function checkIndependenceUI(){
+      const vecs = getCheckedVectors(indepChecklist);
+      if(!vecs.length){ alert('Tick ít nhất 1 vector để kiểm tra.'); return; }
+      try{
+        const data = await callAPI("linear_independence", { vectors: vecs });
+        const msg = (typeof data?.result==='string') ? data.result : 'Không xác định được.';
+        document.getElementById("result_indep").innerText = msg;
+      }catch(err){
+        document.getElementById("result_indep").innerText = "Lỗi: " + err.message;
+      }
+    }
+
+    async function rankVecUI(){
+      const vecs = getCheckedVectors(rankChecklist);
+      if(!vecs.length){ alert('Tick ít nhất 1 vector để tính rank.'); return; }
+      try{
+        const res = await fetch(`${API_BASE}/api/rank`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ vectors: vecs })
+        });
+        if(!res.ok){ throw new Error(`HTTP ${res.status}`); }
+        const data = await res.json();
+        const rank = (typeof data?.rank==='number') ? data.rank : null;
+        document.getElementById("result_rank").innerText = (rank!==null) ? formatScalar(rank) : 'Không đọc được rank.';
+      }catch(err){
+        document.getElementById("result_rank").innerText = "Lỗi: " + err.message;
+      }
+    }
+
+    /* ====== Calculator UI small ====== */
+    function refreshCalcUI(){
+      const op=opSelect.value;
+      const needV2=(op==='add'||op==='sub'||op==='cross');
+      v2Box.style.display = needV2 ? '' : 'none';
+      scalarBox.style.display = (op==='scale') ? '' : 'none';
+      calcSteps.innerHTML = ' ';
+    }
+
+    /* ====== Optional demo quick API kept ====== */
+    function addVectors(){
+      callAPI("add_vectors", {
+        v1: JSON.parse(document.getElementById("v1_add")?.value || "[1,0]"),
+        v2: JSON.parse(document.getElementById("v2_add")?.value || "[0,1]")
+      }).then(vec => alert('add = ' + JSON.stringify(vec)))
+        .catch(e=>alert(e.message));
+    }
+    function subVectors(){
+      callAPI("sub_vectors", {
+        v1: JSON.parse(document.getElementById("v1_sub")?.value || "[1,0]"),
+        v2: JSON.parse(document.getElementById("v2_sub")?.value || "[0,1]")
+      }).then(vec => alert('sub = ' + JSON.stringify(vec)))
+        .catch(e=>alert(e.message));
+    }
+    function scaleVector(){
+      callAPI("scale_vector", {
+        v: JSON.parse(document.getElementById("v_scale")?.value || "[1,2,3]"),
+        scalar: parseFloat(document.getElementById("scalar")?.value || "2")
+      }).then(vec => alert('scale = ' + JSON.stringify(vec)))
+        .catch(e=>alert(e.message));
+    }
+    function crossProduct(){
+      callAPI("cross_product", {
+        v1: JSON.parse(document.getElementById("v1_cross")?.value || "[1,2]"),
+        v2: JSON.parse(document.getElementById("v2_cross")?.value || "[3,4]")
+      }).then(vec => alert('cross = ' + JSON.stringify(vec)))
+        .catch(e=>alert(e.message));
+    }
+    function normalizeVec(){
+      const v = JSON.parse(document.getElementById("v_normz")?.value || "[3,4,0]");
+      callAPI("normalize", { v }).then(vec => alert('normalize = ' + JSON.stringify(vec)))
+        .catch(e=>alert(e.message));
+    }
+  </script>
+</body>
+</html>
