@@ -1,0 +1,238 @@
+:root{ /*Bắt đầu vùng khai báo biến CSS toàn cục*/
+  --panel-w: 380px; /*bề rộng panel điều khiển bên cạnh*/
+  --viewer-size: 820px; /*kích thước vùng xem/đồ thị*/
+
+  --bg: #ffffff; /*Màu nền chung (trắng) cho giao diện sáng*/
+  --fg: #121314; /*Màu chữ chính (đậm, gần đen)*/
+  --muted: #6b6f76; /*Màu chữ/phần tử phụ, mờ (ghi chú, mô tả)*/
+  --border: #dedfe3; /*Màu viền (xám nhạt)*/
+  --card: #ffffff; /*Màu nền cho thẻ/card nội dung (trắng)*/
+  --chip-bg: #f6f7f9; /*Màu nền cho chip/nhãn nhỏ (xám rất nhạt)*/
+
+  --grid-light: #e9eaee; /*Màu lưới nền (ô kẻ) trong viewer ở chế độ sáng*/
+  --axis: #2a2f36; /*Màu chung cho trục (khi không phân theo X/Y/Z)*/
+
+  --axis-x: #e04b4b; /*Màu trục X (đỏ)*/
+  --axis-y: #2fb463; /*Màu trục Y (xanh lá)*/
+  --axis-z: #3a78ff; /*Màu trục Z (xanh dương)*/
+
+  --label-bg: rgba(255,255,255,0.82); /*Nền nhãn/label: màu trắng có độ trong suốt 82% (rgba = đỏ, lục, lam, alpha)*/
+  --label-fg: #121314; /*Màu chữ trên nhãn (đậm, dễ đọc trên nền nhạt)*/
+
+  --pill-bg: rgba(255,255,255,0.92); /*Nền cho “pill” (viên/miếng tròn bo góc): trắng trong suốt 92%*/
+}
+body.dark{ /*class mà toàn bộ biến ở trên sẽ bị “ghi đè” để chuyển sang giao diện tối*/
+  --bg: #0f1116; /*Nền tối*/
+  --fg: #e9e9ef; /*Màu chữ sáng để nổi trên nền tối*/
+  --muted: #a8acb4; /*Màu chữ phụ trong dark mode (xám sáng)*/
+  --border: #2d3139; /*Màu viền tối*/
+  --card: #0f1218; /*Nền thẻ/card tối (hơi khác nền chung để tạo lớp)*/
+  --chip-bg: #141823; /*Nền chip/nhãn trong dark mode*/
+
+  --grid-light: #252a35; /*Màu lưới nền trên nền tối (xám xanh đậm)*/
+  --axis: #dadbe3; /*Màu trục chung trong dark mode (xám rất nhạt)*/
+
+  --axis-x: #ff8a8a; /*Trục X ở dark mode (đỏ sáng hơn để nổi trên nền tối)*/
+  --axis-y: #7be3a0; /*Trục Y ở dark mode (xanh lá sáng)*/
+  --axis-z: #9bb9ff; /*Trục Z ở dark mode (xanh dương sáng)*/
+
+  --label-bg: rgba(0,0,0,0.6); /*Nền nhãn trong dark mode: đen trong suốt 60% (đủ tối để chữ sáng nổi)*/
+  --label-fg: #ffffff; /*Chữ trên nhãn: trắng*/
+
+  --pill-bg: rgba(20,22,28,0.9); /*Nền pill trong dark mode: đậm và gần như không trong suốt (90%)*/
+}
+
+*{ box-sizing: border-box; } /* "*" nghĩa là tất cả mọi phần tử trong trang. box-sizing: border-box giúp việc tính chiều rộng/cao của phần tử gồm luôn cả viền (border) và lề trong (padding)*/
+html, body{ height:100%; } /*Cho cả thẻ html và body chiếm 100% chiều cao của màn hình. Điều này quan trọng để layout hoặc nền phủ toàn trang*/
+body{ /*Định nghĩa style chung cho toàn trang*/
+  margin: 12px;  /*có khoảng trống 12px quanh viền ngoài body*/
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; /*danh sách phông chữ: ưu tiên system-ui (phông mặc định hệ điều hành), nếu không có thì thử lần lượt Roboto, Arial…, cuối cùng là emoji font. → đảm bảo chữ đẹp và nhất quán*/
+  color: var(--fg); /*màu chữ chính (dùng biến --fg đã khai báo ở trên)*/
+  background: var(--bg); /*màu nền (dùng biến --bg)*/
+  overscroll-behavior: none; /*khi cuộn tới đầu/cuối trang, trình duyệt không “dội” hay cuộn tràn sang phần khác (chặn hiệu ứng bounce hoặc cuộn chồng)*/
+}
+
+h2{ margin:6px 0 14px; } /*Tiêu đề cấp 2 (<h2>) có khoảng cách trên 6px, dưới 14px, 2 bên = 0. → Giúp cách chữ rõ ràng*/
+#app{ display:flex; gap:16px; align-items:flex-start; } /*Phần tử có id app (có thể là container chính). "display:flex;" → bật flexbox để sắp xếp con theo hàng ngang/dọc linh hoạt.
+"gap:16px;" → khoảng cách 16px giữa các con.
+"align-items:flex-start;" → canh các con theo đỉnh trên cùng*/
+
+/* Left panel */
+#controls{ width: var(--panel-w); } /*Panel điều khiển bên trái (id="controls") có chiều rộng theo biến --panel-w (380px)*/
+#controls .card{ /*Bên trong panel, mỗi .card (thẻ giao diện dạng hộp) có*/
+  background: var(--card); /*Nền màu --card*/
+  border:1px solid var(--border); /*Viền 1px màu --border*/
+  border-radius: 12px; /*Góc bo 12px*/
+  padding: 12px; /*Khoảng trong 12px*/
+  margin-bottom: 12px; /*Khoảng cách dưới 12px (tách các card)*/
+}
+label{ display:block; font-size:13px; color:var(--muted); margin-bottom:6px; } /*Các nhãn (label cho input) hiển thị dạng block, cỡ chữ nhỏ (13px), màu mờ --muted, và cách dưới 6px → giúp nhãn gọn, rõ*/
+
+input, select, button{ /*Các ô nhập (<input>), danh sách chọn (<select>), nút (<button>) được làm đồng bộ*/
+  font: inherit; /*font: inherit; → dùng cùng font với body*/
+  border:1px solid var(--border); /*Viền 1px --border*/
+  background: var(--card); /*Nền --card*/
+  color: var(--fg); /*Chữ màu --fg*/
+  border-radius: 10px; /*Bo góc 10px*/
+  padding: 8px 10px; /*Padding 8px 10px (cao 8px, ngang 10px)*/
+}
+input, select{ width: 100%; } /*Ô nhập và chọn sẽ chiếm toàn bộ chiều ngang container*/
+button{ cursor:pointer; } /*Khi rê chuột vào nút → con trỏ thành bàn tay (biết là có thể bấm)*/
+button:hover{ filter: brightness(1.06); } /*Khi hover, nút sáng hơn 6% → hiệu ứng phản hồi trực quan*/
+.row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; } /* .row dùng flexbox để xếp các phần tử theo hàng ngang:
+Khoảng cách giữa các phần tử = 8px.
+Canh giữa theo chiều dọc.
+flex-wrap:wrap; → nếu không đủ chỗ, tự động xuống hàng*/
+
+pre{ /*Định dạng cho khối <pre> (hiển thị code hoặc text giữ nguyên xuống dòng)*/
+  background: var(--chip-bg); /*Nền --chip-bg*/
+  border:1px solid var(--border); /*Viền 1px --border*/
+  border-radius:10px; /*Góc bo 10px*/
+  padding:10px; /*Padding 10px*/
+  white-space:pre-wrap; /*giữ nguyên khoảng trắng và xuống dòng tự động*/
+  line-height:1.25; /*dòng chữ cao hơn 1 chút, dễ đọc*/
+  max-height:220px; /*chiều cao cao nhất có thể để không hiện cuộn */
+  overflow:auto; /*hiển thị thanh cuộn nếu quá ngưỡng max*/
+  margin: 6px 0 0; /*cách trên 6px, 2 bên và dưới = 0*/
+}
+
+/* Vector list */
+#vectorList{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; } /*Đây là phần tử có id vectorList (có thể là danh sách các vector).
+list-style:none; → bỏ dấu chấm/dấu số mặc định của danh sách.
+padding:0; margin:0; → bỏ khoảng trống mặc định.
+display:flex; flex-direction:column; → xếp các phần tử con thành cột dọc.
+gap:8px; → cách nhau 8px*/
+.vec-item{ /*Mỗi mục trong danh sách (.vec-item) được làm thành một ô thẻ riêng*/
+  display:flex; align-items:center; gap:10px; /*sắp các phần con theo hàng ngang, canh giữa theo chiều dọc, cách nhau 10px*/
+  border:1px solid var(--border); border-radius:12px; /*có viền mỏng,bo góc 12px*/
+  padding:10px 12px; background: var(--card); /*khoảng trống trong ô,nền theo màu card*/
+}
+.vec-item .sw{ width:14px; height:14px; border-radius:4px; border:1px solid var(--border); } /*.sw = có thể là ô vuông màu nhỏ để hiển thị màu vector.
+Rộng/cao = 14px.
+Góc bo nhẹ 4px.
+Có viền mỏng.*/
+.vec-item .tag{ /*.tag = thẻ nhỏ hiển thị thông tin (ví dụ: “v1”, “v2”)*/
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; /*dùng font chữ monospace (chữ đều như máy đánh chữ)*/
+  padding: 2px 6px; border-radius: 999px; /*tạo thành viên thuốc tròn (pill)*/
+  background: var(--chip-bg); border:1px solid var(--border); /*nền chip, viền*/
+  font-size:12px; color:var(--muted); /*chữ nhỏ, màu mờ*/
+}
+.vec-item .lbl{ /*.lbl = nhãn chính của vector (tên hoặc biểu thức)*/
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; /*Font monospace*/
+  flex: 1 1 auto; /*chiếm hết phần còn lại của hàng*/
+  overflow:hidden; white-space:nowrap; text-overflow:ellipsis; /*nếu chữ dài quá thì cắt bớt và thêm dấu …*/
+}
+.vec-item .btn{ /*.btn = nút nhỏ bên cạnh vector (ví dụ: xóa / chỉnh sửa)*/
+  padding:6px 10px; /*nhỏ gọn*/
+  border-radius:10px; /*bo góc*/
+  background: var(--chip-bg); /*nền nhạt*/
+  color: var(--fg); /*chữ cùng màu chính*/
+}
+.vec-item.active{ outline:2px solid var(--muted); } /*Nếu vector đang được chọn (active) → viền ngoài được tô đậm hơn bằng đường outline 2px*/
+
+/* Viewer */
+#viewerWrap{ /*Khung bao ngoài cho viewer*/
+  position:relative; /*làm gốc để định vị con bên trong*/
+  width: var(--viewer-size); /*khung hình vuông*/
+  height: var(--viewer-size); /*cỡ đã định (820px)*/
+  border:1px solid var(--border); /*viền*/
+  background: var(--card); /*nền trắng/tối tùy theme*/ 
+  border-radius: 14px; /*bo góc khung*/
+  overflow: hidden; /*phần nào vẽ ra ngoài thì bị cắt*/
+  user-select: none; /*không cho bôi đen chữ trong viewer (tránh vô tình chọn)*/
+}
+#viewer{ position:relative; width:100%; height:100%; } /*Bên trong viewerWrap có một lớp #viewer chiếm toàn bộ diện tích. Làm nền cho các lớp vẽ con*/
+#canvas2d{ position:absolute; inset:0; display:block; width:100%; height:100%; } /*Đây là canvas 2D (nơi vẽ bằng JavaScript).
+position:absolute; inset:0; → dán sát 4 cạnh khung cha.
+display:block; width:100%; height:100%; → phủ toàn bộ*/
+#threeLayer{ position:absolute; inset:0; display:none; outline:none; } /*Đây là lớp cho 3D (dùng thư viện như Three.js).
+Vị trí phủ toàn bộ khung như canvas2d.
+display:none; → mặc định ẩn đi, chỉ bật khi cần 3D.
+outline:none; → không có đường viền khi focus*/
+
+/* Pills */
+.pill{ 
+  position:absolute; top:12px; z-index:60; /*phần tử “dán” cố định bên trong container cha, cách trên 12px. ưu tiên nằm trên các phần tử khác (số càng lớn càng nổi)*/
+  padding:8px 12px; border:1px solid var(--border); /*bên trong có khoảng trống trên/dưới 8px, trái/phải 12px, viền mỏng*/
+  background: var(--pill-bg); /*nền theo biến*/
+  border-radius: 999px; user-select:none; cursor:pointer; /*bo tròn hết cỡ → ra hình “viên thuốc”,không cho bôi đen chữ bên trong,di chuột vào biến thành bàn tay (cho biết bấm được)*/
+  backdrop-filter: blur(4px); /*nền phía sau bị làm mờ 4px, giống kính mờ*/
+}
+body:not(.dark) .pill{ background: rgba(255,255,255,0.92); } /*Nếu body không có class dark (tức là light mode) → pill có nền trắng mờ 92%*/
+#themeBadge{ right: 120px; } /*Đặt pill themeBadge ở cách mép phải 120px*/
+#modeBadge{ right: 12px; } /*Đặt pill modeBadge cách mép phải 12px → Vậy sẽ thấy 2 nút nhỏ ở góc trên phải: một đổi theme, một đổi mode*/
+
+.legend{ /*Khung chú giải*/
+  position:absolute; left:12px; top:12px; z-index:40; /*cố định ở góc trên trái, cách cạnh 12px,nổi nhưng thấp hơn pill (pill là 60)*/
+  background: var(--pill-bg); /*nền theo biến*/
+  border:1px solid var(--border); /*viền*/
+  border-radius: 10px; /*bo góc nhẹ*/
+  padding:6px 8px; font-size:12px; color:var(--fg); /*khoảng trống bên trong,chữ nhỏ, màu chữ chính*/
+  backdrop-filter: blur(4px); /*làm mờ nền phía sau*/
+}
+body:not(.dark) .legend{ background: rgba(255,255,255,0.92); } /*Khi ở light mode, legend có nền trắng trong suốt 92%*/
+
+.kbd{ /*Nút hiển thị phím tắt*/
+  border:1px solid var(--border); background: var(--card); /*giống nút nhỏ có viền và nền*/
+  border-radius:6px; padding:0 4px; /*bo góc nhẹ, padding ngang 4px (trên/dưới = 0)*/
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; /*dùng font chữ kiểu “máy đánh chữ” → Dùng để hiển thị ký hiệu phím (ví dụ: “W”, “Ctrl”)*/
+}
+
+/* Calculator sections */
+details.calc{ /*Đây là thẻ <details> có class calc (một kiểu “mục mở/đóng”)*/
+  border:1px solid var(--border); /*Có viền*/
+  background: var(--card); /*nền*/
+  border-radius: 12px; /*góc bo 12px*/
+  padding: 6px 10px 10px; /*rong có khoảng trống*/
+}
+details.calc summary{ list-style:none; cursor:pointer; padding:6px 4px; border-radius:10px; font-weight:600; } /*<summary> là phần tiêu đề có thể bấm để mở/đóng,bỏ dấu tam giác mặc định,trỏ chuột thành bàn tay,có khoảng trống, bo góc,chữ đậm*/
+details.calc summary::marker, details.calc summary::-webkit-details-marker{ display:none; } /*Ẩn hẳn biểu tượng mặc định của <summary> (tam giác sổ xuống)*/
+details.calc summary .chev{ margin-left:6px; opacity:.6; } /*Thay vào đó, có .chev (mũi tên tuỳ chỉnh) cách chữ 6px, mờ 60%*/
+.grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 8px; } /*Bố cục lưới (grid) 2 cột bằng nhau (1fr 1fr). Giữa các ô cách 8px*/
+.help{ font-size:12px; color:var(--muted); margin-top:6px; } /*Chữ phụ trợ, nhỏ (12px), màu mờ, có khoảng cách trên 6px*/
+.small{ font-size:12px; } /*Class chung để giảm chữ xuống 12px*/
+
+/* Extra calc forms */
+.extra-form{ display:none; }
+.extra-form.active{ display:block; }
+
+/* Checklists with checkbox at right */
+.checklist{
+  display:flex; flex-direction:column; gap:6px;
+  max-height: 170px; overflow:auto;
+  border:1px solid var(--border);
+  background: var(--chip-bg);
+  border-radius:10px; padding:8px;
+}
+.checkitem{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:8px; padding:6px 8px;
+  border-radius:8px;
+  background: var(--card);
+  border:1px solid var(--border);
+}
+.checkitem-left{ display:flex; align-items:center; gap:8px; min-width:0; }
+.checkitem .badge{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  padding: 2px 6px; border-radius: 999px;
+  background: var(--chip-bg); border:1px solid var(--border);
+  color: var(--muted);
+  font-size:11px; flex:0 0 auto;
+}
+.checkitem .vec-text{
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  font-size:13px; color: var(--fg);
+}
+.checkitem input[type="checkbox"]{ width:18px; height:18px; flex:0 0 auto; }
+
+/* Tiny keypad */
+.mini-keys{ display:flex; gap:6px; margin-top:6px; }
+.mini-keys .kbtn{
+  padding:6px 10px; border-radius:10px; border:1px solid var(--border);
+  background: var(--chip-bg); cursor:pointer;
+}
+
+/* Tắt spinner cho number input */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { appearance: textfield; }
