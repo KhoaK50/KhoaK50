@@ -28,7 +28,7 @@
         </div>
         <div class="row" style="margin-top:8px">
           <button id="btnDraw" class="btn primary">Thêm vector</button>
-          <button id="btnAuto">Tự động chuyển chiều: BẬT</button>
+          <button id="btnAuto">Tự động 2D<->3D: BẬT</button>
           <button id="btnClearAll" title="Xóa tất cả vector">Xóa hết vector</button>
         </div>
       </div>
@@ -53,7 +53,7 @@
           <summary>Phép tính (tạo vector mới) <span class="chev">▾</span></summary>
           <div class="grid2" style="margin-top:6px">
             <div>
-              <label>Chọn phép:</label>
+              <label>Chọn phép tính:</label>
               <select id="opSelect">
                 <option value="add">Cộng (v1 + v2)</option>
                 <option value="sub">Trừ (v1 – v2)</option>
@@ -91,18 +91,18 @@
       <!-- Phép tính không sinh vector -->
       <div class="card">
         <details class="calc" id="calcBoxExtra" open>
-          <summary>Phép tính (không sinh vector) <span class="chev">▾</span></summary>
+          <summary>Phép tính (không tạo vector mới) <span class="chev">▾</span></summary>
 
           <div class="grid2" style="margin-top:6px">
             <div>
-              <label>Chọn phép:</label>
+              <label>Chọn phép tính:</label>
               <select id="opExtraSelect">
                 <option value="angle_between">Góc giữa 2 vector</option>
-                <option value="vector_norm">Chuẩn (norm) của vector</option>
+                <option value="vector_norm">Độ dài của vector</option>
                 <option value="coordinates">Tọa độ vector theo cơ sở</option>
-                <option value="basis">Cơ sở & số chiều</option>
-                <option value="linear_independence">Độc lập tuyến tính</option>
-                <option value="rank">Hạng (rank) của hệ vector</option>
+                <option value="basis">Cơ sở và số chiều</option>
+                <option value="linear_independence">Kiểm tra độc lập tuyến tính</option>
+                <option value="rank">Hạng của hệ vector</option>
               </select>
             </div>
           </div>
@@ -129,10 +129,10 @@
 
             <!-- Norm -->
             <div id="form-vector_norm" class="extra-form">
-              <label class="small"><b>Chuẩn (norm) của vector</b></label>
+              <label class="small"><b>Độ dài của vector</b></label>
               <select id="vNormSelect"></select>
               <div class="row" style="margin-top:6px">
-                <button id="btnNorm">Tính norm</button>
+                <button id="btnNorm">Tính độ dài</button>
               </div>
               <pre id="result_norm">—</pre>
             </div>
@@ -146,7 +146,7 @@
                 <div id="basisCoordChecklist" class="checklist"></div>
               </div>
               <div class="row" style="margin-top:6px">
-                <button id="btnCoord">Đổi tọa độ</button>
+                <button id="btnCoord">Xuất tọa độ</button>
               </div>
               <pre id="result_coord">—</pre>
             </div>
@@ -156,7 +156,7 @@
               <label class="small"><b>Cơ sở & Số chiều</b> — Chọn tập vector</label>
               <div id="basisChecklist" class="checklist"></div>
               <div class="row" style="margin-top:6px">
-                <button id="btnBasis">Tính cơ sở</button>
+                <button id="btnBasis">Tính cơ sở và số chiều</button>
               </div>
               <pre id="result_basis">—</pre>
             </div>
@@ -173,10 +173,10 @@
 
             <!-- Rank -->
             <div id="form-rank" class="extra-form">
-              <label class="small"><b>Hạng (rank) của hệ vector</b></label>
+              <label class="small"><b>Hạng của hệ vector</b></label>
               <div id="rankChecklist" class="checklist"></div>
               <div class="row" style="margin-top:6px">
-                <button id="btnRank">Tính rank</button>
+                <button id="btnRank">Tính hạng</button>
               </div>
               <pre id="result_rank">—</pre>
             </div>
