@@ -290,7 +290,7 @@
   App.toggleAuto = function () {
     const btn = document.getElementById('btnAuto');
     App.autoMode = !App.autoMode;
-    if (btn) btn.textContent = App.autoMode ? 'Auto Mode: ON' : 'Auto Mode: OFF';
+    if (btn) btn.textContent = App.autoMode ? 'Tự động 2D<->3D: BẬT' : 'Tự động 2D<->3D: TẮT';
   };
 
   App.toggleMode = function () {
