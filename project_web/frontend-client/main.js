@@ -7,7 +7,7 @@
   // ---- Global namespace shared by all modules ----
   window.App = window.App || {};
 
-  App.API_BASE = "https://vsv-i0ya.onrender.com"; // ĐỔI thành domain thật của bạn
+  App.API_BASE = "https://visualization-rr5v.onrender.com"; // ĐỔI thành domain thật của bạn
 
 
   /* ===== Utilities / Debug ===== */
