@@ -8,20 +8,24 @@
   const ctx2d = canvas2d.getContext('2d', { alpha: false });
 
   // Public state (for debug)
-  Vec2D.S2D = { pxPerUnit: 25, offsetX: 0, offsetY: 0, panning: false, startX: 0, startY: 0 };
+  Vec2D.S2D = {
+    pxPerUnit: 25,
+    offsetX: 0, offsetY: 0,
+    panning: false,
+    lastX: 0, lastY: 0,
+    velX: 0, velY: 0
+  };
   Vec2D.gridInfo2D = null;
 
   Vec2D.init2D = function () {
     Vec2D.resize2D();
     Vec2D.bind2DEvents();
-    App.applyTheme(); // sets bg & redraw via draw2DAllVectors if in 2D
+    App.applyTheme();
   };
 
   Vec2D.show2D = function () {
-    const canvas = document.getElementById('canvas2d');
-    const threeLayer = document.getElementById('threeLayer');
-    canvas.style.display = 'block';
-    threeLayer.style.display = 'none';
+    canvas2d.style.display = 'block';
+    document.getElementById('threeLayer').style.display = 'none';
   };
 
   Vec2D.resize2D = function () {
@@ -31,24 +35,31 @@
   };
 
   Vec2D.bind2DEvents = function () {
-    window.addEventListener('resize', () => { Vec2D.resize2D(); if (App.mode === '2D') Vec2D.draw2DAllVectors(); });
+    window.addEventListener('resize', () => {
+      Vec2D.resize2D();
+      if (App.mode === '2D') Vec2D.draw2DAllVectors();
+    });
 
-    // === Panning bằng 1 ngón / chuột ===
+    // ========== Pointer (chuột hoặc 1 ngón) ==========
     canvas2d.addEventListener('pointerdown', e => {
-      if (e.isPrimary) {
-        Vec2D.S2D.panning = true;
-        Vec2D.S2D.startX = e.clientX - Vec2D.S2D.offsetX;
-        Vec2D.S2D.startY = e.clientY - Vec2D.S2D.offsetY;
-        canvas2d.setPointerCapture(e.pointerId);
-        canvas2d.style.cursor = 'grabbing';
-        e.preventDefault();
-      }
+      Vec2D.S2D.panning = true;
+      Vec2D.S2D.lastX = e.clientX;
+      Vec2D.S2D.lastY = e.clientY;
+      Vec2D.S2D.velX = 0; Vec2D.S2D.velY = 0;
+      canvas2d.setPointerCapture(e.pointerId);
+      canvas2d.style.cursor = 'grabbing';
+      e.preventDefault();
     });
 
     canvas2d.addEventListener('pointermove', e => {
       if (!Vec2D.S2D.panning) return;
-      Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
-      Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
+      const dx = e.clientX - Vec2D.S2D.lastX;
+      const dy = e.clientY - Vec2D.S2D.lastY;
+      Vec2D.S2D.offsetX += dx;
+      Vec2D.S2D.offsetY += dy;
+      Vec2D.S2D.velX = dx; Vec2D.S2D.velY = dy;
+      Vec2D.S2D.lastX = e.clientX;
+      Vec2D.S2D.lastY = e.clientY;
       if (App.mode === '2D') Vec2D.draw2DAllVectors();
     });
 
@@ -58,7 +69,7 @@
       canvas2d.style.cursor = 'default';
     });
 
-    // === Zoom bằng wheel (chuột) ===
+    // ========== Wheel zoom ==========
     canvas2d.addEventListener('wheel', e => {
       const rect = canvas2d.getBoundingClientRect();
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
@@ -74,46 +85,64 @@
       e.preventDefault();
     }, { passive: false });
 
-    // === Pinch zoom bằng 2 ngón (touch) ===
-    let lastDist = null;
-    let isPinching = false;
-
-    canvas2d.addEventListener('touchstart', e => {
-      if (e.touches.length === 2) {
-        isPinching = true;
-        const dx = e.touches[0].clientX - e.touches[1].clientX;
-        const dy = e.touches[0].clientY - e.touches[1].clientY;
-        lastDist = Math.hypot(dx, dy);
-      }
-    }, { passive: false });
-
+    // ========== Touch (1 hoặc 2 ngón) ==========
+    let lastMid = null, lastDist = null;
     canvas2d.addEventListener('touchmove', e => {
-      if (e.touches.length === 2 && isPinching) {
-        e.preventDefault();
+      if (e.touches.length === 1) {
+        // 1 ngón = pan
+        const t = e.touches[0];
+        if (lastMid) {
+          Vec2D.S2D.offsetX += t.clientX - lastMid.x;
+          Vec2D.S2D.offsetY += t.clientY - lastMid.y;
+        }
+        lastMid = { x: t.clientX, y: t.clientY };
+        if (App.mode === '2D') Vec2D.draw2DAllVectors();
+      } else if (e.touches.length === 2) {
+        // 2 ngón = pan + zoom kết hợp
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        if (lastMid) {
+          Vec2D.S2D.offsetX += (midX - lastMid.x);
+          Vec2D.S2D.offsetY += (midY - lastMid.y);
+        }
+        lastMid = { x: midX, y: midY };
+
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         const dist = Math.hypot(dx, dy);
-
         if (lastDist) {
-          const rawFactor = dist / lastDist;
-          const factor = Math.pow(rawFactor, 0.4); // 0.4 = mượt
+          const factor = dist / lastDist;
           Vec2D.S2D.pxPerUnit *= factor;
-          if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit < 1e-6) Vec2D.S2D.pxPerUnit = 1e-6;
-          if (App.mode === '2D') Vec2D.draw2DAllVectors();
+          if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12) Vec2D.S2D.pxPerUnit = 1e-12;
         }
         lastDist = dist;
+
+        if (App.mode === '2D') Vec2D.draw2DAllVectors();
       }
+      e.preventDefault();
     }, { passive: false });
 
-    canvas2d.addEventListener('touchend', e => {
-      if (e.touches.length < 2) {
-        isPinching = false;
-        lastDist = null;
+    canvas2d.addEventListener('touchend', () => { lastMid = null; lastDist = null; });
+
+    // ========== Inertia loop ==========
+    function inertiaLoop() {
+      if (!Vec2D.S2D.panning) {
+        Vec2D.S2D.offsetX += Vec2D.S2D.velX;
+        Vec2D.S2D.offsetY += Vec2D.S2D.velY;
+        Vec2D.S2D.velX *= 0.9;
+        Vec2D.S2D.velY *= 0.9;
+        if (Math.abs(Vec2D.S2D.velX) > 0.1 || Math.abs(Vec2D.S2D.velY) > 0.1) {
+          if (App.mode === '2D') Vec2D.draw2DAllVectors();
+        } else {
+          Vec2D.S2D.velX = Vec2D.S2D.velY = 0;
+        }
       }
-    });
+      requestAnimationFrame(inertiaLoop);
+    }
+    inertiaLoop();
   };
 
-  // ========== Vẽ lưới, vector, overlay ==========
+  // ================= Grid + Draw =================
   Vec2D.render2DGrid = function () {
     const w = canvas2d.width, h = canvas2d.height;
     const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY, px = Vec2D.S2D.pxPerUnit;
@@ -150,7 +179,7 @@
     }
     ctx2d.textAlign = 'left'; ctx2d.textBaseline = 'top'; ctx2d.fillText('0', cx + 4, cy + 4);
 
-    function formatLabel(v) { 
+    function formatLabel(v) {
       if (v === 0) return '0';
       const abs = Math.abs(v);
       if (abs >= 1e6 || abs < 1e-6) return v.toExponential(0).replace('+', '');
