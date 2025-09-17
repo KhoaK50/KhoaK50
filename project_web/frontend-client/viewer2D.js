@@ -285,22 +285,21 @@
 
     // Bước chia chỉ 1 hoặc 5 (…0.1, 0.5, 5, 50, 100…)
    function niceStep(range) {
-  const raw = Math.max(1e-18, range / 10); // mục tiêu ~10 vạch
-  const exp = Math.pow(10, Math.floor(Math.log10(raw)));
-  const norm = raw / exp; // chuẩn hóa về [1,10)
+  // range là chiều dài (theo world unit) muốn phủ lên màn hình
+  const rough = range / 10; // nhắm chừng 10 vạch
 
-  let step;
-  if (exp >= 1) {
-    // phần nguyên -> giữ 1 đơn vị
-    step = Math.ceil(norm) * exp;
-  } else {
-    // phần thập phân -> chỉ 1 hoặc 5
-    if (norm <= 1) step = 1 * exp;
-    else if (norm <= 5) step = 5 * exp;
-    else step = 10 * exp;
-  }
-  return step;
+  // tìm lũy thừa 10 gần nhất
+  const exp = Math.pow(10, Math.floor(Math.log10(rough)));
+  const norm = rough / exp; // [1,10)
+
+  let base;
+  if (norm <= 1) base = 1;
+  else if (norm <= 5) base = 5;
+  else base = 10;
+
+  return base * exp;
 }
+
 
 
     const stepUnit = niceStep(unitsRange);
