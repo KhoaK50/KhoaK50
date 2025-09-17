@@ -63,6 +63,7 @@
                 <option value="scale">Nhân số (k·v)</option>
                 <option value="cross">Tích có hướng (v1 × v2)</option>
                 <option value="normalize">Chuẩn hoá (v1 / ‖v1‖)</option>
+                <option value="projection">Hình chiếu trực giao của v1 lên v2 (proj_v2(v1))</option>
               </select>
             </div>
             <div id="scalarBox" style="display:none">
@@ -95,11 +96,11 @@
       <div class="card">
         <details class="calc" id="calcBoxExtra" open>
           <summary>Phép tính (không tạo vector mới) <span class="chev">▾</span></summary>
-
           <div class="grid2" style="margin-top:6px">
             <div>
               <label>Chọn phép tính:</label>
               <select id="opExtraSelect">
+                <option value="dot">Tích vô hướng (v1 · v2)</option>
                 <option value="angle_between">Góc giữa 2 vector</option>
                 <option value="vector_norm">Độ dài của vector</option>
                 <option value="coordinates">Tọa độ vector theo cơ sở</option>
@@ -111,6 +112,25 @@
           </div>
 
           <div id="extraForms" style="margin-top:8px">
+            <!-- Dot -->
+            <div id="form-dot" class="extra-form">
+              <label class="small"><b>Tích vô hướng (v1 · v2)</b></label>
+              <div class="grid2">
+                <div>
+                  <label>Vector 1 (v1)</label>
+                  <select id="v1DotSelect"></select>
+                </div>
+                <div>
+                  <label>Vector 2 (v2)</label>
+                  <select id="v2DotSelect"></select>
+                </div>
+              </div>
+              <div class="row" style="margin-top:6px">
+                <button id="btnDot">Tính tích vô hướng</button>
+              </div>
+              <pre id="result_dot">—</pre>
+            </div>
+
             <!-- Angle -->
             <div id="form-angle_between" class="extra-form">
               <label class="small"><b>Góc giữa 2 vector</b></label>
@@ -156,10 +176,10 @@
 
             <!-- Basis -->
             <div id="form-basis" class="extra-form">
-              <label class="small"><b>Cơ sở & Số chiều</b> — Chọn tập vector</label>
+              <label class="small"><b>Cơ sở & Số chiều</b></label>
               <div id="basisChecklist" class="checklist"></div>
               <div class="row" style="margin-top:6px">
-                <button id="btnBasis">Tính cơ sở và số chiều</button>
+                <button id="btnBasis">Tính cơ sở</button>
               </div>
               <pre id="result_basis">—</pre>
             </div>
@@ -199,10 +219,8 @@
     </div>
 
     <div id="viewerWrap">
-      
       <div id="themeBadge" class="pill">Theme: Light</div>
       <div id="modeBadge" class="pill">Mode: 2D</div>
-      
       <div id="viewer">
         <canvas id="canvas2d"></canvas>
         <div id="threeLayer" tabindex="0" aria-label="3D viewer (keyboard enabled)"></div>
