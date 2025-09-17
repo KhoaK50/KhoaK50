@@ -551,6 +551,8 @@
     const basisChecklist = document.getElementById('basisChecklist');
     const indepChecklist = document.getElementById('indepChecklist');
     const rankChecklist = document.getElementById('rankChecklist');
+    const v1DotSelect = document.getElementById('v1DotSelect');
+    const v2DotSelect = document.getElementById('v2DotSelect');
 
     if (!v1AngleSelect) return;
 
@@ -558,11 +560,17 @@
     addOptionsToSelect(v2AngleSelect);
     addOptionsToSelect(vNormSelect);
     addOptionsToSelect(vCoordSelect);
+    addOptionsToSelect(v1DotSelect);
+    addOptionsToSelect(v2DotSelect);
+
     if (App.vectorList.length) {
       v1AngleSelect.value = App.vectorList[0].id;
       v2AngleSelect.value = (App.vectorList[1]?.id ?? App.vectorList[0].id);
       vNormSelect.value = App.vectorList[0].id;
       vCoordSelect.value = App.vectorList[0].id;
+      v1DotSelect.value = App.vectorList[0].id;
+      v2DotSelect.value = (App.vectorList[1]?.id ?? App.vectorList[0].id);
+
     }
     makeChecklist(basisCoordChecklist, 'coord');
     makeChecklist(basisChecklist, 'basis');
@@ -911,7 +919,8 @@ App.projectionUI = async function () {
     const op = document.getElementById('opSelect').value;
     const v2Box = document.getElementById('v2Box');
     const scalarBox = document.getElementById('scalarBox');
-    const needV2 = (op === 'add' || op === 'sub' || op === 'cross');
+    const needV2 = (op === 'add' || op === 'sub' || op === 'cross' || op === 'projection');
+
     v2Box.style.display = needV2 ? '' : 'none';
     scalarBox.style.display = (op === 'scale') ? '' : 'none';
     document.getElementById('calcSteps').innerHTML = ' ';
