@@ -10,22 +10,25 @@
   // Public state (for debug)
   Vec2D.S2D = {
     pxPerUnit: 25,
-    offsetX: 0, offsetY: 0,
-    panning: false,
-    lastX: 0, lastY: 0,
-    velX: 0, velY: 0
+    offsetX: 0,
+    offsetY: 0,
+    velocityX: 0,
+    velocityY: 0,
+    lastGesture: null
   };
   Vec2D.gridInfo2D = null;
 
   Vec2D.init2D = function () {
     Vec2D.resize2D();
     Vec2D.bind2DEvents();
-    App.applyTheme();
+    App.applyTheme(); // sets bg & redraw via draw2DAllVectors if in 2D
   };
 
   Vec2D.show2D = function () {
-    canvas2d.style.display = 'block';
-    document.getElementById('threeLayer').style.display = 'none';
+    const canvas = document.getElementById('canvas2d');
+    const threeLayer = document.getElementById('threeLayer');
+    canvas.style.display = 'block';
+    threeLayer.style.display = 'none';
   };
 
   Vec2D.resize2D = function () {
@@ -34,42 +37,124 @@
     canvas2d.height = Math.floor(rect.height);
   };
 
+  // === Gesture Handling (Google Maps style) ===
   Vec2D.bind2DEvents = function () {
     window.addEventListener('resize', () => {
       Vec2D.resize2D();
       if (App.mode === '2D') Vec2D.draw2DAllVectors();
     });
 
-    // ========== Pointer (chuột hoặc 1 ngón) ==========
+    let activeTouches = new Map();
+    let lastMid = null;
+    let lastDist = null;
+    let animating = false;
+
+    const updateMomentum = () => {
+      if (!animating) return;
+      Vec2D.S2D.offsetX += Vec2D.S2D.velocityX;
+      Vec2D.S2D.offsetY += Vec2D.S2D.velocityY;
+
+      Vec2D.S2D.velocityX *= 0.9; // friction
+      Vec2D.S2D.velocityY *= 0.9;
+
+      if (Math.abs(Vec2D.S2D.velocityX) < 0.05 &&
+          Math.abs(Vec2D.S2D.velocityY) < 0.05) {
+        animating = false;
+        return;
+      }
+
+      if (App.mode === '2D') Vec2D.draw2DAllVectors();
+      requestAnimationFrame(updateMomentum);
+    };
+
     canvas2d.addEventListener('pointerdown', e => {
-      Vec2D.S2D.panning = true;
-      Vec2D.S2D.lastX = e.clientX;
-      Vec2D.S2D.lastY = e.clientY;
-      Vec2D.S2D.velX = 0; Vec2D.S2D.velY = 0;
       canvas2d.setPointerCapture(e.pointerId);
-      canvas2d.style.cursor = 'grabbing';
-      e.preventDefault();
+      activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      lastMid = null;
+      lastDist = null;
+      Vec2D.S2D.velocityX = 0;
+      Vec2D.S2D.velocityY = 0;
+      animating = false;
     });
 
     canvas2d.addEventListener('pointermove', e => {
-      if (!Vec2D.S2D.panning) return;
-      const dx = e.clientX - Vec2D.S2D.lastX;
-      const dy = e.clientY - Vec2D.S2D.lastY;
-      Vec2D.S2D.offsetX += dx;
-      Vec2D.S2D.offsetY += dy;
-      Vec2D.S2D.velX = dx; Vec2D.S2D.velY = dy;
-      Vec2D.S2D.lastX = e.clientX;
-      Vec2D.S2D.lastY = e.clientY;
-      if (App.mode === '2D') Vec2D.draw2DAllVectors();
+      if (!activeTouches.has(e.pointerId)) return;
+      activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      const touches = Array.from(activeTouches.values());
+      if (touches.length === 1) {
+        // Pan with 1 finger
+        const t = touches[0];
+        if (lastMid) {
+          const dx = t.x - lastMid.x;
+          const dy = t.y - lastMid.y;
+          Vec2D.S2D.offsetX += dx;
+          Vec2D.S2D.offsetY += dy;
+          Vec2D.S2D.velocityX = dx;
+          Vec2D.S2D.velocityY = dy;
+          if (App.mode === '2D') Vec2D.draw2DAllVectors();
+        }
+        lastMid = { ...t };
+      } else if (touches.length >= 2) {
+        // Pinch zoom + pan with 2 fingers
+        const mid = {
+          x: (touches[0].x + touches[1].x) / 2,
+          y: (touches[0].y + touches[1].y) / 2
+        };
+        const dx = touches[0].x - touches[1].x;
+        const dy = touches[0].y - touches[1].y;
+        const dist = Math.hypot(dx, dy);
+
+        if (lastMid) {
+          // Pan by midpoint movement
+          const dmx = mid.x - lastMid.x;
+          const dmy = mid.y - lastMid.y;
+          Vec2D.S2D.offsetX += dmx;
+          Vec2D.S2D.offsetY += dmy;
+          Vec2D.S2D.velocityX = dmx;
+          Vec2D.S2D.velocityY = dmy;
+        }
+
+        if (lastDist) {
+          // Zoom by pinch distance
+          const factor = Math.pow(dist / lastDist, 0.9);
+          const rect = canvas2d.getBoundingClientRect();
+          const w = canvas2d.clientWidth, h = canvas2d.clientHeight;
+          const cx = w / 2 + Vec2D.S2D.offsetX;
+          const cy = h / 2 + Vec2D.S2D.offsetY;
+          const wx = (mid.x - cx) / Vec2D.S2D.pxPerUnit;
+          const wy = (cy - mid.y) / Vec2D.S2D.pxPerUnit;
+
+          Vec2D.S2D.pxPerUnit *= factor;
+          if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12)
+            Vec2D.S2D.pxPerUnit = 1e-12;
+
+          const cxNew = mid.x - wx * Vec2D.S2D.pxPerUnit;
+          const cyNew = mid.y + wy * Vec2D.S2D.pxPerUnit;
+          Vec2D.S2D.offsetX = cxNew - w / 2;
+          Vec2D.S2D.offsetY = cyNew - h / 2;
+        }
+
+        lastMid = mid;
+        lastDist = dist;
+        if (App.mode === '2D') Vec2D.draw2DAllVectors();
+      }
     });
 
     canvas2d.addEventListener('pointerup', e => {
-      Vec2D.S2D.panning = false;
-      canvas2d.releasePointerCapture(e.pointerId);
-      canvas2d.style.cursor = 'default';
+      activeTouches.delete(e.pointerId);
+      if (activeTouches.size === 0) {
+        lastMid = null;
+        lastDist = null;
+        if (Math.abs(Vec2D.S2D.velocityX) > 0.1 ||
+            Math.abs(Vec2D.S2D.velocityY) > 0.1) {
+          animating = true;
+          requestAnimationFrame(updateMomentum);
+        }
+      }
     });
 
-    // ========== Wheel zoom ==========
+    // Mouse wheel zoom
     canvas2d.addEventListener('wheel', e => {
       const rect = canvas2d.getBoundingClientRect();
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
@@ -78,71 +163,16 @@
       const wx = (mx - cx) / Vec2D.S2D.pxPerUnit, wy = (cy - my) / Vec2D.S2D.pxPerUnit;
       const factor = (e.deltaY < 0) ? 1.18 : (1 / 1.18);
       Vec2D.S2D.pxPerUnit *= factor;
-      if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12) Vec2D.S2D.pxPerUnit = 1e-12;
+      if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12)
+        Vec2D.S2D.pxPerUnit = 1e-12;
       const cxNew = mx - wx * Vec2D.S2D.pxPerUnit, cyNew = my + wy * Vec2D.S2D.pxPerUnit;
-      Vec2D.S2D.offsetX = cxNew - w / 2; Vec2D.S2D.offsetY = cyNew - h / 2;
+      Vec2D.S2D.offsetX = cxNew - w / 2;
+      Vec2D.S2D.offsetY = cyNew - h / 2;
       if (App.mode === '2D') Vec2D.draw2DAllVectors();
       e.preventDefault();
     }, { passive: false });
-
-    // ========== Touch (1 hoặc 2 ngón) ==========
-    let lastMid = null, lastDist = null;
-    canvas2d.addEventListener('touchmove', e => {
-      if (e.touches.length === 1) {
-        // 1 ngón = pan
-        const t = e.touches[0];
-        if (lastMid) {
-          Vec2D.S2D.offsetX += t.clientX - lastMid.x;
-          Vec2D.S2D.offsetY += t.clientY - lastMid.y;
-        }
-        lastMid = { x: t.clientX, y: t.clientY };
-        if (App.mode === '2D') Vec2D.draw2DAllVectors();
-      } else if (e.touches.length === 2) {
-        // 2 ngón = pan + zoom kết hợp
-        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-        if (lastMid) {
-          Vec2D.S2D.offsetX += (midX - lastMid.x);
-          Vec2D.S2D.offsetY += (midY - lastMid.y);
-        }
-        lastMid = { x: midX, y: midY };
-
-        const dx = e.touches[0].clientX - e.touches[1].clientX;
-        const dy = e.touches[0].clientY - e.touches[1].clientY;
-        const dist = Math.hypot(dx, dy);
-        if (lastDist) {
-          const factor = dist / lastDist;
-          Vec2D.S2D.pxPerUnit *= factor;
-          if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12) Vec2D.S2D.pxPerUnit = 1e-12;
-        }
-        lastDist = dist;
-
-        if (App.mode === '2D') Vec2D.draw2DAllVectors();
-      }
-      e.preventDefault();
-    }, { passive: false });
-
-    canvas2d.addEventListener('touchend', () => { lastMid = null; lastDist = null; });
-
-    // ========== Inertia loop ==========
-    function inertiaLoop() {
-      if (!Vec2D.S2D.panning) {
-        Vec2D.S2D.offsetX += Vec2D.S2D.velX;
-        Vec2D.S2D.offsetY += Vec2D.S2D.velY;
-        Vec2D.S2D.velX *= 0.9;
-        Vec2D.S2D.velY *= 0.9;
-        if (Math.abs(Vec2D.S2D.velX) > 0.1 || Math.abs(Vec2D.S2D.velY) > 0.1) {
-          if (App.mode === '2D') Vec2D.draw2DAllVectors();
-        } else {
-          Vec2D.S2D.velX = Vec2D.S2D.velY = 0;
-        }
-      }
-      requestAnimationFrame(inertiaLoop);
-    }
-    inertiaLoop();
   };
 
-  // ================= Grid + Draw =================
   Vec2D.render2DGrid = function () {
     const w = canvas2d.width, h = canvas2d.height;
     const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY, px = Vec2D.S2D.pxPerUnit;
