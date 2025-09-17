@@ -611,6 +611,57 @@
     return await res.json();
   };
 
+  // --- Dot product (tích vô hướng) ---
+App.dotProductUI = async function () {
+  if (App.vectorList.length < 2) { 
+    alert('Cần ít nhất 2 vector.'); 
+    return; 
+  }
+  const v1 = App.selectIdToVector(document.getElementById('v1DotSelect'));
+  const v2 = App.selectIdToVector(document.getElementById('v2DotSelect'));
+  if (!v1 || !v2) { 
+    alert('Chọn v1 và v2.'); 
+    return; 
+  }
+  try {
+    const data = await App.callAPI("dot_product", { v1, v2 });
+    const val = (typeof data?.result === 'number') ? data.result : NaN;
+    document.getElementById("result_dot").innerText = isFinite(val) 
+      ? App.formatScalar(val) 
+      : 'Không đọc được tích vô hướng.';
+  } catch (err) {
+    document.getElementById("result_dot").innerText = "Lỗi: " + err.message;
+  }
+};
+
+// --- Projection (chiếu trực giao) ---
+App.projectionUI = async function () {
+  if (!App.vectorList.length) { 
+    alert('Chưa có vector nào.'); 
+    return; 
+  }
+  const v = App.selectIdToVector(document.getElementById('vProjSelect'));
+  const basis = App.getCheckedVectors(document.getElementById('projBasisChecklist'));
+  if (!v) { 
+    alert('Chọn vector cần chiếu.'); 
+    return; 
+  }
+  if (!basis.length) { 
+    alert('Tick ít nhất 1 vector làm cơ sở chiếu.'); 
+    return; 
+  }
+  try {
+    const data = await App.callAPI("projection", { vector: v, basis });
+    const proj = Array.isArray(data?.result) ? data.result : null;
+    document.getElementById("result_proj").innerText = proj 
+      ? App.formatVectorShort(proj) 
+      : "Không đọc được kết quả chiếu.";
+  } catch (err) {
+    document.getElementById("result_proj").innerText = "Lỗi: " + err.message;
+  }
+};
+
+
   /* ================== RUN CALC (tạo vector) ================== */
   function vectorById(id) { return App.vectorList.find(v => v.id === id)?.vec ?? null; }
 
@@ -912,6 +963,9 @@
     document.getElementById('btnBasis').addEventListener('click', App.basisAndDimUI);
     document.getElementById('btnIndep').addEventListener('click', App.checkIndependenceUI);
     document.getElementById('btnRank').addEventListener('click', App.rankVecUI);
+    document.getElementById('btnDot').addEventListener('click', App.dotProductUI);
+    document.getElementById('btnProj').addEventListener('click', App.projectionUI);
+
 
     // mini keypad for list inputs
     const btnListSlash = document.getElementById('btnListSlash');
