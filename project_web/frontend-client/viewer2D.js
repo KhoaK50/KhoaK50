@@ -35,9 +35,9 @@
   Vec2D.init2D = function () {
     Vec2D.resize2D();
     Vec2D.bind2DEvents();
-    // mobile: tắt hành vi mặc định của browser
+    // rất quan trọng cho mobile để trình duyệt không chiếm gesture
     canvas2d.style.touchAction = 'none';
-    App.applyTheme();
+    App.applyTheme(); // sets bg & redraw via draw2DAllVectors if in 2D
   };
 
   Vec2D.show2D = function () {
@@ -73,46 +73,28 @@
     const cx = w / 2 + Vec2D.S2D.offsetX;
     const cy = h / 2 + Vec2D.S2D.offsetY;
 
+    // world coord under (mx,my) before zoom
     const wx = (mx - cx) / Vec2D.S2D.pxPerUnit;
     const wy = (cy - my) / Vec2D.S2D.pxPerUnit;
 
     Vec2D.S2D.pxPerUnit *= factor;
-    if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12)
-      Vec2D.S2D.pxPerUnit = 1e-12;
+    if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12) Vec2D.S2D.pxPerUnit = 1e-12;
 
+    // keep the same world point under finger
     const cxNew = mx - wx * Vec2D.S2D.pxPerUnit;
     const cyNew = my + wy * Vec2D.S2D.pxPerUnit;
     Vec2D.S2D.offsetX = cxNew - w / 2;
     Vec2D.S2D.offsetY = cyNew - h / 2;
   }
 
-  // chỉ chọn 1 hoặc 5 × 10^n
-  function niceStep15(rawTarget) {
-    if (!(rawTarget > 0) || !isFinite(rawTarget)) return 1;
-    const exp = Math.floor(Math.log10(rawTarget));
-    const base = Math.pow(10, exp);
-    const frac = rawTarget / base;
-
-    let m;
-    if (frac <= 1) m = 1;
-    else if (frac <= 5) m = 5;
-    else {
-      m = 1;
-      return m * Math.pow(10, exp + 1);
-    }
-    return m * base;
-  }
-
   // ---------- Events ----------
   Vec2D.bind2DEvents = function () {
-    window.addEventListener('resize', () => {
-      Vec2D.resize2D();
-      if (App.mode === '2D') Vec2D.draw2DAllVectors();
-    });
+    window.addEventListener('resize', () => { Vec2D.resize2D(); if (App.mode === '2D') Vec2D.draw2DAllVectors(); });
 
     // Pointer down
     canvas2d.addEventListener('pointerdown', e => {
       Vec2D.S2D.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
       if (Vec2D.S2D.momentumId) cancelAnimationFrame(Vec2D.S2D.momentumId);
 
       const n = Vec2D.S2D.pointers.size;
@@ -166,8 +148,7 @@
           Vec2D.S2D.zoomVel = Math.log(factor) / dt;
         }
 
-        Vec2D.S2D.lastCentroidX = c.x;
-        Vec2D.S2D.lastCentroidY = c.y;
+        Vec2D.S2D.lastCentroidX = c.x; Vec2D.S2D.lastCentroidY = c.y;
         Vec2D.S2D.lastDist = dist;
         Vec2D.S2D.lastTime = now;
 
@@ -178,21 +159,24 @@
       if (Vec2D.S2D.isPanningOne && n === 1) {
         Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
         Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
+
         Vec2D.S2D.velX = (e.clientX - Vec2D.S2D.lastX) / dt;
         Vec2D.S2D.velY = (e.clientY - Vec2D.S2D.lastY) / dt;
+
         Vec2D.S2D.lastX = e.clientX;
         Vec2D.S2D.lastY = e.clientY;
         Vec2D.S2D.lastTime = now;
+
         if (App.mode === '2D') Vec2D.draw2DAllVectors();
       }
     });
 
-    // Pointer up
+    // Pointer up / cancel
     const endPointer = (e) => {
       if (!Vec2D.S2D.pointers.has(e.pointerId)) return;
       Vec2D.S2D.pointers.delete(e.pointerId);
-
       const n = Vec2D.S2D.pointers.size;
+
       if (n === 0) {
         canvas2d.releasePointerCapture?.(e.pointerId);
         canvas2d.style.cursor = 'default';
@@ -217,18 +201,13 @@
             }
             if (hasZoomMomentum) {
               const factor = Math.exp(Vec2D.S2D.zoomVel * 16);
-              applyZoomAboutScreenPoint(
-                canvas2d.clientWidth / 2,
-                canvas2d.clientHeight / 2,
-                factor
-              );
+              applyZoomAboutScreenPoint(canvas2d.clientWidth / 2, canvas2d.clientHeight / 2, factor);
               Vec2D.S2D.zoomVel *= decayZoom;
             }
             if (App.mode === '2D') Vec2D.draw2DAllVectors();
             const stillPan = Math.hypot(Vec2D.S2D.velX, Vec2D.S2D.velY) > 0.01;
             const stillZoom = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
-            if (stillPan || stillZoom)
-              Vec2D.S2D.momentumId = requestAnimationFrame(step);
+            if (stillPan || stillZoom) Vec2D.S2D.momentumId = requestAnimationFrame(step);
           };
           Vec2D.S2D.momentumId = requestAnimationFrame(step);
         }
@@ -269,34 +248,30 @@
   // ---------- Rendering ----------
   Vec2D.render2DGrid = function () {
     const w = canvas2d.width, h = canvas2d.height;
-    const cx = w / 2 + Vec2D.S2D.offsetX;
-    const cy = h / 2 + Vec2D.S2D.offsetY;
-    const px = Vec2D.S2D.pxPerUnit;
+    const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY, px = Vec2D.S2D.pxPerUnit;
 
     ctx2d.fillStyle = App.getCSS('--card');
     ctx2d.fillRect(0, 0, w, h);
 
     const unitsHalfX = (w / 2) / px, unitsHalfY = (h / 2) / px;
     const unitsRange = Math.max(unitsHalfX, unitsHalfY) * 2;
-    const stepUnit = niceStep15(unitsRange / 10);
+
+    const stepUnit = App.niceStep(unitsRange, [1, 5]);
     const tickPx = stepUnit * px;
 
     ctx2d.strokeStyle = App.getCSS('--grid-light'); ctx2d.lineWidth = 1;
     for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
-      const x = cx + k * tickPx;
-      ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
+      const x = cx + k * tickPx; ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
     }
     for (let k = Math.floor((cy - h) / tickPx) - 1; k <= Math.ceil((cy + h) / tickPx) + 1; k++) {
-      const y = cy - k * tickPx;
-      ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
+      const y = cy - k * tickPx; ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
     }
 
     ctx2d.strokeStyle = App.getCSS('--axis'); ctx2d.lineWidth = 2;
     ctx2d.beginPath(); ctx2d.moveTo(0, cy); ctx2d.lineTo(w, cy); ctx2d.stroke();
     ctx2d.beginPath(); ctx2d.moveTo(cx, 0); ctx2d.lineTo(cx, h); ctx2d.stroke();
 
-    ctx2d.fillStyle = App.getCSS('--fg');
-    ctx2d.font = '12px sans-serif';
+    ctx2d.fillStyle = App.getCSS('--fg'); ctx2d.font = '12px sans-serif';
     ctx2d.textAlign = 'center'; ctx2d.textBaseline = 'top';
     for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
       const unitVal = k * stepUnit;
@@ -317,9 +292,8 @@
     function formatLabel(v) {
       if (v === 0) return '0';
       const abs = Math.abs(v);
-      if (abs >= 1e6 || abs < 1e-6)
-        return v.toExponential(0).replace('+', '');
-      return Number(v.toFixed(6)).toString();
+      if (abs >= 1e12 || abs < 1e-12) return v.toExponential(2).replace('+','');
+      return Number(v.toFixed(12)).toString();
     }
 
     return { cx, cy, px, stepUnit };
@@ -355,8 +329,7 @@
 
   Vec2D.draw2DAllVectors = function () {
     if (App.firstDrawForVector && App.currentVector && (App.currentVector.length >= 2)) {
-      const w = canvas2d.width, h = canvas2d.height;
-      const v = App.currentVector;
+      const w = canvas2d.width, h = canvas2d.height; const v = App.currentVector;
       const maxComp = Math.max(Math.abs(v[0]), Math.abs(v[1]), 1);
       Vec2D.S2D.pxPerUnit = Math.max((Math.min(w, h) / 2) * 0.6 / maxComp, 1e-12);
       Vec2D.S2D.offsetX = 0; Vec2D.S2D.offsetY = 0; App.firstDrawForVector = false;
@@ -367,7 +340,6 @@
       const v2 = it.vec.length === 2 ? it.vec : [it.vec[0], it.vec[1]];
       draw2DVectorSingle(v2, it.colorCss, it.haloCss, it.highlighted);
     }
-
     if (App.currentAngleVisual2D) _drawAngleArc2DOverlay(App.currentAngleVisual2D);
 
     if (App.currentVector && App.currentVector.length >= 2) {
@@ -388,13 +360,16 @@
 
     const angA = Math.atan2(-a[1], a[0]);
     const angB = Math.atan2(-b[1], b[0]);
+
     let delta = angB - angA;
     if (delta > Math.PI) delta -= 2 * Math.PI;
     if (delta < -Math.PI) delta += 2 * Math.PI;
+
     let sweep = delta;
     if (sweep < 0) sweep += 2 * Math.PI;
 
-    const start = angA, end = angA + sweep;
+    const start = angA;
+    const end = angA + sweep;
     const r = Math.min(canvas2d.width, canvas2d.height) * 0.18;
 
     ctx2d.save();
