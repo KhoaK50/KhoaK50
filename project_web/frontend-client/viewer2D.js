@@ -284,13 +284,24 @@
     const unitsRange = Math.max(unitsHalfX, unitsHalfY) * 2;
 
     // Bước chia chỉ 1 hoặc 5 (…0.1, 0.5, 5, 50, 100…)
-    function niceStep(range) {
-      const raw = Math.max(1e-18, range / 10);            // mục tiêu ~10 vạch
-      const p = Math.pow(10, Math.floor(Math.log10(raw))); // bậc 10
-      const s = raw / p;                                   // 1..10
-      const m = (s <= 2.5) ? 1 : 5;                        // chỉ 1 hoặc 5
-      return m * p;
-    }
+   function niceStep(range) {
+  const raw = Math.max(1e-18, range / 10); // mục tiêu ~10 vạch
+  const exp = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / exp; // chuẩn hóa về [1,10)
+
+  let step;
+  if (exp >= 1) {
+    // phần nguyên -> giữ 1 đơn vị
+    step = Math.ceil(norm) * exp;
+  } else {
+    // phần thập phân -> chỉ 1 hoặc 5
+    if (norm <= 1) step = 1 * exp;
+    else if (norm <= 5) step = 5 * exp;
+    else step = 10 * exp;
+  }
+  return step;
+}
+
 
     const stepUnit = niceStep(unitsRange);
     const tickPx = stepUnit * px;
