@@ -204,8 +204,8 @@
         const hasZoomMomentum = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
 
         if (hasPanMomentum || hasZoomMomentum) {
-          const decayPan = 0.95;
-          const decayZoom = 0.90;
+          const decayPan = 0.85;
+          const decayZoom = 0.80;
 
           const step = () => {
             // 16ms/frame approx
