@@ -35,9 +35,8 @@
   Vec2D.init2D = function () {
     Vec2D.resize2D();
     Vec2D.bind2DEvents();
-    // Rất quan trọng cho mobile để trình duyệt không chiếm gesture (pinch-zoom/pan của browser)
-    canvas2d.style.touchAction = 'none';
-    App.applyTheme(); // sets bg & redraw via draw2DAllVectors if in 2D
+    canvas2d.style.touchAction = 'none'; // rất quan trọng cho mobile
+    App.applyTheme();
   };
 
   Vec2D.show2D = function () {
@@ -53,7 +52,7 @@
     canvas2d.height = Math.floor(rect.height);
   };
 
-  // ---------- Helpers for gestures ----------
+  // ---------- Helpers ----------
   function centroidOfPointers(ptrs) {
     let sx = 0, sy = 0, n = 0;
     for (const p of ptrs.values()) { sx += p.x; sy += p.y; n++; }
@@ -73,37 +72,43 @@
     const cx = w / 2 + Vec2D.S2D.offsetX;
     const cy = h / 2 + Vec2D.S2D.offsetY;
 
-    // world coord under (mx,my) before zoom
     const wx = (mx - cx) / Vec2D.S2D.pxPerUnit;
     const wy = (cy - my) / Vec2D.S2D.pxPerUnit;
 
     Vec2D.S2D.pxPerUnit *= factor;
     if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12) Vec2D.S2D.pxPerUnit = 1e-12;
 
-    // keep the same world point under finger
     const cxNew = mx - wx * Vec2D.S2D.pxPerUnit;
     const cyNew = my + wy * Vec2D.S2D.pxPerUnit;
     Vec2D.S2D.offsetX = cxNew - w / 2;
     Vec2D.S2D.offsetY = cyNew - h / 2;
   }
 
+  // Hàm chọn step chỉ từ {1, 5} × 10^k
+  function niceStep(rangeUnits) {
+    const approxStep = rangeUnits / 10; // chia lưới khoảng 10 bước
+    const exp = Math.floor(Math.log10(approxStep));
+    const base = Math.pow(10, exp);
+    if (approxStep / base <= 2) return base;   // 1 × 10^exp
+    else return 5 * base;                      // 5 × 10^exp
+  }
+
   // ---------- Events ----------
   Vec2D.bind2DEvents = function () {
-    window.addEventListener('resize', () => { Vec2D.resize2D(); if (App.mode === '2D') Vec2D.draw2DAllVectors(); });
+    window.addEventListener('resize', () => {
+      Vec2D.resize2D();
+      if (App.mode === '2D') Vec2D.draw2DAllVectors();
+    });
 
     // Pointer down
     canvas2d.addEventListener('pointerdown', e => {
-      // register pointer
       Vec2D.S2D.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-      // cancel momentum when user touches again
       if (Vec2D.S2D.momentumId) cancelAnimationFrame(Vec2D.S2D.momentumId);
 
       const n = Vec2D.S2D.pointers.size;
       Vec2D.S2D.lastTime = performance.now();
 
       if (n === 1) {
-        // 1-finger or mouse: start pan
         Vec2D.S2D.isPanningOne = true;
         Vec2D.S2D.startX = e.clientX - Vec2D.S2D.offsetX;
         Vec2D.S2D.startY = e.clientY - Vec2D.S2D.offsetY;
@@ -112,12 +117,11 @@
         canvas2d.setPointerCapture(e.pointerId);
         canvas2d.style.cursor = 'grabbing';
       } else if (n === 2) {
-        // two-finger: reset centroid/dist baselines
         const c = centroidOfPointers(Vec2D.S2D.pointers);
         Vec2D.S2D.lastCentroidX = c.x;
         Vec2D.S2D.lastCentroidY = c.y;
         Vec2D.S2D.lastDist = distanceTwoPointers(Vec2D.S2D.pointers);
-        Vec2D.S2D.isPanningOne = false; // switch to two-finger mode
+        Vec2D.S2D.isPanningOne = false;
       }
       e.preventDefault();
     });
@@ -133,34 +137,28 @@
       const n = Vec2D.S2D.pointers.size;
 
       if (n >= 2) {
-        // Combined pan + pinch
         const c = centroidOfPointers(Vec2D.S2D.pointers);
         const dist = distanceTwoPointers(Vec2D.S2D.pointers);
 
-        // Pan by centroid delta
         if (Vec2D.S2D.lastCentroidX != null) {
           const dx = c.x - Vec2D.S2D.lastCentroidX;
           const dy = c.y - Vec2D.S2D.lastCentroidY;
           Vec2D.S2D.offsetX += dx;
           Vec2D.S2D.offsetY += dy;
-
-          // velocity for momentum (px/ms)
           Vec2D.S2D.velX = dx / dt;
           Vec2D.S2D.velY = dy / dt;
         }
 
-        // Pinch zoom about centroid
         if (Vec2D.S2D.lastDist) {
           const rawFactor = dist / Vec2D.S2D.lastDist;
-          const smooth = 0.9; // gentle
+          const smooth = 0.9;
           const factor = Math.pow(rawFactor, smooth);
           applyZoomAboutScreenPoint(c.x, c.y, factor);
-
-          // zoom velocity in log space
           Vec2D.S2D.zoomVel = Math.log(factor) / dt;
         }
 
-        Vec2D.S2D.lastCentroidX = c.x; Vec2D.S2D.lastCentroidY = c.y;
+        Vec2D.S2D.lastCentroidX = c.x;
+        Vec2D.S2D.lastCentroidY = c.y;
         Vec2D.S2D.lastDist = dist;
         Vec2D.S2D.lastTime = now;
 
@@ -168,7 +166,6 @@
         return;
       }
 
-      // Single pointer pan (mouse or one finger)
       if (Vec2D.S2D.isPanningOne && n === 1) {
         Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
         Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
@@ -184,15 +181,13 @@
       }
     });
 
-    // Pointer up / cancel
+    // Pointer up/cancel
     const endPointer = (e) => {
       if (!Vec2D.S2D.pointers.has(e.pointerId)) return;
       Vec2D.S2D.pointers.delete(e.pointerId);
-
       const n = Vec2D.S2D.pointers.size;
 
       if (n === 0) {
-        // no fingers → momentum (both pan & zoom)
         canvas2d.releasePointerCapture?.(e.pointerId);
         canvas2d.style.cursor = 'default';
         Vec2D.S2D.isPanningOne = false;
@@ -206,25 +201,19 @@
         if (hasPanMomentum || hasZoomMomentum) {
           const decayPan = 0.85;
           const decayZoom = 0.80;
-
           const step = () => {
-            // ~16ms/frame
             if (hasPanMomentum) {
               Vec2D.S2D.offsetX += Vec2D.S2D.velX * 16;
               Vec2D.S2D.offsetY += Vec2D.S2D.velY * 16;
               Vec2D.S2D.velX *= decayPan;
               Vec2D.S2D.velY *= decayPan;
             }
-
             if (hasZoomMomentum) {
               const factor = Math.exp(Vec2D.S2D.zoomVel * 16);
-              // zoom về tâm màn hình (ổn định); có thể đổi sang điểm cuối cùng nếu muốn
               applyZoomAboutScreenPoint(canvas2d.clientWidth / 2, canvas2d.clientHeight / 2, factor);
               Vec2D.S2D.zoomVel *= decayZoom;
             }
-
             if (App.mode === '2D') Vec2D.draw2DAllVectors();
-
             const stillPan = Math.hypot(Vec2D.S2D.velX, Vec2D.S2D.velY) > 0.01;
             const stillZoom = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
             if (stillPan || stillZoom) {
@@ -233,11 +222,8 @@
           };
           Vec2D.S2D.momentumId = requestAnimationFrame(step);
         }
-
-        // reset zoomVel for next gesture
         Vec2D.S2D.zoomVel = 0;
       } else if (n === 1) {
-        // if one pointer remains, switch back to one-finger pan baseline
         const remain = Vec2D.S2D.pointers.values().next().value;
         Vec2D.S2D.isPanningOne = true;
         Vec2D.S2D.startX = remain.x - Vec2D.S2D.offsetX;
@@ -249,7 +235,6 @@
         Vec2D.S2D.lastDist = null;
         Vec2D.S2D.zoomVel = 0;
       } else {
-        // still >=2 after removing one → recompute baselines
         const c = centroidOfPointers(Vec2D.S2D.pointers);
         Vec2D.S2D.lastCentroidX = c.x;
         Vec2D.S2D.lastCentroidY = c.y;
@@ -259,7 +244,6 @@
     };
     canvas2d.addEventListener('pointerup', endPointer);
     canvas2d.addEventListener('pointercancel', endPointer);
-    canvas2d.addEventListener('lostpointercapture', () => { /* ignore */ });
 
     // Wheel zoom (desktop)
     canvas2d.addEventListener('wheel', e => {
@@ -282,30 +266,9 @@
 
     const unitsHalfX = (w / 2) / px, unitsHalfY = (h / 2) / px;
     const unitsRange = Math.max(unitsHalfX, unitsHalfY) * 2;
-
-    // Bước chia chỉ 1 hoặc 5 (…0.1, 0.5, 5, 50, 100…)
-   function niceStep(range) {
-  // range là chiều dài (theo world unit) muốn phủ lên màn hình
-  const rough = range / 10; // nhắm chừng 10 vạch
-
-  // tìm lũy thừa 10 gần nhất
-  const exp = Math.pow(10, Math.floor(Math.log10(rough)));
-  const norm = rough / exp; // [1,10)
-
-  let base;
-  if (norm <= 1) base = 1;
-  else if (norm <= 5) base = 5;
-  else base = 10;
-
-  return base * exp;
-}
-
-
-
     const stepUnit = niceStep(unitsRange);
     const tickPx = stepUnit * px;
 
-    // grid lines
     ctx2d.strokeStyle = App.getCSS('--grid-light'); ctx2d.lineWidth = 1;
     for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
       const x = cx + k * tickPx; ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
@@ -314,12 +277,10 @@
       const y = cy - k * tickPx; ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
     }
 
-    // axes
     ctx2d.strokeStyle = App.getCSS('--axis'); ctx2d.lineWidth = 2;
     ctx2d.beginPath(); ctx2d.moveTo(0, cy); ctx2d.lineTo(w, cy); ctx2d.stroke();
     ctx2d.beginPath(); ctx2d.moveTo(cx, 0); ctx2d.lineTo(cx, h); ctx2d.stroke();
 
-    // labels
     ctx2d.fillStyle = App.getCSS('--fg'); ctx2d.font = '12px sans-serif';
     ctx2d.textAlign = 'center'; ctx2d.textBaseline = 'top';
     for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
@@ -372,7 +333,6 @@
   }
 
   Vec2D.draw2DAllVectors = function () {
-    // auto-fit on first draw of currentVector
     if (App.firstDrawForVector && App.currentVector && (App.currentVector.length >= 2)) {
       const w = canvas2d.width, h = canvas2d.height; const v = App.currentVector;
       const maxComp = Math.max(Math.abs(v[0]), Math.abs(v[1]), 1);
@@ -395,7 +355,6 @@
     } else App.coordOut('—');
   };
 
-  // Public: set new angle state and trigger redraw
   Vec2D.drawAngleArc2D = function (v1, v2, deg) {
     App.currentAngleVisual2D = { a: [v1[0], v1[1]], b: [v2[0], v2[1]], deg: Number(deg) };
     Vec2D.draw2DAllVectors();
