@@ -644,30 +644,20 @@ App.dotProductUI = async function () {
 
 // --- Projection (chiếu trực giao) ---
 App.projectionUI = async function () {
-  if (!App.vectorList.length) { 
-    alert('Chưa có vector nào.'); 
-    return; 
-  }
   const v = App.selectIdToVector(document.getElementById('vProjSelect'));
-  const basis = App.getCheckedVectors(document.getElementById('projBasisChecklist'));
-  if (!v) { 
-    alert('Chọn vector cần chiếu.'); 
-    return; 
-  }
-  if (!basis.length) { 
-    alert('Tick ít nhất 1 vector làm cơ sở chiếu.'); 
-    return; 
-  }
+  const u = App.selectIdToVector(document.getElementById('v2ProjSelect')); // bạn cần 1 select cho u
+  if (!v || !u) { alert("Chọn đủ vector v và u."); return; }
   try {
-    const data = await App.callAPI("projection", { vector: v, basis });
+    const data = await App.callAPI("projection", { v, u });
     const proj = Array.isArray(data?.result) ? data.result : null;
-    document.getElementById("result_proj").innerText = proj 
-      ? App.formatVectorShort(proj) 
+    document.getElementById("result_proj").innerText = proj
+      ? App.formatVectorShort(proj)
       : "Không đọc được kết quả chiếu.";
   } catch (err) {
     document.getElementById("result_proj").innerText = "Lỗi: " + err.message;
   }
 };
+
 
 
   /* ================== RUN CALC (tạo vector) ================== */
