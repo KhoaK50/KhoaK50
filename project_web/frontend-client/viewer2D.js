@@ -7,20 +7,36 @@
   const canvas2d = document.getElementById('canvas2d');
   const ctx2d = canvas2d.getContext('2d', { alpha: false });
 
-  // Public state (for debug)
+  // ----- State -----
   Vec2D.S2D = {
     pxPerUnit: 25,
-    offsetX: 0,
-    offsetY: 0,
-    velocityX: 0,
-    velocityY: 0,
-    lastGesture: null
+    offsetX: 0, offsetY: 0,
+
+    // 1-finger/mouse drag
+    isPanningOne: false,
+    startX: 0, startY: 0,
+    lastX: 0, lastY: 0,
+
+    // velocities (px/ms)
+    velX: 0, velY: 0,
+    lastTime: 0,
+
+    // momentum raf
+    momentumId: null,
+
+    // multi-pointer
+    pointers: new Map(), // id -> {x,y}
+    lastCentroidX: null, lastCentroidY: null,
+    lastDist: null,
+    zoomVel: 0, // per ms in log space
   };
   Vec2D.gridInfo2D = null;
 
   Vec2D.init2D = function () {
     Vec2D.resize2D();
     Vec2D.bind2DEvents();
+    // rất quan trọng cho mobile để trình duyệt không chiếm gesture
+    canvas2d.style.touchAction = 'none';
     App.applyTheme(); // sets bg & redraw via draw2DAllVectors if in 2D
   };
 
@@ -37,142 +53,226 @@
     canvas2d.height = Math.floor(rect.height);
   };
 
-  // === Gesture Handling (Google Maps style) ===
+  // ---------- Helpers for gestures ----------
+  function centroidOfPointers(ptrs) {
+    let sx = 0, sy = 0, n = 0;
+    for (const p of ptrs.values()) { sx += p.x; sy += p.y; n++; }
+    if (!n) return null;
+    return { x: sx / n, y: sy / n };
+    }
+
+  function distanceTwoPointers(ptrs) {
+    if (ptrs.size !== 2) return null;
+    const it = ptrs.values();
+    const a = it.next().value, b = it.next().value;
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+
+  function applyZoomAboutScreenPoint(mx, my, factor) {
+    const w = canvas2d.clientWidth, h = canvas2d.clientHeight;
+    const cx = w / 2 + Vec2D.S2D.offsetX;
+    const cy = h / 2 + Vec2D.S2D.offsetY;
+
+    // world coord under (mx,my) before zoom
+    const wx = (mx - cx) / Vec2D.S2D.pxPerUnit;
+    const wy = (cy - my) / Vec2D.S2D.pxPerUnit;
+
+    Vec2D.S2D.pxPerUnit *= factor;
+    if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12) Vec2D.S2D.pxPerUnit = 1e-12;
+
+    // keep the same world point under finger
+    const cxNew = mx - wx * Vec2D.S2D.pxPerUnit;
+    const cyNew = my + wy * Vec2D.S2D.pxPerUnit;
+    Vec2D.S2D.offsetX = cxNew - w / 2;
+    Vec2D.S2D.offsetY = cyNew - h / 2;
+  }
+
+  // ---------- Events ----------
   Vec2D.bind2DEvents = function () {
-    window.addEventListener('resize', () => {
-      Vec2D.resize2D();
-      if (App.mode === '2D') Vec2D.draw2DAllVectors();
+    window.addEventListener('resize', () => { Vec2D.resize2D(); if (App.mode === '2D') Vec2D.draw2DAllVectors(); });
+
+    // Pointer down
+    canvas2d.addEventListener('pointerdown', e => {
+      // register pointer
+      Vec2D.S2D.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      // cancel momentum when user touches again
+      if (Vec2D.S2D.momentumId) cancelAnimationFrame(Vec2D.S2D.momentumId);
+
+      const n = Vec2D.S2D.pointers.size;
+      Vec2D.S2D.lastTime = performance.now();
+
+      if (n === 1) {
+        // 1-finger or mouse: start pan
+        Vec2D.S2D.isPanningOne = true;
+        Vec2D.S2D.startX = e.clientX - Vec2D.S2D.offsetX;
+        Vec2D.S2D.startY = e.clientY - Vec2D.S2D.offsetY;
+        Vec2D.S2D.lastX = e.clientX;
+        Vec2D.S2D.lastY = e.clientY;
+        canvas2d.setPointerCapture(e.pointerId);
+        canvas2d.style.cursor = 'grabbing';
+      } else if (n === 2) {
+        // two-finger: reset centroid/dist baselines
+        const c = centroidOfPointers(Vec2D.S2D.pointers);
+        Vec2D.S2D.lastCentroidX = c.x;
+        Vec2D.S2D.lastCentroidY = c.y;
+        Vec2D.S2D.lastDist = distanceTwoPointers(Vec2D.S2D.pointers);
+        Vec2D.S2D.isPanningOne = false; // switch to two-finger mode
+      }
+      e.preventDefault();
     });
 
-    let activeTouches = new Map();
-    let lastMid = null;
-    let lastDist = null;
-    let animating = false;
+    // Pointer move
+    canvas2d.addEventListener('pointermove', e => {
+      if (!Vec2D.S2D.pointers.has(e.pointerId)) return;
+      Vec2D.S2D.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-    const updateMomentum = () => {
-      if (!animating) return;
-      Vec2D.S2D.offsetX += Vec2D.S2D.velocityX;
-      Vec2D.S2D.offsetY += Vec2D.S2D.velocityY;
+      const now = performance.now();
+      const dt = (now - Vec2D.S2D.lastTime) || 16;
 
-      Vec2D.S2D.velocityX *= 0.9; // friction
-      Vec2D.S2D.velocityY *= 0.9;
+      const n = Vec2D.S2D.pointers.size;
 
-      if (Math.abs(Vec2D.S2D.velocityX) < 0.05 &&
-          Math.abs(Vec2D.S2D.velocityY) < 0.05) {
-        animating = false;
+      if (n >= 2) {
+        // Combined pan + pinch
+        const c = centroidOfPointers(Vec2D.S2D.pointers);
+        const dist = distanceTwoPointers(Vec2D.S2D.pointers);
+
+        // Pan by centroid delta
+        if (Vec2D.S2D.lastCentroidX != null) {
+          const dx = c.x - Vec2D.S2D.lastCentroidX;
+          const dy = c.y - Vec2D.S2D.lastCentroidY;
+          Vec2D.S2D.offsetX += dx;
+          Vec2D.S2D.offsetY += dy;
+
+          // velocity for momentum (px/ms)
+          Vec2D.S2D.velX = dx / dt;
+          Vec2D.S2D.velY = dy / dt;
+        }
+
+        // Pinch zoom about centroid
+        if (Vec2D.S2D.lastDist) {
+          const rawFactor = dist / Vec2D.S2D.lastDist;
+          const smooth = 0.9; // gentle
+          const factor = Math.pow(rawFactor, smooth);
+          applyZoomAboutScreenPoint(c.x, c.y, factor);
+
+          // zoom velocity in log space
+          Vec2D.S2D.zoomVel = Math.log(factor) / dt;
+        }
+
+        Vec2D.S2D.lastCentroidX = c.x; Vec2D.S2D.lastCentroidY = c.y;
+        Vec2D.S2D.lastDist = dist;
+        Vec2D.S2D.lastTime = now;
+
+        if (App.mode === '2D') Vec2D.draw2DAllVectors();
         return;
       }
 
-      if (App.mode === '2D') Vec2D.draw2DAllVectors();
-      requestAnimationFrame(updateMomentum);
-    };
+      // Single pointer pan (mouse or one finger)
+      if (Vec2D.S2D.isPanningOne && n === 1) {
+        Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
+        Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
 
-    canvas2d.addEventListener('pointerdown', e => {
-      canvas2d.setPointerCapture(e.pointerId);
-      activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      lastMid = null;
-      lastDist = null;
-      Vec2D.S2D.velocityX = 0;
-      Vec2D.S2D.velocityY = 0;
-      animating = false;
-    });
+        Vec2D.S2D.velX = (e.clientX - Vec2D.S2D.lastX) / dt;
+        Vec2D.S2D.velY = (e.clientY - Vec2D.S2D.lastY) / dt;
 
-    canvas2d.addEventListener('pointermove', e => {
-      if (!activeTouches.has(e.pointerId)) return;
-      activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        Vec2D.S2D.lastX = e.clientX;
+        Vec2D.S2D.lastY = e.clientY;
+        Vec2D.S2D.lastTime = now;
 
-      const touches = Array.from(activeTouches.values());
-      if (touches.length === 1) {
-        // Pan with 1 finger
-        const t = touches[0];
-        if (lastMid) {
-          const dx = t.x - lastMid.x;
-          const dy = t.y - lastMid.y;
-          Vec2D.S2D.offsetX += dx;
-          Vec2D.S2D.offsetY += dy;
-          Vec2D.S2D.velocityX = dx;
-          Vec2D.S2D.velocityY = dy;
-          if (App.mode === '2D') Vec2D.draw2DAllVectors();
-        }
-        lastMid = { ...t };
-      } else if (touches.length >= 2) {
-        // Pinch zoom + pan with 2 fingers
-        const mid = {
-          x: (touches[0].x + touches[1].x) / 2,
-          y: (touches[0].y + touches[1].y) / 2
-        };
-        const dx = touches[0].x - touches[1].x;
-        const dy = touches[0].y - touches[1].y;
-        const dist = Math.hypot(dx, dy);
-
-        if (lastMid) {
-          // Pan by midpoint movement
-          const dmx = mid.x - lastMid.x;
-          const dmy = mid.y - lastMid.y;
-          Vec2D.S2D.offsetX += dmx;
-          Vec2D.S2D.offsetY += dmy;
-          Vec2D.S2D.velocityX = dmx;
-          Vec2D.S2D.velocityY = dmy;
-        }
-
-        if (lastDist) {
-          // Zoom by pinch distance
-          const factor = Math.pow(dist / lastDist, 0.9);
-          const rect = canvas2d.getBoundingClientRect();
-          const w = canvas2d.clientWidth, h = canvas2d.clientHeight;
-          const cx = w / 2 + Vec2D.S2D.offsetX;
-          const cy = h / 2 + Vec2D.S2D.offsetY;
-          const wx = (mid.x - cx) / Vec2D.S2D.pxPerUnit;
-          const wy = (cy - mid.y) / Vec2D.S2D.pxPerUnit;
-
-          Vec2D.S2D.pxPerUnit *= factor;
-          if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12)
-            Vec2D.S2D.pxPerUnit = 1e-12;
-
-          const cxNew = mid.x - wx * Vec2D.S2D.pxPerUnit;
-          const cyNew = mid.y + wy * Vec2D.S2D.pxPerUnit;
-          Vec2D.S2D.offsetX = cxNew - w / 2;
-          Vec2D.S2D.offsetY = cyNew - h / 2;
-        }
-
-        lastMid = mid;
-        lastDist = dist;
         if (App.mode === '2D') Vec2D.draw2DAllVectors();
       }
     });
 
-    canvas2d.addEventListener('pointerup', e => {
-      activeTouches.delete(e.pointerId);
-      if (activeTouches.size === 0) {
-        lastMid = null;
-        lastDist = null;
-        if (Math.abs(Vec2D.S2D.velocityX) > 0.1 ||
-            Math.abs(Vec2D.S2D.velocityY) > 0.1) {
-          animating = true;
-          requestAnimationFrame(updateMomentum);
-        }
-      }
-    });
+    // Pointer up / cancel
+    const endPointer = (e) => {
+      if (!Vec2D.S2D.pointers.has(e.pointerId)) return;
+      Vec2D.S2D.pointers.delete(e.pointerId);
 
-    // Mouse wheel zoom
+      const n = Vec2D.S2D.pointers.size;
+
+      if (n === 0) {
+        // no fingers → momentum (both pan & zoom)
+        canvas2d.releasePointerCapture?.(e.pointerId);
+        canvas2d.style.cursor = 'default';
+        Vec2D.S2D.isPanningOne = false;
+        Vec2D.S2D.lastCentroidX = Vec2D.S2D.lastCentroidY = null;
+        Vec2D.S2D.lastDist = null;
+
+        const panSpeed = Math.hypot(Vec2D.S2D.velX, Vec2D.S2D.velY);
+        const hasPanMomentum = panSpeed > 0.01;
+        const hasZoomMomentum = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
+
+        if (hasPanMomentum || hasZoomMomentum) {
+          const decayPan = 0.95;
+          const decayZoom = 0.90;
+
+          const step = () => {
+            // 16ms/frame approx
+            if (hasPanMomentum) {
+              Vec2D.S2D.offsetX += Vec2D.S2D.velX * 16;
+              Vec2D.S2D.offsetY += Vec2D.S2D.velY * 16;
+              Vec2D.S2D.velX *= decayPan;
+              Vec2D.S2D.velY *= decayPan;
+            }
+
+            if (hasZoomMomentum) {
+              const factor = Math.exp(Vec2D.S2D.zoomVel * 16);
+              // zoom về tâm màn hình (ổn định), có thể đổi sang điểm cuối cùng nếu muốn
+              applyZoomAboutScreenPoint(canvas2d.clientWidth / 2, canvas2d.clientHeight / 2, factor);
+              Vec2D.S2D.zoomVel *= decayZoom;
+            }
+
+            if (App.mode === '2D') Vec2D.draw2DAllVectors();
+
+            const stillPan = Math.hypot(Vec2D.S2D.velX, Vec2D.S2D.velY) > 0.01;
+            const stillZoom = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
+            if (stillPan || stillZoom) {
+              Vec2D.S2D.momentumId = requestAnimationFrame(step);
+            }
+          };
+          Vec2D.S2D.momentumId = requestAnimationFrame(step);
+        }
+
+        // reset zoomVel for next gesture
+        Vec2D.S2D.zoomVel = 0;
+      } else if (n === 1) {
+        // if one pointer remains, switch back to one-finger pan baseline
+        const remain = Vec2D.S2D.pointers.values().next().value;
+        Vec2D.S2D.isPanningOne = true;
+        Vec2D.S2D.startX = remain.x - Vec2D.S2D.offsetX;
+        Vec2D.S2D.startY = remain.y - Vec2D.S2D.offsetY;
+        Vec2D.S2D.lastX = remain.x;
+        Vec2D.S2D.lastY = remain.y;
+        Vec2D.S2D.lastTime = performance.now();
+        Vec2D.S2D.lastCentroidX = Vec2D.S2D.lastCentroidY = null;
+        Vec2D.S2D.lastDist = null;
+        Vec2D.S2D.zoomVel = 0;
+      } else {
+        // still >=2 after removing one → recompute baselines
+        const c = centroidOfPointers(Vec2D.S2D.pointers);
+        Vec2D.S2D.lastCentroidX = c.x;
+        Vec2D.S2D.lastCentroidY = c.y;
+        Vec2D.S2D.lastDist = distanceTwoPointers(Vec2D.S2D.pointers);
+        Vec2D.S2D.lastTime = performance.now();
+      }
+    };
+    canvas2d.addEventListener('pointerup', endPointer);
+    canvas2d.addEventListener('pointercancel', endPointer);
+    canvas2d.addEventListener('lostpointercapture', () => { /* ignore */ });
+
+    // Wheel zoom (desktop)
     canvas2d.addEventListener('wheel', e => {
       const rect = canvas2d.getBoundingClientRect();
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-      const w = canvas2d.clientWidth, h = canvas2d.clientHeight;
-      const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY;
-      const wx = (mx - cx) / Vec2D.S2D.pxPerUnit, wy = (cy - my) / Vec2D.S2D.pxPerUnit;
       const factor = (e.deltaY < 0) ? 1.18 : (1 / 1.18);
-      Vec2D.S2D.pxPerUnit *= factor;
-      if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12)
-        Vec2D.S2D.pxPerUnit = 1e-12;
-      const cxNew = mx - wx * Vec2D.S2D.pxPerUnit, cyNew = my + wy * Vec2D.S2D.pxPerUnit;
-      Vec2D.S2D.offsetX = cxNew - w / 2;
-      Vec2D.S2D.offsetY = cyNew - h / 2;
+      applyZoomAboutScreenPoint(mx, my, factor);
       if (App.mode === '2D') Vec2D.draw2DAllVectors();
       e.preventDefault();
     }, { passive: false });
   };
 
+  // ---------- Rendering ----------
   Vec2D.render2DGrid = function () {
     const w = canvas2d.width, h = canvas2d.height;
     const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY, px = Vec2D.S2D.pxPerUnit;
@@ -248,6 +348,7 @@
   }
 
   Vec2D.draw2DAllVectors = function () {
+    // auto-fit on first draw of currentVector
     if (App.firstDrawForVector && App.currentVector && (App.currentVector.length >= 2)) {
       const w = canvas2d.width, h = canvas2d.height; const v = App.currentVector;
       const maxComp = Math.max(Math.abs(v[0]), Math.abs(v[1]), 1);
@@ -270,6 +371,7 @@
     } else App.coordOut('—');
   };
 
+  // Public: set new angle state and trigger redraw
   Vec2D.drawAngleArc2D = function (v1, v2, deg) {
     App.currentAngleVisual2D = { a: [v1[0], v1[1]], b: [v2[0], v2[1]], deg: Number(deg) };
     Vec2D.draw2DAllVectors();
