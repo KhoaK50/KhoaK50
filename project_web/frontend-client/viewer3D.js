@@ -1,5 +1,4 @@
-// ===================== 3d.js =====================
-// Three.js layer: Z-up camera, grid/axes, dashed projections, big labels, angle sector overlay.
+// ===================== viewer3D.js =====================
 
 (function () {
   window.Vec3D = window.Vec3D || {};
@@ -9,6 +8,9 @@
 
   // Public fields (useful if you need to debug from console)
   Vec3D._scene = null; Vec3D._camera = null; Vec3D._renderer = null; Vec3D._controls = null;
+  Vec3D._axisMax = 50;          // lưu phạm vi ±trục hiện tại
+  Vec3D._lastLabelKey = "";     // cache để khỏi dựng lại nhãn khi không cần
+
   Vec3D._animating = false;
   Vec3D._hover3D = false; Vec3D._pressed = new Set(); Vec3D._kbAnimId = null;
 
@@ -20,7 +22,11 @@
   Vec3D.AXIS_TICK_PX = 26;
   Vec3D.AXIS_LETTER_PX = 30;
   Vec3D.TIP_PX = 22;
-  Vec3D.TEXTURE_RATIO = 4;
+  Vec3D.TEXTURE_RATIO = 2;
+  // Hiển thị số trên trục?
+Vec3D.SHOW_TICK_NUMBERS = true;         // false = ẩn (sạch như site tham chiếu)
+Vec3D.SHOW_NUMBERS_WHEN_RANGE_LT = 120;   // nếu bật, chỉ hiện khi zoom đủ gần (range < 40)
+
 
   Vec3D.init3D = function () {
     const rect = threeLayer.getBoundingClientRect();
@@ -37,6 +43,11 @@
     Vec3D._camera.up.set(0, 0, 1); // Z-up
 
     Vec3D._controls = new THREE.OrbitControls(Vec3D._camera, Vec3D._renderer.domElement);
+    // Mỗi khi camera/target đổi (zoom/pan/rotate), cập nhật step & nhãn trục
+    Vec3D._controls.addEventListener('change', () => {
+      if (App.mode === '3D') Vec3D.addAxisLabelsDynamic(Vec3D._axisMax || 50);
+    });
+
     Vec3D._controls.enableDamping = true; Vec3D._controls.dampingFactor = 0.07;
     Vec3D._controls.rotateSpeed = 0.6; Vec3D._controls.enablePan = true;
     Vec3D._controls.minDistance = 0.5; Vec3D._controls.maxDistance = 1e12;
@@ -76,7 +87,7 @@
     const stepLoop = () => {
       if (App.mode === '3D' && Vec3D._pressed.size && Vec3D._camera && Vec3D._controls) {
         const base = Vec3D._camera.position.distanceTo(Vec3D._controls.target);
-        const speed = (Vec3D._pressed.has('shift') ? 0.02 : 0.01) * base;
+        const speed = (Vec3D._pressed.has('shift') ? 0.004 : 0.002) * base;
 
         const forward = new THREE.Vector3(); Vec3D._camera.getWorldDirection(forward);
         const up = new THREE.Vector3(0, 0, 1);
@@ -127,8 +138,20 @@
       ctx.arcTo(w, 0, w, h, r); ctx.arcTo(w, h, 0, h, r); ctx.arcTo(0, h, 0, 0, r); ctx.arcTo(0, 0, w, 0, r);
       ctx.closePath(); ctx.fill();
     }
-    ctx.strokeStyle = 'rgba(0,0,0,0.9)'; ctx.lineWidth = 3.4; ctx.strokeText(text, pad, pad);
-    ctx.fillStyle = color; ctx.fillText(text, pad, pad);
+    // viền & shadow nhẹ hơn khi có nền để chữ đỡ “bết”
+const hasBg = !!bg && bg !== 'none';
+ctx.shadowColor = 'rgba(0,0,0,' + (hasBg ? 0.20 : 0.35) + ')';
+ctx.shadowBlur  = hasBg ? 1 : 2;
+
+ctx.strokeStyle = 'rgba(0,0,0,' + (hasBg ? 0.35 : 0.75) + ')';
+ctx.lineWidth   = hasBg ? 0.8 : 1.1;
+
+ctx.strokeText(text, pad, pad);
+ctx.shadowBlur = 0;
+ctx.fillStyle = color;
+ctx.fillText(text, pad, pad);
+
+
     const tex = new THREE.Texture(c); tex.needsUpdate = true;
     const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: depthTest, depthWrite: false });
     const sp = new THREE.Sprite(mat);
@@ -183,63 +206,121 @@
   };
 
   Vec3D.addAxisLabelsDynamic = function (axisMax) {
-    Vec3D.clear3DLabels();
-    const dist = Vec3D._camera.position.distanceTo(Vec3D._controls.target);
-    const worldH = 2 * Math.tan((Vec3D._camera.fov * Math.PI / 180) / 2) * dist;
-    const visibleRange = Math.max(worldH, axisMax * 0.6);
-    const step = App.niceStep(visibleRange);
-    const tickStep = Math.max(step / 2, axisMax / 2000);
+    // helper cục bộ: chọn step 1–2–5
+const niceStep = (raw) => {
+  raw = Math.max(1e-12, Math.abs(raw));
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const s = raw / p;                       // 1..10
+  const m = (s <= 1) ? 1 : (s <= 2) ? 2 : (s <= 5) ? 5 : 10;
+  return m * p;
+};
 
-    const ticks = [];
-    for (let t = -axisMax; t <= axisMax + 1e-9; t += tickStep) {
-      ticks.push(Number((Math.round(t * 1e6) / 1e6).toFixed(6)));
-    }
-    const labelEvery = Math.max(1, Math.round((visibleRange / tickStep) / 12));
-    const fg = App.getCSS('--label-fg'), bg = App.getCSS('--label-bg');
+// helper cục bộ: format tick theo step (bỏ đuôi .0, .00…)
+const formatTick = (v, step) => {
+  const abs = Math.abs(v);
+  if (abs >= 1e12 || abs < 1e-12) return v.toExponential(0).replace('+','');
+  const dec = Math.max(0, Math.min(10, -Math.floor(Math.log10(step))));
+  let s = (Math.round(v / step) * step).toFixed(dec);
+  if (s.includes('.')) s = s.replace(/\.?0+$/, '');
+  return s;
+};
 
-    const emit = (x, y, z, val) => {
-      const sp = Vec3D.makeTextSprite((val === 0 ? '0' : (Math.abs(val) >= 1e6 || Math.abs(val) < 1e-6) ? val.toExponential(0).replace('+', '') : Number(val.toFixed(6)).toString()),
-        fg, Vec3D.AXIS_TICK_PX, bg, true);
-      sp.position.set(x, y, z);
-      const d = Vec3D._camera.position.distanceTo(sp.position);
-      const s = Vec3D.labelWorldScaleForPixels(d) * Vec3D.AXIS_TICK_PX;
-      sp.scale.set(s, s * 0.56, 1);
-      Vec3D._scene.add(sp); Vec3D._labelSprites.push(sp);
-    };
+  if (!Vec3D._camera || !Vec3D._renderer) return;
+  Vec3D._axisMax = axisMax;
 
-    for (let i = 0; i < ticks.length; i++) {
-      if (i % labelEvery !== 0) continue;
-      const t = ticks[i]; if (Math.abs(t) <= 1e-12) continue;
-      emit(t, 0, 0, t); emit(0, t, 0, t); emit(0, 0, t, t);
-    }
+  // 1) world-units / pixel tại target
+  const dist = Vec3D._camera.position.distanceTo(Vec3D._controls?.target || new THREE.Vector3());
+  const vFOV = Vec3D._camera.fov * Math.PI / 180;
+  const screenH = Math.max(1, Vec3D._renderer.domElement.clientHeight);
+  const worldH = 2 * Math.tan(vFOV / 2) * dist;
+  const worldPerPx = worldH / screenH;
 
-    if (Vec3D._axisTicks) Vec3D._scene.remove(Vec3D._axisTicks);
-    const pos = [], add = (axis, t) => {
-      if (Math.abs(t) <= 1e-12) return;
-      const len = Math.max(axisMax * 0.02, 0.25);
-      if (axis === 'x') pos.push(t, -len, 0, t, len, 0);
-      else if (axis === 'y') pos.push(-len, t, 0, len, t, 0);
-      else pos.push(-len, 0, t, len, 0, t);
-    };
-    for (const t of ticks) { add('x', t); add('y', t); add('z', t); }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    Vec3D._axisTicks = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: new THREE.Color(App.getCSS('--grid-light')) }));
-    Vec3D._scene.add(Vec3D._axisTicks);
+  // 2) spacing mục tiêu theo pixel (đặt thưa ra chút)
+  const targetPx = 100; // 80→100 để đỡ dày
+  const rawStep = targetPx * worldPerPx;
+  const step = niceStep(rawStep);
 
-    const letterOff = axisMax * 1.12;
-    const addL = (txt, vec) => {
-      const sp = Vec3D.makeTextSprite(txt, fg, Vec3D.AXIS_LETTER_PX, bg, true);
-      sp.position.copy(vec);
-      const d = Vec3D._camera.position.distanceTo(sp.position);
-      const s = Vec3D.labelWorldScaleForPixels(d) * Vec3D.AXIS_LETTER_PX;
-      sp.scale.set(s, s * 0.58, 1);
-      Vec3D._scene.add(sp); Vec3D._labelSprites.push(sp);
-    };
-    addL('X', new THREE.Vector3(letterOff, 0, 0));
-    addL('Y', new THREE.Vector3(0, letterOff, 0));
-    addL('Z', new THREE.Vector3(0, 0, letterOff));
+
+  // 3) Tạo dãy tick theo đúng bội k*step (không bị lẻ)
+const kMin = Math.ceil(-axisMax / step);
+const kMax = Math.floor(axisMax / step);
+const ticks = [];
+for (let k = kMin; k <= kMax; k++) ticks.push(+((k * step).toFixed(12)));
+
+
+  // 4) Chỉ gắn nhãn ~12 cái / trục
+  const MAX_LABELS_PER_AXIS = 12;
+  const labelEvery = Math.max(1, Math.ceil(ticks.length / MAX_LABELS_PER_AXIS));
+
+  // Cache key (đổi khi step/labelEvery/theme thay đổi)
+  const key = `${axisMax}|${step.toFixed(10)}|${labelEvery}|${App.theme}`;
+  if (Vec3D._lastLabelKey === key) return;
+  Vec3D._lastLabelKey = key;
+
+  // 5) Xoá nhãn & tick cũ
+  Vec3D.clear3DLabels();
+  if (Vec3D._axisTicks) {
+    Vec3D._scene.remove(Vec3D._axisTicks);
+    Vec3D._axisTicks.geometry?.dispose?.();
+    Vec3D._axisTicks.material?.dispose?.();
+    Vec3D._axisTicks = null;
+  }
+
+  // 6) Vẽ CHỈ “major ticks” (mỗi labelEvery tick mới vẽ) để nhẹ
+  const majors = ticks.filter((_, i) => i % labelEvery === 0);
+  const gridCol = new THREE.Color(App.getCSS('--grid-light'));
+  const tickLen = Math.max(axisMax * 0.02, 0.25);
+  const pos = [];
+  const addMajor = (axis, t) => {
+    if (axis === 'x') { pos.push(t, -tickLen, 0,  t, tickLen, 0); }
+    else if (axis === 'y') { pos.push(-tickLen, t, 0,  tickLen, t, 0); }
+    else { pos.push(-tickLen, 0, t,  tickLen, 0, t); }
   };
+  for (const t of majors) { addMajor('x', t); addMajor('y', t); addMajor('z', t); }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  Vec3D._axisTicks = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: gridCol.getHex() }));
+  Vec3D._scene.add(Vec3D._axisTicks);
+
+  // 7) Gắn nhãn cho majors, màu theo trục – scale theo pixel
+  const colX = App.getCSS('--axis-x');
+  const colY = App.getCSS('--axis-y');
+  const colZ = App.getCSS('--axis-z');
+  const bg = App.getCSS('--label-bg');
+
+  const putLabel = (axis, val, x, y, z) => {
+    const txt = formatTick(val, step);
+
+    const color = axis === 'x' ? colX : (axis === 'y' ? colY : colZ);
+    const sp = Vec3D.makeTextSprite(txt, color, 22, bg, /*depthTest=*/false);
+    sp.position.set(x, y, z);
+    const s = (worldH / screenH) * 22; // 22 px
+    sp.scale.set(s, s * 0.56, 1);
+    Vec3D._scene.add(sp);
+    Vec3D._labelSprites.push(sp);
+  };
+
+  for (const t of majors) {
+    if (Math.abs(t) <= 1e-12) continue; // tránh dán 0 trùng vào tâm
+    putLabel('x', t, t, 0, 0);
+    putLabel('y', t, 0, t, 0);
+    putLabel('z', t, 0, 0, t);
+  }
+
+  // 8) Ký tự X/Y/Z ở đầu trục
+  const letterOff = axisMax * 1.12;
+  const addLetter = (txt, axis, vec) => {
+    const color = axis === 'x' ? colX : (axis === 'y' ? colY : colZ);
+    const sp = Vec3D.makeTextSprite(txt, color, 28, bg, false);
+    sp.position.copy(vec);
+    const s = (worldH / screenH) * 28;
+    sp.scale.set(s, s * 0.58, 1);
+    Vec3D._scene.add(sp); Vec3D._labelSprites.push(sp);
+  };
+  addLetter('X', 'x', new THREE.Vector3(letterOff, 0, 0));
+  addLetter('Y', 'y', new THREE.Vector3(0, letterOff, 0));
+  addLetter('Z', 'z', new THREE.Vector3(0, 0, letterOff));
+};
 
   // ====== Projection cubes & vector bodies ======
   Vec3D.buildProjectionGroupZUp = function (vec3, colorCSS = '#444') {
@@ -264,7 +345,21 @@
   };
 
   Vec3D.buildTipLabel = function (vec3, fg, bg) {
-    const sp = Vec3D.makeTextSprite(App.formatTip(vec3), fg, Vec3D.TIP_PX, bg, false);
+    // nền theo theme: dark -> đen nhạt; light -> trắng mờ
+const tipBG = (String(App.theme||'').toLowerCase().includes('dark'))
+  ? 'rgba(0,0,0,0.25)'
+  : 'rgba(255,255,255,0.85)';
+
+const sp = Vec3D.makeTextSprite(
+  App.formatTip(vec3),
+  App.getCSS('--label-fg'),
+  Vec3D.TIP_PX,
+  tipBG,
+  false
+);
+sp.material.opacity = 0.95; // tổng thể nhẹ hơn một chút
+
+
     sp.renderOrder = 999;
     sp.position.set(vec3[0], vec3[1], vec3[2]);
     const d = Vec3D._camera.position.distanceTo(sp.position);

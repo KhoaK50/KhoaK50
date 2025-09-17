@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <title>Vector Visualizer — Z-up, Projections, Big 3D Labels</title>
+  <title>Vector Visualizer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 
@@ -12,11 +12,16 @@
 </head>
 
 <body>
-  <h2>Vector Visualizer — Z-up, Projections, Big 3D Labels</h2>
-
+  <h2>Vector Visualizer</h2>
   <div id="app">
-    <div id="controls">
+    <!-- Hamburger menu (chỉ hiện trên mobile) -->
+    <div id="hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
 
+    <div id="controls">
       <!-- Nhập vector + mini keypad -->
       <div class="card">
         <label>Nhập vector: chấp nhận <code>[1,2]</code>, <code>[1/2, sqrt(2)]</code>, <code>[3*sqrt(5)/7, -1/2]</code></label>
@@ -24,7 +29,6 @@
         <div class="mini-keys">
           <button class="kbtn" id="btnInsertSlash">/</button>
           <button class="kbtn" id="btnInsertSqrt">√</button>
-          
         </div>
         <div class="row" style="margin-top:8px">
           <button id="btnDraw" class="btn primary">Thêm vector</button>
@@ -35,17 +39,15 @@
 
       <!-- Danh sách vector -->
       <div class="card">
-  <div style="display:flex; align-items:center; justify-content:space-between;">
-    <label>Danh sách vector</label>
-    <div class="mini-keys">
-      <button class="kbtn" id="btnListSlash">/</button>
-      <button class="kbtn" id="btnListSqrt">√</button>
-    </div>
-  </div>
-  <ul id="vectorList"></ul>
-</div>
-
-
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <label>Danh sách vector</label>
+          <div class="mini-keys">
+            <button class="kbtn" id="btnListSlash">/</button>
+            <button class="kbtn" id="btnListSqrt">√</button>
+          </div>
+        </div>
+        <ul id="vectorList"></ul>
+      </div>
 
       <!-- Phép tính tạo vector -->
       <div class="card">
@@ -181,8 +183,6 @@
               <pre id="result_rank">—</pre>
             </div>
           </div>
-
-          
         </details>
       </div>
 
@@ -195,8 +195,6 @@
         <label>Console logs</label>
         <pre id="logOut">—</pre>
       </div>
-
-      
     </div>
 
     <div id="viewerWrap">
@@ -208,6 +206,7 @@
       </div>
       <div id="themeBadge" class="pill">Theme: Light</div>
       <div id="modeBadge" class="pill">Mode: 2D</div>
+      
       <div id="viewer">
         <canvas id="canvas2d"></canvas>
         <div id="threeLayer" tabindex="0" aria-label="3D viewer (keyboard enabled)"></div>
@@ -220,7 +219,5 @@
   <script src="viewer2D.js"></script>
   <script src="viewer3D.js"></script>
   <script src="api.js"></script>
-
-
 </body>
 </html>

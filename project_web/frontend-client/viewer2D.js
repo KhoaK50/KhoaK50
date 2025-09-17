@@ -1,5 +1,4 @@
-// ===================== 2d.js =====================
-// 2D canvas layer (grid, axes, vector arrows, angle overlay)
+// ===================== viewer2D.js =====================
 
 (function () {
   window.Vec2D = window.Vec2D || {};
@@ -33,20 +32,26 @@
 
   Vec2D.bind2DEvents = function () {
     window.addEventListener('resize', () => { Vec2D.resize2D(); if (App.mode === '2D') Vec2D.draw2DAllVectors(); });
-    canvas2d.addEventListener('mousedown', e => {
-      Vec2D.S2D.panning = true;
-      Vec2D.S2D.startX = e.clientX - Vec2D.S2D.offsetX;
-      Vec2D.S2D.startY = e.clientY - Vec2D.S2D.offsetY;
-      canvas2d.style.cursor = 'grabbing';
-      e.preventDefault();
-    });
-    window.addEventListener('mouseup', () => { Vec2D.S2D.panning = false; canvas2d.style.cursor = 'default'; });
-    window.addEventListener('mousemove', e => {
-      if (!Vec2D.S2D.panning) return;
-      Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
-      Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
-      if (App.mode === '2D') Vec2D.draw2DAllVectors();
-    });
+    canvas2d.addEventListener('pointerdown', e => {
+  Vec2D.S2D.panning = true;
+  Vec2D.S2D.startX = e.clientX - Vec2D.S2D.offsetX;
+  Vec2D.S2D.startY = e.clientY - Vec2D.S2D.offsetY;
+  canvas2d.setPointerCapture(e.pointerId);
+  canvas2d.style.cursor = 'grabbing';
+  e.preventDefault();
+});
+canvas2d.addEventListener('pointermove', e => {
+  if (!Vec2D.S2D.panning) return;
+  Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
+  Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
+  if (App.mode === '2D') Vec2D.draw2DAllVectors();
+});
+canvas2d.addEventListener('pointerup', e => {
+  Vec2D.S2D.panning = false;
+  canvas2d.releasePointerCapture(e.pointerId);
+  canvas2d.style.cursor = 'default';
+});
+
     canvas2d.addEventListener('wheel', e => {
       const rect = canvas2d.getBoundingClientRect();
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
@@ -61,6 +66,29 @@
       if (App.mode === '2D') Vec2D.draw2DAllVectors();
       e.preventDefault();
     }, { passive: false });
+    
+    // === Zoom bằng pinch (2 ngón trên mobile) ===
+  let lastDist = null;
+  canvas2d.addEventListener('touchmove', e => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      if (lastDist) {
+        // thêm hệ số mượt để tránh zoom gắt quá
+const smooth = 0.9; 
+const factor = Math.pow(dist / lastDist, smooth);
+
+        Vec2D.S2D.pxPerUnit *= factor;
+        if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12)
+          Vec2D.S2D.pxPerUnit = 1e-12;
+        if (App.mode === '2D') Vec2D.draw2DAllVectors();
+      }
+      lastDist = dist;
+    }
+  }, { passive: false });
+  canvas2d.addEventListener('touchend', () => { lastDist = null; });
   };
 
   Vec2D.render2DGrid = function () {

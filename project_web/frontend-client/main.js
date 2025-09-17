@@ -948,6 +948,15 @@
 
     // default visible form
     App.showExtraForm(document.getElementById('opExtraSelect').value);
+    // Hamburger toggle cho mobile
+const burger = document.getElementById('hamburger');
+const controls = document.getElementById('controls');
+if (burger && controls) {
+  burger.addEventListener('click', () => {
+    controls.classList.toggle('open');
+  });
+}
+
   };
 
   // Wait DOM, then init (Vec2D/Vec3D are loaded before main.js per recommended order)
