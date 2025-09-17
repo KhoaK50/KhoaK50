@@ -25,25 +25,24 @@
     momentumId: null,
 
     // multi-pointer
-    pointers: new Map(), // id -> {x,y}
+    pointers: new Map(),
     lastCentroidX: null, lastCentroidY: null,
     lastDist: null,
-
-    // smoothing accumulators
-    filtDx: 0, filtDy: 0, filtLogZoom: 0,
-
-    // zoom momentum
-    zoomVel: 0, // per ms (log-space)
-    zoomCx: null, zoomCy: null, // last zoom center (screen px)
+    zoomVel: 0,
   };
   Vec2D.gridInfo2D = null;
+
+  // clamp zoom scale
+  function clampZoom(v) {
+    if (!isFinite(v)) return 1;
+    return Math.max(1e-12, Math.min(1e12, v));
+  }
 
   Vec2D.init2D = function () {
     Vec2D.resize2D();
     Vec2D.bind2DEvents();
-    // rất quan trọng cho mobile để trình duyệt không chiếm gesture
     canvas2d.style.touchAction = 'none';
-    App.applyTheme(); // sets bg & redraw via draw2DAllVectors if in 2D
+    App.applyTheme();
   };
 
   Vec2D.show2D = function () {
@@ -60,11 +59,6 @@
   };
 
   // ---------- Helpers ----------
-  function clampZoom(v) {
-    if (!isFinite(v)) return 1;
-    return Math.max(1e-12, Math.min(1e12, v));
-  }
-
   function centroidOfPointers(ptrs) {
     let sx = 0, sy = 0, n = 0;
     for (const p of ptrs.values()) { sx += p.x; sy += p.y; n++; }
@@ -84,13 +78,11 @@
     const cx = w / 2 + Vec2D.S2D.offsetX;
     const cy = h / 2 + Vec2D.S2D.offsetY;
 
-    // world coord under (mx,my) before zoom
     const wx = (mx - cx) / Vec2D.S2D.pxPerUnit;
     const wy = (cy - my) / Vec2D.S2D.pxPerUnit;
 
     Vec2D.S2D.pxPerUnit = clampZoom(Vec2D.S2D.pxPerUnit * factor);
 
-    // keep the same world point under finger
     const cxNew = mx - wx * Vec2D.S2D.pxPerUnit;
     const cyNew = my + wy * Vec2D.S2D.pxPerUnit;
     Vec2D.S2D.offsetX = cxNew - w / 2;
@@ -108,36 +100,25 @@
     canvas2d.addEventListener('pointerdown', e => {
       Vec2D.S2D.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-      // bắt pointer để không bị "rơi" event khi kéo nhanh
-      try { canvas2d.setPointerCapture(e.pointerId); } catch {}
-
-      // cancel momentum when user touches again
       if (Vec2D.S2D.momentumId) cancelAnimationFrame(Vec2D.S2D.momentumId);
 
       const n = Vec2D.S2D.pointers.size;
       Vec2D.S2D.lastTime = performance.now();
 
       if (n === 1) {
-        // 1-finger or mouse: start pan
         Vec2D.S2D.isPanningOne = true;
         Vec2D.S2D.startX = e.clientX - Vec2D.S2D.offsetX;
         Vec2D.S2D.startY = e.clientY - Vec2D.S2D.offsetY;
         Vec2D.S2D.lastX = e.clientX;
         Vec2D.S2D.lastY = e.clientY;
-        Vec2D.S2D.velX = Vec2D.S2D.velY = 0;
-        // reset filters
-        Vec2D.S2D.filtDx = Vec2D.S2D.filtDy = 0;
+        canvas2d.setPointerCapture(e.pointerId);
         canvas2d.style.cursor = 'grabbing';
       } else if (n === 2) {
-        // two-finger: reset centroid/dist baselines
         const c = centroidOfPointers(Vec2D.S2D.pointers);
         Vec2D.S2D.lastCentroidX = c.x;
         Vec2D.S2D.lastCentroidY = c.y;
         Vec2D.S2D.lastDist = distanceTwoPointers(Vec2D.S2D.pointers);
-        Vec2D.S2D.zoomCx = c.x; Vec2D.S2D.zoomCy = c.y;
-        Vec2D.S2D.isPanningOne = false; // switch to two-finger mode
-        // reset filters
-        Vec2D.S2D.filtDx = Vec2D.S2D.filtDy = Vec2D.S2D.filtLogZoom = 0;
+        Vec2D.S2D.isPanningOne = false;
       }
       e.preventDefault();
     });
@@ -148,47 +129,29 @@
       Vec2D.S2D.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
       const now = performance.now();
-      let dt = now - Vec2D.S2D.lastTime;
-      if (!isFinite(dt) || dt <= 0) dt = 16;
+      const dt = (now - Vec2D.S2D.lastTime) || 16;
 
       const n = Vec2D.S2D.pointers.size;
 
-      // Smoothing factors (EMA)
-      const ALPHA_PAN = 0.35;
-      const ALPHA_ZOOM = 0.4;
-
       if (n >= 2) {
-        // Combined pan + pinch
         const c = centroidOfPointers(Vec2D.S2D.pointers);
         const dist = distanceTwoPointers(Vec2D.S2D.pointers);
 
-        // Pan by centroid delta (EMA để giảm giật)
         if (Vec2D.S2D.lastCentroidX != null) {
-          let dx = c.x - Vec2D.S2D.lastCentroidX;
-          let dy = c.y - Vec2D.S2D.lastCentroidY;
-          Vec2D.S2D.filtDx = Vec2D.S2D.filtDx * (1 - ALPHA_PAN) + dx * ALPHA_PAN;
-          Vec2D.S2D.filtDy = Vec2D.S2D.filtDy * (1 - ALPHA_PAN) + dy * ALPHA_PAN;
-
-          Vec2D.S2D.offsetX += Vec2D.S2D.filtDx;
-          Vec2D.S2D.offsetY += Vec2D.S2D.filtDy;
-
-          // velocity for momentum (px/ms)
-          Vec2D.S2D.velX = Vec2D.S2D.filtDx / dt;
-          Vec2D.S2D.velY = Vec2D.S2D.filtDy / dt;
+          const dx = c.x - Vec2D.S2D.lastCentroidX;
+          const dy = c.y - Vec2D.S2D.lastCentroidY;
+          Vec2D.S2D.offsetX += dx;
+          Vec2D.S2D.offsetY += dy;
+          Vec2D.S2D.velX = dx / dt;
+          Vec2D.S2D.velY = dy / dt;
         }
 
-        // Pinch zoom about centroid (EMA trên log-factor)
         if (Vec2D.S2D.lastDist) {
           const rawFactor = dist / Vec2D.S2D.lastDist;
-          const logF = Math.log(Math.max(1e-6, rawFactor));
-          Vec2D.S2D.filtLogZoom = Vec2D.S2D.filtLogZoom * (1 - ALPHA_ZOOM) + logF * ALPHA_ZOOM;
-
-          const factor = Math.exp(Vec2D.S2D.filtLogZoom);
+          const smooth = 0.9;
+          const factor = Math.pow(rawFactor, smooth);
           applyZoomAboutScreenPoint(c.x, c.y, factor);
-
-          // zoom velocity in log space
-          Vec2D.S2D.zoomVel = Vec2D.S2D.filtLogZoom / dt;
-          Vec2D.S2D.zoomCx = c.x; Vec2D.S2D.zoomCy = c.y;
+          Vec2D.S2D.zoomVel = Math.log(factor) / dt;
         }
 
         Vec2D.S2D.lastCentroidX = c.x; Vec2D.S2D.lastCentroidY = c.y;
@@ -199,17 +162,9 @@
         return;
       }
 
-      // Single pointer pan (mouse hoặc 1 ngón)
       if (Vec2D.S2D.isPanningOne && n === 1) {
-        const dx = (e.clientX - Vec2D.S2D.startX) - Vec2D.S2D.offsetX;
-        const dy = (e.clientY - Vec2D.S2D.startY) - Vec2D.S2D.offsetY;
-
-        // EMA để tránh "khấc"
-        Vec2D.S2D.filtDx = Vec2D.S2D.filtDx * (1 - ALPHA_PAN) + dx * ALPHA_PAN;
-        Vec2D.S2D.filtDy = Vec2D.S2D.filtDy * (1 - ALPHA_PAN) + dy * ALPHA_PAN;
-
-        Vec2D.S2D.offsetX += Vec2D.S2D.filtDx;
-        Vec2D.S2D.offsetY += Vec2D.S2D.filtDy;
+        Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
+        Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
 
         Vec2D.S2D.velX = (e.clientX - Vec2D.S2D.lastX) / dt;
         Vec2D.S2D.velY = (e.clientY - Vec2D.S2D.lastY) / dt;
@@ -230,46 +185,38 @@
       const n = Vec2D.S2D.pointers.size;
 
       if (n === 0) {
-        try { canvas2d.releasePointerCapture(e.pointerId); } catch {}
+        canvas2d.releasePointerCapture?.(e.pointerId);
         canvas2d.style.cursor = 'default';
         Vec2D.S2D.isPanningOne = false;
         Vec2D.S2D.lastCentroidX = Vec2D.S2D.lastCentroidY = null;
         Vec2D.S2D.lastDist = null;
 
-        // thresholds
         const panSpeed = Math.hypot(Vec2D.S2D.velX, Vec2D.S2D.velY);
-        const hasPanMomentum = panSpeed > 0.02;       // nhạy ít hơn
-        const hasZoomMomentum = Math.abs(Vec2D.S2D.zoomVel) > 2e-4;
+        const hasPanMomentum = panSpeed > 0.01;
+        const hasZoomMomentum = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
 
         if (hasPanMomentum || hasZoomMomentum) {
-          let prev = performance.now();
-          const decayPan = 0.88;
-          const decayZoom = 0.85;
+          const decayPan = 0.85;
+          const decayZoom = 0.80;
 
           const step = () => {
-            const now = performance.now();
-            let dt = now - prev; prev = now;
-            if (!isFinite(dt) || dt <= 0) dt = 16;
-
             if (hasPanMomentum) {
-              Vec2D.S2D.offsetX += Vec2D.S2D.velX * dt;
-              Vec2D.S2D.offsetY += Vec2D.S2D.velY * dt;
+              Vec2D.S2D.offsetX += Vec2D.S2D.velX * 16;
+              Vec2D.S2D.offsetY += Vec2D.S2D.velY * 16;
               Vec2D.S2D.velX *= decayPan;
               Vec2D.S2D.velY *= decayPan;
             }
 
             if (hasZoomMomentum) {
-              const factor = Math.exp(Vec2D.S2D.zoomVel * dt);
-              const zx = Vec2D.S2D.zoomCx ?? (canvas2d.clientWidth / 2);
-              const zy = Vec2D.S2D.zoomCy ?? (canvas2d.clientHeight / 2);
-              applyZoomAboutScreenPoint(zx, zy, factor);
+              const factor = Math.exp(Vec2D.S2D.zoomVel * 16);
+              applyZoomAboutScreenPoint(canvas2d.clientWidth / 2, canvas2d.clientHeight / 2, factor);
               Vec2D.S2D.zoomVel *= decayZoom;
             }
 
             if (App.mode === '2D') Vec2D.draw2DAllVectors();
 
-            const stillPan = Math.hypot(Vec2D.S2D.velX, Vec2D.S2D.velY) > 0.02;
-            const stillZoom = Math.abs(Vec2D.S2D.zoomVel) > 2e-4;
+            const stillPan = Math.hypot(Vec2D.S2D.velX, Vec2D.S2D.velY) > 0.01;
+            const stillZoom = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
             if (stillPan || stillZoom) {
               Vec2D.S2D.momentumId = requestAnimationFrame(step);
             }
@@ -278,9 +225,7 @@
         }
 
         Vec2D.S2D.zoomVel = 0;
-        Vec2D.S2D.zoomCx = Vec2D.S2D.zoomCy = null;
       } else if (n === 1) {
-        // if one pointer remains, switch back to one-finger pan baseline
         const remain = Vec2D.S2D.pointers.values().next().value;
         Vec2D.S2D.isPanningOne = true;
         Vec2D.S2D.startX = remain.x - Vec2D.S2D.offsetX;
@@ -291,9 +236,7 @@
         Vec2D.S2D.lastCentroidX = Vec2D.S2D.lastCentroidY = null;
         Vec2D.S2D.lastDist = null;
         Vec2D.S2D.zoomVel = 0;
-        Vec2D.S2D.filtDx = Vec2D.S2D.filtDy = 0;
       } else {
-        // still >=2 after removing one → recompute baselines
         const c = centroidOfPointers(Vec2D.S2D.pointers);
         Vec2D.S2D.lastCentroidX = c.x;
         Vec2D.S2D.lastCentroidY = c.y;
@@ -303,7 +246,7 @@
     };
     canvas2d.addEventListener('pointerup', endPointer);
     canvas2d.addEventListener('pointercancel', endPointer);
-    canvas2d.addEventListener('lostpointercapture', () => { /* ignore */ });
+    canvas2d.addEventListener('lostpointercapture', () => {});
 
     // Wheel zoom (desktop)
     canvas2d.addEventListener('wheel', e => {
@@ -319,21 +262,38 @@
   // ---------- Rendering ----------
   Vec2D.render2DGrid = function () {
     const w = canvas2d.width, h = canvas2d.height;
-    const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY, px = Vec2D.S2D.pxPerUnit;
+    const cx = w / 2 + Vec2D.S2D.offsetX,
+          cy = h / 2 + Vec2D.S2D.offsetY,
+          px = clampZoom(Vec2D.S2D.pxPerUnit);
 
     ctx2d.fillStyle = App.getCSS('--card');
     ctx2d.fillRect(0, 0, w, h);
 
     const unitsHalfX = (w / 2) / px, unitsHalfY = (h / 2) / px;
     const unitsRange = Math.max(unitsHalfX, unitsHalfY) * 2;
-    const stepUnit = App.niceStep(unitsRange), tickPx = stepUnit * px;
+
+    const stepUnit = Math.max(1e-12, App.niceStep(unitsRange));
+    const tickPx = Math.max(1, stepUnit * px);
+
+    const maxTicks = 1000;
+    let count = 0;
 
     ctx2d.strokeStyle = App.getCSS('--grid-light'); ctx2d.lineWidth = 1;
-    for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
-      const x = cx + k * tickPx; ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
+    for (let k = Math.floor((-cx) / tickPx) - 1;
+         k <= Math.ceil((w - cx) / tickPx) + 1;
+         k++) {
+      if (count++ > maxTicks) break;
+      const x = cx + k * tickPx;
+      ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
     }
-    for (let k = Math.floor((cy - h) / tickPx) - 1; k <= Math.ceil((cy + h) / tickPx) + 1; k++) {
-      const y = cy - k * tickPx; ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
+
+    count = 0;
+    for (let k = Math.floor((cy - h) / tickPx) - 1;
+         k <= Math.ceil((cy + h) / tickPx) + 1;
+         k++) {
+      if (count++ > maxTicks) break;
+      const y = cy - k * tickPx;
+      ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
     }
 
     ctx2d.strokeStyle = App.getCSS('--axis'); ctx2d.lineWidth = 2;
@@ -342,13 +302,21 @@
 
     ctx2d.fillStyle = App.getCSS('--fg'); ctx2d.font = '12px sans-serif';
     ctx2d.textAlign = 'center'; ctx2d.textBaseline = 'top';
-    for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
-      const unitVal = k * stepUnit; if (Math.abs(unitVal) <= 1e-12) continue; const x = cx + k * tickPx;
+    for (let k = Math.floor((-cx) / tickPx) - 1;
+         k <= Math.ceil((w - cx) / tickPx) + 1;
+         k++) {
+      const unitVal = k * stepUnit;
+      if (Math.abs(unitVal) <= 1e-12) continue;
+      const x = cx + k * tickPx;
       ctx2d.fillText(formatLabel(unitVal), x, cy + 6);
     }
     ctx2d.textAlign = 'left'; ctx2d.textBaseline = 'middle';
-    for (let k = Math.floor((cy - h) / tickPx) - 1; k <= Math.ceil((cy + h) / tickPx) + 1; k++) {
-      const unitVal = k * stepUnit; if (Math.abs(unitVal) <= 1e-12) continue; const y = cy - k * tickPx;
+    for (let k = Math.floor((cy - h) / tickPx) - 1;
+         k <= Math.ceil((cy + h) / tickPx) + 1;
+         k++) {
+      const unitVal = k * stepUnit;
+      if (Math.abs(unitVal) <= 1e-12) continue;
+      const y = cy - k * tickPx;
       ctx2d.fillText(formatLabel(unitVal), cx + 6, y);
     }
     ctx2d.textAlign = 'left'; ctx2d.textBaseline = 'top'; ctx2d.fillText('0', cx + 4, cy + 4);
@@ -392,11 +360,10 @@
   }
 
   Vec2D.draw2DAllVectors = function () {
-    // auto-fit on first draw of currentVector
     if (App.firstDrawForVector && App.currentVector && (App.currentVector.length >= 2)) {
       const w = canvas2d.width, h = canvas2d.height; const v = App.currentVector;
       const maxComp = Math.max(Math.abs(v[0]), Math.abs(v[1]), 1);
-      Vec2D.S2D.pxPerUnit = Math.max((Math.min(w, h) / 2) * 0.6 / maxComp, 1e-12);
+      Vec2D.S2D.pxPerUnit = clampZoom(Math.max((Math.min(w, h) / 2) * 0.6 / maxComp, 1e-12));
       Vec2D.S2D.offsetX = 0; Vec2D.S2D.offsetY = 0; App.firstDrawForVector = false;
     }
 
@@ -415,7 +382,6 @@
     } else App.coordOut('—');
   };
 
-  // Public: set new angle state and trigger redraw
   Vec2D.drawAngleArc2D = function (v1, v2, deg) {
     App.currentAngleVisual2D = { a: [v1[0], v1[1]], b: [v2[0], v2[1]], deg: Number(deg) };
     Vec2D.draw2DAllVectors();
