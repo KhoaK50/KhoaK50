@@ -472,61 +472,61 @@ sp.material.opacity = 0.95; // tổng thể nhẹ hơn một chút
   };
 
   Vec3D.drawAngleArc3D = function (v1, v2, rad, deg) {
-    if (App.currentAngleVisual3D) {
-      Vec3D._scene.remove(App.currentAngleVisual3D);
-      App.currentAngleVisual3D.traverse(obj => {
-        if (obj.geometry) obj.geometry.dispose?.();
-        if (obj.material) { obj.material.map?.dispose?.(); obj.material.dispose?.(); }
-      });
-      App.currentAngleVisual3D = null;
-    }
-
-    const a = new THREE.Vector3(...(v1.length === 3 ? v1 : [v1[0], v1[1], 0]));
-    const b = new THREE.Vector3(...(v2.length === 3 ? v2 : [v2[0], v2[1], 0]));
-    const lenA = a.length(), lenB = b.length();
-    if (lenA < 1e-9 || lenB < 1e-9 || !isFinite(rad) || rad <= 1e-9) return;
-
-    const w = new THREE.Vector3().crossVectors(a, b);
-    if (w.lengthSq() < 1e-18) return; // colinear
-    w.normalize();
-
-    const u = a.clone().normalize();
-    const v_ = new THREE.Vector3().crossVectors(w, u).normalize();
-    const r = Math.min(lenA, lenB) * 0.6;
-
-    let angA = 0;
-    let angB = Math.atan2(b.dot(v_), b.dot(u));
-    let sweep = angB - angA;
-    if (sweep < 0) sweep += 2 * Math.PI;
-
-    const segments = Math.max(32, Math.ceil(sweep * 64 / Math.PI));
-    const geom = new THREE.RingGeometry(0, r, segments, 1, 0, sweep);
-    const mat = new THREE.MeshBasicMaterial({
-      color: 0xffc000, transparent: true, opacity: 0.35, side: THREE.DoubleSide,
-      depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
+  if (App.currentAngleVisual3D) {
+    Vec3D._scene.remove(App.currentAngleVisual3D);
+    App.currentAngleVisual3D.traverse(obj => {
+      if (obj.geometry) obj.geometry.dispose?.();
+      if (obj.material) { obj.material.map?.dispose?.(); obj.material.dispose?.(); }
     });
-    const sector = new THREE.Mesh(geom, mat);
+    App.currentAngleVisual3D = null;
+  }
 
-    const basis = new THREE.Matrix4().makeBasis(u, v_, w);
-    sector.applyMatrix4(basis);
+  const a = new THREE.Vector3(...(v1.length === 3 ? v1 : [v1[0], v1[1], 0]));
+  const b = new THREE.Vector3(...(v2.length === 3 ? v2 : [v2[0], v2[1], 0]));
+  const lenA = a.length(), lenB = b.length();
+  if (lenA < 1e-9 || lenB < 1e-9 || !isFinite(rad) || rad <= 1e-9) return;
 
-    const group = new THREE.Group();
-    group.add(sector);
+  const w = new THREE.Vector3().crossVectors(a, b);
+  if (w.lengthSq() < 1e-18) return; // colinear
+  w.normalize();
 
-    const midDir = u.clone().applyAxisAngle(w, sweep / 2).multiplyScalar(r * 1.12);
-    const text = `${(sweep * 180 / Math.PI).toFixed(1)}°`;
-    const sp = Vec3D.makeTextSprite(text, App.getCSS('--label-fg'), 24, App.getCSS('--label-bg'), false);
-    sp.onBeforeRender = function (renderer, scene, camera) {
-      const d = camera.position.distanceTo(sp.position);
-      const s = Vec3D.labelWorldScaleForPixels(d) * 24;
-      sp.scale.set(s, s * 0.56, 1);
-    };
-    sp.position.copy(midDir);
-    group.add(sp);
+  const u = a.clone().normalize();
+  const v_ = new THREE.Vector3().crossVectors(w, u).normalize();
+  const r = Math.min(lenA, lenB) * 0.6;
 
-    Vec3D._scene.add(group);
-    App.currentAngleVisual3D = group;
+  // Dùng rad từ backend, luôn trong [0,π]
+  const sweep = rad;
+
+  const segments = Math.max(32, Math.ceil(sweep * 64 / Math.PI));
+  const geom = new THREE.RingGeometry(0, r, segments, 1, 0, sweep);
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0xffc000, transparent: true, opacity: 0.35, side: THREE.DoubleSide,
+    depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
+  });
+  const sector = new THREE.Mesh(geom, mat);
+
+  const basis = new THREE.Matrix4().makeBasis(u, v_, w);
+  sector.applyMatrix4(basis);
+
+  const group = new THREE.Group();
+  group.add(sector);
+
+  // Label ở giữa cung
+  const midDir = u.clone().applyAxisAngle(w, sweep / 2).multiplyScalar(r * 1.12);
+  const text = `${deg.toFixed(1)}°`;   // dùng luôn deg từ backend
+  const sp = Vec3D.makeTextSprite(text, App.getCSS('--label-fg'), 24, App.getCSS('--label-bg'), false);
+  sp.onBeforeRender = function (renderer, scene, camera) {
+    const d = camera.position.distanceTo(sp.position);
+    const s = Vec3D.labelWorldScaleForPixels(d) * 24;
+    sp.scale.set(s, s * 0.56, 1);
   };
+  sp.position.copy(midDir);
+  group.add(sp);
+
+  Vec3D._scene.add(group);
+  App.currentAngleVisual3D = group;
+};
+
 
   // Double-refresh to ensure ticks/labels stabilized
   Vec3D.hardRefresh3D = function (frameFirst = false) {
