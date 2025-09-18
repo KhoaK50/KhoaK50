@@ -82,10 +82,11 @@ body {
 
 #topbar .spacer { width: 28px; }
 
+/* hamburger: mặc định ẩn (desktop), chỉ hiện trên mobile */
 #hamburger {
-  display: flex;              /* xếp flex */
-  flex-direction: column;     /* cho 3 span xếp dọc */
-  justify-content: center;    /* căn giữa theo chiều dọc */
+  display: none;
+  flex-direction: column;
+  justify-content: center;
   width: 28px;
   height: 24px;
   padding: 0;
@@ -96,13 +97,12 @@ body {
 }
 #hamburger span {
   display: block;
-  width: 100%;                /* mỗi thanh full chiều ngang */
+  width: 100%;
   height: 3px;
   background: var(--fg);
   border-radius: 2px;
   margin: 3px 0;
 }
-
 
 /* =================== APP LAYOUT =================== */
 #app {
@@ -116,17 +116,20 @@ body {
   padding: 12px;
 }
 
-/* ----- Sidebar / Controls ----- */
-#sidebar {
-  position: relative;        /* desktop: panel trái tĩnh */
-  width: var(--panel-w);
-  flex: 0 0 var(--panel-w);
-  height: 100%;
-  overflow: hidden auto;     /* cuộn NỘI BỘ nếu nhiều control */
-  background: transparent;
-  z-index: 150;
+/* ----- Sidebar / Controls (desktop) ----- */
+@media (min-width: 900px) {
+  #sidebar {
+    position: relative;
+    width: var(--panel-w);
+    flex: 0 0 var(--panel-w);
+    height: 100%;
+    overflow: hidden auto;
+    background: transparent;
+    z-index: 150;
+  }
 }
 
+/* Controls */
 #controls .card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -215,7 +218,7 @@ body:not(.dark) .pill { background: rgba(255,255,255,0.92); }
 #themeBadge { right: 120px; }
 #modeBadge { right: 12px; }
 
-.legend { /* chưa dùng tới .legend*/
+.legend {
   position:absolute; left:12px; top:12px; z-index:40;
   background: var(--pill-bg);
   border:1px solid var(--border);
@@ -288,13 +291,13 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 input[type=number] { appearance: textfield; }
 
 /* =================== RESPONSIVE =================== */
-/* Desktop ≥ 900px: panel trái tĩnh + viewer bên phải (đã set mặc định) */
-
 /* Mobile/Tablet < 900px: sidebar thành overlay, viewer full màn */
 @media (max-width: 899.98px) {
+  #hamburger { display: flex; }
+
   #app {
-    padding: 12px;          /* vẫn có viền thoáng hai bên */
-    gap: 0;                 /* overlay không cần gap */
+    padding: 12px;
+    gap: 0;
   }
 
   #sidebar {
@@ -314,11 +317,8 @@ input[type=number] { appearance: textfield; }
   }
   #sidebar.open { transform: translateX(0); }
 
-  /* viewer chiếm 100% không cuộn */
   #viewerWrap {
     border-radius: 0;
     border: none;
   }
 }
-
-/* Giữ hamburger luôn hiện (đã nằm trong topbar) */
