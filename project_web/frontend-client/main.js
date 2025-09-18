@@ -7,7 +7,7 @@
   // ---- Global namespace shared by all modules ----
   window.App = window.App || {};
 
-  App.API_BASE = "https://vsv-i0ya.onrender.com/"; // ĐỔI thành domain thật của bạn
+  App.API_BASE = "https://vsv-i0ya.onrender.com"; // ĐỔI thành domain thật của bạn
 
 
   /* ===== Utilities / Debug ===== */
@@ -997,15 +997,15 @@ if (window.Vec2D) {
   Vec2D.draw2DAllVectors();
 }
 
-// đảm bảo nền 3D khớp màu theme, không bị đen
+// KHÔNG show3D ở đây, chỉ update helpers thôi
 if (window.Vec3D) {
-  Vec3D.show3D();
   Vec3D.update3DHelpersBase();
-  Vec3D.hardRefresh3D(true);
+  // chưa gọi show3D, để mặc định 2D hiển thị
 }
 
 // đồng bộ lại
 App.redrawAll({ frame: true });
+
 
 App.log('Ready Z-up.');
 
@@ -1026,12 +1026,13 @@ if (burger && sidebar) {
   });
 }
 
-const viewerWrap = document.getElementById('viewerWrap');
-if (viewerWrap && sidebar) {
-  viewerWrap.addEventListener('pointerdown', () => {
+const viewerWrap2 = document.getElementById('viewerWrap');
+if (viewerWrap2 && sidebar) {
+  viewerWrap2.addEventListener('pointerdown', () => {
     sidebar.classList.remove('open');
   });
 }
+
 
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') sidebar.classList.remove('open');
