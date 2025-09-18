@@ -1003,13 +1003,15 @@ App.projectionUI = async function () {
     App.showExtraForm(document.getElementById('opExtraSelect').value);
     // Hamburger toggle cho mobile
 const burger = document.getElementById('hamburger');
-const controls = document.getElementById('controls');
-if (burger && controls) {
-  burger.addEventListener('click', () => {
-    controls.classList.toggle('open');
+const sidebar = document.getElementById('sidebar');
+if (burger && sidebar) {
+  burger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    sidebar.classList.toggle('open');
   });
 }
-    const viewerWrap = document.getElementById('viewerWrap');
+
+const viewerWrap = document.getElementById('viewerWrap');
 if (viewerWrap && sidebar) {
   viewerWrap.addEventListener('pointerdown', () => {
     sidebar.classList.remove('open');
