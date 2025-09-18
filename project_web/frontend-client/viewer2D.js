@@ -1,5 +1,4 @@
 // ===================== viewer2D.js =====================
-
 (function () {
   window.Vec2D = window.Vec2D || {};
   const App = window.App || {};
@@ -7,13 +6,36 @@
   const canvas2d = document.getElementById('canvas2d');
   const ctx2d = canvas2d.getContext('2d', { alpha: false });
 
-  // Public state (for debug)
-  Vec2D.S2D = { pxPerUnit: 25, offsetX: 0, offsetY: 0, panning: false, startX: 0, startY: 0 };
+  // ----- State -----
+  Vec2D.S2D = {
+    pxPerUnit: 25,
+    offsetX: 0, offsetY: 0,
+
+    // 1-finger/mouse drag
+    isPanningOne: false,
+    startX: 0, startY: 0,
+    lastX: 0, lastY: 0,
+
+    // velocities (px/ms)
+    velX: 0, velY: 0,
+    lastTime: 0,
+
+    // momentum raf
+    momentumId: null,
+
+    // multi-pointer
+    pointers: new Map(), // id -> {x,y}
+    lastCentroidX: null, lastCentroidY: null,
+    lastDist: null,
+    zoomVel: 0, // per ms in log space
+  };
   Vec2D.gridInfo2D = null;
 
   Vec2D.init2D = function () {
     Vec2D.resize2D();
     Vec2D.bind2DEvents();
+    // rất quan trọng cho mobile để trình duyệt không chiếm gesture
+    canvas2d.style.touchAction = 'none';
     App.applyTheme(); // sets bg & redraw via draw2DAllVectors if in 2D
   };
 
@@ -30,90 +52,227 @@
     canvas2d.height = Math.floor(rect.height);
   };
 
+  // ---------- Helpers for gestures ----------
+  function centroidOfPointers(ptrs) {
+    let sx = 0, sy = 0, n = 0;
+    for (const p of ptrs.values()) { sx += p.x; sy += p.y; n++; }
+    if (!n) return null;
+    return { x: sx / n, y: sy / n };
+  }
+
+  function distanceTwoPointers(ptrs) {
+    if (ptrs.size !== 2) return null;
+    const it = ptrs.values();
+    const a = it.next().value, b = it.next().value;
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+
+  function applyZoomAboutScreenPoint(mx, my, factor) {
+    const w = canvas2d.clientWidth, h = canvas2d.clientHeight;
+    const cx = w / 2 + Vec2D.S2D.offsetX;
+    const cy = h / 2 + Vec2D.S2D.offsetY;
+
+    // world coord dưới điểm (mx,my) trước khi zoom
+    const wx = (mx - cx) / Vec2D.S2D.pxPerUnit;
+    const wy = (cy - my) / Vec2D.S2D.pxPerUnit;
+
+    Vec2D.S2D.pxPerUnit *= factor;
+    if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12) Vec2D.S2D.pxPerUnit = 1e-12;
+
+    // giữ nguyên world point dưới ngón
+    const cxNew = mx - wx * Vec2D.S2D.pxPerUnit;
+    const cyNew = my + wy * Vec2D.S2D.pxPerUnit;
+    Vec2D.S2D.offsetX = cxNew - w / 2;
+    Vec2D.S2D.offsetY = cyNew - h / 2;
+  }
+
+  // ---------- Events ----------
   Vec2D.bind2DEvents = function () {
     window.addEventListener('resize', () => { Vec2D.resize2D(); if (App.mode === '2D') Vec2D.draw2DAllVectors(); });
 
-    // === Panning bằng 1 ngón / chuột ===
+    // Pointer down (hợp nhất chuột + touch qua Pointer Events)
     canvas2d.addEventListener('pointerdown', e => {
-      if (e.isPrimary) {
-        Vec2D.S2D.panning = true;
+      // nhớ pointer
+      Vec2D.S2D.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      // chạm lại thì hủy momentum hiện tại
+      if (Vec2D.S2D.momentumId) cancelAnimationFrame(Vec2D.S2D.momentumId);
+
+      const n = Vec2D.S2D.pointers.size;
+      Vec2D.S2D.lastTime = performance.now();
+
+      if (n === 1) {
+        // 1 ngón / chuột: bắt đầu pan
+        Vec2D.S2D.isPanningOne = true;
         Vec2D.S2D.startX = e.clientX - Vec2D.S2D.offsetX;
         Vec2D.S2D.startY = e.clientY - Vec2D.S2D.offsetY;
+        Vec2D.S2D.lastX = e.clientX;
+        Vec2D.S2D.lastY = e.clientY;
         canvas2d.setPointerCapture(e.pointerId);
         canvas2d.style.cursor = 'grabbing';
-        e.preventDefault();
+      } else if (n === 2) {
+        // 2 ngón: reset mốc centroid & khoảng cách
+        const c = centroidOfPointers(Vec2D.S2D.pointers);
+        Vec2D.S2D.lastCentroidX = c.x;
+        Vec2D.S2D.lastCentroidY = c.y;
+        Vec2D.S2D.lastDist = distanceTwoPointers(Vec2D.S2D.pointers);
+        Vec2D.S2D.isPanningOne = false; // chuyển qua 2 ngón
+      }
+      e.preventDefault();
+    });
+
+    // Pointer move
+    canvas2d.addEventListener('pointermove', e => {
+      if (!Vec2D.S2D.pointers.has(e.pointerId)) return;
+      // cập nhật vị trí pointer
+      Vec2D.S2D.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      const now = performance.now();
+      const dt = (now - Vec2D.S2D.lastTime) || 16;
+
+      const n = Vec2D.S2D.pointers.size;
+
+      if (n >= 2) {
+        // Pan + Pinch kết hợp (giống Google Maps)
+        const c = centroidOfPointers(Vec2D.S2D.pointers);
+        const dist = distanceTwoPointers(Vec2D.S2D.pointers);
+
+        // Pan bởi dịch chuyển centroid
+        if (Vec2D.S2D.lastCentroidX != null) {
+          const dx = c.x - Vec2D.S2D.lastCentroidX;
+          const dy = c.y - Vec2D.S2D.lastCentroidY;
+          Vec2D.S2D.offsetX += dx;
+          Vec2D.S2D.offsetY += dy;
+
+          // tốc độ cho momentum (px/ms)
+          Vec2D.S2D.velX = dx / dt;
+          Vec2D.S2D.velY = dy / dt;
+        }
+
+        // Pinch zoom quanh centroid
+        if (Vec2D.S2D.lastDist) {
+          const rawFactor = dist / Vec2D.S2D.lastDist;
+          const smooth = 0.9; // mượt tay
+          const factor = Math.pow(rawFactor, smooth);
+          applyZoomAboutScreenPoint(c.x, c.y, factor);
+
+          // tốc độ zoom ở không gian log
+          Vec2D.S2D.zoomVel = Math.log(factor) / dt;
+        }
+
+        Vec2D.S2D.lastCentroidX = c.x; Vec2D.S2D.lastCentroidY = c.y;
+        Vec2D.S2D.lastDist = dist;
+        Vec2D.S2D.lastTime = now;
+
+        if (App.mode === '2D') Vec2D.draw2DAllVectors();
+        return;
+      }
+
+      // Pan 1 ngón / chuột
+      if (Vec2D.S2D.isPanningOne && n === 1) {
+        Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
+        Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
+
+        Vec2D.S2D.velX = (e.clientX - Vec2D.S2D.lastX) / dt;
+        Vec2D.S2D.velY = (e.clientY - Vec2D.S2D.lastY) / dt;
+
+        Vec2D.S2D.lastX = e.clientX;
+        Vec2D.S2D.lastY = e.clientY;
+        Vec2D.S2D.lastTime = now;
+
+        if (App.mode === '2D') Vec2D.draw2DAllVectors();
       }
     });
 
-    canvas2d.addEventListener('pointermove', e => {
-      if (!Vec2D.S2D.panning) return;
-      Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
-      Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
-      if (App.mode === '2D') Vec2D.draw2DAllVectors();
-    });
+    // Pointer up / cancel
+    const endPointer = (e) => {
+      if (!Vec2D.S2D.pointers.has(e.pointerId)) return;
+      Vec2D.S2D.pointers.delete(e.pointerId);
 
-    canvas2d.addEventListener('pointerup', e => {
-      Vec2D.S2D.panning = false;
-      canvas2d.releasePointerCapture(e.pointerId);
-      canvas2d.style.cursor = 'default';
-    });
+      const n = Vec2D.S2D.pointers.size;
 
-    // === Zoom bằng wheel (chuột) ===
+      if (n === 0) {
+        // không còn ngón nào → bật momentum (pan + zoom)
+        canvas2d.releasePointerCapture?.(e.pointerId);
+        canvas2d.style.cursor = 'default';
+        Vec2D.S2D.isPanningOne = false;
+        Vec2D.S2D.lastCentroidX = Vec2D.S2D.lastCentroidY = null;
+        Vec2D.S2D.lastDist = null;
+
+        const panSpeed = Math.hypot(Vec2D.S2D.velX, Vec2D.S2D.velY);
+        const hasPanMomentum = panSpeed > 0.01;
+        const hasZoomMomentum = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
+
+        if (hasPanMomentum || hasZoomMomentum) {
+          const decayPan = 0.85;   // giảm dần pan
+          const decayZoom = 0.80;  // giảm dần zoom
+
+          const step = () => {
+            // ~16ms/frame
+            if (hasPanMomentum) {
+              Vec2D.S2D.offsetX += Vec2D.S2D.velX * 16;
+              Vec2D.S2D.offsetY += Vec2D.S2D.velY * 16;
+              Vec2D.S2D.velX *= decayPan;
+              Vec2D.S2D.velY *= decayPan;
+            }
+
+            if (hasZoomMomentum) {
+              const factor = Math.exp(Vec2D.S2D.zoomVel * 16);
+              // zoom về tâm màn hình (ổn định)
+              applyZoomAboutScreenPoint(canvas2d.clientWidth / 2, canvas2d.clientHeight / 2, factor);
+              Vec2D.S2D.zoomVel *= decayZoom;
+            }
+
+            if (App.mode === '2D') Vec2D.draw2DAllVectors();
+
+            const stillPan = Math.hypot(Vec2D.S2D.velX, Vec2D.S2D.velY) > 0.01;
+            const stillZoom = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
+            if (stillPan || stillZoom) {
+              Vec2D.S2D.momentumId = requestAnimationFrame(step);
+            }
+          };
+          Vec2D.S2D.momentumId = requestAnimationFrame(step);
+        }
+
+        // reset tốc độ zoom
+        Vec2D.S2D.zoomVel = 0;
+      } else if (n === 1) {
+        // còn 1 ngón → chuyển lại baseline pan 1 ngón
+        const remain = Vec2D.S2D.pointers.values().next().value;
+        Vec2D.S2D.isPanningOne = true;
+        Vec2D.S2D.startX = remain.x - Vec2D.S2D.offsetX;
+        Vec2D.S2D.startY = remain.y - Vec2D.S2D.offsetY;
+        Vec2D.S2D.lastX = remain.x;
+        Vec2D.S2D.lastY = remain.y;
+        Vec2D.S2D.lastTime = performance.now();
+        Vec2D.S2D.lastCentroidX = Vec2D.S2D.lastCentroidY = null;
+        Vec2D.S2D.lastDist = null;
+        Vec2D.S2D.zoomVel = 0;
+      } else {
+        // vẫn >=2 sau khi nhấc một ngón → tính lại mốc
+        const c = centroidOfPointers(Vec2D.S2D.pointers);
+        Vec2D.S2D.lastCentroidX = c.x;
+        Vec2D.S2D.lastCentroidY = c.y;
+        Vec2D.S2D.lastDist = distanceTwoPointers(Vec2D.S2D.pointers);
+        Vec2D.S2D.lastTime = performance.now();
+      }
+    };
+    canvas2d.addEventListener('pointerup', endPointer);
+    canvas2d.addEventListener('pointercancel', endPointer);
+    canvas2d.addEventListener('lostpointercapture', () => { /* ignore */ });
+
+    // Wheel zoom (desktop) — zoom quanh con trỏ
     canvas2d.addEventListener('wheel', e => {
       const rect = canvas2d.getBoundingClientRect();
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-      const w = canvas2d.clientWidth, h = canvas2d.clientHeight;
-      const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY;
-      const wx = (mx - cx) / Vec2D.S2D.pxPerUnit, wy = (cy - my) / Vec2D.S2D.pxPerUnit;
       const factor = (e.deltaY < 0) ? 1.18 : (1 / 1.18);
-      Vec2D.S2D.pxPerUnit *= factor;
-      if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12) Vec2D.S2D.pxPerUnit = 1e-12;
-      const cxNew = mx - wx * Vec2D.S2D.pxPerUnit, cyNew = my + wy * Vec2D.S2D.pxPerUnit;
-      Vec2D.S2D.offsetX = cxNew - w / 2; Vec2D.S2D.offsetY = cyNew - h / 2;
+      applyZoomAboutScreenPoint(mx, my, factor);
       if (App.mode === '2D') Vec2D.draw2DAllVectors();
       e.preventDefault();
     }, { passive: false });
-
-    // === Pinch zoom bằng 2 ngón (touch) ===
-    let lastDist = null;
-    let isPinching = false;
-
-    canvas2d.addEventListener('touchstart', e => {
-      if (e.touches.length === 2) {
-        isPinching = true;
-        const dx = e.touches[0].clientX - e.touches[1].clientX;
-        const dy = e.touches[0].clientY - e.touches[1].clientY;
-        lastDist = Math.hypot(dx, dy);
-      }
-    }, { passive: false });
-
-    canvas2d.addEventListener('touchmove', e => {
-      if (e.touches.length === 2 && isPinching) {
-        e.preventDefault();
-        const dx = e.touches[0].clientX - e.touches[1].clientX;
-        const dy = e.touches[0].clientY - e.touches[1].clientY;
-        const dist = Math.hypot(dx, dy);
-
-        if (lastDist) {
-          const rawFactor = dist / lastDist;
-          const factor = Math.pow(rawFactor, 0.4); // 0.4 = mượt
-          Vec2D.S2D.pxPerUnit *= factor;
-          if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit < 1e-6) Vec2D.S2D.pxPerUnit = 1e-6;
-          if (App.mode === '2D') Vec2D.draw2DAllVectors();
-        }
-        lastDist = dist;
-      }
-    }, { passive: false });
-
-    canvas2d.addEventListener('touchend', e => {
-      if (e.touches.length < 2) {
-        isPinching = false;
-        lastDist = null;
-      }
-    });
   };
 
-  // ========== Vẽ lưới, vector, overlay ==========
+  // ---------- Rendering ----------
   Vec2D.render2DGrid = function () {
     const w = canvas2d.width, h = canvas2d.height;
     const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY, px = Vec2D.S2D.pxPerUnit;
@@ -150,7 +309,7 @@
     }
     ctx2d.textAlign = 'left'; ctx2d.textBaseline = 'top'; ctx2d.fillText('0', cx + 4, cy + 4);
 
-    function formatLabel(v) { 
+    function formatLabel(v) {
       if (v === 0) return '0';
       const abs = Math.abs(v);
       if (abs >= 1e6 || abs < 1e-6) return v.toExponential(0).replace('+', '');
@@ -189,6 +348,7 @@
   }
 
   Vec2D.draw2DAllVectors = function () {
+    // auto-fit lần đầu cho vector hiện hành
     if (App.firstDrawForVector && App.currentVector && (App.currentVector.length >= 2)) {
       const w = canvas2d.width, h = canvas2d.height; const v = App.currentVector;
       const maxComp = Math.max(Math.abs(v[0]), Math.abs(v[1]), 1);
@@ -211,6 +371,7 @@
     } else App.coordOut('—');
   };
 
+  // Public: set new angle state and trigger redraw
   Vec2D.drawAngleArc2D = function (v1, v2, deg) {
     App.currentAngleVisual2D = { a: [v1[0], v1[1]], b: [v2[0], v2[1]], deg: Number(deg) };
     Vec2D.draw2DAllVectors();
@@ -221,33 +382,41 @@
   const { cx, cy } = Vec2D.gridInfo2D;
   const a = state.a, b = state.b;
 
+  // Góc màn hình (trục y ngược) cho 2 vector
   const angA = Math.atan2(-a[1], a[0]);
-  // const angB = Math.atan2(-b[1], b[0]); // không cần nữa
+  const angB = Math.atan2(-b[1], b[0]);
 
-  // Góc từ backend (luôn 0..180)
-  const sweep = state.deg * Math.PI / 180;
+  // Chuẩn hóa chênh lệch vào (−π, π]
+  const normPi = (x) => {
+    while (x <= -Math.PI) x += 2 * Math.PI;
+    while (x >  Math.PI) x -= 2 * Math.PI;
+    return x;
+  };
+  const delta = normPi(angB - angA);        // góc quay có dấu từ a → b
+  const anticlockwise = (delta < 0);        // delta âm => vẽ theo chiều kim đồng hồ
 
-  const start = angA;
-  const end = angA + sweep;
   const r = Math.min(canvas2d.width, canvas2d.height) * 0.18;
 
+  // Vẽ nêm góc theo đúng chiều delta
   ctx2d.save();
   ctx2d.beginPath();
   ctx2d.moveTo(cx, cy);
-  ctx2d.arc(cx, cy, r, start, end, false);
+  ctx2d.arc(cx, cy, r, angA, angA + delta, anticlockwise);
   ctx2d.closePath();
   ctx2d.fillStyle = "rgba(255, 200, 0, 0.32)";
   ctx2d.fill();
 
-  const mid = start + sweep / 2;
+  // Ghi nhãn ở giữa cung
+  const mid = angA + delta / 2;
   const tx = cx + Math.cos(mid) * (r * 1.2);
   const ty = cy + Math.sin(mid) * (r * 1.2);
+  const degShow = (state.deg != null) ? state.deg : Math.abs(delta * 180 / Math.PI);
 
   ctx2d.font = "14px sans-serif";
   ctx2d.textAlign = "center";
   ctx2d.textBaseline = "middle";
   ctx2d.fillStyle = App.getCSS('--fg');
-  ctx2d.fillText(`${state.deg.toFixed(1)}°`, tx, ty);
+  ctx2d.fillText(`${degShow.toFixed(1)}°`, tx, ty);
   ctx2d.restore();
 }
 
