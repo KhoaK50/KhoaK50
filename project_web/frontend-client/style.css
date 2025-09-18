@@ -149,7 +149,7 @@ body:not(.dark) .pill { background: rgba(255,255,255,0.92); }
 #themeBadge { right: 120px; }
 #modeBadge { right: 12px; }
 
-.legend { /* chưa dùng tới .legend*/
+.legend {
   position:absolute; left:12px; top:12px; z-index:40;
   background: var(--pill-bg);
   border:1px solid var(--border);
@@ -233,55 +233,62 @@ input[type=number] { appearance: textfield; }
   #app { gap: 12px; }
 }
 
-/* Mobile */
+/* Mobile layout với sidebar overlay */
 @media (max-width: 600px) {
   :root {
-    --panel-w: 100%;
+    --panel-w: 80%;      /* sidebar rộng 80% */
     --viewer-size: 100%;
-    --viewer-h: 60vh;
+    --viewer-h: 100vh;
   }
+
+  body { margin:0; }
 
   #app {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 0;
   }
 
+  /* Sidebar overlay */
   #controls {
+    position: fixed;
+    top: 0; left: -100%;
     width: var(--panel-w);
-    order: 2;
+    height: 100%;
+    background: var(--bg);
+    padding: 16px;
+    overflow-y: auto;
+    transition: left 0.3s ease;
+    z-index: 150;
+  }
+  #controls.open {
+    left: 0;
   }
 
+  /* Viewer full */
   #viewerWrap {
     width: var(--viewer-size);
     height: var(--viewer-h);
-    order: 1;
+    border-radius: 0;
   }
-}
 
-/* Hamburger menu */
-#hamburger {
-  display: none; /* ẩn mặc định */
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  width: 32px;
-  height: 28px;
-  flex-direction: column;
-  justify-content: space-between;
-  cursor: pointer;
-  z-index: 200;
-}
-#hamburger span {
-  display: block;
-  height: 4px;
-  background: var(--fg);
-  border-radius: 2px;
-}
-
-/* Mobile: hiện hamburger và ẩn panel */
-@media (max-width: 600px) {
-  #hamburger { display: flex; }
-  #controls { display: none; }
-  #controls.open { display: block; margin-top: 12px; }
+  /* Hamburger */
+  #hamburger {
+    display: flex;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    width: 32px;
+    height: 26px;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    z-index: 200;
+  }
+  #hamburger span {
+    display: block;
+    height: 4px;
+    background: var(--fg);
+    border-radius: 2px;
+  }
 }
