@@ -7,7 +7,7 @@
   // ---- Global namespace shared by all modules ----
   window.App = window.App || {};
 
-  App.API_BASE = "http://127.0.0.1:5000"; // ĐỔI thành domain thật của bạn
+  App.API_BASE = "https://vsv-i0ya.onrender.com/"; // ĐỔI thành domain thật của bạn
 
 
   /* ===== Utilities / Debug ===== */
