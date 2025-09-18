@@ -1009,6 +1009,21 @@ if (burger && controls) {
     controls.classList.toggle('open');
   });
 }
+    const viewerWrap = document.getElementById('viewerWrap');
+if (viewerWrap && sidebar) {
+  viewerWrap.addEventListener('pointerdown', () => {
+    sidebar.classList.remove('open');
+  });
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') sidebar.classList.remove('open');
+});
+
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= 900) sidebar.classList.remove('open');
+});
+
 
   };
 
