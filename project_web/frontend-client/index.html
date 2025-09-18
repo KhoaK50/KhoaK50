@@ -257,36 +257,6 @@
   <script src="viewer2D.js"></script>
   <script src="viewer3D.js"></script>
 
-  <!-- Toggler: mở/đóng sidebar + chạm vào viewer để đóng -->
-  <script>
-    (function () {
-      const sidebar = document.getElementById('sidebar');
-      const burger = document.getElementById('hamburger');
-      const viewerWrap = document.getElementById('viewerWrap');
-
-      function openSidebar()  { sidebar.classList.add('open'); }
-      function closeSidebar() { sidebar.classList.remove('open'); }
-      function toggleSidebar(){ sidebar.classList.toggle('open'); }
-
-      burger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleSidebar();
-      });
-
-      // Chạm vào viewer (không bị sidebar che) để tắt
-      viewerWrap.addEventListener('pointerdown', closeSidebar);
-
-      // Esc để tắt
-      window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeSidebar();
-      });
-
-      // Nếu resize lên desktop, bỏ lớp open để về panel trái
-      const DESKTOP_W = 900;
-      window.addEventListener('resize', () => {
-        if (window.innerWidth >= DESKTOP_W) closeSidebar();
-      });
-    })();
-  </script>
+  
 </body>
 </html>
