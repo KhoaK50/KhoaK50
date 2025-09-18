@@ -1,8 +1,8 @@
+/* =================== THEME VARS =================== */
 :root {
-  --panel-w: 28vw;       /* panel chiếm 28% chiều rộng màn hình */
-  --viewer-size: 70vw;   /* viewer chiếm 70% */
-  --viewer-h: 80vh;      /* chiều cao tối đa */
+  --topbar-h: 52px;
 
+  --panel-w: 340px;      /* desktop: chiều rộng panel trái */
   --bg: #ffffff;
   --fg: #121314;
   --muted: #6b6f76;
@@ -42,28 +42,88 @@ body.dark {
   --pill-bg: rgba(20,22,28,0.9);
 }
 
+/* =================== BASE =================== */
 * { box-sizing: border-box; }
-html, body { height:100%; }
+
+html, body {
+  height: 100vh;
+  overflow: hidden;              /* KHÔNG cuộn trang */
+}
+
 body {
-  margin: 12px;
+  margin: 0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
   color: var(--fg);
   background: var(--bg);
-  overscroll-behavior: none;
+  overscroll-behavior: none;     /* tránh kéo dội trên mobile */
 }
 
-h2 { margin:6px 0 14px; }
+/* =================== TOPBAR =================== */
+#topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--topbar-h);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  z-index: 300;
+}
+
+#topbar .brand {
+  text-align: center;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.2px;
+}
+
+#topbar .spacer { width: 28px; }
+
+#hamburger {
+  display: inline-flex;
+  width: 28px; height: 24px;
+  padding: 0; margin: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+#hamburger span {
+  display: block;
+  width: 100%; height: 3px;
+  background: var(--fg);
+  border-radius: 2px;
+  margin: 3px 0;
+}
+
+/* =================== APP LAYOUT =================== */
 #app {
-  display:flex;
-  gap:16px;
-  align-items:flex-start;
+  position: absolute;
+  inset: var(--topbar-h) 0 0 0;  /* bên dưới topbar */
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: calc(100vh - var(--topbar-h));
+  gap: 12px;
+  padding: 12px;
 }
 
-/* Left panel */
-#controls { width: var(--panel-w); }
+/* ----- Sidebar / Controls ----- */
+#sidebar {
+  position: relative;        /* desktop: panel trái tĩnh */
+  width: var(--panel-w);
+  flex: 0 0 var(--panel-w);
+  height: 100%;
+  overflow: hidden auto;     /* cuộn NỘI BỘ nếu nhiều control */
+  background: transparent;
+  z-index: 150;
+}
+
 #controls .card {
   background: var(--card);
-  border:1px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
   margin-bottom: 12px;
@@ -122,12 +182,12 @@ pre {
 }
 .vec-item.active { outline:2px solid var(--muted); }
 
-/* Viewer */
+/* ----- Viewer ----- */
 #viewerWrap {
-  position:relative;
-  width: var(--viewer-size);
-  height: var(--viewer-size);
-  border:1px solid var(--border);
+  position: relative;
+  flex: 1 1 auto;
+  height: 100%;
+  border: 1px solid var(--border);
   background: var(--card);
   border-radius: 14px;
   overflow: hidden;
@@ -149,7 +209,7 @@ body:not(.dark) .pill { background: rgba(255,255,255,0.92); }
 #themeBadge { right: 120px; }
 #modeBadge { right: 12px; }
 
-.legend {
+.legend { /* chưa dùng tới .legend*/
   position:absolute; left:12px; top:12px; z-index:40;
   background: var(--pill-bg);
   border:1px solid var(--border);
@@ -221,74 +281,38 @@ input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input[type=number] { appearance: textfield; }
 
-/* ========== Responsive ========== */
+/* =================== RESPONSIVE =================== */
+/* Desktop ≥ 900px: panel trái tĩnh + viewer bên phải (đã set mặc định) */
 
-/* Tablet */
-@media (max-width: 1024px) {
-  :root {
-    --panel-w: 32vw;
-    --viewer-size: 60vw;
-    --viewer-h: 75vh;
-  }
-  #app { gap: 12px; }
-}
-
-/* Mobile layout với sidebar overlay */
-@media (max-width: 600px) {
-  :root {
-    --panel-w: 80%;      /* sidebar rộng 80% */
-    --viewer-size: 100%;
-    --viewer-h: 100vh;
-  }
-
-  body { margin:0; }
-
+/* Mobile/Tablet < 900px: sidebar thành overlay, viewer full màn */
+@media (max-width: 899.98px) {
   #app {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
+    padding: 12px;          /* vẫn có viền thoáng hai bên */
+    gap: 0;                 /* overlay không cần gap */
   }
 
-  /* Sidebar overlay */
-  #controls {
+  #sidebar {
     position: fixed;
-    top: 0; left: -100%;
-    width: var(--panel-w);
-    height: 100%;
-    background: var(--bg);
-    padding: 16px;
-    overflow-y: auto;
-    transition: left 0.3s ease;
-    z-index: 150;
-  }
-  #controls.open {
+    top: var(--topbar-h);
     left: 0;
+    height: calc(100vh - var(--topbar-h));
+    width: min(88vw, 360px);
+    max-width: 92vw;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    box-shadow: 0 8px 30px rgba(0,0,0,.25);
+    transform: translateX(-100%);
+    transition: transform .22s ease-out;
+    z-index: 250;
+    padding: 12px;
   }
+  #sidebar.open { transform: translateX(0); }
 
-  /* Viewer full */
+  /* viewer chiếm 100% không cuộn */
   #viewerWrap {
-    width: var(--viewer-size);
-    height: var(--viewer-h);
     border-radius: 0;
-  }
-
-  /* Hamburger */
-  #hamburger {
-    display: flex;
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    width: 32px;
-    height: 26px;
-    flex-direction: column;
-    justify-content: space-between;
-    cursor: pointer;
-    z-index: 200;
-  }
-  #hamburger span {
-    display: block;
-    height: 4px;
-    background: var(--fg);
-    border-radius: 2px;
+    border: none;
   }
 }
+
+/* Giữ hamburger luôn hiện (đã nằm trong topbar) */
