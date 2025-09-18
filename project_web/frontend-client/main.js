@@ -981,19 +981,34 @@ App.projectionUI = async function () {
     });
 
     // Init 2D/3D layers
-    if (window.Vec2D) Vec2D.init2D();
-    if (window.Vec3D) Vec3D.init3D();
+if (window.Vec2D) Vec2D.init2D();
+if (window.Vec3D) Vec3D.init3D();
 
-    // prevent wheel scroll in viewer wrap (so it zooms canvas/three only)
-    const viewerWrap = document.getElementById('viewerWrap');
-    viewerWrap.addEventListener('wheel', (e) => { e.preventDefault(); }, { passive: false });
+// prevent wheel scroll in viewer wrap (so it zooms canvas/three only)
+const viewerWrap = document.getElementById('viewerWrap');
+viewerWrap.addEventListener('wheel', (e) => { e.preventDefault(); }, { passive: false });
 
-    // First show 2D by default
-    App.applyTheme();
-    if (window.Vec2D) Vec2D.show2D();
-    App.redrawAll();
+// First show 2D by default
+App.applyTheme();
 
-    App.log('Ready Z-up.');
+// đảm bảo canvas 2D có nội dung ngay từ đầu
+if (window.Vec2D) {
+  Vec2D.show2D();
+  Vec2D.draw2DAllVectors();
+}
+
+// đảm bảo nền 3D khớp màu theme, không bị đen
+if (window.Vec3D) {
+  Vec3D.show3D();
+  Vec3D.update3DHelpersBase();
+  Vec3D.hardRefresh3D(true);
+}
+
+// đồng bộ lại
+App.redrawAll({ frame: true });
+
+App.log('Ready Z-up.');
+
 
     // selectors + checklists
     App.refreshCalcVectorOptions();
