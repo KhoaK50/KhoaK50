@@ -2,7 +2,6 @@
 :root {
   --topbar-h: 52px;
 
-  --panel-w: 340px;      /* desktop: chiều rộng panel trái */
   --bg: #ffffff;
   --fg: #121314;
   --muted: #6b6f76;
@@ -82,18 +81,18 @@ body {
 
 #topbar .spacer { width: 28px; }
 
-/* hamburger: mặc định ẩn (desktop), chỉ hiện trên mobile */
+/* Hamburger luôn hiện */
 #hamburger {
-  display: none;
+  display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   width: 28px;
-  height: 24px;
-  padding: 0;
-  margin: 0;
+  height: 22px;
+  cursor: pointer;
   background: transparent;
   border: none;
-  cursor: pointer;
+  padding: 0;
+  margin: 0;
 }
 #hamburger span {
   display: block;
@@ -101,35 +100,53 @@ body {
   height: 3px;
   background: var(--fg);
   border-radius: 2px;
-  margin: 3px 0;
 }
 
 /* =================== APP LAYOUT =================== */
 #app {
   position: absolute;
-  inset: var(--topbar-h) 0 0 0;  /* bên dưới topbar */
+  inset: var(--topbar-h) 0 0 0;  /* dưới topbar */
   display: flex;
-  align-items: stretch;
   width: 100%;
   height: calc(100vh - var(--topbar-h));
-  gap: 12px;
+}
+
+/* ----- Sidebar overlay ----- */
+#controls {
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0;
+  height: calc(100vh - var(--topbar-h));
+  width: min(88vw, 360px);
+  max-width: 92vw;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  box-shadow: 0 8px 30px rgba(0,0,0,.25);
+  transform: translateX(-100%);
+  transition: transform .25s ease-out;
+  z-index: 250;
   padding: 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#controls.open { transform: translateX(0); }
+
+/* Overlay */
+#overlay {
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 200;
+  display: none;
+}
+#overlay.show {
+  display: block;
 }
 
-/* ----- Sidebar / Controls (desktop) ----- */
-@media (min-width: 900px) {
-  #sidebar {
-    position: relative;
-    width: var(--panel-w);
-    flex: 0 0 var(--panel-w);
-    height: 100%;
-    overflow: hidden auto;
-    background: transparent;
-    z-index: 150;
-  }
-}
-
-/* Controls */
+/* Card trong sidebar */
 #controls .card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -137,6 +154,7 @@ body {
   padding: 12px;
   margin-bottom: 12px;
 }
+
 label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
 
 input, select, button {
@@ -150,6 +168,7 @@ input, select, button {
 input, select { width: 100%; }
 button { cursor:pointer; }
 button:hover { filter: brightness(1.06); }
+
 .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 
 pre {
@@ -193,14 +212,14 @@ pre {
 
 /* ----- Viewer ----- */
 #viewerWrap {
-  position: relative;
   flex: 1 1 auto;
-  height: 100%;
+  position: relative;
   border: 1px solid var(--border);
   background: var(--card);
   border-radius: 14px;
   overflow: hidden;
   user-select: none;
+  margin-left: 0; /* không bị đẩy khi sidebar overlay */
 }
 #viewer { position:relative; width:100%; height:100%; }
 #canvas2d { position:absolute; inset:0; display:block; width:100%; height:100%; }
@@ -218,20 +237,13 @@ body:not(.dark) .pill { background: rgba(255,255,255,0.92); }
 #themeBadge { right: 120px; }
 #modeBadge { right: 12px; }
 
-.legend {
-  position:absolute; left:12px; top:12px; z-index:40;
-  background: var(--pill-bg);
+/* Checklist */
+.checklist {
+  display:flex; flex-direction:column; gap:6px;
+  max-height: 170px; overflow:auto;
   border:1px solid var(--border);
-  border-radius: 10px;
-  padding:6px 8px; font-size:12px; color:var(--fg);
-  backdrop-filter: blur(4px);
-}
-body:not(.dark) .legend { background: rgba(255,255,255,0.92); }
-
-.kbd {
-  border:1px solid var(--border); background: var(--card);
-  border-radius:6px; padding:0 4px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--chip-bg);
+  border-radius:10px; padding:8px;
 }
 
 /* Calculator sections */
@@ -244,85 +256,55 @@ details.calc {
 details.calc summary { list-style:none; cursor:pointer; padding:6px 4px; border-radius:10px; font-weight:600; }
 details.calc summary::marker, details.calc summary::-webkit-details-marker { display:none; }
 details.calc summary .chev { margin-left:6px; opacity:.6; }
+
 .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .help { font-size:12px; color:var(--muted); margin-top:6px; }
 .small { font-size:12px; }
 
-.extra-form { display:none; }
-.extra-form.active { display:block; }
-
-.checklist {
-  display:flex; flex-direction:column; gap:6px;
-  max-height: 170px; overflow:auto;
-  border:1px solid var(--border);
-  background: var(--chip-bg);
-  border-radius:10px; padding:8px;
-}
-.checkitem {
-  display:flex; align-items:center; justify-content:space-between;
-  gap:8px; padding:6px 8px;
-  border-radius:8px;
-  background: var(--card);
-  border:1px solid var(--border);
-}
-.checkitem-left { display:flex; align-items:center; gap:8px; min-width:0; }
-.checkitem .badge {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  padding: 2px 6px; border-radius: 999px;
-  background: var(--chip-bg); border:1px solid var(--border);
-  color: var(--muted);
-  font-size:11px; flex:0 0 auto;
-}
-.checkitem .vec-text {
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  font-size:13px; color: var(--fg);
-}
-.checkitem input[type="checkbox"] { width:18px; height:18px; flex:0 0 auto; }
-
+/* Mini keypad */
 .mini-keys { display:flex; gap:6px; margin-top:6px; }
 .mini-keys .kbtn {
   padding:6px 10px; border-radius:10px; border:1px solid var(--border);
   background: var(--chip-bg); cursor:pointer;
 }
 
-/* Tắt spinner cho number input */
-input[type=number]::-webkit-outer-spin-button,
-input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-input[type=number] { appearance: textfield; }
+/* ===== Fix viewer chiếm đủ màn hình ===== */
+#viewerWrap { 
+  height: 100%; 
+  display: flex;
+}
+#viewer { 
+  flex: 1 1 auto; 
+  min-height: 0;
+}
 
-/* =================== RESPONSIVE =================== */
-/* Mobile/Tablet < 900px: sidebar thành overlay, viewer full màn */
-@media (max-width: 899.98px) {
-  #hamburger { display: flex; }
+#canvas2d,
+#threeLayer {
+  position: absolute;
+  inset: 0;
+}
 
-  #app {
-    padding: 12px;
-    gap: 0;
-  }
+/* ép canvas ThreeJS fill 100% */
+#threeLayer canvas,
+#viewerWrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
 
-  #sidebar {
-    position: fixed;
-    top: var(--topbar-h);
-    left: 0;
-    height: calc(100vh - var(--topbar-h));
-    width: min(88vw, 360px);
-    max-width: 92vw;
-    background: var(--card);
-    border-right: 1px solid var(--border);
-    box-shadow: 0 8px 30px rgba(0,0,0,.25);
-    transform: translateX(-100%);
-    transition: transform .22s ease-out;
-    z-index: 250;
-    padding: 12px;
+#threeLayer canvas,
+#canvas2d {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
 
-    /* Cho sidebar cuộn được riêng */
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  #sidebar.open { transform: translateX(0); }
+/* Ẩn tất cả form phụ mặc định */
+.extra-form {
+  display: none;
+}
 
-  #viewerWrap {
-    border-radius: 0;
-    border: none;
-  }
+/* Chỉ hiện form nào đang active */
+.extra-form.active {
+  display: block;
 }

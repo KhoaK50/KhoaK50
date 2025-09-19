@@ -7,7 +7,12 @@
   // ---- Global namespace shared by all modules ----
   window.App = window.App || {};
 
-  App.API_BASE = "https://visualization-rr5v.onrender.com"; // ĐỔI thành domain thật của bạn
+  if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
+  App.API_BASE = "http://127.0.0.1:5000";   // chạy local
+} else {
+  App.API_BASE = "https://visualization-rr5v.onrender.com"; // chạy khi deploy Render
+}
+
 
 
   /* ===== Utilities / Debug ===== */
@@ -645,10 +650,12 @@ App.dotProductUI = async function () {
 // --- Projection (chiếu trực giao) ---
 App.projectionUI = async function () {
   const v = App.selectIdToVector(document.getElementById('vProjSelect'));
-  const u = App.selectIdToVector(document.getElementById('v2ProjSelect')); // bạn cần 1 select cho u
-  if (!v || !u) { alert("Chọn đủ vector v và u."); return; }
+  const basis = App.getCheckedVectors(document.getElementById('projBasisChecklist'));
+  if (!v) { alert("Chọn vector cần chiếu."); return; }
+  if (basis.length !== 1) { alert("Chỉ tick đúng 1 vector để làm cơ sở chiếu."); return; }
+
   try {
-    const data = await App.callAPI("projection", { v, u });
+    const data = await App.callAPI("projection", { v, u: basis[0] });
     const proj = Array.isArray(data?.result) ? data.result : null;
     document.getElementById("result_proj").innerText = proj
       ? App.formatVectorShort(proj)
@@ -657,6 +664,8 @@ App.projectionUI = async function () {
     document.getElementById("result_proj").innerText = "Lỗi: " + err.message;
   }
 };
+
+
 
 
 
@@ -696,7 +705,13 @@ App.projectionUI = async function () {
       } else if (op === 'normalize') {
         if (!v1) throw 'Chọn v1';
         payload = { v: v1 }; explain = `normalize(${App.formatVectorShort(v1)}) = `;
-      }
+      } else if (op === 'projection') {
+        if (!v1 || !v2) throw 'Chọn đủ v1, v2';
+        if (v1.length !== v2.length) throw 'Hai vector phải cùng chiều không gian.';
+        payload = { v: v1, u: v2 };
+        explain = `proj_${App.formatVectorShort(v2)}(${App.formatVectorShort(v1)}) = `;
+}
+
     } catch (err) { alert(String(err)); return; }
 
     const mapOpToApi = {
@@ -704,7 +719,8 @@ App.projectionUI = async function () {
       sub: 'sub_vectors',
       scale: 'scale_vector',
       cross: 'cross_product',
-      normalize: 'normalize'
+      normalize: 'normalize',
+      projection: 'projection'
     };
 
     let data = null;
@@ -981,66 +997,44 @@ App.projectionUI = async function () {
     });
 
     // Init 2D/3D layers
-if (window.Vec2D) Vec2D.init2D();
-if (window.Vec3D) Vec3D.init3D();
+    if (window.Vec2D) Vec2D.init2D();
+    if (window.Vec3D) Vec3D.init3D();
 
-// prevent wheel scroll in viewer wrap (so it zooms canvas/three only)
-const viewerWrap = document.getElementById('viewerWrap');
-viewerWrap.addEventListener('wheel', (e) => { e.preventDefault(); }, { passive: false });
+    // prevent wheel scroll in viewer wrap (so it zooms canvas/three only)
+    const viewerWrap = document.getElementById('viewerWrap');
+    viewerWrap.addEventListener('wheel', (e) => { e.preventDefault(); }, { passive: false });
 
-// First show 2D by default
-App.applyTheme();
+    // First show 2D by default
+    App.applyTheme();
+    if (window.Vec2D) Vec2D.show2D();
+    App.redrawAll();
 
-// đảm bảo canvas 2D có nội dung ngay từ đầu
-if (window.Vec2D) {
-  Vec2D.show2D();
-  Vec2D.draw2DAllVectors();
-}
-
-// KHÔNG show3D ở đây, chỉ update helpers thôi
-if (window.Vec3D) {
-  Vec3D.update3DHelpersBase();
-  // chưa gọi show3D, để mặc định 2D hiển thị
-}
-
-// đồng bộ lại
-App.redrawAll({ frame: true });
-
-
-App.log('Ready Z-up.');
-
+    App.log('Ready Z-up.');
 
     // selectors + checklists
     App.refreshCalcVectorOptions();
     App.renderExtraCalcOptions();
 
     // default visible form
-    App.showExtraForm(document.getElementById('opExtraSelect').value);
-    // Hamburger toggle cho mobile
+App.showExtraForm(document.getElementById('opExtraSelect').value);
+
+// Hamburger toggle + overlay
 const burger = document.getElementById('hamburger');
-const sidebar = document.getElementById('sidebar');
-if (burger && sidebar) {
-  burger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    sidebar.classList.toggle('open');
+const controls = document.getElementById('controls');
+const overlay = document.getElementById('overlay');
+
+if (burger && controls && overlay) {
+  burger.addEventListener('click', () => {
+    controls.classList.toggle('open');
+    overlay.classList.toggle('show');
+  });
+
+  // bấm ra ngoài (overlay) thì đóng sidebar
+  overlay.addEventListener('click', () => {
+    controls.classList.remove('open');
+    overlay.classList.remove('show');
   });
 }
-
-const viewerWrap2 = document.getElementById('viewerWrap');
-if (viewerWrap2 && sidebar) {
-  viewerWrap2.addEventListener('pointerdown', () => {
-    sidebar.classList.remove('open');
-  });
-}
-
-
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') sidebar.classList.remove('open');
-});
-
-window.addEventListener('resize', () => {
-  if (window.innerWidth >= 900) sidebar.classList.remove('open');
-});
 
 
   };
@@ -1050,7 +1044,6 @@ window.addEventListener('resize', () => {
     App.init();
     App.log('three typeof: ' + (typeof THREE));
     App.log('OrbitControls ' + (typeof THREE?.OrbitControls));
-    
   });
 
 })();

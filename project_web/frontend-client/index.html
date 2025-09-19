@@ -1,262 +1,111 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <title>VizuVec</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- Three.js r128 -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <meta charset="UTF-8">
+  <title>VizuVec - Trang Chủ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #f8f9fc;
+      --fg: #121314;
+      --primary: #6c63ff;
+      --primary-hover: #5548d9;
+      --border: #e0e0e5;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      padding: 16px 24px;
+      font-size: 20px;
+      font-weight: bold;
+      border-bottom: 1px solid var(--border);
+      background: white;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .content {
+      max-width: 720px;
+    }
+    .content h1 {
+      font-size: 36px;
+      margin-bottom: 16px;
+    }
+    .content p {
+      font-size: 18px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+      color: white;
+    }
+    .btn-primary {
+      background: var(--primary);
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+    }
+    .btn-outline:hover {
+      background: #e8e8ec;
+      color: var(--primary);
+    }
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 14px;
+      color: #666;
+      border-top: 1px solid var(--border);
+      background: white;
+    }
+  </style>
 </head>
-
 <body>
-  <!-- Topbar (cố định, luôn hiện ở cả dọc/lẫn ngang) -->
-  <div id="topbar">
-    <button id="hamburger" aria-label="Mở menu" title="Menu">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="brand">VizuVec</div>
-    <div class="spacer"></div>
-  </div>
-
-  <!-- App layout: viewer + (sidebar overlay chứa controls) -->
-  <div id="app">
-    <!-- Sidebar: overlay trên mobile, panel trái trên desktop -->
-    <aside id="sidebar" aria-label="Thanh công cụ">
-      <div id="controls">
-        <!-- Nhập vector + mini keypad -->
-        <div class="card">
-          <label>Nhập vector: chấp nhận <code>[1,2]</code>, <code>[1/2, sqrt(2)]</code>, <code>[3*sqrt(5)/7, -1/2]</code></label>
-          <input id="vectorInput" placeholder='[1,2] hoặc [1/2, sqrt(2)]' value="[1,2]" />
-          <div class="mini-keys">
-            <button class="kbtn" id="btnInsertSlash">/</button>
-            <button class="kbtn" id="btnInsertSqrt">√</button>
-          </div>
-          <div class="row" style="margin-top:8px">
-            <button id="btnDraw" class="btn primary">Thêm vector</button>
-            <button id="btnAuto">Tự động 2D<->3D: BẬT</button>
-            <button id="btnClearAll" title="Xóa tất cả vector">Xóa hết vector</button>
-          </div>
-        </div>
-
-        <!-- Danh sách vector -->
-        <div class="card">
-          <div style="display:flex; align-items:center; justify-content:space-between;">
-            <label>Danh sách vector</label>
-            <div class="mini-keys">
-              <button class="kbtn" id="btnListSlash">/</button>
-              <button class="kbtn" id="btnListSqrt">√</button>
-            </div>
-          </div>
-          <ul id="vectorList"></ul>
-        </div>
-
-        <!-- Phép tính tạo vector -->
-        <div class="card">
-          <details class="calc" id="calcBox" open>
-            <summary>Phép tính (tạo vector mới) <span class="chev">▾</span></summary>
-            <div class="grid2" style="margin-top:6px">
-              <div>
-                <label>Chọn phép tính:</label>
-                <select id="opSelect">
-                  <option value="add">Cộng (v1 + v2)</option>
-                  <option value="sub">Trừ (v1 – v2)</option>
-                  <option value="scale">Nhân số (k·v)</option>
-                  <option value="cross">Tích có hướng (v1 × v2)</option>
-                  <option value="normalize">Chuẩn hoá (v1 / ‖v1‖)</option>
-                  <option value="projection">Hình chiếu trực giao của v1 lên v2 (proj_v2(v1))</option>
-                </select>
-              </div>
-              <div id="scalarBox" style="display:none">
-                <label>Hệ số k</label>
-                <input id="scalarInp" type="number" step="any" value="2" />
-              </div>
-            </div>
-
-            <div class="grid2" style="margin-top:8px">
-              <div>
-                <label>Vector 1 (v1)</label>
-                <select id="v1Select"></select>
-              </div>
-              <div id="v2Box">
-                <label>Vector 2 (v2)</label>
-                <select id="v2Select"></select>
-              </div>
-            </div>
-
-            <div class="row" style="margin-top:10px">
-              <button id="btnCompute" class="btn primary">Tính & Thêm vào danh sách</button>
-              <button id="btnPreview" title="Chỉ xem kết quả, không thêm">Xem trước</button>
-            </div>
-
-            <div id="calcSteps" class="help">Kết quả phép tính & giải thích sẽ hiển thị ở đây.</div>
-          </details>
-        </div>
-
-        <!-- Phép tính không sinh vector -->
-        <div class="card">
-          <details class="calc" id="calcBoxExtra" open>
-            <summary>Phép tính (không tạo vector mới) <span class="chev">▾</span></summary>
-            <div class="grid2" style="margin-top:6px">
-              <div>
-                <label>Chọn phép tính:</label>
-                <select id="opExtraSelect">
-                  <option value="dot">Tích vô hướng (v1 · v2)</option>
-                  <option value="angle_between">Góc giữa 2 vector</option>
-                  <option value="vector_norm">Độ dài của vector</option>
-                  <option value="coordinates">Tọa độ vector theo cơ sở</option>
-                  <option value="basis">Cơ sở và số chiều</option>
-                  <option value="linear_independence">Kiểm tra độc lập tuyến tính</option>
-                  <option value="rank">Hạng của hệ vector</option>
-                </select>
-              </div>
-            </div>
-
-            <div id="extraForms" style="margin-top:8px">
-              <!-- Dot -->
-              <div id="form-dot" class="extra-form">
-                <label class="small"><b>Tích vô hướng (v1 · v2)</b></label>
-                <div class="grid2">
-                  <div>
-                    <label>Vector 1 (v1)</label>
-                    <select id="v1DotSelect"></select>
-                  </div>
-                  <div>
-                    <label>Vector 2 (v2)</label>
-                    <select id="v2DotSelect"></select>
-                  </div>
-                </div>
-                <div class="row" style="margin-top:6px">
-                  <button id="btnDot">Tính tích vô hướng</button>
-                </div>
-                <pre id="result_dot">—</pre>
-              </div>
-
-              <!-- Projection -->
-              <div id="form-projection" class="extra-form">
-                <label class="small"><b>Hình chiếu trực giao</b></label>
-                <div>
-                  <label>Vector cần chiếu</label>
-                  <select id="vProjSelect"></select>
-                </div>
-                <div style="margin-top:8px">
-                  <label>Chọn vector làm cơ sở chiếu:</label>
-                  <div id="projBasisChecklist" class="checklist"></div>
-                </div>
-                <div class="row" style="margin-top:6px">
-                  <button id="btnProj">Tạo hình chiếu</button>
-                </div>
-                <pre id="result_proj">—</pre>
-              </div>
-
-              <!-- Angle -->
-              <div id="form-angle_between" class="extra-form">
-                <label class="small"><b>Góc giữa 2 vector</b></label>
-                <div class="grid2">
-                  <div>
-                    <label>Vector 1 (v1)</label>
-                    <select id="v1AngleSelect"></select>
-                  </div>
-                  <div>
-                    <label>Vector 2 (v2)</label>
-                    <select id="v2AngleSelect"></select>
-                  </div>
-                </div>
-                <div class="row" style="margin-top:6px">
-                  <button id="btnAngle">Tính góc</button>
-                </div>
-                <pre id="result_angle">—</pre>
-              </div>
-
-              <!-- Norm -->
-              <div id="form-vector_norm" class="extra-form">
-                <label class="small"><b>Độ dài của vector</b></label>
-                <select id="vNormSelect"></select>
-                <div class="row" style="margin-top:6px">
-                  <button id="btnNorm">Tính độ dài</button>
-                </div>
-                <pre id="result_norm">—</pre>
-              </div>
-
-              <!-- Coordinates -->
-              <div id="form-coordinates" class="extra-form">
-                <label class="small"><b>Tọa độ của vector theo cơ sở</b></label>
-                <select id="vCoordSelect"></select>
-                <div style="margin-top:8px">
-                  <label>Chọn các vector làm cơ sở:</label>
-                  <div id="basisCoordChecklist" class="checklist"></div>
-                </div>
-                <div class="row" style="margin-top:6px">
-                  <button id="btnCoord">Xuất tọa độ</button>
-                </div>
-                <pre id="result_coord">—</pre>
-              </div>
-
-              <!-- Basis -->
-              <div id="form-basis" class="extra-form">
-                <label class="small"><b>Cơ sở & Số chiều</b></label>
-                <div id="basisChecklist" class="checklist"></div>
-                <div class="row" style="margin-top:6px">
-                  <button id="btnBasis">Tính cơ sở</button>
-                </div>
-                <pre id="result_basis">—</pre>
-              </div>
-
-              <!-- Independence -->
-              <div id="form-linear_independence" class="extra-form">
-                <label class="small"><b>Kiểm tra độc lập tuyến tính</b></label>
-                <div id="indepChecklist" class="checklist"></div>
-                <div class="row" style="margin-top:6px">
-                  <button id="btnIndep">Kiểm tra</button>
-                </div>
-                <pre id="result_indep">—</pre>
-              </div>
-
-              <!-- Rank -->
-              <div id="form-rank" class="extra-form">
-                <label class="small"><b>Hạng của hệ vector</b></label>
-                <div id="rankChecklist" class="checklist"></div>
-                <div class="row" style="margin-top:6px">
-                  <button id="btnRank">Tính hạng</button>
-                </div>
-                <pre id="result_rank">—</pre>
-              </div>
-            </div>
-          </details>
-        </div>
-
-        <!-- Kết quả -->
-        <div class="card">
-          <label>Kết quả (vector hiện hành):</label>
-          <pre id="coordOut">—</pre>
-        </div>
-
-        <!-- Console -->
-        <div class="card">
-          <label>Console logs</label>
-          <pre id="logOut">—</pre>
-        </div>
+  <header>VizuVec</header>
+  <main>
+    <div class="content">
+      <h1>Khám phá thế giới Vector với VizuVec</h1>
+      <p>
+        VizuVec là công cụ trực quan hóa vector 2D & 3D, giúp bạn dễ dàng thực hiện các phép tính vector, 
+        quan sát hình học, và học kiến thức về không gian vector thông qua hình ảnh, video và LaTeX.
+      </p>
+      <div class="buttons">
+        <a href="calculation.html" class="btn btn-primary">Bắt đầu tính toán</a>
+        <a href="knowledge_info.html" class="btn btn-outline">Tìm hiểu kiến thức</a>
       </div>
-    </aside>
-
-    <!-- Viewer (chiếm toàn bộ phần còn lại, không cuộn) -->
-    <main id="viewerWrap">
-      <div id="themeBadge" class="pill">Theme: Light</div>
-      <div id="modeBadge" class="pill">Mode: 2D</div>
-      <div id="viewer">
-        <canvas id="canvas2d"></canvas>
-        <div id="threeLayer" tabindex="0" aria-label="3D viewer (keyboard enabled)"></div>
-      </div>
-    </main>
-  </div>
-
-  <!-- App scripts -->
-  <script src="main.js"></script>
-  <script src="viewer2D.js"></script>
-  <script src="viewer3D.js"></script>
-
-  
+    </div>
+  </main>
+  <footer>
+    © 2025 VizuVec. Học và trực quan hóa không gian vector.
+  </footer>
 </body>
 </html>
