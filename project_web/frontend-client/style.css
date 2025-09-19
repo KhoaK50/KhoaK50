@@ -314,6 +314,10 @@ input[type=number] { appearance: textfield; }
     transition: transform .22s ease-out;
     z-index: 250;
     padding: 12px;
+
+    /* Cho sidebar cuộn được riêng */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   #sidebar.open { transform: translateX(0); }
 
