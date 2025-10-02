@@ -103,6 +103,20 @@ Vec3D._renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 Vec3D._renderer.setSize(rect.width || 760, rect.height || 760);
 Vec3D._renderer.setPixelRatio(window.devicePixelRatio || 1);
 threeLayer.appendChild(Vec3D._renderer.domElement);
+
+/* === MOBILE TOUCH: bắt toàn bộ gesture cho canvas === */
+const canvas = Vec3D._renderer.domElement;
+// Ngăn trình duyệt scroll/zoom trang, nhường gesture cho OrbitControls
+canvas.style.touchAction = 'none';          // Chrome/Edge/Android
+canvas.style.webkitUserSelect = 'none';
+canvas.style.userSelect = 'none';
+['touchstart','touchmove','touchend','touchcancel'].forEach(ev => {
+  canvas.addEventListener(ev, e => { e.preventDefault(); }, { passive: false });
+});
+// (nếu bạn có dùng CSS2DRenderer)
+if (Vec3D._labelRenderer?.domElement) {
+  Vec3D._labelRenderer.domElement.style.touchAction = 'none';
+}
 // ĐẢM BẢO canvas ở dưới
 Vec3D._renderer.domElement.style.position = 'absolute';
 Vec3D._renderer.domElement.style.inset = '0';
@@ -136,31 +150,31 @@ threeLayer.appendChild(Vec3D._labelRenderer.domElement);
 
     // Orbit controls: cấm zoom
     Vec3D._controls = new THREE.OrbitControls(Vec3D._camera, Vec3D._renderer.domElement);
-    // Cố định gốc quy chiếu cho cả trục lẫn số
-Vec3D.S3D.unitsPerWorld = 1;
-Vec3D.S3D.zoomTarget    = 1;
-Vec3D.S3D.offset.set(0, 0, 0);
-Vec3D.S3D.hasPivot = false;
 
-    Vec3D._controls.enableDamping = true;
-    Vec3D._controls.dampingFactor = 0.07;
-    Vec3D._controls.rotateSpeed = 0.6;
-    Vec3D._controls.enablePan = true;
-    Vec3D._controls.enableZoom = false; // QUAN TRỌNG: camera không zoom
+// Giữ các listener 'change' như cũ của bạn
 
-    // --- KHÓA ZOOM HOÀN TOÀN ---
-Vec3D._controls.enableZoom = false;   // chặn logic zoom
-Vec3D._controls.zoomSpeed = 0;        // dự phòng
+Vec3D._controls.enableDamping = true;
+Vec3D._controls.dampingFactor = 0.07;
+Vec3D._controls.rotateSpeed = 0.6;
+
+Vec3D._controls.enablePan  = true;
+Vec3D._controls.enableZoom = true;   // bật zoom để pinch hoạt động
+Vec3D._controls.zoomSpeed  = 1.0;
 Vec3D._controls.zoomToCursor = false;
-Vec3D._controls.mouseButtons = {      // bỏ dolly ở chuột giữa
-  LEFT: THREE.MOUSE.ROTATE,
-  MIDDLE: THREE.MOUSE.PAN,
-  RIGHT: THREE.MOUSE.PAN
-};
-Vec3D._controls.touches = {           // bỏ pinch-dolly
+
+// Map gesture: 1 ngón xoay, 2 ngón pinch-zoom + pan
+Vec3D._controls.touches = {
   ONE: THREE.TOUCH.ROTATE,
-  TWO: THREE.TOUCH.PAN
+  TWO: THREE.TOUCH.DOLLY_PAN
 };
+
+// Chuột: giữa = zoom, phải = pan
+Vec3D._controls.mouseButtons = {
+  LEFT:   THREE.MOUSE.ROTATE,
+  MIDDLE: THREE.MOUSE.DOLLY,
+  RIGHT:  THREE.MOUSE.PAN
+};
+
 // Wheel = math-zoom (đổi unitsPerWorld), KHÔNG camera zoom
 // Wheel = math-zoom (đổi unitsPerWorld), KHÔNG camera zoom
 const wheelHandler = (e) => {
