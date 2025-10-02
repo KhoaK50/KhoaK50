@@ -2,13 +2,14 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <title>VizuVec</title>
+  <title>Vectoria - Mô hình trực quan </title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 
   <!-- Three.js r128 -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
 </head>
 
 <body>
@@ -19,8 +20,8 @@
       <span></span>
       <span></span>
     </div>
-    <div class="brand">VizuVec</div>
-    <div class="spacer"></div>
+    <div class="brand">Vectoria</div>
+    <div class="spacer" ><div id="themeBadge" class="pill">Theme: Light</div></div>
   </div>
 
   <!-- Overlay để bấm ngoài tắt sidebar -->
@@ -29,8 +30,8 @@
   <div id="app">
     <!-- Sidebar -->
     <div id="controls">
-      <!-- Nhập vector + mini keypad -->
-      <div class="card">
+      <!-- 1) Tạo vector -->
+      <div class="card section-create glow" id="card-create">
         <label>Nhập vector: chấp nhận <code>[1,2]</code>, <code>[1/2, sqrt(2)]</code>, <code>[3*sqrt(5)/7, -1/2]</code></label>
         <input id="vectorInput" placeholder='[1,2] hoặc [1/2, sqrt(2)]' value="[1,2]" />
         <div class="mini-keys">
@@ -44,8 +45,8 @@
         </div>
       </div>
 
-      <!-- Danh sách vector -->
-      <div class="card">
+      <!-- 2) Danh sách vector -->
+      <div class="card section-list glow">
         <div style="display:flex; align-items:center; justify-content:space-between;">
           <label>Danh sách vector</label>
           <div class="mini-keys">
@@ -56,10 +57,11 @@
         <ul id="vectorList"></ul>
       </div>
 
-      <!-- Phép tính tạo vector -->
-      <div class="card">
+      <!-- 3) Phép tính (tạo vector mới) -->
+      <div class="card section-calc-new glow" >
         <details class="calc" id="calcBox" open>
           <summary>Phép tính (tạo vector mới) <span class="chev">▾</span></summary>
+
           <div class="grid2" style="margin-top:6px">
             <div>
               <label>Chọn phép tính:</label>
@@ -98,10 +100,11 @@
         </details>
       </div>
 
-      <!-- Phép tính không sinh vector -->
-      <div class="card">
+      <!-- 4) Phép tính (không tạo vector mới) -->
+      <div class="card section-calc-info glow">
         <details class="calc" id="calcBoxExtra" open>
           <summary>Phép tính (không tạo vector mới) <span class="chev">▾</span></summary>
+
           <div class="grid2" style="margin-top:6px">
             <div>
               <label>Chọn phép tính:</label>
@@ -118,7 +121,7 @@
           </div>
 
           <div id="extraForms" style="margin-top:8px">
-            <!-- Các form phép tính phụ (dot, projection, angle, norm, coordinates, basis, independence, rank) -->
+            <!-- dot -->
             <div id="form-dot" class="extra-form">
               <label class="small"><b>Tích vô hướng (v1 · v2)</b></label>
               <div class="grid2">
@@ -128,6 +131,8 @@
               <div class="row" style="margin-top:6px"><button id="btnDot">Tính tích vô hướng</button></div>
               <pre id="result_dot">—</pre>
             </div>
+
+            <!-- projection -->
             <div id="form-projection" class="extra-form">
               <label class="small"><b>Hình chiếu trực giao</b></label>
               <div><label>Vector cần chiếu</label><select id="vProjSelect"></select></div>
@@ -138,7 +143,8 @@
               <div class="row" style="margin-top:6px"><button id="btnProj">Tạo hình chiếu</button></div>
               <pre id="result_proj">—</pre>
             </div>
-            <!-- Các form khác giữ nguyên cấu trúc -->
+
+            <!-- angle -->
             <div id="form-angle_between" class="extra-form">
               <label class="small"><b>Góc giữa 2 vector</b></label>
               <div class="grid2">
@@ -148,12 +154,16 @@
               <div class="row" style="margin-top:6px"><button id="btnAngle">Tính góc</button></div>
               <pre id="result_angle">—</pre>
             </div>
+
+            <!-- norm -->
             <div id="form-vector_norm" class="extra-form">
               <label class="small"><b>Độ dài của vector</b></label>
               <select id="vNormSelect"></select>
               <div class="row" style="margin-top:6px"><button id="btnNorm">Tính độ dài</button></div>
               <pre id="result_norm">—</pre>
             </div>
+
+            <!-- coordinates -->
             <div id="form-coordinates" class="extra-form">
               <label class="small"><b>Tọa độ của vector theo cơ sở</b></label>
               <select id="vCoordSelect"></select>
@@ -164,18 +174,24 @@
               <div class="row" style="margin-top:6px"><button id="btnCoord">Xuất tọa độ</button></div>
               <pre id="result_coord">—</pre>
             </div>
+
+            <!-- basis -->
             <div id="form-basis" class="extra-form">
               <label class="small"><b>Cơ sở & Số chiều</b></label>
               <div id="basisChecklist" class="checklist"></div>
               <div class="row" style="margin-top:6px"><button id="btnBasis">Tính cơ sở</button></div>
               <pre id="result_basis">—</pre>
             </div>
+
+            <!-- independence -->
             <div id="form-linear_independence" class="extra-form">
               <label class="small"><b>Kiểm tra độc lập tuyến tính</b></label>
               <div id="indepChecklist" class="checklist"></div>
               <div class="row" style="margin-top:6px"><button id="btnIndep">Kiểm tra</button></div>
               <pre id="result_indep">—</pre>
             </div>
+
+            <!-- rank -->
             <div id="form-rank" class="extra-form">
               <label class="small"><b>Hạng của hệ vector</b></label>
               <div id="rankChecklist" class="checklist"></div>
@@ -185,14 +201,11 @@
           </div>
         </details>
       </div>
-
-      <div class="card"><label>Kết quả (vector hiện hành):</label><pre id="coordOut">—</pre></div>
-      <div class="card"><label>Console logs</label><pre id="logOut">—</pre></div>
     </div>
 
     <!-- Viewer -->
     <div id="viewerWrap">
-      <div id="themeBadge" class="pill">Theme: Light</div>
+      
       <div id="modeBadge" class="pill">Mode: 2D</div>
       <div id="viewer">
         <canvas id="canvas2d"></canvas>
@@ -202,10 +215,10 @@
   </div>
 
   <!-- App scripts -->
+  
+
   <script src="main.js"></script>
   <script src="viewer2D.js"></script>
   <script src="viewer3D.js"></script>
-
-  
 </body>
 </html>

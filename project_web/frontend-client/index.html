@@ -2,8 +2,14 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>VizuVec - Trang Chủ</title>
+  <title>Vectoria - Trang Chủ</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="logo.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="logo.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+
   <style>
     :root {
       --bg: #f8f9fc;
@@ -22,11 +28,17 @@
       min-height: 100vh;
     }
     header {
-      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
       font-size: 20px;
       font-weight: bold;
       border-bottom: 1px solid var(--border);
       background: white;
+    }
+    header img {
+      height: 60px;         /* chỉnh kích thước logo */
+      margin-right: 10px;   /* cách chữ một khoảng */
     }
     main {
       flex: 1;
@@ -90,13 +102,17 @@
   </style>
 </head>
 <body>
-  <header>VizuVec</header>
+  <header>
+    <img src="logo+name.png" alt="Vectoria Logo">
+    <span></span>
+  </header>
+
   <main>
     <div class="content">
-      <h1>Khám phá thế giới Vector với VizuVec</h1>
+      <h1>Khám phá Không gian Vector với Vectoria</h1>
       <p>
-        VizuVec là công cụ trực quan hóa vector 2D & 3D, giúp bạn dễ dàng thực hiện các phép tính vector, 
-        quan sát hình học, và học kiến thức về không gian vector thông qua hình ảnh, video và LaTeX.
+        Vectoria là công cụ trực quan hóa vector 2D & 3D, giúp bạn dễ dàng thực hiện các phép tính vector, 
+        quan sát hình học, và học kiến thức về Không gian vector thông qua video và mô hình tương tác động.
       </p>
       <div class="buttons">
         <a href="calculation.html" class="btn btn-primary">Bắt đầu tính toán</a>
@@ -104,8 +120,9 @@
       </div>
     </div>
   </main>
+
   <footer>
-    © 2025 VizuVec. Học và trực quan hóa không gian vector.
+    © 2025 Vectoria. Học và trực quan hóa Không gian vector.
   </footer>
 </body>
 </html>

@@ -84,7 +84,8 @@
       colorHex: computeVectorColorHex(hue),
       haloCss: App.theme === 'dark' ? `hsl(${hue} 95% 80%)` : `hsl(${hue} 80% 30%)`,
       haloHex: computeHaloHex(hue, App.theme),
-      highlighted: false,
+      focus: false,
+      visible: true,
     };
   }
   App.refreshHaloColors = function () {
@@ -189,41 +190,49 @@
     return null;
   }
 
-  App.formatScalar = function (x) {
-    if (!isFinite(x)) return String(x);
-    if (Math.abs(x) < 1e-12) return "0";
-    if (isNearlyInt(x)) return String(Math.round(x));
-    const rat = rationalApprox(x, 10000, 1e-12);
-    if (rat) {
-      const n = rat.n, d = rat.d;
-      if (d === 1) return String(n);
-      return `${n}/${d}`;
-    }
-    const rad = approxRadical(x, 1e-9);
-    if (rad) return rad;
-    return Number(x.toFixed(6)).toString();
-  };
+  App.formatScalar = function (x, dec = 6) {
+  if (!isFinite(x)) return String(x);
+  const ax = Math.abs(x);
+
+  // dùng e-notation cho số rất lớn/nhỏ
+  if (ax >= 1e6 || (ax > 0 && ax < 1e-6)) {
+    return x.toExponential(2).replace('+','');
+  }
+
+  if (ax < 1e-12) return "0";
+  if (isNearlyInt(x)) return String(Math.round(x));
+
+  const rat = rationalApprox(x, 10000, 1e-12);
+  if (rat) {
+    const { n, d } = rat;
+    return d === 1 ? String(n) : `${n}/${d}`;
+  }
+
+  const rad = approxRadical(x, 1e-9);
+  if (rad) return rad;
+
+  let s = x.toFixed(dec).replace(/\.?0+$/,'');
+  return s === '-0' ? '0' : s;
+};
+
   App.formatVectorShort = (vec) => `[${vec.map(App.formatScalar).join(", ")}]`;
   App.formatTip = (vec) => `(${vec.map(App.formatScalar).join(", ")})`;
 
     // === Reset angle overlay (2D & 3D) ===
-  App.clearAngleOverlay = function () {
-    // xóa trạng thái 2D
-    App.currentAngleVisual2D = null;
-    const angEl = document.getElementById("result_angle");
-    if (angEl) angEl.innerText = "—";
+  // === Reset angle overlay (2D & 3D) ===
+App.clearAngleOverlay = function () {
+  // 2D
+  App.currentAngleVisual2D = null;
+  const angEl = document.getElementById("result_angle");
+  if (angEl) angEl.innerText = "—";
 
-    // xóa mesh 3D nếu đang có
-    if (App.currentAngleVisual3D && window.Vec3D) {
-      Vec3D._scene.remove(App.currentAngleVisual3D);
-      App.currentAngleVisual3D.traverse(obj => {
-        obj.geometry?.dispose?.();
-        if (obj.material) { obj.material.map?.dispose?.(); obj.material.dispose?.(); }
-      });
-      App.currentAngleVisual3D = null;
-      if (App.mode === '3D') Vec3D.hardRefresh3D(false);
-    }
-  };
+  // 3D (cơ chế mới: giao cho Vec3D tự dọn đúng parent)
+  if (window.Vec3D) {
+    Vec3D.clearAngle();
+    if (App.mode === '3D') Vec3D.hardRefresh3D(false);
+  }
+};
+
 
   /* ===== Parser cho input vector: hỗ trợ phân số & sqrt ===== */
   function splitTopLevelByComma(s) {
@@ -278,17 +287,31 @@
 
   /* ===== THEME ===== */
   App.applyTheme = function () {
-    document.body.classList.toggle('dark', App.theme === 'dark');
-    const themeBadge = document.getElementById('themeBadge');
-    if (themeBadge) themeBadge.textContent = `Theme: ${App.theme === 'dark' ? 'Dark' : 'Light'}`;
-    App.refreshHaloColors();
-    if (App.mode === '2D' && window.Vec2D) Vec2D.draw2DAllVectors();
-    if (window.Vec3D && Vec3D._scene) {
-      Vec3D._scene.background = new THREE.Color(App.getCSS('--bg'));
-      Vec3D.update3DHelpersBase();
-      Vec3D.hardRefresh3D(false);
-    }
-  };
+  document.body.classList.toggle('dark', App.theme === 'dark');
+  const themeBadge = document.getElementById('themeBadge');
+  if (themeBadge) themeBadge.textContent = `Theme: ${App.theme === 'dark' ? 'Dark' : 'Light'}`;
+
+  App.refreshHaloColors();
+
+  if (App.mode === '2D' && window.Vec2D) {
+    Vec2D.draw2DAllVectors();
+  }
+
+  if (window.Vec3D && Vec3D._scene) {
+    Vec3D._scene.background = new THREE.Color(App.getCSS('--bg'));
+    Vec3D.update3DHelpersBase();
+    Vec3D.hardRefresh3D(false);
+    // đang có quạt 3D → chỉ refresh màu
+    if (App.currentAngleVisual3D) Vec3D.refreshAngleTheme();
+  }
+
+  // đang ở 2D và có quạt 2D → vẽ lại để ăn màu mới
+  if (App.mode === '2D' && App.currentAngleVisual2D && window.Vec2D) {
+    const g2 = App.currentAngleVisual2D;
+    Vec2D.drawAngleArc2D(g2.a, g2.b, g2.deg);
+  }
+};
+
   App.toggleTheme = function () { App.theme = App.theme === 'light' ? 'dark' : 'light'; App.applyTheme(); };
 
   /* ===== MODE ===== */
@@ -298,18 +321,100 @@
     if (btn) btn.textContent = App.autoMode ? 'Tự động 2D<->3D: BẬT' : 'Tự động 2D<->3D: TẮT';
   };
 
-  App.toggleMode = function () {
-    const to3D = (App.mode === '2D');
-    App.mode = to3D ? '3D' : '2D';
-    const modeBadge = document.getElementById('modeBadge');
-    if (modeBadge) modeBadge.textContent = `Mode: ${App.mode}`;
-    if (to3D) {
-      App.redrawAll({ frame: true });
-      if (window.Vec3D) Vec3D.hardRefresh3D(true);
-    } else {
-      App.redrawAll({ frame: false });
+  // Giữ/quy đổi overlay góc khi đổi mode
+// Giữ/quy đổi overlay góc khi đổi mode
+App._portAngleOverlay = function (toMode) {
+  if (toMode === '3D') {
+    if (!window.Vec3D) return;
+    // đã có quạt 3D → chỉ refresh màu
+    if (App.currentAngleVisual3D) {
+      Vec3D.refreshAngleTheme();
+      return;
     }
-  };
+    // mang góc 2D sang 3D (z=0)
+    const g2 = App.currentAngleVisual2D;
+    if (g2 && Array.isArray(g2.a) && Array.isArray(g2.b)) {
+      // nhận cả number lẫn chuỗi có ký hiệu ° (vd "8.1°")
+      const parseDeg = (x) =>
+        (typeof x === 'number' && isFinite(x))
+          ? x
+          : parseFloat(String(x).replace(/[^\d+\-eE.]/g, ''));
+      const deg = parseDeg(g2.deg);
+      if (!isFinite(deg)) return;   // không vẽ nếu vẫn không parse được
+      const rad = deg * Math.PI / 180;
+      Vec3D.drawAngleArc3D(
+        [g2.a[0], g2.a[1], 0],
+        [g2.b[0], g2.b[1], 0],
+        rad, deg
+      );
+    }
+
+  } else if (toMode === '2D') {
+    if (!window.Vec2D) return;
+    // đã có quạt 2D → vẽ lại để ăn theme
+    if (App.currentAngleVisual2D) {
+      Vec2D.drawAngleArc2D(
+        App.currentAngleVisual2D.a,
+        App.currentAngleVisual2D.b,
+        App.currentAngleVisual2D.deg
+      );
+      return;
+    }
+    // mang góc 3D về 2D (lấy thành phần x,y)
+    const g3 = App.currentAngleVisual3D;
+    const src = g3?.userData?.angleMeta?.src;
+    if (src?.a && src?.b) {
+      const ax = src.a[0] || 0, ay = src.a[1] || 0;
+      const bx = src.b[0] || 0, by = src.b[1] || 0;
+      const la = Math.hypot(ax, ay), lb = Math.hypot(bx, by);
+      if (la > 1e-9 && lb > 1e-9) {
+        let c = (ax * bx + ay * by) / (la * lb);
+        c = Math.max(-1, Math.min(1, c));
+        const rad = Math.acos(c);
+        const deg = rad * 180 / Math.PI;
+        Vec2D.drawAngleArc2D([ax, ay], [bx, by], deg);
+      }
+    }
+  }
+};
+
+
+
+  App.toggleMode = function () {
+  const to3D = (App.mode === '2D');
+  App.mode = to3D ? '3D' : '2D';
+  const modeBadge = document.getElementById('modeBadge');
+  if (modeBadge) modeBadge.textContent = `Mode: ${App.mode}`;
+
+  if (to3D) {
+    if (window.Vec3D) {
+      if (!Vec3D._scene) Vec3D.init3D();
+      // reset math-zoom
+      Vec3D.S3D.unitsPerWorld = 1;
+      Vec3D.S3D.zoomTarget    = 1;
+      Vec3D.S3D.offset.set(0,0,0);
+      Vec3D.S3D.hasPivot = false;
+      Vec3D._lastUForVectors = 1;
+
+      Vec3D.show3D();
+      Vec3D.hardRefresh3D(true);
+
+      // GIỮ/GHIM GÓC sang 3D
+      App._portAngleOverlay('3D');
+    }
+  } else {
+    if (window.Vec2D) {
+      Vec2D.show2D();
+      Vec2D.draw2DAllVectors();
+
+      // GIỮ/GHIM GÓC sang 2D
+      App._portAngleOverlay('2D');
+    }
+  }
+};
+
+
+
 
   App.displayIndexOf = (item) => App.vectorList.indexOf(item) + 1;
 
@@ -352,121 +457,134 @@
   App.optionLabelFor = (it) => `#${App.displayIndexOf(it)} ${App.formatVectorShort(it.vec)}`;
 
   App.renderVectorList = function () {
-    const el = document.getElementById('vectorList');
-    if (!el) return;
-    el.innerHTML = '';
+  const el = document.getElementById('vectorList');
+  if (!el) return;
+  el.innerHTML = '';
 
-    for (const item of App.vectorList) {
-      const li = document.createElement('li');
-      li.className = 'vec-item' + (item.highlighted ? ' active' : '');
+  for (const item of App.vectorList) {
+    const li = document.createElement('li');
+    li.className = 'vec-item hover-gradient' + (item.highlighted ? ' active' : '');
 
-      const sw = document.createElement('div');
-      sw.className = 'sw';
-      sw.style.background = item.colorCss;
+    // ô màu
+    const sw = document.createElement('div');
+    sw.className = 'sw';
+    sw.style.background = item.colorCss;
 
-      const tag = document.createElement('span');
-      tag.className = 'tag';
-      tag.textContent = `#${App.displayIndexOf(item)}`;
+    // khối phải gồm 2 hàng: header (tag + input) và actions (3 nút)
+    const main = document.createElement('div');
+    main.className = 'vec-main';
 
-      const lbl = document.createElement('input');
-      lbl.className = 'lbl';
-      lbl.value = App.formatVectorShort(item.vec);
-      lbl.title = App.formatVectorShort(item.vec);
+    // hàng 1: tag + input tọa độ
+    const header = document.createElement('div');
+    header.className = 'vec-header';
 
-      lbl.addEventListener('focus', () => { App.currentListInput = lbl; });
-      lbl.addEventListener('blur', () => { if (App.currentListInput === lbl) App.currentListInput = null; });
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = `#${App.displayIndexOf(item)}`;
 
-      lbl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          try {
-            const v = App.parseVectorExpr(lbl.value);
-            item.vec = v;
-            App.currentVector = v.slice();
-            lbl.value = App.formatVectorShort(v);
-            lbl.title = App.formatVectorShort(v);
-            App.clearAngleOverlay();      // xoá góc quét cũ
-            App.updateCalcSelectLabels(); // cập nhật nhãn trong các <select>
-            if (App.autoMode) {
-              const newMode = (v.length === 3) ? '3D' : '2D';
-              if (App.mode !== newMode) {
-                App.mode = newMode;
-                const modeBadge = document.getElementById('modeBadge');
-                if (modeBadge) modeBadge.textContent = `Mode: ${App.mode}`;
-                App.redrawAll({ frame: true });
-              }
+    const lbl = document.createElement('input');
+    lbl.className = 'lbl';
+    lbl.value = App.formatVectorShort(item.vec);
+    lbl.title = App.formatVectorShort(item.vec);
+
+    // ghi nhớ input đang focus để / và √ hoạt động
+    lbl.addEventListener('focus', () => { App.currentListInput = lbl; });
+    lbl.addEventListener('blur',  () => { if (App.currentListInput === lbl) App.currentListInput = null; });
+
+    // enter để cập nhật vector
+    lbl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        try {
+          const v = App.parseVectorExpr(lbl.value);
+          item.vec = v;
+          App.currentVector = v.slice();
+          lbl.value = App.formatVectorShort(v);
+          lbl.title = App.formatVectorShort(v);
+          App.clearAngleOverlay();
+          App.updateCalcSelectLabels();
+
+          if (App.autoMode) {
+            const newMode = (v.length === 3) ? '3D' : '2D';
+            if (App.mode !== newMode) {
+              App.mode = newMode;
+              const modeBadge = document.getElementById('modeBadge');
+              if (modeBadge) modeBadge.textContent = `Mode: ${App.mode}`;
+              App.redrawAll({ frame: true });
             }
-            if (App.mode === '3D' && window.Vec3D) Vec3D.hardRefresh3D(false);
-            else if (window.Vec2D) Vec2D.draw2DAllVectors();
-
-            // tắt góc quét khi vector thay đổi
-            App.currentAngleVisual2D = null;
-            if (App.currentAngleVisual3D && window.Vec3D) {
-              Vec3D._scene.remove(App.currentAngleVisual3D);
-              App.currentAngleVisual3D = null;
-            }
-
-          } catch (err) {
-            alert("Sai định dạng vector: " + err);
-            lbl.value = App.formatVectorShort(item.vec);
-            lbl.title = App.formatVectorShort(item.vec);
           }
+          if (App.mode === '3D' && window.Vec3D) Vec3D.hardRefresh3D(false);
+          else if (window.Vec2D) Vec2D.draw2DAllVectors();
+        } catch (err) {
+          alert("Sai định dạng vector: " + err);
+          lbl.value = App.formatVectorShort(item.vec);
+          lbl.title = App.formatVectorShort(item.vec);
         }
-        if (e.key === '/' && !e.ctrlKey) {
-          e.preventDefault();
-          App.insertAtCursor(lbl, '/');
-        }
-        if (e.key === '√' || e.key.toLowerCase() === 'r') {
-          e.preventDefault();
-          App.insertSqrt(lbl);
-        }
-      });
+      }
+      // hỗ trợ / và √
+      if (e.key === '/' && !e.ctrlKey) { e.preventDefault(); App.insertAtCursor(lbl, '/'); }
+      if (e.key === '√' || e.key.toLowerCase() === 'r') { e.preventDefault(); App.insertSqrt(lbl); }
+    });
 
-      const haloBtn = document.createElement('button');
-      haloBtn.className = 'btn';
-      haloBtn.textContent = item.highlighted ? 'Halo ON' : 'Halo OFF';
-      haloBtn.onclick = (e) => {
-        e.stopPropagation();
-        item.highlighted = !item.highlighted;
-        haloBtn.textContent = item.highlighted ? 'Halo ON' : 'Halo OFF';
-        li.classList.toggle('active', item.highlighted);
-        if (App.mode === '3D' && window.Vec3D) Vec3D.hardRefresh3D(false);
-        else if (window.Vec2D) Vec2D.draw2DAllVectors();
-      };
+    header.appendChild(tag);
+    header.appendChild(lbl);
 
-      const del = document.createElement('button');
-      del.className = 'btn';
-      del.textContent = 'Xóa';
-      del.onclick = (e) => {
-        e.stopPropagation();
-        const idx = App.vectorList.findIndex(v => v.id === item.id);
-        if (idx >= 0) App.vectorList.splice(idx, 1);
-        App.usedHues.delete(item.hue);
-        App.clearAngleOverlay();
+    // hàng 2: ba nút
+    const actions = document.createElement('div');
+    actions.className = 'vec-actions';
 
-        App.renderVectorList();
-        App.refreshCalcVectorOptions();
-        App.renderExtraCalcOptions();
-        if (App.mode === '3D' && window.Vec3D) Vec3D.hardRefresh3D(false);
-        else if (window.Vec2D) Vec2D.draw2DAllVectors();
+    const focusBtn = document.createElement('button');
+    focusBtn.className = 'btn';
+    focusBtn.textContent = item.focus ? 'Chú ý: BẬT' : 'Chú ý: TẮT';
+    focusBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (!item.focus) App.vectorList.forEach(v => v.focus = false);
+      item.focus = !item.focus;
+      App.renderVectorList();
+      if (App.mode === '3D' && window.Vec3D) Vec3D.hardRefresh3D(false);
+      else if (window.Vec2D) Vec2D.draw2DAllVectors();
+    };
 
-        // tắt góc quét khi danh sách thay đổi
-        App.currentAngleVisual2D = null;
-        if (App.currentAngleVisual3D && window.Vec3D) {
-          Vec3D._scene.remove(App.currentAngleVisual3D);
-          App.currentAngleVisual3D = null;
-        }
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'btn';
+    toggleBtn.textContent = item.visible ? 'Ẩn' : 'Hiện';
+    toggleBtn.onclick = (e) => {
+      e.stopPropagation();
+      item.visible = !item.visible;
+      toggleBtn.textContent = item.visible ? 'Ẩn' : 'Hiện';
+      if (App.mode === '3D' && window.Vec3D) Vec3D.hardRefresh3D(false);
+      else if (window.Vec2D) Vec2D.draw2DAllVectors();
+    };
 
-      };
+    const del = document.createElement('button');
+    del.className = 'btn';
+    del.textContent = 'Xóa';
+    del.onclick = (e) => {
+      e.stopPropagation();
+      const idx = App.vectorList.findIndex(v => v.id === item.id);
+      if (idx >= 0) App.vectorList.splice(idx, 1);
+      App.usedHues.delete(item.hue);
+      App.clearAngleOverlay();
+      App.renderVectorList();
+      App.refreshCalcVectorOptions();
+      App.renderExtraCalcOptions();
+      if (App.mode === '3D' && window.Vec3D) Vec3D.hardRefresh3D(false);
+      else if (window.Vec2D) Vec2D.draw2DAllVectors();
+    };
 
-      li.appendChild(sw);
-      li.appendChild(tag);
-      li.appendChild(lbl);
-      li.appendChild(haloBtn);
-      li.appendChild(del);
-      el.appendChild(li);
-    }
-  };
+    actions.appendChild(focusBtn);
+    actions.appendChild(toggleBtn);
+    actions.appendChild(del);
+
+    main.appendChild(header);
+    main.appendChild(actions);
+
+    li.appendChild(sw);
+    li.appendChild(main);
+    el.appendChild(li);
+  }
+};
+
 
   App.getFocusedVectorInput = function () {
     return document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('lbl')
@@ -478,6 +596,7 @@
     App.vectorList.length = 0;
     App.usedHues.clear();
     App.currentAngleVisual2D = null;
+    if (window.Vec3D) Vec3D.clearAngle();
     if (App.currentAngleVisual3D && window.Vec3D) {
       Vec3D._scene.remove(App.currentAngleVisual3D);
       App.currentAngleVisual3D = null;
@@ -748,11 +867,9 @@ App.projectionUI = async function () {
       else if (window.Vec2D) Vec2D.draw2DAllVectors();
 
       // tắt góc quét khi sinh vector mới
-      App.currentAngleVisual2D = null;
-      if (App.currentAngleVisual3D && window.Vec3D) {
-        Vec3D._scene.remove(App.currentAngleVisual3D);
-        App.currentAngleVisual3D = null;
-      }
+App.currentAngleVisual2D = null;
+if (window.Vec3D) Vec3D.clearAngle();
+
 
     } else {
       App.previewVector(vec);
@@ -766,15 +883,30 @@ App.projectionUI = async function () {
       App.firstDrawForVector = false;
       Vec2D.draw2DAllVectors();
     } else if (window.Vec3D) {
-      if (App._previewTemp) { Vec3D._scene.remove(App._previewTemp); App._previewTemp = null; }
-      const v3 = vec.length === 3 ? vec : [vec[0], vec[1], 0];
-      const grp = Vec3D.buildVectorGroup3D(v3, '#bdbdbd', '#d0d0d0', false);
-      const proj = Vec3D.buildProjectionGroupZUp(v3, '#555');
-      const tip = Vec3D.buildTipLabel(v3, App.getCSS('--label-fg'), App.getCSS('--label-bg'));
-      const g = new THREE.Group(); g.add(grp); g.add(proj); g.add(tip);
-      Vec3D._scene.add(g); App._previewTemp = g;
-      Vec3D.hardRefresh3D(false);
-    }
+  if (App._previewTemp) { Vec3D._scene.remove(App._previewTemp); App._previewTemp = null; }
+
+  // vec -> v3 (math coords, bảo đảm có z)
+  const v3 = vec.length === 3 ? vec : [vec[0], vec[1], 0];
+
+  // math -> WORLD
+  const u = Math.max(1e-12, Vec3D.S3D.unitsPerWorld);
+  const tipWorld = new THREE.Vector3(v3[0] * u, v3[1] * u, v3[2] * u);
+
+  // Dựng arrow/projection theo WORLD
+  const grp  = Vec3D.buildVectorGroup3D([tipWorld.x, tipWorld.y, tipWorld.z], '#bdbdbd');
+  const proj = Vec3D.buildProjectionGroupZUp([tipWorld.x, tipWorld.y, tipWorld.z], '#555');
+
+  // Label: text dùng toạ độ toán, vị trí WORLD
+  const tip = Vec3D.buildTipLabel(App.formatTip(v3), tipWorld);
+
+  const g = new THREE.Group();
+  g.add(grp, proj, tip);
+  Vec3D._scene.add(g);
+  App._previewTemp = g;
+
+  Vec3D.hardRefresh3D(false);
+}
+
     App.coordOut(App.formatTip(vec));
   };
 

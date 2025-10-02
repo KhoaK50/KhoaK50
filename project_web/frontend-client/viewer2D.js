@@ -274,50 +274,67 @@
 
   // ---------- Rendering ----------
   Vec2D.render2DGrid = function () {
-    const w = canvas2d.width, h = canvas2d.height;
-    const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY, px = Vec2D.S2D.pxPerUnit;
+  const w = canvas2d.width, h = canvas2d.height;
+  const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY, px = Vec2D.S2D.pxPerUnit;
 
-    ctx2d.fillStyle = App.getCSS('--card');
-    ctx2d.fillRect(0, 0, w, h);
+  ctx2d.fillStyle = App.getCSS('--card');
+  ctx2d.fillRect(0, 0, w, h);
 
-    const unitsHalfX = (w / 2) / px, unitsHalfY = (h / 2) / px;
-    const unitsRange = Math.max(unitsHalfX, unitsHalfY) * 2;
-    const stepUnit = App.niceStep(unitsRange), tickPx = stepUnit * px;
+  const unitsHalfX = (w / 2) / px, unitsHalfY = (h / 2) / px;
+  const unitsRange = Math.max(unitsHalfX, unitsHalfY) * 2;
+  const stepUnit = App.niceStep(unitsRange), tickPx = stepUnit * px;
 
-    ctx2d.strokeStyle = App.getCSS('--grid-light'); ctx2d.lineWidth = 1;
-    for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
-      const x = cx + k * tickPx; ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
-    }
-    for (let k = Math.floor((cy - h) / tickPx) - 1; k <= Math.ceil((cy + h) / tickPx) + 1; k++) {
-      const y = cy - k * tickPx; ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
-    }
+  // --- Vẽ lưới phụ (subgrid) ---
+  const subDiv = 5; // chia mỗi ô thành 5x5 (có thể đổi thành 25 nếu muốn)
+  const subTickPx = tickPx / subDiv;
+  ctx2d.strokeStyle = App.getCSS('--grid-light');
+  ctx2d.lineWidth = 0.5;
+  for (let x = cx % subTickPx; x <= w; x += subTickPx) {
+    ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
+  }
+  for (let y = cy % subTickPx; y <= h; y += subTickPx) {
+    ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
+  }
 
-    ctx2d.strokeStyle = App.getCSS('--axis'); ctx2d.lineWidth = 2;
-    ctx2d.beginPath(); ctx2d.moveTo(0, cy); ctx2d.lineTo(w, cy); ctx2d.stroke();
-    ctx2d.beginPath(); ctx2d.moveTo(cx, 0); ctx2d.lineTo(cx, h); ctx2d.stroke();
+  // --- Vẽ lưới chính ---
+  ctx2d.strokeStyle = App.getCSS('--grid-light');
+  ctx2d.lineWidth = 1.2;
+  for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
+    const x = cx + k * tickPx; ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
+  }
+  for (let k = Math.floor((cy - h) / tickPx) - 1; k <= Math.ceil((cy + h) / tickPx) + 1; k++) {
+    const y = cy - k * tickPx; ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
+  }
 
-    ctx2d.fillStyle = App.getCSS('--fg'); ctx2d.font = '12px sans-serif';
-    ctx2d.textAlign = 'center'; ctx2d.textBaseline = 'top';
-    for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
-      const unitVal = k * stepUnit; if (Math.abs(unitVal) <= 1e-12) continue; const x = cx + k * tickPx;
-      ctx2d.fillText(formatLabel(unitVal), x, cy + 6);
-    }
-    ctx2d.textAlign = 'left'; ctx2d.textBaseline = 'middle';
-    for (let k = Math.floor((cy - h) / tickPx) - 1; k <= Math.ceil((cy + h) / tickPx) + 1; k++) {
-      const unitVal = k * stepUnit; if (Math.abs(unitVal) <= 1e-12) continue; const y = cy - k * tickPx;
-      ctx2d.fillText(formatLabel(unitVal), cx + 6, y);
-    }
-    ctx2d.textAlign = 'left'; ctx2d.textBaseline = 'top'; ctx2d.fillText('0', cx + 4, cy + 4);
+  // --- Trục to ---
+  ctx2d.strokeStyle = App.getCSS('--axis'); ctx2d.lineWidth = 2;
+  ctx2d.beginPath(); ctx2d.moveTo(0, cy); ctx2d.lineTo(w, cy); ctx2d.stroke();
+  ctx2d.beginPath(); ctx2d.moveTo(cx, 0); ctx2d.lineTo(cx, h); ctx2d.stroke();
 
-    function formatLabel(v) {
-      if (v === 0) return '0';
-      const abs = Math.abs(v);
-      if (abs >= 1e6 || abs < 1e-6) return v.toExponential(0).replace('+', '');
-      return Number(v.toFixed(6)).toString();
-    }
+  // --- Label ---
+  ctx2d.fillStyle = App.getCSS('--fg'); ctx2d.font = '12px sans-serif';
+  ctx2d.textAlign = 'center'; ctx2d.textBaseline = 'top';
+  for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
+    const unitVal = k * stepUnit; if (Math.abs(unitVal) <= 1e-12) continue; const x = cx + k * tickPx;
+    ctx2d.fillText(formatLabel(unitVal), x, cy + 6);
+  }
+  ctx2d.textAlign = 'left'; ctx2d.textBaseline = 'middle';
+  for (let k = Math.floor((cy - h) / tickPx) - 1; k <= Math.ceil((cy + h) / tickPx) + 1; k++) {
+    const unitVal = k * stepUnit; if (Math.abs(unitVal) <= 1e-12) continue; const y = cy - k * tickPx;
+    ctx2d.fillText(formatLabel(unitVal), cx + 6, y);
+  }
+  ctx2d.textAlign = 'left'; ctx2d.textBaseline = 'top'; ctx2d.fillText('0', cx + 4, cy + 4);
 
-    return { cx, cy, px, stepUnit };
-  };
+  function formatLabel(v) {
+    if (v === 0) return '0';
+    const abs = Math.abs(v);
+    if (abs >= 1e6 || abs < 1e-6) return v.toExponential(0).replace('+', '');
+    return Number(v.toFixed(6)).toString();
+  }
+
+  return { cx, cy, px, stepUnit };
+};
+
 
   function draw2DVectorSingle(v, color, haloColor, highlighted) {
     const { cx, cy, px } = Vec2D.gridInfo2D;
@@ -358,10 +375,15 @@
 
     Vec2D.gridInfo2D = Vec2D.render2DGrid();
 
-    for (const it of App.vectorList) {
-      const v2 = it.vec.length === 2 ? it.vec : [it.vec[0], it.vec[1]];
-      draw2DVectorSingle(v2, it.colorCss, it.haloCss, it.highlighted);
-    }
+    // Nếu có vector đang được focus thì chỉ vẽ nó, ngược lại vẽ các vector visible
+const focused = App.vectorList.find(v => v.focus);
+const toDraw = focused ? [focused] : App.vectorList.filter(v => v.visible);
+
+for (const it of toDraw) {
+  const v2 = it.vec.length === 2 ? it.vec : [it.vec[0], it.vec[1]];
+  draw2DVectorSingle(v2, it.colorCss, it.haloCss, it.focus); 
+}
+
 
     if (App.currentAngleVisual2D) _drawAngleArc2DOverlay(App.currentAngleVisual2D);
 
@@ -373,9 +395,9 @@
 
   // Public: set new angle state and trigger redraw
   Vec2D.drawAngleArc2D = function (v1, v2, deg) {
-    App.currentAngleVisual2D = { a: [v1[0], v1[1]], b: [v2[0], v2[1]], deg: Number(deg) };
-    Vec2D.draw2DAllVectors();
-  };
+  App.currentAngleVisual2D = { a: [v1[0], v1[1]], b: [v2[0], v2[1]], deg: Number(deg) };
+  Vec2D.draw2DAllVectors();  // chỉ vẽ lại, KHÔNG gán lần 2
+};
 
   function _drawAngleArc2DOverlay(state) {
   if (!Vec2D.gridInfo2D || !state) return;
@@ -408,16 +430,21 @@
 
   // Ghi nhãn ở giữa cung
   const mid = angA + delta / 2;
-  const tx = cx + Math.cos(mid) * (r * 1.2);
-  const ty = cy + Math.sin(mid) * (r * 1.2);
-  const degShow = (state.deg != null) ? state.deg : Math.abs(delta * 180 / Math.PI);
+// đẩy ra ngoài cung thêm ~16px để không “dí sát” vào cung
+const padPx = 16;
+const tx = cx + Math.cos(mid) * (r + padPx);
+const ty = cy + Math.sin(mid) * (r + padPx);
 
-  ctx2d.font = "14px sans-serif";
-  ctx2d.textAlign = "center";
-  ctx2d.textBaseline = "middle";
-  ctx2d.fillStyle = App.getCSS('--fg');
-  ctx2d.fillText(`${degShow.toFixed(1)}°`, tx, ty);
-  ctx2d.restore();
+const degShow = (state.deg != null) ? state.deg : Math.abs(delta * 180 / Math.PI);
+
+ctx2d.font = "14px sans-serif";
+ctx2d.textAlign = "center";
+ctx2d.textBaseline = "middle";
+// màu giống nhãn tọa độ vector
+const textColor = App.getCSS('--label-fg') || App.getCSS('--fg') || '#fff';
+ctx2d.fillStyle = textColor;
+ctx2d.fillText(`${degShow.toFixed(1)}°`, tx, ty);
+ctx2d.restore();
 }
 
 
