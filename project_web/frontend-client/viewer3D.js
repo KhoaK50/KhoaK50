@@ -103,73 +103,6 @@ Vec3D._renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 Vec3D._renderer.setSize(rect.width || 760, rect.height || 760);
 Vec3D._renderer.setPixelRatio(window.devicePixelRatio || 1);
 threeLayer.appendChild(Vec3D._renderer.domElement);
-
-/* === MOBILE TOUCH: bắt toàn bộ gesture cho canvas === */
-const canvas = Vec3D._renderer.domElement;
-// Ngăn trình duyệt scroll/zoom trang, nhường gesture cho OrbitControls
-canvas.style.touchAction = 'none';          // Chrome/Edge/Android
-canvas.style.webkitUserSelect = 'none';
-canvas.style.userSelect = 'none';
-['touchstart','touchmove','touchend','touchcancel'].forEach(ev => {
-  canvas.addEventListener(ev, e => { e.preventDefault(); }, { passive: false });
-});
-// (nếu bạn có dùng CSS2DRenderer)
-if (Vec3D._labelRenderer?.domElement) {
-  Vec3D._labelRenderer.domElement.style.touchAction = 'none';
-}
-// ===== Pinch-to-zoom (MATH ZOOM) — neo tại gốc =====
-const touchEl = Vec3D._renderer.domElement;
-
-const pinch = {
-  active: false,
-  startDist: 0,
-  initZoom: 1
-};
-
-function dist2(t0, t1) {
-  const dx = t0.clientX - t1.clientX;
-  const dy = t0.clientY - t1.clientY;
-  return Math.hypot(dx, dy);
-}
-
-touchEl.addEventListener('touchstart', (e) => {
-  if (e.touches.length === 2) {
-    pinch.active    = true;
-    pinch.startDist = dist2(e.touches[0], e.touches[1]);
-    pinch.initZoom  = Vec3D.S3D.zoomTarget;
-
-    // Neo tại GỐC TOÁN: giữ world-pos của gốc trong suốt pinch
-    Vec3D.S3D.pivotMath.set(0, 0, 0);
-    Vec3D.S3D.pivotWorld.copy(Vec3D.S3D.offset);
-    Vec3D.S3D.hasPivot = true;
-  }
-}, { passive: false });
-
-touchEl.addEventListener('touchmove', (e) => {
-  if (!pinch.active || e.touches.length !== 2) return;
-
-  const d = dist2(e.touches[0], e.touches[1]);
-  if (pinch.startDist > 0) {
-    const s = d / pinch.startDist; // tỉ lệ pinch
-    const next = pinch.initZoom * s;
-
-    // math-zoom trong biên
-    Vec3D.S3D.zoomTarget = Math.min(
-      Vec3D._ZOOM_MAX,
-      Math.max(Vec3D._ZOOM_MIN, next)
-    );
-  }
-}, { passive: false });
-
-function endPinch() {
-  pinch.active = false;
-  // Thả neo khi kết thúc pinch; offset đã được cập nhật trong addAxisLabelsDynamic()
-  Vec3D.S3D.hasPivot = false;
-}
-
-touchEl.addEventListener('touchend',   (e) => { if (e.touches.length < 2) endPinch(); }, { passive: false });
-touchEl.addEventListener('touchcancel',(e) => { endPinch(); }, { passive: false });
-
 // ĐẢM BẢO canvas ở dưới
 Vec3D._renderer.domElement.style.position = 'absolute';
 Vec3D._renderer.domElement.style.inset = '0';
@@ -203,32 +136,31 @@ threeLayer.appendChild(Vec3D._labelRenderer.domElement);
 
     // Orbit controls: cấm zoom
     Vec3D._controls = new THREE.OrbitControls(Vec3D._camera, Vec3D._renderer.domElement);
+    // Cố định gốc quy chiếu cho cả trục lẫn số
+Vec3D.S3D.unitsPerWorld = 1;
+Vec3D.S3D.zoomTarget    = 1;
+Vec3D.S3D.offset.set(0, 0, 0);
+Vec3D.S3D.hasPivot = false;
 
-// Giữ listener 'change' của bạn
+    Vec3D._controls.enableDamping = true;
+    Vec3D._controls.dampingFactor = 0.07;
+    Vec3D._controls.rotateSpeed = 0.6;
+    Vec3D._controls.enablePan = true;
+    Vec3D._controls.enableZoom = false; // QUAN TRỌNG: camera không zoom
 
-Vec3D._controls.enableDamping = true;
-Vec3D._controls.dampingFactor = 0.07;
-Vec3D._controls.rotateSpeed   = 0.6;
-
-Vec3D._controls.enablePan  = true;
-Vec3D._controls.enableZoom = false; // <-- tắt dolly camera để pinch không zoom camera
-Vec3D._controls.zoomSpeed  = 0;     // phòng hờ
+    // --- KHÓA ZOOM HOÀN TOÀN ---
+Vec3D._controls.enableZoom = false;   // chặn logic zoom
+Vec3D._controls.zoomSpeed = 0;        // dự phòng
 Vec3D._controls.zoomToCursor = false;
-
-// Mobile: 1 ngón = xoay, 2 ngón = PAN (không DOLLY)
-Vec3D._controls.touches = {
+Vec3D._controls.mouseButtons = {      // bỏ dolly ở chuột giữa
+  LEFT: THREE.MOUSE.ROTATE,
+  MIDDLE: THREE.MOUSE.PAN,
+  RIGHT: THREE.MOUSE.PAN
+};
+Vec3D._controls.touches = {           // bỏ pinch-dolly
   ONE: THREE.TOUCH.ROTATE,
   TWO: THREE.TOUCH.PAN
 };
-
-// Chuột: giữa = zoom (nếu bạn muốn), phải = pan
-Vec3D._controls.mouseButtons = {
-  LEFT:   THREE.MOUSE.ROTATE,
-  MIDDLE: THREE.MOUSE.DOLLY,
-  RIGHT:  THREE.MOUSE.PAN
-};
-
-
 // Wheel = math-zoom (đổi unitsPerWorld), KHÔNG camera zoom
 // Wheel = math-zoom (đổi unitsPerWorld), KHÔNG camera zoom
 const wheelHandler = (e) => {
