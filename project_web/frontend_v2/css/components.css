@@ -1,0 +1,328 @@
+/* =================== CARDS =================== */
+#controls .card {
+  position: relative; /* để gắn nhãn ::before */
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* =================== SECTION ACCENTS (4 khu vực) =================== */
+/* Dùng biến --acc để thống nhất. (ĐÃ BỎ cụm section accents cứng màu để tránh đè nhau) */
+
+.section-create { --acc: #3a78ff; }
+.section-list { --acc: #8b5cf6; }
+.section-calc-new { --acc: #22c55e; }
+.section-calc-info { --acc: #f59e0b; }
+
+/* viền trái đậm + nền beam rất nhẹ */
+.section-create,
+.section-list,
+.section-calc-new,
+.section-calc-info {
+  padding-left: 16px;
+  border-left: 4px solid var(--acc);
+  background:
+    linear-gradient(90deg, color-mix(in oklab, var(--acc) 10%, transparent) 0%, transparent 38%),
+    var(--card);
+}
+
+/* gạch chân mảnh theo màu nhấn khi hover card */
+.section-create:hover,
+.section-list:hover,
+.section-calc-new:hover,
+.section-calc-info:hover {
+  box-shadow: 0 1px 0 0 color-mix(in oklab, var(--acc) 30%, transparent) inset, var(--shadow-sm);
+}
+
+/* tinh chỉnh hover của summary trong từng section để hợp màu */
+.section-calc-new details.calc summary:hover {
+  background: color-mix(in oklab, var(--acc) 10%, transparent);
+}
+
+.section-calc-info details.calc summary:hover {
+  background: color-mix(in oklab, var(--acc) 12%, transparent);
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+/* =================== FORM ELEMENTS =================== */
+input, select, button {
+  font: inherit;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--fg);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+}
+
+input, select { width: 100%; }
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  background: color-mix(in oklab, var(--card) 92%, transparent);
+}
+
+button {
+  cursor: pointer;
+  user-select: none;
+}
+
+button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* Buttons */
+.btn {
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  background: var(--chip-bg);
+  color: var(--fg);
+}
+
+.btn:hover { filter: brightness(1.04); }
+.btn:active { transform: translateY(0.5px); }
+
+.btn.primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: color-mix(in oklab, var(--accent) 80%, #000 0%);
+  box-shadow: 0 6px 18px rgba(58, 120, 255, .25);
+}
+
+.btn.primary:hover { background: var(--accent-600); }
+.btn.primary:active { background: var(--accent-700); }
+
+.btn.ghost {
+  background: transparent;
+  border-color: var(--border);
+}
+
+.btn.outline {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn.danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: color-mix(in oklab, var(--danger) 80%, #000 0%);
+}
+
+/* Mini keypad */
+.mini-keys {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.mini-keys .kbtn {
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--chip-bg);
+  cursor: pointer;
+  transition: background var(--t-fast), box-shadow var(--t-fast);
+}
+
+.mini-keys .kbtn:hover { box-shadow: var(--shadow-sm); }
+.mini-keys .kbtn:active { transform: translateY(0.5px); }
+
+/* Rows & helpers */
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.help {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.small { font-size: 12px; }
+
+/* Pre / result boxes */
+pre {
+  background: var(--chip-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px;
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  line-height: 1.25;
+  max-height: 220px;
+  overflow: auto;
+  box-shadow: var(--shadow-sm);
+}
+
+/* =================== VECTOR LIST =================== */
+#vectorList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vec-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 10px 12px;
+  background: var(--card);
+  transition: border-color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
+}
+
+.vec-item:hover {
+  box-shadow: var(--shadow-sm);
+  background: color-mix(in oklab, var(--card) 96%, transparent);
+}
+
+.vec-item .sw {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.vec-item .tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.vec-item .lbl {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  flex: 1 1 auto;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 2 hàng: tọa độ trên, nút dưới */
+.vec-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.vec-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vec-header .tag { flex: 0 0 auto; }
+.vec-header .lbl { flex: 1 1 auto; min-width: 0; }
+
+.vec-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.vec-actions .btn { padding: 6px 10px; }
+
+@media (max-width: 420px) {
+  .grid2 { grid-template-columns: 1fr; }
+
+  .vec-actions .btn { flex: 1 0 auto; }
+}
+
+/* Active (không viền tím, chỉ nhấn nền) */
+.vec-item.active {
+  background: color-mix(in oklab, var(--accent) 8%, var(--card) 92%);
+  border-color: color-mix(in oklab, var(--accent) 35%, var(--border) 65%);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent);
+}
+
+/* =================== CALC SECTIONS =================== */
+details.calc {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: var(--r-lg);
+  padding: 8px 10px 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+details.calc summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 8px 6px;
+  border-radius: var(--r-sm);
+  font-weight: 700;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background var(--t-fast);
+}
+
+details.calc summary:hover {
+  background: color-mix(in oklab, var(--accent) 6%, transparent);
+}
+
+details.calc summary::marker,
+details.calc summary::-webkit-details-marker {
+  display: none;
+}
+
+details.calc summary .chev {
+  margin-left: auto;
+  opacity: .6;
+  transition: transform var(--t-fast);
+}
+
+details.calc[open] summary .chev { transform: rotate(180deg); }
+
+/* Extra forms */
+.extra-form { display: none; }
+.extra-form.active { display: block; }
+
+/* Checklist */
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 180px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  background: var(--chip-bg);
+  border-radius: var(--r-sm);
+  padding: 8px;
+  box-shadow: var(--shadow-sm);
+}

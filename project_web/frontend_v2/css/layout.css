@@ -1,0 +1,144 @@
+/* =================== TOPBAR =================== */
+#topbar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--topbar-h);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  background: color-mix(in oklab, var(--card) 92%, transparent);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  z-index: 300;
+}
+
+#topbar .brand {
+  text-align: center;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: .2px;
+}
+
+#topbar .spacer { width: 30px; }
+
+/* Hamburger */
+#hamburger {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 28px;
+  height: 22px;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+}
+
+#hamburger span {
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--fg);
+  transition: transform var(--t-fast), opacity var(--t-fast);
+}
+
+/* =================== APP LAYOUT =================== */
+#app {
+  position: absolute;
+  inset: var(--topbar-h) 0 0 0;
+  display: flex;
+  width: 100%;
+  height: calc(100vh - var(--topbar-h));
+}
+
+/* ----- Sidebar overlay ----- */
+#controls {
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0;
+  height: calc(100vh - var(--topbar-h));
+  width: min(88vw, 380px);
+  max-width: 92vw;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  transform: translateX(-100%);
+  transition: transform var(--t-slow);
+  z-index: 250;
+  padding: 14px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#controls.open { transform: translateX(0); }
+
+/* Overlay */
+#overlay {
+  position: fixed;
+  inset: var(--topbar-h) 0 0 0;
+  background: rgba(0, 0, 0, 0.38);
+  z-index: 200;
+  display: none;
+}
+
+#overlay.show { display: block; }
+
+/* =================== VIEWER LAYOUT =================== */
+#viewerWrap {
+  flex: 1 1 auto;
+  position: relative;
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  user-select: none;
+  margin-left: 0;
+  box-shadow: var(--shadow-md);
+  height: 100%;
+  display: flex;
+}
+
+#viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+#canvas2d {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#threeLayer {
+  position: absolute;
+  inset: 0;
+  display: none;
+  outline: none;
+}
+
+/* ép canvas ThreeJS fill 100% */
+#threeLayer canvas,
+#viewerWrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+#threeLayer canvas,
+#canvas2d {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* =================== RESPONSIVE =================== */
+@media (min-width: 1100px) {
+  #controls { width: 380px; }
+}

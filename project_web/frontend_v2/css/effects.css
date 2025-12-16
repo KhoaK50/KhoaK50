@@ -1,0 +1,63 @@
+/* =================== VIỀN ĐẶC BIỆT =================== */
+
+/* Gradient viền cố định nhiều màu */
+.card.gradient,
+.vec-item.gradient {
+  border: 2px solid transparent !important;
+  border-radius: var(--r-lg);
+  background:
+    linear-gradient(var(--card), var(--card)) padding-box,
+    linear-gradient(135deg, var(--accent), #8b5cf6, #10b981, #f59e0b) border-box;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Neon Glow (phát sáng) */
+.card.glow,
+.vec-item.glow {
+  border: 2px solid var(--accent) !important;
+  border-radius: var(--r-lg);
+  background: var(--card);
+  box-shadow:
+    0 0 6px var(--accent),
+    0 0 14px var(--accent),
+    0 0 24px color-mix(in oklab, var(--accent) 70%, transparent);
+}
+
+/* Depth (viền nổi khối 3D) */
+.card.depth,
+.vec-item.depth {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r-lg);
+  background: var(--card);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.20);
+}
+
+/* Hover Gradient (bình thường viền đơn giản, hover mới có gradient) */
+.card.hover-gradient,
+.vec-item.hover-gradient {
+  position: relative;
+  border: 2px solid var(--border) !important;
+  border-radius: var(--r-lg);
+  background: var(--card);
+  overflow: hidden;
+  z-index: 0;
+}
+
+.card.hover-gradient::before,
+.vec-item.hover-gradient::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), #8b5cf6, #10b981, #f59e0b);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+.card.hover-gradient:hover::before,
+.vec-item.hover-gradient:hover::before {
+  opacity: 1;
+}
