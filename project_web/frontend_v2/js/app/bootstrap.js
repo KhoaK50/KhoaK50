@@ -70,25 +70,61 @@
 
     App.refreshCalcVectorOptions();
     App.renderExtraCalcOptions();
-
     App.showExtraForm(document.getElementById("opExtraSelect").value);
 
-    // Hamburger toggle + overlay
+    // =========================
+    // GẮN GUARD CHO CÁC <select> DÙNG VECTOR
+    // (đặc biệt 4 ô bạn nói: v1Select, v2Select, v1DotSelect, v2DotSelect)
+    // =========================
+    function attachEmptyVectorGuards() {
+      if (typeof App.guardEmptyVectorSelect !== "function") return;
+
+      const ids = [
+        // 2 ô trên (phép tính tạo vector mới)
+        "v1Select", "v2Select",
+
+        // 2 ô dưới (tích vô hướng)
+        "v1DotSelect", "v2DotSelect",
+
+        // các select khác cũng cần guard luôn cho đồng bộ UX
+        "v1AngleSelect", "v2AngleSelect",
+        "vNormSelect",
+        "vCoordSelect",
+        "vProjSelect",
+      ];
+
+      ids.forEach((id) => App.guardEmptyVectorSelect(document.getElementById(id)));
+    }
+
+    attachEmptyVectorGuards();
+
+    // =========================
+    // Hamburger toggle: CHỈ nút 3 gạch mới đóng/mở
+    // =========================
     const burger = document.getElementById("hamburger");
     const controls = document.getElementById("controls");
     const overlay = document.getElementById("overlay");
 
-    if (burger && controls && overlay) {
-      burger.addEventListener("click", () => {
-        controls.classList.toggle("open");
-        overlay.classList.toggle("show");
-      });
-
-      overlay.addEventListener("click", () => {
-        controls.classList.remove("open");
-        overlay.classList.remove("show");
-      });
+    function syncOverlay() {
+      if (!overlay || !controls) return;
+      if (controls.classList.contains("open")) overlay.classList.add("show");
+      else overlay.classList.remove("show");
     }
+
+    if (burger && controls) {
+      burger.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        controls.classList.toggle("open");
+        syncOverlay();
+      });
+    } else {
+      syncOverlay();
+    }
+    if (App.SolutionPanel && typeof App.SolutionPanel.init === "function") {
+      App.SolutionPanel.init();
+    }
+
   };
 
   window.addEventListener("DOMContentLoaded", () => {

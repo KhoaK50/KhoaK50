@@ -74,16 +74,22 @@
 
 #controls.open { transform: translateX(0); }
 
-/* Overlay */
-#overlay {
+/* Overlay: tồn tại nhưng KHÔNG chặn tương tác (theo yêu cầu vừa input vừa kéo/zoom đồ thị) */
+#overlay{
   position: fixed;
   inset: var(--topbar-h) 0 0 0;
-  background: rgba(0, 0, 0, 0.38);
+  background: transparent;   /* không làm tối */
+  opacity: 0;
+  pointer-events: none;      /* QUAN TRỌNG: không chặn viewer */
   z-index: 200;
-  display: none;
+  display: block;            /* luôn tồn tại nhưng vô hình */
+  transition: opacity 180ms ease;
 }
 
-#overlay.show { display: block; }
+#overlay.show{
+  opacity: 0;                /* vẫn 0 theo yêu cầu không tối */
+}
+
 
 /* =================== VIEWER LAYOUT =================== */
 #viewerWrap {
@@ -142,3 +148,49 @@
 @media (min-width: 1100px) {
   #controls { width: 380px; }
 }
+
+/* ================= TOPBAR ICON BUTTONS ================= */
+
+/* ================= TOPBAR ICONS (SVG) ================= */
+
+.topbar-left,
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--fg); /* QUAN TRỌNG: icon trắng/đen */
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background var(--t-fast),
+    box-shadow var(--t-fast),
+    transform var(--t-fast);
+}
+
+.topbar-icon:hover {
+  background: color-mix(in oklab, var(--accent) 10%, var(--card));
+  box-shadow: var(--shadow-sm);
+}
+
+.topbar-icon:active {
+  transform: translateY(0.5px);
+}
+
+/* SVG size */
+.topbar-icon .icon {
+  width: 40px;
+  height: 40px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+

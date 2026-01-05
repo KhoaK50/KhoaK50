@@ -1,0 +1,208 @@
+/* ===================== Solution Panel ===================== */
+.sol-overlay{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0,0,0,.45);
+  z-index: 9999;
+}
+
+.sol-overlay.is-open{ display: flex; }
+
+.sol-panel{
+  width: min(980px, 92vw);
+  height: min(86vh, 860px);
+  background: #fff;
+  color: #111;
+  border-radius: 16px;
+
+  border: 1px solid rgba(0,0,0,.12);
+  box-shadow: 0 24px 80px rgba(0,0,0,.35);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sol-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  background: #fff;
+}
+
+.sol-title{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.sol-badge{
+  width: fit-content;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.06);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: .2px;
+}
+
+.sol-h1{
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.22;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sol-h1 mjx-container{
+  display: inline-block;
+  vertical-align: -0.08em;
+  margin-left: 6px;
+}
+
+.sol-close{
+  border: 1px solid rgba(0,0,0,.12);
+  background: rgba(0,0,0,.06);
+  color: #111;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 18px;
+  cursor: pointer;
+}
+.sol-close:hover{ background: rgba(0,0,0,.10); }
+
+.sol-toolbar{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  background: #fff;
+}
+
+.sol-method{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.sol-label{
+  font-weight: 800;
+  font-size: 13px;
+  opacity: .85;
+}
+
+.sol-tab{
+  border: 1px solid rgba(0,0,0,.14);
+  background: #fff;
+  color: #111;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-weight: 900;
+  font-size: 13px;
+  cursor: pointer;
+}
+.sol-tab:hover{ background: rgba(0,0,0,.04); }
+
+.sol-tab.is-active{
+  background: rgba(0,0,0,.08);
+  border-color: rgba(0,0,0,.18);
+}
+
+/* subtabs for Cách 2 */
+.sol-subtabs{
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding-left: 8px;
+  margin-left: 2px;
+  border-left: 1px solid rgba(0,0,0,.10);
+}
+
+.sol-subtabs.is-visible{ display: inline-flex; }
+
+.sol-subtab{
+  border: 1px solid rgba(0,0,0,.14);
+  background: #fff;
+  color: #111;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.sol-subtab:hover{ background: rgba(0,0,0,.04); }
+
+.sol-subtab.is-active{
+  background: rgba(0,0,0,.08);
+  border-color: rgba(0,0,0,.18);
+}
+
+.sol-actions{ display: flex; align-items: center; gap: 10px; }
+
+.sol-btn{
+  border: 1px solid rgba(0,0,0,.14);
+  background: #fff;
+  color: #111;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-weight: 900;
+  font-size: 13px;
+  cursor: pointer;
+}
+.sol-btn:hover{ background: rgba(0,0,0,.04); }
+
+.sol-body{
+  flex: 1;
+  overflow: auto;
+  padding: 18px 20px 22px;
+  background: #fff;
+  text-align: left;
+}
+
+.sol-body h2{ margin: 16px 0 10px; font-size: 16px; }
+.sol-body p, .sol-body li{ font-size: 15px; line-height: 1.65; }
+
+/* MathJax scroll ngang nhẹ nếu cần */
+.sol-body mjx-container[jax="CHTML"]{
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+}
+
+.sol-body mjx-container[display="true"]{
+  display: block;
+  text-align: left !important;
+  margin: 8px 0 !important;
+}
+
+.sol-empty{
+  padding: 16px;
+  border: 1px dashed rgba(0,0,0,.18);
+  border-radius: 14px;
+  background: rgba(0,0,0,.03);
+  color: #111;
+}
+
+@media (max-width: 640px){
+  .sol-overlay{ padding: 10px; }
+  .sol-panel{
+    width: 96vw;
+    height: 90vh;
+    border-radius: 14px;
+  }
+  .sol-h1{ font-size: 14px; }
+}

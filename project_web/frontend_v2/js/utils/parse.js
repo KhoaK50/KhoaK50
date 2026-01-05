@@ -44,11 +44,17 @@
   }
 
   App.parseVectorExpr = function (raw) {
-    const s = raw.trim();
-    if (!s.startsWith("[") || !s.endsWith("]")) throw "Nhập phải dạng [a,b] hoặc [a,b,c]";
-    const inside = s.slice(1, -1);
+    const s = String(raw ?? "").trim();
+    if (!s.startsWith("[") || !s.endsWith("]")) throw "Nhập phải dạng [x1,x2,...,xn]";
+
+    const inside = s.slice(1, -1).trim();
+    if (!inside) throw "Vector rỗng";
+
     const parts = splitTopLevelByComma(inside);
-    if (parts.length !== 2 && parts.length !== 3) throw "Vector phải có 2 hoặc 3 toạ độ";
+
+    // ✅ Cho phép n chiều (n >= 2)
+    if (parts.length < 2) throw "Vector phải có ít nhất 2 toạ độ";
+
     return parts.map(evalExprSafe);
   };
 })();

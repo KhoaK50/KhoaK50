@@ -1,4 +1,3 @@
-# backend_v2/vectoria_api/routes/linear_algebra.py
 from flask import Blueprint, jsonify
 import numpy as np
 
@@ -8,28 +7,57 @@ from vectoria_api.explainers.engine import explain
 bp = Blueprint("linear_algebra", __name__)
 
 
+# =========================
+# HẠNG HỆ VECTOR
+# =========================
 @bp.post("/api/rank")
 def compute_rank():
     try:
         data = require_json()
-        mat = validate_vectors_2d_list(data.get("vectors", []))
-        return jsonify({"rank": int(np.linalg.matrix_rank(mat))})
+        vectors = validate_vectors_2d_list(data.get("vectors", []))
+
+        A = np.array(vectors, dtype=float).T   # ⬅️ QUAN TRỌNG
+        rank = int(np.linalg.matrix_rank(A))
+
+        return jsonify({
+            "rank": rank,
+            "message": f"Hạng của hệ vector là {rank}."
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
 
+# =========================
+# ĐỘC LẬP TUYẾN TÍNH
+# =========================
 @bp.post("/api/linear_independence")
 def linear_independence():
     try:
         data = require_json()
-        mat = validate_vectors_2d_list(data.get("vectors", []))
-        r = int(np.linalg.matrix_rank(mat))
-        msg = "Độc lập tuyến tính" if r == mat.shape[0] else "Phụ thuộc tuyến tính"
-        return jsonify({"result": msg, "rank": r})
+        vectors = validate_vectors_2d_list(data.get("vectors", []))
+
+        A = np.array(vectors, dtype=float).T   # ⬅️ QUAN TRỌNG
+        rank = int(np.linalg.matrix_rank(A))
+        num_vectors = A.shape[1]
+
+        independent = (rank == num_vectors)
+
+        return jsonify({
+            "independent": independent,
+            "rank": rank,
+            "message": (
+                "Hệ vector độc lập tuyến tính."
+                if independent
+                else "Hệ vector phụ thuộc tuyến tính."
+            )
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
 
+# =========================
+# CƠ SỞ
+# =========================
 @bp.post("/api/basis")
 def basis():
     try:
@@ -47,6 +75,9 @@ def basis():
         return jsonify({"error": str(e)}), 400
 
 
+# =========================
+# TỌA ĐỘ THEO CƠ SỞ
+# =========================
 @bp.post("/api/coordinates")
 def coordinates():
     try:
@@ -57,16 +88,16 @@ def coordinates():
         if v.ndim != 1:
             return jsonify({"error": "vector phải là list 1D."}), 400
         if basis.ndim != 2:
-            return jsonify({"error": "basis phải là list 2D (list các vector)."}), 400
+            return jsonify({"error": "basis phải là list 2D."}), 400
 
-        BT = basis.T  # dim x r
-        if BT.shape[0] != v.shape[0]:
-            return jsonify({"error": "Chiều của vector và basis không khớp."}), 400
+        B = basis.T
+        if B.shape[0] != v.shape[0]:
+            return jsonify({"error": "Chiều vector không khớp với cơ sở."}), 400
 
-        if BT.shape[0] == BT.shape[1]:
-            coords = np.linalg.solve(BT, v)
+        if B.shape[0] == B.shape[1]:
+            coords = np.linalg.solve(B, v)
         else:
-            coords, _, _, _ = np.linalg.lstsq(BT, v, rcond=None)
+            coords, *_ = np.linalg.lstsq(B, v, rcond=None)
 
         return jsonify({"coordinates": coords.tolist()})
     except Exception as e:

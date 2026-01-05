@@ -316,6 +316,7 @@
     makeChecklist(rankChecklist, "rank");
   };
 
+  
   App.updateCalcSelectLabels = function () {
     const update = (id) => {
       const sel = document.getElementById(id);

@@ -1,23 +1,26 @@
 // ===================== viewer2D.js =====================
 (function () {
   window.Vec2D = window.Vec2D || {};
-  const App = window.App || {};
 
-  const canvas2d = document.getElementById('canvas2d');
-  const ctx2d = canvas2d.getContext('2d', { alpha: false });
+  const canvas2d = document.getElementById("canvas2d");
+  const ctx2d = canvas2d.getContext("2d", { alpha: false });
 
   // ----- State -----
   Vec2D.S2D = {
     pxPerUnit: 25,
-    offsetX: 0, offsetY: 0,
+    offsetX: 0,
+    offsetY: 0,
 
     // 1-finger/mouse drag
     isPanningOne: false,
-    startX: 0, startY: 0,
-    lastX: 0, lastY: 0,
+    startX: 0,
+    startY: 0,
+    lastX: 0,
+    lastY: 0,
 
     // velocities (px/ms)
-    velX: 0, velY: 0,
+    velX: 0,
+    velY: 0,
     lastTime: 0,
 
     // momentum raf
@@ -25,34 +28,46 @@
 
     // multi-pointer
     pointers: new Map(), // id -> {x,y}
-    lastCentroidX: null, lastCentroidY: null,
+    lastCentroidX: null,
+    lastCentroidY: null,
     lastDist: null,
-    zoomVel: 0, // per ms in log space
+    zoomVel: 0 // per ms in log space
   };
+
   Vec2D.gridInfo2D = null;
 
+  // ====== Vector thickness config (MEDIUM-BOLD) ======
+  const VEC_STROKE_W = 3.2;
+  const ARROW_HEAD = 14;
+  const HALO_LAYERS = [
+    { w: 12, a: 0.18 },
+    { w: 8, a: 0.14 },
+    { w: 5, a: 0.10 }
+  ];
+
+  const toVec2 = (v) => [v?.[0] || 0, v?.[1] || 0];
+
   Vec2D.init2D = function () {
+    const App = window.App || {};
     Vec2D.resize2D();
     Vec2D.bind2DEvents();
-    // rất quan trọng cho mobile để trình duyệt không chiếm gesture
-    canvas2d.style.touchAction = 'none';
-    App.applyTheme(); // sets bg & redraw via draw2DAllVectors if in 2D
+    canvas2d.style.touchAction = "none";
+    App.applyTheme?.();
   };
 
   Vec2D.show2D = function () {
-    const canvas = document.getElementById('canvas2d');
-    const threeLayer = document.getElementById('threeLayer');
-    canvas.style.display = 'block';
-    threeLayer.style.display = 'none';
+    const canvas = document.getElementById("canvas2d");
+    const threeLayer = document.getElementById("threeLayer");
+    canvas.style.display = "block";
+    threeLayer.style.display = "none";
   };
 
   Vec2D.resize2D = function () {
-    const rect = document.getElementById('viewer').getBoundingClientRect();
+    const rect = document.getElementById("viewer").getBoundingClientRect();
     canvas2d.width = Math.floor(rect.width);
     canvas2d.height = Math.floor(rect.height);
   };
 
-  // ---------- Helpers for gestures ----------
   function centroidOfPointers(ptrs) {
     let sx = 0, sy = 0, n = 0;
     for (const p of ptrs.values()) { sx += p.x; sy += p.y; n++; }
@@ -72,59 +87,55 @@
     const cx = w / 2 + Vec2D.S2D.offsetX;
     const cy = h / 2 + Vec2D.S2D.offsetY;
 
-    // world coord dưới điểm (mx,my) trước khi zoom
     const wx = (mx - cx) / Vec2D.S2D.pxPerUnit;
     const wy = (cy - my) / Vec2D.S2D.pxPerUnit;
 
     Vec2D.S2D.pxPerUnit *= factor;
     if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12) Vec2D.S2D.pxPerUnit = 1e-12;
 
-    // giữ nguyên world point dưới ngón
     const cxNew = mx - wx * Vec2D.S2D.pxPerUnit;
     const cyNew = my + wy * Vec2D.S2D.pxPerUnit;
     Vec2D.S2D.offsetX = cxNew - w / 2;
     Vec2D.S2D.offsetY = cyNew - h / 2;
   }
 
-  // ---------- Events ----------
   Vec2D.bind2DEvents = function () {
-    window.addEventListener('resize', () => { Vec2D.resize2D(); if (App.mode === '2D') Vec2D.draw2DAllVectors(); });
+    window.addEventListener("resize", () => {
+      const App = window.App || {};
+      Vec2D.resize2D();
+      if (App.mode === "2D") Vec2D.draw2DAllVectors();
+    });
 
-    // Pointer down (hợp nhất chuột + touch qua Pointer Events)
-    canvas2d.addEventListener('pointerdown', e => {
-      // nhớ pointer
+    canvas2d.addEventListener("pointerdown", (e) => {
       Vec2D.S2D.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-      // chạm lại thì hủy momentum hiện tại
       if (Vec2D.S2D.momentumId) cancelAnimationFrame(Vec2D.S2D.momentumId);
 
       const n = Vec2D.S2D.pointers.size;
       Vec2D.S2D.lastTime = performance.now();
 
       if (n === 1) {
-        // 1 ngón / chuột: bắt đầu pan
         Vec2D.S2D.isPanningOne = true;
         Vec2D.S2D.startX = e.clientX - Vec2D.S2D.offsetX;
         Vec2D.S2D.startY = e.clientY - Vec2D.S2D.offsetY;
         Vec2D.S2D.lastX = e.clientX;
         Vec2D.S2D.lastY = e.clientY;
         canvas2d.setPointerCapture(e.pointerId);
-        canvas2d.style.cursor = 'grabbing';
+        canvas2d.style.cursor = "grabbing";
       } else if (n === 2) {
-        // 2 ngón: reset mốc centroid & khoảng cách
         const c = centroidOfPointers(Vec2D.S2D.pointers);
         Vec2D.S2D.lastCentroidX = c.x;
         Vec2D.S2D.lastCentroidY = c.y;
         Vec2D.S2D.lastDist = distanceTwoPointers(Vec2D.S2D.pointers);
-        Vec2D.S2D.isPanningOne = false; // chuyển qua 2 ngón
+        Vec2D.S2D.isPanningOne = false;
       }
+
       e.preventDefault();
     });
 
-    // Pointer move
-    canvas2d.addEventListener('pointermove', e => {
+    canvas2d.addEventListener("pointermove", (e) => {
+      const App = window.App || {};
       if (!Vec2D.S2D.pointers.has(e.pointerId)) return;
-      // cập nhật vị trí pointer
       Vec2D.S2D.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
       const now = performance.now();
@@ -133,42 +144,36 @@
       const n = Vec2D.S2D.pointers.size;
 
       if (n >= 2) {
-        // Pan + Pinch kết hợp (giống Google Maps)
         const c = centroidOfPointers(Vec2D.S2D.pointers);
         const dist = distanceTwoPointers(Vec2D.S2D.pointers);
 
-        // Pan bởi dịch chuyển centroid
         if (Vec2D.S2D.lastCentroidX != null) {
           const dx = c.x - Vec2D.S2D.lastCentroidX;
           const dy = c.y - Vec2D.S2D.lastCentroidY;
           Vec2D.S2D.offsetX += dx;
           Vec2D.S2D.offsetY += dy;
 
-          // tốc độ cho momentum (px/ms)
           Vec2D.S2D.velX = dx / dt;
           Vec2D.S2D.velY = dy / dt;
         }
 
-        // Pinch zoom quanh centroid
         if (Vec2D.S2D.lastDist) {
           const rawFactor = dist / Vec2D.S2D.lastDist;
-          const smooth = 0.9; // mượt tay
+          const smooth = 0.9;
           const factor = Math.pow(rawFactor, smooth);
           applyZoomAboutScreenPoint(c.x, c.y, factor);
-
-          // tốc độ zoom ở không gian log
           Vec2D.S2D.zoomVel = Math.log(factor) / dt;
         }
 
-        Vec2D.S2D.lastCentroidX = c.x; Vec2D.S2D.lastCentroidY = c.y;
+        Vec2D.S2D.lastCentroidX = c.x;
+        Vec2D.S2D.lastCentroidY = c.y;
         Vec2D.S2D.lastDist = dist;
         Vec2D.S2D.lastTime = now;
 
-        if (App.mode === '2D') Vec2D.draw2DAllVectors();
+        if (App.mode === "2D") Vec2D.draw2DAllVectors();
         return;
       }
 
-      // Pan 1 ngón / chuột
       if (Vec2D.S2D.isPanningOne && n === 1) {
         Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
         Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
@@ -180,21 +185,20 @@
         Vec2D.S2D.lastY = e.clientY;
         Vec2D.S2D.lastTime = now;
 
-        if (App.mode === '2D') Vec2D.draw2DAllVectors();
+        if (App.mode === "2D") Vec2D.draw2DAllVectors();
       }
     });
 
-    // Pointer up / cancel
     const endPointer = (e) => {
+      const App = window.App || {};
       if (!Vec2D.S2D.pointers.has(e.pointerId)) return;
       Vec2D.S2D.pointers.delete(e.pointerId);
 
       const n = Vec2D.S2D.pointers.size;
 
       if (n === 0) {
-        // không còn ngón nào → bật momentum (pan + zoom)
         canvas2d.releasePointerCapture?.(e.pointerId);
-        canvas2d.style.cursor = 'default';
+        canvas2d.style.cursor = "default";
         Vec2D.S2D.isPanningOne = false;
         Vec2D.S2D.lastCentroidX = Vec2D.S2D.lastCentroidY = null;
         Vec2D.S2D.lastDist = null;
@@ -204,11 +208,10 @@
         const hasZoomMomentum = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
 
         if (hasPanMomentum || hasZoomMomentum) {
-          const decayPan = 0.85;   // giảm dần pan
-          const decayZoom = 0.80;  // giảm dần zoom
+          const decayPan = 0.85;
+          const decayZoom = 0.8;
 
           const step = () => {
-            // ~16ms/frame
             if (hasPanMomentum) {
               Vec2D.S2D.offsetX += Vec2D.S2D.velX * 16;
               Vec2D.S2D.offsetY += Vec2D.S2D.velY * 16;
@@ -218,12 +221,11 @@
 
             if (hasZoomMomentum) {
               const factor = Math.exp(Vec2D.S2D.zoomVel * 16);
-              // zoom về tâm màn hình (ổn định)
               applyZoomAboutScreenPoint(canvas2d.clientWidth / 2, canvas2d.clientHeight / 2, factor);
               Vec2D.S2D.zoomVel *= decayZoom;
             }
 
-            if (App.mode === '2D') Vec2D.draw2DAllVectors();
+            if (App.mode === "2D") Vec2D.draw2DAllVectors();
 
             const stillPan = Math.hypot(Vec2D.S2D.velX, Vec2D.S2D.velY) > 0.01;
             const stillZoom = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
@@ -234,10 +236,8 @@
           Vec2D.S2D.momentumId = requestAnimationFrame(step);
         }
 
-        // reset tốc độ zoom
         Vec2D.S2D.zoomVel = 0;
       } else if (n === 1) {
-        // còn 1 ngón → chuyển lại baseline pan 1 ngón
         const remain = Vec2D.S2D.pointers.values().next().value;
         Vec2D.S2D.isPanningOne = true;
         Vec2D.S2D.startX = remain.x - Vec2D.S2D.offsetX;
@@ -249,7 +249,6 @@
         Vec2D.S2D.lastDist = null;
         Vec2D.S2D.zoomVel = 0;
       } else {
-        // vẫn >=2 sau khi nhấc một ngón → tính lại mốc
         const c = centroidOfPointers(Vec2D.S2D.pointers);
         Vec2D.S2D.lastCentroidX = c.x;
         Vec2D.S2D.lastCentroidY = c.y;
@@ -257,37 +256,41 @@
         Vec2D.S2D.lastTime = performance.now();
       }
     };
-    canvas2d.addEventListener('pointerup', endPointer);
-    canvas2d.addEventListener('pointercancel', endPointer);
-    canvas2d.addEventListener('lostpointercapture', () => { /* ignore */ });
 
-    // Wheel zoom (desktop) — zoom quanh con trỏ
-    canvas2d.addEventListener('wheel', e => {
-      const rect = canvas2d.getBoundingClientRect();
-      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-      const factor = (e.deltaY < 0) ? 1.18 : (1 / 1.18);
-      applyZoomAboutScreenPoint(mx, my, factor);
-      if (App.mode === '2D') Vec2D.draw2DAllVectors();
-      e.preventDefault();
-    }, { passive: false });
+    canvas2d.addEventListener("pointerup", endPointer);
+    canvas2d.addEventListener("pointercancel", endPointer);
+
+    canvas2d.addEventListener(
+      "wheel",
+      (e) => {
+        const App = window.App || {};
+        const rect = canvas2d.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        const factor = e.deltaY < 0 ? 1.18 : 1 / 1.18;
+        applyZoomAboutScreenPoint(mx, my, factor);
+        if (App.mode === "2D") Vec2D.draw2DAllVectors();
+        e.preventDefault();
+      },
+      { passive: false }
+    );
   };
 
-  // ---------- Rendering ----------
   Vec2D.render2DGrid = function () {
+    const App = window.App || {};
     const w = canvas2d.width, h = canvas2d.height;
     const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY, px = Vec2D.S2D.pxPerUnit;
 
-    ctx2d.fillStyle = App.getCSS('--card');
+    ctx2d.fillStyle = App.getCSS?.("--card") || "#111";
     ctx2d.fillRect(0, 0, w, h);
 
     const unitsHalfX = (w / 2) / px, unitsHalfY = (h / 2) / px;
     const unitsRange = Math.max(unitsHalfX, unitsHalfY) * 2;
-    const stepUnit = App.niceStep(unitsRange), tickPx = stepUnit * px;
+    const stepUnit = App.niceStep ? App.niceStep(unitsRange) : 1;
+    const tickPx = stepUnit * px;
 
-    // --- Vẽ lưới phụ (subgrid) ---
-    const subDiv = 5; // chia mỗi ô thành 5x5 (có thể đổi thành 25 nếu muốn)
+    const subDiv = 5;
     const subTickPx = tickPx / subDiv;
-    ctx2d.strokeStyle = App.getCSS('--grid-light');
+    ctx2d.strokeStyle = App.getCSS?.("--grid-light") || "#2b2b2b";
     ctx2d.lineWidth = 0.5;
     for (let x = cx % subTickPx; x <= w; x += subTickPx) {
       ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
@@ -296,130 +299,192 @@
       ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
     }
 
-    // --- Vẽ lưới chính ---
-    ctx2d.strokeStyle = App.getCSS('--grid-light');
+    ctx2d.strokeStyle = App.getCSS?.("--grid-light") || "#2b2b2b";
     ctx2d.lineWidth = 1.2;
     for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
-      const x = cx + k * tickPx; ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
+      const x = cx + k * tickPx;
+      ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
     }
     for (let k = Math.floor((cy - h) / tickPx) - 1; k <= Math.ceil((cy + h) / tickPx) + 1; k++) {
-      const y = cy - k * tickPx; ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
+      const y = cy - k * tickPx;
+      ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
     }
 
-    // --- Trục to ---
-    ctx2d.strokeStyle = App.getCSS('--axis'); ctx2d.lineWidth = 2;
+    ctx2d.strokeStyle = App.getCSS?.("--axis") || "#aaa";
+    ctx2d.lineWidth = 2;
     ctx2d.beginPath(); ctx2d.moveTo(0, cy); ctx2d.lineTo(w, cy); ctx2d.stroke();
     ctx2d.beginPath(); ctx2d.moveTo(cx, 0); ctx2d.lineTo(cx, h); ctx2d.stroke();
 
-    // --- Label ---
-    ctx2d.fillStyle = App.getCSS('--fg'); ctx2d.font = '12px sans-serif';
-    ctx2d.textAlign = 'center'; ctx2d.textBaseline = 'top';
+    ctx2d.fillStyle = App.getCSS?.("--fg") || "#fff";
+    ctx2d.font = "12px sans-serif";
+
+    ctx2d.textAlign = "center";
+    ctx2d.textBaseline = "top";
     for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
-      const unitVal = k * stepUnit; if (Math.abs(unitVal) <= 1e-12) continue; const x = cx + k * tickPx;
+      const unitVal = k * stepUnit;
+      if (Math.abs(unitVal) <= 1e-12) continue;
+      const x = cx + k * tickPx;
       ctx2d.fillText(formatLabel(unitVal), x, cy + 6);
     }
-    ctx2d.textAlign = 'left'; ctx2d.textBaseline = 'middle';
+
+    ctx2d.textAlign = "left";
+    ctx2d.textBaseline = "middle";
     for (let k = Math.floor((cy - h) / tickPx) - 1; k <= Math.ceil((cy + h) / tickPx) + 1; k++) {
-      const unitVal = k * stepUnit; if (Math.abs(unitVal) <= 1e-12) continue; const y = cy - k * tickPx;
+      const unitVal = k * stepUnit;
+      if (Math.abs(unitVal) <= 1e-12) continue;
+      const y = cy - k * tickPx;
       ctx2d.fillText(formatLabel(unitVal), cx + 6, y);
     }
-    ctx2d.textAlign = 'left'; ctx2d.textBaseline = 'top'; ctx2d.fillText('0', cx + 4, cy + 4);
+
+    ctx2d.textAlign = "left";
+    ctx2d.textBaseline = "top";
+    ctx2d.fillText("0", cx + 4, cy + 4);
 
     function formatLabel(v) {
-      if (v === 0) return '0';
+      if (v === 0) return "0";
       const abs = Math.abs(v);
-      if (abs >= 1e6 || abs < 1e-6) return v.toExponential(0).replace('+', '');
+      if (abs >= 1e6 || abs < 1e-6) return v.toExponential(0).replace("+", "");
       return Number(v.toFixed(6)).toString();
     }
 
     return { cx, cy, px, stepUnit };
   };
 
+  // ✅ FIX: thêm alpha vào tham số
+  function draw2DVectorSingle(v, color, haloColor, highlighted, alpha = 1) {
+    alpha = Math.max(0, Math.min(1, Number(alpha) || 0));
 
-  function draw2DVectorSingle(v, color, haloColor, highlighted) {
     const { cx, cy, px } = Vec2D.gridInfo2D;
     const x2 = cx + v[0] * px, y2 = cy - v[1] * px;
     const angle = Math.atan2(y2 - cy, x2 - cx);
 
     if (highlighted) {
-      const layers = [{ w: 12, a: .18 }, { w: 8, a: .14 }, { w: 5, a: .10 }];
-      for (const L of layers) {
-        ctx2d.strokeStyle = haloColor; ctx2d.globalAlpha = L.a; ctx2d.lineWidth = L.w;
-        ctx2d.beginPath(); ctx2d.moveTo(cx, cy); ctx2d.lineTo(x2, y2); ctx2d.stroke();
-        ctx2d.beginPath(); ctx2d.moveTo(x2, y2);
-        ctx2d.lineTo(x2 - (L.w + 6) * Math.cos(angle - Math.PI / 6), y2 - (L.w + 6) * Math.sin(angle - Math.PI / 6));
-        ctx2d.moveTo(x2, y2);
-        ctx2d.lineTo(x2 - (L.w + 6) * Math.cos(angle + Math.PI / 6), y2 - (L.w + 6) * Math.sin(angle + Math.PI / 6));
-        ctx2d.stroke(); ctx2d.globalAlpha = 1;
-      }
-    }
-    ctx2d.strokeStyle = color; ctx2d.lineWidth = 2;
-    ctx2d.beginPath(); ctx2d.moveTo(cx, cy); ctx2d.lineTo(x2, y2); ctx2d.stroke();
+      ctx2d.save();
+      for (const L of HALO_LAYERS) {
+        ctx2d.strokeStyle = haloColor;
+        ctx2d.globalAlpha = L.a * alpha;
+        ctx2d.lineWidth = L.w;
 
-    const head = 12;
-    ctx2d.beginPath(); ctx2d.moveTo(x2, y2);
-    ctx2d.lineTo(x2 - head * Math.cos(angle - Math.PI / 6), y2 - head * Math.sin(angle - Math.PI / 6));
-    ctx2d.moveTo(x2, y2);
-    ctx2d.lineTo(x2 - head * Math.cos(angle + Math.PI / 6), y2 - head * Math.sin(angle + Math.PI / 6));
+        ctx2d.beginPath(); ctx2d.moveTo(cx, cy); ctx2d.lineTo(x2, y2); ctx2d.stroke();
+
+        ctx2d.beginPath();
+        ctx2d.moveTo(x2, y2);
+        ctx2d.lineTo(
+          x2 - (L.w + 6) * Math.cos(angle - Math.PI / 6),
+          y2 - (L.w + 6) * Math.sin(angle - Math.PI / 6)
+        );
+        ctx2d.moveTo(x2, y2);
+        ctx2d.lineTo(
+          x2 - (L.w + 6) * Math.cos(angle + Math.PI / 6),
+          y2 - (L.w + 6) * Math.sin(angle + Math.PI / 6)
+        );
+        ctx2d.stroke();
+      }
+      ctx2d.restore();
+    }
+
+    ctx2d.save();
+    ctx2d.globalAlpha = alpha;
+
+    ctx2d.strokeStyle = color;
+    ctx2d.lineWidth = VEC_STROKE_W;
+
+    ctx2d.beginPath();
+    ctx2d.moveTo(cx, cy);
+    ctx2d.lineTo(x2, y2);
     ctx2d.stroke();
+
+    ctx2d.beginPath();
+    ctx2d.moveTo(x2, y2);
+    ctx2d.lineTo(x2 - ARROW_HEAD * Math.cos(angle - Math.PI / 6), y2 - ARROW_HEAD * Math.sin(angle - Math.PI / 6));
+    ctx2d.moveTo(x2, y2);
+    ctx2d.lineTo(x2 - ARROW_HEAD * Math.cos(angle + Math.PI / 6), y2 - ARROW_HEAD * Math.sin(angle + Math.PI / 6));
+    ctx2d.stroke();
+
+    ctx2d.restore();
   }
 
   Vec2D.draw2DAllVectors = function () {
-    // auto-fit lần đầu cho vector hiện hành
-    if (App.firstDrawForVector && App.currentVector && (App.currentVector.length >= 2)) {
-      const w = canvas2d.width, h = canvas2d.height; const v = App.currentVector;
+    const App = window.App || {};
+
+    if (App.firstDrawForVector && App.currentVector && App.currentVector.length >= 2) {
+      const w = canvas2d.width, h = canvas2d.height;
+      const v = toVec2(App.currentVector);
       const maxComp = Math.max(Math.abs(v[0]), Math.abs(v[1]), 1);
       Vec2D.S2D.pxPerUnit = Math.max((Math.min(w, h) / 2) * 0.6 / maxComp, 1e-12);
-      Vec2D.S2D.offsetX = 0; Vec2D.S2D.offsetY = 0; App.firstDrawForVector = false;
+      Vec2D.S2D.offsetX = 0;
+      Vec2D.S2D.offsetY = 0;
+      App.firstDrawForVector = false;
     }
 
     Vec2D.gridInfo2D = Vec2D.render2DGrid();
 
-    // Nếu có vector đang được focus thì chỉ vẽ nó, ngược lại vẽ các vector visible
-    const focused = App.vectorList.find(v => v.focus);
-    const toDraw = focused ? [focused] : App.vectorList.filter(v => v.visible);
+    const focused = App.vectorList?.find((v) => v.focus);
+    const toDraw = focused ? [focused] : (App.vectorList || []).filter((v) => v.visible !== false);
 
-    for (const it of toDraw) {
-      const v2 = it.vec.length === 2 ? it.vec : [it.vec[0], it.vec[1]];
-      draw2DVectorSingle(v2, it.colorCss, it.haloCss, it.focus);
+    // ===== Draw order (ONLY during basis animation) =====
+    const drawOne = (it) => {
+      const v2 = it.vec?.length >= 2 ? [it.vec[0], it.vec[1]] : [0, 0];
+      const a = (typeof it.alpha === "number") ? it.alpha : 1;
+      draw2DVectorSingle(v2, it.colorCss, it.haloCss, !!it.focus, a);
+    };
+
+    if (App._basisAnimActive) {
+      // 1) vẽ non-basis trước
+      for (const it of toDraw) {
+        if (it && it._basisIsBasis) continue;
+        drawOne(it);
+      }
+      // 2) vẽ basis sau => luôn nằm trên cùng
+      for (const it of toDraw) {
+        if (!it || !it._basisIsBasis) continue;
+        drawOne(it);
+      }
+    } else {
+      // bình thường: giữ nguyên thứ tự vẽ hiện tại
+      for (const it of toDraw) drawOne(it);
     }
-
 
     if (App.currentAngleVisual2D) _drawAngleArc2DOverlay(App.currentAngleVisual2D);
 
     if (App.currentVector && App.currentVector.length >= 2) {
-      const v2 = App.currentVector;
-      App.coordOut(`[${App.formatScalar(v2[0])}, ${App.formatScalar(v2[1])}] = ${App.formatScalar(v2[0])}·[1,0] + ${App.formatScalar(v2[1])}·[0,1]`);
-    } else App.coordOut('—');
+      const v2 = toVec2(App.currentVector);
+      App.coordOut?.(
+        `[${App.formatScalar?.(v2[0]) ?? v2[0]}, ${App.formatScalar?.(v2[1]) ?? v2[1]}] = ` +
+        `${App.formatScalar?.(v2[0]) ?? v2[0]}·[1,0] + ${App.formatScalar?.(v2[1]) ?? v2[1]}·[0,1]`
+      );
+    } else {
+      App.coordOut?.("—");
+    }
   };
 
-  // Public: set new angle state and trigger redraw
   Vec2D.drawAngleArc2D = function (v1, v2, deg) {
-    App.currentAngleVisual2D = { a: [v1[0], v1[1]], b: [v2[0], v2[1]], deg: Number(deg) };
-    Vec2D.draw2DAllVectors();  // chỉ vẽ lại, KHÔNG gán lần 2
+    const a = toVec2(v1), b = toVec2(v2);
+    const App = window.App || {};
+    App.currentAngleVisual2D = { a: [a[0], a[1]], b: [b[0], b[1]], deg: Number(deg) };
+    Vec2D.draw2DAllVectors();
   };
 
   function _drawAngleArc2DOverlay(state) {
+    const App = window.App || {};
     if (!Vec2D.gridInfo2D || !state) return;
     const { cx, cy } = Vec2D.gridInfo2D;
     const a = state.a, b = state.b;
 
-    // Góc màn hình (trục y ngược) cho 2 vector
     const angA = Math.atan2(-a[1], a[0]);
     const angB = Math.atan2(-b[1], b[0]);
 
-    // Chuẩn hóa chênh lệch vào (−π, π]
     const normPi = (x) => {
       while (x <= -Math.PI) x += 2 * Math.PI;
       while (x > Math.PI) x -= 2 * Math.PI;
       return x;
     };
-    const delta = normPi(angB - angA);        // góc quay có dấu từ a → b
-    const anticlockwise = (delta < 0);        // delta âm => vẽ theo chiều kim đồng hồ
+
+    const delta = normPi(angB - angA);
+    const anticlockwise = delta < 0;
 
     const r = Math.min(canvas2d.width, canvas2d.height) * 0.18;
 
-    // Vẽ nêm góc theo đúng chiều delta
     ctx2d.save();
     ctx2d.beginPath();
     ctx2d.moveTo(cx, cy);
@@ -428,24 +493,21 @@
     ctx2d.fillStyle = "rgba(255, 200, 0, 0.32)";
     ctx2d.fill();
 
-    // Ghi nhãn ở giữa cung
     const mid = angA + delta / 2;
-    // đẩy ra ngoài cung thêm ~16px để không “dí sát” vào cung
     const padPx = 16;
     const tx = cx + Math.cos(mid) * (r + padPx);
     const ty = cy + Math.sin(mid) * (r + padPx);
 
-    const degShow = (state.deg != null) ? state.deg : Math.abs(delta * 180 / Math.PI);
+    const degShow = state.deg != null ? state.deg : Math.abs((delta * 180) / Math.PI);
 
     ctx2d.font = "14px sans-serif";
     ctx2d.textAlign = "center";
     ctx2d.textBaseline = "middle";
-    // màu giống nhãn tọa độ vector
-    const textColor = App.getCSS('--label-fg') || App.getCSS('--fg') || '#fff';
+    const textColor = App.getCSS?.("--label-fg") || App.getCSS?.("--fg") || "#fff";
     ctx2d.fillStyle = textColor;
     ctx2d.fillText(`${degShow.toFixed(1)}°`, tx, ty);
+
     ctx2d.restore();
   }
-
 
 })();

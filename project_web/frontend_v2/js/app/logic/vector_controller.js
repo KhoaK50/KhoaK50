@@ -1,6 +1,8 @@
 (function () {
   window.App = window.App || {};
 
+  const toVec3 = (v) => [v?.[0] || 0, v?.[1] || 0, v?.[2] || 0];
+
   /* ===== THEME ===== */
   App.applyTheme = function () {
     document.body.classList.toggle("dark", App.theme === "dark");
@@ -154,11 +156,13 @@
 
     try {
       v = App.parseVectorExpr(raw);
-      if (!Array.isArray(v) || (v.length !== 2 && v.length !== 3)) throw new Error();
+
+      // ✅ n-chiều (n >= 2)
+      if (!Array.isArray(v) || v.length < 2) throw new Error("Vector phải có ít nhất 2 toạ độ");
     } catch (err) {
       alert(
-        "Nhập hợp lệ: [x,y] hoặc [x,y,z], chấp nhận 1/2, sqrt(2), 3*sqrt(5)/7.\n" +
-          (err?.message || err)
+        "Nhập hợp lệ: [x1,x2,...,xn] (n≥2), chấp nhận 1/2, sqrt(2), 3*sqrt(5)/7.\n" +
+        (err?.message || err)
       );
       return;
     }
@@ -174,8 +178,9 @@
     App.refreshCalcVectorOptions();
     App.renderExtraCalcOptions();
 
+    // ✅ Auto mode: chỉ cần >=3 thì show 3D, còn lại 2D
     if (App.autoMode) {
-      App.mode = (v.length === 3) ? "3D" : "2D";
+      App.mode = (v.length >= 3) ? "3D" : "2D";
       const modeBadge = document.getElementById("modeBadge");
       if (modeBadge) modeBadge.textContent = `Mode: ${App.mode}`;
     }
@@ -234,6 +239,12 @@
         payload = { v: v1, scalar: k }; explain = `${App.formatScalar(k)} · ${App.formatVectorShort(v1)} = `;
       } else if (op === "cross") {
         if (!v1 || !v2) throw "Chọn đủ v1, v2";
+
+        // ✅ Cross chỉ cho đúng 3 chiều (rõ ràng, tránh backend nổ)
+        if (v1.length !== 3 || v2.length !== 3) {
+          throw "Tích có hướng (cross) chỉ hỗ trợ vector đúng 3 chiều.";
+        }
+
         payload = { v1, v2 }; explain = `${App.formatVectorShort(v1)} × ${App.formatVectorShort(v2)} = `;
       } else if (op === "normalize") {
         if (!v1) throw "Chọn v1";
@@ -301,7 +312,7 @@
     } else if (window.Vec3D) {
       if (App._previewTemp) { Vec3D._scene.remove(App._previewTemp); App._previewTemp = null; }
 
-      const v3 = vec.length === 3 ? vec : [vec[0], vec[1], 0];
+      const v3 = toVec3(vec);
       const u = Math.max(1e-12, Vec3D.S3D.unitsPerWorld);
       const tipWorld = new THREE.Vector3(v3[0] * u, v3[1] * u, v3[2] * u);
 
@@ -317,6 +328,7 @@
       Vec3D.hardRefresh3D(false);
     }
 
+    // Tip hiển thị: nếu bạn muốn chỉ hiện 2D/3D, đổi sang formatTip(toVec3(vec)) cũng được
     App.coordOut(App.formatTip(vec));
   };
 
@@ -424,4 +436,55 @@
       document.getElementById("result_proj").innerText = "Lỗi: " + err.message;
     }
   };
+  /* ===== Linear algebra UI ===== */
+
+  // TÍNH HẠNG HỆ VECTOR
+  App.rankVectorsUI = async function () {
+    const container = document.getElementById("rankVectorChecklist");
+    if (!container) {
+      alert("Không tìm thấy danh sách vector (rank).");
+      return;
+    }
+
+    const vectors = App.getCheckedVectors(container);
+    if (!vectors.length) {
+      alert("Tick ít nhất 1 vector.");
+      return;
+    }
+
+    try {
+      const res = await App.callAPI("rank", { vectors });
+      document.getElementById("result_rank").innerText =
+        `Hạng của hệ vector = ${res.rank}`;
+    } catch (err) {
+      document.getElementById("result_rank").innerText =
+        "Lỗi: " + err.message;
+    }
+  };
+
+
+  // KIỂM TRA ĐỘC LẬP TUYẾN TÍNH
+  App.linearIndependenceUI = async function () {
+    const container = document.getElementById("independenceVectorChecklist");
+    if (!container) {
+      alert("Không tìm thấy danh sách vector (độc lập tuyến tính).");
+      return;
+    }
+
+    const vectors = App.getCheckedVectors(container);
+    if (!vectors.length) {
+      alert("Tick ít nhất 1 vector.");
+      return;
+    }
+
+    try {
+      const res = await App.callAPI("linear_independence", { vectors });
+      document.getElementById("result_independence").innerText =
+        `${res.result} (rank = ${res.rank})`;
+    } catch (err) {
+      document.getElementById("result_independence").innerText =
+        "Lỗi: " + err.message;
+    }
+  };
+
 })();
