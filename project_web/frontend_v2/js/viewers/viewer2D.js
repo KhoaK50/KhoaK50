@@ -1,4 +1,4 @@
-// ===================== viewer2D.js (High-DPI Optimized) =====================
+// ===================== viewer2D.js (Fixed Loading & Resize) =====================
 (function () {
   window.Vec2D = window.Vec2D || {};
 
@@ -50,18 +50,36 @@
   // Helper: Lấy kích thước logic (CSS pixels)
   function getLogicalSize() {
     const dpr = window.devicePixelRatio || 1;
-    return {
-      w: canvas2d.width / dpr,
-      h: canvas2d.height / dpr
-    };
+    // Phòng trường hợp canvas chưa init xong width=0
+    const w = (canvas2d.width / dpr) || 1;
+    const h = (canvas2d.height / dpr) || 1;
+    return { w, h };
   }
 
   Vec2D.init2D = function () {
     const App = window.App || {};
+    
+    // 1. Resize lần đầu (có thể chưa chính xác nếu DOM chưa load xong)
     Vec2D.resize2D();
+    
+    // 2. Bind Events
     Vec2D.bind2DEvents();
     canvas2d.style.touchAction = "none";
     App.applyTheme?.();
+
+    // 3. QUAN TRỌNG: Dùng ResizeObserver để theo dõi kích thước thật của div cha (#viewer)
+    // Ngay khi div cha có kích thước chuẩn, nó sẽ tự gọi resize2D và vẽ lại.
+    const viewerDiv = document.getElementById("viewer");
+    if (viewerDiv) {
+      const ro = new ResizeObserver(() => {
+        // Chỉ vẽ lại nếu đang ở mode 2D
+        if (App.mode === "2D") {
+          Vec2D.resize2D();
+          Vec2D.draw2DAllVectors();
+        }
+      });
+      ro.observe(viewerDiv);
+    }
   };
 
   Vec2D.show2D = function () {
@@ -69,23 +87,28 @@
     const threeLayer = document.getElementById("threeLayer");
     canvas.style.display = "block";
     threeLayer.style.display = "none";
-    // Resize lại khi hiện để đảm bảo không bị méo
-    Vec2D.resize2D();
-    Vec2D.draw2DAllVectors();
+    
+    // Resize lại ngay khi hiển thị để đảm bảo nét
+    requestAnimationFrame(() => {
+        Vec2D.resize2D();
+        Vec2D.draw2DAllVectors();
+    });
   };
 
-  // ✅ FIX: Xử lý High-DPI (Retina) để không bị mờ
+  // Hàm xử lý High-DPI
   Vec2D.resize2D = function () {
     const rect = document.getElementById("viewer").getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
+
+    // Nếu kích thước = 0 (đang ẩn hoặc chưa load), bỏ qua để tránh lỗi
+    if (rect.width === 0 || rect.height === 0) return;
 
     // 1. Set kích thước vật lý (thực tế) gấp dpr lần
     canvas2d.width = Math.floor(rect.width * dpr);
     canvas2d.height = Math.floor(rect.height * dpr);
 
-    // 2. Scale context để vẽ theo đơn vị logic (CSS pixels)
-    // Giúp code vẽ cũ vẫn hoạt động đúng nhưng nét hơn
-    ctx2d.setTransform(1, 0, 0, 1, 0, 0); // Reset
+    // 2. Scale context
+    ctx2d.setTransform(1, 0, 0, 1, 0, 0); // Reset transform cũ
     ctx2d.scale(dpr, dpr);
   };
 
@@ -112,7 +135,9 @@
     const wy = (cy - my) / Vec2D.S2D.pxPerUnit;
 
     Vec2D.S2D.pxPerUnit *= factor;
+    // Giới hạn zoom tránh crash
     if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12) Vec2D.S2D.pxPerUnit = 1e-12;
+    if (Vec2D.S2D.pxPerUnit > 1e12) Vec2D.S2D.pxPerUnit = 1e12;
 
     const cxNew = mx - wx * Vec2D.S2D.pxPerUnit;
     const cyNew = my + wy * Vec2D.S2D.pxPerUnit;
@@ -121,10 +146,13 @@
   }
 
   Vec2D.bind2DEvents = function () {
+    // window.resize đã được ResizeObserver lo, nhưng giữ lại cho chắc chắn
     window.addEventListener("resize", () => {
       const App = window.App || {};
-      Vec2D.resize2D();
-      if (App.mode === "2D") Vec2D.draw2DAllVectors();
+      if (App.mode === "2D") {
+          Vec2D.resize2D();
+          Vec2D.draw2DAllVectors();
+      }
     });
 
     canvas2d.addEventListener("pointerdown", (e) => {
@@ -299,7 +327,6 @@
 
   Vec2D.render2DGrid = function () {
     const App = window.App || {};
-    // ✅ FIX: Dùng kích thước logic thay vì canvas.width (vì canvas.width giờ đã x2, x3)
     const { w, h } = getLogicalSize();
     
     const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY, px = Vec2D.S2D.pxPerUnit;
@@ -429,7 +456,6 @@
 
   Vec2D.draw2DAllVectors = function () {
     const App = window.App || {};
-    // ✅ FIX: Dùng kích thước logic
     const { w, h } = getLogicalSize();
 
     if (App.firstDrawForVector && App.currentVector && App.currentVector.length >= 2) {
@@ -495,7 +521,7 @@
     const { cx, cy } = Vec2D.gridInfo2D;
     const a = state.a, b = state.b;
 
-    // ✅ FIX: Dùng kích thước logic để tính bán kính tương đối
+    // ✅ FIX: Dùng kích thước logic
     const { w, h } = getLogicalSize();
 
     const angA = Math.atan2(-a[1], a[0]);
