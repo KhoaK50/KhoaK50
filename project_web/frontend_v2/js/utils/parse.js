@@ -1,60 +1,92 @@
 (function () {
   window.App = window.App || {};
 
-  function splitTopLevelByComma(s) {
-    const parts = [];
-    let cur = "";
-    let depth = 0;
+  /* * Hàm phân tích chuỗi vector "[1, 2^3, sqrt(4)]" thành mảng số [1, 8, 2]
+   */
+  App.parseVectorExpr = function (str) {
+    if (!str) throw new Error("Chuỗi rỗng");
+    
+    // 1. Chuẩn hóa chuỗi (xóa khoảng trắng thừa, chữ thường)
+    let s = str.trim().toLowerCase();
 
-    for (let i = 0; i < s.length; i++) {
-      const ch = s[i];
-      if (ch === "," && depth === 0) { parts.push(cur.trim()); cur = ""; continue; }
-      if (ch === "(") depth++;
-      else if (ch === ")" && depth > 0) depth--;
-      cur += ch;
-    }
-    if (cur.trim() !== "") parts.push(cur.trim());
-    return parts;
-  }
-
-  function evalExprSafe(expr) {
-    if (!expr || !expr.trim()) throw "Thiếu toạ độ";
-    let e = expr.trim();
-
-    e = e.replace(/√\s*\(/g, "sqrt(");
-    e = e.replace(/√\s*([0-9.]+)/g, "sqrt($1)");
-    e = e.replace(/\bsqrt\s*\(/gi, "Math.sqrt(");
-
-    const safeRe = /^[0-9+\-*/.\s()a-zA-Z_]+$/;
-    if (!safeRe.test(e)) throw "Biểu thức có ký tự không hợp lệ";
-    if (/constructor|Function|=>|while|for|if|return|try|catch|process|window|document/i.test(e)) {
-      throw "Biểu thức không hợp lệ";
+    // 2. Kiểm tra cú pháp cơ bản [ ... ]
+    if (!s.startsWith("[") || !s.endsWith("]")) {
+      throw new Error("Phải bắt đầu bằng '[' và kết thúc bằng ']'");
     }
 
-    let val;
-    try {
-      // eslint-disable-next-line no-new-func
-      val = Function(`"use strict"; return (${e});`)();
-    } catch {
-      throw `Không tính được: ${expr}`;
-    }
+    // Lấy nội dung bên trong
+    let content = s.substring(1, s.length - 1).trim();
+    if (!content) throw new Error("Vector rỗng");
 
-    if (!isFinite(val)) throw `Kết quả không hợp lệ: ${expr}`;
-    return Number(val);
-  }
+    // 3. Tách các thành phần bằng dấu phẩy
+    const parts = content.split(",");
 
-  App.parseVectorExpr = function (raw) {
-    const s = String(raw ?? "").trim();
-    if (!s.startsWith("[") || !s.endsWith("]")) throw "Nhập phải dạng [x1,x2,...,xn]";
+    if (parts.length < 2) throw new Error("Cần ít nhất 2 tọa độ (x, y)");
 
-    const inside = s.slice(1, -1).trim();
-    if (!inside) throw "Vector rỗng";
+    // 4. Hàm tính toán biểu thức an toàn
+    const evaluate = (expr) => {
+      // --- XỬ LÝ PHÉP MŨ (QUAN TRỌNG) ---
+      // Thay thế '^' thành '**' để JS hiểu là lũy thừa
+      expr = expr.replace(/\^/g, "**");
 
-    const parts = splitTopLevelByComma(inside);
+      // --- XỬ LÝ HÀM & HẰNG SỐ ---
+      // Dùng Regex \b để thay thế chính xác từ khóa (tránh thay nhầm chữ trong biến khác)
+      expr = expr.replace(/\bpi\b/g, "Math.PI");
+      expr = expr.replace(/\be\b/g, "Math.E");
+      
+      expr = expr.replace(/\bsqrt\b/g, "Math.sqrt");
+      expr = expr.replace(/\bsin\b/g, "Math.sin");
+      expr = expr.replace(/\bcos\b/g, "Math.cos");
+      expr = expr.replace(/\btan\b/g, "Math.tan");
+      expr = expr.replace(/\babs\b/g, "Math.abs");
+      expr = expr.replace(/\blog\b/g, "Math.log10");
+      expr = expr.replace(/\bln\b/g, "Math.log");
 
-    // ✅ Cho phép n chiều (n >= 2)
-    if (parts.length < 2) throw "Vector phải có ít nhất 2 toạ độ";
+      try {
+        // Dùng Function constructor để eval an toàn hơn
+        const func = new Function(`return (${expr})`);
+        const val = func();
+        
+        // Kiểm tra kết quả
+        if (typeof val !== "number" || isNaN(val) || !isFinite(val)) {
+          throw new Error("Kết quả không xác định");
+        }
+        return val;
+      } catch (err) {
+        throw new Error("Biểu thức không hợp lệ");
+      }
+    };
 
-    return parts.map(evalExprSafe);
+    // 5. Duyệt qua từng tọa độ và tính toán
+    const result = parts.map((p, index) => {
+      try {
+        if(!p.trim()) throw new Error("Rỗng");
+        return evaluate(p);
+      } catch (e) {
+        throw new Error(`Tọa độ thứ ${index + 1} ("${p}") lỗi: ${e.message}`);
+      }
+    });
+
+    return result;
   };
+
+  // Hàm format hiển thị vector ngắn gọn (làm tròn 4 chữ số thập phân)
+  App.formatVectorShort = function (vec) {
+    if (!Array.isArray(vec)) return "[]";
+    const niceNum = (n) => {
+      // Làm tròn 4 số lẻ, nếu là số nguyên thì hiện số nguyên
+      const r = Math.round(n * 10000) / 10000; 
+      return r.toString();
+    };
+    return "[" + vec.map(niceNum).join(", ") + "]";
+  };
+
+  // Helper format số vô tỉ (tùy chọn dùng thêm)
+  App.formatScalar = function(n) {
+      if(n === undefined || n === null) return "—";
+      if(Math.abs(n - Math.PI) < 1e-4) return "π";
+      if(Math.abs(n) < 1e-9) return "0";
+      return parseFloat(n.toFixed(4)).toString();
+  };
+
 })();
