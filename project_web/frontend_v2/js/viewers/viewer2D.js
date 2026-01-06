@@ -1,4 +1,4 @@
-// ===================== viewer2D.js (Fixed Scale = 80 -> Hiện số 1, 2, 3) =====================
+// ===================== viewer2D.js (Full Features: Scale 80, Smart Grid, Anim Reset, Shift-Zoom) =====================
 (function () {
   window.Vec2D = window.Vec2D || {};
 
@@ -7,7 +7,7 @@
 
   // ----- State -----
   Vec2D.S2D = {
-    pxPerUnit: 80, // <--- SỬA TỪ 50 THÀNH 80 (Zoom to để hiện rõ số 1, 2, 3)
+    pxPerUnit: 80, // <--- MẶC ĐỊNH 80 ĐỂ HIỆN RÕ 1 ĐƠN VỊ
     offsetX: 0,
     offsetY: 0,
 
@@ -27,15 +27,16 @@
     momentumId: null,
 
     // multi-pointer
-    pointers: new Map(),
+    pointers: new Map(), // id -> {x,y}
     lastCentroidX: null,
     lastCentroidY: null,
     lastDist: null,
-    zoomVel: 0
+    zoomVel: 0 // per ms in log space
   };
 
   Vec2D.gridInfo2D = null;
 
+  // ====== Vector thickness config ======
   const VEC_STROKE_W = 3.2;
   const ARROW_HEAD = 14;
   const HALO_LAYERS = [
@@ -199,6 +200,26 @@
       }
 
       if (Vec2D.S2D.isPanningOne && n === 1) {
+        
+        // --- TÍNH NĂNG MỚI: SHIFT + KÉO CHUỘT ĐỂ ZOOM (Thay cho Pinch) ---
+        if (e.shiftKey) {
+            const dy = e.clientY - Vec2D.S2D.lastY;
+            const factor = dy > 0 ? (1 + dy * 0.01) : (1 / (1 - dy * 0.01));
+            const rect = canvas2d.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            
+            applyZoomAboutScreenPoint(mx, my, factor);
+            
+            Vec2D.S2D.lastX = e.clientX;
+            Vec2D.S2D.lastY = e.clientY;
+            Vec2D.S2D.lastTime = now;
+            
+            if (App.mode === "2D") Vec2D.draw2DAllVectors();
+            return; 
+        }
+        // -------------------------------------------------------------
+
         Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
         Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
         Vec2D.S2D.velX = (e.clientX - Vec2D.S2D.lastX) / dt;
@@ -300,10 +321,22 @@
     ctx2d.fillStyle = App.getCSS?.("--card") || "#111";
     ctx2d.fillRect(0, 0, w, h);
 
-    const unitsHalfX = (w / 2) / px, unitsHalfY = (h / 2) / px;
-    const unitsRange = Math.max(unitsHalfX, unitsHalfY) * 2;
-    const stepUnit = App.niceStep ? App.niceStep(unitsRange) : 1;
+    // --- LOGIC MỚI: TÍNH BƯỚC NHẢY DỰA TRÊN MẬT ĐỘ PIXEL ---
+    // Mục tiêu: Giữ khoảng cách giữa các số ~70px
+    const targetPx = 70; 
+    const rawStep = targetPx / Math.max(1e-9, px); 
+    
+    const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const res = rawStep / mag;
+    
+    let stepUnit;
+    if (res <= 1) stepUnit = 1 * mag;
+    else if (res <= 2) stepUnit = 2 * mag;
+    else if (res <= 5) stepUnit = 5 * mag;
+    else stepUnit = 10 * mag;
+
     const tickPx = stepUnit * px;
+    // -------------------------------------------------------
 
     const subDiv = 5;
     const subTickPx = tickPx / subDiv;
@@ -318,11 +351,17 @@
 
     ctx2d.strokeStyle = App.getCSS?.("--grid-light") || "#2b2b2b";
     ctx2d.lineWidth = 1.2;
-    for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
+    // Lưới chính
+    const startKx = Math.floor((-cx) / tickPx) - 1;
+    const endKx = Math.ceil((w - cx) / tickPx) + 1;
+    for (let k = startKx; k <= endKx; k++) {
       const x = cx + k * tickPx;
       ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
     }
-    for (let k = Math.floor((cy - h) / tickPx) - 1; k <= Math.ceil((cy + h) / tickPx) + 1; k++) {
+    
+    const startKy = Math.floor((cy - h) / tickPx) - 1;
+    const endKy = Math.ceil((cy + h) / tickPx) + 1;
+    for (let k = startKy; k <= endKy; k++) {
       const y = cy - k * tickPx;
       ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
     }
@@ -335,33 +374,41 @@
     ctx2d.fillStyle = App.getCSS?.("--fg") || "#fff";
     ctx2d.font = "12px sans-serif";
 
+    // Số trục X
     ctx2d.textAlign = "center";
     ctx2d.textBaseline = "top";
-    for (let k = Math.floor((-cx) / tickPx) - 1; k <= Math.ceil((w - cx) / tickPx) + 1; k++) {
+    for (let k = startKx; k <= endKx; k++) {
       const unitVal = k * stepUnit;
-      if (Math.abs(unitVal) <= 1e-12) continue;
+      if (Math.abs(unitVal) < 1e-9) continue;
       const x = cx + k * tickPx;
-      ctx2d.fillText(formatLabel(unitVal), x, cy + 6);
+      if(Math.abs(x - cx) > 15) { // Tránh đè trục Y
+          ctx2d.fillText(formatLabel(unitVal), x, cy + 6);
+      }
     }
 
-    ctx2d.textAlign = "left";
+    // Số trục Y
+    ctx2d.textAlign = "right";
     ctx2d.textBaseline = "middle";
-    for (let k = Math.floor((cy - h) / tickPx) - 1; k <= Math.ceil((cy + h) / tickPx) + 1; k++) {
+    for (let k = startKy; k <= endKy; k++) {
       const unitVal = k * stepUnit;
-      if (Math.abs(unitVal) <= 1e-12) continue;
+      if (Math.abs(unitVal) < 1e-9) continue;
       const y = cy - k * tickPx;
-      ctx2d.fillText(formatLabel(unitVal), cx + 6, y);
+      if(Math.abs(y - cy) > 15) { // Tránh đè trục X
+          ctx2d.fillText(formatLabel(unitVal), cx - 8, y);
+      }
     }
 
-    ctx2d.textAlign = "left";
+    ctx2d.textAlign = "right";
     ctx2d.textBaseline = "top";
-    ctx2d.fillText("0", cx + 4, cy + 4);
+    ctx2d.fillText("0", cx - 6, cy + 6);
 
     function formatLabel(v) {
       if (v === 0) return "0";
       const abs = Math.abs(v);
       if (abs >= 1e6 || abs < 1e-6) return v.toExponential(0).replace("+", "");
-      return Number(v.toFixed(6)).toString();
+      const p = Math.floor(Math.log10(stepUnit));
+      const digits = Math.max(0, -p);
+      return v.toFixed(digits);
     }
 
     return { cx, cy, px, stepUnit };
@@ -419,7 +466,6 @@
 
     if (App.firstDrawForVector && App.currentVector && App.currentVector.length >= 2) {
       const v = toVec2(App.currentVector);
-      const maxComp = Math.max(Math.abs(v[0]), Math.abs(v[1]), 1);
       // Auto-scale tắt để giữ zoom 80 cố định khi reset
       App.firstDrawForVector = false;
     }
@@ -511,57 +557,45 @@
     ctx2d.restore();
   }
 
-  // --- HÀM RESET VIEW 2D (ANIMATION: LƯỚT VỀ) ---
+  // --- HÀM RESET VIEW 2D (ANIMATION: LƯỚT VỀ + ZOOM 80) ---
   Vec2D.resetView = function () {
-    // 1. Nếu đang chạy animation cũ thì hủy đi để tránh xung đột
     if (Vec2D._resetAnimId) cancelAnimationFrame(Vec2D._resetAnimId);
 
-    // 2. Lấy trạng thái hiện tại (Điểm xuất phát)
     const startX = Vec2D.S2D.offsetX;
     const startY = Vec2D.S2D.offsetY;
     const startScale = Vec2D.S2D.pxPerUnit;
 
-    // 3. Trạng thái đích (Điểm đến)
     const targetX = 0;
     const targetY = 0;
     const targetScale = 80; // Zoom chuẩn
 
-    // Kiểm tra nếu đã ở đúng vị trí thì thôi, khỏi chạy
     if (Math.abs(startX) < 0.1 && Math.abs(startY) < 0.1 && Math.abs(startScale - targetScale) < 0.1) return;
 
-    // 4. Cấu hình Animation
-    const duration = 800; // Thời gian chạy: 800ms (0.8 giây)
+    const duration = 800; 
     const startTime = performance.now();
-
-    // Hàm Easing: Ease Out Cubic (Chạy nhanh rồi chậm dần ở cuối -> Rất mượt)
     const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
     function loop(now) {
       const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1); // Từ 0 đến 1
-      const ease = easeOutCubic(progress); // Biến đổi theo đường cong
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = easeOutCubic(progress);
 
-      // Nội suy (Interpolation)
       Vec2D.S2D.offsetX = startX + (targetX - startX) * ease;
       Vec2D.S2D.offsetY = startY + (targetY - startY) * ease;
       Vec2D.S2D.pxPerUnit = startScale + (targetScale - startScale) * ease;
 
-      // Vẽ lại khung hình
       Vec2D.draw2DAllVectors();
 
       if (progress < 1) {
         Vec2D._resetAnimId = requestAnimationFrame(loop);
       } else {
         Vec2D._resetAnimId = null;
-        // Chốt đơn lần cuối cho chính xác số
         Vec2D.S2D.offsetX = targetX;
         Vec2D.S2D.offsetY = targetY;
         Vec2D.S2D.pxPerUnit = targetScale;
         Vec2D.draw2DAllVectors();
       }
     }
-
-    // Bắt đầu chạy
     Vec2D._resetAnimId = requestAnimationFrame(loop);
   };
-})(); 
+})();
