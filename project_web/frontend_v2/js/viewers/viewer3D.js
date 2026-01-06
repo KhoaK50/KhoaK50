@@ -1,9 +1,11 @@
-// ===================== viewer3D.js (Optimized & Animated Reset) =====================
+// ===================== viewer3D.js =====================
 (function () {
   // Public namespace
   window.Vec3D = window.Vec3D || {};
+  
   Vec3D._ZOOM_MIN = 1e-12;
   Vec3D._ZOOM_MAX = 1e12;
+  
   const App = window.App || {};
   const toVec3 = (v) => [v?.[0] || 0, v?.[1] || 0, v?.[2] || 0];
 
@@ -47,29 +49,24 @@
   Vec3D._kbAnimId = null;
   Vec3D._lastUForVectors = 1;
 
-  // Scene helpers
-  Vec3D._axisMaxMath = 50;
+  // --- CẤU HÌNH ĐỘ DÀI TRỤC: GIẢM TỪ 50 XUỐNG 20 CHO ĐỠ RỐI ---
+  Vec3D._axisMaxMath = 20; 
   Vec3D._axisMaxWorld = Vec3D._axisMaxMath;
+  
   Vec3D._frameGroup = null;
-
   Vec3D._axesGroup = null;
   Vec3D._planeXY = null;
   Vec3D._mathGroup = null;
   Vec3D._vectorsGroup = null;
-
   Vec3D._ticksGroup = null;
   Vec3D._tickLabels = [];
   Vec3D._axisLetters = [];
   Vec3D._lastLabelKey = "";
+  Vec3D.threeVecMap = new Map();
 
-  // Vectormap
-  Vec3D.threeVecMap = new Map(); // id -> group
-
-  // Text sizes
   Vec3D.AXIS_TICK_PX = 26;
   Vec3D.AXIS_LETTER_PX = 30;
   Vec3D.TIP_PX = 22;
-
   Vec3D.ANGLE_LABEL_PX = 28;
   Vec3D.ANGLE_ARC_GAP_PX = 8;
   Vec3D.ANGLE_RADIUS_RATIO = 0.72;
@@ -120,8 +117,10 @@
       0.1,
       1e12
     );
-    Vec3D._camera.position.set(100, 100, 100);
-    Vec3D._camera.up.set(0, 0, 1); // Z-up
+    
+    // Camera ở vị trí gần để thấy số 1,2,3 rõ ràng
+    Vec3D._camera.position.set(10, 10, 10); 
+    Vec3D._camera.up.set(0, 0, 1); 
 
     Vec3D._controls = new THREE.OrbitControls(Vec3D._camera, Vec3D._renderer.domElement);
 
@@ -134,7 +133,7 @@
     Vec3D._controls.dampingFactor = 0.07;
     Vec3D._controls.rotateSpeed = 0.6;
     Vec3D._controls.enablePan = true;
-    Vec3D._controls.enableZoom = false;
+    Vec3D._controls.enableZoom = false; // Zoom handled manually
 
     Vec3D._controls.zoomSpeed = 0;
     Vec3D._controls.zoomToCursor = false;
@@ -151,7 +150,6 @@
     const wheelHandler = (e) => {
       e.preventDefault();
       e.stopImmediatePropagation();
-
       const dir = e.deltaY < 0 ? +1 : -1;
       const factor = dir > 0 ? 1.12 : 1 / 1.12;
 
@@ -175,7 +173,9 @@
     Vec3D._labelRenderer.domElement.addEventListener("wheel", wheelHandler, { passive: false });
 
     Vec3D._controls.addEventListener("change", () => {
-      if (App.mode !== "3D") return;
+      if (App.mode !== "3D") {
+          return;
+      }
       Vec3D.addAxisLabelsDynamic();
       Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
       Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
@@ -187,7 +187,9 @@
       Vec3D._camera.updateProjectionMatrix();
       Vec3D._renderer.setSize(r.width || 760, r.height || 760);
       Vec3D._labelRenderer.setSize(r.width || 760, r.height || 760);
-      if (App.mode === "3D") Vec3D.hardRefresh3D(false);
+      if (App.mode === "3D") {
+          Vec3D.hardRefresh3D(false);
+      }
     });
 
     const ro = new ResizeObserver(() => {
@@ -196,7 +198,9 @@
       Vec3D._camera.updateProjectionMatrix();
       Vec3D._renderer.setSize(r.width || 760, r.height || 760);
       Vec3D._labelRenderer.setSize(r.width || 760, r.height || 760);
-      if (App.mode === "3D") Vec3D.hardRefresh3D(false);
+      if (App.mode === "3D") {
+          Vec3D.hardRefresh3D(false);
+      }
     });
     ro.observe(threeLayer);
 
@@ -208,64 +212,57 @@
       Vec3D._hover3D = false;
     });
 
-    document.addEventListener(
-      "keydown",
-      (e) => {
+    // Keyboard controls (WASD)
+    document.addEventListener("keydown", (e) => {
         const controlsPane = document.getElementById("controls");
-        const typing =
-          ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) ||
-          (controlsPane && controlsPane.contains(e.target));
-        if (App.mode !== "3D" || !Vec3D._hover3D || typing) return;
-
+        const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) || (controlsPane && controlsPane.contains(e.target));
+        
+        if (App.mode !== "3D" || !Vec3D._hover3D || typing) {
+            return;
+        }
+        
         const key = e.key.toLowerCase();
         Vec3D._pressed.add(key);
-
+        
         if (["w", "a", "s", "d", "q", "e", "arrowup", "arrowdown", "arrowleft", "arrowright", "shift"].includes(key)) {
-          e.preventDefault();
+          e.preventDefault(); 
           e.stopPropagation();
         }
-      },
-      { capture: true }
-    );
+      }, { capture: true });
 
-    document.addEventListener(
-      "keyup",
-      (e) => {
+    document.addEventListener("keyup", (e) => {
         const controlsPane = document.getElementById("controls");
-        const typing =
-          ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) ||
-          (controlsPane && controlsPane.contains(e.target));
-        if (typing) return;
-
+        const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) || (controlsPane && controlsPane.contains(e.target));
+        if (typing) {
+            return;
+        }
+        
         const key = e.key.toLowerCase();
         if (Vec3D._pressed.has(key)) {
           Vec3D._pressed.delete(key);
           e.preventDefault();
           e.stopPropagation();
         }
-      },
-      { capture: true }
-    );
+      }, { capture: true });
 
     const stepLoop = () => {
       if (App.mode === "3D" && Vec3D._pressed.size && Vec3D._camera && Vec3D._controls) {
         const base = Vec3D._camera.position.distanceTo(Vec3D._controls.target);
         const speed = (Vec3D._pressed.has("shift") ? 0.01 : 0.005) * base;
-
+        
         const forward = new THREE.Vector3();
-        Vec3D._camera.getWorldDirection(forward);
+        Vec3D._camera.getWorldDirection(forward); 
         forward.normalize();
-
+        
         const worldUp = new THREE.Vector3(0, 0, 1);
         const right = new THREE.Vector3().crossVectors(forward, worldUp).normalize();
-
+        
         const move = new THREE.Vector3();
-
         if (Vec3D._pressed.has("w")) move.add(forward);
         if (Vec3D._pressed.has("s")) move.sub(forward);
         if (Vec3D._pressed.has("a")) move.sub(right);
         if (Vec3D._pressed.has("d")) move.add(right);
-
+        
         if (move.lengthSq() > 0) {
           move.normalize().multiplyScalar(speed);
           Vec3D._camera.position.add(move);
@@ -273,16 +270,15 @@
           Vec3D._controls.update();
         }
       }
-
       Vec3D._kbAnimId = requestAnimationFrame(stepLoop);
     };
-
     if (!Vec3D._kbAnimId) Vec3D._kbAnimId = requestAnimationFrame(stepLoop);
 
     Vec3D.update3DHelpersBase();
     Vec3D.show3D();
-
-    requestAnimationFrame(() => Vec3D.hardRefresh3D(true));
+    
+    // Fix: Gọi false để không Auto-Fit (giữ zoom gần)
+    requestAnimationFrame(() => Vec3D.hardRefresh3D(false));
   };
 
   Vec3D._syncVectorList = function () {
@@ -296,7 +292,7 @@
       +((typeof v.alpha === "number" ? v.alpha : 1).toFixed(3)),
       String(v.colorHex || v.colorCss || "")
     ]);
-
+    
     const sig = JSON.stringify(list);
     if (sig !== Vec3D._vecSignature) {
       Vec3D._vecSignature = sig;
@@ -318,24 +314,24 @@
       (function loop() {
         if (!Vec3D._animating) return;
         requestAnimationFrame(loop);
-
+        
         if (Vec3D._controls) {
           Vec3D._controls.update();
           Vec3D._syncVectorList();
         }
-
+        
         const target = Math.min(Vec3D._ZOOM_MAX, Math.max(Vec3D._ZOOM_MIN, Vec3D.S3D.zoomTarget));
         Vec3D.S3D.unitsPerWorld += (target - Vec3D.S3D.unitsPerWorld) * 0.15;
-
+        
         const diff = Math.abs(Vec3D.S3D.unitsPerWorld - target);
         const eps = Math.max(1e-9, Math.abs(target) * 1e-9);
+        
         if (diff <= eps) {
           Vec3D.S3D.unitsPerWorld = target;
           Vec3D.S3D.hasPivot = false;
         }
-
+        
         Vec3D.addAxisLabelsDynamic();
-
         Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
         Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
       })();
@@ -345,7 +341,7 @@
   // ===== Helpers (plane + cube + axes) =====
   Vec3D.update3DHelpersBase = function () {
     const Lw = Vec3D._axisMaxWorld;
-
+    
     if (!Vec3D._frameGroup) {
       Vec3D._frameGroup = new THREE.Group();
       Vec3D._scene.add(Vec3D._frameGroup);
@@ -367,11 +363,12 @@
       const keepAngles = Vec3D._angleLayer || new THREE.Group();
       keepVectors.parent && keepVectors.parent.remove(keepVectors);
       keepAngles.parent && keepAngles.parent.remove(keepAngles);
+      
       Vec3D._mathGroup.clear();
       Vec3D._vectorsGroup = keepVectors;
       Vec3D._angleLayer = keepAngles;
     }
-
+    
     if (!Vec3D._vectorsGroup) Vec3D._vectorsGroup = new THREE.Group();
     if (!Vec3D._angleLayer) Vec3D._angleLayer = new THREE.Group();
 
@@ -386,31 +383,27 @@
       })
     );
     Vec3D._planeXY.renderOrder = 0;
-    Vec3D._planeXY.rotation.set(0, 0, 0);
     Vec3D._mathGroup.add(Vec3D._planeXY);
 
     Vec3D._axesGroup = (function buildAxesWorld(L) {
       const g = new THREE.Group();
-      const mk = (a, b, cssVar) =>
-        new THREE.Line(
+      const mk = (a, b, cssVar) => new THREE.Line(
           new THREE.BufferGeometry().setFromPoints([a, b]),
           new THREE.LineBasicMaterial({ color: new THREE.Color(App.getCSS(cssVar)) })
         );
-
       g.add(mk(new THREE.Vector3(-L, 0, 0), new THREE.Vector3(L, 0, 0), "--axis-x"));
       g.add(mk(new THREE.Vector3(0, -L, 0), new THREE.Vector3(0, L, 0), "--axis-y"));
       g.add(mk(new THREE.Vector3(0, 0, -L), new THREE.Vector3(0, 0, L), "--axis-z"));
       return g;
     })(Lw);
-
+    
     Vec3D._mathGroup.add(Vec3D._axesGroup);
     Vec3D._mathGroup.add(Vec3D._vectorsGroup);
     Vec3D._mathGroup.add(Vec3D._angleLayer);
-
     Vec3D._mathGroup.position.copy(Vec3D.S3D.offset);
   };
 
-  // ===== Axis ticks & labels (math-zoom aware) =====
+  // ===== Axis ticks & labels =====
   function niceStep(raw) {
     raw = Math.max(1e-12, Math.abs(raw));
     const p = Math.pow(10, Math.floor(Math.log10(raw)));
@@ -423,15 +416,14 @@
     if (!isFinite(v)) return "";
     const abs = Math.abs(v);
     if (abs === 0) return "0";
-
+    
     const s = Math.max(1e-300, Math.abs(step || 1));
     const expStep = Math.floor(Math.log10(s));
-    const expV = Math.floor(Math.log10(abs));
-    let sig = 1 + (expV - expStep);
+    let sig = 1 + (Math.floor(Math.log10(abs)) - expStep);
     sig = Math.max(1, Math.min(6, sig));
-
+    
     if (abs >= 1e6 || abs < 1e-6) return Number(v).toExponential(sig - 1).replace("+", "");
-
+    
     const dec = Math.max(0, -expStep);
     let out = (Math.round(v / step) * step).toFixed(Math.min(6, dec));
     if (out.includes(".")) out = out.replace(/\.?0+$/, "");
@@ -440,7 +432,7 @@
 
   Vec3D.addAxisLabelsDynamic = function () {
     if (!Vec3D._camera || !Vec3D._renderer || !Vec3D._mathGroup) return;
-
+    
     const u = Math.max(1e-12, Vec3D.S3D.unitsPerWorld);
     const Lw = Vec3D._axisMaxWorld;
     const Lm = Lw / u;
@@ -461,7 +453,6 @@
 
     if (Math.abs(u - (Vec3D._lastUForVectors || 0)) > 1e-6) {
       Vec3D.draw3DAllVectors({ frame: false });
-
       const g = App.currentAngleVisual3D;
       if (g?.userData?.angleMeta) {
         const u0 = g.userData.angleMeta.createdU || 1;
@@ -472,11 +463,13 @@
       Vec3D._lastUForVectors = u;
     }
 
-    const targetPx = 70;
+    // --- CẤU HÌNH QUAN TRỌNG: MẬT ĐỘ NHÃN ---
+    const targetPx = 40; 
     const step = niceStep(targetPx / Math.max(1e-9, pxPerMath));
-
+    
     const off = Vec3D.S3D.offset;
     const key = `${Lw}|${step}|${u}|${App.theme}|${Math.round(dist * 1000)}|${off.x.toFixed(4)},${off.y.toFixed(4)},${off.z.toFixed(4)}`;
+    
     if (key === Vec3D._lastLabelKey) return;
     Vec3D._lastLabelKey = key;
 
@@ -486,14 +479,8 @@
       Vec3D._ticksGroup.material.dispose();
       Vec3D._ticksGroup = null;
     }
-    for (const o of Vec3D._tickLabels) {
-      o.element?.remove();
-      o.parent?.remove(o);
-    }
-    for (const o of Vec3D._axisLetters) {
-      o.element?.remove();
-      o.parent?.remove(o);
-    }
+    for (const o of Vec3D._tickLabels) { o.element?.remove(); o.parent?.remove(o); }
+    for (const o of Vec3D._axisLetters) { o.element?.remove(); o.parent?.remove(o); }
     Vec3D._tickLabels.length = 0;
     Vec3D._axisLetters.length = 0;
 
@@ -508,21 +495,18 @@
       for (let t = start; t <= end + 1e-12; t += step) arr.push(+t.toFixed(12));
       return arr;
     }
-
     const majorsX = buildMajorsAround(t0x);
     const majorsY = buildMajorsAround(t0y);
     const majorsZ = buildMajorsAround(t0z);
 
     const tickLenW = Math.max(Lw * 0.02, 0.25);
     const pos = [];
-
     const addMajor = (axis, tMath) => {
       const s = tMath * u;
       if (axis === "x") pos.push(s, -tickLenW, 0, s, +tickLenW, 0);
       if (axis === "y") pos.push(-tickLenW, s, 0, +tickLenW, s, 0);
       if (axis === "z") pos.push(-tickLenW, 0, s, +tickLenW, 0, s);
     };
-
     majorsX.forEach((t) => addMajor("x", t));
     majorsY.forEach((t) => addMajor("y", t));
     majorsZ.forEach((t) => addMajor("z", t));
@@ -538,7 +522,6 @@
     const putLabel = (axis, tMath) => {
       if (Math.abs(tMath) <= 1e-12) return;
       const txt = formatTick(tMath, step);
-
       const outer = document.createElement("div");
       outer.className = "axis-label-outer";
       const inner = document.createElement("div");
@@ -546,14 +529,12 @@
       inner.textContent = txt;
       inner.style.color = axis === "x" ? App.getCSS("--axis-x") : axis === "y" ? App.getCSS("--axis-y") : App.getCSS("--axis-z");
       outer.appendChild(inner);
-
       const obj = new THREE.CSS2DObject(outer);
       const s = tMath * u;
       obj.position.set(axis === "x" ? s : 0, axis === "y" ? s : 0, axis === "z" ? s : 0);
       Vec3D._mathGroup.add(obj);
       Vec3D._tickLabels.push(obj);
     };
-
     majorsX.forEach((t) => putLabel("x", t));
     majorsY.forEach((t) => putLabel("y", t));
     majorsZ.forEach((t) => putLabel("z", t));
@@ -569,7 +550,6 @@
       Vec3D._mathGroup.add(obj);
       Vec3D._axisLetters.push(obj);
     };
-
     addLetter("X", "x", new THREE.Vector3(letterOffW, 0, 0));
     addLetter("Y", "y", new THREE.Vector3(0, letterOffW, 0));
     addLetter("Z", "z", new THREE.Vector3(0, 0, letterOffW));
@@ -591,69 +571,49 @@
     (function updateAngleLabel() {
       const g = App.currentAngleVisual3D;
       if (!g || !g.userData?.angleMeta) return;
-
       const { midDir, r, labelPx = Vec3D.ANGLE_LABEL_PX, gapPx = Vec3D.ANGLE_LABEL_GAP_PX } = g.userData.angleMeta;
       const lbl = g.children.find((ch) => ch.isCSS2DObject);
       if (!lbl) return;
-
       const pxPerWorld = Vec3D._pxPerWorld || 1;
       const s = g.scale?.x || 1;
-
       const padPx = (gapPx || 0) + (labelPx || 0) * 0.5;
       const insetW = padPx / pxPerWorld;
       const minInside = r * (Vec3D.ANGLE_LABEL_MIN_RATIO || 0.38);
-
       const distLocal = Math.max(minInside, r - insetW / s);
       lbl.position.copy(midDir.clone().multiplyScalar(distLocal));
     })();
   };
 
-  // ===== Projection (dashed) =====
   Vec3D.buildProjectionGroupZUp = function (vecWorld, colorCSS = "#444", alpha = 1) {
     const g = new THREE.Group();
     const [x, y, z] = vecWorld;
-
-    const mat = new THREE.LineDashedMaterial({
-      color: new THREE.Color(colorCSS),
-      dashSize: 0.6,
-      gapSize: 0.35,
-      transparent: true,
-      opacity: Math.max(0, Math.min(1, Number(alpha) || 0))
-    });
-
+    const mat = new THREE.LineDashedMaterial({ color: new THREE.Color(colorCSS), dashSize: 0.6, gapSize: 0.35, transparent: true, opacity: Math.max(0, Math.min(1, Number(alpha) || 0)) });
     const mk = (pts) => {
       const geo = new THREE.BufferGeometry().setFromPoints(pts);
       const l = new THREE.Line(geo, mat);
       l.computeLineDistances();
       return l;
     };
-
     g.add(mk([new THREE.Vector3(x, y, z), new THREE.Vector3(x, y, 0)]));
     g.add(mk([new THREE.Vector3(x, y, z), new THREE.Vector3(0, y, z)]));
     g.add(mk([new THREE.Vector3(x, y, z), new THREE.Vector3(x, 0, z)]));
-
     g.add(mk([new THREE.Vector3(x, y, 0), new THREE.Vector3(x, 0, 0)]));
     g.add(mk([new THREE.Vector3(x, y, 0), new THREE.Vector3(0, y, 0)]));
     g.add(mk([new THREE.Vector3(0, y, z), new THREE.Vector3(0, 0, z)]));
     g.add(mk([new THREE.Vector3(x, 0, z), new THREE.Vector3(0, 0, z)]));
-
     g.add(mk([new THREE.Vector3(x, 0, 0), new THREE.Vector3(x, y, 0)]));
     g.add(mk([new THREE.Vector3(0, y, 0), new THREE.Vector3(x, y, 0)]));
     g.add(mk([new THREE.Vector3(0, 0, z), new THREE.Vector3(x, 0, z)]));
     g.add(mk([new THREE.Vector3(0, 0, z), new THREE.Vector3(0, y, z)]));
-
     return g;
   };
 
-  // ===== Clip tip to cube (math) =====
   function clipToCubeMath(x, y, z, L) {
     const tip = new THREE.Vector3(x, y, z);
     if (Math.abs(x) <= L && Math.abs(y) <= L && Math.abs(z) <= L) return tip;
-
     const tx = x ? (Math.sign(x) * L) / x : Infinity;
     const ty = y ? (Math.sign(y) * L) / y : Infinity;
     const tz = z ? (Math.sign(z) * L) / z : Infinity;
-
     const t = Math.min(tx > 0 ? tx : Infinity, ty > 0 ? ty : Infinity, tz > 0 ? tz : Infinity);
     return isFinite(t) ? tip.multiplyScalar(t) : new THREE.Vector3(0, 0, 0);
   }
@@ -666,31 +626,26 @@
   Vec3D._maybeInvalidateAngle = function () {
     const g = App.currentAngleVisual3D;
     if (!g?.userData?.angleMeta?.src) return;
-
     const { a: A0, b: B0 } = g.userData.angleMeta.src;
     const cur = (App.vectorList || []).filter((v) => v.visible !== false);
-
     const hasA = cur.some((v) => Vec3D._sameVec([v.vec[0] || 0, v.vec[1] || 0, v.vec[2] || 0], A0));
     const hasB = cur.some((v) => Vec3D._sameVec([v.vec[0] || 0, v.vec[1] || 0, v.vec[2] || 0], B0));
-
     if (!(hasA && hasB) || cur.length === 0) Vec3D.clearAngle();
   };
 
-  // ===== Draw all vectors =====
   Vec3D.draw3DAllVectors = function (opts = { frame: false }) {
     Vec3D._maybeInvalidateAngle();
-
+    
     if (!Vec3D._mathGroup) return;
-    if (!Vec3D._vectorsGroup) {
-      Vec3D._vectorsGroup = new THREE.Group();
-      Vec3D._mathGroup.add(Vec3D._vectorsGroup);
+    if (!Vec3D._vectorsGroup) { 
+        Vec3D._vectorsGroup = new THREE.Group(); 
+        Vec3D._mathGroup.add(Vec3D._vectorsGroup); 
     }
-
+    
     Vec3D._vectorsGroup.traverse((obj) => {
       if (obj.isCSS2DObject && obj.element) obj.element.remove();
       if (obj.geometry) obj.geometry.dispose?.();
-      if (Array.isArray(obj.material)) obj.material.forEach((m) => m?.dispose?.());
-      else obj.material?.dispose?.();
+      if (Array.isArray(obj.material)) obj.material.forEach((m) => m?.dispose?.()); else obj.material?.dispose?.();
     });
     Vec3D._vectorsGroup.clear();
     Vec3D.threeVecMap.clear();
@@ -698,24 +653,19 @@
     const u = Math.max(1e-12, Vec3D.S3D.unitsPerWorld);
     const Lw = Vec3D._axisMaxWorld;
     const Lm = Lw / u;
-
     const focused = App.vectorList.find((v) => v.focus);
     const list = focused ? [focused] : (App.vectorList || []).filter((v) => v.visible !== false);
 
     for (const it of list) {
       const v = [it.vec[0] || 0, it.vec[1] || 0, it.vec[2] || 0];
-
       const aItem = (typeof it.alpha === "number") ? Math.max(0, Math.min(1, it.alpha)) : 1;
       if (aItem <= 0.001) continue;
-
+      
       const tipM = clipToCubeMath(v[0], v[1], v[2], Lm);
       const tipLocal = tipM.clone().multiplyScalar(u);
-
       const len = Math.max(tipLocal.length(), 1e-9);
       const dirLocal = len > 1e-9 ? tipLocal.clone().normalize() : new THREE.Vector3(1, 0, 0);
-
       const shaftLen = Math.max(len - VEC_HEAD_H, 1e-6);
-
       const color = new THREE.Color(it.colorHex || it.colorCss || "#ffffff");
 
       const shaft = new THREE.Mesh(
@@ -733,7 +683,6 @@
       head.position.copy(tipLocal.clone().addScaledVector(dirLocal, -VEC_HEAD_H / 2));
 
       const proj = Vec3D.buildProjectionGroupZUp([tipLocal.x, tipLocal.y, tipLocal.z], App.getCSS("--axis"), aItem * 0.9);
-
       const el = document.createElement("div");
       el.className = "tip-label";
       el.textContent = App.formatTip(v);
@@ -745,43 +694,38 @@
       const group = new THREE.Group();
       group.userData.tipLocal = tipLocal;
       group.userData.dirLocal = dirLocal;
-
+      
       if (App._basisAnimActive && it._basisIsBasis) {
-        group.renderOrder = 999;
-        shaft.renderOrder = 999;
-        head.renderOrder = 999;
-        shaft.material.depthTest = false;
-        head.material.depthTest = false;
-        shaft.material.depthWrite = false;
-        head.material.depthWrite = false;
+        group.renderOrder = 999; shaft.renderOrder = 999; head.renderOrder = 999;
+        shaft.material.depthTest = false; head.material.depthTest = false;
+        shaft.material.depthWrite = false; head.material.depthWrite = false;
       } else {
         group.renderOrder = 1;
       }
-
       group.add(shaft, head, proj, labelEl);
       Vec3D._vectorsGroup.add(group);
       Vec3D.threeVecMap.set(it.id, group);
-
     }
 
     if (opts.frame) {
-      const longestMath = App.vectorList.length
-        ? Math.max(
-          ...App.vectorList.map((it) => {
-            const a = toVec3(it.vec);
-            return new THREE.Vector3(a[0], a[1], a[2]).length();
-          })
-        )
-        : 1;
-
-      const targetWorld = Lw * 0.55;
-      const uFit = targetWorld / Math.max(1e-9, longestMath);
-
-      Vec3D.S3D.unitsPerWorld = Vec3D.S3D.zoomTarget = Math.min(Vec3D._ZOOM_MAX, Math.max(Vec3D._ZOOM_MIN, uFit));
-      Vec3D._lastUForVectors = Vec3D.S3D.unitsPerWorld;
+      // --- LOGIC AUTO-FIT THÔNG MINH ---
+      const hasVec = (App.vectorList || []).some(v => v.visible !== false);
+      let dist;
+      if(!hasVec) {
+          // Nếu chưa có vector, đặt camera gần (10) để hiện rõ số 1,2,3
+          dist = 16;
+      } else {
+          // Nếu có vector, tính toán bao quát nhưng không zoom quá xa
+          const longestMath = Math.max(...App.vectorList.map((it) => new THREE.Vector3(...toVec3(it.vec)).length()));
+          const targetWorld = Lw * 0.55;
+          const uFit = targetWorld / Math.max(1e-9, longestMath);
+          Vec3D.S3D.unitsPerWorld = Math.min(Vec3D._ZOOM_MAX, Math.max(Vec3D._ZOOM_MIN, uFit));
+          Vec3D._lastUForVectors = Vec3D.S3D.unitsPerWorld;
+          // Zoom vừa phải, không quá 40 để tránh mất chi tiết
+          dist = Math.min(40, Math.max(32, Lw * 1.15));
+      }
+      
       Vec3D.S3D.offset.set(0, 0, 0);
-
-      const dist = Math.max(32, Lw * 1.15);
       Vec3D._camera.position.set(dist, dist, dist);
       Vec3D._controls.target.copy(Vec3D.S3D.offset);
       Vec3D._controls.update();
@@ -795,7 +739,6 @@
     }
   };
 
-  // ===== Angle cleanup =====
   Vec3D.clearAngle = function () {
     const g = App.currentAngleVisual3D;
     if (!g) return;
@@ -803,8 +746,7 @@
     g.traverse((obj) => {
       obj.element?.remove?.();
       obj.geometry?.dispose?.();
-      if (Array.isArray(obj.material)) obj.material.forEach((m) => m?.dispose?.());
-      else obj.material?.dispose?.();
+      if (Array.isArray(obj.material)) obj.material.forEach((m) => m?.dispose?.()); else obj.material?.dispose?.();
     });
     App.currentAngleVisual3D = null;
   };
@@ -812,7 +754,6 @@
   Vec3D.refreshAngleTheme = function () {
     const g = App.currentAngleVisual3D;
     if (!g) return;
-
     const sectorColor = new THREE.Color(App.getCSS("--angle") || "#ffb703");
     g.children.forEach((ch) => {
       if (ch.isMesh && ch.material?.color) ch.material.color.copy(sectorColor);
@@ -824,7 +765,6 @@
         el.style.textShadow = "0 1px 1px rgba(0,0,0,.35)";
       }
     });
-
     Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
     Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
   };
@@ -833,16 +773,13 @@
     const sweep = (root) => {
       if (!root) return;
       const trash = [];
-      root.traverse((o) => {
-        if (o.userData?.isAngleSector) trash.push(o);
-      });
+      root.traverse((o) => { if (o.userData?.isAngleSector) trash.push(o); });
       trash.forEach((g) => {
         (g.parent || root).remove(g);
         g.traverse((obj) => {
           obj.element?.remove?.();
           obj.geometry?.dispose?.();
-          if (Array.isArray(obj.material)) obj.material.forEach((m) => m?.dispose?.());
-          else obj.material?.dispose?.();
+          if (Array.isArray(obj.material)) obj.material.forEach((m) => m?.dispose?.()); else obj.material?.dispose?.();
         });
       });
     };
@@ -851,33 +788,28 @@
     App.currentAngleVisual3D = null;
   };
 
-  // ===== Angle sector =====
   Vec3D.drawAngleArc3D = function (v1, v2, rad, deg) {
     Vec3D.removeAllAngleVisuals();
-
-    const a3 = toVec3(v1);
-    const b3 = toVec3(v2);
+    const a3 = toVec3(v1); const b3 = toVec3(v2);
     const a = new THREE.Vector3(a3[0], a3[1], a3[2]);
     const b = new THREE.Vector3(b3[0], b3[1], b3[2]);
-
+    
     if (a.length() < 1e-9 || b.length() < 1e-9 || !isFinite(rad) || rad <= 1e-9) return;
-
+    
     const u = Math.max(1e-12, Vec3D.S3D.unitsPerWorld);
     const au = a.clone().multiplyScalar(u);
     const bu = b.clone().multiplyScalar(u);
-
     const planeN = new THREE.Vector3().crossVectors(au, bu);
+    
     if (planeN.lengthSq() < 1e-18) return;
     planeN.normalize();
-
+    
     const xDir = au.clone().normalize();
     const yDir = new THREE.Vector3().crossVectors(planeN, xDir).normalize();
-
     const r = Math.min(au.length(), bu.length()) * (Vec3D.ANGLE_RADIUS_RATIO || 0.72);
     const sweep = rad;
     const segments = Math.max(32, Math.ceil((sweep * 64) / Math.PI));
     const geom = new THREE.RingGeometry(0, r, segments, 1, 0, sweep);
-
     const angleColor = App.getCSS("--angle") || "#ffd166";
     const mat = new THREE.MeshBasicMaterial({
       color: new THREE.Color(angleColor),
@@ -890,20 +822,18 @@
       polygonOffsetFactor: -2,
       polygonOffsetUnits: -2
     });
+    
     const sector = new THREE.Mesh(geom, mat);
     sector.renderOrder = 2;
-
     const basis = new THREE.Matrix4().makeBasis(xDir, yDir, planeN);
     sector.applyMatrix4(basis);
-
     const midDirUnit = xDir.clone().applyAxisAngle(planeN, sweep / 2).normalize();
     const el = document.createElement("div");
     el.className = "tip-label angle-badge";
     el.textContent = `${deg.toFixed(1)}°`;
-
     const lbl = new THREE.CSS2DObject(el);
     lbl.position.copy(midDirUnit.clone().multiplyScalar(r * 0.6));
-
+    
     el.style.background = App.getCSS("--chip-bg") || "rgba(0,0,0,.45)";
     el.style.border = `1px solid ${App.getCSS("--chip-border") || "rgba(255,255,255,.22)"}`;
     el.style.color = App.getCSS("--chip-fg") || App.getCSS("--fg") || "#fff";
@@ -911,33 +841,19 @@
     el.style.borderRadius = "8px";
     el.style.fontWeight = "600";
     el.style.textShadow = "0 1px 1px rgba(0,0,0,.35)";
-
+    
     const group = new THREE.Group();
     group.userData.isAngleSector = true;
-    group.userData.angleMeta = {
-      midDir: midDirUnit.clone(),
-      r,
-      createdU: u,
-      src: { a: [a.x, a.y, a.z], b: [b.x, b.y, b.z] },
-      labelPx: Vec3D.ANGLE_LABEL_PX,
-      gapPx: Vec3D.ANGLE_LABEL_GAP_PX
-    };
-
+    group.userData.angleMeta = { midDir: midDirUnit.clone(), r, createdU: u, src: { a: [a.x, a.y, a.z], b: [b.x, b.y, b.z] }, labelPx: Vec3D.ANGLE_LABEL_PX, gapPx: Vec3D.ANGLE_LABEL_GAP_PX };
     group.add(sector, lbl);
-
-    if (!Vec3D._angleLayer) {
-      Vec3D._angleLayer = new THREE.Group();
-      if (Vec3D._mathGroup) Vec3D._mathGroup.add(Vec3D._angleLayer);
-    }
+    if (!Vec3D._angleLayer) { Vec3D._angleLayer = new THREE.Group(); if (Vec3D._mathGroup) Vec3D._mathGroup.add(Vec3D._angleLayer); }
     Vec3D._angleLayer.add(group);
     App.currentAngleVisual3D = group;
   };
 
-  // ===== Hard refresh =====
   Vec3D.hardRefresh3D = function (frameFirst = false) {
     if (App.mode !== "3D") return;
     Vec3D.draw3DAllVectors({ frame: frameFirst });
-
     Vec3D._controls.update();
     Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
     Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
@@ -950,44 +866,35 @@
     Vec3D.hardRefresh3D(false);
   };
 
-  // --- HÀM RESET VIEW 3D (CAMERA FLY ANIMATION) ---
+  // --- ANIMATED RESET (Bay về vị trí 10,10,10 để hiện rõ số 1,2,3) ---
   Vec3D.resetView = function () {
     if (!Vec3D._camera || !Vec3D._controls) return;
     if (Vec3D._resetAnimId) cancelAnimationFrame(Vec3D._resetAnimId);
 
-    // 1. Điểm xuất phát
     const startPos = Vec3D._camera.position.clone();
-    const startTarget = Vec3D._controls.target.clone(); // Điểm camera đang nhìn vào
-    const startZoom = Vec3D.S3D.unitsPerWorld; // Zoom của hệ trục (nếu có)
+    const startTarget = Vec3D._controls.target.clone();
+    const startZoom = Vec3D.S3D.unitsPerWorld;
 
-    // 2. Điểm đích
-    const targetPos = new THREE.Vector3(100, 100, 100); // Vị trí mặc định (như trong init)
-    const targetLookAt = new THREE.Vector3(0, 0, 0); // Nhìn vào gốc
-    const targetZoom = 1; // Reset scale trục
+    const targetPos = new THREE.Vector3(10, 10, 10);
+    const targetLookAt = new THREE.Vector3(0, 0, 0);
+    const targetZoom = 1;
 
-    const duration = 1000; // 1 giây cho 3D (vì không gian rộng nên cần chậm hơn xíu)
+    const duration = 1000;
     const startTime = performance.now();
-    const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4); // Mượt hơn cả Cubic
+    const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
 
     function loop(now) {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const ease = easeOutQuart(progress);
 
-      // Nội suy vị trí Camera
       Vec3D._camera.position.lerpVectors(startPos, targetPos, ease);
-
-      // Nội suy điểm nhìn (Target)
       Vec3D._controls.target.lerpVectors(startTarget, targetLookAt, ease);
-
-      // Nội suy Zoom trục (quan trọng để trục không bị to/nhỏ bất thường)
       Vec3D.S3D.unitsPerWorld = startZoom + (targetZoom - startZoom) * ease;
-      Vec3D.S3D.zoomTarget = Vec3D.S3D.unitsPerWorld; // Đồng bộ để chuột không bị giật lại
+      Vec3D.S3D.zoomTarget = Vec3D.S3D.unitsPerWorld;
 
-      // Cập nhật Controls
       Vec3D._controls.update();
 
-      // Vẽ lại (Render loop chính của 3D sẽ tự vẽ, nhưng gọi thêm cho chắc nếu loop đang dừng)
       if (!Vec3D._animating) {
         Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
         Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
@@ -998,14 +905,11 @@
         Vec3D._resetAnimId = requestAnimationFrame(loop);
       } else {
         Vec3D._resetAnimId = null;
-        // Reset offset nội bộ về 0
         Vec3D.S3D.offset.set(0, 0, 0);
         Vec3D.S3D.hasPivot = false;
         Vec3D.hardRefresh3D(false);
       }
     }
-
     Vec3D._resetAnimId = requestAnimationFrame(loop);
   };
-
 })();
