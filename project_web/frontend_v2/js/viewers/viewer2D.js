@@ -1,4 +1,4 @@
-// ===================== viewer2D.js =====================
+// ===================== viewer2D.js (High-DPI Optimized) =====================
 (function () {
   window.Vec2D = window.Vec2D || {};
 
@@ -47,6 +47,15 @@
 
   const toVec2 = (v) => [v?.[0] || 0, v?.[1] || 0];
 
+  // Helper: Lấy kích thước logic (CSS pixels)
+  function getLogicalSize() {
+    const dpr = window.devicePixelRatio || 1;
+    return {
+      w: canvas2d.width / dpr,
+      h: canvas2d.height / dpr
+    };
+  }
+
   Vec2D.init2D = function () {
     const App = window.App || {};
     Vec2D.resize2D();
@@ -60,12 +69,24 @@
     const threeLayer = document.getElementById("threeLayer");
     canvas.style.display = "block";
     threeLayer.style.display = "none";
+    // Resize lại khi hiện để đảm bảo không bị méo
+    Vec2D.resize2D();
+    Vec2D.draw2DAllVectors();
   };
 
+  // ✅ FIX: Xử lý High-DPI (Retina) để không bị mờ
   Vec2D.resize2D = function () {
     const rect = document.getElementById("viewer").getBoundingClientRect();
-    canvas2d.width = Math.floor(rect.width);
-    canvas2d.height = Math.floor(rect.height);
+    const dpr = window.devicePixelRatio || 1;
+
+    // 1. Set kích thước vật lý (thực tế) gấp dpr lần
+    canvas2d.width = Math.floor(rect.width * dpr);
+    canvas2d.height = Math.floor(rect.height * dpr);
+
+    // 2. Scale context để vẽ theo đơn vị logic (CSS pixels)
+    // Giúp code vẽ cũ vẫn hoạt động đúng nhưng nét hơn
+    ctx2d.setTransform(1, 0, 0, 1, 0, 0); // Reset
+    ctx2d.scale(dpr, dpr);
   };
 
   function centroidOfPointers(ptrs) {
@@ -83,7 +104,7 @@
   }
 
   function applyZoomAboutScreenPoint(mx, my, factor) {
-    const w = canvas2d.clientWidth, h = canvas2d.clientHeight;
+    const { w, h } = getLogicalSize();
     const cx = w / 2 + Vec2D.S2D.offsetX;
     const cy = h / 2 + Vec2D.S2D.offsetY;
 
@@ -221,7 +242,8 @@
 
             if (hasZoomMomentum) {
               const factor = Math.exp(Vec2D.S2D.zoomVel * 16);
-              applyZoomAboutScreenPoint(canvas2d.clientWidth / 2, canvas2d.clientHeight / 2, factor);
+              const { w, h } = getLogicalSize();
+              applyZoomAboutScreenPoint(w / 2, h / 2, factor);
               Vec2D.S2D.zoomVel *= decayZoom;
             }
 
@@ -277,7 +299,9 @@
 
   Vec2D.render2DGrid = function () {
     const App = window.App || {};
-    const w = canvas2d.width, h = canvas2d.height;
+    // ✅ FIX: Dùng kích thước logic thay vì canvas.width (vì canvas.width giờ đã x2, x3)
+    const { w, h } = getLogicalSize();
+    
     const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY, px = Vec2D.S2D.pxPerUnit;
 
     ctx2d.fillStyle = App.getCSS?.("--card") || "#111";
@@ -350,7 +374,6 @@
     return { cx, cy, px, stepUnit };
   };
 
-  // ✅ FIX: thêm alpha vào tham số
   function draw2DVectorSingle(v, color, haloColor, highlighted, alpha = 1) {
     alpha = Math.max(0, Math.min(1, Number(alpha) || 0));
 
@@ -406,9 +429,10 @@
 
   Vec2D.draw2DAllVectors = function () {
     const App = window.App || {};
+    // ✅ FIX: Dùng kích thước logic
+    const { w, h } = getLogicalSize();
 
     if (App.firstDrawForVector && App.currentVector && App.currentVector.length >= 2) {
-      const w = canvas2d.width, h = canvas2d.height;
       const v = toVec2(App.currentVector);
       const maxComp = Math.max(Math.abs(v[0]), Math.abs(v[1]), 1);
       Vec2D.S2D.pxPerUnit = Math.max((Math.min(w, h) / 2) * 0.6 / maxComp, 1e-12);
@@ -471,6 +495,9 @@
     const { cx, cy } = Vec2D.gridInfo2D;
     const a = state.a, b = state.b;
 
+    // ✅ FIX: Dùng kích thước logic để tính bán kính tương đối
+    const { w, h } = getLogicalSize();
+
     const angA = Math.atan2(-a[1], a[0]);
     const angB = Math.atan2(-b[1], b[0]);
 
@@ -483,7 +510,7 @@
     const delta = normPi(angB - angA);
     const anticlockwise = delta < 0;
 
-    const r = Math.min(canvas2d.width, canvas2d.height) * 0.18;
+    const r = Math.min(w, h) * 0.18;
 
     ctx2d.save();
     ctx2d.beginPath();
