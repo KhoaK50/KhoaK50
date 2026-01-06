@@ -37,7 +37,14 @@
     };
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
+  <style>
+    /* Ẩn toàn bộ body ban đầu, tạo hiệu ứng hiện dần (fade-in) */
+    body {
+      opacity: 0;
+      transition: opacity 0.25s ease-in;
+      /* Hiện dần trong 0.25 giây */
+    }
+  </style>
 </head>
 
 <body>
@@ -379,7 +386,15 @@
 
   <!-- bootstrap cuối cùng -->
   <script src="js/app/bootstrap.js"></script>
-
+  <script>
+    // Lắng nghe sự kiện "load" (tức là khi web đã tải xong hoàn toàn)
+    window.addEventListener('load', function () {
+      // Dùng requestAnimationFrame để đảm bảo mượt mà
+      requestAnimationFrame(function () {
+        document.body.style.opacity = '1'; // Hiện giao diện lên
+      });
+    });
+  </script>
 </body>
 
 </html>
