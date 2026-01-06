@@ -58,6 +58,7 @@
   App.optionLabelFor = (it) => `#${App.displayIndexOf(it)} ${App.formatVectorShort(it.vec)}`;
 
   /* ====== Mini keypad helpers ====== */
+  // Vẫn giữ để hỗ trợ phím tắt bàn phím vật lý
   App.insertAtCursor = function (inp, text) {
     const start = inp.selectionStart ?? inp.value.length;
     const end = inp.selectionEnd ?? inp.value.length;
@@ -67,6 +68,7 @@
     const pos = start + text.length;
     inp.selectionStart = inp.selectionEnd = pos;
     inp.focus();
+    inp.dispatchEvent(new Event('input', { bubbles: true })); // Trigger update
   };
 
   App.insertSqrt = function (inp) {
@@ -74,14 +76,6 @@
     App.insertAtCursor(inp, "sqrt()");
     inp.selectionStart = inp.selectionEnd = start + "sqrt(".length;
     inp.focus();
-  };
-
-  App.getFocusedVectorInput = function () {
-    return document.activeElement &&
-      document.activeElement.classList &&
-      document.activeElement.classList.contains("lbl")
-      ? document.activeElement
-      : null;
   };
 
   /* ====== Vector list render ====== */
@@ -112,6 +106,20 @@
       lbl.className = "lbl";
       lbl.value = App.formatVectorShort(item.vec);
       lbl.title = App.formatVectorShort(item.vec);
+      
+      // --- CẤU HÌNH INPUT CHO BÀN PHÍM ẢO ---
+      lbl.setAttribute("autocomplete", "off");
+      lbl.setAttribute("spellcheck", "false");
+      // Quan trọng: Chặn bàn phím native trên mobile để dùng bàn phím custom
+      if (window.innerWidth < 768) {
+         lbl.setAttribute("inputmode", "none"); 
+         lbl.setAttribute("readonly", "true");
+      }
+
+      // Đảm bảo click vào là mở bàn phím ngay (dự phòng cho Event Delegation)
+      lbl.addEventListener("click", (e) => {
+        if(window.openKeypad) window.openKeypad(e.target);
+      });
 
       lbl.addEventListener("focus", () => { App.currentListInput = lbl; });
       lbl.addEventListener("blur", () => { if (App.currentListInput === lbl) App.currentListInput = null; });
@@ -141,19 +149,23 @@
 
             if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
             else if (window.Vec2D) Vec2D.draw2DAllVectors();
+            
+            // Đóng bàn phím sau khi Enter
+            const closeBtn = document.getElementById('keypadClose');
+            if(closeBtn) closeBtn.click();
+            lbl.blur();
+
           } catch (err) {
             alert("Sai định dạng vector: " + err);
             lbl.value = App.formatVectorShort(item.vec);
             lbl.title = App.formatVectorShort(item.vec);
           }
         }
-
-        if (e.key === "/" && !e.ctrlKey) { e.preventDefault(); App.insertAtCursor(lbl, "/"); }
-        if (e.key === "√" || e.key.toLowerCase() === "r") { e.preventDefault(); App.insertSqrt(lbl); }
       });
 
       header.appendChild(tag);
       header.appendChild(lbl);
+      // Đã xóa hoàn toàn phần .mini-keys (icon / và √) tại đây
 
       const actions = document.createElement("div");
       actions.className = "vec-actions";
