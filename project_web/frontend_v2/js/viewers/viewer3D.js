@@ -13,7 +13,6 @@
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
                     || window.innerWidth < 768;
 
-  // Giảm chất lượng hình học trên mobile để mượt hơn
   const GEOM_QUALITY = {
     shaftSeg: isMobile ? 8 : 18,
     headSeg: isMobile ? 12 : 22,
@@ -50,7 +49,7 @@
   Vec3D._kbAnimId = null;
   Vec3D._lastUForVectors = 1;
 
-  // --- CẤU HÌNH ĐỘ DÀI TRỤC: 20 ĐƠN VỊ ---
+  // --- TRỤC: 20 ĐƠN VỊ ---
   Vec3D._axisMaxMath = 20; 
   Vec3D._axisMaxWorld = Vec3D._axisMaxMath;
   
@@ -65,7 +64,6 @@
   Vec3D._lastLabelKey = "";
   Vec3D.threeVecMap = new Map();
 
-  // Text sizes configuration
   Vec3D.AXIS_TICK_PX = 26;
   Vec3D.AXIS_LETTER_PX = 30;
   Vec3D.TIP_PX = 22;
@@ -75,7 +73,6 @@
   Vec3D.ANGLE_LABEL_MIN_RATIO = 0.38;
   Vec3D.ANGLE_LABEL_GAP_PX = 6;
 
-  // Vector shape configuration
   const VEC_SHAFT_R = 0.1;
   const VEC_HEAD_R = 0.20;
   const VEC_HEAD_H = 0.35;
@@ -91,7 +88,6 @@
     }
     const rect = threeLayer.getBoundingClientRect();
 
-    // 1. Setup Renderer
     Vec3D._renderer = new THREE.WebGLRenderer({ 
         antialias: !isMobile, 
         alpha: true 
@@ -104,7 +100,6 @@
     Vec3D._renderer.domElement.style.inset = "0";
     Vec3D._renderer.domElement.style.zIndex = "0";
 
-    // 2. Setup Label Renderer (CSS2D)
     Vec3D._labelRenderer = new THREE.CSS2DRenderer();
     Vec3D._labelRenderer.setSize(rect.width || 760, rect.height || 760);
     Vec3D._labelRenderer.domElement.style.position = "absolute";
@@ -114,11 +109,9 @@
     Vec3D._labelRenderer.domElement.style.zIndex = "1";
     threeLayer.appendChild(Vec3D._labelRenderer.domElement);
 
-    // 3. Setup Scene
     Vec3D._scene = new THREE.Scene();
     Vec3D._scene.background = new THREE.Color(App.getCSS("--bg"));
 
-    // 4. Setup Camera
     Vec3D._camera = new THREE.PerspectiveCamera(
       Vec3D.DEFAULT_FOV,
       Math.max(1e-6, (rect.width || 760) / (rect.height || 760)),
@@ -126,12 +119,10 @@
       1e12
     );
     
-    // --- VỊ TRÍ KHỞI TẠO: (16,16,16) ---
-    // Vị trí này vừa đủ để hiển thị lưới 1 đơn vị đẹp mắt
-    Vec3D._camera.position.set(16, 16, 16); 
+    // --- VỊ TRÍ CHUẨN ĐỒNG BỘ: (10, 10, 10) ---
+    Vec3D._camera.position.set(10, 10, 10); 
     Vec3D._camera.up.set(0, 0, 1); 
 
-    // 5. Setup Controls
     Vec3D._controls = new THREE.OrbitControls(Vec3D._camera, Vec3D._renderer.domElement);
 
     Vec3D.S3D.unitsPerWorld = 1;
@@ -143,7 +134,7 @@
     Vec3D._controls.dampingFactor = 0.07;
     Vec3D._controls.rotateSpeed = 0.6;
     Vec3D._controls.enablePan = true;
-    Vec3D._controls.enableZoom = false; // Tự xử lý Zoom bằng tay
+    Vec3D._controls.enableZoom = false; 
 
     Vec3D._controls.zoomSpeed = 0;
     Vec3D._controls.zoomToCursor = false;
@@ -157,7 +148,6 @@
       TWO: THREE.TOUCH.PAN
     };
 
-    // 6. Event Listeners
     const wheelHandler = (e) => {
       e.preventDefault();
       e.stopImmediatePropagation();
@@ -221,16 +211,12 @@
       Vec3D._hover3D = false;
     });
 
-    // Keyboard controls (WASD)
     document.addEventListener("keydown", (e) => {
         const controlsPane = document.getElementById("controls");
         const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) || (controlsPane && controlsPane.contains(e.target));
-        
         if (App.mode !== "3D" || !Vec3D._hover3D || typing) return;
-        
         const key = e.key.toLowerCase();
         Vec3D._pressed.add(key);
-        
         if (["w", "a", "s", "d", "q", "e", "arrowup", "arrowdown", "arrowleft", "arrowright", "shift"].includes(key)) {
           e.preventDefault(); 
           e.stopPropagation();
@@ -241,7 +227,6 @@
         const controlsPane = document.getElementById("controls");
         const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) || (controlsPane && controlsPane.contains(e.target));
         if (typing) return;
-        
         const key = e.key.toLowerCase();
         if (Vec3D._pressed.has(key)) {
           Vec3D._pressed.delete(key);
@@ -250,25 +235,20 @@
         }
       }, { capture: true });
 
-    // Animation Loop for Key Movement
     const stepLoop = () => {
       if (App.mode === "3D" && Vec3D._pressed.size && Vec3D._camera && Vec3D._controls) {
         const base = Vec3D._camera.position.distanceTo(Vec3D._controls.target);
         const speed = (Vec3D._pressed.has("shift") ? 0.01 : 0.005) * base;
-        
         const forward = new THREE.Vector3();
         Vec3D._camera.getWorldDirection(forward); 
         forward.normalize();
-        
         const worldUp = new THREE.Vector3(0, 0, 1);
         const right = new THREE.Vector3().crossVectors(forward, worldUp).normalize();
-        
         const move = new THREE.Vector3();
         if (Vec3D._pressed.has("w")) move.add(forward);
         if (Vec3D._pressed.has("s")) move.sub(forward);
         if (Vec3D._pressed.has("a")) move.sub(right);
         if (Vec3D._pressed.has("d")) move.add(right);
-        
         if (move.lengthSq() > 0) {
           move.normalize().multiplyScalar(speed);
           Vec3D._camera.position.add(move);
@@ -282,8 +262,6 @@
 
     Vec3D.update3DHelpersBase();
     Vec3D.show3D();
-    
-    // Gọi false để tránh Auto-Fit (giữ zoom gần 1 đơn vị)
     requestAnimationFrame(() => Vec3D.hardRefresh3D(false));
   };
 
@@ -302,7 +280,6 @@
       +((typeof v.alpha === "number" ? v.alpha : 1).toFixed(3)),
       String(v.colorHex || v.colorCss || "")
     ]);
-    
     const sig = JSON.stringify(list);
     if (sig !== Vec3D._vecSignature) {
       Vec3D._vecSignature = sig;
@@ -323,23 +300,18 @@
       (function loop() {
         if (!Vec3D._animating) return;
         requestAnimationFrame(loop);
-        
         if (Vec3D._controls) {
           Vec3D._controls.update();
           Vec3D._syncVectorList();
         }
-        
         const target = Math.min(Vec3D._ZOOM_MAX, Math.max(Vec3D._ZOOM_MIN, Vec3D.S3D.zoomTarget));
         Vec3D.S3D.unitsPerWorld += (target - Vec3D.S3D.unitsPerWorld) * 0.15;
-        
         const diff = Math.abs(Vec3D.S3D.unitsPerWorld - target);
         const eps = Math.max(1e-9, Math.abs(target) * 1e-9);
-        
         if (diff <= eps) {
           Vec3D.S3D.unitsPerWorld = target;
           Vec3D.S3D.hasPivot = false;
         }
-        
         Vec3D.addAxisLabelsDynamic();
         Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
         Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
@@ -349,14 +321,12 @@
 
   Vec3D.update3DHelpersBase = function () {
     const Lw = Vec3D._axisMaxWorld;
-    
     if (!Vec3D._frameGroup) {
       Vec3D._frameGroup = new THREE.Group();
       Vec3D._scene.add(Vec3D._frameGroup);
     } else {
       Vec3D._frameGroup.clear();
     }
-
     const cube = new THREE.LineSegments(
       new THREE.EdgesGeometry(new THREE.BoxGeometry(Lw * 2, Lw * 2, Lw * 2)),
       new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.25 })
@@ -371,12 +341,10 @@
       const keepAngles = Vec3D._angleLayer || new THREE.Group();
       keepVectors.parent && keepVectors.parent.remove(keepVectors);
       keepAngles.parent && keepAngles.parent.remove(keepAngles);
-      
       Vec3D._mathGroup.clear();
       Vec3D._vectorsGroup = keepVectors;
       Vec3D._angleLayer = keepAngles;
     }
-    
     if (!Vec3D._vectorsGroup) Vec3D._vectorsGroup = new THREE.Group();
     if (!Vec3D._angleLayer) Vec3D._angleLayer = new THREE.Group();
 
@@ -404,14 +372,13 @@
       g.add(mk(new THREE.Vector3(0, 0, -L), new THREE.Vector3(0, 0, L), "--axis-z"));
       return g;
     })(Lw);
-    
     Vec3D._mathGroup.add(Vec3D._axesGroup);
     Vec3D._mathGroup.add(Vec3D._vectorsGroup);
     Vec3D._mathGroup.add(Vec3D._angleLayer);
     Vec3D._mathGroup.position.copy(Vec3D.S3D.offset);
   };
 
-  // ===== AXIS TICK CALCULATION =====
+  // ===== Axis ticks & labels =====
   function niceStep(raw) {
     raw = Math.max(1e-12, Math.abs(raw));
     const p = Math.pow(10, Math.floor(Math.log10(raw)));
@@ -424,14 +391,11 @@
     if (!isFinite(v)) return "";
     const abs = Math.abs(v);
     if (abs === 0) return "0";
-    
     const s = Math.max(1e-300, Math.abs(step || 1));
     const expStep = Math.floor(Math.log10(s));
     let sig = 1 + (Math.floor(Math.log10(abs)) - expStep);
     sig = Math.max(1, Math.min(6, sig));
-    
     if (abs >= 1e6 || abs < 1e-6) return Number(v).toExponential(sig - 1).replace("+", "");
-    
     const dec = Math.max(0, -expStep);
     let out = (Math.round(v / step) * step).toFixed(Math.min(6, dec));
     if (out.includes(".")) out = out.replace(/\.?0+$/, "");
@@ -440,7 +404,6 @@
 
   Vec3D.addAxisLabelsDynamic = function () {
     if (!Vec3D._camera || !Vec3D._renderer || !Vec3D._mathGroup) return;
-    
     const u = Math.max(1e-12, Vec3D.S3D.unitsPerWorld);
     const Lw = Vec3D._axisMaxWorld;
     const Lm = Lw / u;
@@ -471,8 +434,9 @@
       Vec3D._lastUForVectors = u;
     }
 
-    // --- QUAN TRỌNG: Tăng targetPx lên 70 để ưu tiên hiện số nguyên 1, 2 ---
-    const targetPx = 70; 
+    // --- TARGET PX = 50 (Đồng bộ) ---
+    const targetPx = 50; 
+    
     const step = niceStep(targetPx / Math.max(1e-9, pxPerMath));
     
     const off = Vec3D.S3D.offset;
@@ -643,13 +607,8 @@
 
   Vec3D.draw3DAllVectors = function (opts = { frame: false }) {
     Vec3D._maybeInvalidateAngle();
-    
     if (!Vec3D._mathGroup) return;
-    if (!Vec3D._vectorsGroup) { 
-        Vec3D._vectorsGroup = new THREE.Group(); 
-        Vec3D._mathGroup.add(Vec3D._vectorsGroup); 
-    }
-    
+    if (!Vec3D._vectorsGroup) { Vec3D._vectorsGroup = new THREE.Group(); Vec3D._mathGroup.add(Vec3D._vectorsGroup); }
     Vec3D._vectorsGroup.traverse((obj) => {
       if (obj.isCSS2DObject && obj.element) obj.element.remove();
       if (obj.geometry) obj.geometry.dispose?.();
@@ -716,19 +675,19 @@
     }
 
     if (opts.frame) {
-      // Logic Auto-Fit thông minh (nhưng vẫn giữ zoom gần nếu vector nhỏ)
+      // --- LOGIC AUTO-FIT ---
       const hasVec = (App.vectorList || []).some(v => v.visible !== false);
       let dist;
       if(!hasVec) {
-          // Camera gần mặc định
-          dist = 16;
+          // --- ĐỒNG BỘ VỚI RESET VIEW: 17.32 (tức là 10,10,10) ---
+          dist = 17.32; 
       } else {
           const longestMath = Math.max(...App.vectorList.map((it) => new THREE.Vector3(...toVec3(it.vec)).length()));
           const targetWorld = Lw * 0.55;
           const uFit = targetWorld / Math.max(1e-9, longestMath);
           Vec3D.S3D.unitsPerWorld = Math.min(Vec3D._ZOOM_MAX, Math.max(Vec3D._ZOOM_MIN, uFit));
           Vec3D._lastUForVectors = Vec3D.S3D.unitsPerWorld;
-          // Zoom xa tối đa là 40 (để tránh mất lưới 1 đơn vị)
+          
           dist = Math.min(40, Math.max(32, Lw * 1.15));
       }
       
@@ -873,9 +832,7 @@
     Vec3D.hardRefresh3D(false);
   };
 
-  // =========================================
-  // ANIMATED RESET 3D (SMOOTH & CLEAN)
-  // =========================================
+  // --- ANIMATED RESET 3D (ĐÍCH: 10, 10, 10) ---
   Vec3D.resetView = function () {
     if (!Vec3D._camera || !Vec3D._controls) return;
     if (Vec3D._resetAnimId) cancelAnimationFrame(Vec3D._resetAnimId);
@@ -884,8 +841,7 @@
     const startTarget = Vec3D._controls.target.clone();
     const startZoom = Vec3D.S3D.unitsPerWorld;
 
-    // Đích đến: Vị trí (16, 16, 16) để zoom gần
-    const targetPos = new THREE.Vector3(16, 16, 16); 
+    const targetPos = new THREE.Vector3(10, 10, 10);
     const targetLookAt = new THREE.Vector3(0, 0, 0);
     const targetZoom = 1;
 
