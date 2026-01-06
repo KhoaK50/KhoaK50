@@ -19,11 +19,9 @@
   <link rel="stylesheet" href="css/solution_panel.css" />
   <link rel="icon" href="./assets/logo.png" type="image/png">
 
-  <!-- Three.js r128 -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
-  <!-- MathJax (LaTeX renderer) -->
   <script>
     window.MathJax = {
       tex: {
@@ -42,62 +40,46 @@
     body {
       opacity: 0;
       transition: opacity 0.25s ease-in;
-      /* Hiện dần trong 0.25 giây */
     }
   </style>
 </head>
 
 <body>
   <div id="topbar">
-    <!-- LEFT -->
     <div class="topbar-left">
-      <!-- Hamburger -->
       <div id="hamburger">
         <span></span>
         <span></span>
         <span></span>
       </div>
 
-      <!-- HOME -->
       <button class="topbar-icon" title="Trang chủ" onclick="location.href='index.html'" aria-label="Trang chủ">
-        <!-- HOME ICON -->
         <svg viewBox="0 0 24 24" class="icon">
           <path d="M3 10.5L12 3l9 7.5" fill="none" stroke="currentColor" stroke-width="2" />
           <path d="M5 9.5V21h5v-6h4v6h5V9.5" fill="none" stroke="currentColor" stroke-width="2" />
         </svg>
       </button>
 
-      <!-- KNOWLEDGE (OPEN BOOK) -->
       <button class="topbar-icon" title="Kiến thức" onclick="location.href='knowledge_info.html'"
         aria-label="Kiến thức">
-        <!-- OPEN BOOK ICON -->
         <svg viewBox="0 0 24 24" class="icon">
-          <!-- left page -->
           <path d="M3 5h7a3 3 0 0 1 3 3v11a3 3 0 0 0-3-3H3z" fill="none" stroke="currentColor" stroke-width="2" />
-          <!-- right page -->
           <path d="M21 5h-7a3 3 0 0 0-3 3v11a3 3 0 0 1 3-3h7z" fill="none" stroke="currentColor" stroke-width="2" />
         </svg>
       </button>
     </div>
 
-    <!-- CENTER -->
     <div class="brand">Vectoria</div>
 
-    <!-- RIGHT -->
     <div class="topbar-right">
       <div id="themeBadge" class="pill">Theme: Light</div>
     </div>
   </div>
 
-
-
-  <!-- Overlay để bấm ngoài tắt sidebar -->
   <div id="overlay"></div>
 
   <div id="app">
-    <!-- Sidebar -->
     <div id="controls">
-      <!-- 3) Phép tính (tạo vector mới) -->
       <div class="card section-calc-new glow">
         <details class="calc" id="calcBox" open>
           <summary>Phép tính (tạo vector mới) <span class="chev">▾</span></summary>
@@ -140,7 +122,6 @@
         </details>
       </div>
 
-      <!-- 4) Phép tính (không tạo vector mới) -->
       <div class="card section-calc-info glow">
         <details class="calc" id="calcBoxExtra" open>
           <summary>Phép tính (không tạo vector mới) <span class="chev">▾</span></summary>
@@ -161,7 +142,6 @@
           </div>
 
           <div id="extraForms" style="margin-top:8px">
-            <!-- dot -->
             <div id="form-dot" class="extra-form">
               <label class="small"><b>Tích vô hướng (v1 · v2)</b></label>
               <div class="grid2">
@@ -172,7 +152,6 @@
               <pre id="result_dot">—</pre>
             </div>
 
-            <!-- projection -->
             <div id="form-projection" class="extra-form">
               <label class="small"><b>Hình chiếu trực giao</b></label>
               <div><label>Vector cần chiếu</label><select id="vProjSelect"></select></div>
@@ -184,7 +163,6 @@
               <pre id="result_proj">—</pre>
             </div>
 
-            <!-- angle -->
             <div id="form-angle_between" class="extra-form">
               <label class="small"><b>Góc giữa 2 vector</b></label>
               <div class="grid2">
@@ -195,7 +173,6 @@
               <pre id="result_angle">—</pre>
             </div>
 
-            <!-- norm -->
             <div id="form-vector_norm" class="extra-form">
               <label class="small"><b>Độ dài của vector</b></label>
               <select id="vNormSelect"></select>
@@ -203,7 +180,6 @@
               <pre id="result_norm">—</pre>
             </div>
 
-            <!-- coordinates -->
             <div id="form-coordinates" class="extra-form">
               <label class="small"><b>Tọa độ của vector theo cơ sở</b></label>
               <select id="vCoordSelect"></select>
@@ -222,17 +198,14 @@
               <div class="row" style="margin-top:6px; gap:8px;">
                 <button id="btnBasis">Tính cơ sở</button>
 
-                <!-- Nút mở panel lời giải -->
                 <button id="btnOpenSolution" class="btn-solution" type="button" title="Giải theo nhiều cách">
                   Lời giải
                 </button>
-
               </div>
 
               <pre id="result_basis">—</pre>
             </div>
 
-            <!-- independence -->
             <div id="form-linear_independence" class="extra-form">
               <label class="small"><b>Kiểm tra độc lập tuyến tính</b></label>
               <div id="indepChecklist" class="checklist"></div>
@@ -240,7 +213,6 @@
               <pre id="result_indep">—</pre>
             </div>
 
-            <!-- rank -->
             <div id="form-rank" class="extra-form">
               <label class="small"><b>Hạng của hệ vector</b></label>
               <div id="rankChecklist" class="checklist"></div>
@@ -251,15 +223,11 @@
         </details>
       </div>
 
-      <!-- 1) Tạo vector -->
       <div class="card section-create glow" id="card-create">
         <label>Nhập vector: chấp nhận <code>[1,2]</code>, <code>[1/2, sqrt(2)]</code>,
           <code>[3*sqrt(5)/7, -1/2]</code></label>
         <input id="vectorInput" placeholder='[1,2] hoặc [1/2, sqrt(2)]' value="[1,2]" />
-        <div class="mini-keys">
-          <button class="kbtn" id="btnInsertSlash">/</button>
-          <button class="kbtn" id="btnInsertSqrt">√</button>
-        </div>
+
         <div class="row" style="margin-top:8px">
           <button id="btnDraw" class="btn primary">Thêm vector</button>
           <button id="btnAuto">Tự động 2D<->3D: BẬT</button>
@@ -267,133 +235,229 @@
         </div>
       </div>
 
-      <!-- 2) Danh sách vector -->
       <div class="card section-list glow">
         <div style="display:flex; align-items:center; justify-content:space-between;">
           <label>Danh sách vector</label>
-          <div class="mini-keys">
-            <button class="kbtn" id="btnListSlash">/</button>
-            <button class="kbtn" id="btnListSqrt">√</button>
-          </div>
         </div>
         <ul id="vectorList"></ul>
       </div>
 
     </div>
 
-    <!-- Viewer -->
     <div id="viewerWrap">
-
       <div id="modeBadge" class="pill">Mode: 2D</div>
       <div id="viewer">
         <canvas id="canvas2d"></canvas>
         <div id="threeLayer" tabindex="0" aria-label="3D viewer (keyboard enabled)"></div>
       </div>
+      <button id="btnResetView" title="Quay về gốc tọa độ (Reset góc nhìn)">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" />
+          <circle cx="12" cy="12" r="2" fill="currentColor" />
+          <line x1="12" y1="2" x2="12" y2="7" stroke="currentColor" stroke-width="2" />
+          <line x1="12" y1="17" x2="12" y2="22" stroke="currentColor" stroke-width="2" />
+          <line x1="2" y1="12" x2="7" y2="12" stroke="currentColor" stroke-width="2" />
+          <line x1="17" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2" />
+        </svg>
+      </button>
     </div>
   </div>
 
-  <!-- ===================== Solution Panel (near-fullscreen) ===================== -->
   <div id="solutionOverlay" class="sol-overlay" aria-hidden="true">
     <div class="sol-panel" role="dialog" aria-modal="true" aria-labelledby="solTitle">
       <div class="sol-header">
         <div class="sol-title">
           <div class="sol-badge">Lời giải</div>
-
-          <!-- ✅ FIX: tách chữ thường ra khỏi MathJax để không bị font toán -->
           <div id="solTitle" class="sol-h1">
             <span id="solTitleText" class="sol-titleText">Cơ sở &amp; số chiều trong</span>
             <span id="solTitleMath" class="sol-math">\( \mathbb{R}^n \)</span>
           </div>
         </div>
-
-        <button id="btnCloseSolution" class="sol-close" type="button" title="Đóng (Esc)">
-          ✕
-        </button>
+        <button id="btnCloseSolution" class="sol-close" type="button" title="Đóng (Esc)">✕</button>
       </div>
 
       <div class="sol-toolbar">
         <div class="sol-method">
           <span class="sol-label">Cách giải:</span>
-
-          <button id="solMethodMat" class="sol-tab is-active" type="button">
-            Cách 1: Ma trận & biến đổi sơ cấp
-          </button>
-
-          <button id="solMethodEq" class="sol-tab" type="button">
-            Cách 2: Giải hệ phương trình
-          </button>
-
+          <button id="solMethodMat" class="sol-tab is-active" type="button">Cách 1: Ma trận & biến đổi sơ cấp</button>
+          <button id="solMethodEq" class="sol-tab" type="button">Cách 2: Giải hệ phương trình</button>
         </div>
-
         <div class="sol-actions">
-          <button id="btnCopySolution" class="sol-btn" type="button" title="Copy LaTeX">
-            Copy LaTeX
-          </button>
+          <button id="btnCopySolution" class="sol-btn" type="button" title="Copy LaTeX">Copy LaTeX</button>
         </div>
       </div>
 
       <div id="solutionBody" class="sol-body">
-        <!-- Nội dung LaTeX sẽ được JS bơm vào đây -->
-        <div class="sol-empty">
-          Chưa có lời giải. Bấm <b>Tính toán</b> rồi mở <b>Lời giải</b> để xem.
-        </div>
+        <div class="sol-empty">Chưa có lời giải. Bấm <b>Tính toán</b> rồi mở <b>Lời giải</b> để xem.</div>
       </div>
     </div>
   </div>
 
-  <!-- utils -->
   <script src="js/utils/math.js"></script>
   <script src="js/utils/parse.js"></script>
 
-  <!-- app core -->
   <script src="js/app/api/endpoints.js"></script>
   <script src="js/app/state.js"></script>
   <script src="js/app/api/client.js"></script>
 
-  <!-- ui -->
   <script src="js/app/ui/steps_renderer.js"></script>
   <script src="js/app/ui/sidebar.js"></script>
   <script src="js/app/ui/solution_panel.js"></script>
   <script src="js/app/ui/solution_generators.js"></script>
 
-  <!-- logic -->
   <script src="js/app/playback/animator.js"></script>
   <script src="js/app/logic/vector_controller.js"></script>
   <script src="js/app/logic/gauss_steps.js"></script>
   <script src="js/app/logic/basis_controller.js"></script>
 
-  <!-- viewers -->
   <script src="js/viewers/viewer2D.js"></script>
   <script>
     (function () {
       var version = new Date().getTime();
-
-      // Hàm load script an toàn (giữ đúng thứ tự)
       function loadScript(url) {
         var script = document.createElement("script");
         script.src = url + "?v=" + version;
-        script.async = false; // Quan trọng: Đảm bảo load xong cái này mới chạy cái kia
+        script.async = false;
         document.body.appendChild(script);
       }
-
-      // Danh sách các file JS cần load tự động (Thêm file nào thì viết vào đây)
       loadScript("js/viewers/viewer3D.js");
-      // Nếu sau này bạn có viewer2D.js cần update liên tục thì thêm:
-      // loadScript("js/viewers/viewer2D.js");
     })();
   </script>
   <script src="./js/app/playback/basis_animation.js"></script>
 
-  <!-- bootstrap cuối cùng -->
   <script src="js/app/bootstrap.js"></script>
   <script>
-    // Lắng nghe sự kiện "load" (tức là khi web đã tải xong hoàn toàn)
+    // Hiện giao diện sau khi load
     window.addEventListener('load', function () {
-      // Dùng requestAnimationFrame để đảm bảo mượt mà
       requestAnimationFrame(function () {
-        document.body.style.opacity = '1'; // Hiện giao diện lên
+        document.body.style.opacity = '1';
       });
     });
+  </script>
+
+  <div id="mathKeypad">
+    <div class="keypad-header">
+      <div class="drag-handle"></div> <button id="keypadClose" title="Đóng bàn phím">✕</button>
+    </div>
+    <div class="keypad-grid">
+      <button class="k-btn op" onclick="App.key('[')">[</button>
+      <button class="k-btn op" onclick="App.key(']')">]</button>
+      <button class="k-btn op" onclick="App.key('(')">(</button>
+      <button class="k-btn op" onclick="App.key(')')">)</button>
+      <button class="k-btn action" onclick="App.del()">⌫</button>
+
+      <button class="k-btn num" onclick="App.key('7')">7</button>
+      <button class="k-btn num" onclick="App.key('8')">8</button>
+      <button class="k-btn num" onclick="App.key('9')">9</button>
+      <button class="k-btn op" onclick="App.key('sqrt(')">√</button>
+      <button class="k-btn op" onclick="App.key('^2')">^2</button>
+
+      <button class="k-btn num" onclick="App.key('4')">4</button>
+      <button class="k-btn num" onclick="App.key('5')">5</button>
+      <button class="k-btn num" onclick="App.key('6')">6</button>
+      <button class="k-btn op" onclick="App.key('*')">×</button>
+      <button class="k-btn op" onclick="App.key('^')">^</button>
+
+      <button class="k-btn num" onclick="App.key('1')">1</button>
+      <button class="k-btn num" onclick="App.key('2')">2</button>
+      <button class="k-btn num" onclick="App.key('3')">3</button>
+      <button class="k-btn op" onclick="App.key('-')">−</button>
+      <button class="k-btn op" onclick="App.key('/')">÷</button>
+
+      <button class="k-btn num" onclick="App.key('0')">0</button>
+      <button class="k-btn num" onclick="App.key('.')">.</button>
+      <button class="k-btn op" onclick="App.key(',')">,</button>
+      <button class="k-btn op" onclick="App.key('+')">+</button>
+      <button class="k-btn primary" onclick="App.enter()">↵</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const keypad = document.getElementById('mathKeypad');
+      let activeInput = null;
+
+      // 1. Mở bàn phím
+      window.openKeypad = function (el) {
+        activeInput = el;
+        keypad.classList.add('open');
+
+        // Thêm class này để CSS biết đường độn padding lên
+        document.body.classList.add('has-keypad');
+
+        // Mobile: Chặn bàn phím zin của điện thoại
+        if (window.innerWidth < 768) {
+          el.setAttribute('readonly', 'true');
+        }
+
+        // --- QUAN TRỌNG: CUỘN INPUT LÊN TẦM MẮT ---
+        // Đợi 300ms cho bàn phím trượt lên xong rồi mới cuộn
+        setTimeout(() => {
+          el.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center', // Căn ô input vào GIỮA màn hình (tránh bị che bởi topbar hoặc keypad)
+            inline: 'nearest'
+          });
+        }, 300);
+      };
+
+      // 2. Đóng bàn phím
+      document.getElementById('keypadClose').onclick = function () {
+        keypad.classList.remove('open');
+        // Gỡ class để giao diện trở lại bình thường
+        document.body.classList.remove('has-keypad');
+
+        if (activeInput) activeInput.removeAttribute('readonly');
+      };
+
+      // 3. Xử lý gõ phím
+      window.App.key = function (char) {
+        if (!activeInput) return;
+        const start = activeInput.selectionStart;
+        const end = activeInput.selectionEnd;
+        const v = activeInput.value;
+        activeInput.value = v.substring(0, start) + char + v.substring(end);
+        activeInput.selectionStart = activeInput.selectionEnd = start + char.length;
+        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+        activeInput.focus();
+      };
+
+      window.App.del = function () {
+        if (!activeInput) return;
+        const start = activeInput.selectionStart;
+        const val = activeInput.value;
+        if (start > 0) {
+          activeInput.value = val.slice(0, start - 1) + val.slice(start);
+          activeInput.selectionStart = activeInput.selectionEnd = start - 1;
+          activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+          activeInput.focus();
+        }
+      };
+
+      window.App.enter = function () {
+        if (!activeInput) return;
+        activeInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      };
+
+      // 4. EVENT DELEGATION
+      document.addEventListener('focusin', function (e) {
+        const el = e.target;
+        if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'number')) {
+          if (!el.classList.contains('no-keypad')) {
+            openKeypad(el);
+          }
+        }
+      });
+
+      document.addEventListener('click', function (e) {
+        const el = e.target;
+        if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'number')) {
+          if (!keypad.classList.contains('open')) {
+            openKeypad(el);
+          }
+        }
+      });
+    })();
   </script>
 </body>
 
