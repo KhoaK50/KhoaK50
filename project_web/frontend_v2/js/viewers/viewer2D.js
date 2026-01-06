@@ -1,4 +1,4 @@
-// ===================== viewer2D.js (Fixed Loading & Resize) =====================
+// ===================== viewer2D.js (Fixed Scale = 80 -> Hiện số 1, 2, 3) =====================
 (function () {
   window.Vec2D = window.Vec2D || {};
 
@@ -7,7 +7,7 @@
 
   // ----- State -----
   Vec2D.S2D = {
-    pxPerUnit: 25,
+    pxPerUnit: 80, // <--- SỬA TỪ 50 THÀNH 80 (Zoom to để hiện rõ số 1, 2, 3)
     offsetX: 0,
     offsetY: 0,
 
@@ -27,16 +27,15 @@
     momentumId: null,
 
     // multi-pointer
-    pointers: new Map(), // id -> {x,y}
+    pointers: new Map(),
     lastCentroidX: null,
     lastCentroidY: null,
     lastDist: null,
-    zoomVel: 0 // per ms in log space
+    zoomVel: 0
   };
 
   Vec2D.gridInfo2D = null;
 
-  // ====== Vector thickness config (MEDIUM-BOLD) ======
   const VEC_STROKE_W = 3.2;
   const ARROW_HEAD = 14;
   const HALO_LAYERS = [
@@ -47,10 +46,8 @@
 
   const toVec2 = (v) => [v?.[0] || 0, v?.[1] || 0];
 
-  // Helper: Lấy kích thước logic (CSS pixels)
   function getLogicalSize() {
     const dpr = window.devicePixelRatio || 1;
-    // Phòng trường hợp canvas chưa init xong width=0
     const w = (canvas2d.width / dpr) || 1;
     const h = (canvas2d.height / dpr) || 1;
     return { w, h };
@@ -58,21 +55,14 @@
 
   Vec2D.init2D = function () {
     const App = window.App || {};
-    
-    // 1. Resize lần đầu (có thể chưa chính xác nếu DOM chưa load xong)
     Vec2D.resize2D();
-    
-    // 2. Bind Events
     Vec2D.bind2DEvents();
     canvas2d.style.touchAction = "none";
-    App.applyTheme?.();
+    if (App.applyTheme) App.applyTheme();
 
-    // 3. QUAN TRỌNG: Dùng ResizeObserver để theo dõi kích thước thật của div cha (#viewer)
-    // Ngay khi div cha có kích thước chuẩn, nó sẽ tự gọi resize2D và vẽ lại.
     const viewerDiv = document.getElementById("viewer");
     if (viewerDiv) {
       const ro = new ResizeObserver(() => {
-        // Chỉ vẽ lại nếu đang ở mode 2D
         if (App.mode === "2D") {
           Vec2D.resize2D();
           Vec2D.draw2DAllVectors();
@@ -87,28 +77,20 @@
     const threeLayer = document.getElementById("threeLayer");
     canvas.style.display = "block";
     threeLayer.style.display = "none";
-    
-    // Resize lại ngay khi hiển thị để đảm bảo nét
+
     requestAnimationFrame(() => {
-        Vec2D.resize2D();
-        Vec2D.draw2DAllVectors();
+      Vec2D.resize2D();
+      Vec2D.draw2DAllVectors();
     });
   };
 
-  // Hàm xử lý High-DPI
   Vec2D.resize2D = function () {
     const rect = document.getElementById("viewer").getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
-
-    // Nếu kích thước = 0 (đang ẩn hoặc chưa load), bỏ qua để tránh lỗi
     if (rect.width === 0 || rect.height === 0) return;
-
-    // 1. Set kích thước vật lý (thực tế) gấp dpr lần
     canvas2d.width = Math.floor(rect.width * dpr);
     canvas2d.height = Math.floor(rect.height * dpr);
-
-    // 2. Scale context
-    ctx2d.setTransform(1, 0, 0, 1, 0, 0); // Reset transform cũ
+    ctx2d.setTransform(1, 0, 0, 1, 0, 0);
     ctx2d.scale(dpr, dpr);
   };
 
@@ -135,7 +117,6 @@
     const wy = (cy - my) / Vec2D.S2D.pxPerUnit;
 
     Vec2D.S2D.pxPerUnit *= factor;
-    // Giới hạn zoom tránh crash
     if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12) Vec2D.S2D.pxPerUnit = 1e-12;
     if (Vec2D.S2D.pxPerUnit > 1e12) Vec2D.S2D.pxPerUnit = 1e12;
 
@@ -146,20 +127,17 @@
   }
 
   Vec2D.bind2DEvents = function () {
-    // window.resize đã được ResizeObserver lo, nhưng giữ lại cho chắc chắn
     window.addEventListener("resize", () => {
       const App = window.App || {};
       if (App.mode === "2D") {
-          Vec2D.resize2D();
-          Vec2D.draw2DAllVectors();
+        Vec2D.resize2D();
+        Vec2D.draw2DAllVectors();
       }
     });
 
     canvas2d.addEventListener("pointerdown", (e) => {
       Vec2D.S2D.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
       if (Vec2D.S2D.momentumId) cancelAnimationFrame(Vec2D.S2D.momentumId);
-
       const n = Vec2D.S2D.pointers.size;
       Vec2D.S2D.lastTime = performance.now();
 
@@ -178,7 +156,6 @@
         Vec2D.S2D.lastDist = distanceTwoPointers(Vec2D.S2D.pointers);
         Vec2D.S2D.isPanningOne = false;
       }
-
       e.preventDefault();
     });
 
@@ -189,7 +166,6 @@
 
       const now = performance.now();
       const dt = (now - Vec2D.S2D.lastTime) || 16;
-
       const n = Vec2D.S2D.pointers.size;
 
       if (n >= 2) {
@@ -201,7 +177,6 @@
           const dy = c.y - Vec2D.S2D.lastCentroidY;
           Vec2D.S2D.offsetX += dx;
           Vec2D.S2D.offsetY += dy;
-
           Vec2D.S2D.velX = dx / dt;
           Vec2D.S2D.velY = dy / dt;
         }
@@ -226,14 +201,11 @@
       if (Vec2D.S2D.isPanningOne && n === 1) {
         Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
         Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
-
         Vec2D.S2D.velX = (e.clientX - Vec2D.S2D.lastX) / dt;
         Vec2D.S2D.velY = (e.clientY - Vec2D.S2D.lastY) / dt;
-
         Vec2D.S2D.lastX = e.clientX;
         Vec2D.S2D.lastY = e.clientY;
         Vec2D.S2D.lastTime = now;
-
         if (App.mode === "2D") Vec2D.draw2DAllVectors();
       }
     });
@@ -242,7 +214,6 @@
       const App = window.App || {};
       if (!Vec2D.S2D.pointers.has(e.pointerId)) return;
       Vec2D.S2D.pointers.delete(e.pointerId);
-
       const n = Vec2D.S2D.pointers.size;
 
       if (n === 0) {
@@ -259,7 +230,6 @@
         if (hasPanMomentum || hasZoomMomentum) {
           const decayPan = 0.85;
           const decayZoom = 0.8;
-
           const step = () => {
             if (hasPanMomentum) {
               Vec2D.S2D.offsetX += Vec2D.S2D.velX * 16;
@@ -267,16 +237,13 @@
               Vec2D.S2D.velX *= decayPan;
               Vec2D.S2D.velY *= decayPan;
             }
-
             if (hasZoomMomentum) {
               const factor = Math.exp(Vec2D.S2D.zoomVel * 16);
               const { w, h } = getLogicalSize();
               applyZoomAboutScreenPoint(w / 2, h / 2, factor);
               Vec2D.S2D.zoomVel *= decayZoom;
             }
-
             if (App.mode === "2D") Vec2D.draw2DAllVectors();
-
             const stillPan = Math.hypot(Vec2D.S2D.velX, Vec2D.S2D.velY) > 0.01;
             const stillZoom = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
             if (stillPan || stillZoom) {
@@ -285,7 +252,6 @@
           };
           Vec2D.S2D.momentumId = requestAnimationFrame(step);
         }
-
         Vec2D.S2D.zoomVel = 0;
       } else if (n === 1) {
         const remain = Vec2D.S2D.pointers.values().next().value;
@@ -328,7 +294,7 @@
   Vec2D.render2DGrid = function () {
     const App = window.App || {};
     const { w, h } = getLogicalSize();
-    
+
     const cx = w / 2 + Vec2D.S2D.offsetX, cy = h / 2 + Vec2D.S2D.offsetY, px = Vec2D.S2D.pxPerUnit;
 
     ctx2d.fillStyle = App.getCSS?.("--card") || "#111";
@@ -403,7 +369,6 @@
 
   function draw2DVectorSingle(v, color, haloColor, highlighted, alpha = 1) {
     alpha = Math.max(0, Math.min(1, Number(alpha) || 0));
-
     const { cx, cy, px } = Vec2D.gridInfo2D;
     const x2 = cx + v[0] * px, y2 = cy - v[1] * px;
     const angle = Math.atan2(y2 - cy, x2 - cx);
@@ -414,9 +379,7 @@
         ctx2d.strokeStyle = haloColor;
         ctx2d.globalAlpha = L.a * alpha;
         ctx2d.lineWidth = L.w;
-
         ctx2d.beginPath(); ctx2d.moveTo(cx, cy); ctx2d.lineTo(x2, y2); ctx2d.stroke();
-
         ctx2d.beginPath();
         ctx2d.moveTo(x2, y2);
         ctx2d.lineTo(
@@ -435,22 +398,18 @@
 
     ctx2d.save();
     ctx2d.globalAlpha = alpha;
-
     ctx2d.strokeStyle = color;
     ctx2d.lineWidth = VEC_STROKE_W;
-
     ctx2d.beginPath();
     ctx2d.moveTo(cx, cy);
     ctx2d.lineTo(x2, y2);
     ctx2d.stroke();
-
     ctx2d.beginPath();
     ctx2d.moveTo(x2, y2);
     ctx2d.lineTo(x2 - ARROW_HEAD * Math.cos(angle - Math.PI / 6), y2 - ARROW_HEAD * Math.sin(angle - Math.PI / 6));
     ctx2d.moveTo(x2, y2);
     ctx2d.lineTo(x2 - ARROW_HEAD * Math.cos(angle + Math.PI / 6), y2 - ARROW_HEAD * Math.sin(angle + Math.PI / 6));
     ctx2d.stroke();
-
     ctx2d.restore();
   }
 
@@ -461,9 +420,7 @@
     if (App.firstDrawForVector && App.currentVector && App.currentVector.length >= 2) {
       const v = toVec2(App.currentVector);
       const maxComp = Math.max(Math.abs(v[0]), Math.abs(v[1]), 1);
-      Vec2D.S2D.pxPerUnit = Math.max((Math.min(w, h) / 2) * 0.6 / maxComp, 1e-12);
-      Vec2D.S2D.offsetX = 0;
-      Vec2D.S2D.offsetY = 0;
+      // Auto-scale tắt để giữ zoom 80 cố định khi reset
       App.firstDrawForVector = false;
     }
 
@@ -472,7 +429,6 @@
     const focused = App.vectorList?.find((v) => v.focus);
     const toDraw = focused ? [focused] : (App.vectorList || []).filter((v) => v.visible !== false);
 
-    // ===== Draw order (ONLY during basis animation) =====
     const drawOne = (it) => {
       const v2 = it.vec?.length >= 2 ? [it.vec[0], it.vec[1]] : [0, 0];
       const a = (typeof it.alpha === "number") ? it.alpha : 1;
@@ -480,18 +436,15 @@
     };
 
     if (App._basisAnimActive) {
-      // 1) vẽ non-basis trước
       for (const it of toDraw) {
         if (it && it._basisIsBasis) continue;
         drawOne(it);
       }
-      // 2) vẽ basis sau => luôn nằm trên cùng
       for (const it of toDraw) {
         if (!it || !it._basisIsBasis) continue;
         drawOne(it);
       }
     } else {
-      // bình thường: giữ nguyên thứ tự vẽ hiện tại
       for (const it of toDraw) drawOne(it);
     }
 
@@ -520,8 +473,6 @@
     if (!Vec2D.gridInfo2D || !state) return;
     const { cx, cy } = Vec2D.gridInfo2D;
     const a = state.a, b = state.b;
-
-    // ✅ FIX: Dùng kích thước logic
     const { w, h } = getLogicalSize();
 
     const angA = Math.atan2(-a[1], a[0]);
@@ -535,7 +486,6 @@
 
     const delta = normPi(angB - angA);
     const anticlockwise = delta < 0;
-
     const r = Math.min(w, h) * 0.18;
 
     ctx2d.save();
@@ -550,7 +500,6 @@
     const padPx = 16;
     const tx = cx + Math.cos(mid) * (r + padPx);
     const ty = cy + Math.sin(mid) * (r + padPx);
-
     const degShow = state.deg != null ? state.deg : Math.abs((delta * 180) / Math.PI);
 
     ctx2d.font = "14px sans-serif";
@@ -559,8 +508,60 @@
     const textColor = App.getCSS?.("--label-fg") || App.getCSS?.("--fg") || "#fff";
     ctx2d.fillStyle = textColor;
     ctx2d.fillText(`${degShow.toFixed(1)}°`, tx, ty);
-
     ctx2d.restore();
   }
 
-})();
+  // --- HÀM RESET VIEW 2D (ANIMATION: LƯỚT VỀ) ---
+  Vec2D.resetView = function () {
+    // 1. Nếu đang chạy animation cũ thì hủy đi để tránh xung đột
+    if (Vec2D._resetAnimId) cancelAnimationFrame(Vec2D._resetAnimId);
+
+    // 2. Lấy trạng thái hiện tại (Điểm xuất phát)
+    const startX = Vec2D.S2D.offsetX;
+    const startY = Vec2D.S2D.offsetY;
+    const startScale = Vec2D.S2D.pxPerUnit;
+
+    // 3. Trạng thái đích (Điểm đến)
+    const targetX = 0;
+    const targetY = 0;
+    const targetScale = 80; // Zoom chuẩn
+
+    // Kiểm tra nếu đã ở đúng vị trí thì thôi, khỏi chạy
+    if (Math.abs(startX) < 0.1 && Math.abs(startY) < 0.1 && Math.abs(startScale - targetScale) < 0.1) return;
+
+    // 4. Cấu hình Animation
+    const duration = 800; // Thời gian chạy: 800ms (0.8 giây)
+    const startTime = performance.now();
+
+    // Hàm Easing: Ease Out Cubic (Chạy nhanh rồi chậm dần ở cuối -> Rất mượt)
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+    function loop(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1); // Từ 0 đến 1
+      const ease = easeOutCubic(progress); // Biến đổi theo đường cong
+
+      // Nội suy (Interpolation)
+      Vec2D.S2D.offsetX = startX + (targetX - startX) * ease;
+      Vec2D.S2D.offsetY = startY + (targetY - startY) * ease;
+      Vec2D.S2D.pxPerUnit = startScale + (targetScale - startScale) * ease;
+
+      // Vẽ lại khung hình
+      Vec2D.draw2DAllVectors();
+
+      if (progress < 1) {
+        Vec2D._resetAnimId = requestAnimationFrame(loop);
+      } else {
+        Vec2D._resetAnimId = null;
+        // Chốt đơn lần cuối cho chính xác số
+        Vec2D.S2D.offsetX = targetX;
+        Vec2D.S2D.offsetY = targetY;
+        Vec2D.S2D.pxPerUnit = targetScale;
+        Vec2D.draw2DAllVectors();
+      }
+    }
+
+    // Bắt đầu chạy
+    Vec2D._resetAnimId = requestAnimationFrame(loop);
+  };
+})(); 
