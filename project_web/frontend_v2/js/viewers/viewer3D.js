@@ -1,4 +1,4 @@
-// ===================== viewer3D.js (Optimized for Mobile) =====================
+// ===================== viewer3D.js (Optimized & Fixed Reset) =====================
 (function () {
   // Public namespace
   window.Vec3D = window.Vec3D || {};
@@ -8,17 +8,13 @@
   const toVec3 = (v) => [v?.[0] || 0, v?.[1] || 0, v?.[2] || 0];
 
   // ===== DEVICE DETECTION =====
-  // Kiểm tra xem thiết bị hiện tại có phải là mobile/tablet yếu không
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-                   || window.innerWidth < 768;
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    || window.innerWidth < 768;
 
-  // Cấu hình chất lượng đồ họa dựa trên thiết bị
-  // Mobile: Giảm lưới đa giác (8-12 cạnh) để nhẹ gánh GPU
-  // Desktop: Tăng lưới (18-24 cạnh) cho tròn đẹp
   const GEOM_QUALITY = {
     shaftSeg: isMobile ? 8 : 18,
     headSeg: isMobile ? 12 : 22,
-    maxPixel: isMobile ? 1.5 : 2 // Mobile giới hạn render 1.5x để tránh nóng máy
+    maxPixel: isMobile ? 1.5 : 2
   };
 
   // Mount point
@@ -84,7 +80,6 @@
   const VEC_SHAFT_R = 0.1;
   const VEC_HEAD_R = 0.20;
   const VEC_HEAD_H = 0.35;
-  // Lưu ý: Số lượng segment đã được đưa vào GEOM_QUALITY ở trên
 
   // ===== Init =====
   Vec3D.init3D = function () {
@@ -95,15 +90,12 @@
     }
     const rect = threeLayer.getBoundingClientRect();
 
-    Vec3D._renderer = new THREE.WebGLRenderer({ 
-        antialias: !isMobile, // Tắt khử răng cưa trên mobile để mượt hơn
-        alpha: true 
+    Vec3D._renderer = new THREE.WebGLRenderer({
+      antialias: !isMobile,
+      alpha: true
     });
     Vec3D._renderer.setSize(rect.width || 760, rect.height || 760);
-    
-    // Tối ưu hóa PixelRatio: Giới hạn maxPixel để tránh crash trên màn hình độ phân giải cao
     Vec3D._renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, GEOM_QUALITY.maxPixel));
-    
     threeLayer.appendChild(Vec3D._renderer.domElement);
 
     Vec3D._renderer.domElement.style.position = "absolute";
@@ -726,7 +718,6 @@
 
       const color = new THREE.Color(it.colorHex || it.colorCss || "#ffffff");
 
-      // Sử dụng GEOM_QUALITY đã định nghĩa ở đầu file để vẽ shaft và head
       const shaft = new THREE.Mesh(
         new THREE.CylinderGeometry(VEC_SHAFT_R, VEC_SHAFT_R, shaftLen, GEOM_QUALITY.shaftSeg, 1, true),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: aItem })
@@ -755,15 +746,10 @@
       group.userData.tipLocal = tipLocal;
       group.userData.dirLocal = dirLocal;
 
-      // ===== Basis on top ONLY during animation =====
       if (App._basisAnimActive && it._basisIsBasis) {
         group.renderOrder = 999;
-
-        // làm cho shaft/head ưu tiên vẽ (không bị che bởi vector khác)
         shaft.renderOrder = 999;
         head.renderOrder = 999;
-
-        // tùy chọn: basis luôn nhìn thấy (thường đủ dùng)
         shaft.material.depthTest = false;
         head.material.depthTest = false;
         shaft.material.depthWrite = false;
@@ -963,4 +949,63 @@
     Vec3D._camera.updateProjectionMatrix();
     Vec3D.hardRefresh3D(false);
   };
-})();
+
+  // --- HÀM RESET VIEW 3D (CAMERA FLY ANIMATION) ---
+  Vec3D.resetView = function () {
+    if (!Vec3D._camera || !Vec3D._controls) return;
+    if (Vec3D._resetAnimId) cancelAnimationFrame(Vec3D._resetAnimId);
+
+    // 1. Điểm xuất phát
+    const startPos = Vec3D._camera.position.clone();
+    const startTarget = Vec3D._controls.target.clone(); // Điểm camera đang nhìn vào
+    const startZoom = Vec3D.S3D.unitsPerWorld; // Zoom của hệ trục (nếu có)
+
+    // 2. Điểm đích
+    const targetPos = new THREE.Vector3(100, 100, 100); // Vị trí mặc định (như trong init)
+    const targetLookAt = new THREE.Vector3(0, 0, 0); // Nhìn vào gốc
+    const targetZoom = 1; // Reset scale trục
+
+    const duration = 1000; // 1 giây cho 3D (vì không gian rộng nên cần chậm hơn xíu)
+    const startTime = performance.now();
+    const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4); // Mượt hơn cả Cubic
+
+    function loop(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = easeOutQuart(progress);
+
+      // Nội suy vị trí Camera
+      Vec3D._camera.position.lerpVectors(startPos, targetPos, ease);
+
+      // Nội suy điểm nhìn (Target)
+      Vec3D._controls.target.lerpVectors(startTarget, targetLookAt, ease);
+
+      // Nội suy Zoom trục (quan trọng để trục không bị to/nhỏ bất thường)
+      Vec3D.S3D.unitsPerWorld = startZoom + (targetZoom - startZoom) * ease;
+      Vec3D.S3D.zoomTarget = Vec3D.S3D.unitsPerWorld; // Đồng bộ để chuột không bị giật lại
+
+      // Cập nhật Controls
+      Vec3D._controls.update();
+
+      // Vẽ lại (Render loop chính của 3D sẽ tự vẽ, nhưng gọi thêm cho chắc nếu loop đang dừng)
+      if (!Vec3D._animating) {
+        Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
+        Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
+        Vec3D.addAxisLabelsDynamic();
+      }
+
+      if (progress < 1) {
+        Vec3D._resetAnimId = requestAnimationFrame(loop);
+      } else {
+        Vec3D._resetAnimId = null;
+        // Reset offset nội bộ về 0
+        Vec3D.S3D.offset.set(0, 0, 0);
+        Vec3D.S3D.hasPivot = false;
+        Vec3D.hardRefresh3D(false);
+      }
+    }
+
+    Vec3D._resetAnimId = requestAnimationFrame(loop);
+  };
+
+})(); 
