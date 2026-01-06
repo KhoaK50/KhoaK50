@@ -1,105 +1,109 @@
+// ================== bootstrap.js ==================
 (function () {
   window.App = window.App || {};
 
   App.init = function () {
-    App.log(`Frontend origin: ${location.origin}`);
-    App.pingBackend();
+    if (App.log) App.log(`Frontend origin: ${location.origin}`);
+    if (App.pingBackend) App.pingBackend();
 
-    // Keypad top
+    // Keypad top (ĐÃ XÓA btnInsertSlash, btnInsertSqrt)
     const vectorInput = document.getElementById("vectorInput");
-    document.getElementById("btnInsertSlash").addEventListener("click", () => App.insertAtCursor(vectorInput, "/"));
-    document.getElementById("btnInsertSqrt").addEventListener("click", () => App.insertSqrt(vectorInput));
-    vectorInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); App.onAddVector(); }
-    });
+    if (vectorInput) {
+      vectorInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); App.onAddVector(); }
+      });
+    }
 
-    document.getElementById("btnDraw").addEventListener("click", App.onAddVector);
-    document.getElementById("btnAuto").addEventListener("click", App.toggleAuto);
-    document.getElementById("btnClearAll").addEventListener("click", App.clearAllVectors);
-    document.getElementById("themeBadge").addEventListener("click", App.toggleTheme);
-    document.getElementById("modeBadge").addEventListener("click", App.toggleMode);
+    // Gắn sự kiện an toàn (kiểm tra tồn tại trước khi addEventListener)
+    const bindClick = (id, fn) => {
+      const el = document.getElementById(id);
+      if (el && fn) el.addEventListener("click", fn);
+    };
 
-    document.getElementById("opSelect").addEventListener("change", App.refreshCalcUI);
-    document.getElementById("btnCompute").addEventListener("click", () => App.runCalc(true));
-    document.getElementById("btnPreview").addEventListener("click", () => App.runCalc(false));
+    const bindChange = (id, fn) => {
+      const el = document.getElementById(id);
+      if (el && fn) el.addEventListener("change", fn);
+    };
 
-    document.getElementById("opExtraSelect").addEventListener("change", () => {
-      App.showExtraForm(document.getElementById("opExtraSelect").value);
-    });
+    bindClick("btnDraw", App.onAddVector);
+    bindClick("btnAuto", App.toggleAuto);
+    bindClick("btnClearAll", App.clearAllVectors);
+    bindClick("themeBadge", App.toggleTheme);
+    bindClick("modeBadge", App.toggleMode);
 
-    document.getElementById("btnAngle").addEventListener("click", App.angleBetweenUI);
-    document.getElementById("btnNorm").addEventListener("click", App.vectorNormUI);
-    document.getElementById("btnCoord").addEventListener("click", App.coordinatesUI);
-    document.getElementById("btnBasis").addEventListener("click", App.basisAndDimUI);
-    document.getElementById("btnIndep").addEventListener("click", App.checkIndependenceUI);
-    document.getElementById("btnRank").addEventListener("click", App.rankVecUI);
-    document.getElementById("btnDot").addEventListener("click", App.dotProductUI);
-    document.getElementById("btnProj").addEventListener("click", App.projectionUI);
+    bindChange("opSelect", App.refreshCalcUI);
 
-    // mini keypad for list inputs
-    const btnListSlash = document.getElementById("btnListSlash");
-    const btnListSqrt = document.getElementById("btnListSqrt");
+    // Nút tính toán & xem trước
+    const btnCompute = document.getElementById("btnCompute");
+    if (btnCompute) btnCompute.addEventListener("click", () => App.runCalc(true));
 
-    btnListSlash.addEventListener("mousedown", (e) => e.preventDefault());
-    btnListSqrt.addEventListener("mousedown", (e) => e.preventDefault());
+    const btnPreview = document.getElementById("btnPreview");
+    if (btnPreview) btnPreview.addEventListener("click", () => App.runCalc(false));
 
-    btnListSlash.addEventListener("click", () => {
-      const inp = App.currentListInput || App.getFocusedVectorInput();
-      if (inp) { App.insertAtCursor(inp, "/"); inp.focus(); }
-    });
+    // Select phép tính phụ
+    const opExtraSelect = document.getElementById("opExtraSelect");
+    if (opExtraSelect) {
+      opExtraSelect.addEventListener("change", () => {
+        App.showExtraForm(opExtraSelect.value);
+      });
+    }
 
-    btnListSqrt.addEventListener("click", () => {
-      const inp = App.currentListInput || App.getFocusedVectorInput();
-      if (inp) { App.insertSqrt(inp); inp.focus(); }
-    });
+    // Các nút phép tính phụ
+    bindClick("btnAngle", App.angleBetweenUI);
+    bindClick("btnNorm", App.vectorNormUI);
+    bindClick("btnCoord", App.coordinatesUI);
+    bindClick("btnBasis", App.basisAndDimUI);
+    bindClick("btnIndep", App.checkIndependenceUI);
+    bindClick("btnRank", App.rankVecUI);
+    bindClick("btnDot", App.dotProductUI);
+    bindClick("btnProj", App.projectionUI);
+
+    // --- (ĐÃ XÓA HOÀN TOÀN ĐOẠN MINI KEYPAD CŨ GÂY LỖI) ---
 
     // Init 2D/3D layers
-    if (window.Vec2D) Vec2D.init2D();
-    if (window.Vec3D) Vec3D.init3D();
+    if (window.Vec2D && Vec2D.init2D) Vec2D.init2D();
+    if (window.Vec3D && Vec3D.init3D) Vec3D.init3D();
 
     // prevent wheel scroll in viewer wrap
     const viewerWrap = document.getElementById("viewerWrap");
-    viewerWrap.addEventListener("wheel", (e) => e.preventDefault(), { passive: false });
+    if (viewerWrap) viewerWrap.addEventListener("wheel", (e) => e.preventDefault(), { passive: false });
 
     // First show 2D by default
-    App.applyTheme();
-    if (window.Vec2D) Vec2D.show2D();
-    App.redrawAll();
+    if (App.applyTheme) App.applyTheme();
+    if (window.Vec2D && Vec2D.show2D) Vec2D.show2D();
+    if (App.redrawAll) App.redrawAll();
 
-    App.log("Ready Z-up.");
+    if (App.log) App.log("Ready Z-up.");
 
-    App.refreshCalcVectorOptions();
-    App.renderExtraCalcOptions();
-    App.showExtraForm(document.getElementById("opExtraSelect").value);
+    if (App.refreshCalcVectorOptions) App.refreshCalcVectorOptions();
+    if (App.renderExtraCalcOptions) App.renderExtraCalcOptions();
+    if (opExtraSelect && App.showExtraForm) App.showExtraForm(opExtraSelect.value);
 
     // =========================
-    // GẮN GUARD CHO CÁC <select> DÙNG VECTOR
-    // (đặc biệt 4 ô bạn nói: v1Select, v2Select, v1DotSelect, v2DotSelect)
+    // GẮN GUARD CHO CÁC <select>
     // =========================
     function attachEmptyVectorGuards() {
       if (typeof App.guardEmptyVectorSelect !== "function") return;
 
       const ids = [
-        // 2 ô trên (phép tính tạo vector mới)
         "v1Select", "v2Select",
-
-        // 2 ô dưới (tích vô hướng)
         "v1DotSelect", "v2DotSelect",
-
-        // các select khác cũng cần guard luôn cho đồng bộ UX
         "v1AngleSelect", "v2AngleSelect",
         "vNormSelect",
         "vCoordSelect",
         "vProjSelect",
       ];
 
-      ids.forEach((id) => App.guardEmptyVectorSelect(document.getElementById(id)));
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) App.guardEmptyVectorSelect(el);
+      });
     }
 
     attachEmptyVectorGuards();
 
     // =========================
-    // Hamburger toggle: CHỈ nút 3 gạch mới đóng/mở
+    // Hamburger toggle
     // =========================
     const burger = document.getElementById("hamburger");
     const controls = document.getElementById("controls");
@@ -118,18 +122,53 @@
         controls.classList.toggle("open");
         syncOverlay();
       });
+      // Thêm sự kiện click overlay để đóng menu
+      if (overlay) {
+        overlay.addEventListener("click", () => {
+          controls.classList.remove("open");
+          syncOverlay();
+        });
+      }
     } else {
       syncOverlay();
     }
-    if (App.SolutionPanel && typeof App.SolutionPanel.init === "function") {
+
+    // Init Solution Panel
+    if (window.App && App.SolutionPanel && typeof App.SolutionPanel.init === "function") {
       App.SolutionPanel.init();
     }
+    // --- XỬ LÝ NÚT RESET VIEW (QUAY VỀ GỐC) ---
+    const btnResetView = document.getElementById("btnResetView");
+    if (btnResetView) {
+      btnResetView.addEventListener("click", function () {
+        // Hiệu ứng xoay icon cho ngầu
+        const icon = this.querySelector("svg");
+        if (icon) {
+          icon.style.transition = "transform 0.5s";
+          icon.style.transform = "rotate(360deg)";
+          setTimeout(() => icon.style.transform = "none", 500);
+        }
 
+        // Gọi hàm reset tùy theo chế độ 2D hay 3D
+        if (App.mode === "3D") {
+          if (window.Vec3D && Vec3D.resetView) Vec3D.resetView();
+        } else {
+          if (window.Vec2D && Vec2D.resetView) Vec2D.resetView();
+        }
+      });
+    }
   };
 
-  window.addEventListener("DOMContentLoaded", () => {
+  // Chạy init khi DOM sẵn sàng
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      App.init();
+      if (App.log) {
+        App.log("three typeof: " + (typeof THREE));
+        App.log("OrbitControls " + (typeof THREE?.OrbitControls));
+      }
+    });
+  } else {
     App.init();
-    App.log("three typeof: " + (typeof THREE));
-    App.log("OrbitControls " + (typeof THREE?.OrbitControls));
-  });
+  }
 })();
