@@ -5,37 +5,415 @@
 @import url("./viewer.css");
 @import url("./effects.css");
 
-/* =================== MOBILE OPTIMIZATIONS =================== */
-/* Đoạn này ghi đè lên các file import bên trên khi màn hình nhỏ */
+/* ========================================================== */
+/* MOBILE SPLIT VIEW - GIAO DIỆN CHIA ĐÔI (TRÊN/DƯỚI) */
+/* ========================================================== */
+/* =================== TOPBAR GLOBAL (PC & MOBILE) =================== */
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Đẩy 2 đầu ra xa */
+  height: var(--topbar-h);
+  padding: 0 16px;
+  background: var(--bg); /* Nền đặc */
+  border-bottom: 1px solid var(--border);
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 300;
+}
+
+/* Nhóm bên trái (Menu + Home) */
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1; /* Chiếm 1 phần */
+}
+
+/* Logo nằm giữa tuyệt đối */
+.brand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Nhóm bên phải (Theme) - Căn sát lề phải */
+.topbar-right {
+  flex: 1; /* Chiếm 1 phần đối xứng với bên trái */
+  display: flex;
+  justify-content: flex-end; /* Đẩy nội dung sang phải */
+}
+
+#themeBadge {
+  position: static !important; /* Bỏ position absolute cũ */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  cursor: pointer;
+}
 
 @media (max-width: 768px) {
-  /* 1. Tắt hiệu ứng kính mờ (blur) - Nguyên nhân chính gây crash GPU */
-  #topbar, .pill, .card, .sol-panel {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    background: var(--card) !important; /* Dùng màu đặc thay vì trong suốt */
-  }
   
-  /* 2. Giảm độ phức tạp của bóng đổ (glow) */
-  .card.glow, .vec-item.glow {
-    box-shadow: 0 2px 8px color-mix(in oklab, var(--accent) 40%, transparent) !important;
-    border: 1px solid var(--accent) !important;
+
+  /* Ẩn luôn nút Hamburger (vì bảng điều khiển sẽ luôn hiện bên dưới) */
+  #hamburger { display: none !important; }
+
+
+  /* --- 2. BỐ CỤC CHÍNH: Xếp dọc (Trên - Dưới) --- */
+  #app {
+    display: flex !important;
+    flex-direction: column !important; /* Xếp thành cột dọc */
+    height: calc(100vh - var(--topbar-h));
+    overflow: hidden;
   }
 
-  /* 3. Tắt animation gradient nền trên mobile cho nhẹ */
-  .section-create, .section-list, .section-calc-new, .section-calc-info {
-    background: var(--card) !important;
-    border-left: 4px solid var(--acc);
+  /* --- 3. ĐỒ THỊ (VIEWER): Nằm trên, cố định chiều cao --- */
+  #viewerWrap {
+    order: 1; /* Nằm trước */
+    width: 100% !important;
+    height: 40vh !important; /* Chiếm 40% chiều cao màn hình */
+    flex: none !important;   /* Không co giãn */
+    border-radius: 0 !important;
+    border-bottom: 2px solid var(--border);
+    border-left: none;
+    border-right: none;
+    z-index: 1;
   }
 
-  /* 4. Tắt hiệu ứng hover trên màn hình cảm ứng để tránh bị dính màu khi chạm */
-  .vec-item:hover {
-    background: var(--card);
-    box-shadow: none;
-  }
-  
-  /* 5. Tối ưu thanh sidebar trượt mượt hơn */
+  /* --- 4. BẢNG ĐIỀU KHIỂN (CONTROLS): Nằm dưới, cuộn độc lập --- */
   #controls {
-    will-change: transform;
+    order: 2; /* Nằm sau */
+    position: static !important; /* Bỏ chế độ trượt/ẩn */
+    width: 100% !important;
+    height: auto !important;
+    flex: 1 1 auto !important; /* Chiếm nốt phần chiều cao còn lại (60%) */
+    
+    background: var(--bg) !important;
+    transform: none !important; /* Luôn hiện */
+    box-shadow: none !important;
+    border: none;
+    
+    padding: 12px;
+    padding-bottom: 80px; /* Chừa khoảng trống cuối cùng để dễ vuốt */
+    overflow-y: auto; /* Cho phép cuộn */
+    z-index: 2;
+  }
+  
+  /* Tắt overlay đen mờ */
+  #overlay { display: none !important; }
+
+
+  /* --- 5. TỐI ƯU NÚT BẤM (To, dễ chạm) --- */
+  
+  /* Các dòng nút (Tính toán, Xem trước...) chia đôi màn hình */
+  .row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .row button {
+    width: 100%;
+    margin: 0 !important;
+    min-height: 42px; /* Cao hơn để dễ bấm */
+  }
+
+  /* Input và Select cao lên */
+  input, select {
+    min-height: 42px;
+    font-size: 15px; /* Chữ to hơn chút */
+  }
+
+  /* Danh sách vector: Các nút con (Ẩn/Xóa) chia đều 3 cột */
+  .vec-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  
+  .vec-actions .btn {
+    padding: 8px 0;
+    justify-content: center;
+    font-size: 13px;
+  }
+
+}
+
+/* =================== MATH KEYPAD V3 (RESPONSIVE) =================== */
+#mathKeypad {
+  position: fixed;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  
+  /* Trạng thái ẩn mặc định */
+  opacity: 0;
+  pointer-events: none;
+}
+
+#mathKeypad.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* --- HEADER --- */
+.keypad-header {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Nút đóng bên phải */
+  background: color-mix(in srgb, var(--bg) 96%, var(--fg));
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px;
+}
+
+#keypadClose {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 10px;
+}
+#keypadClose:hover { color: var(--danger); }
+
+/* --- GRID BUTTONS --- */
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 cột */
+  gap: 6px;
+  padding: 8px;
+}
+
+.k-btn {
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 16px;
+  font-family: "JetBrains Mono", monospace; /* Font code cho đẹp */
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.05);
+}
+
+.k-btn:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+/* Màu sắc từng loại nút */
+.k-btn.num { font-weight: 700; font-size: 18px; }
+.k-btn.op { background: color-mix(in srgb, var(--accent) 8%, var(--bg)); color: var(--accent-700); }
+.k-btn.action { background: color-mix(in srgb, var(--danger) 10%, var(--bg)); color: var(--danger); }
+.k-btn.primary { background: var(--accent); color: #fff; border: none; }
+
+
+/* --- CẤU HÌNH RIÊNG CHO MOBILE --- */
+@media (max-width: 768px) {
+  #mathKeypad {
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    transform: translateY(100%); /* Trượt từ dưới lên */
+    border-radius: 16px 16px 0 0;
+    padding-bottom: 20px; /* Tai thỏ */
+  }
+  #mathKeypad.open {
+    transform: translateY(0);
+  }
+}
+
+/* ========================================================= */
+/* BÀN PHÍM FULL WIDTH (TRẢI DÀI TỪ TRÁI QUA PHẢI) - ALL DEVICES */
+/* ========================================================= */
+
+#mathKeypad {
+  /* Vị trí cố định: Dính chặt đáy, Full màn hình */
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  
+  /* Giao diện khung chứa */
+  background: var(--bg); /* Nền trùng màu web */
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+  z-index: 2147483647; /* Luôn nằm trên cùng (đè lên cả Sidebar) */
+  
+  /* Hiệu ứng trượt */
+  transform: translateY(100%); 
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  
+  /* Căn giữa nội dung bên trong */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Để cụm phím nằm giữa màn hình */
+  padding-bottom: 0;
+}
+
+#mathKeypad.open {
+  transform: translateY(0); /* Trượt lên */
+}
+
+/* --- THANH HEADER (Nút đóng) --- */
+.keypad-header {
+  width: 100%;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Nút đóng nằm góc phải */
+  padding: 0 15px;
+  background: color-mix(in srgb, var(--bg) 95%, var(--fg));
+  border-bottom: 1px solid var(--border);
+}
+
+#keypadClose {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 10px;
+  line-height: 1;
+}
+#keypadClose:hover { color: var(--danger); }
+
+/* --- LƯỚI NÚT BẤM --- */
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 cột */
+  gap: 8px;
+  padding: 10px;
+  
+  /* QUAN TRỌNG: Giới hạn chiều rộng để nút không bị bè ra quá mức trên màn hình to */
+  width: 100%;
+  max-width: 900px; /* Trên màn hình 2K/4K nó vẫn chỉ rộng 900px cho vừa tay */
+}
+
+/* Style nút bấm */
+.k-btn {
+  height: 46px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--fg);
+  font-size: 18px;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+}
+
+.k-btn:active {
+  background: var(--border);
+  transform: scale(0.98);
+}
+.k-btn:hover {
+  background: color-mix(in srgb, var(--card) 90%, var(--fg)); /* Hover nhẹ cho Desktop */
+}
+
+/* Màu sắc */
+.k-btn.op { color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--card)); }
+.k-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Ẩn thanh kéo thừa thãi */
+.drag-handle { display: none; }
+
+/* Làm đẹp ô nhập liệu */
+input, .lbl {
+  font-family: "Consolas", "Monaco", "Courier New", monospace; /* Font code */
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* --- ẨN CÁC ICON THỪA TRONG TIÊU ĐỀ CARD --- */
+.card-header button, 
+.card-header .btn,
+
+/* Đảm bảo ô input trong danh sách vector hiển thị font đẹp */
+.vec-item input {
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* --- FIX LỖI BÀN PHÍM CHE INPUT --- */
+/* Khi body có class 'has-keypad', ta độn thêm padding cực lớn vào đáy #controls */
+body.has-keypad #controls {
+  padding-bottom: 50vh !important; /* Độn 50% chiều cao màn hình */
+  scroll-behavior: smooth; /* Cuộn mượt */
+}
+
+/* Đảm bảo ô input đang nhập nổi bật hơn */
+input:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);
+}
+
+
+/* --- CẬP NHẬT CSS: ĐỊNH VỊ NÚT RESET VÀO TRONG VIEWER --- */
+
+/* 1. Đặt khung chứa viewer là relative để làm mốc toạ độ */
+#viewerWrap {
+  position: relative !important; 
+  /* Đảm bảo khung này chiếm hết không gian còn lại */
+  overflow: hidden; 
+}
+
+/* 2. Nút Reset giờ sẽ bám theo viewerWrap chứ không bám theo body */
+#btnResetView {
+  position: absolute !important; /* Đổi từ fixed sang absolute */
+  
+  /* Canh lề phải dưới của khung viewer */
+  bottom: 15px;
+  right: 15px;
+  
+  z-index: 10; /* Chỉ cần cao hơn canvas là được */
+  
+  /* Giữ nguyên các style làm đẹp cũ */
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--fg);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#btnResetView:hover {
+  transform: scale(1.1);
+  background: var(--bg);
+  color: var(--accent);
+}
+
+/* Mobile tweak: Không cần đẩy lên cao nữa vì nó đã nằm trong khung viewer rồi */
+@media (max-width: 768px) {
+  #btnResetView {
+    bottom: 15px; 
+    right: 15px;
   }
 }
