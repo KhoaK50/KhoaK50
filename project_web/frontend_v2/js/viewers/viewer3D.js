@@ -1,4 +1,4 @@
-﻿// ===================== viewer3D.js (Optimized & Fixed Reset) =====================
+// ===================== viewer3D.js (Optimized & Animated Reset) =====================
 (function () {
   // Public namespace
   window.Vec3D = window.Vec3D || {};
@@ -8,8 +8,8 @@
   const toVec3 = (v) => [v?.[0] || 0, v?.[1] || 0, v?.[2] || 0];
 
   // ===== DEVICE DETECTION =====
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    || window.innerWidth < 768;
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+                    || window.innerWidth < 768;
 
   const GEOM_QUALITY = {
     shaftSeg: isMobile ? 8 : 18,
@@ -90,9 +90,9 @@
     }
     const rect = threeLayer.getBoundingClientRect();
 
-    Vec3D._renderer = new THREE.WebGLRenderer({
-      antialias: !isMobile,
-      alpha: true
+    Vec3D._renderer = new THREE.WebGLRenderer({ 
+        antialias: !isMobile, 
+        alpha: true 
     });
     Vec3D._renderer.setSize(rect.width || 760, rect.height || 760);
     Vec3D._renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, GEOM_QUALITY.maxPixel));
@@ -1008,4 +1008,4 @@
     Vec3D._resetAnimId = requestAnimationFrame(loop);
   };
 
-})(); 
+})();
