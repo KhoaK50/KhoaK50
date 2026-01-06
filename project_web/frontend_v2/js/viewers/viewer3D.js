@@ -1,4 +1,4 @@
-﻿// ===================== viewer3D.js =====================
+// ===================== viewer3D.js (Optimized for Mobile) =====================
 (function () {
   // Public namespace
   window.Vec3D = window.Vec3D || {};
@@ -6,6 +6,20 @@
   Vec3D._ZOOM_MAX = 1e12;
   const App = window.App || {};
   const toVec3 = (v) => [v?.[0] || 0, v?.[1] || 0, v?.[2] || 0];
+
+  // ===== DEVICE DETECTION =====
+  // Kiểm tra xem thiết bị hiện tại có phải là mobile/tablet yếu không
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+                   || window.innerWidth < 768;
+
+  // Cấu hình chất lượng đồ họa dựa trên thiết bị
+  // Mobile: Giảm lưới đa giác (8-12 cạnh) để nhẹ gánh GPU
+  // Desktop: Tăng lưới (18-24 cạnh) cho tròn đẹp
+  const GEOM_QUALITY = {
+    shaftSeg: isMobile ? 8 : 18,
+    headSeg: isMobile ? 12 : 22,
+    maxPixel: isMobile ? 1.5 : 2 // Mobile giới hạn render 1.5x để tránh nóng máy
+  };
 
   // Mount point
   const threeLayer = document.getElementById("threeLayer");
@@ -66,12 +80,11 @@
   Vec3D.ANGLE_LABEL_MIN_RATIO = 0.38;
   Vec3D.ANGLE_LABEL_GAP_PX = 6;
 
-  // ===== Vector thickness config (MEDIUM-BOLD) =====
+  // ===== Vector thickness config =====
   const VEC_SHAFT_R = 0.1;
   const VEC_HEAD_R = 0.20;
   const VEC_HEAD_H = 0.35;
-  const VEC_SHAFT_RADIAL_SEG = 18;
-  const VEC_HEAD_RADIAL_SEG = 22;
+  // Lưu ý: Số lượng segment đã được đưa vào GEOM_QUALITY ở trên
 
   // ===== Init =====
   Vec3D.init3D = function () {
@@ -82,9 +95,15 @@
     }
     const rect = threeLayer.getBoundingClientRect();
 
-    Vec3D._renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    Vec3D._renderer = new THREE.WebGLRenderer({ 
+        antialias: !isMobile, // Tắt khử răng cưa trên mobile để mượt hơn
+        alpha: true 
+    });
     Vec3D._renderer.setSize(rect.width || 760, rect.height || 760);
-    Vec3D._renderer.setPixelRatio(window.devicePixelRatio || 1);
+    
+    // Tối ưu hóa PixelRatio: Giới hạn maxPixel để tránh crash trên màn hình độ phân giải cao
+    Vec3D._renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, GEOM_QUALITY.maxPixel));
+    
     threeLayer.appendChild(Vec3D._renderer.domElement);
 
     Vec3D._renderer.domElement.style.position = "absolute";
@@ -707,15 +726,16 @@
 
       const color = new THREE.Color(it.colorHex || it.colorCss || "#ffffff");
 
+      // Sử dụng GEOM_QUALITY đã định nghĩa ở đầu file để vẽ shaft và head
       const shaft = new THREE.Mesh(
-        new THREE.CylinderGeometry(VEC_SHAFT_R, VEC_SHAFT_R, shaftLen, VEC_SHAFT_RADIAL_SEG, 1, true),
+        new THREE.CylinderGeometry(VEC_SHAFT_R, VEC_SHAFT_R, shaftLen, GEOM_QUALITY.shaftSeg, 1, true),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: aItem })
       );
       shaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
       shaft.position.copy(dirLocal.clone().multiplyScalar(shaftLen / 2));
 
       const head = new THREE.Mesh(
-        new THREE.ConeGeometry(VEC_HEAD_R, VEC_HEAD_H, VEC_HEAD_RADIAL_SEG),
+        new THREE.ConeGeometry(VEC_HEAD_R, VEC_HEAD_H, GEOM_QUALITY.headSeg),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: aItem })
       );
       head.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
