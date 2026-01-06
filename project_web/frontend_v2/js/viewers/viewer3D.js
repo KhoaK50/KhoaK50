@@ -1,4 +1,4 @@
-// ===================== viewer3D.js (Optimized & Fixed Reset) =====================
+﻿// ===================== viewer3D.js (Optimized & Fixed Reset) =====================
 (function () {
   // Public namespace
   window.Vec3D = window.Vec3D || {};
