@@ -4,3 +4,38 @@
 @import url("./components.css");
 @import url("./viewer.css");
 @import url("./effects.css");
+
+/* =================== MOBILE OPTIMIZATIONS =================== */
+/* Đoạn này ghi đè lên các file import bên trên khi màn hình nhỏ */
+
+@media (max-width: 768px) {
+  /* 1. Tắt hiệu ứng kính mờ (blur) - Nguyên nhân chính gây crash GPU */
+  #topbar, .pill, .card, .sol-panel {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--card) !important; /* Dùng màu đặc thay vì trong suốt */
+  }
+  
+  /* 2. Giảm độ phức tạp của bóng đổ (glow) */
+  .card.glow, .vec-item.glow {
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--accent) 40%, transparent) !important;
+    border: 1px solid var(--accent) !important;
+  }
+
+  /* 3. Tắt animation gradient nền trên mobile cho nhẹ */
+  .section-create, .section-list, .section-calc-new, .section-calc-info {
+    background: var(--card) !important;
+    border-left: 4px solid var(--acc);
+  }
+
+  /* 4. Tắt hiệu ứng hover trên màn hình cảm ứng để tránh bị dính màu khi chạm */
+  .vec-item:hover {
+    background: var(--card);
+    box-shadow: none;
+  }
+  
+  /* 5. Tối ưu thanh sidebar trượt mượt hơn */
+  #controls {
+    will-change: transform;
+  }
+}
