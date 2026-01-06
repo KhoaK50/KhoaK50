@@ -1,4 +1,4 @@
-// ===================== viewer2D.js (Full Features: Scale 80, Smart Grid, Anim Reset, Shift-Zoom) =====================
+// ===================== viewer2D.js =====================
 (function () {
   window.Vec2D = window.Vec2D || {};
 
@@ -7,7 +7,7 @@
 
   // ----- State -----
   Vec2D.S2D = {
-    pxPerUnit: 80, // <--- MẶC ĐỊNH 80 ĐỂ HIỆN RÕ 1 ĐƠN VỊ
+    pxPerUnit: 80, // ZOOM TO: Để hiện rõ bước nhảy 1 đơn vị
     offsetX: 0,
     offsetY: 0,
 
@@ -118,6 +118,7 @@
     const wy = (cy - my) / Vec2D.S2D.pxPerUnit;
 
     Vec2D.S2D.pxPerUnit *= factor;
+    // Giới hạn zoom
     if (!isFinite(Vec2D.S2D.pxPerUnit) || Vec2D.S2D.pxPerUnit <= 1e-12) Vec2D.S2D.pxPerUnit = 1e-12;
     if (Vec2D.S2D.pxPerUnit > 1e12) Vec2D.S2D.pxPerUnit = 1e12;
 
@@ -201,7 +202,7 @@
 
       if (Vec2D.S2D.isPanningOne && n === 1) {
         
-        // --- TÍNH NĂNG MỚI: SHIFT + KÉO CHUỘT ĐỂ ZOOM (Thay cho Pinch) ---
+        // --- SHIFT + KÉO CHUỘT ĐỂ ZOOM ---
         if (e.shiftKey) {
             const dy = e.clientY - Vec2D.S2D.lastY;
             const factor = dy > 0 ? (1 + dy * 0.01) : (1 / (1 - dy * 0.01));
@@ -218,7 +219,7 @@
             if (App.mode === "2D") Vec2D.draw2DAllVectors();
             return; 
         }
-        // -------------------------------------------------------------
+        // ---------------------------------
 
         Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
         Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
@@ -312,6 +313,7 @@
     );
   };
 
+  // --- TÍNH BƯỚC NHẢY (DENSITY-BASED) CHO 2D ---
   Vec2D.render2DGrid = function () {
     const App = window.App || {};
     const { w, h } = getLogicalSize();
@@ -321,8 +323,6 @@
     ctx2d.fillStyle = App.getCSS?.("--card") || "#111";
     ctx2d.fillRect(0, 0, w, h);
 
-    // --- LOGIC MỚI: TÍNH BƯỚC NHẢY DỰA TRÊN MẬT ĐỘ PIXEL ---
-    // Mục tiêu: Giữ khoảng cách giữa các số ~70px
     const targetPx = 70; 
     const rawStep = targetPx / Math.max(1e-9, px); 
     
@@ -336,7 +336,6 @@
     else stepUnit = 10 * mag;
 
     const tickPx = stepUnit * px;
-    // -------------------------------------------------------
 
     const subDiv = 5;
     const subTickPx = tickPx / subDiv;
@@ -351,7 +350,7 @@
 
     ctx2d.strokeStyle = App.getCSS?.("--grid-light") || "#2b2b2b";
     ctx2d.lineWidth = 1.2;
-    // Lưới chính
+    
     const startKx = Math.floor((-cx) / tickPx) - 1;
     const endKx = Math.ceil((w - cx) / tickPx) + 1;
     for (let k = startKx; k <= endKx; k++) {
@@ -374,26 +373,24 @@
     ctx2d.fillStyle = App.getCSS?.("--fg") || "#fff";
     ctx2d.font = "12px sans-serif";
 
-    // Số trục X
     ctx2d.textAlign = "center";
     ctx2d.textBaseline = "top";
     for (let k = startKx; k <= endKx; k++) {
       const unitVal = k * stepUnit;
       if (Math.abs(unitVal) < 1e-9) continue;
       const x = cx + k * tickPx;
-      if(Math.abs(x - cx) > 15) { // Tránh đè trục Y
+      if(Math.abs(x - cx) > 15) { 
           ctx2d.fillText(formatLabel(unitVal), x, cy + 6);
       }
     }
 
-    // Số trục Y
     ctx2d.textAlign = "right";
     ctx2d.textBaseline = "middle";
     for (let k = startKy; k <= endKy; k++) {
       const unitVal = k * stepUnit;
       if (Math.abs(unitVal) < 1e-9) continue;
       const y = cy - k * tickPx;
-      if(Math.abs(y - cy) > 15) { // Tránh đè trục X
+      if(Math.abs(y - cy) > 15) { 
           ctx2d.fillText(formatLabel(unitVal), cx - 8, y);
       }
     }
@@ -466,7 +463,7 @@
 
     if (App.firstDrawForVector && App.currentVector && App.currentVector.length >= 2) {
       const v = toVec2(App.currentVector);
-      // Auto-scale tắt để giữ zoom 80 cố định khi reset
+      // Auto-scale OFF -> Giữ zoom 80 để hiện số 1,2,3
       App.firstDrawForVector = false;
     }
 
@@ -557,7 +554,7 @@
     ctx2d.restore();
   }
 
-  // --- HÀM RESET VIEW 2D (ANIMATION: LƯỚT VỀ + ZOOM 80) ---
+  // --- ANIMATED RESET 2D ---
   Vec2D.resetView = function () {
     if (Vec2D._resetAnimId) cancelAnimationFrame(Vec2D._resetAnimId);
 
@@ -567,7 +564,7 @@
 
     const targetX = 0;
     const targetY = 0;
-    const targetScale = 80; // Zoom chuẩn
+    const targetScale = 80; // Reset về 80 để hiện số 1,2,3
 
     if (Math.abs(startX) < 0.1 && Math.abs(startY) < 0.1 && Math.abs(startScale - targetScale) < 0.1) return;
 
