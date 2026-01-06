@@ -5,7 +5,17 @@
   <meta charset="utf-8" />
   <title>Vectoria - Mô hình trực quan </title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/style.css" />
+  <script>
+    (function () {
+      // Tạo số phiên bản dựa trên thời gian thực (từng giây)
+      var version = new Date().getTime();
+
+      var link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "css/style.css?v=" + version; // Tự động thêm đuôi ?v=123456...
+      document.head.appendChild(link);
+    })();
+  </script>
   <link rel="stylesheet" href="css/solution_panel.css" />
   <link rel="icon" href="./assets/logo.png" type="image/png">
 
@@ -347,7 +357,24 @@
 
   <!-- viewers -->
   <script src="js/viewers/viewer2D.js"></script>
-  <script src="js/viewers/viewer3D.js"></script>
+  <script>
+    (function () {
+      var version = new Date().getTime();
+
+      // Hàm load script an toàn (giữ đúng thứ tự)
+      function loadScript(url) {
+        var script = document.createElement("script");
+        script.src = url + "?v=" + version;
+        script.async = false; // Quan trọng: Đảm bảo load xong cái này mới chạy cái kia
+        document.body.appendChild(script);
+      }
+
+      // Danh sách các file JS cần load tự động (Thêm file nào thì viết vào đây)
+      loadScript("js/viewers/viewer3D.js");
+      // Nếu sau này bạn có viewer2D.js cần update liên tục thì thêm:
+      // loadScript("js/viewers/viewer2D.js");
+    })();
+  </script>
   <script src="./js/app/playback/basis_animation.js"></script>
 
   <!-- bootstrap cuối cùng -->
