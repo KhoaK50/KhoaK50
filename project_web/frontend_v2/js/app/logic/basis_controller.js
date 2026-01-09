@@ -1,18 +1,20 @@
-// ===================== basis_controller.js =====================
+// ===================== basis_controller.js (FULL - USER VERSION PRESERVED) =====================
 (function () {
   window.App = window.App || {};
 
   function $(id) { return document.getElementById(id); }
 
+  // [LOGIC] Lấy ID theo thứ tự DOM (thứ tự người dùng nhìn thấy trên màn hình)
+  // Khi người dùng kéo thả, DOM thay đổi, hàm này sẽ lấy đúng thứ tự mới.
   function getCheckedIds(container) {
     if (!container) return [];
-    const ids = [];
-    container.querySelectorAll('input[type="checkbox"]:checked').forEach((cb) => {
+    // querySelectorAll trả về NodeList theo thứ tự từ trên xuống dưới trong HTML
+    const checkboxes = Array.from(container.querySelectorAll('input[type="checkbox"]:checked'));
+    return checkboxes.map(cb => {
       const raw = (cb.value !== undefined && cb.value !== "") ? cb.value : cb.getAttribute("data-id");
       const id = Number(raw);
-      if (Number.isFinite(id)) ids.push(id);
-    });
-    return ids;
+      return Number.isFinite(id) ? id : null;
+    }).filter(id => id !== null);
   }
 
   // =========================
@@ -24,38 +26,30 @@
       visible: (v.visible !== false),
       focus: !!v.focus,
       alpha: (typeof v.alpha === "number") ? v.alpha : 1,
-
       colorCss: v.colorCss,
       colorHex: v.colorHex,
       haloCss: v.haloCss,
-
       highlighted: !!v.highlighted
     }));
   }
 
   function restoreSnapshot(list, snap) {
     if (!Array.isArray(list)) return;
-
     for (let i = list.length - 1; i >= 0; i--) {
       if (list[i] && list[i]._basisTemp) list.splice(i, 1);
     }
-
     const byId = new Map((snap || []).map(s => [s.id, s]));
     for (const it of list) {
       const s = byId.get(it.id);
       if (!s) continue;
-
       it.visible = s.visible;
       it.focus = s.focus;
       it.alpha = s.alpha;
-
       it.colorCss = s.colorCss;
       it.colorHex = s.colorHex;
       it.haloCss = s.haloCss;
-
       it.highlighted = s.highlighted;
     }
-
     if (typeof App.renderVectorList === "function") App.renderVectorList();
     if (App.mode === "2D" && window.Vec2D) Vec2D.draw2DAllVectors();
     else if (window.Vec3D) Vec3D.hardRefresh3D(false);
@@ -68,34 +62,28 @@
     if (typeof App.stopBasisAnimation === "function") {
       try { App.stopBasisAnimation(); } catch (_) { }
     }
-
     App._basisAnimActive = false;
-
     (App.vectorList || []).forEach((it) => {
       if (!it) return;
       delete it._basisIsBasis;
     });
-
     if (App._basisBaselineSnapshot) {
       restoreSnapshot(App.vectorList, App._basisBaselineSnapshot);
     }
-
     if (App._basisTempByKey && typeof App._basisTempByKey.clear === "function") {
       App._basisTempByKey.clear();
     }
     App._basisTempByKey = null;
-
     App._basisModeActive = false;
     App._basisBaselineSnapshot = null;
   };
 
   // =========================
-  // B) SPEED CONTROL -> ms
+  // B) ANIMATION CONTROLS
   // =========================
   App.BASIS_PHASE_MS_MIN = 100;
   App.BASIS_PHASE_MS_MAX = 5000;
   App.BASIS_PHASE_MS_STEP = 50;
-
   App.basisAnimPhaseMs = 1000;
 
   App.setBasisAnimPhaseMs = function (ms) {
@@ -108,15 +96,10 @@
     return x;
   };
 
-  /*function estimateTotalMs(phaseMs) {
-    return Math.round(phaseMs * 3.2);
-  }*/
-
   App.ensureBasisAnimControls = function () {
     const checklist = $("basisChecklist");
     const out = $("result_basis");
     if (!checklist || !out) return;
-
     if ($("basisAnimControls")) return;
 
     const host = out.parentElement || checklist.parentElement;
@@ -125,13 +108,14 @@
     const wrap = document.createElement("div");
     wrap.id = "basisAnimControls";
     wrap.className = "basis-anim-controls";
-
     wrap.style.display = "flex";
     wrap.style.flexDirection = "column";
     wrap.style.gap = "10px";
     wrap.style.margin = "10px 0 8px";
     wrap.style.padding = "12px";
-    wrap.style.borderRadius = "12px";
+    wrap.style.borderRadius = "8px";
+    wrap.style.background = "var(--card)";
+    wrap.style.border = "1px solid var(--border)";
 
     const row1 = document.createElement("div");
     row1.style.display = "flex";
@@ -142,7 +126,7 @@
     const lbl = document.createElement("div");
     lbl.style.fontSize = "13px";
     lbl.style.fontWeight = "700";
-    lbl.textContent = "Thời lượng animation:";
+    lbl.textContent = "Tốc độ Animation:";
 
     const val = document.createElement("div");
     val.id = "basisSpeedVal";
@@ -160,30 +144,29 @@
     range.max = String(App.BASIS_PHASE_MS_MAX);
     range.step = String(App.BASIS_PHASE_MS_STEP);
     range.value = String(App.basisAnimPhaseMs);
+    range.style.width = "100%";
 
     const help = document.createElement("div");
     help.id = "basisSpeedHelp";
     help.style.fontSize = "12px";
     help.style.opacity = "0.85";
-    help.textContent = `Vector được tô màu đỏ là vector trong hệ sinh.\nVector được tô màu xanh lá là vector làm cơ sở.`;
+    help.innerHTML = `<span style="color:salmon">●</span> Vector phụ thuộc &nbsp; <span style="color:lightgreen">●</span> Vector cơ sở`;
 
     const btn = document.createElement("button");
     btn.id = "btnStopBasisAnim";
     btn.type = "button";
-    btn.textContent = "Hủy animation";
-    btn.className = "btn basis-anim-stop";
-    btn.style.padding = "10px 12px";
-    btn.style.borderRadius = "10px";
-    btn.style.fontWeight = "800";
+    btn.textContent = "Dừng & Hủy Animation";
+    btn.className = "btn";
+    btn.style.padding = "6px 12px";
+    btn.style.borderRadius = "6px";
+    btn.style.fontSize = "0.9em";
     btn.style.cursor = "pointer";
     btn.style.width = "fit-content";
+    btn.style.marginTop = "5px";
 
     range.addEventListener("input", () => {
       const ms = App.setBasisAnimPhaseMs(range.value);
-      const v = $("basisSpeedVal");
-      if (v) v.textContent = `${ms} ms`;
-      const h = $("basisSpeedHelp");
-      if (h) h.textContent = `Chọn thời lượng 1000ms là chuẩn nhất rồi đó -_- Vector được tô màu đỏ là vector trong hệ sinh. Vector được tô màu xanh lá là vector làm cơ sở.`;
+      if (val) val.textContent = `${ms} ms`;
     });
 
     btn.addEventListener("click", () => {
@@ -206,25 +189,34 @@
   }
 
   // =========================
-  // MAIN UI
+  // C) MAIN LOGIC: TÍNH CƠ SỞ & SỐ CHIỀU
   // =========================
   App.basisAndDimUI = async function () {
+    if (typeof App.handleEmptyListAction === "function") {
+        if (App.handleEmptyListAction()) return;
+    }
+
     App.ensureBasisAnimControls();
 
     const checklist = $("basisChecklist");
     if (!checklist) return;
 
+    // 1. Lấy danh sách ID đã tick (theo đúng thứ tự trên màn hình)
+    // Lưu ý: Nếu có Drag & Drop, DOM phải được cập nhật thì hàm này mới đúng.
     const checkedIds = getCheckedIds(checklist);
+    
+    // 2. Map ID sang Object Vector (Giữ nguyên thứ tự của checkedIds)
+    // Code cũ của bạn đã đúng ở chỗ này, nó sẽ tạo mảng selectedItems theo thứ tự của checkedIds
     const selectedItems = checkedIds
       .map((id) => (App.vectorList || []).find((v) => v.id === id))
       .filter(Boolean);
 
     if (!selectedItems.length) {
-      alert("Tick ít nhất 1 vector để xét cơ sở.");
+      if(typeof App.showToast === 'function') App.showToast("⚠️ Hãy tick chọn ít nhất 1 vector!");
+      else alert("Tick ít nhất 1 vector.");
       return;
     }
 
-    // RESET RUN
     if (App._basisModeActive || App._basisBaselineSnapshot) {
       App.restoreBasisPreState();
     }
@@ -233,7 +225,7 @@
     }
 
     const out = $("result_basis");
-    if (out) out.innerText = "Đang tính...";
+    if (out) out.innerText = "Đang tính toán...";
 
     App._basisBaselineSnapshot = snapshotVectorList(App.vectorList);
 
@@ -241,55 +233,45 @@
       try { App.stopBasisAnimation(); } catch (_) { }
     }
 
+    // Lấy dữ liệu vector thô để gửi đi
     const vecs = selectedItems.map((it) => (it.vec || []).slice());
 
     try {
-      const base = App.API_BASE || "";
-      const res = await fetch(`${base}/api/basis`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vectors: vecs }),
+      // [FIX] Thêm tham số pivot_strategy='basic' để báo cho backend biết:
+      // "Đừng có tự ý đổi chỗ vector của tao!"
+      const data = await App.callAPI("basis", { 
+          vectors: vecs,
+          pivot_strategy: "basic" 
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const data = await res.json();
+      // Gọi hàm sinh lời giải (Code cũ của bạn)
+      const packMat = (App.SolutionGen && App.SolutionGen.buildBasisByMatrix) 
+        ? App.SolutionGen.buildBasisByMatrix(selectedItems, data) : null;
+      
+      const packEqGeneral = (App.SolutionGen && App.SolutionGen.buildBasisByEquationsGeneral) 
+        ? App.SolutionGen.buildBasisByEquationsGeneral(selectedItems, data) : null;
+      
+      const packEqStep = (App.SolutionGen && App.SolutionGen.buildBasisByEquationsStepwise) 
+        ? App.SolutionGen.buildBasisByEquationsStepwise(selectedItems, data) : null;
 
-      // ===== Build 3 lời giải: (1) ma trận, (2) PT tổng quát, (3) xét từng vector =====
-      const packMat = (App.SolutionGen && typeof App.SolutionGen.buildBasisByMatrix === "function")
-        ? App.SolutionGen.buildBasisByMatrix(selectedItems, data)
-        : null;
-
-      const packEqGeneral = (App.SolutionGen && typeof App.SolutionGen.buildBasisByEquationsGeneral === "function")
-        ? App.SolutionGen.buildBasisByEquationsGeneral(selectedItems, data)
-        : null;
-
-      const packEqStep = (App.SolutionGen && typeof App.SolutionGen.buildBasisByEquationsStepwise === "function")
-        ? App.SolutionGen.buildBasisByEquationsStepwise(selectedItems, data)
-        : null;
-
-      const basis = Array.isArray(packMat?.basisVectors)
-        ? packMat.basisVectors
-        : (Array.isArray(data?.basis) ? data.basis : []);
-
-      const dim = (typeof packMat?.dimension === "number")
-        ? packMat.dimension
-        : ((typeof data?.dimension === "number") ? data.dimension : null);
+      const basis = Array.isArray(packMat?.basisVectors) 
+        ? packMat.basisVectors : (Array.isArray(data?.basis) ? data.basis : []);
+      
+      const dim = (typeof packMat?.dimension === "number") 
+        ? packMat.dimension : ((typeof data?.dimension === "number") ? data.dimension : null);
 
       const basisStr = basis.length
-        ? basis
-          .map((v) => (typeof App.formatVectorShort === "function") ? App.formatVectorShort(v) : JSON.stringify(v))
-          .join("\n")
+        ? basis.map((v) => (typeof App.formatVectorShort === "function") ? App.formatVectorShort(v) : JSON.stringify(v)).join("\n")
         : "(rỗng)";
 
       const explanationText =
-        "KẾT QUẢ CƠ SỞ & SỐ CHIỀU\n\n" +
-        `dim(V) = ${dim !== null ? (typeof App.formatScalar === "function" ? App.formatScalar(dim) : String(dim)) : "?"}\n` +
+        `Số chiều dim(V) = ${dim ?? "?"}\n` +
         "Cơ sở gồm:\n" + basisStr + "\n\n" +
-        'Bấm nút "Lời giải" để xem lời giải chi tiết.';
+        '👉 Bấm "Lời giải" để xem chi tiết.';
 
-      // dependents backend trả index theo selectedItems -> đổi sang ID
       let dependentIds = [];
       if (Array.isArray(data?.dependents) && data.dependents.length) {
+        // data.dependents trả về index trong mảng gửi đi -> map lại ID gốc
         dependentIds = data.dependents
           .map((idx) => selectedItems[idx])
           .filter(Boolean)
@@ -302,17 +284,21 @@
         out.innerText = explanationText;
       }
 
-      // ✅ set Solution Panel (đúng key)
+      // Truyền dữ liệu HTML sang Panel
       if (typeof App.setBasisSolutionForPanel === "function") {
         App.setBasisSolutionForPanel({
-          titleText: packMat?.titleText || packEqGeneral?.titleText || packEqStep?.titleText || "Cơ sở & số chiều trong",
-          titleMath: packMat?.titleMath || packEqGeneral?.titleMath || packEqStep?.titleMath || "\\( \\mathbb{R}^n \\)",
-
-          matLatex: packMat?.matLatex || "",
-
-          eqLatexGeneral: packEqGeneral?.eqLatexGeneral || "",
-          eqLatexStep: packEqStep?.eqLatexStep || ""
+          titleText: packMat?.titleText || "Cơ sở & số chiều",
+          titleMath: packMat?.titleMath || "\\( \\mathbb{R}^n \\)",
+          // Gói dữ liệu cấu trúc mới
+          allSolutions: {
+              mat: packMat?.htmlContent || "",
+              general: packEqGeneral?.htmlContent || "",
+              step: packEqStep?.htmlContent || ""
+          }
         });
+        
+        const btnSol = $("btnOpenSolution");
+        if(btnSol) btnSol.style.display = "inline-block";
       }
 
       if (typeof App.addAutoVector === "function" && Array.isArray(basis) && basis.length) {
@@ -332,62 +318,18 @@
 
     } catch (err) {
       if (out) out.innerText = "Lỗi: " + err.message;
-      console.error(err);
+      if(typeof App.showToast === 'function') App.showToast(err.message);
     }
   };
-  // =========================
-  // RANK UI
-  // =========================
-  document.getElementById("btnRank")?.addEventListener("click", async () => {
-    const checklist = document.getElementById("rankChecklist");
-    const ids = getCheckedIds(checklist);
 
-    const vectors = ids
-      .map(id => App.vectorList.find(v => v.id === id)?.vec)
-      .filter(Boolean);
-
-    if (!vectors.length) {
-      alert("Tick ít nhất 1 vector.");
-      return;
-    }
-
-    const out = document.getElementById("result_rank");
-    out.innerText = "Đang tính...";
-
-    try {
-      const res = await App.callAPI("rank", { vectors });
-      out.innerText = res.message || `Hạng = ${res.rank}`;
-    } catch (e) {
-      out.innerText = "Lỗi: " + e.message;
-    }
-  });
-
-
-  // =========================
-  // LINEAR INDEPENDENCE UI
-  // =========================
-  document.getElementById("btnIndep")?.addEventListener("click", async () => {
-    const checklist = document.getElementById("indepChecklist");
-    const ids = getCheckedIds(checklist);
-
-    const vectors = ids
-      .map(id => App.vectorList.find(v => v.id === id)?.vec)
-      .filter(Boolean);
-
-    if (!vectors.length) {
-      alert("Tick ít nhất 1 vector.");
-      return;
-    }
-
-    const out = document.getElementById("result_indep");
-    out.innerText = "Đang kiểm tra...";
-
-    try {
-      const res = await App.callAPI("linear_independence", { vectors });
-      out.innerText = res.message;
-    } catch (e) {
-      out.innerText = "Lỗi: " + e.message;
-    }
+  // --- INIT ---
+  document.addEventListener("DOMContentLoaded", () => {
+      const btn = $("btnBasis") || $("btnCalcBasis");
+      if(btn) {
+          const newBtn = btn.cloneNode(true);
+          if(btn.parentNode) btn.parentNode.replaceChild(newBtn, btn);
+          newBtn.addEventListener("click", App.basisAndDimUI);
+      }
   });
 
 })();

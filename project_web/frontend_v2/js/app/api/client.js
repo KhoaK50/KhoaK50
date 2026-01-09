@@ -1,3 +1,4 @@
+// ===================== client.js (Full Toast Support) =====================
 (function () {
   window.App = window.App || {};
 
@@ -16,7 +17,12 @@
       App.log(`Backend OK (${App.API_BASE}) — health: ${JSON.stringify(j)}`);
     } catch (e) {
       App.log(`Không gọi được /api/health — ${e}`);
-      alert("Không kết nối được backend local. Hãy chạy Flask ở 127.0.0.1:5000.");
+      // THAY ALERT BẰNG TOAST
+      if (typeof App.showToast === 'function') {
+          App.showToast("Không kết nối được Backend (127.0.0.1:5000). Kiểm tra lại server nhé!", "error");
+      } else {
+          console.warn("Backend error: " + e.message);
+      }
     }
   };
 
@@ -33,12 +39,13 @@
         cache: "no-store",
       });
     } catch (netErr) {
-      throw new Error(`Network error calling ${op}: ${netErr.message}`);
+      // Ném lỗi để Controller bắt và hiện Toast
+      throw new Error(`Lỗi kết nối mạng: ${netErr.message}`);
     }
 
     if (!res.ok) {
       const t = await res.text().catch(() => "");
-      throw new Error(`API ${op} failed: HTTP ${res.status} ${t}`);
+      throw new Error(`Lỗi API ${op} (HTTP ${res.status}): ${t}`);
     }
     return await res.json();
   };

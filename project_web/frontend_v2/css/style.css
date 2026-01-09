@@ -1,3 +1,7 @@
+/* ========================================================== */
+/* FILE: css/style.css (Full Updated) */
+/* ========================================================== */
+
 @import url("./theme.css");
 @import url("./base.css");
 @import url("./layout.css");
@@ -5,32 +9,29 @@
 @import url("./viewer.css");
 @import url("./effects.css");
 
-/* ========================================================== */
-/* MOBILE SPLIT VIEW - GIAO DIỆN CHIA ĐÔI (TRÊN/DƯỚI) */
-/* ========================================================== */
-/* =================== TOPBAR GLOBAL (PC & MOBILE) =================== */
+/* =================== 1. LAYOUT CHUNG & MOBILE SPLIT VIEW =================== */
+
+/* TOPBAR GLOBAL */
 #topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Đẩy 2 đầu ra xa */
+  justify-content: space-between;
   height: var(--topbar-h);
   padding: 0 16px;
-  background: var(--bg); /* Nền đặc */
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 300;
 }
 
-/* Nhóm bên trái (Menu + Home) */
 .topbar-left {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1; /* Chiếm 1 phần */
+  flex: 1;
 }
 
-/* Logo nằm giữa tuyệt đối */
 .brand {
   position: absolute;
   left: 50%;
@@ -41,15 +42,14 @@
   white-space: nowrap;
 }
 
-/* Nhóm bên phải (Theme) - Căn sát lề phải */
 .topbar-right {
-  flex: 1; /* Chiếm 1 phần đối xứng với bên trái */
+  flex: 1;
   display: flex;
-  justify-content: flex-end; /* Đẩy nội dung sang phải */
+  justify-content: flex-end;
 }
 
 #themeBadge {
-  position: static !important; /* Bỏ position absolute cũ */
+  position: static !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -57,27 +57,24 @@
   cursor: pointer;
 }
 
+/* MOBILE CONFIGURATION (Max-width: 768px) */
 @media (max-width: 768px) {
-  
-
-  /* Ẩn luôn nút Hamburger (vì bảng điều khiển sẽ luôn hiện bên dưới) */
   #hamburger { display: none !important; }
 
-
-  /* --- 2. BỐ CỤC CHÍNH: Xếp dọc (Trên - Dưới) --- */
+  /* Chia đôi màn hình */
   #app {
     display: flex !important;
-    flex-direction: column !important; /* Xếp thành cột dọc */
+    flex-direction: column !important;
     height: calc(100vh - var(--topbar-h));
     overflow: hidden;
   }
 
-  /* --- 3. ĐỒ THỊ (VIEWER): Nằm trên, cố định chiều cao --- */
+  /* Viewer: 40% */
   #viewerWrap {
-    order: 1; /* Nằm trước */
+    order: 1;
     width: 100% !important;
-    height: 40vh !important; /* Chiếm 40% chiều cao màn hình */
-    flex: none !important;   /* Không co giãn */
+    height: 40vh !important;
+    flex: none !important;
     border-radius: 0 !important;
     border-bottom: 2px solid var(--border);
     border-left: none;
@@ -85,311 +82,57 @@
     z-index: 1;
   }
 
-  /* --- 4. BẢNG ĐIỀU KHIỂN (CONTROLS): Nằm dưới, cuộn độc lập --- */
+  /* Controls: 60% */
   #controls {
-    order: 2; /* Nằm sau */
-    position: static !important; /* Bỏ chế độ trượt/ẩn */
+    order: 2;
+    position: static !important;
     width: 100% !important;
     height: auto !important;
-    flex: 1 1 auto !important; /* Chiếm nốt phần chiều cao còn lại (60%) */
-    
+    flex: 1 1 auto !important;
     background: var(--bg) !important;
-    transform: none !important; /* Luôn hiện */
+    transform: none !important;
     box-shadow: none !important;
     border: none;
-    
     padding: 12px;
-    padding-bottom: 80px; /* Chừa khoảng trống cuối cùng để dễ vuốt */
-    overflow-y: auto; /* Cho phép cuộn */
+    padding-bottom: 80px; /* Chừa chỗ cho bàn phím ảo */
+    overflow-y: auto;
     z-index: 2;
   }
   
-  /* Tắt overlay đen mờ */
   #overlay { display: none !important; }
 
-
-  /* --- 5. TỐI ƯU NÚT BẤM (To, dễ chạm) --- */
-  
-  /* Các dòng nút (Tính toán, Xem trước...) chia đôi màn hình */
   .row {
     display: grid !important;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
   
-  .row button {
+  .row button, input, select {
     width: 100%;
     margin: 0 !important;
-    min-height: 42px; /* Cao hơn để dễ bấm */
-  }
-
-  /* Input và Select cao lên */
-  input, select {
     min-height: 42px;
-    font-size: 15px; /* Chữ to hơn chút */
+    font-size: 15px;
   }
 
-  /* Danh sách vector: Các nút con (Ẩn/Xóa) chia đều 3 cột */
-  .vec-actions {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    margin-top: 8px;
-  }
-  
-  .vec-actions .btn {
-    padding: 8px 0;
-    justify-content: center;
-    font-size: 13px;
-  }
-
-}
-
-/* =================== MATH KEYPAD V3 (RESPONSIVE) =================== */
-#mathKeypad {
-  position: fixed;
-  background: var(--card);
-  border: 1px solid var(--border);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  z-index: 99999;
-  display: flex;
-  flex-direction: column;
-  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-  
-  /* Trạng thái ẩn mặc định */
-  opacity: 0;
-  pointer-events: none;
-}
-
-#mathKeypad.open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* --- HEADER --- */
-.keypad-header {
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end; /* Nút đóng bên phải */
-  background: color-mix(in srgb, var(--bg) 96%, var(--fg));
-  border-bottom: 1px solid var(--border);
-  padding: 0 8px;
-}
-
-#keypadClose {
-  background: transparent;
-  border: none;
-  font-size: 18px;
-  color: var(--muted);
-  cursor: pointer;
-  padding: 0 10px;
-}
-#keypadClose:hover { color: var(--danger); }
-
-/* --- GRID BUTTONS --- */
-.keypad-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 5 cột */
-  gap: 6px;
-  padding: 8px;
-}
-
-.k-btn {
-  height: 44px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
-  color: var(--fg);
-  font-size: 16px;
-  font-family: "JetBrains Mono", monospace; /* Font code cho đẹp */
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 0 rgba(0,0,0,0.05);
-}
-
-.k-btn:active {
-  transform: translateY(2px);
-  box-shadow: none;
-}
-
-/* Màu sắc từng loại nút */
-.k-btn.num { font-weight: 700; font-size: 18px; }
-.k-btn.op { background: color-mix(in srgb, var(--accent) 8%, var(--bg)); color: var(--accent-700); }
-.k-btn.action { background: color-mix(in srgb, var(--danger) 10%, var(--bg)); color: var(--danger); }
-.k-btn.primary { background: var(--accent); color: #fff; border: none; }
-
-
-/* --- CẤU HÌNH RIÊNG CHO MOBILE --- */
-@media (max-width: 768px) {
-  #mathKeypad {
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    transform: translateY(100%); /* Trượt từ dưới lên */
-    border-radius: 16px 16px 0 0;
-    padding-bottom: 20px; /* Tai thỏ */
-  }
-  #mathKeypad.open {
-    transform: translateY(0);
+  #btnResetView {
+    bottom: 15px; 
+    right: 15px;
   }
 }
 
-/* ========================================================= */
-/* BÀN PHÍM FULL WIDTH (TRẢI DÀI TỪ TRÁI QUA PHẢI) - ALL DEVICES */
-/* ========================================================= */
 
-#mathKeypad {
-  /* Vị trí cố định: Dính chặt đáy, Full màn hình */
-  position: fixed !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  
-  /* Giao diện khung chứa */
-  background: var(--bg); /* Nền trùng màu web */
-  border-top: 1px solid var(--border);
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-  z-index: 2147483647; /* Luôn nằm trên cùng (đè lên cả Sidebar) */
-  
-  /* Hiệu ứng trượt */
-  transform: translateY(100%); 
-  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-  
-  /* Căn giữa nội dung bên trong */
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* Để cụm phím nằm giữa màn hình */
-  padding-bottom: 0;
-}
+/* =================== 2. VIEWER & RESET BUTTON =================== */
 
-#mathKeypad.open {
-  transform: translateY(0); /* Trượt lên */
-}
-
-/* --- THANH HEADER (Nút đóng) --- */
-.keypad-header {
-  width: 100%;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end; /* Nút đóng nằm góc phải */
-  padding: 0 15px;
-  background: color-mix(in srgb, var(--bg) 95%, var(--fg));
-  border-bottom: 1px solid var(--border);
-}
-
-#keypadClose {
-  background: transparent;
-  border: none;
-  font-size: 20px;
-  color: var(--muted);
-  cursor: pointer;
-  padding: 0 10px;
-  line-height: 1;
-}
-#keypadClose:hover { color: var(--danger); }
-
-/* --- LƯỚI NÚT BẤM --- */
-.keypad-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 5 cột */
-  gap: 8px;
-  padding: 10px;
-  
-  /* QUAN TRỌNG: Giới hạn chiều rộng để nút không bị bè ra quá mức trên màn hình to */
-  width: 100%;
-  max-width: 900px; /* Trên màn hình 2K/4K nó vẫn chỉ rộng 900px cho vừa tay */
-}
-
-/* Style nút bấm */
-.k-btn {
-  height: 46px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--card);
-  color: var(--fg);
-  font-size: 18px;
-  font-family: "JetBrains Mono", monospace;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.1s;
-}
-
-.k-btn:active {
-  background: var(--border);
-  transform: scale(0.98);
-}
-.k-btn:hover {
-  background: color-mix(in srgb, var(--card) 90%, var(--fg)); /* Hover nhẹ cho Desktop */
-}
-
-/* Màu sắc */
-.k-btn.op { color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--card)); }
-.k-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-
-/* Ẩn thanh kéo thừa thãi */
-.drag-handle { display: none; }
-
-/* Làm đẹp ô nhập liệu */
-input, .lbl {
-  font-family: "Consolas", "Monaco", "Courier New", monospace; /* Font code */
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-/* --- ẨN CÁC ICON THỪA TRONG TIÊU ĐỀ CARD --- */
-.card-header button, 
-.card-header .btn,
-
-/* Đảm bảo ô input trong danh sách vector hiển thị font đẹp */
-.vec-item input {
-  font-family: "JetBrains Mono", monospace;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-/* --- FIX LỖI BÀN PHÍM CHE INPUT --- */
-/* Khi body có class 'has-keypad', ta độn thêm padding cực lớn vào đáy #controls */
-body.has-keypad #controls {
-  padding-bottom: 50vh !important; /* Độn 50% chiều cao màn hình */
-  scroll-behavior: smooth; /* Cuộn mượt */
-}
-
-/* Đảm bảo ô input đang nhập nổi bật hơn */
-input:focus {
-  border-color: var(--accent) !important;
-  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);
-}
-
-
-/* --- CẬP NHẬT CSS: ĐỊNH VỊ NÚT RESET VÀO TRONG VIEWER --- */
-
-/* 1. Đặt khung chứa viewer là relative để làm mốc toạ độ */
 #viewerWrap {
   position: relative !important; 
-  /* Đảm bảo khung này chiếm hết không gian còn lại */
   overflow: hidden; 
 }
 
-/* 2. Nút Reset giờ sẽ bám theo viewerWrap chứ không bám theo body */
 #btnResetView {
-  position: absolute !important; /* Đổi từ fixed sang absolute */
-  
-  /* Canh lề phải dưới của khung viewer */
+  position: absolute !important;
   bottom: 15px;
   right: 15px;
-  
-  z-index: 10; /* Chỉ cần cao hơn canvas là được */
-  
-  /* Giữ nguyên các style làm đẹp cũ */
+  z-index: 10;
   width: 45px;
   height: 45px;
   border-radius: 50%;
@@ -410,10 +153,283 @@ input:focus {
   color: var(--accent);
 }
 
-/* Mobile tweak: Không cần đẩy lên cao nữa vì nó đã nằm trong khung viewer rồi */
-@media (max-width: 768px) {
-  #btnResetView {
-    bottom: 15px; 
-    right: 15px;
-  }
+
+/* =================== 3. PRO TOAST NOTIFICATION (POPUP ĐỘNG) =================== */
+
+#toast-container {
+  position: fixed;
+  top: 80px; 
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toast-item {
+  pointer-events: auto;
+  position: relative;
+  min-width: 320px;
+  max-width: 400px;
+  background: var(--card);
+  color: var(--fg);
+  border-left: 5px solid #ff4d4f; /* Viền đỏ báo lỗi */
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  border-radius: 6px;
+  padding: 14px 18px;
+  padding-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  animation: toastSlideIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.toast-item.hide {
+  animation: toastSlideOut 0.4s forwards;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95em;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.toast-icon {
+  color: #ff4d4f;
+  font-size: 1.4em;
+  flex-shrink: 0;
+}
+
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background-color: #ff4d4f;
+  width: 100%;
+  animation: progressRun 5s linear forwards;
+}
+
+@keyframes toastSlideIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toastSlideOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(120%); opacity: 0; }
+}
+
+@keyframes progressRun {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+
+/* =================== 4. CHECKLIST NÂNG CẤP (LAYOUT CHUẨN) =================== */
+
+.checklist-tools {
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vec-search-inp {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0.95em;
+}
+
+/* Dòng "Chọn tất cả" và Dòng Vector */
+.select-all-row, .vec-item-row {
+  display: flex;
+  justify-content: space-between; /* Chữ trái - Tick phải */
+  align-items: center;
+  padding: 8px 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.vec-item-row {
+  border-bottom: 1px dashed var(--border);
+}
+.vec-item-row:last-child { border-bottom: none; }
+
+.vec-item-row:hover, .select-all-row:hover {
+  background: var(--hover);
+}
+
+.vec-label-text, .select-all-text {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 15px;
+  font-weight: 500;
+  font-size: 0.95em;
+  color: var(--fg);
+}
+
+.vec-label-text {
+  font-family: 'Consolas', monospace;
+}
+
+.vec-checkbox, .select-all-cb {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary); 
+}
+
+.vec-list-scroll {
+  max-height: 350px; 
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.empty-list-msg {
+  text-align: center;
+  color: #ff4d4f;
+  font-size: 0.95em;
+  padding: 15px;
+  border: 1px dashed #ff4d4f;
+  border-radius: 6px;
+  cursor: pointer;
+  background: rgba(255, 77, 79, 0.05);
+  margin-top: 5px;
+}
+.empty-list-msg:hover {
+  background: rgba(255, 77, 79, 0.1);
+  font-weight: 600;
+}
+
+
+/* =================== 5. MATH KEYPAD (FULL WIDTH) =================== */
+
+#mathKeypad {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+  z-index: 2147483647;
+  transform: translateY(100%); 
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#mathKeypad.open {
+  transform: translateY(0);
+}
+
+.keypad-header {
+  width: 100%;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 15px;
+  background: color-mix(in srgb, var(--bg) 95%, var(--fg));
+  border-bottom: 1px solid var(--border);
+}
+
+#keypadClose {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 10px;
+  line-height: 1;
+}
+#keypadClose:hover { color: var(--danger); }
+
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 10px;
+  width: 100%;
+  max-width: 900px;
+}
+
+.k-btn {
+  height: 46px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--fg);
+  font-size: 18px;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+}
+
+.k-btn:active { background: var(--border); transform: scale(0.98); }
+.k-btn.op { color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--card)); }
+.k-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.drag-handle { display: none; }
+
+input, .lbl, .card-header button, .card-header .btn, .vec-item input {
+  font-family: "JetBrains Mono", "Consolas", monospace;
+  font-weight: 600;
+}
+
+input:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);
+}
+
+body.has-keypad #controls {
+  padding-bottom: 50vh !important;
+  scroll-behavior: smooth;
+}
+
+/* =================== 6. TÙY CHỈNH INPUT HỆ SỐ K (ĐÃ SỬA) =================== */
+
+/* Căn giữa chữ trong ô input K */
+#scalarInp {
+  text-align: center;       /* Số nằm giữa */
+  font-weight: bold;
+  color: var(--accent);
+  font-size: 1.1em;
+  padding: 0;               /* Bỏ padding thừa để căn giữa chuẩn hơn */
+}
+
+/* Ẩn mũi tên lên xuống (Spinners) cho Chrome/Safari/Edge */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Ẩn mũi tên cho Firefox (Sửa để hết gạch vàng: dùng appearance chuẩn) */
+input[type=number] {
+  appearance: textfield;       /* Chuẩn mới */
+  -moz-appearance: textfield;  /* Chuẩn cũ Firefox */
 }

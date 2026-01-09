@@ -1,43 +1,40 @@
-// ===================== solution_panel.js =====================
+// ===================== solution_panel.js (HTML RENDER + TABS) =====================
 (function () {
   window.App = window.App || {};
 
   function $(id) { return document.getElementById(id); }
 
+  // DOM Elements
   const overlay = $("solutionOverlay");
   const body = $("solutionBody");
-
   const titleTextEl = $("solTitleText");
   const titleMathEl = $("solTitleMath");
-
   const btnOpen = $("btnOpenSolution");
   const btnClose = $("btnCloseSolution");
-
   const tabMat = $("solMethodMat");
   const tabEq = $("solMethodEq");
-
   const btnCopy = $("btnCopySolution");
 
-  // ---------- subtabs for "Cách 2" ----------
+  // Subtabs Logic
   let eqSubWrap = null;
   let eqBtnGeneral = null;
   let eqBtnStep = null;
 
+  // State Management (Lưu HTML thay vì LaTeX)
   const state = {
     titleText: "Cơ sở & số chiều trong",
     titleMath: "\\( \\mathbb{R}^n \\)",
+    
+    // Nội dung HTML của 3 cách giải
+    htmlMat: "",
+    htmlEqGeneral: "",
+    htmlEqStep: "",
 
-    // method 1
-    matLatex: "",
-
-    // method 2 variants
-    eqLatexGeneral: "",     // Tổng quát (R4)
-    eqLatexStep: "",        // Xét từng vector (R5)
-
-    active: "mat",          // "mat" | "eq"
-    eqVariant: "general"    // "general" | "step"
+    active: "mat",      // Tab chính: "mat" | "eq"
+    eqVariant: "general" // Subtab: "general" | "step"
   };
 
+  // Hàm render MathJax
   function typesetMath() {
     if (window.MathJax && typeof window.MathJax.typesetPromise === "function") {
       return window.MathJax.typesetPromise([overlay]);
@@ -45,40 +42,23 @@
     return Promise.resolve();
   }
 
+  // Toggle Panel
   function setOpen(open) {
     if (!overlay) return;
     if (open) {
       overlay.classList.add("is-open");
       overlay.setAttribute("aria-hidden", "false");
-      renderAll(); // render + typeset
+      renderAll();
     } else {
       overlay.classList.remove("is-open");
       overlay.setAttribute("aria-hidden", "true");
     }
   }
 
+  // Render Tabs Logic
   function renderTabs() {
     if (tabMat) tabMat.classList.toggle("is-active", state.active === "mat");
     if (tabEq) tabEq.classList.toggle("is-active", state.active === "eq");
-  }
-
-  // ✅ delimiter check: chỉ coi là "đã có math mode" khi có \[...\] hoặc $$...$$ hoặc \(...\)
-  function hasMathDelimiters(latex) {
-    const s = (latex || "").trim();
-    if (!s) return false;
-    if (s.includes("$$")) return true;
-    if (s.includes("\\[") && s.includes("\\]")) return true;
-    if (s.includes("\\(") && s.includes("\\)")) return true;
-    return false;
-  }
-
-  // ✅ luôn bọc \[...\] nếu chưa có delimiter
-  // (vì \begin{array} KHÔNG tự tạo math mode trong MathJax)
-  function wrapLatexToDisplayMath(latex) {
-    const s = (latex || "").trim();
-    if (!s) return "";
-    if (hasMathDelimiters(s)) return s;
-    return `\\[\n${s}\n\\]`;
   }
 
   function ensureEqSubtabs() {
@@ -90,93 +70,64 @@
     eqSubWrap.id = "solEqSubtabs";
 
     eqBtnGeneral = document.createElement("button");
-    eqBtnGeneral.type = "button";
     eqBtnGeneral.className = "sol-subtab is-active";
-    eqBtnGeneral.id = "solEqGeneral";
     eqBtnGeneral.textContent = "Tổng quát";
+    eqBtnGeneral.onclick = () => { state.eqVariant = "general"; renderEqSubtabs(); renderBody(); };
 
     eqBtnStep = document.createElement("button");
-    eqBtnStep.type = "button";
     eqBtnStep.className = "sol-subtab";
-    eqBtnStep.id = "solEqStep";
     eqBtnStep.textContent = "Xét từng vector";
+    eqBtnStep.onclick = () => { state.eqVariant = "step"; renderEqSubtabs(); renderBody(); };
 
     eqSubWrap.appendChild(eqBtnGeneral);
     eqSubWrap.appendChild(eqBtnStep);
-
     tabEq.parentElement.appendChild(eqSubWrap);
-
-    eqBtnGeneral.addEventListener("click", () => {
-      state.eqVariant = "general";
-      renderEqSubtabs();
-      renderBody();
-    });
-
-    eqBtnStep.addEventListener("click", () => {
-      state.eqVariant = "step";
-      renderEqSubtabs();
-      renderBody();
-    });
   }
 
   function renderEqSubtabs() {
     ensureEqSubtabs();
     if (!eqSubWrap) return;
 
-    const hasGeneral = !!(state.eqLatexGeneral && state.eqLatexGeneral.trim());
-    const hasStep = !!(state.eqLatexStep && state.eqLatexStep.trim());
-
-    const show = (state.active === "eq") && hasGeneral && hasStep;
+    // Chỉ hiện subtab nếu đang ở tab Equation
+    const show = (state.active === "eq");
     eqSubWrap.classList.toggle("is-visible", show);
 
     if (eqBtnGeneral) eqBtnGeneral.classList.toggle("is-active", state.eqVariant === "general");
     if (eqBtnStep) eqBtnStep.classList.toggle("is-active", state.eqVariant === "step");
   }
 
-  function getActiveLatex() {
-    if (state.active === "mat") return state.matLatex || "";
-
-    const g = (state.eqLatexGeneral || "").trim();
-    const st = (state.eqLatexStep || "").trim();
-
-    if (g && st) return (state.eqVariant === "step") ? state.eqLatexStep : state.eqLatexGeneral;
-    if (g) return state.eqLatexGeneral;
-    if (st) return state.eqLatexStep;
-    return "";
-  }
-
+  // Render Nội dung chính (Thay innerHTML bằng HTML string)
   function renderBody() {
     if (!body) return;
 
-    const latexRaw = getActiveLatex();
-    const latex = (latexRaw || "").trim();
-
-    if (!latex) {
-      body.innerHTML = `
-        <div class="sol-empty">
-          Chưa có lời giải. Bấm <b>Tính cơ sở</b> rồi mở <b>Lời giải</b> để xem.
-        </div>
-      `;
-      renderEqSubtabs();
-      return typesetMath();
+    let content = "";
+    if (state.active === "mat") {
+        content = state.htmlMat;
+    } else {
+        content = (state.eqVariant === "step") ? state.htmlEqStep : state.htmlEqGeneral;
+        // Fallback nếu 1 trong 2 subtab chưa có dữ liệu
+        if (!content && state.eqVariant === "step") content = state.htmlEqGeneral;
+        if (!content && state.eqVariant === "general") content = state.htmlEqStep;
     }
 
-    const content = wrapLatexToDisplayMath(latex);
-
-    body.innerHTML = `
-      <div class="sol-content">
-        ${content}
-      </div>
-    `;
+    // Hiển thị
+    if (!content) {
+      body.innerHTML = `
+        <div class="sol-empty">
+          Chưa có lời giải. Hãy bấm <b>"Tính cơ sở"</b> để tạo lời giải mới.
+        </div>
+      `;
+    } else {
+      body.innerHTML = content; // Chèn trực tiếp HTML
+    }
 
     renderEqSubtabs();
-    return typesetMath();
+    typesetMath(); // Render công thức sau khi chèn HTML
   }
 
   function renderTitle() {
-    if (titleTextEl) titleTextEl.textContent = state.titleText || "Cơ sở & số chiều trong";
-    if (titleMathEl) titleMathEl.innerHTML = state.titleMath || "";
-    return typesetMath();
+    if (titleTextEl) titleTextEl.textContent = state.titleText;
+    if (titleMathEl) titleMathEl.innerHTML = state.titleMath;
   }
 
   function renderAll() {
@@ -186,47 +137,56 @@
     renderBody();
   }
 
-  // API public
+  // --- API Public ---
+  // Nhận dữ liệu từ Controller (basis_controller.js)
   App.setBasisSolutionForPanel = function (pack) {
-    state.titleText = (pack && typeof pack.titleText === "string") ? pack.titleText : "Cơ sở & số chiều trong";
-    state.titleMath = (pack && typeof pack.titleMath === "string") ? pack.titleMath : "\\( \\mathbb{R}^n \\)";
+    state.titleText = pack.titleText || "Cơ sở & số chiều trong";
+    state.titleMath = pack.titleMath || "\\( \\mathbb{R}^n \\)";
 
-    state.matLatex = (pack && typeof pack.matLatex === "string") ? pack.matLatex : "";
+    // Update dữ liệu HTML cho cả 3 cách
+    if (pack.allSolutions) {
+        state.htmlMat = pack.allSolutions.mat || "";
+        state.htmlEqGeneral = pack.allSolutions.general || "";
+        state.htmlEqStep = pack.allSolutions.step || "";
+    } else {
+        // Fallback cho code cũ (nếu có)
+        state.htmlMat = pack.htmlContent || "";
+    }
 
-    // ✅ đúng key
-    state.eqLatexGeneral = (pack && typeof pack.eqLatexGeneral === "string") ? pack.eqLatexGeneral : "";
-    state.eqLatexStep = (pack && typeof pack.eqLatexStep === "string") ? pack.eqLatexStep : "";
-
-    state.active = "mat";
-
-    if ((state.eqLatexGeneral || "").trim() && !(state.eqLatexStep || "").trim()) state.eqVariant = "general";
-    else if (!(state.eqLatexGeneral || "").trim() && (state.eqLatexStep || "").trim()) state.eqVariant = "step";
-    else state.eqVariant = "general";
-
+    // Reset về tab đầu tiên khi có kết quả mới
+    state.active = "mat"; 
+    state.eqVariant = "general";
+    
     renderAll();
   };
 
-  function copyActiveLatex() {
-    const latex = (getActiveLatex() || "").trim();
-    if (!latex) return;
+  // Hàm Copy thông minh (Lấy text thuần túy từ HTML đang hiển thị)
+  function copyActiveContent() {
+    const text = body.innerText; // Lấy text đã render (bao gồm công thức dạng text)
+    if (!text || text.includes("Chưa có lời giải")) return;
 
     const ok = () => {
       if (!btnCopy) return;
       const old = btnCopy.textContent;
       btnCopy.textContent = "Đã copy!";
-      setTimeout(() => { btnCopy.textContent = old || "Copy LaTeX"; }, 900);
+      setTimeout(() => { btnCopy.textContent = old || "Copy Text"; }, 900);
     };
 
-    navigator.clipboard?.writeText(latex).then(ok).catch(() => {
-      const ta = document.createElement("textarea");
-      ta.value = latex;
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand("copy"); ok(); } catch (_) { }
-      ta.remove();
-    });
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(ok);
+    } else {
+        // Fallback cũ
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        ok();
+    }
   }
 
+  // Bind Events
   function bind() {
     ensureEqSubtabs();
 
@@ -245,19 +205,15 @@
 
     if (tabMat) tabMat.addEventListener("click", () => {
       state.active = "mat";
-      renderTabs();
-      renderEqSubtabs();
-      renderBody();
+      renderTabs(); renderEqSubtabs(); renderBody();
     });
 
     if (tabEq) tabEq.addEventListener("click", () => {
       state.active = "eq";
-      renderTabs();
-      renderEqSubtabs();
-      renderBody();
+      renderTabs(); renderEqSubtabs(); renderBody();
     });
 
-    if (btnCopy) btnCopy.addEventListener("click", () => copyActiveLatex());
+    if (btnCopy) btnCopy.addEventListener("click", copyActiveContent);
   }
 
   if (document.readyState === "loading") {

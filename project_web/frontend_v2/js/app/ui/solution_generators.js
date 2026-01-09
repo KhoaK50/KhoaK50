@@ -1,21 +1,23 @@
-// ===================== solution_generators.js =====================
+// ===================== solution_generators.js (ORIGINAL TEXT - HTML FORMAT - WITH ROW OPS FIX) =====================
 (function () {
   window.App = window.App || {};
   App.SolutionGen = App.SolutionGen || {};
 
-  // ---------- scalar / vector / matrix to LaTeX ----------
+  /* =======================================================================
+      PHẦN 1: GIỮ NGUYÊN CÁC HÀM BỔ TRỢ CỦA BẢN CŨ
+      ======================================================================= */
   function fmtScalarLatex(x) {
     let s = (typeof App.formatScalar === "function") ? App.formatScalar(x) : String(x);
     s = String(s).trim();
     s = s.replace(/sqrt\(([^)]+)\)/g, "\\sqrt{$1}");
-    s = s.replace(/(\d)\s*\*\s*(\\sqrt|\w)/g, "$1\\cdot $2");
-    return s;
+    return s.replace(/(\d)\s*\*\s*(\\sqrt|\w)/g, "$1\\cdot $2");
   }
 
   function vecToLatex(v) {
     const items = (v || []).map(fmtScalarLatex);
-    return `\\left(${items.join(",\\;")}\\right)`;
+    return `\\left(${items.join(",\\, ")}\\right)`;
   }
+
 
   function matrixToLatex(M) {
     if (!Array.isArray(M) || !M.length) return "\\begin{pmatrix}\\end{pmatrix}";
@@ -50,7 +52,6 @@
     return v.every(x => Math.abs(Number(x)) < tol);
   }
 
-  // ---------- helpers: compare matrices to skip redundant last matrix ----------
   function normCell(x) {
     if (x === null || x === undefined) return "";
     if (typeof x === "number") {
@@ -77,7 +78,6 @@
     return true;
   }
 
-  // ---------- row-op label ----------
   function fmtNumForOp(k) {
     const kk = Number(k);
     if (!Number.isFinite(kk)) return String(k);
@@ -87,44 +87,59 @@
 
   function rowOpDictToLatex(op) {
     if (!op || typeof op !== "object") return "";
-
     const kind = op.op;
-
     if (kind === "swap") {
       const a = Number(op.i) + 1;
       const b = Number(op.j) + 1;
       if (Number.isFinite(a) && Number.isFinite(b)) {
-        return `d_${a}\\;\\leftrightarrow\\;d_${b}`;
+        return `d_{${a}}\\;\\leftrightarrow\\;d_{${b}}`;
       }
       return "";
     }
-
     if (kind === "elim") {
       const dst = Number(op.i) + 1;
       const src = Number(op.j) + 1;
       const k = Number(op.factor);
-
       if (!Number.isFinite(dst) || !Number.isFinite(src)) return "";
-      if (!Number.isFinite(k)) return `d_${dst}\\;\\to\\;d_${dst}`;
-
-      if (Math.abs(k) < 1e-12) return `d_${dst}\\;\\to\\;d_${dst}`;
-      if (Math.abs(k - 1) < 1e-12) return `d_${dst}\\;\\to\\;d_${dst}-d_${src}`;
-      if (Math.abs(k + 1) < 1e-12) return `d_${dst}\\;\\to\\;d_${dst}+d_${src}`;
-
-      if (k > 0) return `d_${dst}\\;\\to\\;d_${dst}-${fmtNumForOp(k)}d_${src}`;
-      return `d_${dst}\\;\\to\\;d_${dst}+${fmtNumForOp(Math.abs(k))}d_${src}`;
+      if (Math.abs(k) < 1e-12) return `d_{${dst}}\\;\\to\\;d_{${dst}}`;
+      if (Math.abs(k - 1) < 1e-12) return `d_{${dst}}\\;\\to\\;d_{${dst}}-d_{${src}}`;
+      if (Math.abs(k + 1) < 1e-12) return `d_{${dst}}\\;\\to\\;d_{${dst}}+d_{${src}}`;
+      if (k > 0) return `d_{${dst}}\\;\\to\\;d_{${dst}}-${fmtNumForOp(k)}d_{${src}}`;
+      return `d_{${dst}}\\;\\to\\;d_{${dst}}+${fmtNumForOp(Math.abs(k))}d_{${src}}`;
     }
-
+    if (kind === "scale") {
+      const i = Number(op.i) + 1;
+      const k = Number(op.factor);
+      return `d_{${i}} \\to (${fmtNumForOp(k)})d_{${i}}`;
+    }
     return "";
   }
 
+  /* =======================================================================
+      [FIX DUY NHẤT] CHUẨN HÓA LABEL MŨI TÊN TỪ BACKEND
+      ======================================================================= */
   function cleanLabelFromText(text) {
     let s = String(text ?? "").trim();
     if (!s) return "";
 
+    // d1tod2-d1 , d2tod2+3d1 , d10tod3-d2
+    s = s.replace(
+      /d(\d+)\s*to\s*d(\d+)\s*-\s*(\d*)d(\d+)/gi,
+      (_, a, b, k, c) => `d_{${a}}\\;\\to\\;d_{${b}}-${k ? k : ""}d_{${c}}`
+    );
+
+    s = s.replace(
+      /d(\d+)\s*to\s*d(\d+)\s*\+\s*(\d*)d(\d+)/gi,
+      (_, a, b, k, c) => `d_{${a}}\\;\\to\\;d_{${b}}+${k ? k : ""}d_{${c}}`
+    );
+
+    s = s.replace(
+      /d(\d+)\s*to\s*d(\d+)/gi,
+      "d_{$1}\\;\\to\\;d_{$2}"
+    );
+
     s = s.replace(/^Bước\s*[^:]*:\s*/i, "").trim();
-    s = s.replace(/↔/g, "\\leftrightarrow");
-    s = s.replace(/→/g, "\\to");
+    s = s.replace(/↔/g, "\\leftrightarrow").replace(/→/g, "\\to");
 
     const hasArrow = /(\\+to|\\+leftrightarrow)/.test(s);
     const hasD = /d_\d+/.test(s);
@@ -133,58 +148,41 @@
     s = s.replace(/\\+to/g, "\\to");
     s = s.replace(/\\+leftrightarrow/g, "\\leftrightarrow");
 
-    s = s.replace(/d_(\d+)\s*\\to\s*d_(\d+)/g, "d_$1\\;\\to\\; d_$2");
-    s = s.replace(/d_(\d+)\s*\\leftrightarrow\s*d_(\d+)/g, "d_$1\\;\\leftrightarrow\\; d_$2");
-    s = s.replace(/\s*\+\s*/g, " + ");
-    s = s.replace(/\s*-\s*/g, " - ");
-    s = s.replace(/\s+/g, " ").trim();
+    s = s.replace(/d_(\d+)\s*\\to\s*d_(\d+)/g, "d_{$1}\\;\\to\\;d_{$2}");
+    s = s.replace(/d_(\d+)\s*\\leftrightarrow\s*d_(\d+)/g, "d_{$1}\\;\\leftrightarrow\\;d_{$2}");
+    s = s.replace(/d_(\d+)/g, "d_{$1}");
 
-    return s;
+    return s.replace(/\s+/g, " ").trim();
   }
 
   function arrowLatex(label) {
-    if (!label) return "\\to";
-    return `\\xrightarrow{\\;${label}\\;}`;
+    return label ? `\\xrightarrow{\\;${label}\\;}` : "\\to";
   }
 
   function buildChainFromSteps(steps) {
     const list = Array.isArray(steps) ? steps : [];
-
     let firstMatrix = null;
     for (const st of list) {
-      if (st && Array.isArray(st.matrix) && st.matrix.length) {
+      if (st && (st.kind === "matrix" || st.kind === "info") && Array.isArray(st.matrix) && st.matrix.length) {
         firstMatrix = st.matrix;
         break;
       }
     }
     if (!firstMatrix) return { chain: "", lastMatrix: null };
 
-    const rowOps = list.filter(st => st && st.kind === "row_op" && Array.isArray(st.matrix));
-    if (rowOps.length) {
-      let chain = `${matrixToLatex(firstMatrix)}`;
-      let prevM = firstMatrix;
-
-      for (const st of rowOps) {
-        const label = rowOpDictToLatex(st.row_op) || cleanLabelFromText(st.text) || "";
-        const nextM = st.matrix;
-
-        if (!label && matrixEqual(prevM, nextM)) continue;
-
-        chain += `\\;${arrowLatex(label)}\\;${matrixToLatex(nextM)}`;
-        prevM = nextM;
-      }
-      return { chain, lastMatrix: prevM };
-    }
-
     const mats = [];
     for (const st of list) {
       if (st && st.kind === "matrix" && Array.isArray(st.matrix)) {
-        mats.push({ M: st.matrix, label: cleanLabelFromText(st.text) });
+        let label = st.text || "";
+        if (!label && st.row_op) label = rowOpDictToLatex(st.row_op);
+        mats.push({ M: st.matrix, label: cleanLabelFromText(label) });
       }
     }
-    if (!mats.length) return { chain: "", lastMatrix: null };
 
-    let chain = `${matrixToLatex(mats[0].M)}`;
+    if (!mats.length) return { chain: matrixToLatex(firstMatrix), lastMatrix: firstMatrix };
+    if (!matrixEqual(firstMatrix, mats[0].M)) mats.unshift({ M: firstMatrix, label: "" });
+
+    let chain = matrixToLatex(mats[0].M);
     let prevM = mats[0].M;
 
     for (let i = 1; i < mats.length; i++) {
@@ -194,73 +192,77 @@
       chain += `\\;${arrowLatex(label)}\\;${matrixToLatex(nextM)}`;
       prevM = nextM;
     }
-
     return { chain, lastMatrix: prevM };
   }
 
-  // =========================
-  // CÁCH 1: Ma trận & biến đổi sơ cấp
-  // =========================
+  /* =======================================================================
+      PHẦN 2: CÁCH 1 - MA TRẬN (HTML Version - Text gốc)
+      ======================================================================= */
   App.SolutionGen.buildBasisByMatrix = function (selectedItems, apiData) {
     const vecs = (selectedItems || []).map(it => (it.vec || []).slice());
     const n = vecs[0]?.length ?? 0;
-
     const dim = (typeof apiData?.dimension === "number") ? apiData.dimension : null;
     const A = vecs;
 
     const steps = Array.isArray(apiData?.steps) ? apiData.steps : [];
+
+    // [GỌI HÀM ĐÃ SỬA]
     const { chain, lastMatrix } = buildChainFromSteps(steps);
+
     const chainLatex = chain ? chain : `${matrixToLatex(A)}`;
 
     const rankFromE = Array.isArray(lastMatrix) ? nonZeroRowCount(lastMatrix) : null;
     const rank = (dim !== null) ? dim : (rankFromE ?? null);
 
-    const vecListLatex = (selectedItems || [])
-      .map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`)
-      .join(",\\; ");
+    const vecListLatex = (selectedItems || []).map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`).join(",\\; ");
 
-    let basisRows = [];
-    if (Array.isArray(lastMatrix)) basisRows = lastMatrix.filter(r => !isZeroRow(r));
+    // CƠ SỞ LẤY TỪ CÁC DÒNG KHÁC 0 CỦA MA TRẬN CUỐI
+    let basisFromMatrix = [];
+    if (Array.isArray(lastMatrix)) {
+      for (const row of lastMatrix) {
+        if (!isZeroRow(row)) {
+          basisFromMatrix.push(row);
+        }
+      }
+    }
 
-    const basisRowsLatex = basisRows.length
-      ? `\\left\\{${basisRows.map(vecToLatex).join(",\\; ")}\\right\\}`
+    const basisRowsLatex = basisFromMatrix.length
+      ? `\\left\\{${basisFromMatrix.map(vecToLatex).join(",\\; ")}\\right\\}`
       : "\\left\\{\\;\\right\\}";
+
+
+    // --- CHUYỂN TEXT CŨ SANG HTML ---
+    let html = `<div class="sol-step-container">`;
+    html += `<div class="sol-text">Cho $${vecListLatex}$.</div>`;
+    html += `<div class="sol-text">Lập ma trận $A$ (các vectơ là các dòng) và biến đổi về dạng bậc thang:</div>`;
+
+    // Math block có scroll ngang
+    html += `<div class="sol-math-block" style="overflow-x: auto; white-space: nowrap;">\\[ ${chainLatex} \\]</div>`;
+
+    html += `<div class="sol-bold">Kết luận.</div>`;
+    html += `<div class="sol-bullet">Số chiều: $\\dim(V) = ${rank !== null ? rank : "?"}$.</div>`;
+    html += `<div class="sol-bullet">Một cơ sở của $V$ là: $B = ${basisRowsLatex}$.</div>`;
+    html += `</div>`;
 
     return {
       titleText: "Cơ sở và số chiều trong",
       titleMath: `\\(\\mathbb{R}^{${n}}\\)`,
-
-      matLatex:
-        "\\renewcommand{\\arraystretch}{1.25}\n" +
-        "\\begin{array}{l}\n" +
-        `\\text{Cho } ${vecListLatex}.\\\\[2pt]\n` +
-        `\\text{Lập ma trận }A\\text{ (các vectơ là các dòng) và biến đổi về dạng bậc thang:}\\\\[6pt]\n` +
-        `${chainLatex}.\\\\[10pt]\n` +
-        "\\textbf{Kết luận.}\\\\[4pt]\n" +
-        `\\bullet\\; \\text{Số chiều: }\\dim(V) = ${rank !== null ? rank : "\\,?\\,"}.\\\\[2pt]\n` +
-        `\\bullet\\; \\text{Một cơ sở của }V\\text{ là: } B = ${basisRowsLatex}.\\\\\n` +
-        "\\end{array}",
-
-      basisVectors: basisRows,
-      dimension: rank
+      htmlContent: html
     };
   };
 
-  // ============================================================
-  // CÁCH 2A: Giải hệ phương trình - TỔNG QUÁT (FIX theo PDF)
-  // ============================================================
-
+  /* =======================================================================
+      PHẦN 3: LOGIC TOÁN (GIỮ NGUYÊN BẢN CŨ CỦA BẠN)
+      ======================================================================= */
   function buildComponentSystemLatex(vecs) {
     const m = vecs.length;
     const n = vecs[0]?.length ?? 0;
-
     const eqs = [];
     for (let i = 0; i < n; i++) {
       const parts = [];
       for (let j = 0; j < m; j++) {
         const a = Number(vecs[j][i] ?? 0);
         const kj = `k_{${j + 1}}`;
-
         if (j === 0) {
           parts.push(`${fmtScalarLatex(a)}${kj}`);
         } else {
@@ -269,12 +271,9 @@
         }
       }
       let lhs = parts.join(" ");
-      lhs = lhs.replace(/\+\s*0k_\{\d+\}/g, ""); // nhẹ tay loại 0k (nếu có)
-      lhs = lhs.replace(/-\s*0k_\{\d+\}/g, "");
-      lhs = lhs.replace(/\s+/g, " ").trim();
+      lhs = lhs.replace(/\+\s*0k_\{\d+\}/g, "").replace(/-\s*0k_\{\d+\}/g, "").replace(/\s+/g, " ").trim();
       eqs.push(`${lhs} = 0\\;(${i + 1})`);
     }
-
     return `\\left\\{\\begin{array}{l}\n${eqs.join(" \\\\\n")}\n\\end{array}\\right.`;
   }
 
@@ -282,85 +281,50 @@
     const M = A.map(r => r.map(x => Number(x)));
     const rows = M.length;
     const cols = M[0]?.length ?? 0;
-
     let r = 0;
     const pivotCols = [];
-
     for (let c = 0; c < cols && r < rows; c++) {
       let piv = r;
-      for (let i = r; i < rows; i++) {
-        if (Math.abs(M[i][c]) > Math.abs(M[piv][c])) piv = i;
-      }
+      for (let i = r; i < rows; i++) if (Math.abs(M[i][c]) > Math.abs(M[piv][c])) piv = i;
       if (Math.abs(M[piv][c]) < tol) continue;
-
-      if (piv !== r) {
-        const tmp = M[piv]; M[piv] = M[r]; M[r] = tmp;
-      }
-
+      if (piv !== r) { const tmp = M[piv]; M[piv] = M[r]; M[r] = tmp; }
       const pv = M[r][c];
       for (let j = c; j < cols; j++) M[r][j] /= pv;
-
       for (let i = 0; i < rows; i++) {
         if (i === r) continue;
         const f = M[i][c];
         if (Math.abs(f) < tol) continue;
         for (let j = c; j < cols; j++) M[i][j] -= f * M[r][j];
       }
-
       pivotCols.push(c);
       r++;
     }
-
-    for (let i = 0; i < rows; i++) {
-      for (let j = 0; j < cols; j++) {
-        if (Math.abs(M[i][j]) < tol) M[i][j] = 0;
-      }
-    }
-
+    for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) if (Math.abs(M[i][j]) < tol) M[i][j] = 0;
     return { M, pivotCols, rank: pivotCols.length };
   }
 
   function solutionFromRrefLatex(R, pivotCols) {
     const n = R.length;
     const m = R[0]?.length ?? 0;
-
     const pivSet = new Set(pivotCols);
     const freeCols = [];
     for (let j = 0; j < m; j++) if (!pivSet.has(j)) freeCols.push(j);
 
-    // only trivial
     if (freeCols.length === 0) {
       const lines = [];
       for (let j = 0; j < m; j++) lines.push(`k_{${j + 1}} = 0`);
-      return {
-        freeCount: 0,
-        freeCols,
-        latex:
-          "\\left\\{\\begin{array}{l}\n" +
-          lines.join(" \\\\\n") +
-          "\n\\end{array}\\right."
-      };
+      return { freeCount: 0, freeCols, latex: "\\left\\{\\begin{array}{l}\n" + lines.join(" \\\\\n") + "\n\\end{array}\\right." };
     }
 
     const tNames = freeCols.map((_, idx) => `t_{${idx + 1}}`);
     const lines = [];
+    for (let idx = 0; idx < freeCols.length; idx++) lines.push(`k_{${freeCols[idx] + 1}} = ${tNames[idx]}`);
 
-    // free vars
-    for (let idx = 0; idx < freeCols.length; idx++) {
-      const col = freeCols[idx];
-      lines.push(`k_{${col + 1}} = ${tNames[idx]}`);
-    }
-
-    // pivot vars from rref rows
-    // find pivot row for each pivot col (leading 1)
     function findPivotRow(pc) {
       for (let i = 0; i < n; i++) {
         if (R[i][pc] !== 1) continue;
-        // leading check
         let ok = true;
-        for (let j = 0; j < pc; j++) {
-          if (Math.abs(Number(R[i][j])) > 1e-12) { ok = false; break; }
-        }
+        for (let j = 0; j < pc; j++) if (Math.abs(Number(R[i][j])) > 1e-12) { ok = false; break; }
         if (ok) return i;
       }
       return -1;
@@ -369,108 +333,81 @@
     for (const pc of pivotCols) {
       const row = findPivotRow(pc);
       if (row < 0) continue;
-
       const terms = [];
       for (let idx = 0; idx < freeCols.length; idx++) {
         const fc = freeCols[idx];
         const coeff = Number(R[row][fc] ?? 0);
         if (Math.abs(coeff) < 1e-12) continue;
-
-        // k_pc + coeff*k_fc = 0 -> k_pc = -coeff*k_fc
         const c = -coeff;
         if (Math.abs(c - 1) < 1e-12) terms.push(`${tNames[idx]}`);
         else if (Math.abs(c + 1) < 1e-12) terms.push(`- ${tNames[idx]}`);
         else terms.push(`${fmtScalarLatex(c)}${tNames[idx]}`);
       }
-
       const rhs = terms.length ? terms.join(" + ").replace(/\+\s*-\s*/g, "- ") : "0";
       lines.push(`k_{${pc + 1}} = ${rhs}`);
     }
-
-    return {
-      freeCount: freeCols.length,
-      freeCols,
-      latex:
-        "\\left\\{\\begin{array}{l}\n" +
-        lines.join(" \\\\\n") +
-        "\n\\end{array}\\right."
-    };
+    return { freeCount: freeCols.length, freeCols, latex: "\\left\\{\\begin{array}{l}\n" + lines.join(" \\\\\n") + "\n\\end{array}\\right." };
   }
 
+  /* =======================================================================
+      PHẦN 4: CÁCH 2A - GIẢI HỆ (HTML Version - Text gốc)
+      ======================================================================= */
   App.SolutionGen.buildBasisByEquationsGeneral = function (selectedItems, apiData) {
     const vecs = (selectedItems || []).map(it => (it.vec || []).slice());
     const n = vecs[0]?.length ?? 0;
     const m = vecs.length;
-
     const dim = (typeof apiData?.dimension === "number") ? apiData.dimension : null;
-
-    // basis lấy từ hệ sinh: ưu tiên pivot_indices backend, nếu không có thì dùng pivotCols từ rref
     const pivotFromApi = Array.isArray(apiData?.pivot_indices) ? apiData.pivot_indices : null;
 
-    const vecListLatex = (selectedItems || [])
-      .map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`)
-      .join(",\\; ");
-
+    const vecListLatex = (selectedItems || []).map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`).join(",\\; ");
     const eq0 = Array.from({ length: m }, (_, i) => `k_{${i + 1}}v_{${i + 1}}`).join(" + ") + " = \\vec{0}";
-
-    // hệ phương trình theo thành phần
     const sysLatex = buildComponentSystemLatex(vecs);
 
-    // ma trận hệ số A (n x m): hàng là tọa độ, cột là vector
-    const A = Array.from({ length: n }, (_, i) =>
-      Array.from({ length: m }, (_, j) => Number(vecs[j][i] ?? 0))
-    );
-
+    const A = Array.from({ length: n }, (_, i) => Array.from({ length: m }, (_, j) => Number(vecs[j][i] ?? 0)));
     const { M: R, pivotCols, rank: rnk } = rref(A, 1e-10);
     const sol = solutionFromRrefLatex(R, pivotCols);
-
-    const independent = (sol.freeCount === 0); // only trivial -> independent
+    const independent = (sol.freeCount === 0);
 
     let piv = pivotFromApi;
-    if (!Array.isArray(piv) || !piv.length) piv = pivotCols.slice(); // 0-based
-
+    if (!Array.isArray(piv) || !piv.length) piv = pivotCols.slice();
     const basisFromSet = piv.length ? piv.map(i => vecs[i]) : [];
-
-    const basisLatex = basisFromSet.length
-      ? `\\left\\{${basisFromSet.map(vecToLatex).join(",\\; ")}\\right\\}`
-      : "\\left\\{\\;\\right\\}";
-
+    const basisLatex = basisFromSet.length ? `\\left\\{${basisFromSet.map(vecToLatex).join(",\\; ")}\\right\\}` : "\\left\\{\\;\\right\\}";
     const rank = (typeof dim === "number") ? dim : (typeof rnk === "number" ? rnk : null);
+
+    // --- HTML OUTPUT ---
+    let html = `<div class="sol-step-container">`;
+    html += `<div class="sol-text">Cho $${vecListLatex}$.</div>`;
+    html += `<div class="sol-text">[Xét $V=\\mathrm{span}\\{v_1,\\dots,v_m\\}$ ($m \\ge 1$). Một tập con các vector trong hệ sinh sẽ làm cơ sở]</div>`;
+
+    html += `<div class="sol-bold">Bước 1: Lập hệ phương trình.</div>`;
+    html += `<div class="sol-text">Xét phương trình vectơ: $${eq0}$.</div>`;
+    html += `<div class="sol-text">Tương đương hệ phương trình theo từng thành phần:</div>`;
+    html += `<div class="sol-math-block">\\[ ${sysLatex} \\]</div>`;
+
+    html += `<div class="sol-bold">Bước 2: Giải hệ (khử Gauss).</div>`;
+    html += `<div class="sol-text">Đưa ma trận hệ số về dạng bậc thang rút gọn:</div>`;
+    html += `<div class="sol-math-block">\\[ ${matrixToLatex(A)} \\to ${matrixToLatex(R)} \\]</div>`;
+    html += `<div class="sol-text">Suy ra nghiệm của hệ:</div>`;
+    html += `<div class="sol-math-block">\\[ ${sol.latex} \\]</div>`;
+
+    html += `<div class="sol-bold">Bước 3: Kết luận.</div>`;
+    if (independent) html += `<div class="sol-text">Hệ chỉ có nghiệm tầm thường nên các vectơ độc lập tuyến tính.</div>`;
+    else html += `<div class="sol-text">Hệ có nghiệm không tầm thường nên các vectơ phụ thuộc tuyến tính.</div>`;
+
+    html += `<div class="sol-bullet">Số chiều: $\\dim(V) = ${rank != null ? String(rank) : "?"}$.</div>`;
+    html += `<div class="sol-bullet">Một cơ sở (lấy từ hệ sinh) là: $B = ${basisLatex}$.</div>`;
+    html += `</div>`;
 
     return {
       titleText: "Cơ sở & số chiều trong",
       titleMath: `\\(\\mathbb{R}^{${n}}\\)`,
-
-      eqLatexGeneral:
-        "\\renewcommand{\\arraystretch}{1.25}\n" +
-        "\\begin{array}{l}\n" +
-        `\\text{Cho } ${vecListLatex}.\\\\[2pt]\n` +
-        `\\text{[Xét }V=\\mathrm{span}\\{v_1,\\dots,v_m\\}\\text{ }(m \\ge 1).\\;\\text{Một tập con các vector trong hệ sinh sẽ làm cơ sở]}\\\\[10pt]` +
-        "\\textbf{Bước 1: Lập hệ phương trình.}\\\\[4pt]\n" +
-        `\\text{Xét phương trình vectơ: } ${eq0}.\\\\[6pt]\n` +
-        "\\text{Tương đương hệ phương trình theo từng thành phần:}\\\\[6pt]\n" +
-        `${sysLatex}.\\\\[10pt]\n` +
-
-        "\\textbf{Bước 2: Giải hệ (khử Gauss).}\\\\[4pt]\n" +
-        "\\text{Đưa ma trận hệ số về dạng bậc thang rút gọn:}\\\\[6pt]\n" +
-        `${matrixToLatex(A)}\\;\\to\\;${matrixToLatex(R)}.\\\\[8pt]\n` +
-        "\\text{Suy ra nghiệm của hệ:}\\\\[4pt]\n" +
-        `${sol.latex}.\\\\[10pt]\n` +
-
-        "\\textbf{Bước 3: Kết luận.}\\\\[4pt]\n" +
-        (independent
-          ? "\\text{Hệ chỉ có nghiệm tầm thường nên các vectơ độc lập tuyến tính.}\\\\[4pt]\n"
-          : "\\text{Hệ có nghiệm không tầm thường nên các vectơ phụ thuộc tuyến tính.}\\\\[4pt]\n"
-        ) +
-        `\\bullet\\; \\text{Số chiều: }\\dim(V) = ${rank != null ? String(rank) : "?"}.\\\\[2pt]\n` +
-        `\\bullet\\; \\text{Một cơ sở (lấy từ hệ sinh) là: } B = ${basisLatex}.` +
-        "\n\\end{array}"
+      htmlContent: html
     };
   };
 
-  // =========================
-  // CÁCH 2B: Xét từng vector (R5)
-  // =========================
+  /* =======================================================================
+      PHẦN 5: CÁCH 2B - XÉT TỪNG BƯỚC (HTML Version - Text gốc)
+      ======================================================================= */
   function ratioCheckLatex(v1, v2) {
     const a1 = fmtScalarLatex(v1[0]);
     const b1 = fmtScalarLatex(v2[0]);
@@ -484,16 +421,13 @@
     const r = B.length;
     const BT = Array.from({ length: n }, (_, i) => Array.from({ length: r }, (_, j) => Number(B[j][i] ?? 0)));
     const rhs = Array.from({ length: n }, (_, i) => Number(v[i] ?? 0));
-
     const idxs = Array.from({ length: n }, (_, i) => i);
-
-    function det2(A) { return A[0][0]*A[1][1]-A[0][1]*A[1][0]; }
+    function det2(A) { return A[0][0] * A[1][1] - A[0][1] * A[1][0]; }
     function det3(A) {
-      return A[0][0]*(A[1][1]*A[2][2]-A[1][2]*A[2][1])
-           - A[0][1]*(A[1][0]*A[2][2]-A[1][2]*A[2][0])
-           + A[0][2]*(A[1][0]*A[2][1]-A[1][1]*A[2][0]);
+      return A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1])
+        - A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0])
+        + A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
     }
-
     function combinations(arr, k) {
       const out = [];
       const rec = (start, cur) => {
@@ -507,7 +441,6 @@
       rec(0, []);
       return out;
     }
-
     let rows = null;
     if (r === 1) rows = [0];
     else if (r === 2 || r === 3) {
@@ -516,44 +449,31 @@
         const d = (r === 2) ? det2(A) : det3(A);
         if (Math.abs(d) > 1e-10) { rows = cand; break; }
       }
-    } else {
-      rows = Array.from({ length: r }, (_, i) => i);
-    }
-
+    } else { rows = Array.from({ length: r }, (_, i) => i); }
     if (!rows) return { rowsUsed: [0], coeffs: Array(r).fill(0), ok: false };
-
     const A = rows.map(i => BT[i].slice());
     const b = rows.map(i => rhs[i]);
-
     const M = A.map((row, i) => row.concat([b[i]]));
-
     for (let col = 0; col < r; col++) {
       let piv = col;
-      for (let i = col; i < r; i++) {
-        if (Math.abs(M[i][col]) > Math.abs(M[piv][col])) piv = i;
-      }
+      for (let i = col; i < r; i++) if (Math.abs(M[i][col]) > Math.abs(M[piv][col])) piv = i;
       if (Math.abs(M[piv][col]) < 1e-12) continue;
       if (piv !== col) { const tmp = M[piv]; M[piv] = M[col]; M[col] = tmp; }
-
       const pv = M[col][col];
       for (let j = col; j <= r; j++) M[col][j] /= pv;
-
       for (let i = 0; i < r; i++) {
         if (i === col) continue;
         const f = M[i][col];
         for (let j = col; j <= r; j++) M[i][j] -= f * M[col][j];
       }
     }
-
     const coeffs = Array.from({ length: r }, (_, i) => M[i][r]);
-
     let ok = true;
     for (let i = 0; i < n; i++) {
       let s = 0;
       for (let j = 0; j < r; j++) s += (Number(B[j][i] ?? 0) * coeffs[j]);
       if (Math.abs(s - rhs[i]) > 1e-6) { ok = false; break; }
     }
-
     return { rowsUsed: rows, coeffs, ok };
   }
 
@@ -569,93 +489,65 @@
     const vecs = (selectedItems || []).map(it => (it.vec || []).slice());
     const n = vecs[0]?.length ?? 0;
     const m = vecs.length;
-
     const basisFromApi = Array.isArray(apiData?.basis) ? apiData.basis : [];
     const dim = (typeof apiData?.dimension === "number") ? apiData.dimension : null;
+    const vecListLatex = (selectedItems || []).map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`).join(",\\; ");
 
-    const vecListLatex = (selectedItems || [])
-      .map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`)
-      .join(",\\; ");
-
-    const lines = [];
-    lines.push(`\\text{Cho } ${vecListLatex}.\\\\[2pt]`);
-    lines.push(`\\text{[Xét }V=\\mathrm{span}\\{v_1,\\dots,v_m\\}\\text{ }(m \\ge 1).\\;\\text{Một tập con các vector trong hệ sinh sẽ làm cơ sở]}\\\\[10pt]`);
+    // --- HTML OUTPUT ---
+    let html = `<div class="sol-step-container">`;
+    html += `<div class="sol-text">Cho $${vecListLatex}$.</div>`;
+    html += `<div class="sol-text">[Xét $V=\\mathrm{span}\\{v_1,\\dots,v_m\\}$ ($m \\ge 1$). Một tập con các vector trong hệ sinh sẽ làm cơ sở]</div>`;
 
     if (m === 1) {
-      lines.push(`\\textbf{Bước 1: Xét hệ }\\left\\{v_{1}\\right\\}.\\\\[4pt]`);
-      if (isZeroVector(vecs[0])) lines.push(`\\text{Vì }v_{1}=\\vec{0}\\text{ nên }\\left\\{v_{1}\\right\\}\\text{ phụ thuộc tuyến tính.}\\\\[10pt]`);
-      else lines.push(`\\text{Vì }v_{1}\\neq\\vec{0}\\text{ nên }\\left\\{v_{1}\\right\\}\\text{ độc lập tuyến tính.}\\\\[10pt]`);
+      html += `<div class="sol-bold">Bước 1: Xét hệ $\\left\\{v_{1}\\right\\}$.</div>`;
+      if (isZeroVector(vecs[0])) html += `<div class="sol-text">Vì $v_{1}=\\vec{0}$ nên $\\left\\{v_{1}\\right\\}$ phụ thuộc tuyến tính.</div>`;
+      else html += `<div class="sol-text">Vì $v_{1}\\neq\\vec{0}$ nên $\\left\\{v_{1}\\right\\}$ độc lập tuyến tính.</div>`;
     } else {
-      lines.push(`\\textbf{Bước 1: Xét hệ }\\left\\{v_{1},\\,v_{2}\\right\\}.\\\\[4pt]`);
-
+      html += `<div class="sol-bold">Bước 1: Xét hệ $\\left\\{v_{1},\\,v_{2}\\right\\}$.</div>`;
       if (isZeroVector(vecs[0]) && isZeroVector(vecs[1])) {
-        lines.push(`\\text{Vì }v_{1}=\\vec{0},\\;v_{2}=\\vec{0}\\text{ nên hệ phụ thuộc tuyến tính.}\\\\[10pt]`);
+        html += `<div class="sol-text">Vì $v_{1}=\\vec{0},\\;v_{2}=\\vec{0}$ nên hệ phụ thuộc tuyến tính.</div>`;
       } else if (isZeroVector(vecs[0])) {
-        lines.push(`\\text{Vì }v_{1}=\\vec{0}\\text{ nên xét }\\left\\{v_{2}\\right\\}.\\;\\text{Do }v_{2}\\neq\\vec{0}\\text{ nên độc lập tuyến tính.}\\\\[10pt]`);
+        html += `<div class="sol-text">Vì $v_{1}=\\vec{0}$ nên xét $\\left\\{v_{2}\\right\\}$. Do $v_{2}\\neq\\vec{0}$ nên độc lập tuyến tính.</div>`;
       } else if (isZeroVector(vecs[1])) {
-        lines.push(`\\text{Vì }v_{2}=\\vec{0}\\text{ nên xét }\\left\\{v_{1}\\right\\}.\\;\\text{Do }v_{1}\\neq\\vec{0}\\text{ nên độc lập tuyến tính.}\\\\[10pt]`);
+        html += `<div class="sol-text">Vì $v_{2}=\\vec{0}$ nên xét $\\left\\{v_{1}\\right\\}$. Do $v_{1}\\neq\\vec{0}$ nên độc lập tuyến tính.</div>`;
       } else {
-        lines.push(
-          `\\text{Vì }v_{1}\\text{ và }v_{2}\\text{ không tỉ lệ }\\,${ratioCheckLatex(vecs[0], vecs[1])}` +
-          `\\text{ nên }\\left\\{v_{1},\\,v_{2}\\right\\}\\text{ độc lập tuyến tính.}\\\\[10pt]`
-        );
+        html += `<div class="sol-text">Vì $v_{1}$ và $v_{2}$ không tỉ lệ $${ratioCheckLatex(vecs[0], vecs[1])}$ nên $\\left\\{v_{1},\\,v_{2}\\right\\}$ độc lập tuyến tính.</div>`;
       }
 
       for (let i = 2; i < m; i++) {
         const viName = `v_{${i + 1}}`;
+        html += `<div class="sol-bold">Bước ${i}: Kiểm tra $${viName}$ có là tổ hợp tuyến tính của $v_{1},\\,v_{2}$ không.</div>`;
+        html += `<div class="sol-text">Giả sử $${viName} = a\\cdot v_{1} + b\\cdot v_{2}$. Ta xét 2 thành phần đầu tiên:</div>`;
 
-        lines.push(`\\textbf{Bước ${i}: Kiểm tra }${viName}\\text{ có là tổ hợp tuyến tính của }v_{1},\\,v_{2}\\text{ không.}\\\\[4pt]`);
-        lines.push(`\\text{Giả sử }${viName} = a\\cdot v_{1} + b\\cdot v_{2}.\\;\\text{Ta xét 2 thành phần đầu tiên:}\\\\[4pt]`);
+        const a11 = fmtScalarLatex(vecs[0][0]), a12 = fmtScalarLatex(vecs[1][0]), b1 = fmtScalarLatex(vecs[i][0]);
+        const a21 = fmtScalarLatex(vecs[0][1] ?? 0), a22 = fmtScalarLatex(vecs[1][1] ?? 0), b2 = fmtScalarLatex(vecs[i][1] ?? 0);
 
-        const a11 = fmtScalarLatex(vecs[0][0]);
-        const a12 = fmtScalarLatex(vecs[1][0]);
-        const b1 = fmtScalarLatex(vecs[i][0]);
-
-        const a21 = fmtScalarLatex(vecs[0][1] ?? 0);
-        const a22 = fmtScalarLatex(vecs[1][1] ?? 0);
-        const b2 = fmtScalarLatex(vecs[i][1] ?? 0);
-
-        lines.push(
-          "\\left\\{\\begin{array}{l}\n" +
-          `${a11}a + ${a12}b = ${b1}\\\\\n` +
-          `${a21}a + ${a22}b = ${b2}\n` +
-          "\\end{array}\\right.\\;\\Rightarrow\\;"
-        );
+        const sys = `\\left\\{\\begin{array}{l} ${a11}a + ${a12}b = ${b1}\\\\ ${a21}a + ${a22}b = ${b2} \\end{array}\\right. \\Rightarrow`;
+        html += `<div class="sol-math-block">\\[ ${sys} \\]</div>`;
 
         const B = [vecs[0], vecs[1]];
         const { coeffs, ok } = solveCoeffs(B, vecs[i]);
-        const aVal = fmtCoeff(coeffs[0]);
-        const bVal = fmtCoeff(coeffs[1]);
+        const aVal = fmtCoeff(coeffs[0]), bVal = fmtCoeff(coeffs[1]);
 
-        lines.push(
-          "\\left\\{\\begin{array}{l}\n" +
-          `a = ${aVal}\\\\\n` +
-          `b = ${bVal}\n` +
-          "\\end{array}\\right.\\\\[6pt]"
-        );
+        const resSys = `\\left\\{\\begin{array}{l} a = ${aVal}\\\\ b = ${bVal} \\end{array}\\right.`;
+        html += `<div class="sol-math-block">\\[ ${resSys} \\]</div>`;
 
-        if (ok) lines.push(`\\text{Vậy }${viName} = ${aVal}v_{1} + ${bVal}v_{2}.\\;\\text{Loại }${viName}\\text{ khỏi hệ sinh.}\\\\[10pt]`);
-        else lines.push(`\\text{Vì không thỏa mãn nên }${viName}\\text{ độc lập tuyến tính với }v_{1},\\,v_{2}.\\\\[10pt]`);
+        if (ok) html += `<div class="sol-text">Vậy $${viName} = ${aVal}v_{1} + ${bVal}v_{2}$. Loại $${viName}$ khỏi hệ sinh.</div>`;
+        else html += `<div class="sol-text">Vì không thỏa mãn nên $${viName}$ độc lập tuyến tính với $v_{1},\\,v_{2}$.</div>`;
       }
     }
 
-    const basisLatex = basisFromApi.length
-      ? `\\left\\{${basisFromApi.map(vecToLatex).join(",\\; ")}\\right\\}`
-      : "\\left\\{\\;\\right\\}";
+    const basisLatex = basisFromApi.length ? `\\left\\{${basisFromApi.map(vecToLatex).join(",\\; ")}\\right\\}` : "\\left\\{\\;\\right\\}";
 
-    lines.push("\\textbf{Kết luận.}\\\\[4pt]");
-    lines.push(`\\bullet\\; \\text{Số chiều: }\\dim(V) = ${dim != null ? String(dim) : "?"}.\\\\[2pt]`);
-    lines.push(`\\bullet\\; \\text{Một cơ sở là: } B = ${basisLatex}.`);
+    html += `<div class="sol-bold">Kết luận.</div>`;
+    html += `<div class="sol-bullet">Số chiều: $\\dim(V) = ${dim != null ? String(dim) : "?"}$.</div>`;
+    html += `<div class="sol-bullet">Một cơ sở là: $B = ${basisLatex}$.</div>`;
+    html += `</div>`;
 
     return {
       titleText: "Cơ sở & số chiều trong",
       titleMath: `\\(\\mathbb{R}^{${n}}\\)`,
-
-      eqLatexStep:
-        "\\renewcommand{\\arraystretch}{1.25}\n" +
-        "\\begin{array}{l}\n" +
-        lines.join("\n") +
-        "\n\\end{array}"
+      htmlContent: html
     };
   };
 

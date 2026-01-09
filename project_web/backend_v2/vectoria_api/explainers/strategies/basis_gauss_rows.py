@@ -1,4 +1,3 @@
-# backend_v2/vectoria_api/explainers/strategies/basis_gauss_rows.py
 from __future__ import annotations
 from typing import Dict, List, Tuple
 import numpy as np
@@ -33,6 +32,7 @@ def _dependent_expressions_rows(A_rows: List[List[float]], pivot_indices: List[i
     coeff_map: Dict[int, List[float]] = {}
     for i in dep:
         v = A[i, :]
+        # Giải hệ B^T * c = v^T (tìm tọa độ c) để biểu diễn v theo basis B
         c, _, _, _ = np.linalg.lstsq(BT, v, rcond=None)
         coeff_map[i] = c.tolist()
 
@@ -52,9 +52,9 @@ def _fmt_k(k: float, tol: float = 1e-10) -> str:
 def _fmt_row_op_latex(op: dict, tol: float = 1e-10) -> str:
     """
     Trả về CHUỖI LaTeX ĐÚNG ĐỂ ĐẶT LÊN MŨI TÊN:
-      - swap: d_1 \\leftrightarrow d_2
-      - elim: d_3 \\to d_3 - 2d_1  (hoặc + nếu factor âm)
-      - scale (nếu có): d_2 \\to (1/3) d_2
+      - swap: d_1 <-> d_2
+      - elim: d_3 -> d_3 - 2d_1
+      - scale: d_2 -> (1/3) d_2
     """
     kind = op.get("op")
 
@@ -91,75 +91,29 @@ def _fmt_row_op_latex(op: dict, tol: float = 1e-10) -> str:
     return ""
 
 
-def _is_independent_rows(rows: np.ndarray, tol: float = 1e-10) -> bool:
-    """Kiểm tra độc lập tuyến tính khi mỗi hàng là 1 vector."""
-    if rows.ndim != 2 or rows.shape[0] == 0:
-        return False
-    r = int(np.linalg.matrix_rank(rows, tol=tol))
-    return r == rows.shape[0]
-
-
-def _improve_basis_by_exchange(A_rows: List[List[float]], pivot_indices: List[int], tol: float = 1e-10) -> List[int]:
+def _solve_homogeneous_rank(vectors: List[List[float]], tol: float = 1e-10) -> Tuple[int, int]:
     """
-    Tối ưu cơ sở theo kiểu "basis exchange":
-    - Đang có basis = pivot_indices (rank = r)
-    - Thử thay từng vector cơ sở bằng vector ngoài cơ sở
-      nếu vẫn độc lập và vector mới "đẹp" hơn (score nhỏ hơn).
+    Rank theo kiểu 'hệ phương trình' k1..km (m ẩn).
+    Ma trận hệ: n x m (cột là vector).
     """
-    A = np.array(A_rows, dtype=float)
-    n = A.shape[0]
-    basis = pivot_indices[:]
-    if not basis:
-        return basis
-
-    scores = [vector_pretty_score(A[i, :]) for i in range(n)]
-
-    improved = True
-    while improved:
-        improved = False
-
-        for bi in range(len(basis)):
-            cur_idx = basis[bi]
-            cur_score = scores[cur_idx]
-
-            outsiders = [j for j in range(n) if j not in basis]
-            best_j = None
-            best_score = cur_score
-
-            for j in outsiders:
-                if scores[j] >= best_score - 1e-12:
-                    continue
-
-                trial = basis[:]
-                trial[bi] = j
-                trial_rows = A[trial, :]
-
-                if _is_independent_rows(trial_rows, tol=tol):
-                    best_j = j
-                    best_score = scores[j]
-
-            if best_j is not None:
-                basis[bi] = best_j
-                improved = True
-
-    basis.sort(key=lambda idx: scores[idx])
-    return basis
+    if not vectors:
+        return 0, 0
+    A = np.array(vectors, dtype=float)  # m x n (rows)
+    M = A.T  # n x m (cols)
+    r = int(np.linalg.matrix_rank(M, tol=tol))
+    m = M.shape[1]
+    return r, m
 
 
 # =========================
-# PDF-style LaTeX helpers (CÁCH 2)
+# PDF-style LaTeX helpers
 # =========================
 def _latex_vec(v: List[float], tol: float = 1e-10) -> str:
     items = [_fmt_k(float(x), tol=tol) for x in v]
     return "\\left(" + ",\\;".join(items) + "\\right)"
 
 
-def _latex_zero_vec(dim: int) -> str:
-    return "\\left(" + ",\\;".join(["0"] * dim) + "\\right)"
-
-
 def _latex_vec_list(vectors: List[List[float]], tol: float = 1e-10) -> str:
-    # v_1=(...), v_2=(...), ...
     parts = []
     for i, v in enumerate(vectors):
         parts.append(f"v_{{{i+1}}} = {_latex_vec(v, tol=tol)}")
@@ -167,32 +121,21 @@ def _latex_vec_list(vectors: List[List[float]], tol: float = 1e-10) -> str:
 
 
 def _build_homogeneous_system_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tuple[str, str]:
-    """
-    Xét k1 v1 + ... + km vm = 0 trong R^n
-    -> hệ n phương trình theo m ẩn k1..km.
-    Trả về:
-      (latex_equation_line, latex_system_brace)
-    """
     if not vectors:
         return "", ""
 
     m = len(vectors)
     n = len(vectors[0])
 
-    # k1 v1 + ... + km vm = 0
     combo = " + ".join([f"k_{{{i+1}}}v_{{{i+1}}}" for i in range(m)])
     eq_line = f"{combo} = \\vec{{0}}"
 
-    # hệ theo từng tọa độ: sum_i k_i * v_i[j] = 0, j=1..n
-    # để giống PDF: viết dạng { ... } (n dòng)
     lines = []
     for j in range(n):
-        # sum over i
         terms = []
         for i in range(m):
             a = float(vectors[i][j])
             ak = _fmt_k(a, tol=tol)
-            # bỏ hệ số 1 cho gọn
             if ak == "0":
                 continue
             if ak == "1":
@@ -211,40 +154,15 @@ def _build_homogeneous_system_latex(vectors: List[List[float]], tol: float = 1e-
     return eq_line, system
 
 
-def _solve_homogeneous_rank(vectors: List[List[float]], tol: float = 1e-10) -> Tuple[int, int]:
-    """
-    Rank theo kiểu 'hệ phương trình' k1..km (m ẩn).
-    Ma trận hệ: n x m (cột là vector).
-    """
-    if not vectors:
-        return 0, 0
-    A = np.array(vectors, dtype=float)  # m x n (rows)
-    M = A.T  # n x m (cols)
-    r = int(np.linalg.matrix_rank(M, tol=tol))
-    m = M.shape[1]
-    return r, m
-
-
 def _eq_general_pdf_latex(vectors: List[List[float]], basis_indices: List[int], rank: int, tol: float = 1e-10) -> str:
-    """
-    Cách 2 - Tổng quát (style R^4 trong PDF):
-      - Lập phương trình k1 v1 + ... + km vm = 0
-      - Viết hệ phương trình theo tọa độ
-      - Kết luận: độc lập/phụ thuộc -> dim & basis
-    (Không dùng bước 'xét tỉ lệ' ở Bước 1.)
-    """
     if not vectors:
         return ""
 
     m = len(vectors)
-    n = len(vectors[0])
-
     vec_list = _latex_vec_list(vectors, tol=tol)
     eq_line, system = _build_homogeneous_system_latex(vectors, tol=tol)
 
-    # kết luận theo rank
     if rank == m:
-        # độc lập -> basis là toàn bộ
         dim_line = f"\\bullet\\; \\text{{Số chiều: }}\\dim(V) = {rank}."
         basis_line = "\\bullet\\; \\text{Một cơ sở của }V\\text{ là: } B = \\left\\{ " + ",\\; ".join(
             [f"v_{{{i+1}}}" for i in range(m)]
@@ -256,8 +174,6 @@ def _eq_general_pdf_latex(vectors: List[List[float]], basis_indices: List[int], 
             f"{basis_line}"
         )
     else:
-        # phụ thuộc -> lấy basis theo pivot (backend đã chọn)
-        # PDF kiểu thường: kết luận dim = rank và ghi một cơ sở
         dim_line = f"\\bullet\\; \\text{{Số chiều: }}\\dim(V) = {rank}."
         if basis_indices:
             basis_line = (
@@ -292,13 +208,8 @@ def _eq_general_pdf_latex(vectors: List[List[float]], basis_indices: List[int], 
 
 
 def _is_multiple(v2: np.ndarray, v1: np.ndarray, tol: float = 1e-10) -> Tuple[bool, float]:
-    """
-    Check v2 = t v1? Return (is_multiple, t)
-    """
-    # handle zero
     if np.linalg.norm(v1) < tol:
         return False, 0.0
-    # find first non-zero in v1
     idx = None
     for i in range(v1.shape[0]):
         if abs(v1[i]) >= tol:
@@ -333,9 +244,14 @@ def _solve_in_span(B_rows: List[List[float]], v: List[float], tol: float = 1e-10
 def _eq_stepwise_pdf_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tuple[str, List[int], int]:
     """
     Cách 2 - Xét từng vector (style R^5 trong PDF):
-      - Bước 1: xét {v1}, thêm v2 nếu không tỉ lệ (kiểu "không tỉ lệ" như PDF)
-      - Các vector sau: giả sử vk = a v1 + b v2 (+...) rồi lập vài phương trình, thử lại, kết luận.
-    Trả về: (latex, chosen_basis_indices(0-based), dim)
+      - Bước 1: xét {v1}, thêm v2 nếu không tỉ lệ
+      - Các vector sau: thử biểu diễn tuyến tính qua các vector cơ sở hiện có.
+    
+    Hàm này quan trọng: Nó thực hiện đúng logic "Xét lần lượt từ trái sang phải".
+    Nó sẽ trả về:
+      - latex: Chuỗi lời giải
+      - basis_idx: Danh sách index cơ sở ĐÚNG THEO THỨ TỰ (VD: [0, 1])
+      - dim: Số chiều
     """
     if not vectors:
         return "", [], 0
@@ -343,7 +259,6 @@ def _eq_stepwise_pdf_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tu
     m = len(vectors)
     n = len(vectors[0])
 
-    # chọn basis theo thứ tự duyệt (giống PDF “xét từng”)
     basis_idx: List[int] = []
     basis_rows: List[List[float]] = []
 
@@ -354,10 +269,9 @@ def _eq_stepwise_pdf_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tu
     lines.append("\\begin{array}{l}")
     lines.append(f"\\text{{Cho }} {vec_list}.\\\\[6pt]")
 
-    # Step 1: start with v1 if not zero
+    # Step 1: Check v1
     v1 = np.array(vectors[0], dtype=float)
     if np.linalg.norm(v1) < tol:
-        # v1 is zero -> skip, but keep narrative
         lines.append("\\textbf{Bước 1: }\\text{Vì }v_1=\\vec{0}\\text{ nên bỏ }v_1\\text{ khỏi hệ.}\\\\[6pt]")
     else:
         basis_idx.append(0)
@@ -365,7 +279,7 @@ def _eq_stepwise_pdf_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tu
         lines.append("\\textbf{Bước 1: }\\text{Xét hệ }\\{v_1\\}.\\\\[2pt]")
         lines.append("\\text{Vì }v_1\\neq\\vec{0}\\text{ nên }\\{v_1\\}\\text{ độc lập tuyến tính.}\\\\[6pt]")
 
-    # Step 2: handle v2 with ratio-check (đúng style PDF R5)
+    # Step 2: Check v2
     if m >= 2:
         v2 = np.array(vectors[1], dtype=float)
         if basis_rows:
@@ -373,14 +287,10 @@ def _eq_stepwise_pdf_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tu
             if not mul:
                 basis_idx.append(1)
                 basis_rows.append(vectors[1])
-                # dùng “không tỉ lệ” y như PDF (nêu 2 tỉ số đầu tiên cho nhanh)
-                # chọn 2 tọa độ đầu tiên khác 0 nếu có
+                # Tìm tỉ lệ để hiển thị
                 a = v1
                 b = v2
-                i1 = 0
-                i2 = 1 if n > 1 else 0
-                # tránh chia 0 nếu có thể
-                # nếu a[i] =0 thì vẫn in như PDF kiểu "… ≠ …", nhưng cố gắng lấy chỗ không 0
+                # Tìm 2 vị trí khác 0 đầu tiên để so sánh tỉ lệ
                 def pick_nonzero_idx(arr):
                     for ii in range(arr.shape[0]):
                         if abs(arr[ii]) >= tol:
@@ -406,7 +316,6 @@ def _eq_stepwise_pdf_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tu
                     f"\\text{{Ta có }}v_2 = {_fmt_k(t, tol=tol)}\\,v_1\\text{{ nên }}\\{{v_1,v_2\\}}\\text{{ phụ thuộc tuyến tính. Bỏ }}v_2\\text{{ khỏi cơ sở.}}\\\\[6pt]"
                 )
         else:
-            # basis empty due to v1=0
             if np.linalg.norm(v2) >= tol:
                 basis_idx.append(1)
                 basis_rows.append(vectors[1])
@@ -414,12 +323,11 @@ def _eq_stepwise_pdf_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tu
             else:
                 lines.append("\\textbf{Bước 2: }\\text{Vì }v_2=\\vec{0}\\text{ nên bỏ }v_2.\\\\[6pt]")
 
-    # Next vectors: try represent in span(current basis)
+    # Step 3+: Check others
     step_no = 3
     for k in range(2, m):
         vk = vectors[k]
-        vk_np = np.array(vk, dtype=float)
-        if np.linalg.norm(vk_np) < tol:
+        if np.linalg.norm(np.array(vk, dtype=float)) < tol:
             lines.append(f"\\textbf{{Bước {step_no}: }}\\text{{Vì }}v_{{{k+1}}}=\\vec{{0}}\\text{{ nên bỏ }}v_{{{k+1}}}.\\\\[6pt]")
             step_no += 1
             continue
@@ -433,11 +341,9 @@ def _eq_stepwise_pdf_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tu
 
         in_span, coeffs = _solve_in_span(basis_rows, vk, tol=tol)
 
-        r = len(basis_rows)
-        # latex giả sử: v_k = c1 v_{b1} + ... + cr v_{br}
         lhs = f"v_{{{k+1}}}"
         rhs_terms = []
-        for t_i in range(r):
+        for t_i in range(len(basis_rows)):
             c = float(coeffs[t_i]) if t_i < len(coeffs) else 0.0
             cs = _fmt_k(c, tol=tol)
             if cs == "0":
@@ -449,12 +355,13 @@ def _eq_stepwise_pdf_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tu
                 rhs_terms.append(f"-v_{{{bidx}}}")
             else:
                 rhs_terms.append(f"{cs}v_{{{bidx}}}")
+        
         if not rhs_terms:
             rhs = "0"
         else:
             rhs = " + ".join(rhs_terms).replace("+ -", "- ")
 
-        lines.append(f"\\textbf{{Bước {step_no}: }}\\text{{Kiểm tra }}v_{{{k+1}}}\\text{{ có là tổ hợp tuyến tính của các vectơ trong cơ sở hiện tại hay không.}}\\\\[2pt]")
+        lines.append(f"\\textbf{{Bước {step_no}: }}\\text{{Kiểm tra }}v_{{{k+1}}}\\text{{ có là tổ hợp tuyến tính...}}\\\\[2pt]")
         lines.append(f"\\text{{Giả sử }} {lhs} = {rhs}.\\\\[2pt]")
 
         if in_span:
@@ -471,31 +378,22 @@ def _eq_stepwise_pdf_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tu
         step_no += 1
 
     dim = len(basis_idx)
-    # kết luận cuối giống PDF: dim + basis
     basis_set = "\\left\\{" + ",\\; ".join([f"v_{{{i+1}}}" for i in basis_idx]) + "\\right\\}" if basis_idx else "\\left\\{\\;\\right\\}"
     lines.append("\\textbf{Kết luận.}\\\\[4pt]")
     lines.append(f"\\bullet\\; \\text{{Số chiều: }}\\dim(V) = {dim}.\\\\[2pt]")
     lines.append(f"\\bullet\\; \\text{{Một cơ sở là: }} B = {basis_set}.")
     lines.append("\\end{array}")
 
+    # TRẢ VỀ basis_idx ĐỂ DÙNG CHO MAIN PAYLOAD
     return "\n".join(lines), basis_idx, dim
 
 
+# =========================================================================
+# MAIN FUNCTION (FIXED LOGIC)
+# =========================================================================
 def compute_basis_payload(vectors: List[List[float]], tol: float = 1e-10, pivot_strategy: str = "min_norm"):
     """
     vectors: list[list[float]] với mỗi vector là 1 HÀNG.
-
-    Payload trả về:
-      basis: các vector độc lập (theo pivot_indices)
-      dimension: rank
-      pivot_indices: index vector gốc thuộc cơ sở
-      dependents: index vector gốc phụ thuộc
-      coeff_map: dep -> hệ số theo basis
-      steps: lời giải chi tiết (đúng để frontend dựng kiểu PDF)
-
-    + NEW:
-      solution: { eq_general_latex, eq_step_latex }
-        -> backend sinh luôn LaTeX đúng phong cách PDF, frontend KHÔNG tự suy luận.
     """
     if not vectors:
         raise ValueError("Danh sách vector rỗng.")
@@ -505,21 +403,34 @@ def compute_basis_payload(vectors: List[List[float]], tol: float = 1e-10, pivot_
         raise ValueError("Dữ liệu vector không hợp lệ (phải là list 2D).")
 
     m, dim = mat.shape
-    A = mat.tolist()  # (m x dim) mỗi hàng là 1 vector
+    A = mat.tolist()
 
-    rank, pivot_indices, E, ops, row_ids = gaussian_elimination_rows_with_ops(
+    # 1. Chạy Khử Gauss (Cho Cách 1 - Ma trận)
+    # LƯU Ý: Thuật toán này có thể tráo đổi hàng (swap rows) để khử, dẫn đến pivot_indices bị thay đổi
+    # Ví dụ: Nếu row 2 tốt hơn row 1, nó swap lên, làm thay đổi thứ tự cơ sở.
+    rank, pivot_indices_gauss, E, ops, row_ids = gaussian_elimination_rows_with_ops(
         A, tol=tol, pivot_strategy=pivot_strategy, snapshot_every_step=True
     )
 
-    if pivot_strategy == "pretty" and rank > 0:
-        pivot_indices = _improve_basis_by_exchange(A, pivot_indices, tol=tol)
+    # 2. Chạy Logic "Xét từng vector" (Cho Cách 2 - Phương trình & KẾT QUẢ CUỐI CÙNG)
+    # Đây là logic CHUẨN mà người dùng muốn: Duyệt từ trái qua phải, không swap lung tung.
+    eq_step_latex, step_basis_idx, step_dim = _eq_stepwise_pdf_latex(vectors, tol=tol)
 
-    basis_vectors = [vectors[i] for i in pivot_indices]
-    dependents, coeff_map = _dependent_expressions_rows(A, pivot_indices, tol=tol)
+    # [QUAN TRỌNG NHẤT]: GHI ĐÈ KẾT QUẢ CHÍNH BẰNG KẾT QUẢ CỦA CÁCH 2 (step_basis_idx)
+    # Vì Cách 2 tuân thủ đúng thứ tự "v1 trước, v2 sau".
+    # Nếu Cách 1 (Gauss) ra [0, 2] mà Cách 2 ra [0, 1], ta tin tưởng Cách 2.
+    final_pivot_indices = step_basis_idx
+    final_pivot_indices.sort() # Đảm bảo index tăng dần (dù thuật toán trên đã đảm bảo rồi)
+
+    basis_vectors = [vectors[i] for i in final_pivot_indices]
+    
+    # Tính lại phụ thuộc (dependents) và hệ số (coeff_map) dựa trên cơ sở CHUẨN này
+    dependents, coeff_map = _dependent_expressions_rows(A, final_pivot_indices, tol=tol)
 
     # =========================
-    # Steps for "Cách 1: Ma trận" (frontend dùng)
+    # Steps for "Cách 1: Ma trận" (Visual Steps)
     # =========================
+    # Vẫn hiển thị các bước biến đổi ma trận (vì nó có giá trị tham khảo về Rank)
     steps: List[dict] = []
 
     steps.append(Step(
@@ -557,17 +468,20 @@ def compute_basis_payload(vectors: List[List[float]], tol: float = 1e-10, pivot_
         matrix=E.tolist() if hasattr(E, "tolist") else E,
     ).to_dict())
 
-    if rank == 0:
+    rank_val = int(step_dim) # Dùng rank từ thuật toán chuẩn
+
+    if rank_val == 0:
         steps.append(Step(
             kind="summary",
             text="Kết luận: Tất cả vector đều bằng 0 ⇒ rank = 0, không có cơ sở khác 0.",
         ).to_dict())
     else:
-        basis_human = ", ".join([f"#{i+1}" for i in pivot_indices])
+        # Hiển thị kết luận dựa trên final_pivot_indices (Cơ sở chuẩn)
+        basis_human = ", ".join([f"#{i+1}" for i in final_pivot_indices])
         steps.append(Step(
             kind="pivot_choose",
-            text=f"Bước 3: Chọn các vector {basis_human} làm cơ sở (độc lập tuyến tính).",
-            meta={"pivot_indices": pivot_indices},
+            text=f"Bước 3: Dựa trên quá trình xét độc lập tuyến tính (Cách 2), ta chọn các vector {basis_human} làm cơ sở.",
+            meta={"pivot_indices": final_pivot_indices},
         ).to_dict())
 
         if dependents:
@@ -580,40 +494,35 @@ def compute_basis_payload(vectors: List[List[float]], tol: float = 1e-10, pivot_
 
         steps.append(Step(
             kind="summary",
-            text=f"Kết luận: rank = {rank}. Cơ sở lấy từ các vector {basis_human}.",
+            text=f"Kết luận: rank = {rank_val}. Cơ sở: {basis_human}.",
         ).to_dict())
 
     # =========================
-    # NEW: LaTeX for "Cách 2: Phương trình" (PDF-style)
-    #   - Tổng quát: không dùng 'xét tỉ lệ' ở bước 1
-    #   - Xét từng vector: có 'không tỉ lệ' đúng kiểu PDF R5
+    # Generate LaTeX Explanations
     # =========================
-    # rank theo hệ k1..km: hạng của ma trận n x m (cột là vector)
+    # Tính lại rank_eq cho Cách 2 Tổng quát (chỉ để hiển thị text)
     rank_eq, m_unknowns = _solve_homogeneous_rank(vectors, tol=tol)
 
     eq_general_latex = _eq_general_pdf_latex(
         vectors=vectors,
-        basis_indices=pivot_indices,
+        basis_indices=final_pivot_indices, # Dùng cơ sở chuẩn
         rank=rank_eq,
         tol=tol
     )
 
-    eq_step_latex, step_basis_idx, step_dim = _eq_stepwise_pdf_latex(vectors, tol=tol)
+    # eq_step_latex đã tính ở trên rồi
 
     return {
         "basis": basis_vectors,
-        "dimension": int(rank),
-        "pivot_indices": pivot_indices,
+        "dimension": rank_val,
+        "pivot_indices": final_pivot_indices, # Trả về index chuẩn (0, 1) thay vì (0, 2)
         "dependents": dependents,
         "coeff_map": coeff_map,
         "steps": steps,
 
-        # ✅ frontend chỉ cần lấy đúng 2 chuỗi này -> render y hệt “phong cách PDF”
         "solution": {
             "eq_general_latex": eq_general_latex,
             "eq_step_latex": eq_step_latex,
-
-            # bonus meta để UX nếu cần hiển thị “cơ sở chọn theo xét từng”
             "eq_step_basis_indices": step_basis_idx,
             "eq_step_dimension": int(step_dim),
         }

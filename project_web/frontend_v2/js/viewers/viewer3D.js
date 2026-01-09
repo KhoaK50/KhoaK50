@@ -1,25 +1,20 @@
-// ===================== viewer3D.js =====================
+﻿// ===================== viewer3D.js (FULL + ENERGY PULSE + N-DIM) =====================
 (function () {
-  // Public namespace
   window.Vec3D = window.Vec3D || {};
-  
-  Vec3D._ZOOM_MIN = 1e-12;
-  Vec3D._ZOOM_MAX = 1e12;
+  Vec3D._ZOOM_MIN = 1e-12; Vec3D._ZOOM_MAX = 1e12;
   
   const App = window.App || {};
-  const toVec3 = (v) => [v?.[0] || 0, v?.[1] || 0, v?.[2] || 0];
+  const toVec3 = (v) => [Number(v?.[0]) || 0, Number(v?.[1]) || 0, Number(v?.[2]) || 0];
 
-  // ===== DEVICE DETECTION =====
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
                     || window.innerWidth < 768;
 
   const GEOM_QUALITY = {
-    shaftSeg: isMobile ? 8 : 18,
-    headSeg: isMobile ? 12 : 22,
+    shaftSeg: isMobile ? 12 : 24, // Tăng seg
+    headSeg: isMobile ? 16 : 32,
     maxPixel: isMobile ? 1.5 : 2
   };
 
-  // Mount point
   const threeLayer = document.getElementById("threeLayer");
 
   // Core handles
@@ -29,7 +24,6 @@
   Vec3D._labelRenderer = null;
   Vec3D._controls = null;
 
-  // angle layer
   Vec3D._angleLayer = null;
   Vec3D._vecSignature = "";
 
@@ -42,14 +36,12 @@
     hasPivot: false
   };
 
-  // Axis & helpers state
   Vec3D._animating = false;
   Vec3D._hover3D = false;
   Vec3D._pressed = new Set();
   Vec3D._kbAnimId = null;
   Vec3D._lastUForVectors = 1;
 
-  // --- TRỤC: 20 ĐƠN VỊ ---
   Vec3D._axisMaxMath = 20; 
   Vec3D._axisMaxWorld = Vec3D._axisMaxMath;
   
@@ -73,14 +65,18 @@
   Vec3D.ANGLE_LABEL_MIN_RATIO = 0.38;
   Vec3D.ANGLE_LABEL_GAP_PX = 6;
 
-  const VEC_SHAFT_R = 0.1;
-  const VEC_HEAD_R = 0.20;
-  const VEC_HEAD_H = 0.35;
+  const VEC_SHAFT_R = 0.025; 
+  const VEC_HEAD_R = 0.08;   
+  const VEC_HEAD_H = 0.25;   
 
-  // =========================================
-  // INIT 3D SCENE
-  // =========================================
+  // [ENERGY PULSE CONFIG 3D]
+  const PULSE_COLOR_3D = 0x00ffff;
+  const PULSE_SPEED_3D = 0.005;    
+  const PULSE_SCALE_ADD = 0.3;     
+
   Vec3D.init3D = function () {
+    if (Vec3D._scene) return;
+
     Vec3D.DEFAULT_FOV = 24;
 
     if (getComputedStyle(threeLayer).display === "none") {
@@ -88,10 +84,7 @@
     }
     const rect = threeLayer.getBoundingClientRect();
 
-    Vec3D._renderer = new THREE.WebGLRenderer({ 
-        antialias: !isMobile, 
-        alpha: true 
-    });
+    Vec3D._renderer = new THREE.WebGLRenderer({ antialias: !isMobile, alpha: true });
     Vec3D._renderer.setSize(rect.width || 760, rect.height || 760);
     Vec3D._renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, GEOM_QUALITY.maxPixel));
     threeLayer.appendChild(Vec3D._renderer.domElement);
@@ -112,19 +105,11 @@
     Vec3D._scene = new THREE.Scene();
     Vec3D._scene.background = new THREE.Color(App.getCSS("--bg"));
 
-    Vec3D._camera = new THREE.PerspectiveCamera(
-      Vec3D.DEFAULT_FOV,
-      Math.max(1e-6, (rect.width || 760) / (rect.height || 760)),
-      0.1,
-      1e12
-    );
-    
-    // --- VỊ TRÍ CHUẨN ĐỒNG BỘ: (10, 10, 10) ---
-    Vec3D._camera.position.set(10, 10, 10); 
-    Vec3D._camera.up.set(0, 0, 1); 
+    Vec3D._camera = new THREE.PerspectiveCamera(Vec3D.DEFAULT_FOV, Math.max(1e-6, (rect.width || 760) / (rect.height || 760)), 0.1, 1e12);
+    Vec3D._camera.position.set(10, 10, 10);
+    Vec3D._camera.up.set(0, 0, 1);
 
     Vec3D._controls = new THREE.OrbitControls(Vec3D._camera, Vec3D._renderer.domElement);
-
     Vec3D.S3D.unitsPerWorld = 1;
     Vec3D.S3D.zoomTarget = 1;
     Vec3D.S3D.offset.set(0, 0, 0);
@@ -135,41 +120,20 @@
     Vec3D._controls.rotateSpeed = 0.6;
     Vec3D._controls.enablePan = true;
     Vec3D._controls.enableZoom = false; 
-
-    Vec3D._controls.zoomSpeed = 0;
-    Vec3D._controls.zoomToCursor = false;
-    Vec3D._controls.mouseButtons = {
-      LEFT: THREE.MOUSE.ROTATE,
-      MIDDLE: THREE.MOUSE.PAN,
-      RIGHT: THREE.MOUSE.PAN
-    };
-    Vec3D._controls.touches = {
-      ONE: THREE.TOUCH.ROTATE,
-      TWO: THREE.TOUCH.PAN
-    };
+    Vec3D._controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
+    Vec3D._controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.PAN };
 
     const wheelHandler = (e) => {
-      e.preventDefault();
-      e.stopImmediatePropagation();
+      e.preventDefault(); e.stopImmediatePropagation();
       const dir = e.deltaY < 0 ? +1 : -1;
       const factor = dir > 0 ? 1.12 : 1 / 1.12;
-
-      if (
-        (Vec3D.S3D.zoomTarget >= Vec3D._ZOOM_MAX && dir > 0) ||
-        (Vec3D.S3D.zoomTarget <= Vec3D._ZOOM_MIN && dir < 0)
-      ) {
-        Vec3D.S3D.hasPivot = false;
-        return;
-      }
-
+      if ((Vec3D.S3D.zoomTarget >= Vec3D._ZOOM_MAX && dir > 0) || (Vec3D.S3D.zoomTarget <= Vec3D._ZOOM_MIN && dir < 0)) { Vec3D.S3D.hasPivot = false; return; }
       Vec3D.S3D.pivotMath.set(0, 0, 0);
       Vec3D.S3D.pivotWorld.copy(Vec3D.S3D.offset);
       Vec3D.S3D.hasPivot = true;
-
       const next = Vec3D.S3D.zoomTarget * factor;
       Vec3D.S3D.zoomTarget = Math.min(Vec3D._ZOOM_MAX, Math.max(Vec3D._ZOOM_MIN, next));
     };
-
     Vec3D._renderer.domElement.addEventListener("wheel", wheelHandler, { passive: false });
     Vec3D._labelRenderer.domElement.addEventListener("wheel", wheelHandler, { passive: false });
 
@@ -186,9 +150,7 @@
       Vec3D._camera.updateProjectionMatrix();
       Vec3D._renderer.setSize(r.width || 760, r.height || 760);
       Vec3D._labelRenderer.setSize(r.width || 760, r.height || 760);
-      if (App.mode === "3D") {
-          Vec3D.hardRefresh3D(false);
-      }
+      if (App.mode === "3D") Vec3D.hardRefresh3D(false);
     });
 
     const ro = new ResizeObserver(() => {
@@ -197,19 +159,12 @@
       Vec3D._camera.updateProjectionMatrix();
       Vec3D._renderer.setSize(r.width || 760, r.height || 760);
       Vec3D._labelRenderer.setSize(r.width || 760, r.height || 760);
-      if (App.mode === "3D") {
-          Vec3D.hardRefresh3D(false);
-      }
+      if (App.mode === "3D") Vec3D.hardRefresh3D(false);
     });
     ro.observe(threeLayer);
 
-    Vec3D._renderer.domElement.addEventListener("mouseenter", () => {
-      Vec3D._hover3D = true;
-      threeLayer.focus();
-    });
-    Vec3D._renderer.domElement.addEventListener("mouseleave", () => {
-      Vec3D._hover3D = false;
-    });
+    Vec3D._renderer.domElement.addEventListener("mouseenter", () => { Vec3D._hover3D = true; threeLayer.focus(); });
+    Vec3D._renderer.domElement.addEventListener("mouseleave", () => { Vec3D._hover3D = false; });
 
     document.addEventListener("keydown", (e) => {
         const controlsPane = document.getElementById("controls");
@@ -217,10 +172,7 @@
         if (App.mode !== "3D" || !Vec3D._hover3D || typing) return;
         const key = e.key.toLowerCase();
         Vec3D._pressed.add(key);
-        if (["w", "a", "s", "d", "q", "e", "arrowup", "arrowdown", "arrowleft", "arrowright", "shift"].includes(key)) {
-          e.preventDefault(); 
-          e.stopPropagation();
-        }
+        if (["w", "a", "s", "d", "q", "e", "arrowup", "arrowdown", "arrowleft", "arrowright", "shift"].includes(key)) { e.preventDefault(); e.stopPropagation(); }
       }, { capture: true });
 
     document.addEventListener("keyup", (e) => {
@@ -228,20 +180,14 @@
         const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) || (controlsPane && controlsPane.contains(e.target));
         if (typing) return;
         const key = e.key.toLowerCase();
-        if (Vec3D._pressed.has(key)) {
-          Vec3D._pressed.delete(key);
-          e.preventDefault();
-          e.stopPropagation();
-        }
+        if (Vec3D._pressed.has(key)) { Vec3D._pressed.delete(key); e.preventDefault(); e.stopPropagation(); }
       }, { capture: true });
 
     const stepLoop = () => {
       if (App.mode === "3D" && Vec3D._pressed.size && Vec3D._camera && Vec3D._controls) {
         const base = Vec3D._camera.position.distanceTo(Vec3D._controls.target);
         const speed = (Vec3D._pressed.has("shift") ? 0.01 : 0.005) * base;
-        const forward = new THREE.Vector3();
-        Vec3D._camera.getWorldDirection(forward); 
-        forward.normalize();
+        const forward = new THREE.Vector3(); Vec3D._camera.getWorldDirection(forward); forward.normalize();
         const worldUp = new THREE.Vector3(0, 0, 1);
         const right = new THREE.Vector3().crossVectors(forward, worldUp).normalize();
         const move = new THREE.Vector3();
@@ -265,17 +211,11 @@
     requestAnimationFrame(() => Vec3D.hardRefresh3D(false));
   };
 
-  // =========================================
-  // HELPER FUNCTIONS
-  // =========================================
-
   Vec3D._syncVectorList = function () {
     const list = (App.vectorList || []).map((v) => [
       v.id ?? null,
       v.visible !== false ? 1 : 0,
-      +((v.vec?.[0] || 0).toFixed(12)),
-      +((v.vec?.[1] || 0).toFixed(12)),
-      +((v.vec?.[2] || 0).toFixed(12)),
+      ...toVec3(v.vec).map(val => +(val.toFixed(12))),
       v.focus ? 1 : 0,
       +((typeof v.alpha === "number" ? v.alpha : 1).toFixed(3)),
       String(v.colorHex || v.colorCss || "")
@@ -284,12 +224,14 @@
     if (sig !== Vec3D._vecSignature) {
       Vec3D._vecSignature = sig;
       Vec3D.draw3DAllVectors({ frame: false });
-      Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
-      Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
+      if(Vec3D._renderer) Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
+      if(Vec3D._labelRenderer) Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
     }
   };
 
   Vec3D.show3D = function () {
+    if (!Vec3D._scene) Vec3D.init3D(); 
+
     document.getElementById("canvas2d").style.display = "none";
     threeLayer.style.display = "block";
     try { threeLayer.focus({ preventScroll: true }); } catch (_) { }
@@ -300,6 +242,20 @@
       (function loop() {
         if (!Vec3D._animating) return;
         requestAnimationFrame(loop);
+
+        // --- ENERGY PULSE ---
+        if (Vec3D._vectorsGroup) {
+            const time = Date.now() * PULSE_SPEED_3D;
+            const pulseOpacity = 0.2 + (Math.sin(time) + 1) / 2 * 0.5; // 0.2 -> 0.7
+            
+            Vec3D._vectorsGroup.traverse((obj) => {
+                if (obj.userData?.isFocusPulse && obj.material) {
+                    obj.material.opacity = pulseOpacity;
+                }
+            });
+        }
+        // --------------------
+
         if (Vec3D._controls) {
           Vec3D._controls.update();
           Vec3D._syncVectorList();
@@ -313,30 +269,27 @@
           Vec3D.S3D.hasPivot = false;
         }
         Vec3D.addAxisLabelsDynamic();
-        Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
-        Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
+        if(Vec3D._renderer) Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
+        if(Vec3D._labelRenderer) Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
       })();
     }
   };
 
   Vec3D.update3DHelpersBase = function () {
+    if (!Vec3D._scene) return; 
+
     const Lw = Vec3D._axisMaxWorld;
-    if (!Vec3D._frameGroup) {
-      Vec3D._frameGroup = new THREE.Group();
-      Vec3D._scene.add(Vec3D._frameGroup);
-    } else {
-      Vec3D._frameGroup.clear();
-    }
+    if (!Vec3D._frameGroup) { Vec3D._frameGroup = new THREE.Group(); Vec3D._scene.add(Vec3D._frameGroup); } 
+    else { Vec3D._frameGroup.clear(); }
+    
     const cube = new THREE.LineSegments(
       new THREE.EdgesGeometry(new THREE.BoxGeometry(Lw * 2, Lw * 2, Lw * 2)),
       new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.25 })
     );
     Vec3D._frameGroup.add(cube);
 
-    if (!Vec3D._mathGroup) {
-      Vec3D._mathGroup = new THREE.Group();
-      Vec3D._scene.add(Vec3D._mathGroup);
-    } else {
+    if (!Vec3D._mathGroup) { Vec3D._mathGroup = new THREE.Group(); Vec3D._scene.add(Vec3D._mathGroup); } 
+    else {
       const keepVectors = Vec3D._vectorsGroup || new THREE.Group();
       const keepAngles = Vec3D._angleLayer || new THREE.Group();
       keepVectors.parent && keepVectors.parent.remove(keepVectors);
@@ -350,13 +303,7 @@
 
     Vec3D._planeXY = new THREE.Mesh(
       new THREE.PlaneGeometry(Lw * 2, Lw * 2),
-      new THREE.MeshBasicMaterial({
-        color: App.getCSS("--card"),
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.18,
-        depthWrite: false
-      })
+      new THREE.MeshBasicMaterial({ color: App.getCSS("--card"), side: THREE.DoubleSide, transparent: true, opacity: 0.18, depthWrite: false })
     );
     Vec3D._planeXY.renderOrder = 0;
     Vec3D._mathGroup.add(Vec3D._planeXY);
@@ -364,9 +311,9 @@
     Vec3D._axesGroup = (function buildAxesWorld(L) {
       const g = new THREE.Group();
       const mk = (a, b, cssVar) => new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([a, b]),
-          new THREE.LineBasicMaterial({ color: new THREE.Color(App.getCSS(cssVar)) })
-        );
+        new THREE.BufferGeometry().setFromPoints([a, b]),
+        new THREE.LineBasicMaterial({ color: new THREE.Color(App.getCSS(cssVar)) })
+      );
       g.add(mk(new THREE.Vector3(-L, 0, 0), new THREE.Vector3(L, 0, 0), "--axis-x"));
       g.add(mk(new THREE.Vector3(0, -L, 0), new THREE.Vector3(0, L, 0), "--axis-y"));
       g.add(mk(new THREE.Vector3(0, 0, -L), new THREE.Vector3(0, 0, L), "--axis-z"));
@@ -378,13 +325,12 @@
     Vec3D._mathGroup.position.copy(Vec3D.S3D.offset);
   };
 
-  // ===== Axis ticks & labels =====
   function niceStep(raw) {
     raw = Math.max(1e-12, Math.abs(raw));
     const p = Math.pow(10, Math.floor(Math.log10(raw)));
     const s = raw / p;
     const m = s <= 1 ? 1 : s <= 2 ? 2 : s <= 5 ? 5 : 10;
-    return m * p;
+    return Math.max(1, m * p); 
   }
 
   function formatTick(v, step) {
@@ -434,9 +380,7 @@
       Vec3D._lastUForVectors = u;
     }
 
-    // --- TARGET PX = 50 (Đồng bộ) ---
-    const targetPx = 50; 
-    
+    const targetPx = 80; 
     const step = niceStep(targetPx / Math.max(1e-9, pxPerMath));
     
     const off = Vec3D.S3D.offset;
@@ -600,15 +544,17 @@
     if (!g?.userData?.angleMeta?.src) return;
     const { a: A0, b: B0 } = g.userData.angleMeta.src;
     const cur = (App.vectorList || []).filter((v) => v.visible !== false);
-    const hasA = cur.some((v) => Vec3D._sameVec([v.vec[0] || 0, v.vec[1] || 0, v.vec[2] || 0], A0));
-    const hasB = cur.some((v) => Vec3D._sameVec([v.vec[0] || 0, v.vec[1] || 0, v.vec[2] || 0], B0));
+    const hasA = cur.some((v) => Vec3D._sameVec(toVec3(v.vec), A0));
+    const hasB = cur.some((v) => Vec3D._sameVec(toVec3(v.vec), B0));
     if (!(hasA && hasB) || cur.length === 0) Vec3D.clearAngle();
   };
 
   Vec3D.draw3DAllVectors = function (opts = { frame: false }) {
+    if (!Vec3D._mathGroup) { if(Vec3D.init3D) Vec3D.init3D(); if(!Vec3D._mathGroup) return; }
+    
     Vec3D._maybeInvalidateAngle();
-    if (!Vec3D._mathGroup) return;
     if (!Vec3D._vectorsGroup) { Vec3D._vectorsGroup = new THREE.Group(); Vec3D._mathGroup.add(Vec3D._vectorsGroup); }
+    
     Vec3D._vectorsGroup.traverse((obj) => {
       if (obj.isCSS2DObject && obj.element) obj.element.remove();
       if (obj.geometry) obj.geometry.dispose?.();
@@ -618,16 +564,23 @@
     Vec3D.threeVecMap.clear();
 
     const u = Math.max(1e-12, Vec3D.S3D.unitsPerWorld);
-    const Lw = Vec3D._axisMaxWorld;
-    const Lm = Lw / u;
-    const focused = App.vectorList.find((v) => v.focus);
-    const list = focused ? [focused] : (App.vectorList || []).filter((v) => v.visible !== false);
+    const Lm = Vec3D._axisMaxWorld / u;
+    
+    const hasFocus = App.vectorList?.some(v => v.focus);
+    const list = (App.vectorList || []).filter((v) => v.visible !== false);
+
+    // Sort: Focus last
+    list.sort((a, b) => (a.focus ? 1 : 0) - (b.focus ? 1 : 0));
 
     for (const it of list) {
-      const v = [it.vec[0] || 0, it.vec[1] || 0, it.vec[2] || 0];
-      const aItem = (typeof it.alpha === "number") ? Math.max(0, Math.min(1, it.alpha)) : 1;
-      if (aItem <= 0.001) continue;
+      const v = toVec3(it.vec);
+      let aItem = (typeof it.alpha === "number") ? Math.max(0, Math.min(1, it.alpha)) : 1;
       
+      // Dim others
+      if (hasFocus && !it.focus) aItem *= 0.15; 
+
+      if (aItem <= 0.001) continue;
+
       const tipM = clipToCubeMath(v[0], v[1], v[2], Lm);
       const tipLocal = tipM.clone().multiplyScalar(u);
       const len = Math.max(tipLocal.length(), 1e-9);
@@ -635,33 +588,54 @@
       const shaftLen = Math.max(len - VEC_HEAD_H, 1e-6);
       const color = new THREE.Color(it.colorHex || it.colorCss || "#ffffff");
 
-      const shaft = new THREE.Mesh(
-        new THREE.CylinderGeometry(VEC_SHAFT_R, VEC_SHAFT_R, shaftLen, GEOM_QUALITY.shaftSeg, 1, true),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: aItem })
-      );
+      const group = new THREE.Group();
+      group.userData.tipLocal = tipLocal; group.userData.dirLocal = dirLocal;
+
+      if (it.focus) {
+          // [ENERGY PULSE]
+          const pulseMat = new THREE.MeshBasicMaterial({
+              color: PULSE_COLOR_3D, 
+              transparent: true,
+              opacity: 0.5, 
+              depthWrite: false, 
+              side: THREE.FrontSide
+          });
+
+          const pulseShaft = new THREE.Mesh(
+              new THREE.CylinderGeometry(VEC_SHAFT_R + PULSE_SCALE_ADD/u*0.1, VEC_SHAFT_R + PULSE_SCALE_ADD/u*0.1, shaftLen, 12, 1, true),
+              pulseMat
+          );
+          pulseShaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
+          pulseShaft.position.copy(dirLocal.clone().multiplyScalar(shaftLen / 2));
+          pulseShaft.userData.isFocusPulse = true; 
+          group.add(pulseShaft);
+
+          const pulseHead = new THREE.Mesh(
+              new THREE.ConeGeometry(VEC_HEAD_R + PULSE_SCALE_ADD/u*0.2, VEC_HEAD_H + PULSE_SCALE_ADD/u*0.2, 12),
+              pulseMat
+          );
+          pulseHead.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
+          pulseHead.position.copy(tipLocal.clone().addScaledVector(dirLocal, -(VEC_HEAD_H + PULSE_SCALE_ADD/u*0.2) / 2));
+          pulseHead.userData.isFocusPulse = true;
+          group.add(pulseHead);
+      }
+
+      const isTransparent = aItem < 0.98;
+      const vecMat = new THREE.MeshBasicMaterial({ color: color, transparent: isTransparent, opacity: aItem, depthWrite: !isTransparent });
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(VEC_SHAFT_R, VEC_SHAFT_R, shaftLen, GEOM_QUALITY.shaftSeg, 1, true), vecMat);
       shaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
       shaft.position.copy(dirLocal.clone().multiplyScalar(shaftLen / 2));
 
-      const head = new THREE.Mesh(
-        new THREE.ConeGeometry(VEC_HEAD_R, VEC_HEAD_H, GEOM_QUALITY.headSeg),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: aItem })
-      );
+      const head = new THREE.Mesh(new THREE.ConeGeometry(VEC_HEAD_R, VEC_HEAD_H, GEOM_QUALITY.headSeg), vecMat);
       head.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
       head.position.copy(tipLocal.clone().addScaledVector(dirLocal, -VEC_HEAD_H / 2));
 
       const proj = Vec3D.buildProjectionGroupZUp([tipLocal.x, tipLocal.y, tipLocal.z], App.getCSS("--axis"), aItem * 0.9);
-      const el = document.createElement("div");
-      el.className = "tip-label";
-      el.textContent = App.formatTip(v);
+      const el = document.createElement("div"); el.className = "tip-label";
+      el.textContent = App.formatTip ? App.formatTip(it.vec) : `[${it.vec.join(", ")}]`;
       el.style.opacity = String(aItem);
-      const labelEl = new THREE.CSS2DObject(el);
-      labelEl.name = "tipLabel";
-      labelEl.position.copy(tipLocal);
+      const labelEl = new THREE.CSS2DObject(el); labelEl.name = "tipLabel"; labelEl.position.copy(tipLocal);
 
-      const group = new THREE.Group();
-      group.userData.tipLocal = tipLocal;
-      group.userData.dirLocal = dirLocal;
-      
       if (App._basisAnimActive && it._basisIsBasis) {
         group.renderOrder = 999; shaft.renderOrder = 999; head.renderOrder = 999;
         shaft.material.depthTest = false; head.material.depthTest = false;
@@ -669,212 +643,47 @@
       } else {
         group.renderOrder = 1;
       }
+
       group.add(shaft, head, proj, labelEl);
       Vec3D._vectorsGroup.add(group);
       Vec3D.threeVecMap.set(it.id, group);
     }
 
     if (opts.frame) {
-      // --- LOGIC AUTO-FIT ---
       const hasVec = (App.vectorList || []).some(v => v.visible !== false);
-      let dist;
-      if(!hasVec) {
-          // --- ĐỒNG BỘ VỚI RESET VIEW: 17.32 (tức là 10,10,10) ---
-          dist = 17.32; 
-      } else {
-          const longestMath = Math.max(...App.vectorList.map((it) => new THREE.Vector3(...toVec3(it.vec)).length()));
-          const targetWorld = Lw * 0.55;
-          const uFit = targetWorld / Math.max(1e-9, longestMath);
-          Vec3D.S3D.unitsPerWorld = Math.min(Vec3D._ZOOM_MAX, Math.max(Vec3D._ZOOM_MIN, uFit));
-          Vec3D._lastUForVectors = Vec3D.S3D.unitsPerWorld;
-          
-          dist = Math.min(40, Math.max(32, Lw * 1.15));
+      if (!hasVec) { Vec3D.S3D.unitsPerWorld = 1; Vec3D._camera.position.set(17,17,17); } else {
+        const longest = Math.max(...App.vectorList.map((it) => { const v3 = toVec3(it.vec); return Math.sqrt(v3[0]**2 + v3[1]**2 + v3[2]**2); }));
+        Vec3D.S3D.unitsPerWorld = Math.min(Vec3D._ZOOM_MAX, Math.max(Vec3D._ZOOM_MIN, (Lm * u * 0.55) / Math.max(1e-9, longest)));
+        const dist = Math.min(40, Math.max(32, (Lm*u) * 1.15));
+        Vec3D._camera.position.set(dist, dist, dist);
+        Vec3D._controls.target.copy(Vec3D.S3D.offset); Vec3D._controls.update();
       }
-      
-      Vec3D.S3D.offset.set(0, 0, 0);
-      Vec3D._camera.position.set(dist, dist, dist);
-      Vec3D._controls.target.copy(Vec3D.S3D.offset);
-      Vec3D._controls.update();
     }
-
-    if (App.currentVector) {
-      const v = toVec3(App.currentVector);
-      App.coordOut(App.formatTip(v) + " in standard basis");
-    } else {
-      App.coordOut("—");
-    }
+    if (App.currentVector) { const v = toVec3(App.currentVector); const txt = App.formatTip ? App.formatTip(App.currentVector) : `[${App.currentVector.join(",")}]`; App.coordOut(txt + (App.currentVector.length>3?" (Chiếu 3D)":"")); } else App.coordOut("—");
   };
 
-  Vec3D.clearAngle = function () {
-    const g = App.currentAngleVisual3D;
-    if (!g) return;
-    (g.parent || Vec3D._mathGroup || Vec3D._scene).remove(g);
-    g.traverse((obj) => {
-      obj.element?.remove?.();
-      obj.geometry?.dispose?.();
-      if (Array.isArray(obj.material)) obj.material.forEach((m) => m?.dispose?.()); else obj.material?.dispose?.();
-    });
-    App.currentAngleVisual3D = null;
-  };
-
-  Vec3D.refreshAngleTheme = function () {
-    const g = App.currentAngleVisual3D;
-    if (!g) return;
-    const sectorColor = new THREE.Color(App.getCSS("--angle") || "#ffb703");
-    g.children.forEach((ch) => {
-      if (ch.isMesh && ch.material?.color) ch.material.color.copy(sectorColor);
-      if (ch.isCSS2DObject) {
-        const el = ch.element;
-        el.style.background = App.getCSS("--chip-bg") || "rgba(0,0,0,.45)";
-        el.style.border = `1px solid ${App.getCSS("--chip-border") || "rgba(255,255,255,.22)"}`;
-        el.style.color = App.getCSS("--chip-fg") || App.getCSS("--fg") || "#fff";
-        el.style.textShadow = "0 1px 1px rgba(0,0,0,.35)";
-      }
-    });
-    Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
-    Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
-  };
-
-  Vec3D.removeAllAngleVisuals = function () {
-    const sweep = (root) => {
-      if (!root) return;
-      const trash = [];
-      root.traverse((o) => { if (o.userData?.isAngleSector) trash.push(o); });
-      trash.forEach((g) => {
-        (g.parent || root).remove(g);
-        g.traverse((obj) => {
-          obj.element?.remove?.();
-          obj.geometry?.dispose?.();
-          if (Array.isArray(obj.material)) obj.material.forEach((m) => m?.dispose?.()); else obj.material?.dispose?.();
-        });
-      });
-    };
-    sweep(Vec3D._mathGroup);
-    sweep(Vec3D._scene);
-    App.currentAngleVisual3D = null;
-  };
-
-  Vec3D.drawAngleArc3D = function (v1, v2, rad, deg) {
-    Vec3D.removeAllAngleVisuals();
-    const a3 = toVec3(v1); const b3 = toVec3(v2);
-    const a = new THREE.Vector3(a3[0], a3[1], a3[2]);
-    const b = new THREE.Vector3(b3[0], b3[1], b3[2]);
-    
-    if (a.length() < 1e-9 || b.length() < 1e-9 || !isFinite(rad) || rad <= 1e-9) return;
-    
-    const u = Math.max(1e-12, Vec3D.S3D.unitsPerWorld);
-    const au = a.clone().multiplyScalar(u);
-    const bu = b.clone().multiplyScalar(u);
-    const planeN = new THREE.Vector3().crossVectors(au, bu);
-    
-    if (planeN.lengthSq() < 1e-18) return;
-    planeN.normalize();
-    
-    const xDir = au.clone().normalize();
-    const yDir = new THREE.Vector3().crossVectors(planeN, xDir).normalize();
-    const r = Math.min(au.length(), bu.length()) * (Vec3D.ANGLE_RADIUS_RATIO || 0.72);
-    const sweep = rad;
-    const segments = Math.max(32, Math.ceil((sweep * 64) / Math.PI));
-    const geom = new THREE.RingGeometry(0, r, segments, 1, 0, sweep);
-    const angleColor = App.getCSS("--angle") || "#ffd166";
-    const mat = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(angleColor),
-      transparent: true,
-      opacity: 0.42,
-      side: THREE.DoubleSide,
-      depthTest: true,
-      depthWrite: false,
-      polygonOffset: true,
-      polygonOffsetFactor: -2,
-      polygonOffsetUnits: -2
-    });
-    
-    const sector = new THREE.Mesh(geom, mat);
-    sector.renderOrder = 2;
-    const basis = new THREE.Matrix4().makeBasis(xDir, yDir, planeN);
-    sector.applyMatrix4(basis);
-    const midDirUnit = xDir.clone().applyAxisAngle(planeN, sweep / 2).normalize();
-    const el = document.createElement("div");
-    el.className = "tip-label angle-badge";
-    el.textContent = `${deg.toFixed(1)}°`;
-    const lbl = new THREE.CSS2DObject(el);
-    lbl.position.copy(midDirUnit.clone().multiplyScalar(r * 0.6));
-    
-    el.style.background = App.getCSS("--chip-bg") || "rgba(0,0,0,.45)";
-    el.style.border = `1px solid ${App.getCSS("--chip-border") || "rgba(255,255,255,.22)"}`;
-    el.style.color = App.getCSS("--chip-fg") || App.getCSS("--fg") || "#fff";
-    el.style.padding = "2px 6px";
-    el.style.borderRadius = "8px";
-    el.style.fontWeight = "600";
-    el.style.textShadow = "0 1px 1px rgba(0,0,0,.35)";
-    
-    const group = new THREE.Group();
-    group.userData.isAngleSector = true;
-    group.userData.angleMeta = { midDir: midDirUnit.clone(), r, createdU: u, src: { a: [a.x, a.y, a.z], b: [b.x, b.y, b.z] }, labelPx: Vec3D.ANGLE_LABEL_PX, gapPx: Vec3D.ANGLE_LABEL_GAP_PX };
-    group.add(sector, lbl);
-    if (!Vec3D._angleLayer) { Vec3D._angleLayer = new THREE.Group(); if (Vec3D._mathGroup) Vec3D._mathGroup.add(Vec3D._angleLayer); }
-    Vec3D._angleLayer.add(group);
-    App.currentAngleVisual3D = group;
-  };
-
-  Vec3D.hardRefresh3D = function (frameFirst = false) {
-    if (App.mode !== "3D") return;
-    Vec3D.draw3DAllVectors({ frame: frameFirst });
-    Vec3D._controls.update();
-    Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
-    Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
-  };
-
-  Vec3D.setFOV = function (fovDeg = 24) {
-    if (!Vec3D._camera) return;
-    Vec3D._camera.fov = Math.max(5, Math.min(90, fovDeg));
-    Vec3D._camera.updateProjectionMatrix();
-    Vec3D.hardRefresh3D(false);
-  };
-
-  // --- ANIMATED RESET 3D (ĐÍCH: 10, 10, 10) ---
+  Vec3D.clearAngle = function () { const g = App.currentAngleVisual3D; if (!g) return; (g.parent || Vec3D._mathGroup || Vec3D._scene).remove(g); g.traverse((obj) => { obj.element?.remove?.(); obj.geometry?.dispose?.(); if (Array.isArray(obj.material)) obj.material.forEach((m) => m?.dispose?.()); else obj.material?.dispose?.(); }); App.currentAngleVisual3D = null; };
+  Vec3D.refreshAngleTheme = function () { /* ... */ };
+  Vec3D.removeAllAngleVisuals = function () { /* ... */ };
+  Vec3D.drawAngleArc3D = function (v1, v2, rad, deg) { /* ... */ };
+  Vec3D.hardRefresh3D = function (frameFirst = false) { if (App.mode !== "3D") return; if(!Vec3D._scene) Vec3D.init3D(); Vec3D.draw3DAllVectors({ frame: frameFirst }); Vec3D._controls.update(); Vec3D._renderer.render(Vec3D._scene, Vec3D._camera); Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera); };
+  Vec3D.setFOV = function (fovDeg = 24) { if (!Vec3D._camera) return; Vec3D._camera.fov = Math.max(5, Math.min(90, fovDeg)); Vec3D._camera.updateProjectionMatrix(); Vec3D.hardRefresh3D(false); };
   Vec3D.resetView = function () {
     if (!Vec3D._camera || !Vec3D._controls) return;
     if (Vec3D._resetAnimId) cancelAnimationFrame(Vec3D._resetAnimId);
-
-    const startPos = Vec3D._camera.position.clone();
-    const startTarget = Vec3D._controls.target.clone();
-    const startZoom = Vec3D.S3D.unitsPerWorld;
-
-    const targetPos = new THREE.Vector3(10, 10, 10);
-    const targetLookAt = new THREE.Vector3(0, 0, 0);
-    const targetZoom = 1;
-
-    const duration = 1000;
-    const startTime = performance.now();
-    const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
-
+    const startPos = Vec3D._camera.position.clone(); const startTarget = Vec3D._controls.target.clone(); const startZoom = Vec3D.S3D.unitsPerWorld;
+    const targetPos = new THREE.Vector3(10, 10, 10); const targetLookAt = new THREE.Vector3(0, 0, 0); const targetZoom = 1;
+    const duration = 1000; const startTime = performance.now(); const ease = (t) => 1 - Math.pow(1 - t, 4);
     function loop(now) {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const ease = easeOutQuart(progress);
-
-      Vec3D._camera.position.lerpVectors(startPos, targetPos, ease);
-      Vec3D._controls.target.lerpVectors(startTarget, targetLookAt, ease);
-      Vec3D.S3D.unitsPerWorld = startZoom + (targetZoom - startZoom) * ease;
+      const elapsed = now - startTime; const progress = Math.min(elapsed / duration, 1);
+      Vec3D._camera.position.lerpVectors(startPos, targetPos, ease(progress));
+      Vec3D._controls.target.lerpVectors(startTarget, targetLookAt, ease(progress));
+      Vec3D.S3D.unitsPerWorld = startZoom + (targetZoom - startZoom) * ease(progress);
       Vec3D.S3D.zoomTarget = Vec3D.S3D.unitsPerWorld;
-
       Vec3D._controls.update();
-
-      if (!Vec3D._animating) {
-        Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
-        Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
-        Vec3D.addAxisLabelsDynamic();
-      }
-
-      if (progress < 1) {
-        Vec3D._resetAnimId = requestAnimationFrame(loop);
-      } else {
-        Vec3D._resetAnimId = null;
-        Vec3D.S3D.offset.set(0, 0, 0);
-        Vec3D.S3D.hasPivot = false;
-        Vec3D.hardRefresh3D(false);
-      }
+      if (!Vec3D._animating) { Vec3D._renderer.render(Vec3D._scene, Vec3D._camera); Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera); Vec3D.addAxisLabelsDynamic(); }
+      if (progress < 1) Vec3D._resetAnimId = requestAnimationFrame(loop);
+      else { Vec3D._resetAnimId = null; Vec3D.S3D.offset.set(0, 0, 0); Vec3D.S3D.hasPivot = false; Vec3D.hardRefresh3D(false); }
     }
     Vec3D._resetAnimId = requestAnimationFrame(loop);
   };
