@@ -1,5 +1,6 @@
 import sqlite3
 import smtplib
+import os
 from email.mime.text import MIMEText
 from datetime import datetime
 from flask import Blueprint, request, jsonify
@@ -7,12 +8,17 @@ from flask import Blueprint, request, jsonify
 # Tạo Blueprint
 contact_bp = Blueprint('contact', __name__)
 
-# --- CẤU HÌNH ---
-SMTP_EMAIL = "sc3.nguyentrandangkhoa@gmail.com"
-SMTP_PASSWORD = "dxzb gcie nymx bwdc"
+# --- CẤU HÌNH (Sửa lại đoạn này) ---
+
+# Thay vì viết thẳng email, hãy bảo nó lấy từ biến MAIL_USERNAME trên Render
+SMTP_EMAIL = os.environ.get("MAIL_USERNAME") 
+
+# Lấy mật khẩu từ biến MAIL_PASSWORD trên Render
+SMTP_PASSWORD = os.environ.get("MAIL_PASSWORD")
+
 RECEIVERS = [
     "minhhuy42work@gmail.com",
-    "sc3.nguyentrandangkhoa@gmail.com"
+    os.environ.get("MAIL_USERNAME") # Gửi về cho chính mình luôn
 ]
 
 def init_feedback_db():
