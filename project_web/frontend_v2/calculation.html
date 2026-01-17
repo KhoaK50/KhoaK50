@@ -16,7 +16,7 @@
   </script>
   <link rel="stylesheet" href="css/solution_panel.css" />
   <link rel="icon" href="./assets/logo.png" type="image/png">
-
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
@@ -33,20 +33,68 @@
     };
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-  <style>
-    body { opacity: 0; transition: opacity 0.25s ease-in; }
-  </style>
+
+  <script>
+    if (localStorage.getItem('vec_theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
 </head>
 
 <body>
+  <div class="theme-transition-icons">
+    <i class="fa-solid fa-sun" id="sunIcon"></i>
+    <i class="fa-solid fa-moon" id="moonIcon"></i>
+  </div>
+
   <div id="topbar">
     <div class="topbar-left">
       <div id="hamburger"><span></span><span></span><span></span></div>
-      <button class="topbar-icon" onclick="location.href='index.html'"><svg viewBox="0 0 24 24" class="icon"><path d="M3 10.5L12 3l9 7.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M5 9.5V21h5v-6h4v6h5V9.5" fill="none" stroke="currentColor" stroke-width="2" /></svg></button>
-      <button class="topbar-icon" onclick="location.href='knowledge_info.html'"><svg viewBox="0 0 24 24" class="icon"><path d="M3 5h7a3 3 0 0 1 3 3v11a3 3 0 0 0-3-3H3z" fill="none" stroke="currentColor" stroke-width="2" /><path d="M21 5h-7a3 3 0 0 0-3 3v11a3 3 0 0 1 3-3h7z" fill="none" stroke="currentColor" stroke-width="2" /></svg></button>
+      <button class="topbar-icon" onclick="location.href='index.html'"><svg viewBox="0 0 24 24" class="icon">
+          <path d="M3 10.5L12 3l9 7.5" fill="none" stroke="currentColor" stroke-width="2" />
+          <path d="M5 9.5V21h5v-6h4v6h5V9.5" fill="none" stroke="currentColor" stroke-width="2" />
+        </svg></button>
+      <button class="topbar-icon" onclick="location.href='knowledge_info.html'"><svg viewBox="0 0 24 24" class="icon">
+          <path d="M3 5h7a3 3 0 0 1 3 3v11a3 3 0 0 0-3-3H3z" fill="none" stroke="currentColor" stroke-width="2" />
+          <path d="M21 5h-7a3 3 0 0 0-3 3v11a3 3 0 0 1 3-3h7z" fill="none" stroke="currentColor" stroke-width="2" />
+        </svg></button>
     </div>
+
     <div class="brand">Vectoria</div>
-    <div class="topbar-right"><div id="themeBadge" class="pill">Theme: Light</div></div>
+
+    <div class="topbar-right">
+      <div class="settings-container">
+        <button id="btnSettings" class="icon-btn" title="Cài đặt">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+
+        <div class="settings-dropdown" id="settingsDropdown">
+          <div class="setting-item">
+            <span><i class="fa-solid fa-moon"></i> Chế độ tối</span>
+            <label class="switch">
+              <input type="checkbox" id="themeToggle">
+              <span class="slider round"></span>
+            </label>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid var(--border, #ddd); margin: 8px 0; opacity: 0.5;">
+
+          <div class="setting-item">
+            <span><i class="fa-solid fa-film"></i> Hiệu ứng (phép tính)</span>
+            <label class="switch">
+              <input type="checkbox" id="animToggle" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <hr style="border: 0; border-top: 1px solid var(--border, #ddd); margin: 0; opacity: 0.5;">
+
+          <a href="contact.html" class="setting-item link-item" style="text-decoration: none; cursor: pointer;">
+            <span><i class="fa-solid fa-envelope"></i> Liên hệ / Góp ý</span>
+            <i class="fa-solid fa-chevron-right" style="font-size: 0.8em;"></i>
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="overlay"></div>
@@ -71,10 +119,30 @@
           </div>
 
           <div id="extraForms" style="margin-top:8px">
-            <div id="form-linear_independence" class="extra-form"><label class="small"><b>Kiểm tra ĐLTT</b></label><div id="indepChecklist" class="checklist"></div><div class="row" style="margin-top:6px"><button id="btnIndep">Kiểm tra</button></div><pre id="result_indep">—</pre></div>
-            <div id="form-rank" class="extra-form"><label class="small"><b>Hạng của hệ vector</b></label><div id="rankChecklist" class="checklist"></div><div class="row" style="margin-top:6px"><button id="btnRank">Tính hạng</button></div><pre id="result_rank">—</pre></div>
-            <div id="form-basis" class="extra-form"><label class="small"><b>Cơ sở & Số chiều</b></label><div id="basisChecklist" class="checklist"></div><div class="row" style="margin-top:6px; gap:8px;"><button id="btnBasis">Tính cơ sở</button><button id="btnOpenSolution" class="btn-solution" type="button">Lời giải</button></div><pre id="result_basis">—</pre></div>
-            <div id="form-coordinates" class="extra-form"><label class="small"><b>Tọa độ theo cơ sở</b></label><select id="vCoordSelect"></select><div style="margin-top:8px"><label>Chọn cơ sở:</label><div id="basisCoordChecklist" class="checklist"></div></div><div class="row" style="margin-top:6px"><button id="btnCoord">Xuất tọa độ</button></div><pre id="result_coord">—</pre></div>
+            <div id="form-linear_independence" class="extra-form"><label class="small"><b>Kiểm tra ĐLTT</b></label>
+              <div id="indepChecklist" class="checklist"></div>
+              <div class="row" style="margin-top:6px"><button id="btnIndep">Kiểm tra</button></div>
+              <pre id="result_indep">—</pre>
+            </div>
+            <div id="form-rank" class="extra-form"><label class="small"><b>Hạng của hệ vector</b></label>
+              <div id="rankChecklist" class="checklist"></div>
+              <div class="row" style="margin-top:6px"><button id="btnRank">Tính hạng</button></div>
+              <pre id="result_rank">—</pre>
+            </div>
+            <div id="form-basis" class="extra-form"><label class="small"><b>Cơ sở & Số chiều</b></label>
+              <div id="basisChecklist" class="checklist"></div>
+              <div class="row" style="margin-top:6px; gap:8px;"><button id="btnBasis">Tính cơ sở</button><button
+                  id="btnOpenSolution" class="btn-solution" type="button">Lời giải</button></div>
+              <pre id="result_basis">—</pre>
+            </div>
+            <div id="form-coordinates" class="extra-form"><label class="small"><b>Tọa độ theo cơ sở</b></label><select
+                id="vCoordSelect"></select>
+              <div style="margin-top:8px"><label>Chọn cơ sở:</label>
+                <div id="basisCoordChecklist" class="checklist"></div>
+              </div>
+              <div class="row" style="margin-top:6px"><button id="btnCoord">Xuất tọa độ</button></div>
+              <pre id="result_coord">—</pre>
+            </div>
           </div>
         </details>
       </div>
@@ -88,7 +156,8 @@
               <label>Chọn phép tính:</label>
               <select id="opSelect">
                 <option value="add">Cộng vector (v1 + v2)</option>
-                <option value="scale">Kéo dãn (k·v)</option> <option value="projection">Hình chiếu (proj_v2(v1))</option>
+                <option value="scale">Kéo dãn (k·v)</option>
+                <option value="projection">Hình chiếu (proj_v2(v1))</option>
                 <option value="normalize">Chuẩn hoá (v1 / ‖v1‖)</option>
                 <option value="dot">Tích vô hướng (v1 · v2)</option>
                 <option value="cross">Tích có hướng (v1 × v2)</option>
@@ -125,7 +194,7 @@
       <div class="card section-create glow" id="card-create">
         <label><b>KHỞI TẠO VECTOR</b></label>
         <div style="margin-top:5px; font-size:0.9em; color:#888">
-           Định dạng hợp lệ: <code>[1,2]</code>, <code>[1,2,3]</code> hoặc <code>[sqrt(2), 1/2]</code>
+          Định dạng hợp lệ: <code>[1,2]</code>, <code>[1,2,3]</code> hoặc <code>[sqrt(2), 1/2]</code>
         </div>
         <input id="vectorInput" placeholder='[1,2] ...' value="[1,2]" />
 
@@ -153,12 +222,12 @@
       </div>
       <button id="btnResetView" title="Quay về gốc tọa độ">
         <svg viewBox="0 0 24 24" width="24" height="24">
-          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-          <circle cx="12" cy="12" r="2" fill="currentColor"/>
-          <line x1="12" y1="2" x2="12" y2="7" stroke="currentColor" stroke-width="2"/>
-          <line x1="12" y1="17" x2="12" y2="22" stroke="currentColor" stroke-width="2"/>
-          <line x1="2" y1="12" x2="7" y2="12" stroke="currentColor" stroke-width="2"/>
-          <line x1="17" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" />
+          <circle cx="12" cy="12" r="2" fill="currentColor" />
+          <line x1="12" y1="2" x2="12" y2="7" stroke="currentColor" stroke-width="2" />
+          <line x1="12" y1="17" x2="12" y2="22" stroke="currentColor" stroke-width="2" />
+          <line x1="2" y1="12" x2="7" y2="12" stroke="currentColor" stroke-width="2" />
+          <line x1="17" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2" />
         </svg>
       </button>
     </div>
@@ -169,7 +238,8 @@
       <div class="sol-header">
         <div class="sol-title">
           <div class="sol-badge">Lời giải</div>
-          <div id="solTitle" class="sol-h1"><span id="solTitleText">Cơ sở &amp; số chiều</span> <span id="solTitleMath">\( \mathbb{R}^n \)</span></div>
+          <div id="solTitle" class="sol-h1"><span id="solTitleText">Cơ sở &amp; số chiều</span> <span
+              id="solTitleMath">\( \mathbb{R}^n \)</span></div>
         </div>
         <button id="btnCloseSolution" class="sol-close">✕</button>
       </div>
@@ -181,7 +251,9 @@
         </div>
         <div class="sol-actions"><button id="btnCopySolution" class="sol-btn">Copy LaTeX</button></div>
       </div>
-      <div id="solutionBody" class="sol-body"><div class="sol-empty">Chưa có lời giải.</div></div>
+      <div id="solutionBody" class="sol-body">
+        <div class="sol-empty">Chưa có lời giải.</div>
+      </div>
     </div>
   </div>
 
@@ -211,17 +283,31 @@
       loadScript("js/viewers/viewer3D.js");
     })();
   </script>
+  <script src="js/app/playback/operation_animation.js"></script>
   <script src="./js/app/playback/basis_animation.js"></script>
   <script src="js/app/bootstrap.js"></script>
 
   <div id="mathKeypad">
-    <div class="keypad-header"><div class="drag-handle"></div> <button id="keypadClose">✕</button></div>
+    <div class="keypad-header">
+      <div class="drag-handle"></div> <button id="keypadClose">✕</button>
+    </div>
     <div class="keypad-grid">
-      <button class="k-btn op" onclick="App.key('[')">[</button><button class="k-btn op" onclick="App.key(']')">]</button><button class="k-btn op" onclick="App.key('(')">(</button><button class="k-btn op" onclick="App.key(')')">)</button><button class="k-btn action" onclick="App.del()">⌫</button>
-      <button class="k-btn num" onclick="App.key('7')">7</button><button class="k-btn num" onclick="App.key('8')">8</button><button class="k-btn num" onclick="App.key('9')">9</button><button class="k-btn op" onclick="App.key('sqrt(')">√</button><button class="k-btn op" onclick="App.key('^2')">^2</button>
-      <button class="k-btn num" onclick="App.key('4')">4</button><button class="k-btn num" onclick="App.key('5')">5</button><button class="k-btn num" onclick="App.key('6')">6</button><button class="k-btn op" onclick="App.key('*')">×</button><button class="k-btn op" onclick="App.key('^')">^</button>
-      <button class="k-btn num" onclick="App.key('1')">1</button><button class="k-btn num" onclick="App.key('2')">2</button><button class="k-btn num" onclick="App.key('3')">3</button><button class="k-btn op" onclick="App.key('-')">−</button><button class="k-btn op" onclick="App.key('/')">÷</button>
-      <button class="k-btn num" onclick="App.key('0')">0</button><button class="k-btn num" onclick="App.key('.')">.</button><button class="k-btn op" onclick="App.key(',')">,</button><button class="k-btn op" onclick="App.key('+')">+</button><button class="k-btn primary" onclick="App.enter()">↵</button>
+      <button class="k-btn op" onclick="App.key('[')">[</button><button class="k-btn op"
+        onclick="App.key(']')">]</button><button class="k-btn op" onclick="App.key('(')">(</button><button
+        class="k-btn op" onclick="App.key(')')">)</button><button class="k-btn action" onclick="App.del()">⌫</button>
+      <button class="k-btn num" onclick="App.key('7')">7</button><button class="k-btn num"
+        onclick="App.key('8')">8</button><button class="k-btn num" onclick="App.key('9')">9</button><button
+        class="k-btn op" onclick="App.key('sqrt(')">√</button><button class="k-btn op"
+        onclick="App.key('^2')">^2</button>
+      <button class="k-btn num" onclick="App.key('4')">4</button><button class="k-btn num"
+        onclick="App.key('5')">5</button><button class="k-btn num" onclick="App.key('6')">6</button><button
+        class="k-btn op" onclick="App.key('*')">×</button><button class="k-btn op" onclick="App.key('^')">^</button>
+      <button class="k-btn num" onclick="App.key('1')">1</button><button class="k-btn num"
+        onclick="App.key('2')">2</button><button class="k-btn num" onclick="App.key('3')">3</button><button
+        class="k-btn op" onclick="App.key('-')">−</button><button class="k-btn op" onclick="App.key('/')">÷</button>
+      <button class="k-btn num" onclick="App.key('0')">0</button><button class="k-btn num"
+        onclick="App.key('.')">.</button><button class="k-btn op" onclick="App.key(',')">,</button><button
+        class="k-btn op" onclick="App.key('+')">+</button><button class="k-btn primary" onclick="App.enter()">↵</button>
     </div>
   </div>
 
@@ -251,57 +337,93 @@
         const v = activeInput.value;
         activeInput.value = v.substring(0, start) + char + v.substring(end);
         activeInput.selectionStart = activeInput.selectionEnd = start + char.length;
-        activeInput.dispatchEvent(new Event('input', { bubbles: true })); 
+        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
         activeInput.focus();
       };
 
-      // ĐÃ SỬA: Hàm del xử lý được việc xóa khi đang bôi đen và xóa lùi
       window.App.del = function () {
         if (!activeInput) return;
-        
         const start = activeInput.selectionStart;
         const end = activeInput.selectionEnd;
         const val = activeInput.value;
-
-        // Nếu đang chọn (bôi đen) -> Xóa phần chọn
         if (end > start) {
-            activeInput.value = val.substring(0, start) + val.substring(end);
-            activeInput.selectionStart = activeInput.selectionEnd = start;
+          activeInput.value = val.substring(0, start) + val.substring(end);
+          activeInput.selectionStart = activeInput.selectionEnd = start;
+        } else if (start > 0) {
+          activeInput.value = val.substring(0, start - 1) + val.substring(start);
+          activeInput.selectionStart = activeInput.selectionEnd = start - 1;
         }
-        // Nếu chỉ là con trỏ -> Xóa ký tự trước nó
-        else if (start > 0) {
-            activeInput.value = val.substring(0, start - 1) + val.substring(start);
-            activeInput.selectionStart = activeInput.selectionEnd = start - 1;
-        }
-
-        activeInput.dispatchEvent(new Event('input', { bubbles: true })); 
+        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
         activeInput.focus();
       };
 
-      window.App.enter = function () { 
-          if (!activeInput) return; 
-          activeInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); 
+      window.App.enter = function () {
+        if (!activeInput) return;
+        activeInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
       };
 
       document.addEventListener('focusin', function (e) {
         const el = e.target;
-        // Áp dụng cho cả text và number
-        if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'number')) { 
-            if (!el.classList.contains('no-keypad')) openKeypad(el); 
+        if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'number')) {
+          if (!el.classList.contains('no-keypad')) openKeypad(el);
         }
       });
 
       document.addEventListener('click', function (e) {
         const el = e.target;
-        if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'number')) { 
-            if (!keypad.classList.contains('open')) openKeypad(el); 
+        if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'number')) {
+          if (!keypad.classList.contains('open')) openKeypad(el);
         }
       });
 
-      window.addEventListener('load', function () { 
-          requestAnimationFrame(function () { document.body.style.opacity = '1'; }); 
+      window.addEventListener('load', function () {
+        requestAnimationFrame(function () { document.body.style.opacity = '1'; });
       });
     })();
   </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedTheme = localStorage.getItem('vec_theme');
+        
+        // 1. Áp dụng class Dark cho body
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark');
+            document.documentElement.classList.add('dark');
+        }
+
+        // 2. KỸ THUẬT DELAY: Chờ 0.1 giây để đảm bảo UI đã tải xong mới gạt nút
+        setTimeout(() => {
+            const toggle = document.getElementById('themeToggle');
+            if (toggle && savedTheme === 'dark') {
+                toggle.checked = true;
+            }
+            
+            // 3. Gắn sự kiện bấm nút an toàn
+            if (toggle) {
+                // Clone nút để xóa sạch các event cũ (tránh xung đột)
+                const newToggle = toggle.cloneNode(true);
+                toggle.parentNode.replaceChild(newToggle, toggle);
+                
+                // Gắn sự kiện mới
+                newToggle.addEventListener('change', function() {
+                    if (this.checked) {
+                        document.body.classList.add('dark');
+                        document.documentElement.classList.add('dark');
+                        localStorage.setItem('vec_theme', 'dark');
+                    } else {
+                        document.body.classList.remove('dark');
+                        document.documentElement.classList.remove('dark');
+                        localStorage.setItem('vec_theme', 'light');
+                    }
+                });
+                
+                // Đồng bộ lại lần cuối
+                if (savedTheme === 'dark') newToggle.checked = true;
+            }
+        }, 100); 
+    });
+  </script>
+
 </body>
 </html>

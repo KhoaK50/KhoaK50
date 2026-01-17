@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết kiến thức - Vectoria</title>
+    <link rel="stylesheet" href="../css/knowledge.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* CSS riêng cho trang chi tiết */
+        .content-wrapper { display: flex; gap: 30px; margin-top: 20px; }
+        .sidebar { width: 250px; flex-shrink: 0; background: #fff; padding: 15px; border-radius: 8px; height: fit-content; }
+        .main-article { flex-grow: 1; background: #fff; padding: 30px; border-radius: 8px; }
+        
+        .sidebar-menu a { display: block; padding: 10px; color: #333; text-decoration: none; border-bottom: 1px solid #eee; }
+        .sidebar-menu a:hover { color: #e67e22; padding-left: 15px; transition: 0.2s; }
+        
+        .video-container {
+            width: 100%; aspect-ratio: 16/9; background: #000; margin-bottom: 20px; border-radius: 8px; overflow: hidden;
+        }
+        .pdf-container {
+            width: 100%; height: 600px; border: 1px solid #ccc; margin-top: 20px;
+        }
+        h1 { color: #e67e22; margin-bottom: 20px; }
+        .breadcrumb { margin-bottom: 15px; color: #888; font-size: 0.9rem; }
+        .breadcrumb a { color: #333; text-decoration: none; }
+    </style>
+</head>
+<body>
+    
+    <header class="main-header">
+        <div class="container header-content">
+            <div class="logo"><a href="../knowledge_info.html"><i class="fa-solid fa-arrow-left"></i> Quay lại</a></div>
+        </div>
+    </header>
+
+    <div class="container content-wrapper">
+        
+        <aside class="sidebar">
+            <h3 style="margin-bottom: 15px; border-bottom: 2px solid #e67e22; padding-bottom: 5px;">Mục lục</h3>
+            <nav class="sidebar-menu">
+                <a href="#dinh-nghia">1. Định nghĩa</a>
+                <a href="#video-minh-hoa">2. Video minh họa (Manim)</a>
+                <a href="#tai-lieu">3. Tài liệu chi tiết (PDF)</a>
+                <a href="#bai-tap">4. Bài tập tự luyện</a>
+            </nav>
+        </aside>
+
+        <article class="main-article">
+            <div class="breadcrumb">
+                <a href="../knowledge_info.html">Kiến thức</a> / <span>Cơ sở và Số chiều</span>
+            </div>
+
+            <h1>Cơ sở và Số chiều của Không gian Vector</h1>
+            
+            <section id="dinh-nghia">
+                <h2>1. Định nghĩa</h2>
+                <p>Ở đây ông viết nội dung tóm tắt ngắn gọn. Ví dụ: Cơ sở của không gian vector V là một hệ vector độc lập tuyến tính và sinh ra V...</p>
+            </section>
+
+            <hr style="margin: 20px 0; border: 0; border-top: 1px dashed #ccc;">
+
+            <section id="video-minh-hoa">
+                <h2>2. Video Minh Họa (Manim)</h2>
+                <p>Xem video dưới đây để hiểu rõ hơn về concept hình học:</p>
+                
+                <div class="video-container">
+                    <video controls width="100%" height="100%">
+                        <source src="../assets/videos/basis_manim_demo.mp4" type="video/mp4">
+                        Trình duyệt của bạn không hỗ trợ video.
+                    </video>
+                </div>
+            </section>
+
+            <hr style="margin: 20px 0; border: 0; border-top: 1px dashed #ccc;">
+
+            <section id="tai-lieu">
+                <h2>3. Tài liệu chi tiết (PDF)</h2>
+                <p>Đọc tài liệu đầy đủ tại đây:</p>
+
+                <iframe src="../assets/docs/co_so_so_chieu.pdf" class="pdf-container"></iframe>
+            </section>
+
+        </article>
+    </div>
+
+</body>
+</html>

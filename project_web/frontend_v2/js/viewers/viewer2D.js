@@ -3,25 +3,25 @@
   window.Vec2D = window.Vec2D || {};
 
   const canvas2d = document.getElementById("canvas2d");
-  if (!canvas2d) return; 
-  
+  if (!canvas2d) return;
+
   const ctx2d = canvas2d.getContext("2d", { alpha: false });
 
   // ----- State (Giữ nguyên toàn bộ) -----
   Vec2D.S2D = {
-    pxPerUnit: 80, 
+    pxPerUnit: 80,
     offsetX: 0, offsetY: 0,
     isPanningOne: false, startX: 0, startY: 0, lastX: 0, lastY: 0,
     velX: 0, velY: 0, lastTime: 0, momentumId: null,
-    pointers: new Map(), lastCentroidX: null, lastCentroidY: null, lastDist: null, zoomVel: 0 
+    pointers: new Map(), lastCentroidX: null, lastCentroidY: null, lastDist: null, zoomVel: 0
   };
 
   Vec2D.gridInfo2D = null;
-  Vec2D._animLoopId = null; 
+  Vec2D._animLoopId = null;
 
   const VEC_STROKE_W = 3.2;
   const ARROW_HEAD = 14;
-  
+
   // [FUNKY PULSE CONFIG]
   const PULSE_SPEED = 0.005; // Tốc độ nhịp
   const PULSE_MIN_W = 6;     // Độ rộng min
@@ -42,7 +42,7 @@
     const App = window.App || {};
     Vec2D.resize2D();
     Vec2D.bind2DEvents();
-    if(canvas2d) canvas2d.style.touchAction = "none";
+    if (canvas2d) canvas2d.style.touchAction = "none";
     if (App.applyTheme) App.applyTheme();
 
     const viewerDiv = document.getElementById("viewer");
@@ -60,8 +60,8 @@
   Vec2D.show2D = function () {
     const canvas = document.getElementById("canvas2d");
     const threeLayer = document.getElementById("threeLayer");
-    if(canvas) canvas.style.display = "block";
-    if(threeLayer) threeLayer.style.display = "none";
+    if (canvas) canvas.style.display = "block";
+    if (threeLayer) threeLayer.style.display = "none";
 
     requestAnimationFrame(() => {
       Vec2D.resize2D();
@@ -169,15 +169,15 @@
 
       if (Vec2D.S2D.isPanningOne && n === 1) {
         if (e.shiftKey) {
-            const dy = e.clientY - Vec2D.S2D.lastY;
-            const factor = dy > 0 ? (1 + dy * 0.01) : (1 / (1 - dy * 0.01));
-            const rect = canvas2d.getBoundingClientRect();
-            const mx = e.clientX - rect.left;
-            const my = e.clientY - rect.top;
-            applyZoomAboutScreenPoint(mx, my, factor);
-            Vec2D.S2D.lastX = e.clientX; Vec2D.S2D.lastY = e.clientY;
-            Vec2D.S2D.lastTime = now;
-            return; 
+          const dy = e.clientY - Vec2D.S2D.lastY;
+          const factor = dy > 0 ? (1 + dy * 0.01) : (1 / (1 - dy * 0.01));
+          const rect = canvas2d.getBoundingClientRect();
+          const mx = e.clientX - rect.left;
+          const my = e.clientY - rect.top;
+          applyZoomAboutScreenPoint(mx, my, factor);
+          Vec2D.S2D.lastX = e.clientX; Vec2D.S2D.lastY = e.clientY;
+          Vec2D.S2D.lastTime = now;
+          return;
         }
         Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
         Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
@@ -195,7 +195,7 @@
       const n = Vec2D.S2D.pointers.size;
 
       if (n === 0) {
-        if(canvas2d.releasePointerCapture) canvas2d.releasePointerCapture(e.pointerId);
+        if (canvas2d.releasePointerCapture) canvas2d.releasePointerCapture(e.pointerId);
         canvas2d.style.cursor = "default";
         Vec2D.S2D.isPanningOne = false;
         Vec2D.S2D.lastCentroidX = Vec2D.S2D.lastCentroidY = null;
@@ -247,12 +247,12 @@
     canvas2d.addEventListener("pointerup", endPointer);
     canvas2d.addEventListener("pointercancel", endPointer);
     canvas2d.addEventListener("wheel", (e) => {
-        const rect = canvas2d.getBoundingClientRect();
-        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-        const factor = e.deltaY < 0 ? 1.18 : 1 / 1.18;
-        applyZoomAboutScreenPoint(mx, my, factor);
-        e.preventDefault();
-      }, { passive: false }
+      const rect = canvas2d.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const factor = e.deltaY < 0 ? 1.18 : 1 / 1.18;
+      applyZoomAboutScreenPoint(mx, my, factor);
+      e.preventDefault();
+    }, { passive: false }
     );
   };
 
@@ -264,11 +264,11 @@
     ctx2d.fillStyle = App.getCSS?.("--card") || "#111";
     ctx2d.fillRect(0, 0, w, h);
 
-    const targetPx = 70; 
-    const rawStep = targetPx / Math.max(1e-9, px); 
+    const targetPx = 70;
+    const rawStep = targetPx / Math.max(1e-9, px);
     const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
     const res = rawStep / mag;
-    let stepUnit = (res <= 1) ? 1*mag : (res <= 2 ? 2*mag : (res <= 5 ? 5*mag : 10*mag));
+    let stepUnit = (res <= 1) ? 1 * mag : (res <= 2 ? 2 * mag : (res <= 5 ? 5 * mag : 10 * mag));
     const tickPx = stepUnit * px;
     const subTickPx = tickPx / 5;
 
@@ -296,14 +296,14 @@
       const unitVal = k * stepUnit;
       if (Math.abs(unitVal) < 1e-9) continue;
       const x = cx + k * tickPx;
-      if(Math.abs(x - cx) > 15) ctx2d.fillText(parseFloat(unitVal.toPrecision(6)), x, cy + 6);
+      if (Math.abs(x - cx) > 15) ctx2d.fillText(parseFloat(unitVal.toPrecision(6)), x, cy + 6);
     }
     ctx2d.textAlign = "right"; ctx2d.textBaseline = "middle";
     for (let k = startKy; k <= endKy; k++) {
       const unitVal = k * stepUnit;
       if (Math.abs(unitVal) < 1e-9) continue;
       const y = cy - k * tickPx;
-      if(Math.abs(y - cy) > 15) ctx2d.fillText(parseFloat(unitVal.toPrecision(6)), cx - 8, y);
+      if (Math.abs(y - cy) > 15) ctx2d.fillText(parseFloat(unitVal.toPrecision(6)), cx - 8, y);
     }
     ctx2d.textAlign = "right"; ctx2d.textBaseline = "top"; ctx2d.fillText("0", cx - 6, cy + 6);
 
@@ -311,26 +311,33 @@
   };
 
   // --- [NEON PULSE EFFECT] ---
-  function draw2DVectorSingle(v, color, highlighted, alpha = 1, pulseFactor = 0) {
+  function draw2DVectorSingle(v, color, highlighted, alpha = 1, pulseFactor = 0, offset = [0, 0]) {
     alpha = Math.max(0, Math.min(1, Number(alpha) || 0));
     const { cx, cy, px } = Vec2D.gridInfo2D;
-    const x2 = cx + v[0] * px, y2 = cy - v[1] * px;
-    const angle = Math.atan2(y2 - cy, x2 - cx);
+    // Tính toán tọa độ gốc (đã cộng offset)
+    const startX = cx + offset[0] * px;
+    const startY = cy - offset[1] * px; // Trục Y canvas ngược chiều Math
+
+    // Tọa độ ngọn (cộng thêm vector v vào điểm gốc)
+    const x2 = startX + v[0] * px;
+    const y2 = startY - v[1] * px;
+
+    const angle = Math.atan2(y2 - startY, x2 - startX);
 
     if (highlighted) {
       ctx2d.save();
-      
+
       // Tính độ rộng và độ mờ theo nhịp xung
       const currentWidth = PULSE_MIN_W + (PULSE_MAX_W - PULSE_MIN_W) * pulseFactor;
-      const currentAlpha = (0.3 + 0.4 * (1 - pulseFactor)) * alpha; 
+      const currentAlpha = (0.3 + 0.4 * (1 - pulseFactor)) * alpha;
 
       // Hào quang
-      ctx2d.strokeStyle = PULSE_COLOR; 
+      ctx2d.strokeStyle = PULSE_COLOR;
       ctx2d.globalAlpha = currentAlpha;
       ctx2d.lineWidth = currentWidth;
       ctx2d.lineCap = "round";
-      ctx2d.beginPath(); ctx2d.moveTo(cx, cy); ctx2d.lineTo(x2, y2); ctx2d.stroke();
-      
+      ctx2d.beginPath(); ctx2d.moveTo(startX, startY); ctx2d.lineTo(x2, y2); ctx2d.stroke();
+
       const haloHead = ARROW_HEAD + currentWidth * 0.3;
       ctx2d.beginPath();
       ctx2d.moveTo(x2, y2);
@@ -347,9 +354,10 @@
     ctx2d.strokeStyle = color;
     ctx2d.lineWidth = VEC_STROKE_W;
     ctx2d.beginPath();
-    ctx2d.moveTo(cx, cy);
+    ctx2d.moveTo(startX, startY);
     ctx2d.lineTo(x2, y2);
     ctx2d.stroke();
+
     ctx2d.beginPath();
     ctx2d.moveTo(x2, y2);
     ctx2d.lineTo(x2 - ARROW_HEAD * Math.cos(angle - Math.PI / 6), y2 - ARROW_HEAD * Math.sin(angle - Math.PI / 6));
@@ -359,12 +367,77 @@
     ctx2d.restore();
   }
 
+  // --- HÀM VẼ ĐÈN PIN VÀ CHÙM SÁNG BAO TRÒN ---
+  function drawFlashlight2D(ghost) {
+    const { cx, cy, px } = Vec2D.gridInfo2D;
+
+    // Tọa độ pixel các đỉnh
+    const p1 = { x: cx + ghost.v1[0] * px, y: cy - ghost.v1[1] * px };
+    const pr = { x: cx + ghost.res[0] * px, y: cy - ghost.res[1] * px };
+
+    // Tính toán hướng
+    let dx = p1.x - pr.x, dy = p1.y - pr.y;
+    let dist = Math.hypot(dx, dy);
+    if (dist < 1) dist = 100;
+
+    const lampOffset = 160 * ghost.scale; // Đèn bay dần vào
+    const f = (dist + lampOffset) / dist;
+    const lx = pr.x + dx * f;
+    const ly = pr.y + dy * f;
+    const angle = Math.atan2(pr.y - ly, pr.x - lx);
+
+    // 1. Vẽ chùm sáng (Beam) - Hình nón bao trọn vector
+    if (ghost.beamOpacity > 0) {
+      ctx2d.save();
+      const beamLen = dist + lampOffset + 50;
+      const beamRadius = Math.max(100, Math.hypot(pr.x - cx, pr.y - cy) * 1.2);
+
+      ctx2d.translate(lx, ly);
+      ctx2d.rotate(angle);
+
+      const grad = ctx2d.createLinearGradient(0, 0, beamLen, 0);
+      grad.addColorStop(0, `rgba(255, 235, 59, ${0.4 * ghost.beamOpacity})`);
+      grad.addColorStop(1, "rgba(255, 235, 59, 0)");
+
+      ctx2d.fillStyle = grad;
+      ctx2d.beginPath();
+      ctx2d.moveTo(0, 0);
+      ctx2d.lineTo(beamLen, -beamRadius);
+      ctx2d.lineTo(beamLen, beamRadius);
+      ctx2d.closePath();
+      ctx2d.fill();
+      ctx2d.restore();
+    }
+
+    // 2. Vẽ cái đèn pin (SVG-like)
+    ctx2d.save();
+    ctx2d.translate(lx, ly);
+    ctx2d.rotate(angle);
+    ctx2d.scale(ghost.scale, ghost.scale);
+    ctx2d.globalAlpha = Math.min(1, ghost.scale * 2);
+
+    // Thân đèn
+    ctx2d.fillStyle = "#333";
+    ctx2d.fillRect(-60, -15, 60, 30);
+    // Đầu đèn
+    ctx2d.fillStyle = "#ffc107";
+    ctx2d.beginPath();
+    ctx2d.moveTo(0, -20); ctx2d.lineTo(30, -35); ctx2d.lineTo(30, 35); ctx2d.lineTo(0, 20);
+    ctx2d.fill();
+    // Mặt kính
+    ctx2d.fillStyle = "#fff";
+    ctx2d.beginPath();
+    ctx2d.ellipse(30, 0, 5, 35, 0, 0, Math.PI * 2);
+    ctx2d.fill();
+
+    ctx2d.restore();
+  }
   // --- VÒNG LẶP VẼ CHÍNH ---
   Vec2D.draw2DAllVectors = function () {
     const App = window.App || {};
     if (App.mode !== "2D") {
-        if (Vec2D._animLoopId) { cancelAnimationFrame(Vec2D._animLoopId); Vec2D._animLoopId = null; }
-        return;
+      if (Vec2D._animLoopId) { cancelAnimationFrame(Vec2D._animLoopId); Vec2D._animLoopId = null; }
+      return;
     }
 
     const time = Date.now() * PULSE_SPEED;
@@ -384,10 +457,41 @@
     list.sort((a, b) => (a.focus ? 1 : 0) - (b.focus ? 1 : 0)); // Focus vẽ sau
 
     for (const it of list) {
-        const v2 = toVec2(it.vec);
-        let alpha = (typeof it.alpha === "number") ? it.alpha : 1;
-        if (hasFocus && !it.focus) alpha *= 0.15; // Mờ đi
-        draw2DVectorSingle(v2, it.colorCss, !!it.focus, alpha, pulseFactor);
+      const v2 = toVec2(it.vec);
+      let alpha = (typeof it.alpha === "number") ? it.alpha : 1;
+      if (hasFocus && !it.focus) alpha *= 0.15; // Mờ đi
+      draw2DVectorSingle(v2, it.colorCss, !!it.focus, alpha, pulseFactor, [0, 0]);
+    }
+    if (App.tempGhosts && Array.isArray(App.tempGhosts)) {
+      for (const g of App.tempGhosts) {
+        if (g.isFlashlight) {
+          // [QUAN TRỌNG] Nếu là đèn pin thì gọi hàm vẽ riêng
+          drawFlashlight2D(g);
+
+          // Vẽ thêm cái bóng đen (Vector kết quả màu đen)
+          const vRes = toVec2(g.res);
+          draw2DVectorSingle(vRes, "#000000", false, g.shadowAlpha, 0, [0, 0]);
+        }
+        else if (g.isNormalize) {
+          const { cx, cy, px } = Vec2D.gridInfo2D;
+          // 1. Vẽ vòng kim cô (Đường tròn đơn vị)
+          ctx2d.save();
+          ctx2d.beginPath();
+          ctx2d.arc(cx, cy, 1 * px, 0, Math.PI * 2);
+          ctx2d.strokeStyle = `rgba(0, 255, 255, ${g.unitCircleAlpha})`;
+          ctx2d.setLineDash([5, 5]); // Nét đứt cho "ngầu"
+          ctx2d.lineWidth = 2;
+          ctx2d.stroke();
+          ctx2d.restore();
+
+          // 2. Vẽ vector ảo đang co dãn (headGlow > 0.4 sẽ bật neon)
+          draw2DVectorSingle(g.vec, g.colorCss, g.headGlow > 0.4, g.alpha, g.headGlow, [0, 0]);
+        }
+        else {
+          // Vẽ các ghost bình thường (như phép cộng)
+          draw2DVectorSingle(g.vec, g.colorCss, false, g.alpha, 0, g.offset || [0, 0]);
+        }
+      }
     }
 
     if (App.currentAngleVisual2D) _drawAngleArc2DOverlay(App.currentAngleVisual2D);
@@ -417,7 +521,7 @@
     const { w, h } = getLogicalSize();
     const angA = Math.atan2(-a[1], a[0]);
     const angB = Math.atan2(-b[1], b[0]);
-    const normPi = (x) => { while (x <= -Math.PI) x += 2*Math.PI; while (x > Math.PI) x -= 2*Math.PI; return x; };
+    const normPi = (x) => { while (x <= -Math.PI) x += 2 * Math.PI; while (x > Math.PI) x -= 2 * Math.PI; return x; };
     const delta = normPi(angB - angA);
     const anticlockwise = delta < 0;
     const r = Math.min(w, h) * 0.18;

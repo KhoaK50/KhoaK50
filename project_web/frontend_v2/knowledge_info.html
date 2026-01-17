@@ -1,23 +1,128 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Vectoria - Thông tin kiến thức</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kho Tàng Kiến Thức - Vectoria Knowledge</title>
+    <link rel="stylesheet" href="css/knowledge.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <main>
-    <div class="content">
-      <h1>CHƯA CÓ NỘI DUNG</h1>
-      <p>
-        
-      </p>
-      
+
+    <div class="theme-transition-icons">
+        <i class="fa-solid fa-sun" id="sunIcon"></i>
+        <i class="fa-solid fa-moon" id="moonIcon"></i>
     </div>
-  </main>
-  <footer>
-    © 2025 Vectoria. Học và trực quan hóa Không gian vector.
-  </footer>
+    <header class="main-header">
+        <div class="container header-flex">
+            
+            <div class="logo" style="flex-grow: 1; display: flex; justify-content: center;">
+                <a href="index.html">
+                    <i class="fa-solid fa-shapes"></i> Vectoria Knowledge
+                </a>
+            </div>
+
+            <div class="settings-container">
+                <button id="btnSettings" class="icon-btn" title="Cài đặt giao diện">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+                
+                <div class="settings-dropdown" id="settingsDropdown">
+                    <div class="setting-item">
+                        <span><i class="fa-solid fa-moon"></i> Chế độ tối</span>
+                        <label class="switch">
+                            <input type="checkbox" id="themeToggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <section class="hero-banner">
+        <div class="container">
+            <h1>Đại Số Tuyến Tính - Trực Quan Hóa Không Gian Vector</h1>
+            <p>Hệ thống lý thuyết, video minh họa Manim và công cụ tính toán hỗ trợ học tập.</p>
+        </div>
+    </section>
+
+    <main class="container main-content">
+        <h2 class="section-heading">Chủ đề học tập</h2>
+        <div class="topic-grid">
+            <a href="topics/overview.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-book-open"></i></div><h3>Tổng quan Không gian Vector</h3><p>Định nghĩa, tính chất, không gian con và các ví dụ cơ bản.</p></a>
+            <a href="topics/linear_independence.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-diagram-project"></i></div><h3>Độc lập và Phụ thuộc tuyến tính</h3><p>Khái niệm cốt lõi, cách xét tính độc lập của hệ vector.</p></a>
+            <a href="topics/basis_dimension.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-cube"></i></div><h3>Cơ sở và Số chiều</h3><p>Hệ sinh, cơ sở (Basis), số chiều (Dimension) và cách tìm.</p></a>
+            <a href="topics/rank.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-layer-group"></i></div><h3>Hạng của hệ Vector</h3><p>Khái niệm Rank, ma trận bậc thang và ứng dụng.</p></a>
+            <a href="topics/coordinates.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-crosshairs"></i></div><h3>Tọa độ theo Cơ sở</h3><p>Biểu diễn vector qua cơ sở, ma trận chuyển cơ sở.</p></a>
+            <a href="topics/videos.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-circle-play"></i></div><h3>Thư viện Video Manim</h3><p>Tổng hợp các video hoạt họa toán học trực quan sinh động.</p></a>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <p>© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnSettings = document.getElementById('btnSettings');
+            const dropdown = document.getElementById('settingsDropdown');
+            const themeToggle = document.getElementById('themeToggle');
+            const body = document.body;
+            const sunIcon = document.getElementById('sunIcon');
+            const moonIcon = document.getElementById('moonIcon');
+
+            // 1. Hàm kích hoạt animation
+            function triggerThemeAnimation(isDark) {
+                // Reset class animation cũ (nếu có) để có thể chạy lại
+                sunIcon.classList.remove('animate-rise-fade');
+                moonIcon.classList.remove('animate-rise-fade');
+                
+                // Thủ thuật buộc trình duyệt render lại để reset animation
+                void sunIcon.offsetWidth; 
+
+                if (isDark) {
+                    // Chuyển sang Tối -> Mặt Trăng mọc lên rồi tan biến
+                    moonIcon.classList.add('animate-rise-fade');
+                } else {
+                    // Chuyển sang Sáng -> Mặt Trời mọc lên rồi tan biến
+                    sunIcon.classList.add('animate-rise-fade');
+                }
+            }
+
+            // 2. Kiểm tra trạng thái cũ
+            const savedTheme = localStorage.getItem('vectoria-theme');
+            if (savedTheme === 'dark') {
+                body.classList.add('dark-mode');
+                themeToggle.checked = true;
+            }
+
+            // 3. Bật/Tắt menu settings
+            btnSettings.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('show');
+            });
+            document.addEventListener('click', (e) => {
+                if (!dropdown.contains(e.target) && e.target !== btnSettings) {
+                    dropdown.classList.remove('show');
+                }
+            });
+
+            // 4. Sự kiện chuyển đổi (Sửa lại để gọi animation)
+            themeToggle.addEventListener('change', () => {
+                if (themeToggle.checked) {
+                    body.classList.add('dark-mode');
+                    localStorage.setItem('vectoria-theme', 'dark');
+                    triggerThemeAnimation(true); // Gọi animation Mặt Trăng
+                } else {
+                    body.classList.remove('dark-mode');
+                    localStorage.setItem('vectoria-theme', 'light');
+                    triggerThemeAnimation(false); // Gọi animation Mặt Trời
+                }
+            });
+        });
+    </script>
+
 </body>
 </html>
