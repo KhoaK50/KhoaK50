@@ -11,14 +11,14 @@ contact_bp = Blueprint('contact', __name__)
 # --- CẤU HÌNH (Sửa lại đoạn này) ---
 
 # Thay vì viết thẳng email, hãy bảo nó lấy từ biến MAIL_USERNAME trên Render
-SMTP_EMAIL = os.environ.get("MAIL_USERNAME") 
+SMTP_EMAIL = os.environ.get("SMTP_EMAIL") 
 
 # Lấy mật khẩu từ biến MAIL_PASSWORD trên Render
-SMTP_PASSWORD = os.environ.get("MAIL_PASSWORD")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
 
 RECEIVERS = [
     "minhhuy42work@gmail.com",
-    os.environ.get("MAIL_USERNAME") # Gửi về cho chính mình luôn
+    os.environ.get("SMTP_EMAIL") # Gửi về cho chính mình luôn
 ]
 
 def init_feedback_db():
