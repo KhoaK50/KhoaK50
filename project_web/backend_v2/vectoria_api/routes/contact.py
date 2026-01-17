@@ -8,21 +8,20 @@ from flask import Blueprint, request, jsonify
 # Tạo Blueprint
 contact_bp = Blueprint('contact', __name__)
 
-# --- CẤU HÌNH (Sửa lại đoạn này) ---
-
-# Thay vì viết thẳng email, hãy bảo nó lấy từ biến MAIL_USERNAME trên Render
+# --- CẤU HÌNH ---
+# Lấy từ Environment Variables trên Render
 SMTP_EMAIL = os.environ.get("SMTP_EMAIL") 
-
-# Lấy mật khẩu từ biến MAIL_PASSWORD trên Render
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
 
-RECEIVERS = [
-    "minhhuy42work@gmail.com",
-    os.environ.get("SMTP_EMAIL") # Gửi về cho chính mình luôn
-]
+# Danh sách nhận tin
+# Lưu ý: RECEIVERS cần được định nghĩa bên trong hoặc sau khi đã lấy SMTP_EMAIL
+def get_receivers():
+    return [
+        "minhhuy42work@gmail.com",
+        os.environ.get("SMTP_EMAIL")
+    ]
 
 def init_feedback_db():
-    """Hàm này sẽ được gọi bên app.py khi khởi động"""
     try:
         conn = sqlite3.connect('feedback.db')
         c = conn.cursor()
@@ -52,6 +51,7 @@ def handle_contact():
             conn.commit()
 
         # B. GỬI MAIL
+        receivers = get_receivers()
         try:
             subject = f"🔔 [Góp Ý Mới] Từ {name} - Vectoria"
             body = f"""
@@ -64,21 +64,24 @@ def handle_contact():
             📝 Nội dung:
             {message}
             -----------------------------------------
-            (Tin nhắn tự động gửi đến: {', '.join(RECEIVERS)})
             """
             
             msg = MIMEText(body, 'plain', 'utf-8')
             msg['Subject'] = subject
             msg['From'] = SMTP_EMAIL
-            msg['To'] = ", ".join(RECEIVERS)
+            msg['To'] = ", ".join(receivers)
 
-            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            # --- SỬA ĐOẠN KẾT NỐI Ở ĐÂY ---
+            # Dùng cổng 587 và .starttls() để bảo mật hơn trên Render
+            with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                server.starttls()  # Kích hoạt bảo mật TLS
                 server.login(SMTP_EMAIL, SMTP_PASSWORD)
-                server.sendmail(SMTP_EMAIL, RECEIVERS, msg.as_string())
+                server.sendmail(SMTP_EMAIL, receivers, msg.as_string())
             
-            print(f">> [Email] Đã gửi mail thành công cho {len(RECEIVERS)} người.")
+            print(f">> [Email] Đã gửi mail thành công cho {len(receivers)} người.")
 
         except Exception as e_mail:
+            # Nếu lỗi, log này sẽ hiện trên tab Logs của Render
             print(f">> [Email Error] Gửi mail thất bại: {e_mail}")
 
         return jsonify({"status": "success", "message": "Cảm ơn! Góp ý đã được gửi."}), 200
