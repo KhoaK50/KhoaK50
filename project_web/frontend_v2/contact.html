@@ -305,6 +305,7 @@
 
         body.dark .toast-text h4 {
             color: #eee;
+            color: #eee;
         }
 
         body.dark .toast-text p {
@@ -381,16 +382,22 @@
     </div>
 
     <div id="math-canvas-container"></div>
-    <script src="js/app/api/endpoints.js"></script>
+    
     <script>
+        // --- 1. CẤU HÌNH ĐỊA CHỈ BACKEND (Nhúng trực tiếp để không bị lỗi 404 file JS) ---
+        window.App = window.App || {};
+        if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
+            App.API_BASE = "http://127.0.0.1:5000";
+        } else {
+            App.API_BASE = "https://visualization-rr5v.onrender.com";
+        }
+        console.log(">> Backend URL hiện tại:", App.API_BASE);
+
+        // --- 2. XỬ LÝ UI ---
         const savedTheme = localStorage.getItem('vec_theme');
         if (savedTheme === 'dark') document.body.classList.add('dark');
 
-        // =========================================================
-        // CẤU HÌNH THỜI GIAN POPUP (10 GIÂY)
-        // =========================================================
         const POPUP_TIME = 3000;
-        // =========================================================
 
         document.getElementById('contactForm').addEventListener('submit', function (e) {
             e.preventDefault();
@@ -399,28 +406,23 @@
             const popup = document.getElementById('static-toast');
             const bar = document.querySelector('.toast-bar');
 
-            // 1. UI FIRST: Disable nút ngay
+            // 1. Disable nút ngay
             btn.disabled = true;
             btn.style.background = '#2ecc71';
             btn.innerHTML = '<i class="fa-solid fa-check"></i> Đang chờ gửi...';
 
-            // 2. CẤU HÌNH THANH BAR CHẠY ĐÚNG THỜI GIAN POPUP
+            // 2. Chạy thanh loading giả lập cho đẹp
             bar.style.transition = `width ${POPUP_TIME}ms linear`;
-
-            // 3. HIỆN POPUP VÀ CHẠY THANH BAR
             requestAnimationFrame(() => {
                 popup.classList.add('show');
-                // Set width 100% để thanh bar bắt đầu chạy
                 requestAnimationFrame(() => {
                     bar.style.width = '100%';
                 });
             });
 
-            // 4. ĐÚNG HẾT GIỜ (POPUP_TIME) MỚI BẮT ĐẦU GỬI DỮ LIỆU
+            // 3. Đợi hết thanh loading (POPUP_TIME) thì mới gửi thật
             setTimeout(() => {
-
-                // Ẩn Popup
-                popup.classList.remove('show');
+                popup.classList.remove('show'); // Ẩn popup loading
 
                 // Thu thập dữ liệu
                 const payload = {
@@ -429,7 +431,6 @@
                     message: document.getElementById('message').value
                 };
 
-                // --- GỬI ĐI ---
                 console.log(">> Bắt đầu gửi dữ liệu...");
 
                 fetch(`${App.API_BASE}/api/contact`, { 
@@ -438,13 +439,12 @@
                     body: JSON.stringify(payload)
                 })
                 .then(async response => {
-                    // QUAN TRỌNG: Kiểm tra xem server có trả về OK (200) không
+                    // Kiểm tra xem Server có trả về OK (200) không
                     if (!response.ok) {
-                        // Nếu lỗi (500, 404, 504...), lấy nội dung lỗi ra xem
                         const errText = await response.text();
+                        // Ném lỗi xuống catch
                         throw new Error(`Server báo lỗi: ${response.status} - ${errText}`);
                     }
-                    // Nếu thành công thật sự
                     return response.json();
                 })
                 .then(data => {
@@ -453,22 +453,23 @@
                     window.location.href = 'calculation.html';
                 })
                 .catch(err => {
-                    // Hiện lỗi ra mặt tiền cho ông thấy
                     console.error(">> Lỗi to đùng:", err);
-                    alert("Lỗi rồi ông ơi: " + err.message);
+                    alert("Lỗi kết nối: " + err.message);
                     
-                    // UI: Mở lại nút gửi để thử lại
-                    const btn = document.getElementById('btnSubmit');
+                    // Reset lại nút để gửi lại
                     btn.disabled = false;
                     btn.innerHTML = '<span>Gửi lại đi</span> <i class="fa-solid fa-paper-plane"></i>';
-                    btn.style.background = ''; // Trả lại màu cũ
+                    btn.style.background = ''; 
+                    
+                    // Reset thanh loading
+                    bar.style.width = '0%';
+                    bar.style.transition = 'none';
                 });
-            }, POPUP_TIME);
 
+            }, POPUP_TIME);
         });
 
-
-        // Math Background
+        // --- 3. MATH BACKGROUND (Hiệu ứng nền) ---
         const CONFIG = { count: 25, speed: 0.6, repelRadius: 160, repelForce: 6 };
         const icons = ['<i class="fa-solid fa-cube"></i>', '<i class="fa-solid fa-shapes"></i>', '<i class="fa-solid fa-draw-polygon"></i>', '<i class="fa-solid fa-vector-square"></i>', '<i class="fa-solid fa-layer-group"></i>', '<i class="fa-solid fa-compass-drafting"></i>', '<i class="fa-solid fa-square-root-variable"></i>', '<i class="fa-solid fa-percent"></i>', '<i class="fa-solid fa-divide"></i>', '<i class="fa-solid fa-infinity"></i>', '<i class="fa-solid fa-equals"></i>', '<i class="fa-solid fa-less-than-equal"></i>', '<i class="fa-solid fa-calculator"></i>', '<span style="font-family: serif;">&pi;</span>', '<span style="font-family: serif;">&Sigma;</span>', '<span style="font-family: serif;">&int;</span>', '<span style="font-family: serif;">&oint;</span>', '<span style="font-family: serif;">&Delta;</span>', '<span style="font-family: serif;">&nabla;</span>', '<span style="font-family: serif;">&angle;</span>', '<span style="font-family: serif;">&forall;</span>'];
         const container = document.getElementById('math-canvas-container');
@@ -477,7 +478,8 @@
             constructor() {
                 this.element = document.createElement('div'); this.element.className = 'math-item';
                 this.element.innerHTML = icons[Math.floor(Math.random() * icons.length)];
-                this.x = Math.random() * window.innerWidth; this.y = Math.random() * window.innerHeight;
+                this.element.x = Math.random() * window.innerWidth; this.element.y = Math.random() * window.innerHeight;
+                this.x = this.element.x; this.y = this.element.y; // Fix context
                 this.vx = (Math.random() - 0.5) * CONFIG.speed; this.vy = (Math.random() - 0.5) * CONFIG.speed;
                 this.size = Math.random() * 25 + 25; this.element.style.fontSize = `${this.size}px`;
                 container.appendChild(this.element);
