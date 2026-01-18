@@ -431,39 +431,20 @@
 
                 // --- GỬI ĐI ---
                 console.log(">> Bắt đầu gửi dữ liệu...");
-
-                // Tự nhận backend theo môi trường
-                const API_BASE =
-                    location.hostname === 'localhost'
-                        ? 'http://localhost:5000'
-                        : 'https://visualization-rr5v.onrender.com';
-                
-                fetch(`${API_BASE}/api/contact`, {
+                fetch('https://visualization-rr5v.onrender.com/api/contact', { // Đổi thành link backend
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                })
-                .then(res => {
-                    if (!res.ok) throw new Error("HTTP error");
-                    return res.json();
-                })
-                .then(data => {
-                    console.log(">> Backend trả về:", data);
-                
-                    if (data.status === 'success') {
-                        console.log(">> Gửi thành công");
-                        window.location.href = 'calculation.html';
-                    } else {
-                        console.error(">> Backend báo lỗi");
-                        alert("Gửi thất bại, vui lòng thử lại");
-                        btn.disabled = false;
-                    }
-                })
-                .catch(err => {
-                    console.error(">> Lỗi mạng:", err);
-                    alert("Không kết nối được server");
-                    btn.disabled = false;
+                }).then(() => {
+                    console.log(">> Gửi thành công");
+                    // Gửi xong thì chuyển trang
+                    window.location.href = 'calculation.html';
+                }).catch(() => {
+                    console.log(">> Lỗi mạng (Vẫn chuyển trang)");
+                    window.location.href = 'calculation.html';
                 });
+
+            }, POPUP_TIME);
 
         });
 
