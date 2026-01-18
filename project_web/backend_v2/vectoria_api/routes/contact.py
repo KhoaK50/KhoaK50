@@ -72,9 +72,10 @@ def handle_contact():
             msg['From'] = SMTP_EMAIL
             msg['To'] = ", ".join(RECEIVERS)
 
-            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                server.starttls()  # Bước này cực quan trọng để mã hóa đường truyền
                 server.login(SMTP_EMAIL, SMTP_PASSWORD)
-                server.sendmail(SMTP_EMAIL, RECEIVERS, msg.as_string())
+                server.sendmail(SMTP_EMAIL, receivers, msg.as_string())
             
             print(f">> [Email] Đã gửi mail thành công cho {len(RECEIVERS)} người.")
 
