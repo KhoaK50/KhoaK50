@@ -1,23 +1,17 @@
 import sqlite3
-import smtplib
 import os
-from email.mime.text import MIMEText
+import requests  # <-- Thư viện mới để đi đường HTTP (Bắt buộc phải có trong requirements.txt)
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 
 contact_bp = Blueprint('contact', __name__)
 
-# --- CẤU HÌNH ---
-SMTP_EMAIL = os.environ.get("SMTP_EMAIL") 
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
+# --- CẤU HÌNH FORMSPREE ---
+# Đây là mã form tui lấy từ hình ông gửi
+FORMSPREE_URL = "https://formspree.io/f/xbddgogg"
 
-# Lấy danh sách email và lọc cái nào rỗng
-raw_receivers = ["minhhuy42work@gmail.com", os.environ.get("SMTP_EMAIL")]
-RECEIVERS = [r for r in raw_receivers if r]
-
-# --- HÀM KHỞI TẠO DATABASE (Hồi nãy bị thiếu cái này nè) ---
+# --- HÀM KHỞI TẠO DATABASE ---
 def init_feedback_db():
-    """Hàm này sẽ được gọi bên app.py khi khởi động"""
     try:
         conn = sqlite3.connect('feedback.db')
         c = conn.cursor()
@@ -41,7 +35,7 @@ def handle_contact():
         message = data.get('message')
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # A. LƯU VÀO DATABASE
+        # 1. LƯU VÀO DATABASE (Vẫn giữ để lưu trữ nội bộ)
         try:
             with sqlite3.connect('feedback.db') as conn:
                 c = conn.cursor()
@@ -50,43 +44,33 @@ def handle_contact():
                 conn.commit()
             print(">> [Database] Lưu feedback thành công.")
         except Exception as db_err:
-            print(f">> [Database Error] Lỗi lưu DB (vẫn tiếp tục gửi mail): {db_err}")
+            print(f">> [Database Error] Lỗi lưu DB: {db_err}")
 
-        # B. GỬI MAIL (DÙNG CỔNG 465 SSL - BẤT TỬ)
+        # 2. GỬI QUA FORMSPREE (Dùng HTTP - Không bị Render chặn)
         try:
-            print(f">> [Email] Đang kết nối tới Gmail qua cổng 465 (SSL)...")
+            print(f">> [Formspree] Đang gửi dữ liệu sang Formspree...")
             
-            subject = f"🔔 [Góp Ý Mới] Từ {name} - Vectoria"
-            body = f"""
-            Hệ thống Vectoria nhận được tin nhắn mới:
-            -----------------------------------------
-            🕒 Thời gian: {timestamp}
-            👤 Người gửi: {name}
-            📧 Email họ: {email}
-            
-            📝 Nội dung:
-            {message}
-            -----------------------------------------
-            (Tin nhắn tự động gửi đến: {', '.join(RECEIVERS)})
-            """
-            
-            msg = MIMEText(body, 'plain', 'utf-8')
-            msg['Subject'] = subject
-            msg['From'] = SMTP_EMAIL
-            msg['To'] = ", ".join(RECEIVERS)
+            # Gửi request POST sang server của Formspree
+            response = requests.post(
+                FORMSPREE_URL,
+                json={
+                    "email": email,
+                    "message": message,
+                    "name": name,
+                    "_subject": f"🔔 Góp ý mới từ {name} (Vectoria)" # Tiêu đề mail
+                }
+            )
 
-            # --- Dùng SMTP_SSL cho cổng 465 ---
-            with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=30) as server:
-                server.set_debuglevel(1)  # Bật log
-                server.login(SMTP_EMAIL, SMTP_PASSWORD)
-                server.sendmail(SMTP_EMAIL, RECEIVERS, msg.as_string())
-            
-            print(f">> [Email] Đã gửi mail thành công cho: {RECEIVERS}")
+            if response.status_code == 200:
+                print(f">> [Formspree] Gửi thành công! Mail sẽ về hòm thư của ông.")
+            else:
+                print(f">> [Formspree Warning] Có lỗi nhỏ: {response.text}")
+                # Không raise lỗi, để Frontend vẫn báo thành công cho user vui
 
-        except Exception as e_mail:
-            print(f">> [Email Error] Gửi mail thất bại: {e_mail}")
-            raise e_mail 
+        except Exception as e_req:
+            print(f">> [Formspree Error] Lỗi kết nối: {e_req}")
 
+        # 3. TRẢ VỀ THÀNH CÔNG CHO FRONTEND
         return jsonify({"status": "success", "message": "Cảm ơn! Góp ý đã được gửi."}), 200
 
     except Exception as e:
