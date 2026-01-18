@@ -6,8 +6,9 @@ from vectoria_api.config import ALLOWED_ORIGINS
 def attach_cors_middleware(app):
     @app.before_request
     def _cors_preflight():
+        # Preflight cho mọi /api/*
         if request.method == "OPTIONS" and request.path.startswith("/api/"):
-            resp = app.make_response(("", 200))
+            resp = app.make_response(("OK", 200))
             return _corsify(resp)
 
     @app.after_request
@@ -22,6 +23,5 @@ def _corsify(resp):
         resp.headers["Vary"] = "Origin"
         resp.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
         resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
-        resp.headers["Access-Control-Allow-Credentials"] = "true"
         resp.headers["Access-Control-Max-Age"] = "3600"
     return resp
