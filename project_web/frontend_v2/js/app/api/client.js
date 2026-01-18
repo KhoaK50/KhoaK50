@@ -19,7 +19,7 @@
       App.log(`Không gọi được /api/health — ${e}`);
       // THAY ALERT BẰNG TOAST
       if (typeof App.showToast === 'function') {
-          App.showToast("Không kết nối được Backend (127.0.0.1:5000). Kiểm tra lại server nhé!", "error");
+          App.showToast(`Không kết nối được Backend tại ${App.API_BASE}. Đang khởi động lại server, vui lòng đợi xíu nhé!`, "error");
       } else {
           console.warn("Backend error: " + e.message);
       }
