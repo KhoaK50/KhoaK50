@@ -431,19 +431,38 @@
 
                 // --- GỬI ĐI ---
                 console.log(">> Bắt đầu gửi dữ liệu...");
+
                 fetch(`${App.API_BASE}/api/contact`, { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }).then(() => {
-                    console.log(">> Gửi thành công");
-                    // Gửi xong thì chuyển trang
+                })
+                .then(async response => {
+                    // QUAN TRỌNG: Kiểm tra xem server có trả về OK (200) không
+                    if (!response.ok) {
+                        // Nếu lỗi (500, 404, 504...), lấy nội dung lỗi ra xem
+                        const errText = await response.text();
+                        throw new Error(`Server báo lỗi: ${response.status} - ${errText}`);
+                    }
+                    // Nếu thành công thật sự
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(">> Gửi thành công:", data);
+                    alert("Gửi thành công! Giờ mới chuyển trang nè.");
                     window.location.href = 'calculation.html';
-                }).catch(() => {
-                    console.log(">> Lỗi mạng (Vẫn chuyển trang)");
-                    window.location.href = 'calculation.html';
+                })
+                .catch(err => {
+                    // Hiện lỗi ra mặt tiền cho ông thấy
+                    console.error(">> Lỗi to đùng:", err);
+                    alert("Lỗi rồi ông ơi: " + err.message);
+                    
+                    // UI: Mở lại nút gửi để thử lại
+                    const btn = document.getElementById('btnSubmit');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Gửi lại đi</span> <i class="fa-solid fa-paper-plane"></i>';
+                    btn.style.background = ''; // Trả lại màu cũ
                 });
-
             }, POPUP_TIME);
 
         });
