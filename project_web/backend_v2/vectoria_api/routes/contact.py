@@ -15,6 +15,22 @@ SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
 raw_receivers = ["minhhuy42work@gmail.com", os.environ.get("SMTP_EMAIL")]
 RECEIVERS = [r for r in raw_receivers if r]
 
+# --- HÀM KHỞI TẠO DATABASE (Hồi nãy bị thiếu cái này nè) ---
+def init_feedback_db():
+    """Hàm này sẽ được gọi bên app.py khi khởi động"""
+    try:
+        conn = sqlite3.connect('feedback.db')
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS feedbacks 
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                      name TEXT, email TEXT, message TEXT, created_at TEXT)''')
+        conn.commit()
+        conn.close()
+        print(">> [Database] Đã kiểm tra/khởi tạo feedback.db thành công.")
+    except Exception as e:
+        print(f">> [Database Error] Không thể tạo DB: {e}")
+
+# --- API XỬ LÝ CONTACT ---
 @contact_bp.route('/api/contact', methods=['POST'])
 def handle_contact():
     try:
@@ -29,9 +45,6 @@ def handle_contact():
         try:
             with sqlite3.connect('feedback.db') as conn:
                 c = conn.cursor()
-                c.execute('''CREATE TABLE IF NOT EXISTS feedbacks 
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                      name TEXT, email TEXT, message TEXT, created_at TEXT)''')
                 c.execute("INSERT INTO feedbacks (name, email, message, created_at) VALUES (?, ?, ?, ?)",
                           (name, email, message, timestamp))
                 conn.commit()
@@ -39,7 +52,7 @@ def handle_contact():
         except Exception as db_err:
             print(f">> [Database Error] Lỗi lưu DB (vẫn tiếp tục gửi mail): {db_err}")
 
-        # B. GỬI MAIL (CHUYỂN SANG CỔNG 465 SSL)
+        # B. GỬI MAIL (DÙNG CỔNG 465 SSL - BẤT TỬ)
         try:
             print(f">> [Email] Đang kết nối tới Gmail qua cổng 465 (SSL)...")
             
@@ -62,15 +75,9 @@ def handle_contact():
             msg['From'] = SMTP_EMAIL
             msg['To'] = ", ".join(RECEIVERS)
 
-            # --- SỬA ĐỔI QUAN TRỌNG NHẤT ---
-            # 1. Dùng SMTP_SSL thay vì SMTP thường
-            # 2. Dùng cổng 465 (Cổng 587 đang bị Render chặn)
+            # --- Dùng SMTP_SSL cho cổng 465 ---
             with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=30) as server:
-                server.set_debuglevel(1)  # Bật log xem quá trình gửi
-                
-                # LƯU Ý: Tuyệt đối KHÔNG dùng server.starttls() ở cổng 465
-                # Vì cổng này đã mặc định là SSL rồi.
-                
+                server.set_debuglevel(1)  # Bật log
                 server.login(SMTP_EMAIL, SMTP_PASSWORD)
                 server.sendmail(SMTP_EMAIL, RECEIVERS, msg.as_string())
             
