@@ -8,18 +8,21 @@ from flask import Blueprint, request, jsonify
 # Tạo Blueprint
 contact_bp = Blueprint('contact', __name__)
 
-# --- CẤU HÌNH ---
-# Lấy từ Environment Variables trên Render
+# --- CẤU HÌNH (Sửa lại đoạn này) ---
+
+# Thay vì viết thẳng email, hãy bảo nó lấy từ biến MAIL_USERNAME trên Render
 SMTP_EMAIL = os.environ.get("SMTP_EMAIL") 
+
+# Lấy mật khẩu từ biến MAIL_PASSWORD trên Render
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
 
-def get_receivers():
-    return [
-        "minhhuy42work@gmail.com",
-        os.environ.get("SMTP_EMAIL")
-    ]
+RECEIVERS = [
+    "minhhuy42work@gmail.com",
+    os.environ.get("SMTP_EMAIL") # Gửi về cho chính mình luôn
+]
 
 def init_feedback_db():
+    """Hàm này sẽ được gọi bên app.py khi khởi động"""
     try:
         conn = sqlite3.connect('feedback.db')
         c = conn.cursor()
@@ -35,11 +38,6 @@ def init_feedback_db():
 @contact_bp.route('/api/contact', methods=['POST'])
 def handle_contact():
     try:
-        # 1. Kiểm tra biến môi trường có tồn tại không
-        if not SMTP_EMAIL or not SMTP_PASSWORD:
-            print(">> [BÁO ĐỘNG] Thiếu SMTP_EMAIL hoặc SMTP_PASSWORD trên Render Environment!")
-            return jsonify({"status": "error", "message": "Cấu hình Server chưa hoàn tất"}), 500
-
         data = request.json
         name = data.get('user_name')
         email = data.get('user_email')
@@ -54,34 +52,37 @@ def handle_contact():
             conn.commit()
 
         # B. GỬI MAIL
-        receivers = get_receivers()
         try:
             subject = f"🔔 [Góp Ý Mới] Từ {name} - Vectoria"
-            body = f"Người gửi: {name}\nEmail: {email}\nNội dung: {message}"
+            body = f"""
+            Hệ thống Vectoria nhận được tin nhắn mới:
+            -----------------------------------------
+            🕒 Thời gian: {timestamp}
+            👤 Người gửi: {name}
+            📧 Email họ: {email}
+            
+            📝 Nội dung:
+            {message}
+            -----------------------------------------
+            (Tin nhắn tự động gửi đến: {', '.join(RECEIVERS)})
+            """
             
             msg = MIMEText(body, 'plain', 'utf-8')
             msg['Subject'] = subject
             msg['From'] = SMTP_EMAIL
-            msg['To'] = ", ".join(receivers)
+            msg['To'] = ", ".join(RECEIVERS)
 
-            print(f">> [Email] Đang thử kết nối tới Gmail với tài khoản: {SMTP_EMAIL}...")
-            
-            # Sử dụng cổng 587 (TLS) để ổn định hơn trên môi trường Cloud
-            with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                server.set_debuglevel(1) # Lệnh này sẽ in chi tiết quá trình bắt tay với Google ra Logs
-                server.starttls()
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
                 server.login(SMTP_EMAIL, SMTP_PASSWORD)
-                server.sendmail(SMTP_EMAIL, receivers, msg.as_string())
+                server.sendmail(SMTP_EMAIL, RECEIVERS, msg.as_string())
             
-            print(f">> [Email] GỬI THÀNH CÔNG cho {len(receivers)} người.")
+            print(f">> [Email] Đã gửi mail thành công cho {len(RECEIVERS)} người.")
 
-        except smtplib.SMTPAuthenticationError:
-            print(">> [Email Error] SAI MẬT KHẨU! Hãy kiểm tra lại SMTP_PASSWORD trên Render (nhớ xóa khoảng trắng).")
         except Exception as e_mail:
-            print(f">> [Email Error] Lỗi cụ thể: {str(e_mail)}")
+            print(f">> [Email Error] Gửi mail thất bại: {e_mail}")
 
-        return jsonify({"status": "success", "message": "Góp ý đã được ghi nhận."}), 200
+        return jsonify({"status": "success", "message": "Cảm ơn! Góp ý đã được gửi."}), 200
 
     except Exception as e:
-        print(f">> [System Error] Lỗi xử lý: {e}")
-        return jsonify({"status": "error", "message": "Lỗi hệ thống"}), 500
+        print(f">> [System Error] Lỗi xử lý contact: {e}")
+        return jsonify({"status": "error", "message": "Lỗi Server"}), 500
