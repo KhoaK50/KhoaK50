@@ -8,18 +8,13 @@ from flask import Blueprint, request, jsonify
 # Tạo Blueprint
 contact_bp = Blueprint('contact', __name__)
 
-# --- CẤU HÌNH (Sửa lại đoạn này) ---
-
-# Thay vì viết thẳng email, hãy bảo nó lấy từ biến MAIL_USERNAME trên Render
+# --- CẤU HÌNH ---
 SMTP_EMAIL = os.environ.get("SMTP_EMAIL") 
-
-# Lấy mật khẩu từ biến MAIL_PASSWORD trên Render
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
 
-RECEIVERS = [
-    "minhhuy42work@gmail.com",
-    os.environ.get("SMTP_EMAIL") # Gửi về cho chính mình luôn
-]
+# Tạo danh sách người nhận (Lọc bỏ giá trị None nếu chưa set biến môi trường)
+raw_receivers = ["minhhuy42work@gmail.com", os.environ.get("SMTP_EMAIL")]
+RECEIVERS = [r for r in raw_receivers if r]  # Chỉ lấy các email hợp lệ
 
 def init_feedback_db():
     """Hàm này sẽ được gọi bên app.py khi khởi động"""
@@ -38,21 +33,28 @@ def init_feedback_db():
 @contact_bp.route('/api/contact', methods=['POST'])
 def handle_contact():
     try:
+        print(">> [Backend] Bắt đầu xử lý contact form...")
         data = request.json
         name = data.get('user_name')
         email = data.get('user_email')
         message = data.get('message')
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # A. LƯU VÀO DATABASE
-        with sqlite3.connect('feedback.db') as conn:
-            c = conn.cursor()
-            c.execute("INSERT INTO feedbacks (name, email, message, created_at) VALUES (?, ?, ?, ?)",
-                      (name, email, message, timestamp))
-            conn.commit()
+        # A. LƯU VÀO DATABASE (Có try-catch riêng để không ảnh hưởng gửi mail)
+        try:
+            with sqlite3.connect('feedback.db') as conn:
+                c = conn.cursor()
+                c.execute("INSERT INTO feedbacks (name, email, message, created_at) VALUES (?, ?, ?, ?)",
+                          (name, email, message, timestamp))
+                conn.commit()
+            print(">> [Database] Lưu feedback thành công.")
+        except Exception as db_err:
+            print(f">> [Database Error] Lỗi lưu DB (vẫn tiếp tục gửi mail): {db_err}")
 
         # B. GỬI MAIL
         try:
+            print(f">> [Email] Đang kết nối tới Gmail (SMTP)...")
+            
             subject = f"🔔 [Góp Ý Mới] Từ {name} - Vectoria"
             body = f"""
             Hệ thống Vectoria nhận được tin nhắn mới:
@@ -72,18 +74,29 @@ def handle_contact():
             msg['From'] = SMTP_EMAIL
             msg['To'] = ", ".join(RECEIVERS)
 
-            with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                server.starttls()  # Bước này cực quan trọng để mã hóa đường truyền
+            # --- CÁC SỬA ĐỔI QUAN TRỌNG ---
+            # 1. Thêm timeout=30s để tránh treo server
+            with smtplib.SMTP('smtp.gmail.com', 587, timeout=30) as server:
+                # 2. Bật log debug để hiện chi tiết quá trình bắt tay với Google
+                server.set_debuglevel(1) 
+                
+                server.starttls() 
                 server.login(SMTP_EMAIL, SMTP_PASSWORD)
-                server.sendmail(SMTP_EMAIL, receivers, msg.as_string())
+                
+                # 3. SỬA LỖI TYPO: Dùng biến RECEIVERS (viết hoa) thay vì receivers
+                server.sendmail(SMTP_EMAIL, RECEIVERS, msg.as_string())
             
-            print(f">> [Email] Đã gửi mail thành công cho {len(RECEIVERS)} người.")
+            print(f">> [Email] Đã gửi mail thành công cho: {RECEIVERS}")
 
         except Exception as e_mail:
             print(f">> [Email Error] Gửi mail thất bại: {e_mail}")
+            # 4. QUAN TRỌNG: Ném lỗi ra ngoài để API trả về 500
+            # Nếu không có dòng này, Frontend sẽ tưởng là thành công
+            raise e_mail 
 
         return jsonify({"status": "success", "message": "Cảm ơn! Góp ý đã được gửi."}), 200
 
     except Exception as e:
+        # Bắt tất cả lỗi (bao gồm lỗi mail vừa ném ra ở trên)
         print(f">> [System Error] Lỗi xử lý contact: {e}")
-        return jsonify({"status": "error", "message": "Lỗi Server"}), 500
+        return jsonify({"status": "error", "message": str(e)}), 500
