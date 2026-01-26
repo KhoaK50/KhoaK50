@@ -3,7 +3,7 @@ import numpy as np
 
 from vectoria_api.core.validate import require_json, validate_vectors_2d_list
 from vectoria_api.explainers.engine import explain
-
+from vectoria_api.core.format import format_number_pretty
 bp = Blueprint("linear_algebra", __name__)
 
 
@@ -85,20 +85,30 @@ def coordinates():
         v = np.array(data.get("vector", []), dtype=float)
         basis = np.array(data.get("basis", []), dtype=float)
 
-        if v.ndim != 1:
-            return jsonify({"error": "vector phải là list 1D."}), 400
-        if basis.ndim != 2:
-            return jsonify({"error": "basis phải là list 2D."}), 400
-
+        # ... (Đoạn kiểm tra dimension giữ nguyên) ...
+        if v.ndim != 1: return jsonify({"error": "vector phải là list 1D."}), 400
+        if basis.ndim != 2: return jsonify({"error": "basis phải là list 2D."}), 400
         B = basis.T
-        if B.shape[0] != v.shape[0]:
-            return jsonify({"error": "Chiều vector không khớp với cơ sở."}), 400
+        if B.shape[0] != v.shape[0]: return jsonify({"error": "Chiều vector không khớp."}), 400
 
+        # 1. Tính toán
         if B.shape[0] == B.shape[1]:
             coords = np.linalg.solve(B, v)
         else:
             coords, *_ = np.linalg.lstsq(B, v, rcond=None)
 
-        return jsonify({"coordinates": coords.tolist()})
+        # 2. Tạo 2 phiên bản
+        # Bản raw (số thực) để vẽ đồ thị
+        raw_coords = coords.tolist()
+        
+        # Bản pretty (chuỗi đẹp) để hiển thị text
+        pretty_coords = [format_number_pretty(x, tol=1e-4) for x in raw_coords]
+
+        # 3. Trả về cả hai
+        return jsonify({
+            "coordinates": raw_coords,       # Dùng cho đồ thị (frontend cũ dùng cái này)
+            "pretty_coordinates": pretty_coords # Dùng cho panel text (cái mới)
+        })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 400

@@ -5,21 +5,17 @@
   <meta charset="utf-8" />
   <title>Vectoria - Mô hình trực quan </title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script>
-    (function () {
-      var version = new Date().getTime();
-      var link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = "css/style.css?v=" + version;
-      document.head.appendChild(link);
-    })();
-  </script>
+
+  <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/solution_panel.css" />
-  <link rel="icon" href="./assets/logo.png" type="image/png">
+
+  <link rel="icon" href="./assets/images/logo.png" type="image/png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
   <script>
     window.MathJax = {
       tex: {
@@ -33,12 +29,172 @@
     };
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script defer src="//unpkg.com/mathlive"></script>
 
-  <script>
-    if (localStorage.getItem('vec_theme') === 'dark') {
-      document.documentElement.classList.add('dark');
+  <style>
+    /* 1. Ẩn sạch sẽ các nút mặc định của MathLive */
+    math-field::part(menu-toggle),
+    math-field::part(virtual-keyboard-toggle) {
+      display: none !important;
     }
-  </script>
+
+    /* 2. Tùy chỉnh ô nhập */
+    math-field {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 8px;
+      padding-right: 40px;
+      /* Chừa chỗ cho nút menu tự chế */
+      background: white;
+      width: 100%;
+      /* [QUAN TRỌNG] Đây là biến chuẩn của MathLive */
+      --highlight-color: #eee !important;
+      /* Màu nền bôi đen */
+      --caret-color: #000 !important;
+      /* Màu con trỏ nhấp nháy */
+
+      /* Phòng hờ các phiên bản khác */
+      --selection-background-color: #eee !important;
+      --selection-color: #000 !important;
+    }
+
+    math-field::part(content) {
+      --highlight-color: #eee !important;
+    }
+
+    /* Ẩn gạch chân đỏ báo lỗi */
+    math-field::part(error) {
+      display: none;
+    }
+
+    math-field:focus-within {
+      border-color: #2196F3;
+      outline: none;
+    }
+
+    /* 3. Style cho Menu tự chế */
+    .custom-menu-btn {
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 18px;
+      color: #555;
+      padding: 5px 10px;
+      z-index: 10;
+    }
+
+    .custom-menu-btn:hover {
+      color: #2196F3;
+    }
+
+    .custom-menu-dropdown {
+      display: none;
+      /* Mặc định ẩn */
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      min-width: 200px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .menu-item {
+      padding: 10px 15px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #333;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .menu-item:last-child {
+      border-bottom: none;
+    }
+
+    .menu-item:hover {
+      background-color: #f5f9ff;
+      color: #2196F3;
+    }
+
+    .latex-preview {
+      font-family: 'Times New Roman', serif;
+      font-style: italic;
+      color: #888;
+    }
+
+    /* --- [CẤU HÌNH DARK MODE CHUẨN - KHỚP MỌI GIAO DIỆN] --- */
+
+    body.dark math-field {
+      /* 1. NỀN: Để trong suốt để ăn theo màu của thẻ cha (Card) */
+      background: transparent !important;
+
+      /* 2. VIỀN: Dùng màu trắng mờ (Opacity) thay vì màu xám cứng -> Hợp mọi nền */
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+
+      /* 3. CHỮ: Trắng ngà (đỡ chói mắt hơn trắng tinh) */
+      color: #ececec !important;
+
+      /* 4. CẤU HÌNH MATHLIVE */
+      --caret-color: #fff !important;
+      /* Màu bôi đen dùng kiểu trong suốt luôn cho sang */
+      --selection-background-color: rgba(255, 255, 255, 0.2) !important;
+      --selection-color: #fff !important;
+      --highlight-color: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    /* Hiệu ứng khi bấm vào nhập (Focus) */
+    body.dark math-field:focus-within {
+      /* Viền sáng lên màu xanh chủ đạo */
+      border-color: #2196F3 !important;
+      box-shadow: 0 0 8px rgba(33, 150, 243, 0.3);
+    }
+
+    /* Fix phần nội dung bên trong cũng trong suốt */
+    body.dark math-field::part(content) {
+      background-color: transparent !important;
+      color: #ececec !important;
+    }
+
+    /* --- [MENU THẢ XUỐNG] --- */
+    /* Menu thì cần nền tối (gần đen) để nổi bật trên nền web */
+    body.dark .custom-menu-dropdown {
+      background: #1e1e1e;
+      /* Màu đen chuẩn VS Code, rất dễ phối */
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    body.dark .menu-item {
+      color: #ccc;
+      /* Chữ xám nhạt */
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    body.dark .menu-item:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      /* Hover sáng nhẹ */
+      color: #2196F3;
+    }
+
+    /* Nút 3 gạch */
+    body.dark .custom-menu-btn {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    body.dark .custom-menu-btn:hover {
+      color: #fff;
+    }
+  </style>
 </head>
 
 <body>
@@ -46,18 +202,21 @@
     <i class="fa-solid fa-sun" id="sunIcon"></i>
     <i class="fa-solid fa-moon" id="moonIcon"></i>
   </div>
-
   <div id="topbar">
     <div class="topbar-left">
       <div id="hamburger"><span></span><span></span><span></span></div>
-      <button class="topbar-icon" onclick="location.href='index.html'"><svg viewBox="0 0 24 24" class="icon">
+      <button class="topbar-icon" onclick="location.href='index.html'">
+        <svg viewBox="0 0 24 24" class="icon">
           <path d="M3 10.5L12 3l9 7.5" fill="none" stroke="currentColor" stroke-width="2" />
           <path d="M5 9.5V21h5v-6h4v6h5V9.5" fill="none" stroke="currentColor" stroke-width="2" />
-        </svg></button>
-      <button class="topbar-icon" onclick="location.href='knowledge_info.html'"><svg viewBox="0 0 24 24" class="icon">
+        </svg>
+      </button>
+      <button class="topbar-icon" onclick="location.href='knowledge_info.html'">
+        <svg viewBox="0 0 24 24" class="icon">
           <path d="M3 5h7a3 3 0 0 1 3 3v11a3 3 0 0 0-3-3H3z" fill="none" stroke="currentColor" stroke-width="2" />
           <path d="M21 5h-7a3 3 0 0 0-3 3v11a3 3 0 0 1 3-3h7z" fill="none" stroke="currentColor" stroke-width="2" />
-        </svg></button>
+        </svg>
+      </button>
     </div>
 
     <div class="brand">Vectoria</div>
@@ -101,12 +260,10 @@
 
   <div id="app">
     <div id="controls">
-
       <div class="card section-calc-info glow">
         <details class="calc" id="calcBoxExtra" open>
           <summary>KHÔNG GIAN VECTOR <span class="chev">▾</span></summary>
-
-          <div class="grid2" style="margin-top:6px">
+          <div style="margin-top:6px">
             <div>
               <label>Chọn bài toán:</label>
               <select id="opExtraSelect">
@@ -117,11 +274,16 @@
               </select>
             </div>
           </div>
-
           <div id="extraForms" style="margin-top:8px">
             <div id="form-linear_independence" class="extra-form"><label class="small"><b>Kiểm tra ĐLTT</b></label>
               <div id="indepChecklist" class="checklist"></div>
-              <div class="row" style="margin-top:6px"><button id="btnIndep">Kiểm tra</button></div>
+              <div class="row" style="margin-top:6px; display: flex; gap: 5px;">
+                <button id="btnIndep" style="flex: 1;">Kiểm tra</button>
+                <button id="btnInteract" style="flex: 1; display: none;" class="btn-secondary"
+                  title="Điều chỉnh vector trực quan">
+                  <i class="fa-solid fa-hand-pointer"></i> Tương tác
+                </button>
+              </div>
               <pre id="result_indep">—</pre>
             </div>
             <div id="form-rank" class="extra-form"><label class="small"><b>Hạng của hệ vector</b></label>
@@ -135,12 +297,20 @@
                   id="btnOpenSolution" class="btn-solution" type="button">Lời giải</button></div>
               <pre id="result_basis">—</pre>
             </div>
-            <div id="form-coordinates" class="extra-form"><label class="small"><b>Tọa độ theo cơ sở</b></label><select
-                id="vCoordSelect"></select>
-              <div style="margin-top:8px"><label>Chọn cơ sở:</label>
+            <div id="form-coordinates" class="extra-form">
+              <label class="small"><b>Tọa độ theo cơ sở</b></label>
+              <select id="vCoordSelect"></select>
+
+              <div style="margin-top:8px">
+                <label>Chọn cơ sở:</label>
                 <div id="basisCoordChecklist" class="checklist"></div>
               </div>
-              <div class="row" style="margin-top:6px"><button id="btnCoord">Xuất tọa độ</button></div>
+
+              <div class="row" style="margin-top:6px; display: flex; gap: 5px;">
+                <button id="btnCoord" style="flex: 1;">Xuất tọa độ</button>
+                <button id="btnCoordSolution" class="btn-solution" type="button" style="flex: 1;">Lời giải</button>
+              </div>
+
               <pre id="result_coord">—</pre>
             </div>
           </div>
@@ -150,8 +320,7 @@
       <div class="card section-calc-new glow">
         <details class="calc" id="calcBox" open>
           <summary>PHÉP TÍNH <span class="chev">▾</span></summary>
-
-          <div class="grid2" style="margin-top:6px">
+          <div style="margin-top:6px">
             <div>
               <label>Chọn phép tính:</label>
               <select id="opSelect">
@@ -170,7 +339,6 @@
               <input id="scalarInp" type="text" inputmode="decimal" value="2" placeholder="Nhập k..." />
             </div>
           </div>
-
           <div class="grid2" style="margin-top:8px">
             <div>
               <label>Vector 1 (v1)</label>
@@ -181,12 +349,10 @@
               <select id="v2Select"></select>
             </div>
           </div>
-
           <div class="row" style="margin-top:10px">
             <button id="btnCompute" class="btn primary">Thực hiện</button>
             <button id="btnPreview" title="Chỉ xem kết quả">Xem trước</button>
           </div>
-
           <div id="calcSteps" class="help">Kết quả phép tính sẽ hiển thị ở đây.</div>
         </details>
       </div>
@@ -196,7 +362,60 @@
         <div style="margin-top:5px; font-size:0.9em; color:#888">
           Định dạng hợp lệ: <code>[1,2]</code>, <code>[1,2,3]</code> hoặc <code>[sqrt(2), 1/2]</code>
         </div>
-        <input id="vectorInput" placeholder='[1,2] ...' value="[1,2]" />
+
+        <div style="position: relative; width: 100%;">
+
+          <math-field id="vectorInput" math-virtual-keyboard-policy="manual" smart-fence="false" smart-mode="false">
+            [1, 2]
+          </math-field>
+
+          <button id="myMenuBtn" class="custom-menu-btn" title="Phép toán nâng cao">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+
+          <div id="myCustomMenu" class="custom-menu-dropdown">
+
+            <div class="menu-item" onclick="insertLatex('\\sqrt{#0}')">
+              <span>Căn bậc 2</span> <span class="latex-preview">√x</span>
+            </div>
+            <div class="menu-item" onclick="insertLatex('\\sqrt[#?]{#0}')">
+              <span>Căn bậc n</span> <span class="latex-preview">ⁿ√x</span>
+            </div>
+
+            <hr style="margin: 5px 0; border-top: 1px solid #eee;">
+
+            <div class="menu-item" onclick="insertLatex('\\sin(#0)')">
+              <span>Sin</span> <span class="latex-preview">sin</span>
+            </div>
+            <div class="menu-item" onclick="insertLatex('\\cos(#0)')">
+              <span>Cos</span> <span class="latex-preview">cos</span>
+            </div>
+            <div class="menu-item" onclick="insertLatex('\\tan(#0)')">
+              <span>Tan</span> <span class="latex-preview">tan</span>
+            </div>
+            <div class="menu-item" onclick="insertLatex('\\cot(#0)')">
+              <span>Cot</span> <span class="latex-preview">cot</span>
+            </div>
+
+            <hr style="margin: 5px 0; border-top: 1px solid #eee;">
+
+            <div class="menu-item" onclick="insertLatex('\\log_{#?}(#0)')">
+              <span>Logarit cơ số a</span> <span class="latex-preview">logₐ</span>
+            </div>
+            <div class="menu-item" onclick="insertLatex('\\ln(#0)')">
+              <span>Logarit tự nhiên</span> <span class="latex-preview">ln</span>
+            </div>
+
+            <hr style="margin: 5px 0; border-top: 1px solid #eee;">
+
+            <div class="menu-item" onclick="insertLatex('\\pi')">
+              <span>Số Pi</span> <span class="latex-preview">π</span>
+            </div>
+            <div class="menu-item" onclick="insertLatex('e')">
+              <span>Số e</span> <span class="latex-preview">e</span>
+            </div>
+          </div>
+        </div>
 
         <div class="row" style="margin-top:8px">
           <button id="btnDraw" class="btn primary">Thêm vector</button>
@@ -209,9 +428,10 @@
         <div style="display:flex; align-items:center; justify-content:space-between;">
           <label>Danh sách vector</label>
         </div>
+        <input type="text" id="mainVecSearch" placeholder="🔍 Tìm vector theo tọa độ" class="vec-search-inp"
+          style="margin-bottom: 8px;">
         <ul id="vectorList"></ul>
       </div>
-
     </div>
 
     <div id="viewerWrap">
@@ -249,7 +469,7 @@
           <button id="solMethodMat" class="sol-tab is-active">Cách 1: Ma trận</button>
           <button id="solMethodEq" class="sol-tab">Cách 2: Hệ phương trình</button>
         </div>
-        <div class="sol-actions"><button id="btnCopySolution" class="sol-btn">Copy LaTeX</button></div>
+
       </div>
       <div id="solutionBody" class="sol-body">
         <div class="sol-empty">Chưa có lời giải.</div>
@@ -265,12 +485,18 @@
   <script src="js/app/ui/steps_renderer.js"></script>
   <script src="js/app/ui/sidebar.js"></script>
   <script src="js/app/ui/solution_panel.js"></script>
-  <script src="js/app/ui/solution_generators.js"></script>
+
+  <script src="js/app/ui/tasks_generator/coord_generator.js"></script>
+  <script src="js/app/logic/tasks_controller/coord_controller.js"></script>
+
+  <script src="js/app/ui/tasks_generator/basis_generator.js"></script>
+  <script src="js/app/logic/tasks_controller/basis_controller.js"></script>
+
   <script src="js/app/playback/animator.js"></script>
   <script src="js/app/logic/vector_controller.js"></script>
   <script src="js/app/logic/gauss_steps.js"></script>
-  <script src="js/app/logic/basis_controller.js"></script>
   <script src="js/viewers/viewer2D.js"></script>
+
   <script>
     (function () {
       var version = new Date().getTime();
@@ -283,147 +509,121 @@
       loadScript("js/viewers/viewer3D.js");
     })();
   </script>
+
   <script src="js/app/playback/operation_animation.js"></script>
   <script src="./js/app/playback/basis_animation.js"></script>
   <script src="js/app/bootstrap.js"></script>
 
-  <div id="mathKeypad">
-    <div class="keypad-header">
-      <div class="drag-handle"></div> <button id="keypadClose">✕</button>
-    </div>
-    <div class="keypad-grid">
-      <button class="k-btn op" onclick="App.key('[')">[</button><button class="k-btn op"
-        onclick="App.key(']')">]</button><button class="k-btn op" onclick="App.key('(')">(</button><button
-        class="k-btn op" onclick="App.key(')')">)</button><button class="k-btn action" onclick="App.del()">⌫</button>
-      <button class="k-btn num" onclick="App.key('7')">7</button><button class="k-btn num"
-        onclick="App.key('8')">8</button><button class="k-btn num" onclick="App.key('9')">9</button><button
-        class="k-btn op" onclick="App.key('sqrt(')">√</button><button class="k-btn op"
-        onclick="App.key('^2')">^2</button>
-      <button class="k-btn num" onclick="App.key('4')">4</button><button class="k-btn num"
-        onclick="App.key('5')">5</button><button class="k-btn num" onclick="App.key('6')">6</button><button
-        class="k-btn op" onclick="App.key('*')">×</button><button class="k-btn op" onclick="App.key('^')">^</button>
-      <button class="k-btn num" onclick="App.key('1')">1</button><button class="k-btn num"
-        onclick="App.key('2')">2</button><button class="k-btn num" onclick="App.key('3')">3</button><button
-        class="k-btn op" onclick="App.key('-')">−</button><button class="k-btn op" onclick="App.key('/')">÷</button>
-      <button class="k-btn num" onclick="App.key('0')">0</button><button class="k-btn num"
-        onclick="App.key('.')">.</button><button class="k-btn op" onclick="App.key(',')">,</button><button
-        class="k-btn op" onclick="App.key('+')">+</button><button class="k-btn primary" onclick="App.enter()">↵</button>
-    </div>
-  </div>
+
+
+
 
   <script>
+    // 1. XỬ LÝ NGAY LẬP TỨC (Chống chớp trắng)
     (function () {
-      const keypad = document.getElementById('mathKeypad');
-      let activeInput = null;
-
-      window.openKeypad = function (el) {
-        activeInput = el;
-        keypad.classList.add('open');
-        document.body.classList.add('has-keypad');
-        if (window.innerWidth < 768) el.setAttribute('readonly', 'true');
-        setTimeout(() => { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' }); }, 300);
-      };
-
-      document.getElementById('keypadClose').onclick = function () {
-        keypad.classList.remove('open');
-        document.body.classList.remove('has-keypad');
-        if (activeInput) activeInput.removeAttribute('readonly');
-      };
-
-      window.App.key = function (char) {
-        if (!activeInput) return;
-        const start = activeInput.selectionStart || activeInput.value.length;
-        const end = activeInput.selectionEnd || activeInput.value.length;
-        const v = activeInput.value;
-        activeInput.value = v.substring(0, start) + char + v.substring(end);
-        activeInput.selectionStart = activeInput.selectionEnd = start + char.length;
-        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
-        activeInput.focus();
-      };
-
-      window.App.del = function () {
-        if (!activeInput) return;
-        const start = activeInput.selectionStart;
-        const end = activeInput.selectionEnd;
-        const val = activeInput.value;
-        if (end > start) {
-          activeInput.value = val.substring(0, start) + val.substring(end);
-          activeInput.selectionStart = activeInput.selectionEnd = start;
-        } else if (start > 0) {
-          activeInput.value = val.substring(0, start - 1) + val.substring(start);
-          activeInput.selectionStart = activeInput.selectionEnd = start - 1;
-        }
-        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
-        activeInput.focus();
-      };
-
-      window.App.enter = function () {
-        if (!activeInput) return;
-        activeInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-      };
-
-      document.addEventListener('focusin', function (e) {
-        const el = e.target;
-        if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'number')) {
-          if (!el.classList.contains('no-keypad')) openKeypad(el);
-        }
-      });
-
-      document.addEventListener('click', function (e) {
-        const el = e.target;
-        if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'number')) {
-          if (!keypad.classList.contains('open')) openKeypad(el);
-        }
-      });
-
-      window.addEventListener('load', function () {
-        requestAnimationFrame(function () { document.body.style.opacity = '1'; });
-      });
+      const savedTheme = localStorage.getItem('vec_theme');
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.body.classList.add('dark');
+      }
     })();
+
+    // 2. XỬ LÝ LOGIC ĐỒNG BỘ (Khi trang tải xong)
+    document.addEventListener('DOMContentLoaded', function () {
+      const toggleInput = document.getElementById('themeToggle');
+
+      // Hàm đồng bộ trạng thái từ A-Z
+      function syncThemeState() {
+        const isDark = localStorage.getItem('vec_theme') === 'dark';
+
+        // 1. Đồng bộ Giao diện (Màn hình)
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          document.body.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.body.classList.remove('dark');
+        }
+
+        // 2. Đồng bộ Nút gạt
+        if (toggleInput) {
+          toggleInput.checked = isDark;
+        }
+      }
+
+      // Chạy đồng bộ lần đầu
+      syncThemeState();
+
+      // Lắng nghe sự kiện click nút
+      if (toggleInput) {
+        toggleInput.addEventListener('change', function () {
+          if (this.checked) {
+            localStorage.setItem('vec_theme', 'dark');
+          } else {
+            localStorage.setItem('vec_theme', 'light');
+          }
+          // Gọi hàm đồng bộ lại lần nữa cho chắc
+          syncThemeState();
+        });
+      }
+
+      // [FIX LỖI CỦA ÔNG] Khi bấm Back/Forward
+      // Buộc hệ thống phải quét lại localStorage và ép lại giao diện
+      window.addEventListener('pageshow', syncThemeState);
+
+      // Fail-safe: Chạy lại một lần nữa khi mọi thứ (ảnh, script khác) đã load xong
+      window.addEventListener('load', syncThemeState);
+    });
   </script>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const savedTheme = localStorage.getItem('vec_theme');
-        
-        // 1. Áp dụng class Dark cho body
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark');
-            document.documentElement.classList.add('dark');
-        }
+    window.addEventListener('load', function () {
+      // Thêm hiệu ứng hiện từ từ cho mượt
+      document.body.style.transition = 'opacity 0.3s ease-in-out';
+      // Bật đèn!
+      requestAnimationFrame(function () {
+        document.body.style.opacity = '1';
+      });
+    });
+  </script>
 
-        // 2. KỸ THUẬT DELAY: Chờ 0.1 giây để đảm bảo UI đã tải xong mới gạt nút
-        setTimeout(() => {
-            const toggle = document.getElementById('themeToggle');
-            if (toggle && savedTheme === 'dark') {
-                toggle.checked = true;
-            }
-            
-            // 3. Gắn sự kiện bấm nút an toàn
-            if (toggle) {
-                // Clone nút để xóa sạch các event cũ (tránh xung đột)
-                const newToggle = toggle.cloneNode(true);
-                toggle.parentNode.replaceChild(newToggle, toggle);
-                
-                // Gắn sự kiện mới
-                newToggle.addEventListener('change', function() {
-                    if (this.checked) {
-                        document.body.classList.add('dark');
-                        document.documentElement.classList.add('dark');
-                        localStorage.setItem('vec_theme', 'dark');
-                    } else {
-                        document.body.classList.remove('dark');
-                        document.documentElement.classList.remove('dark');
-                        localStorage.setItem('vec_theme', 'light');
-                    }
-                });
-                
-                // Đồng bộ lại lần cuối
-                if (savedTheme === 'dark') newToggle.checked = true;
-            }
-        }, 100); 
+  <script>
+    // Hàm chèn LaTeX vào ô MathLive (Cực kỳ đơn giản)
+    window.insertLatex = function (latex) {
+      const mf = document.getElementById('vectorInput');
+      if (mf) {
+        // Lệnh chuẩn của MathLive để chèn
+        mf.executeCommand(['insert', latex]);
+        // Quan trọng: Focus lại vào ô nhập để gõ tiếp luôn
+        mf.focus();
+      }
+      // Chọn xong thì ẩn menu đi
+      document.getElementById('myCustomMenu').style.display = 'none';
+    };
+
+    // Xử lý sự kiện Bật/Tắt menu
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('myMenuBtn');
+      const menu = document.getElementById('myCustomMenu');
+
+      if (btn && menu) {
+        // 1. Bấm nút thì hiện/ẩn
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation(); // Không cho sự kiện lan ra ngoài
+          const isHidden = menu.style.display === 'none' || menu.style.display === '';
+          menu.style.display = isHidden ? 'block' : 'none';
+        });
+
+        // 2. Bấm ra ngoài thì tắt menu
+        document.addEventListener('click', (e) => {
+          if (!menu.contains(e.target) && e.target !== btn) {
+            menu.style.display = 'none';
+          }
+        });
+      }
     });
   </script>
 
 </body>
+
 </html>

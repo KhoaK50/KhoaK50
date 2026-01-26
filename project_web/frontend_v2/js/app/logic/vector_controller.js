@@ -1,10 +1,38 @@
 // ===================== js/app/logic/vector_controller.js (FINAL DETAILED VERSION) =====================
 (function () {
     window.App = window.App || {};
+    App._pickUniqueHue = function () {
+        // Thuật toán Góc Vàng: Màu rải đều, không bao giờ trùng, siêu nhanh
+        const i = App.vectorList ? App.vectorList.length : 0;
+        return (i * 137.508) % 360;
+    };
     App.useAnimation = true;
+    App.formatVectorShort = function (vec) {
+        if (!Array.isArray(vec)) return "[]";
+
+        const clean = (x) => {
+            let n = Number(x);
+            // Nếu sai số < 0.0001 thì ép về số nguyên luôn (3.00000012 -> 3)
+            if (Math.abs(n - Math.round(n)) < 1e-4) return Math.round(n);
+            return n;
+        };
+
+        return "[" + vec.map(x => {
+            let v = clean(x);
+            // Nếu có hàm formatScalar xịn thì dùng, không thì dùng string
+            return (typeof App.formatScalar === 'function' ? App.formatScalar(v) : String(v));
+        }).join(", ") + "]";
+    };
     // Biến đếm ID toàn cục (Reset được)
     let nextVectorId = 1;
-
+    function smartFormat(num) {
+        if (Math.abs(num - Math.round(num)) < 1e-9) return String(Math.round(num));
+        for (let d = 2; d <= 100; d++) {
+            let n = num * d;
+            if (Math.abs(n - Math.round(n)) < 1e-5) return `\\frac{${Math.round(n)}}{${d}}`;
+        }
+        return Number(num).toFixed(4).replace(/\.?0+$/, "");
+    }
     // Helper: Chuyển vector bất kỳ thành mảng [x, y, z] an toàn
     const toVec3 = function (v) {
         return [v?.[0] || 0, v?.[1] || 0, v?.[2] || 0];
@@ -225,32 +253,120 @@
     // Thêm vào đây để đảm bảo chức năng tạo vector không bị lỗi nếu thiếu file logic
     App.parseVectorExpr = function (str) {
         if (!str) return null;
-        // Loại bỏ ngoặc [], (), vector{}, dấu cách thừa
-        let s = str.replace(/[\[\]\(\)\{\}]/g, "").replace(/vector/gi, "").trim();
-        if (!s) return null;
+        let s = str.trim().toLowerCase();
 
-        // Tách bằng dấu phẩy hoặc khoảng trắng
-        let parts = s.split(/[\s,]+/);
-        let res = [];
-        for (let p of parts) {
-            if (!p) continue;
-            let val = parseFloat(p);
-            if (isNaN(val)) throw new Error("Giá trị không hợp lệ: " + p);
-            res.push(val);
+        // 1. DỌN DẸP & CHUẨN HÓA KÝ TỰ ĐẶC BIỆT (Fix lỗi lbrack)
+        s = s.replace(/\\left/g, "").replace(/\\right/g, "");
+
+        // [FIX QUAN TRỌNG] Đổi \lbrack, \rbrack thành ngoặc thường trước khi xóa dấu \
+        s = s.replace(/\\lbrack/g, "[").replace(/\\rbrack/g, "]");
+        s = s.replace(/\\lbrace/g, "(").replace(/\\rbrace/g, ")");
+
+        s = s.replace(/\\cdot/g, "*").replace(/\\times/g, "*");
+        s = s.replace(/\s+\.\s+/g, "*");
+
+        // 2. DỊCH CÁC HÀM LATEX SANG JS
+        // Logarit
+        s = s.replace(/\\log_\{(.+?)\}\((.+?)\)/g, "(log($2)/log($1))");
+        s = s.replace(/\\log_(\d+)\((.+?)\)/g, "(log($2)/log($1))");
+        s = s.replace(/\\ln/g, "ln");
+
+        // Phân số, Căn, Mũ
+        s = s.replace(/\\frac\{(.+?)\}\{(.+?)\}/g, "(($1)/($2))");
+        s = s.replace(/\\sqrt\s*\[(.+?)\]\s*\{(.+?)\}/g, "(($2)**(1/($1)))"); // Căn bậc n
+        s = s.replace(/\\sqrt\s*\{(.+?)\}/g, "sqrt($1)"); // Căn bậc 2
+
+        // Xử lý mũ: 2^3 hoặc x^{...}
+        s = s.replace(/([a-z0-9\)])\^\{(.+?)\}/g, "$1**($2)");
+        s = s.replace(/([a-z0-9\)])\^([0-9]+)/g, "$1**$2");
+
+        // Cotang
+        s = s.replace(/cot\((.+?)\)/g, "(1/tan($1))");
+
+        // 3. XÓA DẤU BACKSLASH (\) CÒN SÓT LẠI
+        // Lưu ý: Lúc này \pi sẽ thành pi, \sin thành sin -> Rất thuận tiện
+        s = s.replace(/\\/g, "");
+
+        // 4. SIÊU NHÂN TẮT (IMPLICIT MULTIPLICATION) - XỬ LÝ MỌI TRƯỜNG HỢP
+
+        // a. Giữa 2 dấu ngoặc: )(, ][, )[ -> Thêm *
+        // Ví dụ: (3)(4) -> (3)*(4), sqrt(2)log(3) -> ...)*l...
+        s = s.replace(/([\)\]])\s*([\[\(])/g, "$1*$2");
+
+        // b. Giữa Ngoặc đóng và Chữ/Số -> Thêm *
+        // Ví dụ: )x, )2, )sin, )sqrt -> )*...
+        s = s.replace(/([\)\]])\s*([a-z0-9])/g, "$1*$2");
+
+        // c. Giữa Số và Ngoặc mở -> Thêm *
+        // Ví dụ: 2( -> 2*(, 2[ -> 2*[
+        s = s.replace(/(\d)\s*([\[\(])/g, "$1*$2");
+
+        // d. Giữa Số và Chữ (trừ trường hợp 1e5) -> Thêm *
+        // Ví dụ: 2sin -> 2*sin, 2pi -> 2*pi, 2sqrt -> 2*sqrt
+        s = s.replace(/(\d)\s*([a-z]+)(?!(e|E)\d)/g, "$1*$2");
+
+        // e. Giữa Chữ (hằng số như pi, e) và Số -> Thêm *
+        // Ví dụ: pi2 -> pi*2 (ít gặp nhưng cứ thêm cho chắc)
+        s = s.replace(/\b(pi|e)\s*(\d)/g, "$1*$2");
+
+        // 5. TÁCH MẢNG VECTOR
+        // Xử lý trường hợp người dùng nhập [1, 2] hoặc (1, 2)
+        if ((s.startsWith("[") && s.endsWith("]")) || (s.startsWith("(") && s.endsWith(")"))) {
+            s = s.substring(1, s.length - 1);
         }
-        return res;
+        let parts = s.split(",");
+
+        // 6. TÍNH TOÁN
+        const evaluate = (expr) => {
+            if (!expr || expr.trim() === "") return 0;
+            let e = expr.trim();
+            try {
+                // Tự động phát hiện ngữ cảnh Radian (nếu có pi hoặc e)
+                const isRadianContext = /\b(pi|e)\b/.test(e);
+
+                const mathScope = {
+                    pi: Math.PI, e: Math.E,
+                    math: Math, Math: Math,
+                    sqrt: Math.sqrt, abs: Math.abs, log: Math.log, ln: Math.log,
+                    // Lượng giác thông minh
+                    sin: isRadianContext ? Math.sin : function (d) { return Math.sin(d * Math.PI / 180); },
+                    cos: isRadianContext ? Math.cos : function (d) { return Math.cos(d * Math.PI / 180); },
+                    tan: isRadianContext ? Math.tan : function (d) { return Math.tan(d * Math.PI / 180); },
+                    cot: isRadianContext ? function (d) { return 1 / Math.tan(d); } : function (d) { return 1 / Math.tan(d * Math.PI / 180); },
+                    sind: function (d) { return Math.sin(d * Math.PI / 180); }
+                };
+
+                const keys = Object.keys(mathScope);
+                const values = Object.values(mathScope);
+
+                // Fix nốt: 2math -> 2*math (nếu có)
+                e = e.replace(/(\d)\s*math/g, "$1*math");
+
+                const func = new Function(...keys, `return (${e})`);
+                const val = func(...values);
+
+                if (typeof val !== "number" || isNaN(val)) throw new Error("NaN");
+                return val;
+            } catch (err) {
+                console.warn("Lỗi tính toán:", expr, err);
+                throw new Error(`Lỗi cú pháp: "${expr}"`);
+            }
+        };
+
+        return parts.map(p => evaluate(p));
     };
 
     // Helper tạo Object Vector mới
     App._attachVectorItem = function (vec, hue) {
+        const lightness = (nextVectorId % 2 === 0) ? 50 : 65;
         return {
             id: nextVectorId++, // ID tăng dần
             vec: vec,
             colorHex: (typeof App.hslToHex === 'function')
                 ? App.hslToHex((hue % 360) / 360, 0.85, 0.6)
                 : `hsl(${hue}, 85%, 60%)`,
-            colorCss: `hsl(${hue}, 85%, 60%)`,
-            haloCss: `hsl(${hue}, 85%, 80%)`,
+            colorCss: `hsl(${hue}, 85%, ${lightness}%)`,
+            haloCss: `hsl(${hue}, 85%, ${lightness + 20}%)`,
             visible: true,
             focus: false,
             highlighted: false,
@@ -262,41 +378,45 @@
     App.onAddVector = function () {
         const inp = document.getElementById("vectorInput");
         if (!inp) return;
-
         const raw = inp.value.trim();
         let v;
         try {
             v = App.parseVectorExpr(raw);
-            if (!Array.isArray(v) || v.length < 2) {
-                throw new Error("Vector phải có ít nhất 2 toạ độ");
-            }
-        } catch (err) {
-            App.showToast("Lỗi nhập liệu: " + err.message);
-            return;
-        }
+            if (!Array.isArray(v) || v.length < 2) throw new Error("Vector phải có ít nhất 2 toạ độ");
+        } catch (err) { App.showToast("Lỗi nhập liệu: " + err.message); return; }
 
         App.currentVector = v.slice();
         App.firstDrawForVector = true;
         const hue = App._pickUniqueHue ? App._pickUniqueHue() : (Math.random() * 360);
-
         const item = App._attachVectorItem(v, hue);
+
+        // --- [ĐOẠN LOGIC QUAN TRỌNG ĐÃ SỬA] ---
+        // Kiểm tra xem có hàm cần tính toán (sin, log...) không?
+        const needsCalc = /(sin|cos|tan|cot|log|ln|pi|e\^|e\s|e$)/i.test(raw);
+
+        if (needsCalc) {
+            // Tính ra số -> Rồi ép ngược về phân số đẹp (VD: 0.5 -> 1/2)
+            const latexArr = v.map(val => smartFormat(val));
+            item.latex = `[${latexArr.join(", ")}]`;
+        } else {
+            // Nếu là căn, phân số hoặc số thường -> Giữ nguyên
+            item.latex = raw;
+        }
+        // ---------------------------------------
+
         App.vectorList.push(item);
 
-        App.renderVectorList();
-        App.refreshCalcVectorOptions();
+        if (App.renderVectorList) App.renderVectorList();
+        if (App.refreshCalcVectorOptions) App.refreshCalcVectorOptions();
+        if (App.renderExtraCalcOptions) App.renderExtraCalcOptions();
 
-        // Tự động chuyển mode nếu cần
         if (App.autoMode) {
             App.mode = (v.length >= 3) ? "3D" : "2D";
-            const modeBadge = document.getElementById("modeBadge");
-            if (modeBadge) modeBadge.textContent = `Mode: ${App.mode}`;
+            const mb = document.getElementById("modeBadge");
+            if (mb) mb.textContent = `Mode: ${App.mode}`;
         }
-
-        App.redrawAll({ frame: false });
-
-        if (App.mode === "3D" && window.Vec3D) {
-            Vec3D.hardRefresh3D(false);
-        }
+        if (App.redrawAll) App.redrawAll({ frame: false });
+        if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
     };
 
     // Hàm xóa hết vector
@@ -531,145 +651,9 @@
         }
     };
 
-    /* =======================================================================
-       PHẦN 4: UI UPDATE (CHECKLIST, DROPDOWN, SEARCH)
-       ======================================================================= */
 
-    App.refreshCalcVectorOptions = function () {
-        const list = App.vectorList || [];
 
-        // 1. Danh sách các ID của Select box cần cập nhật
-        const selectIds = ["v1Select", "v2Select", "vCoordSelect", "vProjSelect", "vNormSelect", "v1DotSelect", "v2DotSelect", "v1AngleSelect", "v2AngleSelect"];
 
-        selectIds.forEach(function (id) {
-            const sel = document.getElementById(id);
-            if (!sel) return;
-
-            // Xử lý khi nhấn vào select box mà danh sách trống
-            sel.onmousedown = function (e) {
-                if (list.length === 0) {
-                    e.preventDefault();
-                    App.handleEmptyListAction();
-                }
-            };
-
-            const oldVal = sel.value;
-            sel.innerHTML = "";
-
-            if (list.length === 0) {
-                const opt = document.createElement("option");
-                opt.text = "(Trống)";
-                sel.appendChild(opt);
-                sel.disabled = true;
-            } else {
-                sel.disabled = false;
-                // Duyệt list và dùng index để hiển thị nhãn cho đồng bộ
-                list.forEach(function (v, index) {
-                    const opt = document.createElement("option");
-                    opt.value = v.id; // Giá trị ngầm vẫn là ID thực để logic xử lý đúng
-
-                    // Nhãn hiển thị dùng index + 1 (khớp với giao diện danh sách bên dưới)
-                    const displayLabel = index + 1;
-                    opt.textContent = `#${displayLabel} [${v.vec.join(", ")}]`;
-
-                    sel.appendChild(opt);
-                });
-
-                // Giữ lại lựa chọn cũ nếu nó vẫn tồn tại trong danh sách mới
-                if (oldVal && list.some(function (x) { return x.id == oldVal; })) {
-                    sel.value = oldVal;
-                }
-            }
-        });
-
-        // 2. Cập nhật Checklist (Có Search)
-        const checklistIds = ["indepChecklist", "rankChecklist", "basisChecklist", "basisCoordChecklist", "projBasisChecklist"];
-
-        checklistIds.forEach(function (id) {
-            const container = document.getElementById(id);
-            if (!container) return;
-            container.innerHTML = "";
-
-            if (list.length === 0) {
-                const emptyDiv = document.createElement("div");
-                emptyDiv.className = "empty-list-msg";
-                emptyDiv.innerHTML = "⚠️ Chưa có vector.<br>Nhấn để tạo ngay!";
-                emptyDiv.onclick = function () { App.handleEmptyListAction(); };
-                container.appendChild(emptyDiv);
-                return;
-            }
-
-            const toolsDiv = document.createElement("div");
-            toolsDiv.className = "checklist-tools";
-            const searchInp = document.createElement("input");
-            searchInp.type = "text";
-            searchInp.placeholder = "🔍 Tìm vector...";
-            searchInp.className = "vec-search-inp";
-
-            const saRow = document.createElement("div");
-            saRow.className = "select-all-row";
-            const saLabel = document.createElement("span");
-            saLabel.className = "select-all-text";
-            saLabel.textContent = "Chọn tất cả";
-            const saCb = document.createElement("input");
-            saCb.type = "checkbox";
-            saCb.className = "select-all-cb";
-
-            saRow.appendChild(saLabel);
-            saRow.appendChild(saCb);
-
-            toolsDiv.appendChild(searchInp);
-            toolsDiv.appendChild(saRow);
-            container.appendChild(toolsDiv);
-
-            const listDiv = document.createElement("div");
-            listDiv.className = "vec-list-scroll";
-            const checkboxes = [];
-
-            list.forEach(function (v) {
-                const row = document.createElement("div");
-                row.className = "vec-item-row";
-
-                const span = document.createElement("span");
-                span.className = "vec-label-text";
-                span.textContent = `${v.name || "#" + v.id} [${v.vec.join(", ")}]`;
-                span.title = span.textContent;
-
-                const cb = document.createElement("input");
-                cb.type = "checkbox";
-                cb.value = v.id;
-                cb.className = "vec-checkbox";
-                cb.setAttribute("data-id", v.id);
-
-                row.addEventListener("click", function (e) {
-                    if (e.target !== cb) {
-                        cb.checked = !cb.checked;
-                        cb.dispatchEvent(new Event('change'));
-                    }
-                });
-
-                row.appendChild(span);
-                row.appendChild(cb);
-                listDiv.appendChild(row);
-                checkboxes.push({ row: row, cb: cb, text: span.textContent.toLowerCase() });
-            });
-            container.appendChild(listDiv);
-
-            searchInp.addEventListener("input", function () {
-                const term = searchInp.value.toLowerCase().replace(/\s+/g, '');
-                checkboxes.forEach(function (i) {
-                    const cleanText = i.text.replace(/\s+/g, '');
-                    i.row.style.display = cleanText.includes(term) ? "flex" : "none";
-                });
-            });
-
-            saCb.addEventListener("change", function () {
-                checkboxes.forEach(function (i) {
-                    if (i.row.style.display !== "none") i.cb.checked = saCb.checked;
-                });
-            });
-        });
-    };
 
     /* =======================================================================
        PHẦN 5: LOGIC GỌI API MENU 1 (EXTRA UTILS)
@@ -750,10 +734,16 @@
 
         try {
             const res = await App.callAPI("coordinates", { vector: v, basis: basis });
-            const coords = res.coordinates;
-            if (!coords) throw new Error("Không tìm thấy tọa độ.");
 
-            const text = `[${coords.map(x => (typeof App.formatScalar === 'function' ? App.formatScalar(x) : x)).join(", ")}]`;
+            // [FIX QUAN TRỌNG]: Ưu tiên lấy chuỗi đẹp từ Backend (pretty_coordinates)
+            // Nếu backend chưa gửi pretty thì mới dùng bản thô (coordinates)
+            const displayCoords = res.pretty_coordinates || res.coordinates;
+
+            if (!displayCoords) throw new Error("Không tìm thấy tọa độ.");
+
+            // Vì displayCoords đã là chuỗi đẹp ("4/3", "1") nên chỉ cần join lại
+            const text = `[${displayCoords.join(", ")}]`;
+
             document.getElementById("result_coord").innerText = `${App.formatVectorShort ? App.formatVectorShort(v) : v} = ${text} (theo cơ sở)`;
         } catch (err) {
             document.getElementById("result_coord").innerText = "Lỗi: " + err.message;
@@ -767,7 +757,7 @@
         if (document.getElementById("btnAddVector")) document.getElementById("btnAddVector").onclick = App.onAddVector;
         if (document.getElementById("btnIndep")) document.getElementById("btnIndep").onclick = App.linearIndependenceUI;
         if (document.getElementById("btnRank")) document.getElementById("btnRank").onclick = App.rankVectorsUI;
-        if (document.getElementById("btnCoord")) document.getElementById("btnCoord").onclick = App.coordinatesUI;
+        //if (document.getElementById("btnCoord")) document.getElementById("btnCoord").onclick = App.coordinatesUI;
 
         // --- [MỚI] XỬ LÝ MENU CÀI ĐẶT (BÁNH RĂNG) ---
         const btnSettings = document.getElementById('btnSettings');
@@ -805,6 +795,289 @@
                 App.toggleTheme();
             });
         }
-    });
 
+        const opSel = document.getElementById("opSelect");
+        if (opSel) {
+            // Xóa sự kiện cũ (nếu có) bằng cách gán lại onclick hoặc dùng cơ chế replace node (tuy nhiên ở đây ta viết đè logic là được)
+            opSel.onchange = function () {
+                // 1. Reset 2 ô chọn về rỗng
+                const v1 = document.getElementById("v1Select");
+                const v2 = document.getElementById("v2Select");
+                if (v1) v1.value = "";
+                if (v2) v2.value = "";
+
+                // 2. [QUAN TRỌNG] Ép buộc ẨN HẾT VECTOR (Force Hide)
+                if (App.vectorList) {
+                    App.vectorList.forEach(v => v.visible = false);
+                }
+
+                // 3. Cập nhật giao diện ngay lập tức
+                if (typeof App.renderVectorList === 'function') App.renderVectorList(); // Cập nhật nút "Hiện/Ẩn" ở list dưới
+                if (typeof App.redrawAll === 'function') App.redrawAll({ frame: false }); // Xóa sạch màn hình vẽ
+
+                // 4. Cập nhật các ô input (ẩn hiện ô k, v2...)
+                if (typeof App.refreshCalcUI === 'function') App.refreshCalcUI();
+
+                // LƯU Ý: Tuyệt đối KHÔNG gọi App.updateVisibilityByCalc() ở đây
+                // vì hàm đó có logic "nếu chưa chọn gì thì hiện tất cả" -> sẽ làm hỏng việc ẩn.
+            };
+        }
+
+    });
+    // =========================================================
+    // PHẦN 3: LOGIC TƯƠNG TÁC HÌNH HỘP & GIZMO (ĐÃ FIX)
+    // =========================================================
+
+    let interactMode = false;
+    let transformControl = null;
+    let parallelepipedMesh = null;
+    let interactVectors = []; // Lưu danh sách các object vector đang tham gia
+
+    // 1. Khởi tạo hệ thống tương tác
+    function initInteraction() {
+        if (!window.App || !window.Vec3D || !Vec3D._scene) return;
+
+        // Tạo Gizmo điều khiển
+        transformControl = new THREE.TransformControls(Vec3D._camera, Vec3D._renderer.domElement);
+
+        // Khi đang kéo -> Tắt xoay camera
+        transformControl.addEventListener('dragging-changed', function (event) {
+            if (Vec3D._controls) Vec3D._controls.enabled = !event.value;
+        });
+
+        // Khi kéo xong -> Cập nhật lại hình hộp & Số liệu
+        transformControl.addEventListener('change', function () {
+            if (interactMode) {
+                syncVectorData();         // Cập nhật số liệu trong object
+                updateParallelepipedMesh(); // Vẽ lại hộp
+
+                // [QUAN TRỌNG] Cập nhật lại giao diện & render lại
+                if (App.renderVectorList) App.renderVectorList();
+                if (App.refreshCalcVectorOptions) App.refreshCalcVectorOptions(); // Để số trên checklist nhảy theo
+                // Lưu ý: Không gọi redrawAll() ở đây vì sẽ làm mất Gizmo, ta chỉ cập nhật mũi tên thôi
+            }
+        });
+
+        Vec3D._scene.add(transformControl);
+
+        // Gắn sự kiện nút
+        const btnInt = document.getElementById('btnInteract');
+        if (btnInt) btnInt.addEventListener('click', toggleInteraction);
+    }
+
+    // 2. Bật/Tắt chế độ tương tác
+    function toggleInteraction() {
+        // Lấy danh sách ID đang được tick trong phần "Độc lập tuyến tính" (hoặc checklist nào ông muốn)
+        // Giả sử dùng 'indepChecklist' làm chuẩn để chọn 3 vector tạo hộp
+        const container = document.getElementById("indepChecklist");
+        if (!container) return;
+
+        const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked');
+        const selectedIds = Array.from(checkedBoxes).map(cb => Number(cb.value));
+
+        if (!interactMode) {
+            // --- BẮT ĐẦU ---
+            if (selectedIds.length !== 3) {
+                App.showToast("⚠️ Vui lòng tick chọn ĐÚNG 3 vector trong danh sách 'Kiểm tra ĐLTT' để tạo hộp!", "error");
+                return;
+            }
+
+            interactMode = true;
+            const btn = document.getElementById('btnInteract');
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-stop"></i> Dừng';
+                btn.classList.add('active');
+            }
+
+            // Lấy object vector từ ID
+            interactVectors = selectedIds.map(id => App.vectorList.find(v => v.id === id)).filter(x => x);
+
+            // Vẽ hộp
+            updateParallelepipedMesh();
+
+            // Gắn Gizmo vào vector thứ 3 (vecto cuối cùng)
+            attachGizmoToVector(interactVectors[2]);
+
+        } else {
+            // --- DỪNG ---
+            interactMode = false;
+            const btn = document.getElementById('btnInteract');
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-cube"></i> Tương tác Hộp';
+                btn.classList.remove('active');
+            }
+
+            if (parallelepipedMesh) {
+                Vec3D._scene.remove(parallelepipedMesh);
+                parallelepipedMesh = null;
+            }
+            transformControl.detach();
+            if (App.redrawAll) App.redrawAll({ frame: false }); // Vẽ lại sạch sẽ
+        }
+    }
+
+    // 3. Vẽ hình hộp
+    function updateParallelepipedMesh() {
+        if (parallelepipedMesh) Vec3D._scene.remove(parallelepipedMesh);
+        if (!interactMode || interactVectors.length < 3) return;
+
+        // Chuyển mảng [x,y,z] thành THREE.Vector3
+        // [FIX] Dùng v.vec thay vì v.components
+        const v1 = new THREE.Vector3(...toVec3(interactVectors[0].vec));
+        const v2 = new THREE.Vector3(...toVec3(interactVectors[1].vec));
+        const v3 = new THREE.Vector3(...toVec3(interactVectors[2].vec));
+
+        // Scale theo tỷ lệ khung nhìn (nếu có logic scale) - ở đây lấy thô
+        const u = Vec3D.S3D ? Vec3D.S3D.unitsPerWorld : 1;
+        v1.multiplyScalar(u); v2.multiplyScalar(u); v3.multiplyScalar(u);
+
+        const O = new THREE.Vector3(0, 0, 0);
+        const A = v1.clone(), B = v2.clone(), C = v3.clone();
+        const D = v1.clone().add(v2);
+        const E = v1.clone().add(v3);
+        const F = v2.clone().add(v3);
+        const G = v1.clone().add(v2).add(v3);
+
+        // Thứ tự đỉnh để tạo các mặt tam giác (Counter-clockwise)
+        const vertices = [
+            O, B, D, O, D, A, // Đáy dưới (O-B-D-A)
+            C, E, G, C, G, F, // Đáy trên (C-E-G-F)
+            O, A, E, O, E, C, // Mặt bên trái
+            B, F, G, B, G, D, // Mặt bên phải
+            O, C, F, O, F, B, // Mặt sau
+            A, D, G, A, G, E  // Mặt trước
+        ];
+
+        const geometry = new THREE.BufferGeometry().setFromPoints(vertices);
+        geometry.computeVertexNormals();
+
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x90ee90, transparent: true, opacity: 0.3,
+            side: THREE.DoubleSide, shininess: 50, depthWrite: false
+        });
+
+        parallelepipedMesh = new THREE.Mesh(geometry, material);
+
+        // Wireframe viền đen cho đẹp
+        const edges = new THREE.EdgesGeometry(geometry);
+        const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x27ae60 }));
+        parallelepipedMesh.add(line);
+
+        Vec3D._scene.add(parallelepipedMesh);
+    }
+
+    // 4. Đồng bộ dữ liệu: Gizmo -> Vector Object
+    function syncVectorData() {
+        const targetMesh = transformControl.object;
+        if (!targetMesh) return;
+
+        // Tìm xem Gizmo đang gắn vào vector nào
+        // [FIX] So sánh qua thuộc tính tạm gizmoBall
+        const targetVec = interactVectors.find(v => v.gizmoBall === targetMesh);
+
+        if (targetVec) {
+            // Tọa độ thế giới thực của Gizmo
+            const newPos = targetMesh.position;
+
+            // Chuyển về tọa độ toán học (chia cho tỉ lệ vẽ)
+            const u = Vec3D.S3D ? Vec3D.S3D.unitsPerWorld : 1;
+            const x = parseFloat((newPos.x / u).toFixed(2));
+            const y = parseFloat((newPos.y / u).toFixed(2));
+            const z = parseFloat((newPos.z / u).toFixed(2));
+
+            // Cập nhật dữ liệu gốc
+            targetVec.vec = [x, y, z];
+
+            // Cập nhật hình ảnh 3D (Gọi trực tiếp hàm của Vec3D để nhanh)
+            if (window.Vec3D) {
+                // Xóa arrow cũ vẽ lại arrow mới (hoặc update nếu Vec3D hỗ trợ update)
+                // Cách đơn giản nhất: Vẽ lại toàn bộ mũi tên
+                Vec3D.draw3DAllVectors({ frame: false });
+                // Lưu ý: redrawAll sẽ xóa scene, làm mất GizmoBall -> Cần cẩn thận.
+                // Tốt nhất chỉ update Mesh nếu có thể. Nhưng để đơn giản, ta chấp nhận redraw 
+                // nhưng phải add lại gizmoBall.
+
+                // => CÁCH TỐT HƠN: Cập nhật object tham chiếu trong Scene (nếu ông lưu arrowMesh vào object vector)
+                // Ở đây ta dùng cách đơn giản: Cập nhật text hiển thị thôi, hình vẽ chờ thả chuột mới update full.
+            }
+        }
+    }
+
+    // 5. Gắn Gizmo
+    function attachGizmoToVector(vec) {
+        if (!window.Vec3D) return;
+
+        // Tạo 1 cục dummy tại đầu vector để gizmo bám vào
+        if (vec.gizmoBall) Vec3D._scene.remove(vec.gizmoBall);
+
+        const u = Vec3D.S3D ? Vec3D.S3D.unitsPerWorld : 1;
+        const pos = new THREE.Vector3(vec.vec[0] * u, vec.vec[1] * u, (vec.vec[2] || 0) * u);
+
+        const geo = new THREE.BoxGeometry(u * 0.5, u * 0.5, u * 0.5);
+        const mat = new THREE.MeshBasicMaterial({ visible: false }); // Ẩn đi
+        vec.gizmoBall = new THREE.Mesh(geo, mat);
+        vec.gizmoBall.position.copy(pos);
+
+        Vec3D._scene.add(vec.gizmoBall);
+        transformControl.attach(vec.gizmoBall);
+    }
+
+    // Tự động init
+    window.addEventListener('load', () => { setTimeout(initInteraction, 1500); });
+
+
+    // --- [CHÈN VÀO CUỐI FILE] Hàm chỉ hiện vector đang được chọn ---
+    App.updateVisibilityByCalc = function () {
+        // 1. Lấy ID đang chọn trong ô v1, v2
+        const v1Select = document.getElementById("v1Select");
+        const v2Select = document.getElementById("v2Select");
+
+        const id1 = v1Select ? Number(v1Select.value) : -1;
+        const id2 = v2Select ? Number(v2Select.value) : -1;
+
+        // 2. Kiểm tra xem có đang chọn gì không (ID > 0 là có chọn)
+        let hasSelection = (id1 > 0 || id2 > 0);
+
+        // 3. Duyệt danh sách vector để Bật/Tắt
+        App.vectorList.forEach(item => {
+            if (hasSelection) {
+                // Nếu đang tính toán: Chỉ hiện thằng được chọn, thằng khác ẩn
+                const isSelected = (item.id === id1 || item.id === id2);
+                item.visible = isSelected;
+            } else {
+                // Nếu chưa chọn gì (mới vào hoặc reset): Hiện tất cả
+                item.visible = true;
+            }
+        });
+
+        // 4. Cập nhật giao diện
+        if (typeof App.renderVectorList === 'function') App.renderVectorList();
+        if (typeof App.redrawAll === 'function') App.redrawAll({ frame: false });
+    };
+
+    // --- [MỚI] HÀM QUẢN LÝ ẨN/HIỆN KHI TÍNH TOÁN ---
+    App.updateVisibilityByCalc = function () {
+        const v1Sel = document.getElementById("v1Select");
+        const v2Sel = document.getElementById("v2Select");
+
+        const id1 = v1Sel ? Number(v1Sel.value) : 0;
+        const id2 = v2Sel ? Number(v2Sel.value) : 0;
+
+        // Có đang chọn vector nào không?
+        const hasSelection = (id1 > 0 || id2 > 0);
+
+        App.vectorList.forEach(v => {
+            if (!hasSelection) {
+                // Nếu chưa chọn gì cả (hoặc mới reset) -> Hiện tất cả cho dễ nhìn
+                v.visible = true;
+            } else {
+                // Nếu đã chọn -> Chỉ hiện những thằng được chọn
+                v.visible = (v.id === id1 || v.id === id2);
+            }
+        });
+
+        // Vẽ lại giao diện
+        if (App.renderVectorList) App.renderVectorList();
+        if (App.redrawAll) App.redrawAll({ frame: false });
+    };
 })();

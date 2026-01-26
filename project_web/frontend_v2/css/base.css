@@ -18,18 +18,32 @@ body {
 
 /* =================== SCROLLBAR =================== */
 *::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 16px;  /* Tăng từ 10px -> 16px cho dễ trúng */
+  height: 16px; /* Tăng chiều cao cho thanh ngang */
 }
 
 *::-webkit-scrollbar-thumb {
-  background: color-mix(in oklab, var(--fg) 12%, transparent);
-  border-radius: 999px;
+  /* Tăng độ đậm màu nền lên (từ 12% -> 25%) để nhìn rõ hơn */
+  background-color: color-mix(in oklab, var(--fg) 25%, transparent);
+  border-radius: 99px;
+  
+  /* Giảm viền trong suốt từ 3px -> 2px để phần ruột to ra, dễ bấm trúng */
   border: 3px solid transparent;
   background-clip: content-box;
+  transition: background-color 0.2s;
 }
 
-*::-webkit-scrollbar-track { background: transparent; }
+/* Khi di chuột vào thì đậm hơn nữa để biết là đang focus */
+*::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklab, var(--fg) 50%, transparent);
+  border: 2px solid transparent; /* Lúc hover thì cho nó phình to ra thêm tí nữa */
+}
+
+/* Phần rãnh trượt (Track) - Thêm màu nhẹ để phân biệt vùng cuộn */
+*::-webkit-scrollbar-track {
+  background: color-mix(in oklab, var(--bg) 95%, var(--fg) 5%); 
+  border-radius: 99px;
+}
 
 /* =================== RESPONSIVE =================== */
 @media (max-width: 420px) {

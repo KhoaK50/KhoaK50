@@ -82,11 +82,11 @@
   };
 
   // Helper format số vô tỉ (tùy chọn dùng thêm)
-  App.formatScalar = function(n) {
+  /*App.formatScalar = function(n) {
       if(n === undefined || n === null) return "—";
       if(Math.abs(n - Math.PI) < 1e-4) return "π";
       if(Math.abs(n) < 1e-9) return "0";
       return parseFloat(n.toFixed(4)).toString();
-  };
+  };*/
 
 })();

@@ -4,8 +4,7 @@ import numpy as np
 
 from vectoria_api.explainers.models import Step
 from vectoria_api.core.linalg import gaussian_elimination_rows_with_ops
-from vectoria_api.core.format import vector_pretty_score
-
+from vectoria_api.core.format import vector_pretty_score, format_number_pretty
 
 def _dependent_expressions_rows(A_rows: List[List[float]], pivot_indices: List[int], tol: float = 1e-10):
     """
@@ -41,12 +40,7 @@ def _dependent_expressions_rows(A_rows: List[List[float]], pivot_indices: List[i
 
 def _fmt_k(k: float, tol: float = 1e-10) -> str:
     """Đưa hệ số về dạng đẹp: 2, -3, 1/2... (tránh thập phân dài)."""
-    if abs(k) < tol:
-        return "0"
-    r = round(k)
-    if abs(k - r) < tol:
-        return str(int(r))
-    return f"{k:.4g}"
+    return format_number_pretty(k, tol)
 
 
 def _fmt_row_op_latex(op: dict, tol: float = 1e-10) -> str:
@@ -86,8 +80,14 @@ def _fmt_row_op_latex(op: dict, tol: float = 1e-10) -> str:
     if kind == "scale":
         i = int(op["i"]) + 1
         k = float(op.get("factor", 1.0))
-        return f"d_{i} \\\\to ({_fmt_k(k, tol)})\\\\,d_{i}"
-
+        k_str = _fmt_k(k, tol) # Lấy chuỗi đẹp (vd: \frac{1}{3})
+        
+        # Nếu là phân số thì khỏi đóng ngoặc, còn số âm hoặc số thường thì đóng ngoặc cho an toàn
+        if "\\" in k_str: # Có ký tự LaTeX
+             return f"d_{i} \\\\to {k_str}\\,d_{i}"
+        else:
+             return f"d_{i} \\\\to ({k_str})\\,d_{i}"
+    
     return ""
 
 
@@ -389,7 +389,7 @@ def _eq_stepwise_pdf_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tu
 
 
 # =========================================================================
-# MAIN FUNCTION (FIXED LOGIC)
+# MAIN FUNCTION (ĐÃ SỬA HIỂN THỊ PHÂN SỐ/CĂN)
 # =========================================================================
 def compute_basis_payload(vectors: List[List[float]], tol: float = 1e-10, pivot_strategy: str = "min_norm"):
     """
@@ -406,21 +406,16 @@ def compute_basis_payload(vectors: List[List[float]], tol: float = 1e-10, pivot_
     A = mat.tolist()
 
     # 1. Chạy Khử Gauss (Cho Cách 1 - Ma trận)
-    # LƯU Ý: Thuật toán này có thể tráo đổi hàng (swap rows) để khử, dẫn đến pivot_indices bị thay đổi
-    # Ví dụ: Nếu row 2 tốt hơn row 1, nó swap lên, làm thay đổi thứ tự cơ sở.
     rank, pivot_indices_gauss, E, ops, row_ids = gaussian_elimination_rows_with_ops(
         A, tol=tol, pivot_strategy=pivot_strategy, snapshot_every_step=True
     )
 
     # 2. Chạy Logic "Xét từng vector" (Cho Cách 2 - Phương trình & KẾT QUẢ CUỐI CÙNG)
-    # Đây là logic CHUẨN mà người dùng muốn: Duyệt từ trái qua phải, không swap lung tung.
     eq_step_latex, step_basis_idx, step_dim = _eq_stepwise_pdf_latex(vectors, tol=tol)
 
-    # [QUAN TRỌNG NHẤT]: GHI ĐÈ KẾT QUẢ CHÍNH BẰNG KẾT QUẢ CỦA CÁCH 2 (step_basis_idx)
-    # Vì Cách 2 tuân thủ đúng thứ tự "v1 trước, v2 sau".
-    # Nếu Cách 1 (Gauss) ra [0, 2] mà Cách 2 ra [0, 1], ta tin tưởng Cách 2.
+    # [QUAN TRỌNG]: GHI ĐÈ KẾT QUẢ CHÍNH BẰNG KẾT QUẢ CỦA CÁCH 2
     final_pivot_indices = step_basis_idx
-    final_pivot_indices.sort() # Đảm bảo index tăng dần (dù thuật toán trên đã đảm bảo rồi)
+    final_pivot_indices.sort() 
 
     basis_vectors = [vectors[i] for i in final_pivot_indices]
     
@@ -430,7 +425,6 @@ def compute_basis_payload(vectors: List[List[float]], tol: float = 1e-10, pivot_
     # =========================
     # Steps for "Cách 1: Ma trận" (Visual Steps)
     # =========================
-    # Vẫn hiển thị các bước biến đổi ma trận (vì nó có giá trị tham khảo về Rank)
     steps: List[dict] = []
 
     steps.append(Step(
@@ -438,10 +432,12 @@ def compute_basis_payload(vectors: List[List[float]], tol: float = 1e-10, pivot_
         text=f"Bước 1: Lập ma trận A gồm {m} hàng (mỗi hàng là 1 vector).",
     ).to_dict())
 
+    # [SỬA 1]: Format ma trận đầu vào A thành chuỗi đẹp (dùng _fmt_k)
+    pretty_A = [[_fmt_k(x, tol) for x in row] for row in A]
     steps.append(Step(
         kind="matrix",
         text="Ma trận A ban đầu:",
-        matrix=A,
+        matrix=pretty_A, 
     ).to_dict())
 
     if ops:
@@ -456,19 +452,27 @@ def compute_basis_payload(vectors: List[List[float]], tol: float = 1e-10, pivot_
                 continue
 
             arrow_text = _fmt_row_op_latex(op, tol=tol).strip()
+            
+            # [SỬA 2]: Format ma trận sau mỗi bước biến đổi
+            pretty_mat_after = [[_fmt_k(x, tol) for x in row] for row in mat_after]
+            
             steps.append(Step(
                 kind="matrix",
                 text=arrow_text if arrow_text else "",
-                matrix=mat_after,
+                matrix=pretty_mat_after,
             ).to_dict())
 
+    # [SỬA 3]: Format ma trận kết quả E thành chuỗi đẹp
+    E_list = E.tolist() if hasattr(E, "tolist") else E
+    pretty_E = [[_fmt_k(x, tol) for x in row] for row in E_list]
+    
     steps.append(Step(
         kind="matrix",
         text="",
-        matrix=E.tolist() if hasattr(E, "tolist") else E,
+        matrix=pretty_E,
     ).to_dict())
 
-    rank_val = int(step_dim) # Dùng rank từ thuật toán chuẩn
+    rank_val = int(step_dim) 
 
     if rank_val == 0:
         steps.append(Step(
@@ -476,7 +480,6 @@ def compute_basis_payload(vectors: List[List[float]], tol: float = 1e-10, pivot_
             text="Kết luận: Tất cả vector đều bằng 0 ⇒ rank = 0, không có cơ sở khác 0.",
         ).to_dict())
     else:
-        # Hiển thị kết luận dựa trên final_pivot_indices (Cơ sở chuẩn)
         basis_human = ", ".join([f"#{i+1}" for i in final_pivot_indices])
         steps.append(Step(
             kind="pivot_choose",
@@ -500,22 +503,32 @@ def compute_basis_payload(vectors: List[List[float]], tol: float = 1e-10, pivot_
     # =========================
     # Generate LaTeX Explanations
     # =========================
-    # Tính lại rank_eq cho Cách 2 Tổng quát (chỉ để hiển thị text)
     rank_eq, m_unknowns = _solve_homogeneous_rank(vectors, tol=tol)
 
     eq_general_latex = _eq_general_pdf_latex(
         vectors=vectors,
-        basis_indices=final_pivot_indices, # Dùng cơ sở chuẩn
+        basis_indices=final_pivot_indices, 
         rank=rank_eq,
         tol=tol
     )
+# ... (code cũ) ...
+    
+    # --- CHÈN ĐOẠN NÀY ĐỂ DEBUG ---
+    print("\n" + "="*30)
+    print("DEBUG KIỂM TRA FORMAT SỐ:")
+    print(f"Input gốc (số xấu): {3.000000000012}")
+    print(f"Format thử: {format_number_pretty(3.000000000012)}")
+    
+    if len(steps) > 1:
+        print("Ma trận đầu tiên trong steps:", steps[1]['matrix'])
+    print("="*30 + "\n")
+    # ------------------------------
 
-    # eq_step_latex đã tính ở trên rồi
-
+    
     return {
         "basis": basis_vectors,
         "dimension": rank_val,
-        "pivot_indices": final_pivot_indices, # Trả về index chuẩn (0, 1) thay vì (0, 2)
+        "pivot_indices": final_pivot_indices, 
         "dependents": dependents,
         "coeff_map": coeff_map,
         "steps": steps,
@@ -527,7 +540,6 @@ def compute_basis_payload(vectors: List[List[float]], tol: float = 1e-10, pivot_
             "eq_step_dimension": int(step_dim),
         }
     }
-
 
 from vectoria_api.explainers.registry import register
 register("basis.gauss_rows", compute_basis_payload)

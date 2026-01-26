@@ -22,16 +22,19 @@
 
   // State Management (Lưu HTML thay vì LaTeX)
   const state = {
-    titleText: "Cơ sở & số chiều trong",
-    titleMath: "\\( \\mathbb{R}^n \\)",
-    
-    // Nội dung HTML của 3 cách giải
-    htmlMat: "",
-    htmlEqGeneral: "",
-    htmlEqStep: "",
+    titleText: "Lời giải",
+    titleMath: "",
 
-    active: "mat",      // Tab chính: "mat" | "eq"
-    eqVariant: "general" // Subtab: "general" | "step"
+    // Nội dung HTML
+    htmlTab1: "", htmlTab2Main: "", htmlTab2Sub: "",
+
+    active: "mat",      // Tab đang chọn
+    eqVariant: "general", // Subtab đang chọn
+
+    // [MỚI] Cấu hình hiển thị (Mặc định)
+    tab1Label: "Cách 1",
+    tab2Label: "Cách 2",
+    showSubTabs: true
   };
 
   // Hàm render MathJax
@@ -57,8 +60,14 @@
 
   // Render Tabs Logic
   function renderTabs() {
-    if (tabMat) tabMat.classList.toggle("is-active", state.active === "mat");
-    if (tabEq) tabEq.classList.toggle("is-active", state.active === "eq");
+    if (tabMat) {
+      tabMat.textContent = state.tab1Label; // Lấy tên từ state
+      tabMat.classList.toggle("is-active", state.active === "mat");
+    }
+    if (tabEq) {
+      tabEq.textContent = state.tab2Label; // Lấy tên từ state
+      tabEq.classList.toggle("is-active", state.active === "eq");
+    }
   }
 
   function ensureEqSubtabs() {
@@ -88,9 +97,11 @@
     ensureEqSubtabs();
     if (!eqSubWrap) return;
 
-    // Chỉ hiện subtab nếu đang ở tab Equation
-    const show = (state.active === "eq");
+    // Chỉ hiện nếu đang ở Tab 2 VÀ Config cho phép hiện
+    const show = (state.active === "eq" && state.showSubTabs);
+
     eqSubWrap.classList.toggle("is-visible", show);
+    eqSubWrap.style.display = show ? "inline-flex" : "none";
 
     if (eqBtnGeneral) eqBtnGeneral.classList.toggle("is-active", state.eqVariant === "general");
     if (eqBtnStep) eqBtnStep.classList.toggle("is-active", state.eqVariant === "step");
@@ -101,28 +112,32 @@
     if (!body) return;
 
     let content = "";
+
+    // Logic mới: Dùng biến state.htmlTab... thay vì tên cũ
     if (state.active === "mat") {
-        content = state.htmlMat;
+      content = state.htmlTab1; // <--- SỬA: Dùng htmlTab1
     } else {
-        content = (state.eqVariant === "step") ? state.htmlEqStep : state.htmlEqGeneral;
-        // Fallback nếu 1 trong 2 subtab chưa có dữ liệu
-        if (!content && state.eqVariant === "step") content = state.htmlEqGeneral;
-        if (!content && state.eqVariant === "general") content = state.htmlEqStep;
+      // Tab 2: Chọn Main (Tổng quát) hay Sub (Từng bước)
+      content = (state.eqVariant === "step") ? state.htmlTab2Sub : state.htmlTab2Main;
+
+      // Fallback: Nếu subtab chưa có, hiện cái kia
+      if (!content && state.eqVariant === "step") content = state.htmlTab2Main;
+      if (!content && state.eqVariant === "general") content = state.htmlTab2Sub;
     }
 
     // Hiển thị
     if (!content) {
       body.innerHTML = `
         <div class="sol-empty">
-          Chưa có lời giải. Hãy bấm <b>"Tính cơ sở"</b> để tạo lời giải mới.
+          Chưa có lời giải. Hãy bấm <b>"Tính toán"</b> để tạo lời giải mới.
         </div>
       `;
     } else {
-      body.innerHTML = content; // Chèn trực tiếp HTML
+      body.innerHTML = content;
     }
 
     renderEqSubtabs();
-    typesetMath(); // Render công thức sau khi chèn HTML
+    typesetMath();
   }
 
   function renderTitle() {
@@ -138,26 +153,45 @@
   }
 
   // --- API Public ---
+
+  // [THÊM MỚI] Hàm mở Panel đa năng
+  App.openSolutionPanel = function (config) {
+    // 1. Nạp dữ liệu
+    state.titleText = config.title || "Lời giải";
+    state.titleMath = config.math || "";
+    state.htmlTab1 = config.content1 || "";
+    state.htmlTab2Main = config.content2 || "";
+    state.htmlTab2Sub = config.content2Sub || "";
+
+    // 2. Nạp Config giao diện (Tên tab, Ẩn/Hiện subtab)
+    state.tab1Label = config.tab1Label || "Cách 1";
+    state.tab2Label = config.tab2Label || "Cách 2";
+    state.showSubTabs = (config.showSubTabs !== false); // Mặc định là hiện
+
+    // 3. Reset trạng thái
+    state.active = "mat";
+    state.eqVariant = "general";
+
+    // 4. Mở Panel (nếu autoOpen = true hoặc không truyền)
+    if (config.autoOpen !== false) setOpen(true);
+  };
+
+  // [THÊM MỚI] Hàm chỉ mở Panel (cho nút "Lời giải")
+  App.showSolutionPanel = function () {
+    setOpen(true);
+  };
   // Nhận dữ liệu từ Controller (basis_controller.js)
   App.setBasisSolutionForPanel = function (pack) {
-    state.titleText = pack.titleText || "Cơ sở & số chiều trong";
-    state.titleMath = pack.titleMath || "\\( \\mathbb{R}^n \\)";
-
-    // Update dữ liệu HTML cho cả 3 cách
-    if (pack.allSolutions) {
-        state.htmlMat = pack.allSolutions.mat || "";
-        state.htmlEqGeneral = pack.allSolutions.general || "";
-        state.htmlEqStep = pack.allSolutions.step || "";
-    } else {
-        // Fallback cho code cũ (nếu có)
-        state.htmlMat = pack.htmlContent || "";
-    }
-
-    // Reset về tab đầu tiên khi có kết quả mới
-    state.active = "mat"; 
-    state.eqVariant = "general";
-    
-    renderAll();
+    App.openSolutionPanel({
+      title: pack.titleText,
+      math: pack.titleMath,
+      content1: pack.allSolutions ? pack.allSolutions.mat : pack.htmlContent,
+      content2: pack.allSolutions ? pack.allSolutions.general : "",
+      content2Sub: pack.allSolutions ? pack.allSolutions.step : "",
+      tab1Label: "Cách 1: Ma trận",
+      tab2Label: "Cách 2: Hệ phương trình",
+      showSubTabs: true
+    });
   };
 
   // Hàm Copy thông minh (Lấy text thuần túy từ HTML đang hiển thị)
@@ -173,16 +207,16 @@
     };
 
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(ok);
+      navigator.clipboard.writeText(text).then(ok);
     } else {
-        // Fallback cũ
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-        ok();
+      // Fallback cũ
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      ok();
     }
   }
 

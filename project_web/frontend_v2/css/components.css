@@ -186,6 +186,9 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 350px; 
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .vec-item {
@@ -197,6 +200,7 @@ pre {
   padding: 10px 12px;
   background: var(--card);
   transition: border-color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
+  flex-shrink: 0;
 }
 
 .vec-item:hover {
@@ -312,8 +316,6 @@ details.calc[open] summary .chev { transform: rotate(180deg); }
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 180px;
-  overflow: auto;
   border: 1px solid var(--border);
   background: var(--chip-bg);
   border-radius: var(--r-sm);

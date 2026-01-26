@@ -98,6 +98,8 @@
   }
 
   App.formatScalar = function (x, dec = 6) {
+    if (typeof x === 'string') return x;
+
     if (!isFinite(x)) return String(x);
     const ax = Math.abs(x);
 
