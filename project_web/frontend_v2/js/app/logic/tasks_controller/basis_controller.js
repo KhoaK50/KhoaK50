@@ -263,18 +263,77 @@
       const dim = (typeof packMat?.dimension === "number")
         ? packMat.dimension : ((typeof data?.dimension === "number") ? data.dimension : null);
 
-      const basisStr = basis.length
-        ? basis.map((v) => (typeof App.formatVectorShort === "function") ? App.formatVectorShort(v) : JSON.stringify(v)).join("\n")
-        : "(rỗng)";
+      // --- [MỚI] 1. TẠO HTML HIỂN THỊ ĐẸP (MATHLIVE READ-ONLY) ---
 
-      const explanationText =
-        `Số chiều dim(V) = ${dim ?? "?"}\n` +
-        "Cơ sở gồm:\n" + basisStr + "\n\n" +
-        '👉 Bấm "Lời giải" để xem chi tiết.';
+      // Hàm chuyển vector [1, 2] thành Latex (1, 2) để hiển thị trong Mathfield
+      const fmtVecForMathLive = (v) => {
+        const nums = v.map(x => {
+          let s = Number(x).toString();
+          if (s.includes('.')) s = Number(x).toFixed(4).replace(/\.?0+$/, ''); // Làm tròn số lẻ
+          return s;
+        });
+        return `\\left(${nums.join(", ")}\\right)`;
+      };
+
+      // Tạo danh sách các thẻ <math-field>
+      const basisMathFields = basis.length
+        ? basis.map(v => `
+            <math-field read-only style="
+                display: block;
+                width: 100%;
+                background: var(--bg-paper, #fff); /* Ăn theo nền sáng/tối */
+                border: 1px solid var(--border, #ccc);
+                border-radius: 8px;
+                padding: 10px 12px;
+                margin-bottom: 8px;
+                font-size: 1.3em; /* [QUAN TRỌNG] Chữ to rõ */
+                color: var(--text-main, #333);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                pointer-events: none; /* Chặn click chỉnh sửa */
+            ">
+                ${fmtVecForMathLive(v)}
+            </math-field>
+          `).join("")
+        : `<div style="font-style:italic; color:#888; padding: 5px;">(Không có vector cơ sở)</div>`;
+
+      // HTML Khung kết quả (Hoàn toàn dùng DIV, không dùng LI/UL)
+      const resultHTML = `
+        <div style="display:flex; flex-direction:column; gap:12px; padding: 5px 0 40px 0;">
+            
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; width:100%;">
+                
+                <div style="display:flex; align-items:center; white-space:nowrap;">
+                    <span style="font-weight:600; font-size:1.1em; color:var(--text-main, #333); margin-right:6px;">Số chiều:</span>
+                    <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:1.2em; color:var(--text-main, #333);">dim(V) = </span>
+                    <span style="font-weight:bold; font-size:1.4em; color:#2196F3; margin-left:6px;">${dim ?? "?"}</span>
+                </div>
+
+                <div style="flex-grow:1;"></div>
+
+                <div style="font-weight:600; font-size:1.1em; color:var(--text-sec, #555); white-space:nowrap;">
+                    Cơ sở gồm:
+                </div>
+            </div>
+            
+            <div style="display:flex; flex-direction:column; width:100%;">
+                ${basisMathFields}
+            </div>
+
+            
+            <div style="margin-top:5px; font-size:1.2em; color:#888; font-style:italic; border-top:1px dashed #ccc; padding-top:8px; text-align: left; width: 100%;">
+                    👉 Bấm nút <b>"Lời giải"</b> để xem chi tiết.
+                </div>
+        </div>
+      `;
+
+      // 2. Text thô dùng cho animation (giữ nguyên để không lỗi logic khác)
+      const basisStr = basis.length
+        ? basis.map(v => `(${v.join(", ")})`).join("\n")
+        : "(rỗng)";
+      const explanationText = `Số chiều dim(V) = ${dim}\nCơ sở gồm:\n${basisStr}`;
 
       let dependentIds = [];
       if (Array.isArray(data?.dependents) && data.dependents.length) {
-        // data.dependents trả về index trong mảng gửi đi -> map lại ID gốc
         dependentIds = data.dependents
           .map((idx) => selectedItems[idx])
           .filter(Boolean)
@@ -283,8 +342,11 @@
 
       if (typeof App.playBasisSolution === "function") {
         await App.playBasisSolution(explanationText);
-      } else if (out) {
-        out.innerText = explanationText;
+      }
+
+      // [FIX] Gán HTML đẹp vào ô kết quả
+      if (out) {
+        out.innerHTML = resultHTML;
       }
 
       // [ĐÚNG] Phải gọi là .htmlContent (cho khớp với file basis_generator.js)

@@ -9,13 +9,16 @@ def require_json() -> Dict[str, Any]:
     return request.get_json(silent=True) or {}
 
 
-def validate_vector(x: Any, *, allow_2d_3d: bool = True) -> np.ndarray:
+def validate_vector(x: Any, *, allow_2d_3d: bool = False) -> np.ndarray: # Sửa True thành False
     if not isinstance(x, list):
         raise ValueError("Vector phải là list.")
-    if allow_2d_3d and (len(x) not in (2, 3)):
-        raise ValueError("Vector phải có 2 hoặc 3 toạ độ.")
-    if not allow_2d_3d and len(x) == 0:
-        raise ValueError("Vector rỗng.")
+    
+    # --- ĐOẠN ĐÃ SỬA ---
+    # Bỏ kiểm tra (2, 3) để cho phép n chiều
+    if len(x) == 0:
+        raise ValueError("Vector không được rỗng.")
+    # -------------------
+
     try:
         return np.array([float(v) for v in x], dtype=float)
     except Exception:

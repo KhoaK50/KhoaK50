@@ -37,8 +37,7 @@
     const btnCompute = document.getElementById("btnCompute");
     if (btnCompute) btnCompute.addEventListener("click", () => App.runCalc(true));
 
-    const btnPreview = document.getElementById("btnPreview");
-    if (btnPreview) btnPreview.addEventListener("click", () => App.runCalc(false));
+    
 
     // Select phép tính phụ
     const opExtraSelect = document.getElementById("opExtraSelect");

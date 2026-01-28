@@ -1,34 +1,40 @@
 from flask import Flask
-from vectoria_api.middleware.cors import attach_cors_middleware
+# 1. BỎ dòng import middleware/cors tự viết
+# from vectoria_api.middleware.cors import attach_cors_middleware 
+
+# 2. THÊM thư viện chuẩn này
+from flask_cors import CORS 
+
 from vectoria_api.routes import register_blueprints
 from vectoria_api.config import HOST, PORT, DEBUG
 from vectoria_api.explainers import init_explainers
 
-# IMPORT MODULE MỚI VỪA TẠO
+# Import module contact
 from vectoria_api.routes.contact import contact_bp, init_feedback_db
 
 def create_app():
+    print(">> FORCE UPDATE VERCEL V1") # Thêm dòng này
     app = Flask(__name__)
-# Đoạn này ép buộc Flask cấp quyền cho mọi trình duyệt
-    @app.after_request
-    def add_cors_headers(response):
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-        return response
-    # 1) CORS
-    attach_cors_middleware(app)
+
+    # ============================================================
+    # CẤU HÌNH CORS TỔNG QUÁT (THE GENERAL WAY)
+    # ============================================================
+    # Dòng này tương đương với việc ông viết 20 dòng code thủ công.
+    # Nó tự động cho phép mọi nguồn (*), mọi method (GET, POST, OPTIONS...),
+    # và tự động xử lý Preflight check cho việc upload file.
+    CORS(app) 
+    # ============================================================
 
     # 2) Nạp explainers
     init_explainers()
 
-    # 3) Khởi tạo Database (Gọi hàm từ file contact.py)
+    # 3) Khởi tạo Database
     init_feedback_db()
 
     # 4) Đăng ký các routes cũ
     register_blueprints(app)
 
-    # 5) ĐĂNG KÝ ROUTE LIÊN HỆ MỚI
+    # 5) ĐĂNG KÝ ROUTE LIÊN HỆ
     app.register_blueprint(contact_bp)
 
     return app

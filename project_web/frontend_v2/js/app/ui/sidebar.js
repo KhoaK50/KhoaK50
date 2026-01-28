@@ -2,8 +2,7 @@
   window.App = window.App || {};
 
   // =========================================================================
-  // 1. DYNAMIC CSS INJECTION
-  // Tự động chèn CSS để đảm bảo giao diện đồng bộ mà không cần sửa file .css
+  // 1. CSS CHO TAB & QUY HOẠCH GIAO DIỆN
   // =========================================================================
   function injectSidebarStyles() {
     if (document.getElementById('sidebar-dynamic-styles')) return;
@@ -11,307 +10,239 @@
     const style = document.createElement('style');
     style.id = 'sidebar-dynamic-styles';
     style.textContent = `
-    /* Wrapper bao quanh ô nhập và nút menu */
+    /* --- KHUNG CHÍNH --- */
+    #controls {
+        display: flex !important; flex-direction: column !important;
+        height: 100vh !important; overflow: hidden !important; padding: 0 !important;
+    }
+
+    /* --- THANH TAB --- */
+    .sidebar-tabs {
+        flex: 0 0 auto; display: flex; background: #fff;
+        border-bottom: 1px solid #eee; z-index: 100; padding: 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+    .tab-btn {
+        flex: 1; border: none; background: transparent; padding: 8px 2px;
+        font-size: 11px; font-weight: 700; line-height: 1.2;
+        color: #888; cursor: pointer; border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 4px; min-width: 0; text-align: center; text-transform: uppercase; white-space: normal;
+    }
+    .tab-btn i { font-size: 14px; margin-bottom: 2px; }
+    .tab-btn.active { color: #2196F3; border-bottom-color: #2196F3; background: transparent; }
+
+    /* --- NỘI DUNG TAB --- */
+    .tab-content {
+        display: none !important; flex: 1 1 auto; 
+        overflow-y: auto !important; overflow-x: hidden;
+        padding: 10px 0; height: auto !important; -webkit-overflow-scrolling: touch;
+    }
+    .tab-content.active { display: block !important; animation: fadeIn 0.2s ease-out; }
+    .tab-content .card { box-shadow: none !important; border: none !important; background: transparent !important; padding: 5px !important; margin-bottom: 15px !important; }
+    .tab-content details > summary { display: none !important; }
+    .tab-content details { border: none !important; padding: 0 !important; }
+
+    /* --- [FIX QUAN TRỌNG] BORDER KHUNG VECTOR --- */
+    /* Làm viền mờ đi (rgba) cho nó sang, không bị đậm đen */
     .vec-input-wrapper {
-        position: relative;
-        flex: 1;
-        display: flex;
-        align-items: center;
-        background: #fff;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        padding: 0;
-        min-height: 34px;
-        z-index: 1;
-        overflow: visible !important;
+        position: relative; flex: 1; display: flex; align-items: center;
+        background: #fff !important; 
+        border: 1px solid rgba(0,0,0,0.1); /* Viền siêu nhẹ */
+        border-radius: 6px; padding: 0; min-height: 36px; z-index: 2; overflow: visible !important;transition: margin-bottom 0.2s ease;
     }
+    .vec-input-wrapper:focus-within { border-color: #2196F3; box-shadow: 0 0 0 2px rgba(33,150,243,0.1); }
     
-    /* Mở khóa hiển thị cho toàn bộ khung chứa */
-    .vec-item, .vec-main, .vec-header {
-        overflow: visible !important;
-    }
+    .vec-item { position: relative; z-index: 1; margin-bottom: 8px; }
+    .vec-math-field { flex: 1; border: none !important; background: transparent !important; padding: 4px 10px; font-size: 1.1em; width: 100%; outline: none; z-index: 1; min-width: 0; }
+    .vec-menu-btn { padding: 0 12px; cursor: pointer; color: #555; background: transparent; border: none; border-left: 1px solid rgba(0,0,0,0.05); font-size: 14px; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 2; }
     
-    /* Khi di chuột vào hoặc bấm vào, đưa dòng đó lên lớp cao nhất */
-    .vec-item {
-        position: relative; 
-        z-index: 1; 
-    }
-    .vec-item:hover, .vec-item:focus-within {
-        z-index: 9999 !important;
-    }
+    /* Dropdown */
+    .vec-dropdown { display: none; position: absolute; top: 100%; right: 0; width: 240px; background: white; border: 1px solid #ddd; box-shadow: 0 8px 24px rgba(0,0,0,0.15); border-radius: 8px; z-index: 100; max-height: 300px; overflow-y: auto; padding: 5px 0; margin-top: 5px;}
+    .vec-item.active-z { z-index: 1000 !important; }
+    .vec-dropdown.show { display: block; animation: fadeIn 0.15s ease-out; }
+    .vec-dropdown-item { padding: 10px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f9f9f9; font-size: 0.95em; color: #333; }
+    .vec-dropdown-item:hover { background: #f0f7ff; color: #2196F3; }
+    .latex-preview { color: #aaa; font-style: italic; font-size: 0.9em; }
 
-    /* Ô nhập MathField chính */
-    .vec-math-field {
-        flex: 1;
-        border: none !important;
-        background: transparent !important;
-        padding: 4px 8px;
-        font-size: 1.1em;
-        width: 100%;
-        outline: none;
-        z-index: 1;
-        min-width: 0;
-    }
-
-    /* Nút Menu (3 gạch) */
-    .vec-menu-btn {
-        padding: 0 10px;
-        cursor: pointer;
-        color: #888;
-        background: transparent;
-        border: none;
-        border-left: 1px solid #eee;
-        font-size: 14px;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 2;
-    }
-    .vec-menu-btn:hover {
-        color: #2196F3;
-        background: #f9f9f9;
-    }
-
-    /* Dropdown Menu */
-    .vec-dropdown {
-        display: none;
-        position: absolute;
-        top: 100%;
-        right: 0;
-        width: 220px;
-        background: white;
-        border: 1px solid #ddd;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        border-radius: 4px;
-        z-index: 99999;
-        max-height: 300px;
-        overflow-y: auto;
-        margin-top: -1px;
-    }
-    .vec-item.active-z {
-        z-index: 1000 !important;
-    }
-    .vec-dropdown.show {
-        display: block;
-    }
-
-    /* Các item trong menu dropdown */
-    .vec-dropdown-item {
-        padding: 8px 12px;
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #f5f5f5;
-        font-size: 0.9em;
-        color: #333;
-    }
-    .vec-dropdown-item:last-child {
-        border-bottom: none;
-    }
-    .vec-dropdown-item:hover {
-        background: #f0f8ff;
-        color: #2196F3;
-    }
-
-    .latex-preview {
-        color: #999;
-        font-style: italic;
-        font-family: "Times New Roman", serif;
-        font-size: 0.95em;
-    }
-
-    /* --- CHECKLIST STYLES (Đã gộp và tối ưu) --- */
-    
-    /* Dòng chứa checkbox + công thức */
-    .checkitem {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 8px 12px;
-        border-bottom: 1px solid #f0f0f0;
-        transition: background 0.2s;
-        cursor: pointer !important; 
-        user-select: none; /* Không cho bôi đen khi click liên tục */
-    }
-    .checkitem:hover {
-        background: #f9f9f9;
-    }
-    
-    .checkitem-left {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.95em;
-        color: #333;
-        flex: 1; /* Để chiếm hết chỗ trống */
-        overflow: hidden;
-        pointer-events: none !important;
-    }
-    .badge {
-        font-size: 0.8em; 
-        font-weight: bold; 
-        color: #888; 
-        background: #eee;
-        padding: 2px 5px; 
-        border-radius: 3px; 
-        white-space: nowrap;
-        
-        /* [QUAN TRỌNG] Click xuyên qua badge */
-        pointer-events: none !important; 
-    }
-
-    /* Ô Checkbox nhỏ gọn */
-    .checkitem input[type="checkbox"] {
-        width: 14px;
-        height: 14px;
-        margin: 0;
-        cursor: pointer;
-        accent-color: #2196F3;
-        pointer-events: auto;
-    }
-    
-    /* Khung công cụ tìm kiếm trong checklist */
-    .checklist-tools {
-        padding: 10px;
-        border-bottom: 1px solid #eee;
-        background: #fafafa;
-    }
-    
-    /* Ô input tìm kiếm */
-    .checklist-search {
-        width: 100%;
-        padding: 6px 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        margin-bottom: 8px;
-        font-size: 0.9em;
-        box-sizing: border-box; /* Quan trọng: Để padding không làm vỡ layout */
-    }
-    
-    /* Dòng chứa nút "Chọn tất cả" */
-    .checklist-actions {
-        display: flex !important;
-        justify-content: space-between !important; /* Bắt buộc dồn sang phải */
-        align-items: center !important;
-        width: 100% !important;
-        gap: 8px !important;
-        margin-top: 6px !important;
-        font-size: 0.9em;
-        color: #555;
-    }
-    /* Trị cái label { display: block } của global */
-    .checklist-actions label {
-        display: inline-block !important;
-        width: auto !important;
-        margin: 0 !important; /* Xóa margin đáy của global */
-        padding: 0 !important;
-        cursor: pointer;
-        user-select: none;
-        font-weight: normal !important;
-    }
-
-    /* Trị cái input { width: 100% } của global */
-    .checklist-actions input[type="checkbox"] {
-        display: inline-block !important;
-        width: 16px !important;  /* Ép về size nhỏ */
-        height: 16px !important;
-        min-height: 0 !important; /* Fix lỗi min-height 42px của mobile */
-        margin: 0 !important;
-        flex: 0 0 auto !important; /* Không cho co giãn */
-        cursor: pointer;
-        accent-color: #2196F3;
-        box-shadow: none !important; /* Bỏ shadow focus của input global */
-    }
-    
-    /* Khung cuộn danh sách */
-    .checklist-scroll {
-        max-height: 250px;
-        overflow-y: auto;
-    }
-
-    /* MathField trong Checklist (Chỉ đọc) */
-    .checklist-math {
-        flex: 1;
-        border: none !important;
-        background: transparent !important;
-        font-size: 1.1em;
-        color: #333;
-        pointer-events: none !important;
-        box-shadow: none !important;
-        outline: none !important;
-        min-width: 0;
-        touch-action: none !important;
-    }
-    /* Ẩn menu ảo của math-field */
+    /* --- CHECKLIST ITEMS --- */
+    .checkitem { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: none !important; border-radius: 6px; margin-bottom: 2px; cursor: pointer !important; user-select: none; max-width: 100%; transition: background 0.15s; }
+    .checkitem:hover { background: #f5f7fa; }
+    .checkitem-left { display: flex; align-items: center; gap: 10px; font-size: 0.95em; color: #333; flex: 1; overflow: hidden; min-width: 0; cursor: pointer !important; pointer-events: auto !important; }
+    .badge { font-size: 0.75em; font-weight: 700; color: #666; background: #eaeff5; padding: 2px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; pointer-events: none !important; }
+    .checklist-math { display: block !important; width: 100%; min-width: 0; border: none !important; background: transparent !important; font-size: 1.1em; color: #333; outline: none; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; pointer-events: none !important; }
     .checklist-math::part(menu-toggle) { display: none; }
+    
+    /* [FIX] CHECKBOX TRONG LIST */
+    .checkitem input[type="checkbox"] { 
+        width: 16px !important; height: 16px !important; /* Size cố định */
+        margin: 0 0 0 8px; cursor: pointer; accent-color: #2196F3; 
+        pointer-events: auto; flex-shrink: 0; border-radius: 4px; 
+    }
 
-    /* --- DARK MODE SUPPORT --- */
-    body.dark .vec-input-wrapper {
-        background: rgba(255,255,255,0.05);
-        border-color: rgba(255,255,255,0.2);
-    }
-    body.dark .vec-math-field {
-        color: #fff;
-        --caret-color: #fff;
-        --selection-background-color: rgba(255,255,255,0.2);
-    }
-    body.dark .vec-menu-btn {
-        color: #aaa;
-        border-left-color: rgba(255,255,255,0.1);
-    }
-    body.dark .vec-menu-btn:hover {
-        color: #fff;
-        background: rgba(255,255,255,0.1);
-    }
-    body.dark .vec-dropdown {
-        background: #1e1e1e;
-        border-color: #444;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
-    body.dark .vec-dropdown-item {
-        color: #ddd;
-        border-bottom-color: #333;
-    }
-    body.dark .vec-dropdown-item:hover {
-        background: #333;
-        color: #2196F3;
+    /* --- CHECKLIST TOOLS (KHUNG TÌM KIẾM & CHỌN TẤT CẢ) --- */
+    .checklist-tools { padding: 10px; border-bottom: 1px solid #eee; background: #fafafa; border-radius: 8px 8px 0 0; }
+    .checklist-search { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px; font-size: 0.95em; box-sizing: border-box; }
+    .checklist-actions { 
+        display: flex !important; justify-content: space-between !important; align-items: center !important; 
+        width: 100% !important; gap: 8px !important; font-size: 0.9em; color: #666; 
     }
     
-    /* Dark mode cho Checklist */
-    body.dark .checklist-tools {
-        background: #2a2a2a;
-        border-bottom-color: #444;
+    /* [FIX QUAN TRỌNG] Ô VUÔNG TRẮNG CHÀ BÁ LỬA Ở ĐÂY NÈ */
+    /* Ép size cho cái nút Chọn tất cả */
+    .checklist-actions input[type="checkbox"] {
+        width: 16px !important; 
+        height: 16px !important;
+        margin: 0 !important;
+        cursor: pointer;
+        accent-color: #2196F3;
+        flex-shrink: 0;
     }
-    body.dark .checklist-search {
-        background: #333;
-        border-color: #555;
-        color: #fff;
+
+    .checklist-scroll { max-height: 260px; overflow-y: auto; padding: 4px; }
+
+    /* Result Box */
+    .nice-result-box { display: block; margin-top: 15px; padding: 15px; background: #e8f5e9; border-left: 5px solid #4caf50; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 1.2em; color: #2e7d32; box-shadow: 0 2px 5px rgba(0,0,0,0.05); word-break: break-all; line-height: 1.5; }
+    .nice-result-box strong { color: #1b5e20; text-transform: uppercase; font-size: 0.85em; display: block; margin-bottom: 5px; }
+
+    /* DARK MODE */
+    body.dark .sidebar-tabs { background: #111; border-color: #333; }
+    body.dark .tab-btn { color: #888; }
+    body.dark .tab-btn:hover { background: #1a1a1a; color: #ccc; }
+    body.dark .tab-btn.active { color: #4f85ff; border-bottom-color: #4f85ff; }
+    
+    /* Viền dark mode mờ đi */
+    body.dark .vec-input-wrapper { background: #1e1e1e !important; border-color: rgba(255,255,255,0.15); }
+    body.dark .vec-input-wrapper:focus-within { border-color: #4f85ff; box-shadow: 0 0 0 2px rgba(79,133,255,0.2); }
+    
+    body.dark .vec-math-field { color: #fff; }
+    body.dark .vec-menu-btn { color: #aaa; border-left-color: rgba(255,255,255,0.1); }
+    body.dark .vec-menu-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+    body.dark .vec-dropdown { background: #1e1e1e; border-color: #444; }
+    body.dark .vec-dropdown-item { color: #ddd; border-bottom-color: #333; }
+    body.dark .vec-dropdown-item:hover { background: #333; color: #2196F3; }
+    body.dark .checklist-tools { background: #2a2a2a; border-bottom-color: #444; }
+    body.dark .checklist-search { background: #333; border-color: #555; color: #fff; }
+    body.dark .checklist-actions { color: #aaa; }
+    body.dark .checkitem:hover { background: #2a2a2a; }
+    body.dark .checkitem-left { color: #ccc; }
+    body.dark .badge { background: #444; color: #ccc; }
+    body.dark .checklist-math { color: #ddd; }
+    body.dark .nice-result-box { background: #1b2e1e; border-left-color: #66bb6a; color: #a5d6a7; }
+    body.dark .nice-result-box strong { color: #81c784; }
+    
+    /* Scrollbar đẹp */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    
+    @keyframes shakeError {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); border-color: #ff4444; box-shadow: 0 0 0 2px rgba(255,0,0,0.1); }
+        75% { transform: translateX(5px); border-color: #ff4444; box-shadow: 0 0 0 2px rgba(255,0,0,0.1); }
     }
-    body.dark .checkitem {
-        border-bottom-color: #333;
+    .input-error-flash {
+        animation: shakeError 0.4s ease-in-out;
+        border-color: #ff4444 !important;
+        background: #fff5f5 !important;
     }
-    body.dark .checkitem:hover {
-        background: #333;
-    }
-    body.dark .checkitem-left {
-        color: #ddd;
-    }
-    body.dark .checklist-math {
-        color: #ddd;
-    }
-    body.dark .checklist-actions {
-        color: #aaa;
-    }
-`;
+    `;
     document.head.appendChild(style);
   }
 
-  // Kích hoạt style ngay lập tức
+  function initSidebarLayout() {
+    const sidebar = document.getElementById("controls");
+    if (!sidebar) return;
+
+    // Nếu đã có tab rồi thì thôi (tránh chạy 2 lần)
+    if (sidebar.querySelector(".sidebar-tabs")) return;
+
+    // 1. Tìm các thành phần cũ (Cards)
+    // Lưu ý: Các class này phải khớp với HTML hiện tại của ông
+    const cardCreate = sidebar.querySelector(".section-create");
+    const cardList = sidebar.querySelector(".section-list");
+    const cardSpace = sidebar.querySelector(".section-calc-info"); // Không gian
+    const cardCalc = sidebar.querySelector(".section-calc-new");   // Phép tính
+
+    // 2. Tạo cấu trúc Tab mới
+    const tabNav = document.createElement("div");
+    tabNav.className = "sidebar-tabs";
+
+    // [SỬA ĐOẠN NÀY] Tạo nút với Icon + Tên dài gốc
+    const btnList = document.createElement("button");
+    btnList.className = "tab-btn active";
+    // Mẹo: Thêm icon để người dùng dễ nhận biết hơn khi chữ bị nhỏ
+    btnList.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> KHỞI TẠO VECTOR';
+
+    const btnSpace = document.createElement("button");
+    btnSpace.className = "tab-btn";
+    btnSpace.innerHTML = '<i class="fa-solid fa-cube"></i> KHÔNG GIAN VECTOR';
+
+    const btnCalc = document.createElement("button");
+    btnCalc.className = "tab-btn";
+    btnCalc.innerHTML = '<i class="fa-solid fa-calculator"></i> PHÉP TÍNH';
+
+    tabNav.appendChild(btnList);
+    tabNav.appendChild(btnSpace);
+    tabNav.appendChild(btnCalc);
+
+    // 3. Tạo các Container chứa nội dung
+    const tabContentList = document.createElement("div"); tabContentList.className = "tab-content active";
+    const tabContentSpace = document.createElement("div"); tabContentSpace.className = "tab-content";
+    const tabContentCalc = document.createElement("div"); tabContentCalc.className = "tab-content";
+
+    // 4. "Gắp" các Card cũ bỏ vào Tab mới (Move DOM)
+    // Việc này giữ nguyên toàn bộ sự kiện click/input đã gán trước đó
+    if (cardCreate) tabContentList.appendChild(cardCreate);
+    if (cardList) tabContentList.appendChild(cardList);
+
+    if (cardSpace) {
+      // Mở sẵn cái details để luôn hiện nội dung
+      const details = cardSpace.querySelector("details");
+      if (details) details.open = true;
+      tabContentSpace.appendChild(cardSpace);
+    }
+
+    if (cardCalc) {
+      const details = cardCalc.querySelector("details");
+      if (details) details.open = true;
+      tabContentCalc.appendChild(cardCalc);
+    }
+
+    // 5. Xóa sạch Sidebar cũ và thêm cấu trúc mới vào
+    // (Vì ta đã appendChild các card sang biến nhớ rồi, nên innerHTML="" chỉ xóa vỏ bọc cũ)
+    sidebar.innerHTML = "";
+    sidebar.appendChild(tabNav);
+    sidebar.appendChild(tabContentList);
+    sidebar.appendChild(tabContentSpace);
+    sidebar.appendChild(tabContentCalc);
+
+    // 6. Logic chuyển Tab
+    const tabs = [btnList, btnSpace, btnCalc];
+    const panels = [tabContentList, tabContentSpace, tabContentCalc];
+
+    tabs.forEach((btn, index) => {
+      btn.onclick = () => {
+        tabs.forEach(t => t.classList.remove("active"));
+        panels.forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        panels[index].classList.add("active");
+      };
+    });
+  }
+
+  // Chạy ngay và luôn
   injectSidebarStyles();
 
-
+  // Đợi DOM load xong để chắc chắn tìm thấy element
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSidebarLayout);
+  } else {
+    initSidebarLayout();
+  }
   // =========================================================================
   // 2. HELPER FUNCTIONS (MÀU SẮC & XỬ LÝ)
   // =========================================================================
@@ -409,18 +340,15 @@
 
     // --- B. SỰ KIỆN CLICK RA NGOÀI & SCROLL (RESET KHUNG) ---
     if (!window._sidebarEventsAttached) {
-      const resetSidebar = () => {
-        document.querySelectorAll('.vec-dropdown').forEach(d => d.classList.remove('show'));
-        document.querySelectorAll('.vec-item').forEach(it => it.classList.remove('active-z'));
-        const list = document.getElementById("vectorList");
-        if (list) {
-          list.style.paddingBottom = "0px";
-          void list.offsetHeight; // Force Reflow để tránh lỗi kẹt
-        }
-      };
-
       document.addEventListener('click', (e) => {
-        if (!e.target.closest('.vec-input-wrapper')) resetSidebar();
+        if (!e.target.closest('.vec-input-wrapper')) {
+          // Đóng menu
+          document.querySelectorAll('.vec-dropdown').forEach(d => d.classList.remove('show'));
+          document.querySelectorAll('.vec-item').forEach(it => it.classList.remove('active-z'));
+
+          // [QUAN TRỌNG] Thu hồi margin (khung co lại như cũ)
+          document.querySelectorAll('.vec-input-wrapper').forEach(w => w.style.marginBottom = "0px");
+        }
       });
       window._sidebarEventsAttached = true;
     }
@@ -470,38 +398,59 @@
       mf.setAttribute("virtual-keyboard-policy", "manual");
 
       // Sự kiện Edit Vector
+      // [FIX LỖI TOÁN] Sửa lại đoạn sự kiện input của math-field
       mf.addEventListener("input", () => {
         try {
-          const v = App.parseVectorExpr(mf.value);
+          // 1. Hàm làm sạch LaTeX thành toán thường (cho backend hiểu)
+          const cleanLatex = (latex) => {
+            let s = latex;
+            // Xóa lệnh latex cơ bản
+            s = s.replace(/\\left/g, "").replace(/\\right/g, "");
+            // Chuyển căn: \sqrt{x} -> sqrt(x)
+            s = s.replace(/\\sqrt\{([^}]+)\}/g, "sqrt($1)");
+            // Chuyển phân số: \frac{a}{b} -> (a/b)
+            s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "($1/$2)");
+            // Chuyển các hàm lượng giác/log
+            s = s.replace(/\\(sin|cos|tan|cot|ln|log)/g, "$1");
+            s = s.replace(/\\pi/g, "pi");
+            // Xử lý nhân tắt: số dính liền chữ (2x, 2sqrt) -> thêm dấu *
+            s = s.replace(/(\d)([a-zA-Z\(])/g, "$1*$2");
+            // Xử lý dấu ngoặc dính liền: )( -> )*(
+            s = s.replace(/\)\(/g, ")*(");
+            return s;
+          };
+
+          // 2. Lấy giá trị đã làm sạch để parse
+          const rawValue = mf.value;
+          const cleanValue = cleanLatex(rawValue);
+
+          // Gọi hàm parse cũ của ông với giá trị đã làm sạch
+          const v = App.parseVectorExpr(cleanValue);
+
           if (v && v.length > 0 && !v.some(isNaN)) {
             item.vec = v;
 
-            // --- [ĐOẠN LOGIC SỬA ĐỔI] ---
-            const raw = mf.value;
-            const needsCalc = /(sin|cos|tan|cot|log|ln|pi|e\^|e\s|e$)/i.test(raw);
-
+            // Giữ nguyên logic hiển thị LaTeX đẹp
+            const needsCalc = /(sin|cos|tan|cot|log|ln|pi|e\^|e\s|e$)/i.test(rawValue);
             if (needsCalc) {
-              // Tính ra số -> Chuyển về phân số
               const latexArr = v.map(val => App.smartFormat(val));
               item.latex = `[${latexArr.join(", ")}]`;
             } else {
-              // Giữ nguyên (ví dụ sqrt(2))
-              item.latex = raw;
+              item.latex = rawValue;
             }
-            // ----------------------------
 
+            // Update App state...
             App.currentVector = v.slice();
             if (App.updateCalcSelectLabels) App.updateCalcSelectLabels();
             if (App.clearAngleOverlay) App.clearAngleOverlay();
             if (App.renderExtraCalcOptions) App.renderExtraCalcOptions();
-
-            if (App.autoMode) { /* ...giữ nguyên... */ }
             if (App.redrawAll) App.redrawAll({ frame: true });
-
             if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
             else if (window.Vec2D) Vec2D.draw2DAllVectors();
           }
-        } catch (err) { }
+        } catch (err) {
+          // console.log("Lỗi nhập liệu:", err); 
+        }
       });
 
       const btn = document.createElement("button");
@@ -551,31 +500,39 @@
       // --- SỰ KIỆN MENU (ĐÃ FIX LỖI KẸT) ---
       btn.onclick = (e) => {
         e.stopPropagation();
-        const listContainer = document.getElementById("vectorList");
-        const wasOpen = dropdown.classList.contains('show');
+        const topMenu = document.getElementById('myCustomMenu');
+        if (topMenu) topMenu.style.display = 'none';
+        
+        // Tìm wrapper chứa input và nút này
+        const currentWrapper = btn.closest('.vec-input-wrapper');
+        const isClosed = !dropdown.classList.contains('show');
 
-        // 1. Reset
+        // 1. Reset toàn bộ (Đóng tất cả menu khác và thu hồi khoảng trống)
         document.querySelectorAll('.vec-dropdown').forEach(d => d.classList.remove('show'));
+        document.querySelectorAll('.vec-input-wrapper').forEach(w => w.style.marginBottom = "0px"); // Reset margin
         document.querySelectorAll('.vec-item').forEach(it => it.classList.remove('active-z'));
-        listContainer.style.paddingBottom = "0px";
-        void listContainer.offsetHeight; // Force Reflow
 
-        if (wasOpen) return;
+        if (isClosed) {
+          // 2. Mở menu
+          dropdown.classList.add('show');
+          li.classList.add('active-z'); // Đẩy z-index lên cao nhất
 
-        // 2. Open
-        li.classList.add('active-z');
-        dropdown.classList.add('show');
+          // 3. Tính chiều cao menu để đẩy khung ra
+          // Phải chờ 1 tick để trình duyệt render menu xong mới lấy được chiều cao
+          requestAnimationFrame(() => {
+            const menuHeight = dropdown.offsetHeight;
+            // Cộng thêm margin-bottom cho wrapper bằng đúng chiều cao menu + chút khoảng hở
+            currentWrapper.style.marginBottom = (menuHeight + 10) + "px";
 
-        // 3. Calc Padding
-        setTimeout(() => {
-          const menuRect = dropdown.getBoundingClientRect();
-          const listRect = listContainer.getBoundingClientRect();
-          if (menuRect.bottom > listRect.bottom) {
-            const extra = menuRect.bottom - listRect.bottom + 2;
-            listContainer.style.paddingBottom = extra + "px";
+            // Nếu menu bị khuất dưới đáy màn hình -> Cuộn xuống cho thấy
+            const rect = dropdown.getBoundingClientRect();
+            const listEl = document.getElementById("vectorList");
+            const viewHeight = listEl.closest('.tab-content').offsetHeight; // Hoặc window.innerHeight
+
+            // Logic cuộn thông minh (nếu cần)
             dropdown.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }
-        }, 10);
+          });
+        }
       };
 
       wrapper.appendChild(mf);
@@ -660,7 +617,7 @@
 
       // 1. Tạo dòng Placeholder mặc định
       const placeholder = document.createElement("option");
-      placeholder.text = "-- Chọn vector --";
+      placeholder.text = "Chọn vector";
       placeholder.value = "";
       placeholder.disabled = true; // Không cho chọn lại dòng này
       placeholder.selected = true; // Mặc định chọn
@@ -716,7 +673,7 @@
     const searchInp = document.createElement("input");
     searchInp.type = "text";
     searchInp.className = "checklist-search";
-    searchInp.placeholder = "🔍 Tìm trong danh sách...";
+    searchInp.placeholder = "🔍 Tìm vector theo tọa độ";
 
     const actions = document.createElement("div");
     actions.className = "checklist-actions";
@@ -758,6 +715,20 @@
       const left = document.createElement("div");
       left.className = "checkitem-left";
 
+      const fullTooltip = `Vector #${App.displayIndexOf(it)}: [${it.vec.join(", ")}]`;
+      left.setAttribute("title", fullTooltip);
+      left.oncontextmenu = (e) => {
+        e.preventDefault(); // Chặn menu chuột phải mặc định của trình duyệt
+        e.stopPropagation(); // Không cho kích hoạt checkbox
+
+        // Hiện thông báo tọa độ
+        if (window.App && App.showToast) {
+          App.showToast(fullCoords);
+        } else {
+          alert(fullCoords);
+        }
+        return false;
+      };
       const badge = document.createElement("span");
       badge.className = "badge";
       badge.textContent = `#${App.displayIndexOf(it)}`;
@@ -895,5 +866,97 @@
     const active = document.getElementById(`form-${op}`);
     if (active) active.classList.add("active");
   };
+  // Hàm kiểm tra vector & Chuyển hướng
+  App.requireVectors = function () {
+    // If vectors exist, allow action
+    if (App.vectorList && App.vectorList.length > 0) return true;
+
+    // --- IF EMPTY: ---
+
+    // 1. Show Toast Message (Missing part)
+    if (window.App && typeof App.showToast === 'function') {
+      App.showToast("Danh sách trống! Hãy tạo vector ở đây trước 👇", "warning");
+    } else {
+      // Fallback if toast system isn't ready
+      alert("Danh sách trống! Hãy tạo vector trước.");
+    }
+
+    // 2. Switch to "Create" Tab
+    const firstTab = document.querySelector('.sidebar-tabs .tab-btn');
+    if (firstTab) {
+      firstTab.click();
+    }
+
+    // 3. Focus and Shake Input
+    setTimeout(() => {
+      const input = document.querySelector('#card-create math-field') || document.querySelector('#vectorInput');
+      if (input) {
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Reset animation
+        input.style.animation = 'none';
+        input.offsetHeight; /* trigger reflow */
+        input.style.animation = 'shakeError 0.4s ease-in-out';
+
+        // Add red border/shadow
+        input.style.borderColor = '#ff4444';
+        input.style.boxShadow = '0 0 0 4px rgba(255, 68, 68, 0.1)';
+
+        input.focus();
+
+        // Clear red styles after 2s
+        setTimeout(() => {
+          input.style.borderColor = '';
+          input.style.boxShadow = '';
+          input.style.animation = '';
+        }, 2000);
+      }
+    }, 150);
+
+    return false; // Stop the original action
+  };
+
+  // Vòng lặp quét để gắn sự kiện chặn (Fix lại logic tìm nút)
+  setInterval(() => {
+    // 1. Dọn dẹp nút thừa
+    const buttons = document.querySelectorAll("button");
+    for (let btn of buttons) {
+      if (btn.textContent.trim() === "Xem trước") btn.remove();
+
+      // 2. Gắn chốt chặn cho các nút tính toán
+      // Danh sách các từ khóa trên nút cần chặn
+      const keywords = ["Thực hiện", "Kiểm tra", "Tính hạng", "Tính cơ sở", "Xuất tọa độ", "Tính toán"];
+      const btnText = btn.textContent.trim();
+
+      if (keywords.some(k => btnText.includes(k))) {
+        if (!btn.dataset.hasCheck) {
+          btn.dataset.hasCheck = "true";
+          // Dùng capture phase (true) để chặn sự kiện trước khi nó chạy vào logic cũ
+          btn.addEventListener("click", (e) => {
+            if (!App.requireVectors()) {
+              e.stopImmediatePropagation();
+              e.preventDefault();
+            }
+          }, true);
+        }
+      }
+    }
+
+    // 3. Làm đẹp kết quả (như cũ)
+    const divs = document.querySelectorAll("div");
+    for (let div of divs) {
+      if (div.textContent.trim().startsWith("Kết quả:") && !div.classList.contains('nice-result-box')) {
+        div.classList.add('nice-result-box');
+        div.innerHTML = div.innerHTML.replace("Kết quả:", "<strong>KẾT QUẢ:</strong>");
+        // Fix số xấu
+        if (/\d+\.\d{5,}/.test(div.innerHTML)) {
+          div.innerHTML = div.innerHTML.replace(/(\d+\.\d+)/g, (m) => {
+            const v = parseFloat(m);
+            return (!isNaN(v) && window.App.smartFormat) ? App.smartFormat(v) : m;
+          });
+        }
+      }
+    }
+  }, 500);
 
 })();

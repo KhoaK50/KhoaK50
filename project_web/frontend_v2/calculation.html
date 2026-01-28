@@ -194,6 +194,527 @@
     body.dark .custom-menu-btn:hover {
       color: #fff;
     }
+
+    /* --- [SOLUTION PANEL - LIGHT MODE (PREMIUM)] --- */
+
+    /* 1. Khung chính (Nền trắng, bóng đổ xịn) */
+    .sol-panel {
+      background-color: #ffffff;
+      border: 1px solid #d1d5db;
+      /* Viền xám nhạt */
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+      /* Bóng mờ sang trọng */
+      color: #1f2937;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      width: 90%;
+      max-width: 800px;
+      max-height: 85vh;
+      margin: auto;
+      position: relative;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    /* 2. Header (Nền xám nhạt để tách biệt) */
+    .sol-header {
+      background-color: #f3f4f6;
+      /* Gray-100 */
+      border-bottom: 1px solid #e5e7eb;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 10px 10px 0 0;
+    }
+
+    /* Tiêu đề & Công thức Header */
+    .sol-h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Màu công thức toán ở tiêu đề (Xanh đậm) */
+    .sol-h1 .MathJax, 
+    .sol-h1 mjx-container,
+    .sol-h1 .MathJax span, 
+    .sol-h1 mjx-container path { 
+        color: #2563eb !important; /* Xanh dương đậm */
+        fill: #2563eb !important; 
+        stroke: #2563eb !important;
+        font-size: 1.1em; 
+    }
+
+    /* Badge (Nhãn Lời giải) - Xanh nổi bật */
+    .sol-badge {
+      background-color: #2563eb;
+      color: #ffffff;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+      margin-bottom: 4px;
+      display: inline-block;
+    }
+
+    /* Nút đóng */
+    .sol-close {
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      color: #6b7280;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .sol-close:hover {
+      background-color: #fee2e2;
+      color: #ef4444;
+      transform: rotate(90deg);
+    }
+
+    /* 3. Toolbar (Thanh tab) */
+    .sol-toolbar {
+      background-color: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sol-label {
+      font-weight: 600;
+      color: #4b5563;
+      font-size: 0.9rem;
+    }
+
+    /* Nút Tab thường */
+    .sol-tab {
+      padding: 8px 16px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #4b5563;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .sol-tab:hover {
+      background: #f3f4f6;
+      color: #111827;
+      border-color: #9ca3af;
+    }
+
+    /* Nút Tab đang chọn (Active) - Xanh nhạt */
+    .sol-tab.is-active {
+      background-color: #eff6ff;
+      /* Blue-50 */
+      color: #1d4ed8;
+      /* Blue-700 */
+      border-color: #2563eb;
+      font-weight: 600;
+    }
+
+    /* 4. Nội dung bài giải */
+    .sol-body {
+      padding: 24px;
+      overflow-y: auto;
+      background-color: #fff;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    .sol-text {
+      margin-bottom: 12px;
+    }
+
+    /* Các bước (Bước 1, Bước 2...) */
+    .sol-bold {
+      font-weight: 700;
+      color: #1d4ed8;
+      margin-top: 24px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    /* Khối Toán (Light Mode) - Nền xám nhẹ, viền xanh */
+    .sol-math-block {
+      background-color: #f9fafb;
+      /* Gray-50 */
+      border-left: 4px solid #3b82f6;
+      padding: 16px;
+      border-radius: 4px;
+      margin: 12px 0;
+      overflow-x: auto;
+      border: 1px solid #e5e7eb;
+      border-left-width: 4px;
+    }
+
+    /* Trạng thái mặc định (Ẩn) */
+    .sol-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999999;
+      /* Đẩy lên cao nhất */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      /* Ẩn hoàn toàn và không chặn chuột click bên dưới */
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+
+      transition: all 0.3s ease-out;
+      backdrop-filter: blur(2px);
+    }
+
+    /* Trạng thái MỞ (Hỗ trợ tất cả các kiểu class mà JS có thể gọi) */
+    .sol-overlay.is-visible,
+    .sol-overlay.active,
+    .sol-overlay.show,
+    .sol-overlay.open,
+    .sol-overlay[aria-hidden="false"] {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      /* Cho phép tương tác lại */
+    }
+
+    /* Hiệu ứng trượt lên */
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* ================================================================= */
+    /* [DARK MODE CHO BẢNG LỜI GIẢI (SOLUTION PANEL)] - CHUẨN CAO CẤP */
+    /* ================================================================= */
+
+    /* 1. Nền bảng chính */
+    body.dark .sol-panel {
+      background-color: #1e1e1e !important;
+      /* Màu xám than (chuẩn Editor) */
+      border: 1px solid #444 !important;
+      /* Viền tối */
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8) !important;
+      /* Bóng đổ sâu */
+      color: #e0e0e0 !important;
+      /* Chữ màu trắng ngà */
+    }
+
+    /* 2. Header (Tiêu đề) */
+    body.dark .sol-header {
+      background-color: #2d2d2d !important;
+      /* [QUAN TRỌNG] Nền header sáng hơn body để tách biệt */
+      border-bottom: 1px solid #444 !important;
+      padding: 15px 20px;
+      /* Căn chỉnh lại padding cho thoáng */
+    }
+
+    body.dark .sol-h1,
+    body.dark .sol-title span {
+      color: #ffffff !important;
+      /* Chữ trắng tinh */
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      /* Đổ bóng chữ nhẹ cho nổi */
+
+    }
+
+    /* Công thức Toán trong Header (R^n) */
+    body.dark .sol-header .MathJax,
+    body.dark .sol-header mjx-container {
+      color: #82b1ff !important;
+      /* Màu xanh dương sáng cho công thức toán ở tiêu đề */
+      font-size: 1.2em !important;
+    }
+
+    /* Fix màu vector SVG của MathJax trong header */
+    body.dark .sol-header mjx-container path {
+      stroke: #82b1ff !important;
+      fill: #82b1ff !important;
+    }
+
+    body.dark .sol-badge {
+      background-color: #2196F3 !important;
+      /* Nền xanh chủ đạo */
+      color: #ffffff !important;
+      /* Chữ trắng */
+      border: 1px solid #64b5f6 !important;
+      /* Viền sáng hơn tí */
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      padding: 4px 10px;
+      border-radius: 12px;
+      /* Bo tròn */
+      font-weight: bold;
+    }
+
+    /* Nút đóng (X) */
+    body.dark .sol-close {
+      color: #aaa !important;
+      transition: all 0.2s;
+    }
+
+    body.dark .sol-close:hover {
+      color: #ffffff !important;
+      background-color: #d32f2f !important;
+      /* Hover vào đỏ rực */
+      border-radius: 50%;
+      transform: rotate(90deg);
+      /* Xoay nhẹ cho ngầu */
+    }
+
+    /* 3. Toolbar (Thanh chọn cách giải) */
+    body.dark .sol-toolbar {
+      background-color: #252526 !important;
+      /* Tối hơn nền chính 1 chút */
+      border-bottom: 1px solid #333 !important;
+    }
+
+    body.dark .sol-label {
+      color: #bbb !important;
+    }
+
+    /* Nút Tab (Cách 1, Cách 2) */
+    body.dark .sol-tab {
+      background: transparent !important;
+      color: #888 !important;
+      border: 1px solid #444 !important;
+    }
+
+    body.dark .sol-tab:hover {
+      background: #333 !important;
+      color: #fff !important;
+    }
+
+    /* Tab đang chọn (Active) */
+    body.dark .sol-tab.is-active {
+      background: #1565c0 !important;
+      /* Xanh chủ đạo */
+      color: #fff !important;
+      border-color: #42a5f5 !important;
+      box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+    }
+
+    /* Body Dark - [ĐÃ FIX MÀU CHỮ DANH SÁCH] */
+    body.dark .sol-body { 
+        background-color: #1e1e1e !important; 
+        color: #d4d4d4 !important; 
+    }
+
+    /* Ép màu chữ sáng cho toàn bộ nội dung, bao gồm cả danh sách (li) */
+    body.dark .sol-text,
+    body.dark .sol-body ul,
+    body.dark .sol-body li,
+    body.dark .sol-body p,
+    body.dark .sol-body span {
+      color: #e0e0e0 !important;
+    }
+
+    body.dark .sol-bold {
+      color: #64b5f6 !important;
+      font-weight: 700;
+      margin-top: 15px;
+      display: block;
+    }
+
+    /* Khối chứa công thức toán (Math Block) */
+    body.dark .sol-math-block {
+      background-color: #2b2b2b !important;
+      /* Nền khối toán tối hơn xíu */
+      border-left: 4px solid #2196F3 !important;
+      /* Viền trái xanh */
+      padding: 12px !important;
+      margin: 10px 0 !important;
+      border-radius: 4px;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+    }
+
+    /* 5. [QUAN TRỌNG] Xử lý màu công thức MathJax */
+    /* Ép toàn bộ công thức toán chuyển sang màu trắng/xám sáng */
+    /* Màu MathJax trong nội dung bài giải */
+    body.dark .sol-body mjx-container,
+    body.dark .sol-body .MathJax {
+      color: #e0e0e0 !important;
+    }
+
+    body.dark .sol-body mjx-container path {
+      stroke: #e0e0e0 !important;
+      fill: #e0e0e0 !important;
+      /* Fix lỗi ký hiệu bị đen */
+    }
+
+    /* 1. Thanh cuộn dọc chính (Body) */
+    body.dark .sol-body::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    body.dark .sol-body::-webkit-scrollbar-track {
+      background: #1e1e1e;
+    }
+
+    body.dark .sol-body::-webkit-scrollbar-thumb {
+      background: #555;
+      border-radius: 4px;
+    }
+
+    body.dark .sol-body::-webkit-scrollbar-thumb:hover {
+      background: #777;
+    }
+
+    /* 2. [MỚI] Thanh cuộn ngang trong khối toán (Math Block) */
+    body.dark .sol-math-block::-webkit-scrollbar {
+      height: 10px;
+      /* Chiều cao cho thanh cuộn ngang */
+    }
+
+    body.dark .sol-math-block::-webkit-scrollbar-track {
+      background: #252526;
+      /* Màu trùng với nền khối toán cho đẹp */
+      border-radius: 4px;
+    }
+
+    body.dark .sol-math-block::-webkit-scrollbar-thumb {
+      background: #666;
+      /* Màu xám sáng hơn tí để dễ nhìn */
+      border-radius: 4px;
+      border: 2px solid #252526; /* Tạo viền giả cho đẹp */
+    }
+
+    body.dark .sol-math-block::-webkit-scrollbar-thumb:hover {
+      background: #999;
+      /* Hover sáng hơn nữa */
+    }
+    .sol-body ul, 
+    .sol-body ol {
+        list-style: none !important;      /* Bỏ dấu chấm tròn/số */
+        padding-left: 0 !important;       /* Bỏ thụt lề trái */
+        margin: 0 !important;             /* Bỏ khoảng cách thừa */
+    }
+
+    .sol-body li {
+        display: block !important;        /* Hiển thị như dòng div bình thường */
+        margin-bottom: 10px !important;   /* Xuống dòng và cách ra một chút */
+        padding: 0 !important;
+    }
+
+    /* 2. Ép màu chữ Dark Mode (Khắc phục triệt để lỗi chữ đen) */
+    body.dark .sol-body ul,
+    body.dark .sol-body li {
+        color: #e0e0e0 !important; /* Trắng xám */
+    }
+    /* ================================================================= */
+    /* [STYLE CHO DÒNG KẾT LUẬN] - (THAY THẾ DANH SÁCH LI/UL) */
+    /* ================================================================= */
+
+    .sol-bullet {
+        display: flex;              /* Dùng flex để canh thẳng hàng */
+        margin-bottom: 8px;         /* Cách dòng dưới một chút */
+        line-height: 1.5;           /* Giãn dòng dễ đọc */
+        align-items: baseline;      /* Canh theo chân chữ */
+        gap: 8px;                   /* Khoảng cách giữa dấu gạch và chữ */
+    }
+
+    /* Tạo dấu gạch đầu dòng giả (nếu muốn), hoặc xóa đoạn này nếu muốn trơn */
+    .sol-bullet::before {
+        content: "•";               /* Dấu chấm tròn nhỏ */
+        color: #2196F3;             /* Màu xanh tạo điểm nhấn */
+        font-weight: bold;
+        font-size: 1.2em;
+    }
+
+    /* --- [QUAN TRỌNG] ÉP MÀU CHỮ CHO DARK MODE --- */
+    body.dark .sol-bullet {
+        color: #e0e0e0 !important;  /* Bắt buộc màu trắng xám */
+    }
+    
+    /* Màu dấu chấm trong dark mode */
+    body.dark .sol-bullet::before {
+        color: #64b5f6;             /* Xanh sáng hơn chút cho nổi trên nền đen */
+    }
+    .calc-result-box {
+        background-color: #e8f5e9;    /* Nền xanh nhạt (Light Mode) */
+        border-left: 5px solid #4caf50; 
+        padding: 12px 16px;
+        border-radius: 4px;
+        margin-top: 12px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transition: all 0.3s ease;
+    }
+
+    .calc-result-label {
+        font-weight: 700;
+        color: #2e7d32;               /* Chữ xanh đậm (Light Mode) */
+        text-transform: uppercase;
+        font-size: 0.85em;
+        letter-spacing: 0.5px;
+    }
+
+    /* Mathfield hiển thị kết quả */
+    .calc-result-math {
+        background: transparent;
+        border: none;
+        width: 100%;
+        font-size: 1.5em;             /* Chữ to */
+        color: #1b5e20;               /* Số màu xanh rất đậm (Light Mode) */
+        padding: 4px 0;
+        pointer-events: none;
+        box-shadow: none;
+        --caret-color: transparent;   /* Ẩn con trỏ nhấp nháy */
+    }
+
+    /* --- [CẤU HÌNH DARK MODE] --- */
+    body.dark .calc-result-box {
+        background-color: #1b3320;    /* Nền xanh rêu tối (Dark Mode) */
+        border-left-color: #66bb6a;   /* Viền sáng hơn chút */
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    body.dark .calc-result-label {
+        color: #a5d6a7;               /* Label màu xanh phấn sáng */
+    }
+
+    body.dark .calc-result-math {
+        color: #e8f5e9 !important;    /* Số màu trắng xanh (cho nổi trên nền tối) */
+        --highlight-color: rgba(255,255,255,0.1);
+    }
+    
+    /* Fix lỗi Mathfield trong dark mode bị mờ */
+    body.dark .calc-result-math::part(content) {
+        color: #e8f5e9 !important;
+    }
   </style>
 </head>
 
@@ -295,7 +816,7 @@
               <div id="basisChecklist" class="checklist"></div>
               <div class="row" style="margin-top:6px; gap:8px;"><button id="btnBasis">Tính cơ sở</button><button
                   id="btnOpenSolution" class="btn-solution" type="button">Lời giải</button></div>
-              <pre id="result_basis">—</pre>
+              <div id="result_basis" style="width:100%">—</div>
             </div>
             <div id="form-coordinates" class="extra-form">
               <label class="small"><b>Tọa độ theo cơ sở</b></label>
@@ -324,14 +845,14 @@
             <div>
               <label>Chọn phép tính:</label>
               <select id="opSelect">
-                <option value="add">Cộng vector (v1 + v2)</option>
-                <option value="scale">Kéo dãn (k·v)</option>
-                <option value="projection">Hình chiếu (proj_v2(v1))</option>
-                <option value="normalize">Chuẩn hoá (v1 / ‖v1‖)</option>
-                <option value="dot">Tích vô hướng (v1 · v2)</option>
-                <option value="cross">Tích có hướng (v1 × v2)</option>
-                <option value="vector_norm">Độ dài vector (|v|)</option>
-                <option value="angle_between">Góc giữa 2 vector ((v1,v2))</option>
+                <option value="add">Cộng 2 vector</option>
+                <option value="scale">Kéo dãn</option>
+                <option value="projection">Hình chiếu</option>
+                <option value="normalize">Chuẩn hoá vector</option>
+                <option value="dot">Tích vô hướng của 2 vector</option>
+                <option value="cross">Tích có hướng của 2 vector</option>
+                <option value="vector_norm">Độ dài vector</option>
+                <option value="angle_between">Góc giữa 2 vector</option>
               </select>
             </div>
             <div id="scalarBox" style="display:none">
@@ -351,17 +872,14 @@
           </div>
           <div class="row" style="margin-top:10px">
             <button id="btnCompute" class="btn primary">Thực hiện</button>
-            <button id="btnPreview" title="Chỉ xem kết quả">Xem trước</button>
-          </div>
-          <div id="calcSteps" class="help">Kết quả phép tính sẽ hiển thị ở đây.</div>
+
+            <div id="calcSteps" class="help">Kết quả phép tính sẽ hiển thị ở đây.</div>
         </details>
       </div>
 
       <div class="card section-create glow" id="card-create">
         <label><b>KHỞI TẠO VECTOR</b></label>
-        <div style="margin-top:5px; font-size:0.9em; color:#888">
-          Định dạng hợp lệ: <code>[1,2]</code>, <code>[1,2,3]</code> hoặc <code>[sqrt(2), 1/2]</code>
-        </div>
+
 
         <div style="position: relative; width: 100%;">
 
@@ -610,6 +1128,13 @@
         // 1. Bấm nút thì hiện/ẩn
         btn.addEventListener('click', (e) => {
           e.stopPropagation(); // Không cho sự kiện lan ra ngoài
+          // 1. Tìm tất cả menu con trong danh sách và đóng lại
+          document.querySelectorAll('.vec-dropdown').forEach(d => d.classList.remove('show'));
+          // 2. Reset z-index của các dòng
+          document.querySelectorAll('.vec-item').forEach(it => it.classList.remove('active-z'));
+          // 3. [QUAN TRỌNG] Reset padding của khung danh sách về 0 (để nó co lại)
+          const list = document.getElementById("vectorList");
+          if (list) list.style.paddingBottom = "0px";
           const isHidden = menu.style.display === 'none' || menu.style.display === '';
           menu.style.display = isHidden ? 'block' : 'none';
         });

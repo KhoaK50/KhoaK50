@@ -324,6 +324,23 @@
             transition: none;
             /* JS sẽ set transition */
         }
+        /* --- CSS UPLOAD FILE --- */
+        .file-upload-label { display: block; cursor: pointer; margin-top: 10px; }
+        .file-upload-design {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 15px;
+            border: 1.5px dashed var(--border);
+            border-radius: 10px;
+            background: var(--bg-color);
+            color: var(--text-sub);
+            transition: 0.2s; font-size: 0.9rem;
+        }
+        .file-upload-design:hover { border-color: var(--primary); color: var(--primary); background: var(--card-bg); }
+        /* Khi đã có file */
+        .file-upload-design.has-file {
+            border-style: solid; border-color: #2ecc71;
+            background: rgba(46, 204, 113, 0.1); color: #27ae60;
+        }
     </style>
 </head>
 
@@ -368,11 +385,21 @@
                 <div class="form-group">
                     <label>Nội dung tin nhắn</label>
                     <div class="input-wrapper area">
-                        <textarea id="message" placeholder="Mô tả lỗi hoặc ý tưởng cải thiện web...          Có thể là một lời nhắn đầy tình thương!" required></textarea>
+                        <textarea id="message"
+                            placeholder="Mô tả lỗi hoặc ý tưởng cải thiện web...          Có thể là một lời nhắn đầy tình thương!"
+                            required></textarea>
                         <i class="fa-regular fa-comment-dots input-icon"></i>
                     </div>
                 </div>
-
+                <div class="form-group">
+                    <input type="file" id="contactFile" class="file-input" accept="image/*, .pdf, .doc, .docx" hidden>
+                    <label for="contactFile" class="file-upload-label">
+                        <div class="file-upload-design">
+                            <i class="fa-solid fa-paperclip"></i>
+                            <span id="fileNameDisplay">Đính kèm ảnh/tệp minh họa (Tối đa 5MB)</span>
+                        </div>
+                    </label>
+                </div>
                 <button type="submit" class="btn-send" id="btnSubmit">
                     <span>Gửi tin nhắn</span>
                     <i class="fa-solid fa-paper-plane"></i>
@@ -382,7 +409,7 @@
     </div>
 
     <div id="math-canvas-container"></div>
-    
+
     <script>
         // --- 1. CẤU HÌNH ĐỊA CHỈ BACKEND (Nhúng trực tiếp để không bị lỗi 404 file JS) ---
         window.App = window.App || {};
@@ -399,73 +426,75 @@
 
         const POPUP_TIME = 3000;
 
+        // 1. Xử lý hiển thị tên file khi chọn
+        const fileInput = document.getElementById('contactFile');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const fileDesign = document.querySelector('.file-upload-design');
+
+        if(fileInput) {
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    const file = this.files[0];
+                    if (file.size > 5 * 1024 * 1024) { // 5MB
+                        alert("File quá lớn! Vui lòng chọn dưới 5MB.");
+                        this.value = ""; return;
+                    }
+                    fileNameDisplay.textContent = `Đã chọn: ${file.name}`;
+                    fileDesign.classList.add('has-file');
+                    fileDesign.querySelector('i').className = "fa-solid fa-check";
+                } else {
+                    fileNameDisplay.textContent = "Đính kèm ảnh/tệp minh họa (Tối đa 5MB)";
+                    fileDesign.classList.remove('has-file');
+                    fileDesign.querySelector('i').className = "fa-solid fa-paperclip";
+                }
+            });
+        }
+
+        // 2. Xử lý Gửi Form (Dùng FormData thay vì JSON)
         document.getElementById('contactForm').addEventListener('submit', function (e) {
             e.preventDefault();
-
             const btn = document.getElementById('btnSubmit');
             const popup = document.getElementById('static-toast');
             const bar = document.querySelector('.toast-bar');
 
-            // 1. Disable nút ngay
+            // UI Loading
             btn.disabled = true;
-            btn.style.background = '#2ecc71';
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> Đang chờ gửi...';
-
-            // 2. Chạy thanh loading giả lập cho đẹp
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
             bar.style.transition = `width ${POPUP_TIME}ms linear`;
-            requestAnimationFrame(() => {
-                popup.classList.add('show');
-                requestAnimationFrame(() => {
-                    bar.style.width = '100%';
-                });
-            });
+            popup.classList.add('show');
+            requestAnimationFrame(() => { bar.style.width = '100%'; });
 
-            // 3. Đợi hết thanh loading (POPUP_TIME) thì mới gửi thật
+            // Gom dữ liệu vào FormData (để gửi được file)
+            const formData = new FormData();
+            formData.append('user_name', document.getElementById('user_name').value);
+            formData.append('user_email', document.getElementById('user_email').value);
+            formData.append('message', document.getElementById('message').value);
+            
+            if (fileInput.files.length > 0) {
+                formData.append('attachment', fileInput.files[0]);
+            }
+
+            // Gửi đi (Lưu ý: Không set Content-Type header khi dùng FormData)
             setTimeout(() => {
-                popup.classList.remove('show'); // Ẩn popup loading
-
-                // Thu thập dữ liệu
-                const payload = {
-                    user_name: document.getElementById('user_name').value,
-                    user_email: document.getElementById('user_email').value,
-                    message: document.getElementById('message').value
-                };
-
-                console.log(">> Bắt đầu gửi dữ liệu...");
-
                 fetch(`${App.API_BASE}/api/contact`, { 
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: formData 
                 })
                 .then(async response => {
-                    // Kiểm tra xem Server có trả về OK (200) không
-                    if (!response.ok) {
-                        const errText = await response.text();
-                        // Ném lỗi xuống catch
-                        throw new Error(`Server báo lỗi: ${response.status} - ${errText}`);
-                    }
+                    if (!response.ok) throw new Error(await response.text());
                     return response.json();
                 })
                 .then(data => {
-                    console.log(">> Gửi thành công:", data);
-                    
+                    console.log("Thành công:", data);
                     window.location.href = 'calculation.html';
                 })
                 .catch(err => {
-                    console.error(">> Lỗi to đùng:", err);
-                    alert("Lỗi kết nối: " + err.message);
-                    
-                    // Reset lại nút để gửi lại
+                    console.error("Lỗi:", err);
+                    alert("Lỗi gửi tin: " + err.message);
                     btn.disabled = false;
-                    btn.innerHTML = '<span>Gửi lại đi</span> <i class="fa-solid fa-paper-plane"></i>';
-                    btn.style.background = ''; 
-                    
-                    // Reset thanh loading
-                    bar.style.width = '0%';
-                    bar.style.transition = 'none';
+                    btn.innerHTML = 'Gửi lại';
+                    popup.classList.remove('show');
                 });
-
             }, POPUP_TIME);
         });
 

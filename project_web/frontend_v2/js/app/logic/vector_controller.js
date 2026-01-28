@@ -26,12 +26,64 @@
     // Biến đếm ID toàn cục (Reset được)
     let nextVectorId = 1;
     function smartFormat(num) {
-        if (Math.abs(num - Math.round(num)) < 1e-9) return String(Math.round(num));
-        for (let d = 2; d <= 100; d++) {
-            let n = num * d;
-            if (Math.abs(n - Math.round(n)) < 1e-5) return `\\frac{${Math.round(n)}}{${d}}`;
+        const val = Number(num);
+        if (isNaN(val)) return "0";
+        if (Math.abs(val) < 1e-9) return "0"; // Xử lý số 0
+
+        const absVal = Math.abs(val);
+        const sign = val < 0 ? "-" : "";
+
+        // 1. Số nguyên (Nới lỏng sai số lên 1e-4 để bắt được cả số đã bị làm tròn)
+        if (Math.abs(val - Math.round(val)) < 1e-4) return String(Math.round(val));
+
+        // 2. Phân số
+        for (let d = 2; d <= 50; d++) {
+            let n = val * d;
+            if (Math.abs(n - Math.round(n)) < 1e-4) {
+                return `\\frac{${Math.round(n)}}{${d}}`;
+            }
         }
-        return Number(num).toFixed(4).replace(/\.?0+$/, "");
+
+        // --- TRUY NGƯỢC CĂN THỨC (Nới lỏng sai số và tăng phạm vi) ---
+        // Sai số cho phép: 0.0005 (để bắt được 1.4953 so với 1.49534...)
+        const TOLERANCE = 5e-4; 
+
+        // 3. Căn bậc 2: k * sqrt(n)
+        for (let k = 1; k <= 10; k++) {
+            const base = (absVal / k) ** 2;
+            const roundBase = Math.round(base);
+            if (Math.abs(base - roundBase) < TOLERANCE && roundBase < 1000) {
+                const latexK = k === 1 ? "" : String(k);
+                return `${sign}${latexK}\\sqrt{${roundBase}}`;
+            }
+        }
+
+        // 4. Căn bậc 4: sqrt[4](n) (Ưu tiên kiểm tra trước căn bậc 3 vì dễ trùng)
+        // Ví dụ: 1.4953 -> mũ 4 lên = 4.999... -> 5
+        const pow4 = Math.pow(absVal, 4);
+        if (Math.abs(pow4 - Math.round(pow4)) < TOLERANCE * 10) { // Nới lỏng hơn cho bậc cao
+             return `${sign}\\sqrt[4]{${Math.round(pow4)}}`;
+        }
+
+        // 5. Căn bậc 3: k * cbrt(n)
+        for (let k = 1; k <= 5; k++) {
+            const base = (absVal / k) ** 3;
+            const roundBase = Math.round(base);
+            if (Math.abs(base - roundBase) < TOLERANCE && roundBase < 1000) {
+                const latexK = k === 1 ? "" : String(k);
+                return `${sign}${latexK}\\sqrt[3]{${roundBase}}`;
+            }
+        }
+
+        // 6. Số Pi (k*pi)
+        const divPi = absVal / Math.PI;
+        if (Math.abs(divPi - Math.round(divPi)) < TOLERANCE) {
+            const k = Math.round(divPi);
+            return (k === 1 ? "" : String(k)) + "\\pi";
+        }
+
+        // 7. Chịu thua -> In số thập phân
+        return Number(val).toFixed(4).replace(/\.?0+$/, "");
     }
     // Helper: Chuyển vector bất kỳ thành mảng [x, y, z] an toàn
     const toVec3 = function (v) {
@@ -255,80 +307,74 @@
         if (!str) return null;
         let s = str.trim().toLowerCase();
 
-        // 1. DỌN DẸP & CHUẨN HÓA KÝ TỰ ĐẶC BIỆT (Fix lỗi lbrack)
+        // 1. CLEANUP & NORMALIZE
         s = s.replace(/\\left/g, "").replace(/\\right/g, "");
-
-        // [FIX QUAN TRỌNG] Đổi \lbrack, \rbrack thành ngoặc thường trước khi xóa dấu \
         s = s.replace(/\\lbrack/g, "[").replace(/\\rbrack/g, "]");
         s = s.replace(/\\lbrace/g, "(").replace(/\\rbrace/g, ")");
-
         s = s.replace(/\\cdot/g, "*").replace(/\\times/g, "*");
-        s = s.replace(/\s+\.\s+/g, "*");
+        s = s.replace(/\s+\.\s+/g, "*"); // Fix dot multiplication
 
-        // 2. DỊCH CÁC HÀM LATEX SANG JS
-        // Logarit
+        // 2. TRANSLATE LATEX TO JS
+        // Logarithms
         s = s.replace(/\\log_\{(.+?)\}\((.+?)\)/g, "(log($2)/log($1))");
         s = s.replace(/\\log_(\d+)\((.+?)\)/g, "(log($2)/log($1))");
         s = s.replace(/\\ln/g, "ln");
 
-        // Phân số, Căn, Mũ
+        // Fractions, Roots, Powers
         s = s.replace(/\\frac\{(.+?)\}\{(.+?)\}/g, "(($1)/($2))");
-        s = s.replace(/\\sqrt\s*\[(.+?)\]\s*\{(.+?)\}/g, "(($2)**(1/($1)))"); // Căn bậc n
-        s = s.replace(/\\sqrt\s*\{(.+?)\}/g, "sqrt($1)"); // Căn bậc 2
+        s = s.replace(/\\sqrt\s*\[(.+?)\]\s*\{(.+?)\}/g, "(($2)**(1/($1)))"); // N-th root
+        s = s.replace(/\\sqrt\s*\{(.+?)\}/g, "sqrt($1)"); // Square root
 
-        // Xử lý mũ: 2^3 hoặc x^{...}
+        // Powers: 2^3 or x^{...}
         s = s.replace(/([a-z0-9\)])\^\{(.+?)\}/g, "$1**($2)");
         s = s.replace(/([a-z0-9\)])\^([0-9]+)/g, "$1**$2");
 
-        // Cotang
+        // Trig
         s = s.replace(/cot\((.+?)\)/g, "(1/tan($1))");
-
-        // 3. XÓA DẤU BACKSLASH (\) CÒN SÓT LẠI
-        // Lưu ý: Lúc này \pi sẽ thành pi, \sin thành sin -> Rất thuận tiện
+        // Trường hợp 1: LaTeX \sqrt 3 (không có ngoặc nhọn)
+        s = s.replace(/\\sqrt\s+(\d+)/g, "sqrt($1)");
+        // Trường hợp 2: Viết thường sqrt3 (không có ngoặc tròn)
+        s = s.replace(/sqrt(\d+)/g, "sqrt($1)");
+        // 3. REMOVE REMAINING BACKSLASHES
         s = s.replace(/\\/g, "");
 
-        // 4. SIÊU NHÂN TẮT (IMPLICIT MULTIPLICATION) - XỬ LÝ MỌI TRƯỜNG HỢP
+        // 4. *** IMPLICIT MULTIPLICATION (THE MISSING PART) ***
 
-        // a. Giữa 2 dấu ngoặc: )(, ][, )[ -> Thêm *
-        // Ví dụ: (3)(4) -> (3)*(4), sqrt(2)log(3) -> ...)*l...
-        s = s.replace(/([\)\]])\s*([\[\(])/g, "$1*$2");
-
-        // b. Giữa Ngoặc đóng và Chữ/Số -> Thêm *
-        // Ví dụ: )x, )2, )sin, )sqrt -> )*...
-        s = s.replace(/([\)\]])\s*([a-z0-9])/g, "$1*$2");
-
-        // c. Giữa Số và Ngoặc mở -> Thêm *
-        // Ví dụ: 2( -> 2*(, 2[ -> 2*[
-        s = s.replace(/(\d)\s*([\[\(])/g, "$1*$2");
-
-        // d. Giữa Số và Chữ (trừ trường hợp 1e5) -> Thêm *
-        // Ví dụ: 2sin -> 2*sin, 2pi -> 2*pi, 2sqrt -> 2*sqrt
+        // a. Between number and function/text (e.g., 2sqrt -> 2*sqrt, 2pi -> 2*pi)
+        // Exclude 'e' when it's part of scientific notation (e.g., 1e5)
         s = s.replace(/(\d)\s*([a-z]+)(?!(e|E)\d)/g, "$1*$2");
 
-        // e. Giữa Chữ (hằng số như pi, e) và Số -> Thêm *
-        // Ví dụ: pi2 -> pi*2 (ít gặp nhưng cứ thêm cho chắc)
+        // b. Between parenthesis blocks: )( -> )*(, ][ -> ]*[
+        s = s.replace(/([\)\]])\s*([\[\(])/g, "$1*$2");
+
+        // c. Between closing parenthesis and number/text: )2 -> )*2, )x -> )*x
+        s = s.replace(/([\)\]])\s*([a-z0-9])/g, "$1*$2");
+
+        // d. Between number and opening parenthesis: 2( -> 2*(
+        s = s.replace(/(\d)\s*([\[\(])/g, "$1*$2");
+
+        // e. Between constants (pi, e) and number: pi2 -> pi*2
         s = s.replace(/\b(pi|e)\s*(\d)/g, "$1*$2");
 
-        // 5. TÁCH MẢNG VECTOR
-        // Xử lý trường hợp người dùng nhập [1, 2] hoặc (1, 2)
+        // 5. SPLIT VECTOR COMPONENTS
         if ((s.startsWith("[") && s.endsWith("]")) || (s.startsWith("(") && s.endsWith(")"))) {
             s = s.substring(1, s.length - 1);
         }
         let parts = s.split(",");
 
-        // 6. TÍNH TOÁN
+        // 6. EVALUATION
         const evaluate = (expr) => {
             if (!expr || expr.trim() === "") return 0;
             let e = expr.trim();
             try {
-                // Tự động phát hiện ngữ cảnh Radian (nếu có pi hoặc e)
+                // Context detection for degrees/radians
                 const isRadianContext = /\b(pi|e)\b/.test(e);
 
                 const mathScope = {
                     pi: Math.PI, e: Math.E,
                     math: Math, Math: Math,
                     sqrt: Math.sqrt, abs: Math.abs, log: Math.log, ln: Math.log,
-                    // Lượng giác thông minh
+                    // Smart Trig
                     sin: isRadianContext ? Math.sin : function (d) { return Math.sin(d * Math.PI / 180); },
                     cos: isRadianContext ? Math.cos : function (d) { return Math.cos(d * Math.PI / 180); },
                     tan: isRadianContext ? Math.tan : function (d) { return Math.tan(d * Math.PI / 180); },
@@ -339,7 +385,7 @@
                 const keys = Object.keys(mathScope);
                 const values = Object.values(mathScope);
 
-                // Fix nốt: 2math -> 2*math (nếu có)
+                // Final fix: 2math -> 2*math
                 e = e.replace(/(\d)\s*math/g, "$1*math");
 
                 const func = new Function(...keys, `return (${e})`);
@@ -348,8 +394,8 @@
                 if (typeof val !== "number" || isNaN(val)) throw new Error("NaN");
                 return val;
             } catch (err) {
-                console.warn("Lỗi tính toán:", expr, err);
-                throw new Error(`Lỗi cú pháp: "${expr}"`);
+                console.warn("Calculation Error:", expr, err);
+                throw new Error(`Syntax Error: "${expr}"`);
             }
         };
 
@@ -532,12 +578,50 @@
                 return;
             }
 
-            // 2. Xử lý kết quả Vector
-            const vecRes = data.result || data.result_vec;
-            calcSteps.innerHTML = `<div><b>Kết quả:</b> <code>${vecRes.join(", ")}</code></div>`;
+            // 2. Xử lý kết quả Vector (Đã fix hiển thị MathLive + Fix lỗi 2 viền)
+            const rawRes = data.result !== undefined ? data.result : data.result_vec;
+            
+            // Hàm làm tròn số
+            const fmtVal = (n) => {
+                let x = Number(n);
+                if (isNaN(x)) return "0";
+                if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x));
+                return String(parseFloat(x.toFixed(4))); 
+            };
 
+            // Tạo chuỗi Latex: Vector (x, y) hoặc số
+            let latex = "";
+            if (Array.isArray(rawRes)) {
+                latex = `\\left( ${rawRes.map(fmtVal).join(",\\; ")} \\right)`;
+            } else {
+                latex = fmtVal(rawRes);
+            }
+
+            // [FIX QUAN TRỌNG] Reset sạch style thẻ cha để không bị 2 viền chồng nhau
+            calcSteps.className = ""; 
+            calcSteps.style.padding = "0";
+            calcSteps.style.border = "none";
+            calcSteps.style.background = "transparent";
+
+            // Gán HTML khung xanh mới
+            calcSteps.innerHTML = `
+                <div class="calc-result-box">
+                    <div class="calc-result-label">
+                        Kết quả:
+                    </div>
+                    
+                    <math-field read-only class="calc-result-math">
+                        ${latex}
+                    </math-field>
+                </div>
+            `;
             if (addToList) {
+                // [FIX LỖI] Định nghĩa vecRes lấy từ kết quả rawRes ở trên
+                const vecRes = Array.isArray(rawRes) ? rawRes : [rawRes];
+
                 const hue = App._pickUniqueHue ? App._pickUniqueHue() : 0;
+
+                // Giờ vecRes đã có giá trị, không bị lỗi nữa
                 const newItem = App._attachVectorItem(vecRes, hue);
 
                 // [FIX] Đưa vào danh sách NGAY LẬP TỨC để đồng bộ ID
@@ -752,14 +836,26 @@
     };
 
     // --- INIT ---
+    // --- INIT ---
     window.addEventListener("load", () => {
+        // [FIX LỆCH PHA] 1. Đồng bộ trạng thái App.theme từ LocalStorage ngay lập tức
+        const savedTheme = localStorage.getItem('vec_theme');
+        if (savedTheme === 'dark') {
+            App.theme = 'dark';
+        } else {
+            App.theme = 'light';
+        }
+        
+        // 2. Đồng bộ giao diện (Icon & Màu sắc) theo App.theme vừa lấy
+        App.applyTheme(); 
+
         // Các nút cơ bản cũ
         if (document.getElementById("btnAddVector")) document.getElementById("btnAddVector").onclick = App.onAddVector;
         if (document.getElementById("btnIndep")) document.getElementById("btnIndep").onclick = App.linearIndependenceUI;
         if (document.getElementById("btnRank")) document.getElementById("btnRank").onclick = App.rankVectorsUI;
         //if (document.getElementById("btnCoord")) document.getElementById("btnCoord").onclick = App.coordinatesUI;
 
-        // --- [MỚI] XỬ LÝ MENU CÀI ĐẶT (BÁNH RĂNG) ---
+        // --- XỬ LÝ MENU CÀI ĐẶT (BÁNH RĂNG) ---
         const btnSettings = document.getElementById('btnSettings');
         const dropdown = document.getElementById('settingsDropdown');
 
@@ -767,7 +863,7 @@
         if (btnSettings && dropdown) {
             btnSettings.addEventListener('click', (e) => {
                 e.stopPropagation();
-                dropdown.classList.toggle('show'); // Ông nhớ thêm CSS .show { display: block; }
+                dropdown.classList.toggle('show'); 
             });
             document.addEventListener('click', (e) => {
                 if (!dropdown.contains(e.target) && e.target !== btnSettings) {
@@ -776,21 +872,22 @@
             });
         }
 
-        // 2. Toggle Animation (id="animToggle" trong HTML cài đặt)
+        // 2. Toggle Animation 
         const animToggle = document.getElementById('animToggle');
         if (animToggle) {
-            animToggle.checked = App.useAnimation; // Đồng bộ trạng thái đầu
+            animToggle.checked = App.useAnimation; 
             animToggle.addEventListener('change', () => {
                 App.useAnimation = animToggle.checked;
-
             });
         }
 
-        // 3. Toggle Theme (id="themeToggle" trong HTML cài đặt)
-        // Thay thế hoàn toàn nút Theme cũ
+        // 3. Toggle Theme (Đã fix đồng bộ)
         const themeToggle = document.getElementById('themeToggle');
         if (themeToggle) {
+            // [QUAN TRỌNG] Set trạng thái nút gạt theo App.theme đã đồng bộ ở trên
             themeToggle.checked = (App.theme === 'dark');
+            
+            // Xử lý sự kiện khi bấm
             themeToggle.addEventListener('change', () => {
                 App.toggleTheme();
             });
@@ -798,31 +895,21 @@
 
         const opSel = document.getElementById("opSelect");
         if (opSel) {
-            // Xóa sự kiện cũ (nếu có) bằng cách gán lại onclick hoặc dùng cơ chế replace node (tuy nhiên ở đây ta viết đè logic là được)
             opSel.onchange = function () {
-                // 1. Reset 2 ô chọn về rỗng
                 const v1 = document.getElementById("v1Select");
                 const v2 = document.getElementById("v2Select");
                 if (v1) v1.value = "";
                 if (v2) v2.value = "";
 
-                // 2. [QUAN TRỌNG] Ép buộc ẨN HẾT VECTOR (Force Hide)
                 if (App.vectorList) {
                     App.vectorList.forEach(v => v.visible = false);
                 }
 
-                // 3. Cập nhật giao diện ngay lập tức
-                if (typeof App.renderVectorList === 'function') App.renderVectorList(); // Cập nhật nút "Hiện/Ẩn" ở list dưới
-                if (typeof App.redrawAll === 'function') App.redrawAll({ frame: false }); // Xóa sạch màn hình vẽ
-
-                // 4. Cập nhật các ô input (ẩn hiện ô k, v2...)
+                if (typeof App.renderVectorList === 'function') App.renderVectorList(); 
+                if (typeof App.redrawAll === 'function') App.redrawAll({ frame: false }); 
                 if (typeof App.refreshCalcUI === 'function') App.refreshCalcUI();
-
-                // LƯU Ý: Tuyệt đối KHÔNG gọi App.updateVisibilityByCalc() ở đây
-                // vì hàm đó có logic "nếu chưa chọn gì thì hiện tất cả" -> sẽ làm hỏng việc ẩn.
             };
         }
-
     });
     // =========================================================
     // PHẦN 3: LOGIC TƯƠNG TÁC HÌNH HỘP & GIZMO (ĐÃ FIX)
