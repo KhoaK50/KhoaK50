@@ -1,27 +1,27 @@
 import sqlite3
 import os
 import requests 
-import threading # Thư viện chạy ngầm
-import smtplib   # [MỚI] Thư viện gửi mail
-from email.mime.text import MIMEText # [MỚI] Định dạng nội dung
-from email.mime.multipart import MIMEMultipart # [MỚI] Cấu trúc mail
+import threading # Still needed for Google Sheets async
+import smtplib   # Library for sending emails
+from email.mime.text import MIMEText # Formatting email content
+from email.mime.multipart import MIMEMultipart # Email structure
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 import base64
 
 contact_bp = Blueprint('contact', __name__)
 
-# --- CẤU HÌNH ---
-# Link Google Script
+# --- CONFIGURATION ---
+# Google Script Link
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQtYiblsalJRXXo1P85Cio1L9Q3mO2OreWNiJdvxHtZJsNIqMlJHT1FVjNOoX3grNfSw/exec" 
 
-# Cấu hình Email gửi đi
+# Email Configuration
 SMTP_SERVER = 'smtp.gmail.com'
-SMTP_PORT = 465 # Cổng bảo mật SSL
+SMTP_PORT = 465 # SSL Port
 SENDER_EMAIL = 'sc3.nguyentrandangkhoa@gmail.com' 
 SENDER_PASSWORD = 'gkon zewb nyua ywkb'   
 
-# --- 1. HÀM KHỞI TẠO DB ---
+# --- 1. DB INITIALIZATION FUNCTION ---
 def init_feedback_db():
     try:
         conn = sqlite3.connect('feedback.db')
@@ -35,31 +35,35 @@ def init_feedback_db():
     except Exception as e:
         print(f">> [Database Error] {e}")
 
-# --- 2. HÀM CHẠY NGẦM (GỬI GOOGLE) ---
+# --- 2. BACKGROUND FUNCTION (SEND TO GOOGLE) ---
+# Keeping this async is generally safer for performance, even on serverless, 
+# as the request is fast.
 def send_to_google_background(payload):
     try:
-        print(f">> [Background] Đang gửi sang Google (Size: {len(str(payload))} bytes)...")
-        requests.post(GOOGLE_SCRIPT_URL, json=payload, timeout=30)
-        print(">> [Background] Gửi Google thành công!")
+        print(f">> [Background] Sending to Google (Size: {len(str(payload))} bytes)...")
+        # Reduced timeout to ensure it doesn't hang the thread too long
+        requests.post(GOOGLE_SCRIPT_URL, json=payload, timeout=10)
+        print(">> [Background] Sent to Google successfully!")
     except Exception as e:
-        print(f">> [Background Error] Gửi Google thất bại: {e}")
+        print(f">> [Background Error] Google send failed: {e}")
 
-# --- [MỚI] 3. HÀM CHẠY NGẦM (GỬI EMAIL TỰ ĐỘNG) ---
-def send_email_background(user_email, user_name):
+# --- 3. SYNCHRONOUS EMAIL FUNCTION ---
+# This runs in the main thread to ensure completion on Vercel/Render
+def send_email_direct(user_email, user_name):
     try:
-        # Kiểm tra email hợp lệ cơ bản
+        # Basic email validation
         if not user_email or "@" not in user_email:
             return 
 
-        print(f">> [Email] Đang gửi mail cho {user_email}...")
+        print(f">> [Email] Sending email to {user_email}...")
 
-        # Tạo nội dung email
+        # Create email content
         msg = MIMEMultipart()
         msg['From'] = f"Vectoria Support <{SENDER_EMAIL}>"
         msg['To'] = user_email
         msg['Subject'] = "Cảm ơn bạn đã liên hệ với Vectoria!"
 
-        # Nội dung thư (HTML)
+        # HTML Email Content
         html_body = f"""
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
             <div style="background-color: #3a78ff; padding: 20px; text-align: center;">
@@ -81,30 +85,30 @@ def send_email_background(user_email, user_name):
         """
         msg.attach(MIMEText(html_body, 'html'))
 
-        # Kết nối Server Gmail và gửi
+        # Connect to Gmail Server and send
         server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         server.send_message(msg)
         server.quit()
         
-        print(f">> [Email] Đã gửi thành công cho {user_email}")
+        print(f">> [Email] Sent successfully to {user_email}")
     except Exception as e:
-        print(f">> [Email Error] Gửi thất bại: {e}")
+        print(f">> [Email Error] Send failed: {e}")
 
-# --- 4. API CHÍNH ---
+# --- 4. MAIN API ---
 @contact_bp.route('/api/contact', methods=['POST'])
 def handle_contact():
     try:
-        # A. Lấy dữ liệu
+        # A. Get Data
         user_name = request.form.get('user_name', 'Ẩn danh')
-        user_email = request.form.get('user_email', '') # Mặc định rỗng để check gửi mail
+        user_email = request.form.get('user_email', '') # Default empty to check for email sending
         message = request.form.get('message', '')
         uploaded_file = request.files.get('attachment')
         
         file_payload = None
         file_name_str = ""
 
-        # B. Xử lý File (nếu có)
+        # B. Handle File (if any)
         if uploaded_file:
             try:
                 file_name_str = uploaded_file.filename
@@ -121,7 +125,7 @@ def handle_contact():
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # C. Lưu Database
+        # C. Save to Database (Local sqlite)
         full_msg = str(message) + (f"\n[📎 {file_name_str}]" if file_name_str else "")
         
         try:
@@ -133,7 +137,7 @@ def handle_contact():
         except Exception:
             pass 
 
-        # D. Chuẩn bị gói tin Google
+        # D. Prepare payload for Google
         google_json = {
             "name": user_name,
             "email": user_email,
@@ -141,18 +145,21 @@ def handle_contact():
             "file": file_payload 
         }
 
-        # E. KÍCH HOẠT CHẠY NGẦM (QUAN TRỌNG)
+        # E. EXECUTE TASKS
         
-        # 1. Gửi sang Google Sheet
+        # 1. Send to Google Sheets (Background Thread)
+        # We keep this async because it's an external API call that might be slow but isn't critical for the user's immediate confirmation loop in the same way email is.
+        # However, Vercel might still kill this. If you want 100% guarantee for sheets too, remove threading here as well.
+        # For now, leaving it as requested to focus on fixing email.
         thread_google = threading.Thread(target=send_to_google_background, args=(google_json,))
         thread_google.start()
 
-        # 2. [MỚI] Gửi Email cảm ơn (Chỉ gửi nếu user có nhập email)
+        # 2. Send Auto-reply Email (DIRECT/SYNCHRONOUS call)
+        # This blocks the response until email is sent, ensuring execution on serverless platforms.
         if user_email and "@" in user_email:
-            thread_email = threading.Thread(target=send_email_background, args=(user_email, user_name))
-            thread_email.start()
+            send_email_direct(user_email, user_name)
 
-        # F. Phản hồi Web ngay lập tức (0.1s)
+        # F. Response to Web
         return jsonify({"status": "success", "message": "Đã nhận tin"}), 200
 
     except Exception as e:
