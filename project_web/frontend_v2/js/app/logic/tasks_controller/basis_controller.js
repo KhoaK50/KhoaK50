@@ -266,15 +266,72 @@
       // --- [MỚI] 1. TẠO HTML HIỂN THỊ ĐẸP (MATHLIVE READ-ONLY) ---
 
       // Hàm chuyển vector [1, 2] thành Latex (1, 2) để hiển thị trong Mathfield
+      // [FIX FINAL] Logic hiển thị: Căn -> Phân số (nghiêm ngặt) -> Thập phân
       const fmtVecForMathLive = (v) => {
+        // Helper: Rút gọn căn
+        const simplifySqrtStr = (n) => {
+             let coef = 1;
+             for (let i = Math.floor(Math.sqrt(n)); i > 1; i--) {
+                 if (n % (i*i) === 0) { coef = i; n /= i*i; break; }
+             }
+             let r = (n===1) ? "" : `\\sqrt{${n}}`;
+             return (coef===1) ? (r||"1") : `${coef}${r}`;
+        };
+
+        // Helper: Tìm phân số (SIẾT CHẶT)
+        const getFrac = (val, maxD=100) => {
+             let h1=1, h2=0, k1=0, k2=1, b=val;
+             do {
+                 let a=Math.floor(b);
+                 let aux=h1; h1=a*h1+h2; h2=aux;
+                 aux=k1; k1=a*k1+k2; k2=aux;
+                 b=1/(b-a);
+             } while(Math.abs(val-h1/k1) > 1e-9 && k1 < maxD); // Lặp đến khi sai số cực nhỏ
+             
+             // [QUAN TRỌNG] Chỉ trả về nếu sai số < 1e-9
+             if(Math.abs(val-h1/k1) < 1e-9) return {n:h1, d:k1};
+             return null;
+        };
+
         const nums = v.map(x => {
-          let s = Number(x).toString();
-          if (s.includes('.')) s = Number(x).toFixed(4).replace(/\.?0+$/, ''); // Làm tròn số lẻ
-          return s;
+          // Nếu backend gửi chuỗi LaTeX (căn, phân số) -> giữ nguyên
+          if (typeof x === 'string' && (x.includes('\\') || x.includes('sqrt'))) return x;
+
+          let val = 0;
+          if (typeof x === 'object' && x !== null) {
+             const n = Number(x.n); const d = Number(x.d); const s = x.s || 1;
+             if (d!==0 && !isNaN(n)) val = s*(n/d);
+          } else { val = Number(x); }
+
+          if (isNaN(val)) return (typeof x === 'string' ? x : "0");
+          if (Math.abs(val) < 1e-9) return "0";
+          
+          let sign = (val < 0) ? "-" : "";
+          let abs = Math.abs(val);
+
+          // 1. Số nguyên
+          if (Number.isInteger(abs)) return String(val);
+
+          // 2. Căn thức (Ưu tiên)
+          let sq = abs * abs;
+          if (Math.abs(sq - Math.round(sq)) < 1e-5 && Math.round(sq) < 1000) {
+               return sign + simplifySqrtStr(Math.round(sq));
+          }
+
+          // 3. Phân số (NGHIÊM NGẶT)
+          // ln(5) sẽ fail ở bước này vì sai số > 1e-9
+          let frac = getFrac(abs, 100);
+          if (frac) {
+              if (frac.d === 1) return sign + frac.n;
+              return `${sign}\\frac{${frac.n}}{${frac.d}}`;
+          }
+
+          // 4. Số thập phân (cho Loga, Pi...)
+          return parseFloat(val.toFixed(4)).toString();
         });
+        
         return `\\left(${nums.join(", ")}\\right)`;
       };
-
       // Tạo danh sách các thẻ <math-field>
       const basisMathFields = basis.length
         ? basis.map(v => `

@@ -556,32 +556,101 @@
       }
 
       // --- BẮT ĐẦU VÒNG LẶP XỬ LÝ TỪ VECTOR THỨ 3 TRỞ ĐI ---
+      // --- BẮT ĐẦU VÒNG LẶP XỬ LÝ TỪ VECTOR THỨ 3 TRỞ ĐI ---
       for (let i = 2; i < m; i++) {
         const viName = `v_{${i + 1}}`;
         html += `<div class="sol-bold">Bước ${i}: Kiểm tra $${viName}$ có là tổ hợp tuyến tính của $v_{1},\\,v_{2}$ không.</div>`;
         html += `<div class="sol-text">Giả sử $${viName} = a\\cdot v_{1} + b\\cdot v_{2}$. Ta xét 2 thành phần đầu tiên:</div>`;
 
-        // 1. KHAI BÁO BIẾN (Quan trọng: Không được thiếu đoạn này)
+        // 1. Lấy dữ liệu
         const a11 = fmtScalarLatex(vecs[0][0]), a12 = fmtScalarLatex(vecs[1][0]), b1 = fmtScalarLatex(vecs[i][0]);
         const a21 = fmtScalarLatex(vecs[0][1] ?? 0), a22 = fmtScalarLatex(vecs[1][1] ?? 0), b2 = fmtScalarLatex(vecs[i][1] ?? 0);
 
-        // 2. Tạo chuỗi LaTeX cho hệ phương trình đầu
+        // 2. Hệ phương trình 2 ẩn
         const sys = `\\left\\{\\begin{array}{l} ${a11}a + ${a12}b = ${b1}\\\\ ${a21}a + ${a22}b = ${b2} \\end{array}\\right.`;
 
-        // 3. Tính toán kết quả
+        // 3. Giải tìm a, b
         const B = [vecs[0], vecs[1]];
-        const { coeffs, ok } = solveCoeffs(B, vecs[i]);
-        const aVal = fmtCoeff(coeffs[0]), bVal = fmtCoeff(coeffs[1]);
+        const { coeffs, ok } = solveCoeffs(B, vecs[i]); // coeffs=[a, b]
+        const aValStr = fmtCoeff(coeffs[0]);
+        const bValStr = fmtCoeff(coeffs[1]);
 
-        // 4. Tạo chuỗi LaTeX cho kết quả
-        const resSys = `\\left\\{\\begin{array}{l} a = ${aVal}\\\\ b = ${bVal} \\end{array}\\right.`;
-
-        // 5. Dùng dấu TƯƠNG ĐƯƠNG (\Leftrightarrow) thay vì suy ra
+        // 4. Kết quả giải hệ
+        const resSys = `\\left\\{\\begin{array}{l} a = ${aValStr}\\\\ b = ${bValStr} \\end{array}\\right.`;
         html += `<div class="sol-math-block">\\[ ${sys} \\quad \\Leftrightarrow \\quad ${resSys} \\]</div>`;
 
-        // 6. Kết luận
-        if (ok) html += `<div class="sol-text">Vậy $${viName} = ${aVal}v_{1} + ${bVal}v_{2}$. Loại $${viName}$ khỏi hệ sinh.</div>`;
-        else html += `<div class="sol-text">Vì không thỏa mãn nên $${viName}$ độc lập tuyến tính với $v_{1},\\,v_{2}$.</div>`;
+        // ============================================================
+        // [PHẦN MỚI] THÊM BƯỚC THỬ LẠI (SUBSTITUTION CHECK)
+        // ============================================================
+        if (n > 2) {
+            html += `<div class="sol-text">Thử lại với các thành phần còn lại của $${viName}$:</div>`;
+            
+            let allMatch = true;
+            // Duyệt các dòng còn lại (từ index 2 trở đi)
+            // Duyệt các dòng còn lại (từ index 2 trở đi)
+            for (let k = 2; k < n; k++) {
+                const valA = coeffs[0];
+                const valB = coeffs[1];
+                const v1_k = Number(vecs[0][k] || 0);
+                const v2_k = Number(vecs[1][k] || 0);
+                const vi_k = Number(vecs[i][k] || 0);
+
+                const calcVal = valA * v1_k + valB * v2_k;
+                
+                const sV1 = fmtScalarLatex(v1_k);
+                const sV2 = fmtScalarLatex(v2_k);
+                
+                // [FIX LỖI DÍNH SỐ]
+                // Thay vì ghép chuỗi thô, ta dùng dấu nhân (\cdot) hoặc ngoặc đơn để tách biệt
+                // Style PDF: 1(3) + (-2)(-1) -> Dùng ngoặc cho vector component
+                
+                const formatTerm = (cStr, vStr) => {
+                    // Luôn đóng ngoặc giá trị vector để tránh dính: 1.73(3) hoặc 1.73 \cdot 3
+                    // Nếu hệ số là số thập phân dài, dùng \cdot cho thoáng
+                    if (cStr.includes(".")) return `${cStr} \\cdot ${vStr}`;
+                    
+                    // Nếu hệ số nguyên đẹp (như 1, -2) thì dùng style a(v) giống PDF
+                    // Nếu v âm thì đóng ngoặc
+                    const vDisplay = (vStr.startsWith("-") || vStr.includes("/")) ? `(${vStr})` : vStr;
+                    
+                    if (cStr === "1") return vDisplay;
+                    if (cStr === "-1") return `-${vDisplay}`;
+                    return `${cStr}(${vStr})`;
+                };
+
+                let term1 = formatTerm(aValStr, sV1);
+                let term2 = formatTerm(bValStr, sV2);
+                
+                // Xử lý dấu cộng trừ giữa 2 số hạng
+                let lhsExpr = "";
+                if (term2.startsWith("-")) {
+                    lhsExpr = `${term1} - ${term2.substring(1)}`;
+                } else {
+                    lhsExpr = `${term1} + ${term2}`;
+                }
+
+                const strRes = fmtCoeff(calcVal);
+                const strTarget = fmtScalarLatex(vi_k);
+                
+                const isMatch = Math.abs(calcVal - vi_k) < 1e-4;
+                if (!isMatch) allMatch = false;
+
+                const rel = isMatch ? "=" : "\\neq";
+                const note = isMatch ? "(\\text{đúng})" : "(\\text{mâu thuẫn})";
+
+                html += `<div class="sol-math-block">\\[ ${lhsExpr} = ${strRes} \\; ${rel} \\; ${strTarget} \\quad ${note} \\]</div>`;
+            }
+
+            if (allMatch && ok) {
+                 html += `<div class="sol-text">Các đẳng thức đều đúng. Vậy $${viName} = ${aValStr}v_{1} + ${bValStr}v_{2}$. Loại $${viName}$ khỏi hệ sinh.</div>`;
+            } else {
+                 html += `<div class="sol-text">Xuất hiện mâu thuẫn nên không tồn tại bộ số $a, b$ thỏa mãn. Vậy $${viName}$ độc lập tuyến tính với $v_{1},\\,v_{2}$.</div>`;
+            }
+        } else {
+            // Trường hợp không gian 2 chiều (không còn dòng để thử)
+            if (ok) html += `<div class="sol-text">Vậy $${viName} = ${aValStr}v_{1} + ${bValStr}v_{2}$. Loại $${viName}$.</div>`;
+            else html += `<div class="sol-text">Hệ vô nghiệm. $${viName}$ độc lập tuyến tính.</div>`;
+        }
       }
 
     }

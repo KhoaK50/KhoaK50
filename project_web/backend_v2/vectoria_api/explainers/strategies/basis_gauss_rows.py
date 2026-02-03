@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Dict, List, Tuple
 import numpy as np
+import math
 
 from vectoria_api.explainers.models import Step
 from vectoria_api.core.linalg import gaussian_elimination_rows_with_ops
@@ -38,10 +39,66 @@ def _dependent_expressions_rows(A_rows: List[List[float]], pivot_indices: List[i
     return dep, coeff_map
 
 
-def _fmt_k(k: float, tol: float = 1e-10) -> str:
-    """Đưa hệ số về dạng đẹp: 2, -3, 1/2... (tránh thập phân dài)."""
-    return format_number_pretty(k, tol)
+def _fmt_k(val: float, tol: float = 1e-9) -> str:
+    """
+    Format số an toàn:
+    1. Số nguyên (Chuẩn)
+    2. Căn bậc 2 (Chuẩn, VD: 2sqrt(2))
+    3. Phân số (CỰC KỲ NGHIÊM NGẶT - Sai số < 1e-9 mới nhận)
+    4. Còn lại -> Số thập phân (Tránh ép loga/pi thành phân số)
+    """
+    # 1. Số 0
+    if abs(val) < tol: return "0"
+    
+    # 2. Số nguyên
+    if abs(val - round(val)) < tol: return str(int(round(val)))
+    
+    sign = "-" if val < 0 else ""
+    abs_val = abs(val)
 
+    # 3. Check Căn thức (Ưu tiên số 1)
+    sq = abs_val * abs_val
+    sq_round = round(sq)
+    # Chỉ đoán căn nếu bình phương lên ra số nguyên đẹp < 1000
+    if abs(sq - sq_round) < 1e-5 and sq_round < 1000:
+        coef = 1
+        n = sq_round
+        for i in range(int(math.isqrt(n)), 1, -1):
+            if n % (i*i) == 0:
+                coef = i
+                n //= (i*i)
+                break
+        
+        latex = f"\\sqrt{{{n}}}" if n > 1 else ""
+        if latex == "": latex = "1"
+        
+        res = latex if coef == 1 else f"{coef}{latex}"
+        if coef == 1 and n == 1: res = "1"
+        return sign + res
+
+    # 4. Check Phân số (SIẾT CHẶT)
+    # Chỉ nhận phân số nếu nó CHÍNH XÁC TUYỆT ĐỐI (sai số < 1e-9)
+    # Ví dụ: 0.3333333333 -> 1/3 (OK)
+    # Ví dụ: 1.6094 (ln5) -> 993/617 (Sai số ~ 1e-5 -> LOẠI NGAY)
+    max_denom = 100
+    h1, h2, k1, k2 = 1, 0, 0, 1
+    b = abs_val
+    while True:
+        a = math.floor(b)
+        aux = h1; h1 = a * h1 + h2; h2 = aux
+        aux = k1; k1 = a * k1 + k2; k2 = aux
+        
+        if k1 > max_denom: break
+        
+        # [QUAN TRỌNG] Kiểm tra sai số cực gắt (1e-9)
+        if abs(abs_val - h1/k1) < 1e-9: 
+             return f"{sign}\\frac{{{h1}}}{{{k1}}}"
+        
+        if abs(b - a) < 1e-9: break
+        b = 1 / (b - a)
+
+    # 5. Fallback: Số thập phân (cho ln, pi, e...)
+    return f"{val:.4f}".rstrip('0').rstrip('.')
 
 def _fmt_row_op_latex(op: dict, tol: float = 1e-10) -> str:
     """
@@ -80,13 +137,13 @@ def _fmt_row_op_latex(op: dict, tol: float = 1e-10) -> str:
     if kind == "scale":
         i = int(op["i"]) + 1
         k = float(op.get("factor", 1.0))
-        k_str = _fmt_k(k, tol) # Lấy chuỗi đẹp (vd: \frac{1}{3})
+        k_str = _fmt_k(k, tol) 
         
-        # Nếu là phân số thì khỏi đóng ngoặc, còn số âm hoặc số thường thì đóng ngoặc cho an toàn
-        if "\\" in k_str: # Có ký tự LaTeX
-             return f"d_{i} \\\\to {k_str}\\,d_{i}"
+        # Nếu là chuỗi phức tạp (phân số, căn, số âm) thì đóng ngoặc
+        if "\\" in k_str or k_str.startswith("-"):
+             return f"d_{{{i}}} \\\\to ({k_str})\\,d_{{{i}}}"
         else:
-             return f"d_{i} \\\\to ({k_str})\\,d_{i}"
+             return f"d_{{{i}}} \\\\to {k_str}\\,d_{{{i}}}"
     
     return ""
 
@@ -162,11 +219,24 @@ def _eq_general_pdf_latex(vectors: List[List[float]], basis_indices: List[int], 
     vec_list = _latex_vec_list(vectors, tol=tol)
     eq_line, system = _build_homogeneous_system_latex(vectors, tol=tol)
 
+    # [FIX LAYOUT] Hàm tạo dòng kết luận cơ sở (Xuống dòng để không bị vỡ giao diện)
+    def make_basis_line(indices):
+        if not indices:
+            return "\\bullet\\; \\text{Một cơ sở của }V\\text{ là: } B = \\left\\{\\;\\right\\}."
+        
+        # Tạo chuỗi vector
+        vec_strs = [f"v_{{{i+1}}}" for i in indices]
+        
+        # [QUAN TRỌNG] Thêm \\\\[3pt] để xuống dòng trước khi liệt kê B = ...
+        return (
+            "\\bullet\\; \\text{Một cơ sở của }V\\text{ là: } \\\\[3pt]" 
+            "B = \\left\\{ " + ",\\; ".join(vec_strs) + " \\right\\}."
+        )
+
     if rank == m:
         dim_line = f"\\bullet\\; \\text{{Số chiều: }}\\dim(V) = {rank}."
-        basis_line = "\\bullet\\; \\text{Một cơ sở của }V\\text{ là: } B = \\left\\{ " + ",\\; ".join(
-            [f"v_{{{i+1}}}" for i in range(m)]
-        ) + " \\right\\}."
+        basis_line = make_basis_line(list(range(m)))
+        
         concl = (
             "\\textbf{Bước 3: Kết luận. }"
             "Vì hệ phương trình chỉ có nghiệm tầm thường nên hệ vectơ độc lập tuyến tính.\\\\[4pt]\n"
@@ -175,14 +245,7 @@ def _eq_general_pdf_latex(vectors: List[List[float]], basis_indices: List[int], 
         )
     else:
         dim_line = f"\\bullet\\; \\text{{Số chiều: }}\\dim(V) = {rank}."
-        if basis_indices:
-            basis_line = (
-                "\\bullet\\; \\text{Một cơ sở của }V\\text{ là: } B = \\left\\{ " +
-                ",\\; ".join([f"v_{{{i+1}}}" for i in basis_indices]) +
-                " \\right\\}."
-            )
-        else:
-            basis_line = "\\bullet\\; \\text{Một cơ sở của }V\\text{ là: } B = \\left\\{\\;\\right\\}."
+        basis_line = make_basis_line(basis_indices)
 
         concl = (
             "\\textbf{Bước 3: Kết luận. }"
@@ -242,149 +305,185 @@ def _solve_in_span(B_rows: List[List[float]], v: List[float], tol: float = 1e-10
 
 
 def _eq_stepwise_pdf_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tuple[str, List[int], int]:
-    """
-    Cách 2 - Xét từng vector (style R^5 trong PDF):
-      - Bước 1: xét {v1}, thêm v2 nếu không tỉ lệ
-      - Các vector sau: thử biểu diễn tuyến tính qua các vector cơ sở hiện có.
-    
-    Hàm này quan trọng: Nó thực hiện đúng logic "Xét lần lượt từ trái sang phải".
-    Nó sẽ trả về:
-      - latex: Chuỗi lời giải
-      - basis_idx: Danh sách index cơ sở ĐÚNG THEO THỨ TỰ (VD: [0, 1])
-      - dim: Số chiều
-    """
-    if not vectors:
-        return "", [], 0
+    if not vectors: return "", [], 0
 
-    m = len(vectors)
-    n = len(vectors[0])
-
+    m, n = len(vectors), len(vectors[0])
     basis_idx: List[int] = []
-    basis_rows: List[List[float]] = []
+    basis_rows: List[List[float]] = [] # Lưu các vector cơ sở dạng float
 
     vec_list = _latex_vec_list(vectors, tol=tol)
+    lines = [
+        "\\renewcommand{\\arraystretch}{1.25}",
+        "\\begin{array}{l}",
+        f"\\text{{Cho }} {vec_list}.\\\\[6pt]"
+    ]
 
-    lines = []
-    lines.append("\\renewcommand{\\arraystretch}{1.25}")
-    lines.append("\\begin{array}{l}")
-    lines.append(f"\\text{{Cho }} {vec_list}.\\\\[6pt]")
-
-    # Step 1: Check v1
+    # --- Bước 1: Xét v1 ---
     v1 = np.array(vectors[0], dtype=float)
     if np.linalg.norm(v1) < tol:
-        lines.append("\\textbf{Bước 1: }\\text{Vì }v_1=\\vec{0}\\text{ nên bỏ }v_1\\text{ khỏi hệ.}\\\\[6pt]")
+        lines.append("\\textbf{Bước 1: }\\text{Vì }v_1=\\vec{0}\\text{ nên bỏ }v_1.\\\\[6pt]")
     else:
         basis_idx.append(0)
         basis_rows.append(vectors[0])
-        lines.append("\\textbf{Bước 1: }\\text{Xét hệ }\\{v_1\\}.\\\\[2pt]")
-        lines.append("\\text{Vì }v_1\\neq\\vec{0}\\text{ nên }\\{v_1\\}\\text{ độc lập tuyến tính.}\\\\[6pt]")
+        lines.append("\\textbf{Bước 1: }\\text{Xét hệ }\\{v_1\\}.\\text{ Vì }v_1\\neq\\vec{0}\\text{ nên độc lập tuyến tính.}\\\\[6pt]")
 
-    # Step 2: Check v2
+    # --- Bước 2: Xét v2 ---
     if m >= 2:
         v2 = np.array(vectors[1], dtype=float)
         if basis_rows:
+            # Check tỉ lệ: v2 = k*v1
             mul, t = _is_multiple(v2, np.array(basis_rows[0], dtype=float), tol=tol)
             if not mul:
                 basis_idx.append(1)
                 basis_rows.append(vectors[1])
-                # Tìm tỉ lệ để hiển thị
-                a = v1
-                b = v2
-                # Tìm 2 vị trí khác 0 đầu tiên để so sánh tỉ lệ
-                def pick_nonzero_idx(arr):
-                    for ii in range(arr.shape[0]):
-                        if abs(arr[ii]) >= tol:
-                            return ii
-                    return 0
-                i1 = pick_nonzero_idx(a)
-                i2 = pick_nonzero_idx(a[1:] if a.shape[0] > 1 else a) + (1 if a.shape[0] > 1 else 0)
-                if i2 == i1 and n > 1:
-                    i2 = (i1 + 1) % n
-
-                a1, a2 = _fmt_k(float(a[i1]), tol=tol), _fmt_k(float(a[i2]), tol=tol)
-                b1, b2 = _fmt_k(float(b[i1]), tol=tol), _fmt_k(float(b[i2]), tol=tol)
-
-                lines.append("\\textbf{Bước 2: }\\text{Xét hệ }\\{v_1, v_2\\}.\\\\[2pt]")
-                lines.append(
-                    f"\\text{{Vì }}v_1\\text{{ và }}v_2\\text{{ không tỉ lệ }}"
-                    f"\\left(\\dfrac{{{a1}}}{{{b1}}} \\neq \\dfrac{{{a2}}}{{{b2}}}\\right)"
-                    f"\\text{{ nên }}\\{{v_1,v_2\\}}\\text{{ độc lập tuyến tính.}}\\\\[6pt]"
-                )
+                # Lấy 2 thành phần đầu để minh họa khác tỉ lệ (nếu n >= 2)
+                idx1, idx2 = 0, 1 if n > 1 else 0
+                a_val = _fmt_k(basis_rows[0][idx1], tol)
+                b_val = _fmt_k(v2[idx1], tol)
+                lines.append(f"\\textbf{{Bước 2: }}\\text{{Xét hệ }}\\{{v_1, v_2\\}}.\\\\[2pt]")
+                lines.append(f"\\text{{Vì }} v_1, v_2 \\text{{ không tỉ lệ (}}\\frac{{{b_val}}}{{{a_val}}} \\neq ...\\text{{) nên độc lập tuyến tính.}}\\\\[6pt]")
             else:
-                lines.append("\\textbf{Bước 2: }\\text{Xét hệ }\\{v_1, v_2\\}.\\\\[2pt]")
-                lines.append(
-                    f"\\text{{Ta có }}v_2 = {_fmt_k(t, tol=tol)}\\,v_1\\text{{ nên }}\\{{v_1,v_2\\}}\\text{{ phụ thuộc tuyến tính. Bỏ }}v_2\\text{{ khỏi cơ sở.}}\\\\[6pt]"
-                )
+                k_str = _fmt_k(t, tol)
+                lines.append(f"\\textbf{{Bước 2: }}\\text{{Ta có }}v_2 = {k_str}v_1\\text{{ nên phụ thuộc. Bỏ }}v_2.\\\\[6pt]")
         else:
-            if np.linalg.norm(v2) >= tol:
+            if np.linalg.norm(v2) > tol:
                 basis_idx.append(1)
                 basis_rows.append(vectors[1])
-                lines.append("\\textbf{Bước 2: }\\text{Vì }v_2\\neq\\vec{0}\\text{ nên lấy }\\{v_2\\}\\text{ làm cơ sở ban đầu.}\\\\[6pt]")
+                lines.append("\\textbf{Bước 2: }\\text{Lấy }v_2\\text{ làm cơ sở.}\\\\[6pt]")
             else:
-                lines.append("\\textbf{Bước 2: }\\text{Vì }v_2=\\vec{0}\\text{ nên bỏ }v_2.\\\\[6pt]")
+                lines.append("\\textbf{Bước 2: }\\text{Bỏ }v_2=\\vec{0}.\\\\[6pt]")
 
-    # Step 3+: Check others
+    # --- Bước 3 trở đi: Logic Giải hệ con & Thử lại ---
     step_no = 3
     for k in range(2, m):
-        vk = vectors[k]
-        if np.linalg.norm(np.array(vk, dtype=float)) < tol:
-            lines.append(f"\\textbf{{Bước {step_no}: }}\\text{{Vì }}v_{{{k+1}}}=\\vec{{0}}\\text{{ nên bỏ }}v_{{{k+1}}}.\\\\[6pt]")
+        vk = np.array(vectors[k], dtype=float)
+        if np.linalg.norm(vk) < tol:
+            lines.append(f"\\textbf{{Bước {step_no}: }}\\text{{Bỏ }}v_{{{k+1}}}=\\vec{{0}}.\\\\[6pt]")
             step_no += 1
             continue
 
-        if not basis_rows:
-            basis_idx.append(k)
-            basis_rows.append(vk)
-            lines.append(f"\\textbf{{Bước {step_no}: }}\\text{{Vì cơ sở đang rỗng và }}v_{{{k+1}}}\\neq\\vec{{0}}\\text{{ nên lấy }}\\{{v_{{{k+1}}}\\}}\\text{{ làm cơ sở.}}\\\\[6pt]")
-            step_no += 1
-            continue
-
-        in_span, coeffs = _solve_in_span(basis_rows, vk, tol=tol)
-
-        lhs = f"v_{{{k+1}}}"
-        rhs_terms = []
-        for t_i in range(len(basis_rows)):
-            c = float(coeffs[t_i]) if t_i < len(coeffs) else 0.0
-            cs = _fmt_k(c, tol=tol)
-            if cs == "0":
-                continue
-            bidx = basis_idx[t_i] + 1
-            if cs == "1":
-                rhs_terms.append(f"v_{{{bidx}}}")
-            elif cs == "-1":
-                rhs_terms.append(f"-v_{{{bidx}}}")
-            else:
-                rhs_terms.append(f"{cs}v_{{{bidx}}}")
+        num_vars = len(basis_rows)
+        # Tạo chuỗi phương trình giả định: v_k = x*v_i + y*v_j
+        rhs_terms = [f"k_{{{i+1}}}v_{{{basis_idx[i]+1}}}" for i in range(num_vars)]
+        rhs_eq = " + ".join(rhs_terms)
         
-        if not rhs_terms:
-            rhs = "0"
-        else:
-            rhs = " + ".join(rhs_terms).replace("+ -", "- ")
+        lines.append(f"\\textbf{{Bước {step_no}: }}\\text{{Kiểm tra }}v_{{{k+1}}}\\text{{ có là tổ hợp tuyến tính của }}v_1, v_2...\\text{{ không.}}\\\\[2pt]")
+        lines.append(f"\\text{{Giả sử }} v_{{{k+1}}} = {rhs_eq}. \\text{{ Ta xét {num_vars} thành phần đầu tiên:}}\\\\[2pt]")
 
-        lines.append(f"\\textbf{{Bước {step_no}: }}\\text{{Kiểm tra }}v_{{{k+1}}}\\text{{ có là tổ hợp tuyến tính...}}\\\\[2pt]")
-        lines.append(f"\\text{{Giả sử }} {lhs} = {rhs}.\\\\[2pt]")
+        # 1. Giải hệ phương trình con (chỉ lấy num_vars dòng đầu tiên)
+        # A_sub * x = b_sub
+        A_sub = np.array([r[:num_vars] for r in basis_rows]).T
+        b_sub = vk[:num_vars]
+        
+        # Tạo hệ phương trình LaTeX để hiển thị
+        sys_lines = []
+        for r_i in range(num_vars):
+            row_terms = []
+            for c_i in range(num_vars):
+                val = basis_rows[c_i][r_i]
+                val_s = _fmt_k(val, tol)
+                if val_s == "0": continue
+                var_char = chr(97 + c_i) # a, b, c...
+                if val_s == "1": row_terms.append(var_char)
+                elif val_s == "-1": row_terms.append(f"-{var_char}")
+                else: row_terms.append(f"{val_s}{var_char}")
+            
+            lhs_expr = " + ".join(row_terms).replace("+ -", "- ") if row_terms else "0"
+            rhs_val = _fmt_k(b_sub[r_i], tol)
+            sys_lines.append(f"{lhs_expr} = {rhs_val}")
+        
+        sys_latex = "\\left\\{\\begin{matrix} " + " \\\\ ".join(sys_lines) + " \\end{matrix}\\right."
 
-        if in_span:
-            lines.append(
-                f"\\text{{Thử lại thấy các tọa độ đều thỏa mãn nên }}v_{{{k+1}}}\\text{{ phụ thuộc tuyến tính. Loại }}v_{{{k+1}}}\\text{{ khỏi hệ sinh.}}\\\\[6pt]"
-            )
+        # Giải nghiệm
+        try:
+            sol = np.linalg.solve(A_sub, b_sub)
+            has_sol = True
+        except np.linalg.LinAlgError:
+            has_sol = False
+            sol = np.zeros(num_vars) # Fallback
+
+        if not has_sol:
+             # Trường hợp hiếm: ngay 2 dòng đầu đã vô nghiệm
+             lines.append(f"{sys_latex} \\Rightarrow \\text{{ Hệ vô nghiệm.}}\\\\[2pt]")
+             lines.append(f"\\text{{Vậy }}v_{{{k+1}}}\\text{{ độc lập tuyến tính. Bổ sung vào cơ sở.}}\\\\[6pt]")
+             basis_idx.append(k)
+             basis_rows.append(vectors[k])
         else:
-            basis_idx.append(k)
-            basis_rows.append(vk)
-            lines.append(
-                f"\\text{{Không tìm được hệ số thỏa mãn (sai số vượt ngưỡng) nên }}v_{{{k+1}}}\\text{{ độc lập với các vectơ trước. Bổ sung }}v_{{{k+1}}}\\text{{ vào cơ sở.}}\\\\[6pt]"
-            )
+            # Hiển thị nghiệm tìm được
+            sol_strs = [f"{chr(97+i)} = {_fmt_k(sol[i], tol)}" for i in range(num_vars)]
+            sol_latex = "\\begin{cases} " + " \\\\ ".join(sol_strs) + " \end{cases}"
+            lines.append(f"{sys_latex} \\Rightarrow {sol_latex}\\\\[4pt]")
+
+            # 2. Thử lại vào các thành phần còn lại (từ dòng num_vars trở đi)
+            is_dependent = True
+            lines.append(f"\\text{{Thử lại với các thành phần còn lại của }} v_{{{k+1}}}:\\\\[2pt]")
+            
+            explanation_parts = []
+            for check_idx in range(num_vars, n):
+                # Tính vế phải: a*v1[i] + b*v2[i]
+                rhs_check = sum(sol[i] * basis_rows[i][check_idx] for i in range(num_vars))
+                lhs_check = vk[check_idx]
+                
+                # Format chuỗi tính toán: 1(2) + (-2)(3)...
+                calc_terms = []
+                for i in range(num_vars):
+                    c_s = _fmt_k(sol[i], tol)
+                    v_s = _fmt_k(basis_rows[i][check_idx], tol)
+                    if v_s == "0": continue
+                    # Đóng ngoặc số âm/phân số
+                    if "-" in v_s or "/" in v_s: v_s = f"({v_s})"
+                    if "-" in c_s or "/" in c_s: c_s = f"({c_s})"
+                    calc_terms.append(f"{c_s}\\cdot{v_s}")
+                
+                calc_str = " + ".join(calc_terms).replace("+ -", "- ") if calc_terms else "0"
+                res_str = _fmt_k(rhs_check, tol)
+                target_str = _fmt_k(lhs_check, tol)
+
+                if abs(rhs_check - lhs_check) < tol:
+                    explanation_parts.append(f"\\bullet\\; \\text{{Dòng {check_idx+1}: }} {calc_str} = {res_str} = {target_str} \\;(\\text{{Đúng}})")
+                else:
+                    explanation_parts.append(f"\\bullet\\; \\text{{Dòng {check_idx+1}: }} {calc_str} = {res_str} \\neq {target_str} \\;(\\text{{Sai}})")
+                    is_dependent = False
+                    break # Chỉ cần 1 dòng sai là kết luận luôn
+
+            lines.append(" \\\\ ".join(explanation_parts) + "\\\\[4pt]")
+
+            if is_dependent:
+                # Tạo chuỗi kết luận v3 = ...
+                final_comb = []
+                for i, s_val in enumerate(sol):
+                    s_fmt = _fmt_k(s_val, tol)
+                    v_name = f"v_{{{basis_idx[i]+1}}}"
+                    if s_fmt == "0": continue
+                    if s_fmt == "1": term = v_name
+                    elif s_fmt == "-1": term = f"-{v_name}"
+                    else: term = f"{s_fmt}{v_name}"
+                    final_comb.append(term)
+                res_eq = " + ".join(final_comb).replace("+ -", "- ")
+                
+                lines.append(f"\\text{{Tất cả đều thỏa mãn. Vậy }} v_{{{k+1}}} = {res_eq}.\\\\[2pt]")
+                lines.append(f"\\text{{Kết luận: }} v_{{{k+1}}} \\text{{ phụ thuộc tuyến tính. Loại bỏ.}}\\\\[6pt]")
+            else:
+                lines.append(f"\\text{{Xuất hiện mâu thuẫn. Vậy không tồn tại bộ số thỏa mãn.}}\\\\[2pt]")
+                lines.append(f"\\text{{Kết luận: }} v_{{{k+1}}} \\text{{ độc lập tuyến tính. Bổ sung vào cơ sở.}}\\\\[6pt]")
+                basis_idx.append(k)
+                basis_rows.append(vectors[k])
 
         step_no += 1
 
+    # Kết luận cuối cùng
     dim = len(basis_idx)
-    basis_set = "\\left\\{" + ",\\; ".join([f"v_{{{i+1}}}" for i in basis_idx]) + "\\right\\}" if basis_idx else "\\left\\{\\;\\right\\}"
+    basis_strs = [f"v_{{{i+1}}}" for i in basis_idx]
+    if basis_strs:
+        b_line = "B = \\left\\{ " + ",\\; ".join(basis_strs) + " \\right\\}."
+    else:
+        b_line = "B = \\emptyset."
+
     lines.append("\\textbf{Kết luận.}\\\\[4pt]")
-    lines.append(f"\\bullet\\; \\text{{Số chiều: }}\\dim(V) = {dim}.\\\\[2pt]")
-    lines.append(f"\\bullet\\; \\text{{Một cơ sở là: }} B = {basis_set}.")
+    lines.append(f"\\bullet\\; \\dim(V) = {dim}.\\\\[2pt]")
+    lines.append(f"\\bullet\\; \\text{{Cơ sở: }} {b_line}")
     lines.append("\\end{array}")
 
-    # TRẢ VỀ basis_idx ĐỂ DÙNG CHO MAIN PAYLOAD
     return "\n".join(lines), basis_idx, dim
 
 

@@ -36,6 +36,7 @@
     math-field::part(menu-toggle),
     math-field::part(virtual-keyboard-toggle) {
       display: none !important;
+      pointer-events: none !important;
     }
 
     /* 2. Tùy chỉnh ô nhập */
@@ -56,6 +57,7 @@
       /* Phòng hờ các phiên bản khác */
       --selection-background-color: #eee !important;
       --selection-color: #000 !important;
+      touch-action: manipulation;
     }
 
     math-field::part(content) {
@@ -240,14 +242,15 @@
     }
 
     /* Màu công thức toán ở tiêu đề (Xanh đậm) */
-    .sol-h1 .MathJax, 
+    .sol-h1 .MathJax,
     .sol-h1 mjx-container,
-    .sol-h1 .MathJax span, 
-    .sol-h1 mjx-container path { 
-        color: #2563eb !important; /* Xanh dương đậm */
-        fill: #2563eb !important; 
-        stroke: #2563eb !important;
-        font-size: 1.1em; 
+    .sol-h1 .MathJax span,
+    .sol-h1 mjx-container path {
+      color: #2563eb !important;
+      /* Xanh dương đậm */
+      fill: #2563eb !important;
+      stroke: #2563eb !important;
+      font-size: 1.1em;
     }
 
     /* Badge (Nhãn Lời giải) - Xanh nổi bật */
@@ -526,9 +529,9 @@
     }
 
     /* Body Dark - [ĐÃ FIX MÀU CHỮ DANH SÁCH] */
-    body.dark .sol-body { 
-        background-color: #1e1e1e !important; 
-        color: #d4d4d4 !important; 
+    body.dark .sol-body {
+      background-color: #1e1e1e !important;
+      color: #d4d4d4 !important;
     }
 
     /* Ép màu chữ sáng cho toàn bộ nội dung, bao gồm cả danh sách (li) */
@@ -607,113 +610,166 @@
       background: #666;
       /* Màu xám sáng hơn tí để dễ nhìn */
       border-radius: 4px;
-      border: 2px solid #252526; /* Tạo viền giả cho đẹp */
+      border: 2px solid #252526;
+      /* Tạo viền giả cho đẹp */
     }
 
     body.dark .sol-math-block::-webkit-scrollbar-thumb:hover {
       background: #999;
       /* Hover sáng hơn nữa */
     }
-    .sol-body ul, 
+
+    .sol-body ul,
     .sol-body ol {
-        list-style: none !important;      /* Bỏ dấu chấm tròn/số */
-        padding-left: 0 !important;       /* Bỏ thụt lề trái */
-        margin: 0 !important;             /* Bỏ khoảng cách thừa */
+      list-style: none !important;
+      /* Bỏ dấu chấm tròn/số */
+      padding-left: 0 !important;
+      /* Bỏ thụt lề trái */
+      margin: 0 !important;
+      /* Bỏ khoảng cách thừa */
     }
 
     .sol-body li {
-        display: block !important;        /* Hiển thị như dòng div bình thường */
-        margin-bottom: 10px !important;   /* Xuống dòng và cách ra một chút */
-        padding: 0 !important;
+      display: block !important;
+      /* Hiển thị như dòng div bình thường */
+      margin-bottom: 10px !important;
+      /* Xuống dòng và cách ra một chút */
+      padding: 0 !important;
     }
 
     /* 2. Ép màu chữ Dark Mode (Khắc phục triệt để lỗi chữ đen) */
     body.dark .sol-body ul,
     body.dark .sol-body li {
-        color: #e0e0e0 !important; /* Trắng xám */
+      color: #e0e0e0 !important;
+      /* Trắng xám */
     }
+
     /* ================================================================= */
     /* [STYLE CHO DÒNG KẾT LUẬN] - (THAY THẾ DANH SÁCH LI/UL) */
     /* ================================================================= */
 
     .sol-bullet {
-        display: flex;              /* Dùng flex để canh thẳng hàng */
-        margin-bottom: 8px;         /* Cách dòng dưới một chút */
-        line-height: 1.5;           /* Giãn dòng dễ đọc */
-        align-items: baseline;      /* Canh theo chân chữ */
-        gap: 8px;                   /* Khoảng cách giữa dấu gạch và chữ */
+      display: flex;
+      /* Dùng flex để canh thẳng hàng */
+      margin-bottom: 8px;
+      /* Cách dòng dưới một chút */
+      line-height: 1.5;
+      /* Giãn dòng dễ đọc */
+      align-items: baseline;
+      /* Canh theo chân chữ */
+      gap: 8px;
+      /* Khoảng cách giữa dấu gạch và chữ */
     }
 
     /* Tạo dấu gạch đầu dòng giả (nếu muốn), hoặc xóa đoạn này nếu muốn trơn */
     .sol-bullet::before {
-        content: "•";               /* Dấu chấm tròn nhỏ */
-        color: #2196F3;             /* Màu xanh tạo điểm nhấn */
-        font-weight: bold;
-        font-size: 1.2em;
+      content: "•";
+      /* Dấu chấm tròn nhỏ */
+      color: #2196F3;
+      /* Màu xanh tạo điểm nhấn */
+      font-weight: bold;
+      font-size: 1.2em;
     }
 
     /* --- [QUAN TRỌNG] ÉP MÀU CHỮ CHO DARK MODE --- */
     body.dark .sol-bullet {
-        color: #e0e0e0 !important;  /* Bắt buộc màu trắng xám */
+      color: #e0e0e0 !important;
+      /* Bắt buộc màu trắng xám */
     }
-    
+
     /* Màu dấu chấm trong dark mode */
     body.dark .sol-bullet::before {
-        color: #64b5f6;             /* Xanh sáng hơn chút cho nổi trên nền đen */
+      color: #64b5f6;
+      /* Xanh sáng hơn chút cho nổi trên nền đen */
     }
+
     .calc-result-box {
-        background-color: #e8f5e9;    /* Nền xanh nhạt (Light Mode) */
-        border-left: 5px solid #4caf50; 
-        padding: 12px 16px;
-        border-radius: 4px;
-        margin-top: 12px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        transition: all 0.3s ease;
+      background-color: #e8f5e9;
+      /* Nền xanh nhạt (Light Mode) */
+      border-left: 5px solid #4caf50;
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin-top: 12px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.3s ease;
     }
 
     .calc-result-label {
-        font-weight: 700;
-        color: #2e7d32;               /* Chữ xanh đậm (Light Mode) */
-        text-transform: uppercase;
-        font-size: 0.85em;
-        letter-spacing: 0.5px;
+      font-weight: 700;
+      color: #2e7d32;
+      /* Chữ xanh đậm (Light Mode) */
+      text-transform: uppercase;
+      font-size: 0.85em;
+      letter-spacing: 0.5px;
     }
 
     /* Mathfield hiển thị kết quả */
     .calc-result-math {
-        background: transparent;
-        border: none;
-        width: 100%;
-        font-size: 1.5em;             /* Chữ to */
-        color: #1b5e20;               /* Số màu xanh rất đậm (Light Mode) */
-        padding: 4px 0;
-        pointer-events: none;
-        box-shadow: none;
-        --caret-color: transparent;   /* Ẩn con trỏ nhấp nháy */
+      background: transparent;
+      border: none;
+      width: 100%;
+      font-size: 1.5em;
+      /* Chữ to */
+      color: #1b5e20;
+      /* Số màu xanh rất đậm (Light Mode) */
+      padding: 4px 0;
+      pointer-events: none;
+      box-shadow: none;
+      --caret-color: transparent;
+      /* Ẩn con trỏ nhấp nháy */
     }
 
     /* --- [CẤU HÌNH DARK MODE] --- */
     body.dark .calc-result-box {
-        background-color: #1b3320;    /* Nền xanh rêu tối (Dark Mode) */
-        border-left-color: #66bb6a;   /* Viền sáng hơn chút */
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      background-color: #1b3320;
+      /* Nền xanh rêu tối (Dark Mode) */
+      border-left-color: #66bb6a;
+      /* Viền sáng hơn chút */
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
 
     body.dark .calc-result-label {
-        color: #a5d6a7;               /* Label màu xanh phấn sáng */
+      color: #a5d6a7;
+      /* Label màu xanh phấn sáng */
     }
 
     body.dark .calc-result-math {
-        color: #e8f5e9 !important;    /* Số màu trắng xanh (cho nổi trên nền tối) */
-        --highlight-color: rgba(255,255,255,0.1);
+      color: #e8f5e9 !important;
+      /* Số màu trắng xanh (cho nổi trên nền tối) */
+      --highlight-color: rgba(255, 255, 255, 0.1);
     }
-    
+
     /* Fix lỗi Mathfield trong dark mode bị mờ */
     body.dark .calc-result-math::part(content) {
-        color: #e8f5e9 !important;
+      color: #e8f5e9 !important;
+    }
+
+    /* 1. Ép màu chữ văn bản thường trong vùng kết quả sang màu sáng */
+    body.dark #result_basis,
+    body.dark #result_basis div,
+    body.dark #result_basis span {
+      color: #e2e8f0 !important;
+      /* Trắng xám dễ đọc */
+    }
+
+    /* 2. Xử lý MathJax (công thức dim(V), R^n...) */
+    /* Ép SVG của MathJax tô màu trắng trong dark mode */
+    body.dark mjx-container,
+    body.dark mjx-container path {
+      fill: #e2e8f0 !important;
+      stroke: #e2e8f0 !important;
+      color: #e2e8f0 !important;
+    }
+
+    /* 3. Giữ màu xanh nổi bật cho các con số kết quả (số 1, số chiều...) */
+    body.dark b,
+    body.dark strong,
+    body.dark .highlight-value {
+      color: #60a5fa !important;
+      /* Xanh dương sáng (Blue-400) để nổi trên nền đen */
     }
   </style>
 </head>
@@ -1148,7 +1204,33 @@
       }
     });
   </script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Cấu hình Global tắt bàn phím ảo MathLive
+      if (window.mathVirtualKeyboard) {
+        window.mathVirtualKeyboard.policy = "manual";
+      }
 
+      const mf = document.getElementById('vectorInput');
+      if (mf) {
+        // 2. Khi người dùng bấm vào ô nhập
+        mf.addEventListener('focusin', () => {
+          // Ép ẩn bàn phím MathLive
+          if (window.mathVirtualKeyboard) {
+            window.mathVirtualKeyboard.hide();
+          }
+        });
+
+        // 3. Hack nhẹ: Focus vào ô nhập để kích hoạt bàn phím điện thoại
+        // Lưu ý: MathLive chặn khá kỹ, nhưng cách này giúp báo hiệu cho trình duyệt
+        mf.addEventListener('click', () => {
+          if (window.mathVirtualKeyboard) {
+            window.mathVirtualKeyboard.hide();
+          }
+        });
+      }
+    });
+  </script>
 </body>
 
 </html>
