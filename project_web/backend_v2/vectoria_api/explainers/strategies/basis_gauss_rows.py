@@ -210,26 +210,24 @@ def _build_homogeneous_system_latex(vectors: List[List[float]], tol: float = 1e-
     system = "\\left\\{\\begin{array}{l}\n" + " \\\\\n".join(lines) + "\n\\end{array}\\right."
     return eq_line, system
 
-
 def _eq_general_pdf_latex(vectors: List[List[float]], basis_indices: List[int], rank: int, tol: float = 1e-10) -> str:
-    if not vectors:
-        return ""
+    if not vectors: return ""
 
     m = len(vectors)
     vec_list = _latex_vec_list(vectors, tol=tol)
     eq_line, system = _build_homogeneous_system_latex(vectors, tol=tol)
 
-    # [FIX LAYOUT] Hàm tạo dòng kết luận cơ sở (Xuống dòng để không bị vỡ giao diện)
+    # [FIX LAYOUT] Hàm tạo dòng kết luận cơ sở (Tách dòng B riêng biệt)
     def make_basis_line(indices):
         if not indices:
-            return "\\bullet\\; \\text{Một cơ sở của }V\\text{ là: } B = \\left\\{\\;\\right\\}."
+            # Dòng 1: Text --> Xuống dòng 8pt --> Dòng 2: B = rỗng
+            return "\\bullet\\; \\text{Một cơ sở của }V\\text{ là:} \\\\[8pt] B = \\emptyset."
         
-        # Tạo chuỗi vector
         vec_strs = [f"v_{{{i+1}}}" for i in indices]
         
-        # [QUAN TRỌNG] Thêm \\\\[3pt] để xuống dòng trước khi liệt kê B = ...
+        # [QUAN TRỌNG] Ngắt dòng dứt khoát ở đây
         return (
-            "\\bullet\\; \\text{Một cơ sở của }V\\text{ là: } \\\\[3pt]" 
+            "\\bullet\\; \\text{Một cơ sở của }V\\text{ là:} \\\\[8pt]" 
             "B = \\left\\{ " + ",\\; ".join(vec_strs) + " \\right\\}."
         )
 
@@ -240,7 +238,7 @@ def _eq_general_pdf_latex(vectors: List[List[float]], basis_indices: List[int], 
         concl = (
             "\\textbf{Bước 3: Kết luận. }"
             "Vì hệ phương trình chỉ có nghiệm tầm thường nên hệ vectơ độc lập tuyến tính.\\\\[4pt]\n"
-            f"{dim_line}\\\\[2pt]\n"
+            f"{dim_line}\\\\[5pt]\n" # Tăng khoảng cách dòng
             f"{basis_line}"
         )
     else:
@@ -250,7 +248,7 @@ def _eq_general_pdf_latex(vectors: List[List[float]], basis_indices: List[int], 
         concl = (
             "\\textbf{Bước 3: Kết luận. }"
             "Hệ phương trình có nghiệm không tầm thường nên hệ vectơ phụ thuộc tuyến tính.\\\\[4pt]\n"
-            f"{dim_line}\\\\[2pt]\n"
+            f"{dim_line}\\\\[5pt]\n" # Tăng khoảng cách dòng
             f"{basis_line}"
         )
 
@@ -473,15 +471,18 @@ def _eq_stepwise_pdf_latex(vectors: List[List[float]], tol: float = 1e-10) -> Tu
 
     # Kết luận cuối cùng
     dim = len(basis_idx)
-    basis_strs = [f"v_{{{i+1}}}" for i in basis_idx]
-    if basis_strs:
-        b_line = "B = \\left\\{ " + ",\\; ".join(basis_strs) + " \\right\\}."
-    else:
-        b_line = "B = \\emptyset."
-
+    basis_vec_strs = [f"v_{{{i+1}}}" for i in basis_idx]
+    
     lines.append("\\textbf{Kết luận.}\\\\[4pt]")
-    lines.append(f"\\bullet\\; \\dim(V) = {dim}.\\\\[2pt]")
-    lines.append(f"\\bullet\\; \\text{{Cơ sở: }} {b_line}")
+    lines.append(f"\\bullet\\; \\text{{Số chiều: }}\\dim(V) = {dim}.\\\\[5pt]") # Thêm giãn dòng 5pt
+    
+    # [FIX LAYOUT] Tách B ra dòng riêng hoàn toàn
+    if not basis_idx:
+        lines.append(f"\\bullet\\; \\text{{Một cơ sở của }} V \\text{{ là:}} \\\\[8pt] B = \\emptyset.")
+    else:
+        b_str = "B = \\left\\{ " + ",\\; ".join(basis_vec_strs) + " \\right\\}."
+        lines.append(f"\\bullet\\; \\text{{Một cơ sở của }} V \\text{{ là:}} \\\\[8pt] {b_str}")
+
     lines.append("\\end{array}")
 
     return "\n".join(lines), basis_idx, dim

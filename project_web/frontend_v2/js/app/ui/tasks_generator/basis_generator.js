@@ -182,10 +182,10 @@
     return label ? `\\xrightarrow{\\;${label}\\;}` : "\\to";
   }
 
-  
+
   function buildChainFromSteps(steps) {
     const list = Array.isArray(steps) ? steps : [];
-    
+
     // 1. Tìm ma trận đầu tiên (Giữ nguyên)
     let firstMatrix = null;
     for (const st of list) {
@@ -199,18 +199,18 @@
     const mats = [];
     for (const st of list) {
       if (st && st.kind === "matrix" && Array.isArray(st.matrix)) {
-        
+
         let label = "";
-        
-        
+
+
         // Bất chấp Backend có gửi text hay không.
         if (st.row_op) {
-            label = rowOpDictToLatex(st.row_op); 
+          label = rowOpDictToLatex(st.row_op);
         }
-        
+
         // Chỉ khi nào không tính được thì mới lấy text của Backend làm phương án dự phòng
         if (!label) {
-            label = cleanLabelFromText(st.text);
+          label = cleanLabelFromText(st.text);
         }
 
         mats.push({ M: st.matrix, label: label });
@@ -228,7 +228,7 @@
       const nextM = mats[i].M;
       // Nếu ma trận không đổi và không có nhãn thì bỏ qua
       if (!label && matrixEqual(prevM, nextM)) continue;
-      
+
       chain += `\\;${arrowLatex(label)}\\;${matrixToLatex(nextM)}`;
       prevM = nextM;
     }
@@ -281,7 +281,10 @@
 
     html += `<div class="sol-bold">Kết luận.</div>`;
     html += `<div class="sol-bullet">Số chiều: $\\dim(V) = ${rank !== null ? rank : "?"}$.</div>`;
-    html += `<div class="sol-bullet">Một cơ sở của $V$ là: $B = ${basisRowsLatex}$.</div>`;
+    // [FIX LAYOUT] Tách text và công thức ra 2 dòng riêng biệt
+    html += `<div class="sol-bullet" style="margin-bottom: 5px;">Một cơ sở của $V$ là:</div>`;
+    // Dùng div riêng với overflow-x để có thanh cuộn nếu quá dài
+    html += `<div class="sol-math-block" style="overflow-x: auto; padding-bottom: 5px;">\\[ B = ${basisRowsLatex} \\]</div>`;
     html += `</div>`;
 
     return {
@@ -436,7 +439,11 @@
     else html += `<div class="sol-text">Hệ có nghiệm không tầm thường nên các vectơ phụ thuộc tuyến tính.</div>`;
 
     html += `<div class="sol-bullet">Số chiều: $\\dim(V) = ${rank != null ? String(rank) : "?"}$.</div>`;
-    html += `<div class="sol-bullet">Một cơ sở (lấy từ hệ sinh) là: $B = ${basisLatex}$.</div>`;
+    
+    // [FIX FINAL] Tách dòng cho Cách 2 (Tổng quát)
+    html += `<div class="sol-bullet" style="margin-bottom: 5px;">Một cơ sở (lấy từ hệ sinh) là:</div>`;
+    html += `<div class="sol-math-block" style="overflow-x: auto; padding-bottom: 5px;">\\[ B = ${basisLatex} \\]</div>`;
+    
     html += `</div>`;
 
     return {
@@ -583,73 +590,73 @@
         // [PHẦN MỚI] THÊM BƯỚC THỬ LẠI (SUBSTITUTION CHECK)
         // ============================================================
         if (n > 2) {
-            html += `<div class="sol-text">Thử lại với các thành phần còn lại của $${viName}$:</div>`;
-            
-            let allMatch = true;
-            // Duyệt các dòng còn lại (từ index 2 trở đi)
-            // Duyệt các dòng còn lại (từ index 2 trở đi)
-            for (let k = 2; k < n; k++) {
-                const valA = coeffs[0];
-                const valB = coeffs[1];
-                const v1_k = Number(vecs[0][k] || 0);
-                const v2_k = Number(vecs[1][k] || 0);
-                const vi_k = Number(vecs[i][k] || 0);
+          html += `<div class="sol-text">Thử lại với các thành phần còn lại của $${viName}$:</div>`;
 
-                const calcVal = valA * v1_k + valB * v2_k;
-                
-                const sV1 = fmtScalarLatex(v1_k);
-                const sV2 = fmtScalarLatex(v2_k);
-                
-                // [FIX LỖI DÍNH SỐ]
-                // Thay vì ghép chuỗi thô, ta dùng dấu nhân (\cdot) hoặc ngoặc đơn để tách biệt
-                // Style PDF: 1(3) + (-2)(-1) -> Dùng ngoặc cho vector component
-                
-                const formatTerm = (cStr, vStr) => {
-                    // Luôn đóng ngoặc giá trị vector để tránh dính: 1.73(3) hoặc 1.73 \cdot 3
-                    // Nếu hệ số là số thập phân dài, dùng \cdot cho thoáng
-                    if (cStr.includes(".")) return `${cStr} \\cdot ${vStr}`;
-                    
-                    // Nếu hệ số nguyên đẹp (như 1, -2) thì dùng style a(v) giống PDF
-                    // Nếu v âm thì đóng ngoặc
-                    const vDisplay = (vStr.startsWith("-") || vStr.includes("/")) ? `(${vStr})` : vStr;
-                    
-                    if (cStr === "1") return vDisplay;
-                    if (cStr === "-1") return `-${vDisplay}`;
-                    return `${cStr}(${vStr})`;
-                };
+          let allMatch = true;
+          // Duyệt các dòng còn lại (từ index 2 trở đi)
+          // Duyệt các dòng còn lại (từ index 2 trở đi)
+          for (let k = 2; k < n; k++) {
+            const valA = coeffs[0];
+            const valB = coeffs[1];
+            const v1_k = Number(vecs[0][k] || 0);
+            const v2_k = Number(vecs[1][k] || 0);
+            const vi_k = Number(vecs[i][k] || 0);
 
-                let term1 = formatTerm(aValStr, sV1);
-                let term2 = formatTerm(bValStr, sV2);
-                
-                // Xử lý dấu cộng trừ giữa 2 số hạng
-                let lhsExpr = "";
-                if (term2.startsWith("-")) {
-                    lhsExpr = `${term1} - ${term2.substring(1)}`;
-                } else {
-                    lhsExpr = `${term1} + ${term2}`;
-                }
+            const calcVal = valA * v1_k + valB * v2_k;
 
-                const strRes = fmtCoeff(calcVal);
-                const strTarget = fmtScalarLatex(vi_k);
-                
-                const isMatch = Math.abs(calcVal - vi_k) < 1e-4;
-                if (!isMatch) allMatch = false;
+            const sV1 = fmtScalarLatex(v1_k);
+            const sV2 = fmtScalarLatex(v2_k);
 
-                const rel = isMatch ? "=" : "\\neq";
-                const note = isMatch ? "(\\text{đúng})" : "(\\text{mâu thuẫn})";
+            // [FIX LỖI DÍNH SỐ]
+            // Thay vì ghép chuỗi thô, ta dùng dấu nhân (\cdot) hoặc ngoặc đơn để tách biệt
+            // Style PDF: 1(3) + (-2)(-1) -> Dùng ngoặc cho vector component
 
-                html += `<div class="sol-math-block">\\[ ${lhsExpr} = ${strRes} \\; ${rel} \\; ${strTarget} \\quad ${note} \\]</div>`;
-            }
+            const formatTerm = (cStr, vStr) => {
+              // Luôn đóng ngoặc giá trị vector để tránh dính: 1.73(3) hoặc 1.73 \cdot 3
+              // Nếu hệ số là số thập phân dài, dùng \cdot cho thoáng
+              if (cStr.includes(".")) return `${cStr} \\cdot ${vStr}`;
 
-            if (allMatch && ok) {
-                 html += `<div class="sol-text">Các đẳng thức đều đúng. Vậy $${viName} = ${aValStr}v_{1} + ${bValStr}v_{2}$. Loại $${viName}$ khỏi hệ sinh.</div>`;
+              // Nếu hệ số nguyên đẹp (như 1, -2) thì dùng style a(v) giống PDF
+              // Nếu v âm thì đóng ngoặc
+              const vDisplay = (vStr.startsWith("-") || vStr.includes("/")) ? `(${vStr})` : vStr;
+
+              if (cStr === "1") return vDisplay;
+              if (cStr === "-1") return `-${vDisplay}`;
+              return `${cStr}(${vStr})`;
+            };
+
+            let term1 = formatTerm(aValStr, sV1);
+            let term2 = formatTerm(bValStr, sV2);
+
+            // Xử lý dấu cộng trừ giữa 2 số hạng
+            let lhsExpr = "";
+            if (term2.startsWith("-")) {
+              lhsExpr = `${term1} - ${term2.substring(1)}`;
             } else {
-                 html += `<div class="sol-text">Xuất hiện mâu thuẫn nên không tồn tại bộ số $a, b$ thỏa mãn. Vậy $${viName}$ độc lập tuyến tính với $v_{1},\\,v_{2}$.</div>`;
+              lhsExpr = `${term1} + ${term2}`;
             }
+
+            const strRes = fmtCoeff(calcVal);
+            const strTarget = fmtScalarLatex(vi_k);
+
+            const isMatch = Math.abs(calcVal - vi_k) < 1e-4;
+            if (!isMatch) allMatch = false;
+
+            const rel = isMatch ? "=" : "\\neq";
+            const note = isMatch ? "(\\text{đúng})" : "(\\text{mâu thuẫn})";
+
+            html += `<div class="sol-math-block">\\[ ${lhsExpr} = ${strRes} \\; ${rel} \\; ${strTarget} \\quad ${note} \\]</div>`;
+          }
+
+          if (allMatch && ok) {
+            html += `<div class="sol-text">Các đẳng thức đều đúng. Vậy $${viName} = ${aValStr}v_{1} + ${bValStr}v_{2}$. Loại $${viName}$ khỏi hệ sinh.</div>`;
+          } else {
+            html += `<div class="sol-text">Xuất hiện mâu thuẫn nên không tồn tại bộ số $a, b$ thỏa mãn. Vậy $${viName}$ độc lập tuyến tính với $v_{1},\\,v_{2}$.</div>`;
+          }
         } else {
-            // Trường hợp không gian 2 chiều (không còn dòng để thử)
-            if (ok) html += `<div class="sol-text">Vậy $${viName} = ${aValStr}v_{1} + ${bValStr}v_{2}$. Loại $${viName}$.</div>`;
-            else html += `<div class="sol-text">Hệ vô nghiệm. $${viName}$ độc lập tuyến tính.</div>`;
+          // Trường hợp không gian 2 chiều (không còn dòng để thử)
+          if (ok) html += `<div class="sol-text">Vậy $${viName} = ${aValStr}v_{1} + ${bValStr}v_{2}$. Loại $${viName}$.</div>`;
+          else html += `<div class="sol-text">Hệ vô nghiệm. $${viName}$ độc lập tuyến tính.</div>`;
         }
       }
 
@@ -659,7 +666,11 @@
 
     html += `<div class="sol-bold">Kết luận.</div>`;
     html += `<div class="sol-bullet">Số chiều: $\\dim(V) = ${dim != null ? String(dim) : "?"}$.</div>`;
-    html += `<div class="sol-bullet">Một cơ sở là: $B = ${basisLatex}$.</div>`;
+
+    // [FIX FINAL] Tách dòng chữ và công thức + Bật thanh cuộn ngang
+    html += `<div class="sol-bullet" style="margin-bottom: 5px;">Một cơ sở (lấy từ hệ sinh) là:</div>`;
+    html += `<div class="sol-math-block" style="overflow-x: auto; padding-bottom: 5px; margin-bottom: 10px;">\\[ B = ${basisLatex} \\]</div>`;
+
     html += `</div>`;
 
     return {
