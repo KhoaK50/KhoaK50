@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <script src="../js/utils/theme-manager.js"></script>
+
     <style>
         /* =================== 1. CÁC BIẾN MÀU & THEME =================== */
         :root {
@@ -355,7 +357,6 @@
                 document.body.classList.add('dark');
             }
         })();
-
         document.addEventListener('DOMContentLoaded', () => {
             const settingsBtn = document.getElementById('btnSettings');
             const settingsDropdown = document.getElementById('settingsDropdown');
@@ -364,9 +365,8 @@
             const moonIcon = document.getElementById('moonIcon');
             const transitionIcons = document.querySelector('.theme-transition-icons');
 
-            if (document.body.classList.contains('dark')) {
-                themeToggle.checked = true;
-            }
+            // Set initial checkbox state from ThemeManager
+            themeToggle.checked = ThemeManager.isDarkMode();
 
             settingsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -380,31 +380,32 @@
             });
 
             themeToggle.addEventListener('change', () => {
-                const isDark = themeToggle.checked;
+                const isDark = ThemeManager.toggle();
+                themeToggle.checked = isDark;
+                ThemeManager.applyTheme(isDark);
                 
-                // Animation Logic (Đã fix lỗi hiển thị)
+                // Animation Logic
                 if (transitionIcons) {
                     transitionIcons.classList.remove('animate-rise-fade');
                     void transitionIcons.offsetWidth; // Trigger reflow
                     
                     if (isDark) {
-                        // Chuyển sang Dark -> Moon hiện
                         sunIcon.style.display = 'none';
                         moonIcon.style.display = 'block';
                     } else {
-                        // Chuyển sang Light -> Sun hiện
                         sunIcon.style.display = 'block';
                         moonIcon.style.display = 'none';
                     }
                     transitionIcons.classList.add('animate-rise-fade');
                 }
+            });
 
-                if (isDark) {
-                    document.body.classList.add('dark');
-                    localStorage.setItem('vec_theme', 'dark');
-                } else {
-                    document.body.classList.remove('dark');
-                    localStorage.setItem('vec_theme', 'light');
+            // Listen for theme changes from other tabs
+            window.addEventListener('storage', (e) => {
+                if (e.key === ThemeManager.STORAGE_KEY) {
+                    const isDark = ThemeManager.isDarkMode();
+                    themeToggle.checked = isDark;
+                    ThemeManager.applyTheme(isDark);
                 }
             });
         });

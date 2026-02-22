@@ -11,6 +11,8 @@
 
   <link rel="icon" href="./assets/images/logo.png" type="image/png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script src="js/utils/theme-manager.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -1093,8 +1095,9 @@
 
 
   <script>
-    // 1. XỬ LÝ NGAY LẬP TỨC (Chống chớp trắng)
-    (function () {
+    // 1. Auto-initialize theme (theme-manager.js handles this)
+    (() => {
+      // ThemeManager auto-initializes, but ensure class is applied early
       const savedTheme = localStorage.getItem('vec_theme');
       if (savedTheme === 'dark') {
         document.documentElement.classList.add('dark');
@@ -1102,51 +1105,33 @@
       }
     })();
 
-    // 2. XỬ LÝ LOGIC ĐỒNG BỘ (Khi trang tải xong)
+    // 2. HANDLE THEME TOGGLE (When page loads)
     document.addEventListener('DOMContentLoaded', function () {
       const toggleInput = document.getElementById('themeToggle');
 
-      // Hàm đồng bộ trạng thái từ A-Z
-      function syncThemeState() {
-        const isDark = localStorage.getItem('vec_theme') === 'dark';
-
-        // 1. Đồng bộ Giao diện (Màn hình)
-        if (isDark) {
-          document.documentElement.classList.add('dark');
-          document.body.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-          document.body.classList.remove('dark');
-        }
-
-        // 2. Đồng bộ Nút gạt
-        if (toggleInput) {
-          toggleInput.checked = isDark;
-        }
-      }
-
-      // Chạy đồng bộ lần đầu
-      syncThemeState();
-
-      // Lắng nghe sự kiện click nút
       if (toggleInput) {
+        // Set initial state
+        toggleInput.checked = ThemeManager.isDarkMode();
+
+        // Handle toggle click
         toggleInput.addEventListener('change', function () {
-          if (this.checked) {
-            localStorage.setItem('vec_theme', 'dark');
-          } else {
-            localStorage.setItem('vec_theme', 'light');
+          const isDark = ThemeManager.toggle();
+          // Ensure visual update on current page
+          ThemeManager.applyTheme(isDark);
+          // Keep checkbox in sync
+          toggleInput.checked = isDark;
+        });
+
+        // Listen for theme changes from other tabs/pages
+        window.addEventListener('storage', (e) => {
+          if (e.key === ThemeManager.STORAGE_KEY) {
+            const isDark = ThemeManager.isDarkMode();
+            toggleInput.checked = isDark;
+            // Apply theme on this page too when other tabs change
+            ThemeManager.applyTheme(isDark);
           }
-          // Gọi hàm đồng bộ lại lần nữa cho chắc
-          syncThemeState();
         });
       }
-
-      // [FIX LỖI CỦA ÔNG] Khi bấm Back/Forward
-      // Buộc hệ thống phải quét lại localStorage và ép lại giao diện
-      window.addEventListener('pageshow', syncThemeState);
-
-      // Fail-safe: Chạy lại một lần nữa khi mọi thứ (ảnh, script khác) đã load xong
-      window.addEventListener('load', syncThemeState);
     });
   </script>
 

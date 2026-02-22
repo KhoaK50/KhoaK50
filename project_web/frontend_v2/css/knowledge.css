@@ -23,10 +23,12 @@
     /* Shadow (Đổ bóng) */
     --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
     --shadow-hover: 0 10px 15px -3px rgba(59, 130, 246, 0.2), 0 4px 6px -2px rgba(59, 130, 246, 0.1);
+    /* Đồng bộ transition khi đổi theme */
+    --theme-transition: 1.5s cubic-bezier(.2, .6, .2, 1);
 }
 
 /* Cấu hình cho DARK MODE */
-body.dark-mode {
+html.dark, body.dark, body.dark-mode {
     --bg-page: #0f172a;        /* Nền tối thẫm */
     --bg-card: #1e293b;        /* Card xám xanh */
     --text-main: #f1f5f9;      /* Chữ trắng */
@@ -46,6 +48,11 @@ body.dark-mode {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* Áp transition đồng bộ cho các thuộc tính màu/chuyển theme */
+*, *::before, *::after {
+    transition: background-color var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition), box-shadow var(--theme-transition), opacity var(--theme-transition), filter var(--theme-transition);
+}
+
 body {
     background-color: var(--bg-page);
     color: var(--text-main);
@@ -54,8 +61,6 @@ body {
     flex-direction: column;
     min-height: 100vh;
     position: relative;
-    /* Transition chậm (1.5s) để khớp với hiệu ứng Mặt trời/Mặt trăng */
-    transition: background-color 1.5s ease, color 1.5s ease;
 }
 
 .container {
@@ -132,10 +137,15 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
-    transition: background-color 1.5s ease;
+    transition: background-color var(--theme-transition);
 }
 
 body.dark-mode .main-header {
+    background-color: #1e293b;
+}
+
+html.dark .main-header,
+body.dark .main-header {
     background-color: #1e293b;
 }
 
@@ -276,17 +286,47 @@ input:checked + .slider:before {
    6. HERO BANNER
    ========================================= */
 .hero-banner {
-    background: linear-gradient(135deg, #2563eb, #60a5fa);
+    position: relative;
     color: var(--white);
     text-align: center;
     padding: 3.5rem 1rem;
     margin-bottom: 2.5rem;
     clip-path: polygon(0 0, 100% 0, 100% 90%, 50% 100%, 0 90%);
-    transition: background 1.5s ease;
+    overflow: hidden;
 }
 
-body.dark-mode .hero-banner {
+/* Cross-fade two layered backgrounds so gradient transition eases smoothly */
+.hero-banner::before,
+.hero-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    transition: opacity var(--theme-transition);
+    will-change: opacity;
+}
+
+/* Light theme background (visible by default) */
+.hero-banner::before {
+    background: linear-gradient(135deg, #2563eb, #60a5fa);
+    opacity: 1;
+}
+
+/* Dark theme background (fades in when dark) */
+.hero-banner::after {
     background: linear-gradient(135deg, #1e293b, #334155);
+    opacity: 0;
+}
+
+/* When dark class is set, cross-fade backgrounds */
+html.dark .hero-banner::before,
+body.dark .hero-banner::before {
+    opacity: 0;
+}
+
+html.dark .hero-banner::after,
+body.dark .hero-banner::after {
+    opacity: 1;
 }
 
 .hero-banner h1 {
@@ -430,10 +470,19 @@ body.dark-mode .hero-banner {
    ========================================= */
 .main-footer {
     margin-top: auto;
-    background: #111827;
-    color: #9ca3af;
+    background: #f0f4f8;
+    color: #4b5563;
     text-align: center;
     padding: 25px;
     font-size: 0.95rem;
     border-top: 4px solid var(--primary-blue);
+    transition: background-color 1.5s ease, color 1.5s ease, border-top-color 1.5s ease;
+}
+
+body.dark-mode .main-footer,
+html.dark .main-footer,
+body.dark .main-footer {
+    background: #0f172a;
+    color: #94a3b8;
+    border-top-color: #60a5fa;
 }

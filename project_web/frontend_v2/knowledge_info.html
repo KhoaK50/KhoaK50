@@ -6,6 +6,7 @@
     <title>Kho Tàng Kiến Thức - Vectoria Knowledge</title>
     <link rel="stylesheet" href="css/knowledge.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="js/utils/theme-manager.js"></script>
 </head>
 <body>
 
@@ -18,7 +19,7 @@
             
             <div class="logo" style="flex-grow: 1; display: flex; justify-content: center;">
                 <a href="index.html">
-                    <i class="fa-solid fa-shapes"></i> Vectoria Knowledge
+                    <i class="fa-solid fa-shapes"></i> Vectoria
                 </a>
             </div>
 
@@ -51,12 +52,12 @@
     <main class="container main-content">
         <h2 class="section-heading">Chủ đề học tập</h2>
         <div class="topic-grid">
-            <a href="topics/overview.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-book-open"></i></div><h3>Kiến thức chuẩn bị</h3><p>Định nghĩa, tính chất, không gian con và các ví dụ cơ bản.</p></a>
-            <a href="topics/linear_independence.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-diagram-project"></i></div><h3>Định nghĩa Không gian Vector</h3><p>Khái niệm cốt lõi, cách xét tính độc lập của hệ vector.</p></a>
-            <a href="topics/basis_dimension.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-cube"></i></div><h3>Độc lập và Phụ thuộc tuyến tính</h3><p>Hệ sinh, cơ sở (Basis), số chiều (Dimension) và cách tìm.</p></a>
-            <a href="topics/rank.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-layer-group"></i></div><h3>Cơ sở và số chiều</h3><p>Khái niệm Rank, ma trận bậc thang và ứng dụng.</p></a>
-            <a href="topics/coordinates.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-crosshairs"></i></div><h3>Tọa độ theo Cơ sở</h3><p>Biểu diễn vector qua cơ sở, ma trận chuyển cơ sở.</p></a>
-            <a href="topics/videos.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-circle-play"></i></div><h3>Thư viện Video trực quan</h3><p>Tổng hợp các video hoạt họa toán học trực quan sinh động.</p></a>
+            <a href="topics/overview.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-book-open"></i></div><h3>Kiến thức chuẩn bị</h3><p>COMING SOON</p></a>
+            <a href="topics/vector_space.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-arrows-to-dot"></i></div><h3>Không gian Vector</h3><p></p></a>
+            <a href="topics/linear_independence.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-code-branch"></i></div><h3>Tổ hợp - Độc lập - Phụ thuộc tuyến tính</h3><p></p></a>
+            <a href="topics/rank_span.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-layer-group"></i></div><h3>Hạng và hệ sinh</h3><p>COMING SOON</p></a>
+            <a href="topics/basis_dimension.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-table-cells-large"></i></div><h3>Cơ sở và số chiều</h3><p>COMING SOON</p></a>
+            <a href="topics/coordinates.html" class="topic-card"><div class="icon-box"><i class="fa-solid fa-crosshairs"></i></div><h3>Tọa độ theo Cơ sở</h3><p>COMING SOON</p></a>
         </div>
     </main>
 
@@ -69,36 +70,11 @@
             const btnSettings = document.getElementById('btnSettings');
             const dropdown = document.getElementById('settingsDropdown');
             const themeToggle = document.getElementById('themeToggle');
-            const body = document.body;
-            const sunIcon = document.getElementById('sunIcon');
-            const moonIcon = document.getElementById('moonIcon');
 
-            // 1. Hàm kích hoạt animation
-            function triggerThemeAnimation(isDark) {
-                // Reset class animation cũ (nếu có) để có thể chạy lại
-                sunIcon.classList.remove('animate-rise-fade');
-                moonIcon.classList.remove('animate-rise-fade');
-                
-                // Thủ thuật buộc trình duyệt render lại để reset animation
-                void sunIcon.offsetWidth; 
+            // Set initial checkbox state from ThemeManager
+            themeToggle.checked = ThemeManager.isDarkMode();
 
-                if (isDark) {
-                    // Chuyển sang Tối -> Mặt Trăng mọc lên rồi tan biến
-                    moonIcon.classList.add('animate-rise-fade');
-                } else {
-                    // Chuyển sang Sáng -> Mặt Trời mọc lên rồi tan biến
-                    sunIcon.classList.add('animate-rise-fade');
-                }
-            }
-
-            // 2. Kiểm tra trạng thái cũ
-            const savedTheme = localStorage.getItem('vectoria-theme');
-            if (savedTheme === 'dark') {
-                body.classList.add('dark-mode');
-                themeToggle.checked = true;
-            }
-
-            // 3. Bật/Tắt menu settings
+            // Toggle theme button settings
             btnSettings.addEventListener('click', (e) => {
                 e.stopPropagation();
                 dropdown.classList.toggle('show');
@@ -109,16 +85,23 @@
                 }
             });
 
-            // 4. Sự kiện chuyển đổi (Sửa lại để gọi animation)
+            // Use ThemeManager for toggle
             themeToggle.addEventListener('change', () => {
-                if (themeToggle.checked) {
-                    body.classList.add('dark-mode');
-                    localStorage.setItem('vectoria-theme', 'dark');
-                    triggerThemeAnimation(true); // Gọi animation Mặt Trăng
-                } else {
-                    body.classList.remove('dark-mode');
-                    localStorage.setItem('vectoria-theme', 'light');
-                    triggerThemeAnimation(false); // Gọi animation Mặt Trời
+                const isDark = ThemeManager.toggle();
+                // Update checkbox to match
+                themeToggle.checked = isDark;
+                // Force theme application on current page
+                ThemeManager.applyTheme(isDark);
+            });
+
+            // Listen for theme changes from other tabs
+            window.addEventListener('storage', (e) => {
+                if (e.key === ThemeManager.STORAGE_KEY) {
+                    const isDark = ThemeManager.isDarkMode();
+                    // Update checkbox when other tabs change theme
+                    themeToggle.checked = isDark;
+                    // Apply theme on this page too
+                    ThemeManager.applyTheme(isDark);
                 }
             });
         });
