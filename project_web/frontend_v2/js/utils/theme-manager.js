@@ -15,6 +15,7 @@ const ThemeManager = (() => {
     const savedTheme = localStorage.getItem(STORAGE_KEY);
     const isDark = savedTheme === 'dark';
 
+    console.debug('[ThemeManager] init, savedTheme=', savedTheme);
     // 2. Áp dụng theme ngay lập tức (chống chớp trắng)
     applyTheme(isDark);
 
@@ -33,7 +34,7 @@ const ThemeManager = (() => {
   function applyTheme(isDark) {
     const html = document.documentElement;
     const body = document.body;
-    
+    console.debug('[ThemeManager] applyTheme isDark=', isDark);
     if (isDark) {
       html.classList.add(DARK_CLASS);
       body.classList.add(DARK_CLASS);
@@ -71,6 +72,7 @@ const ThemeManager = (() => {
     const isDark = currentTheme === 'dark';
     const newTheme = isDark ? 'light' : 'dark';
 
+    console.debug('[ThemeManager] toggle, current=', currentTheme, 'new=', newTheme);
     // Lưu vào localStorage (sẽ kích hoạt storage event trên các trang khác)
     localStorage.setItem(STORAGE_KEY, newTheme);
 

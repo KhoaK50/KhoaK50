@@ -957,9 +957,8 @@
                 <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-solid fa-book-open"></i> Lý thuyết
                 </h2>
 
-                <div class="pdf-h2">3 &nbsp; Tổ hợp - Độc lập - Phụ thuộc tuyến tính</div>
-
-                <div class="pdf-h3">3.1 &nbsp; Tổ hợp tuyến tính</div>
+                <div class="pdf-h1" style="font-size: 1.5rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-bottom: 20px;">Tổ hợp - Độc lập - Phụ thuộc tuyến tính</div>
+                <div class="pdf-h3">1 &nbsp; Tổ hợp tuyến tính</div>
                 <p>Cho \( v_1, v_2, \dots, v_n \) là \( n \) vector (\( n \ge 1 \)) của \( \mathbb{K}- \) không gian
                     vector \( V \) và \( c_1, c_2, \dots, c_n \) là \( n \) vô hướng trong trường \( \mathbb{K} \). Lúc
                     này, vector:</p>
@@ -1042,7 +1041,7 @@
                 </div>
                 <p>Vậy \( v \) là một tổ hợp tuyến tính có dạng \( v = -6u_1 + 3u_2 + 2u_3 \).</p>
 
-                <div class="pdf-h3">3.2 &nbsp; Độc lập tuyến tính và Phụ thuộc tuyến tính</div>
+                <div class="pdf-h3">2 &nbsp; Độc lập tuyến tính và Phụ thuộc tuyến tính</div>
                 <p>Cho \( V \) là không gian vector và \( S = \{v_1, v_2 \dots, v_n\} \) là một hệ vector của \( V \),
                     ta nói:</p>
                 <p>Hệ \( S \) <strong>phụ thuộc tuyến tính</strong> (PTTT) nếu tồn tại các số thực hay các vô hướng \(
@@ -1060,7 +1059,7 @@
                 </div>
                 <p>chỉ có <strong>nghiệm tầm thường</strong> là \( c_1 = c_2 = \dots = c_n = 0 \)</p>
 
-                <div class="pdf-h3" style="font-size: 1.15rem;">3.2.1 &nbsp; Các tính chất cơ bản</div>
+                <div class="pdf-h3" style="font-size: 1.15rem;">2.1 &nbsp; Các tính chất cơ bản</div>
                 <ul class="pdf-list" style="list-style-type: disc; padding-left: 20px;">
                     <li>Hệ chứa vector không luôn PTTT.</li>
                     <li>Hệ gồm 1 vector PTTT khi và chỉ khi vector đó bằng 0, hệ gồm 2 vector PTTT khi và chỉ khi 2
@@ -1171,135 +1170,198 @@
             </div>
 
             <div class="chapter-card" id="bai-tap">
-                <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Bài tập</h2>
+    <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Bài tập</h2>
 
-                <div class="pdf-h1">3 &nbsp; Tổ hợp tuyến tính</div>
+    <div class="pdf-h1" style="font-size: 1.3rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-bottom: 20px;">Tổ hợp tuyến tính</div>
 
-                <div class="box-blue"> 
-                    <span class="text-red-bold">Bài 3.1:</span> Xét xem vector \( v \) có phải là một THTT của hệ \( S \) không? Nếu có, hãy tìm một bộ hệ số \( c_i \) thỏa mãn:
-                    
-                    <div class="math-scroll">
-                        <ul class="exercise-list">
-                            <li>a) \( S = \{(1, 2), (-1, 3)\}, \quad v = (0, 5) \).</li>
-                            <li>b) \( S = \{(1, 0), (0, 1)\}, \quad v = (3, -4) \).</li>
-                            <li>c) \( S = \{(1, 1, 1), (1, 0, 1)\}, \quad v = (2, 1, 2) \).</li>
-                            <li>d) \( S = \{(1, -1, 0), (0, 1, -1)\}, \quad v = (1, 0, -1) \).</li>
-                            <li>e) \( S = \{(1, 2, 3), (0, 1, 2), (0, 0, 1)\}, \quad v = (1, 4, 9) \).</li>
-                            <li>f) \( S = \{e_1, e_2, e_3\} \) (với \( \{e_i\} \) là cơ sở chính tắc của \( \mathbb{R}^3 \)), \( \quad v = (x, y, z) \).</li>
-                            <li>g) \( S = \{(1, 2, 1), (2, 1, 3), (1, 1, 1)\}, \quad v = (1, 1, 0) \).</li>
-                            <li>h) \( S = \{(1, 0, 0), (1, 1, 0), (1, 1, 1)\}, \quad v = (2, 3, 4) \).</li>
-                            <li>i) \( S = \{(1, 2, 1), (2, 5, 2), (1, 3, 2)\}, \quad v = (1, 1, 1) \).</li>
-                            <li>j) \( S = \{(1, 1, 0), (1, 0, 1), (0, 1, 1)\}, \quad v = (2, 2, 2) \).</li>
-                            <li>k) \( S = \{(1, 2, 3), (4, 5, 6)\}, \quad v = (7, 8, 9) \).</li>
-                        </ul>
-                    </div>
+    <div class="box-black">
+        <span class="text-red-bold" style="font-style: italic;">Ví dụ 1:</span> Trong \( \mathbb{R}^3 \), cho hệ vector \( S = \{v_1 = (1, 1, 0), v_2 = (0, 2, 1)\} \) và vector \( v = (2, 6, 2) \). Hỏi \( v \) có phải là THTT của \( S \) không?
+        
+        <span class="text-blue-sol">Lời giải</span>
+        
+        <p>Xét ma trận mở rộng:</p>
+        <div class="math-center" style="overflow-x: auto; margin-bottom: 15px; margin-top: 10px;">
+            \( \bar{A} = \left( \begin{array}{cc|c} 1 & 0 & 2 \\ 1 & 2 & 6 \\ 0 & 1 & 2 \end{array} \right) \xrightarrow{d_2 \rightarrow d_2 - d_1} \left( \begin{array}{cc|c} 1 & 0 & 2 \\ 0 & 2 & 4 \\ 0 & 1 & 2 \end{array} \right) \xrightarrow{d_3 \rightarrow d_3 - \frac{1}{2}d_2} \left( \begin{array}{cc|c} 1 & 0 & 2 \\ 0 & 2 & 4 \\ 0 & 0 & 0 \end{array} \right) \)
+        </div>
+        <p>Ta có \( rank(A) = rank(\bar{A}) = 2 \). Suy ra, hệ có nghiệm duy nhất \( (c_1, c_2) = (2, 2) \).</p>
+        <p style="margin-top: 15px;">Vậy \( v \) là THTT của \( S \) và \( v = 2v_1 + 2v_2 \).</p>
+    </div>
+
+    <div class="box-blue"> 
+        <p><span class="text-red-bold">Bài 1.</span> Xét xem vector \( v \) có phải là một THTT của hệ \( S \) không? Nếu có, hãy tìm một bộ hệ số \( c_i \) thỏa mãn:</p>
+        <div class="math-scroll">
+            <ul class="exercise-list">
+                <li>a) \( S = \{(1, 2), (-1, 3)\}, \quad v = (0, 5) \).</li>
+                <li>b) \( S = \{(1, 0), (0, 1)\}, \quad v = (3, -4) \).</li>
+                <li>c) \( S = \{(1, 1, 1), (1, 0, 1)\}, \quad v = (2, 1, 2) \).</li>
+                <li>d) \( S = \{(1, -1, 0), (0, 1, -1)\}, \quad v = (1, 0, -1) \).</li>
+                <li>e) \( S = \{(1, 2, 3), (0, 1, 2), (0, 0, 1)\}, \quad v = (1, 4, 9) \).</li>
+                <li>f) \( S = \{e_1, e_2, e_3\} \) (với \( e_i \) là cơ sở chính tắc của \( \mathbb{R}^3 \)), \( \quad v = (x, y, z) \).</li>
+                <li>g) \( S = \{(1, 2, 1), (2, 1, 3), (1, 1, 1)\}, \quad v = (1, 1, 0) \).</li>
+                <li>h) \( S = \{(1, 0, 0), (1, 1, 0), (1, 1, 1)\}, \quad v = (2, 3, 4) \).</li>
+                <li>i) \( S = \{(1, 2, 1), (2, 5, 2), (1, 3, 2)\}, \quad v = (1, 1, 1) \).</li>
+                <li>j) \( S = \{(1, 1, 0), (1, 0, 1), (0, 1, 1)\}, \quad v = (2, 2, 2) \).</li>
+                <li>k) \( S = \{(1, 2, 3), (4, 5, 6)\}, \quad v = (7, 8, 9) \).</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="box-blue"> 
+        <p><span class="text-red-bold">Bài 2.</span> Giải thích tại sao các vector \( v \) sau đây <strong>không</strong> phải (hoặc có tính chất đặc biệt) là THTT của hệ \( S \):</p>
+        <div class="math-scroll" style="margin-top: 10px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <div style="margin-bottom: 20px;">a) \( S = \{(2, 1), (6, 3)\}, \quad v = (1, 0) \)</div>
+                    <div style="margin-bottom: 20px;">b) \( S = \{(1, 1), (2, 2)\}, \quad v = (1, 2) \)</div>
+                    <div style="margin-bottom: 20px;">c) \( S = \{(1, 0), (2, 0)\}, \quad v = (0, 1) \)</div>
+                    <div>d) \( S = \{(1, 2, 3), (2, 4, 6)\}, \quad v = (3, 6, 9) \)</div>
                 </div>
-
-                <div class="box-blue"> 
-                    <span class="text-red-bold">Bài 3.2:</span> Giải thích tại sao các vector \( v \) sau đây <strong>không</strong> phải (hoặc có tính chất đặc biệt) là THTT của hệ \( S \):
-                    
-                    <div class="math-scroll" style="margin-top: 10px;">
-                        <ul class="exercise-list" style="display: flex; flex-wrap: wrap; gap: 20px;">
-                            <li style="flex: 1 1 45%; min-width: 300px;">
-                                a) \( S = \{(2, 1), (6, 3)\}, \quad v = (1, 0) \)<br><br>
-                                b) \( S = \{(1, 1), (2, 2)\}, \quad v = (1, 2) \)<br><br>
-                                c) \( S = \{(1, 0), (2, 0)\}, \quad v = (0, 1) \)<br><br>
-                                d) \( S = \{(1, 2, 3), (2, 4, 6)\}, \quad v = (3, 6, 9) \)
-                            </li>
-                            <li style="flex: 1 1 45%; min-width: 300px;">
-                                e) \( S = \{(2, 0, 0), (0, 3, 0)\}, \quad v = (4, 6, 1) \)<br><br>
-                                f) \( S = \{(1, 2, -1), (3, 1, 0)\}, \quad v = (0, 0, 0) \)<br><br>
-                                g) \( S = \{(1, -2), (2, -4)\}, \quad v = (3, -6) \)
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="box-black">
-                    <span class="text-example-blue">Ví dụ 2:</span> Tìm các giá trị của \( m \) để vector \( u \) là tổ hợp tuyến tính của hệ \( \{u_1, u_2\} \) với \( u_1 = (1, 1, 1); \quad u_2 = (1, 2, 3); \quad u = (1, 4, m) \)
-
-                    <span class="text-blue-sol">Lời giải</span>
-                    
-                    <p>Lập ma trận \( A \) từ các vector theo cột và tính định thức:</p>
-                    <div class="math-center">
-                        \( \det(A) = \begin{vmatrix} 1 & 1 & 1 \\ 1 & 2 & 3 \\ 1 & 4 & m \end{vmatrix} \)
-                    </div>
-                    
-                    <p>Khai triển theo dòng 1:</p>
-                    <div class="math-center" style="overflow-x: auto;">
-                        \( \det(A) = 1(2m - 12) - 1(m - 3) + 1(4 - 2) = 2m - 12 - m + 3 + 2 = m - 7 \)
-                    </div>
-                    
-                    <p>Để hệ vector phụ thuộc tuyến tính \( \Leftrightarrow \det(A) = 0 \Leftrightarrow m - 7 = 0 \Leftrightarrow m = 7 \)</p>
-                    
-                    <p>Vậy \( m = 7 \) thì vector \( u \) là một tổ hợp tuyến tính của \( \{u_1, u_2\} \)</p>
-                </div>
-
-                <div class="box-blue"> 
-                    <span class="text-red-bold">Bài 3.3:</span> Tìm các giá trị của \( m \) để vector \( u \) là tổ hợp tuyến tính của hệ vector tương ứng:
-                    
-                    <div class="math-scroll">
-                        <ul class="exercise-list">
-                            <li>a) \( u_1 = (1, 2); \quad u_2 = (2, 4); \quad u = (1, m) \)</li>
-                            <li>b) \( u_1 = (1, 2, -1); \quad u_2 = (2, 3, 1); \quad u_3 = (3, 5, 0); \quad u = (8, m, 1) \)</li>
-                            <li>c) \( u_1 = (2, 3, 1); \quad u_2 = (-4, -6, 2); \quad u_3 = (6, 9, 1); \quad u = (1, 2, m) \)</li>
-                            <li>d) \( u_1 = (1, 2, 4); \quad u_2 = (2, 1, 5); \quad u_3 = (3, -1, 0); \quad u = (m, 3, 1) \)</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="pdf-h1">4 &nbsp; Độc lập tuyến tính - Phụ thuộc tuyến tính</div>
-
-                <div class="box-blue"> 
-                    <span class="text-red-bold">Bài 4.1:</span> Xét tính ĐLTT hoặc PTTT của các hệ vector sau trong không gian tương ứng:
-                    
-                    <div class="math-scroll" style="margin-top: 10px;">
-                        <ul class="exercise-list" style="display: flex; flex-wrap: wrap; gap: 20px;">
-                            <li style="flex: 1 1 45%; min-width: 300px;">
-                                a) \( S = \{(1, 2), (3, 4)\} \) trong \( \mathbb{R}^2 \).<br><br>
-                                b) \( S = \{(1, 1), (2, 2)\} \) trong \( \mathbb{R}^2 \).<br><br>
-                                c) \( S = \{(1, 0, 0), (0, 1, 0), (0, 0, 1)\} \) trong \( \mathbb{R}^3 \).<br><br>
-                                d) \( S = \{(1, 2, 3), (4, 5, 6), (7, 8, 9)\} \) trong \( \mathbb{R}^3 \).<br><br>
-                                e) \( S = \{(1, 0, 1), (1, 1, 0), (0, 1, 1)\} \) trong \( \mathbb{R}^3 \).<br><br>
-                                f) \( S = \{(2, -1, 3), (4, -2, 6)\} \) trong \( \mathbb{R}^3 \).<br><br>
-                                g) \( S = \{(1, 1, 1), (1, 2, 3), (0, 1, 2)\} \) trong \( \mathbb{R}^3 \).
-                            </li>
-                            <li style="flex: 1 1 45%; min-width: 300px;">
-                                h) \( S = \{(1, 2, 1), (0, 1, 2), (0, 0, 3)\} \) trong \( \mathbb{R}^3 \).<br><br>
-                                i) \( S = \{(1, -1, 0), (0, 1, -1), (-1, 0, 1)\} \) trong \( \mathbb{R}^3 \).<br><br>
-                                j) \( S = \{(1, 1, 2), (2, 2, 4), (3, 3, 5)\} \) trong \( \mathbb{R}^3 \).<br><br>
-                                k) \( S = \{(1, 2, 3), (2, 5, 8), (1, 4, 7)\} \) trong \( \mathbb{R}^3 \).<br><br>
-                                l) \( S = \{(1, 0, 1), (0, 1, 0), (2, 1, 3)\} \) trong \( \mathbb{R}^3 \).<br><br>
-                                m) \( S = \{(1, 1, 0, 1), (1, 0, 0, 1), (1, -1, 0, 1)\} \) trong \( \mathbb{R}^4 \).
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="box-blue"> 
-                    <span class="text-red-bold">Bài 4.2:</span> Cho biết các hệ vector sau ĐLTT hay PTTT. Giải thích tại sao?
-                    
-                    <div class="math-scroll">
-                        <ul class="exercise-list">
-                            <li>a) \( S = \{e_1, e_2, e_3, e_4\} \) trong \( \mathbb{R}^4 \) (\( e_i \) <em>là các vector thuộc cơ sở chính tắc của</em> \( \mathbb{R}^4 \)).</li>
-                            <li>b) \( S = \{(1, 2), (2, 3), (3, 4)\} \) trong \( \mathbb{R}^2 \).</li>
-                            <li>c) \( S = \{(1, 0), (0, 1), (1, 1)\} \) trong \( \mathbb{R}^2 \).</li>
-                            <li>d) \( S = \{(1, 2, 3), \mathbf{0}, (4, 5, 6)\} \) trong \( \mathbb{R}^3 \) (với \( \mathbf{0} \) là vector không).</li>
-                            <li>e) Cho hai vector \( u, v \) bất kỳ. Xét hệ vector \( S = \{u, v, u + v\} \).</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="download-container">
-                    <p style="margin-bottom: 15px; color: var(--text-sub); font-size: 0.95rem;">
-                        <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài tập? Tải lời giải về để đối chiếu nhé!
-                    </p>
-
-                    <a href="https://drive.google.com/uc?export=download&id=1kNdg5h3YE2NccqCOq-QeA4wwm3mjYfzw" target="_blank" class="btn-download">
-                        <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
-                    </a>
+                <div>
+                    <div style="margin-bottom: 20px;">e) \( S = \{(2, 0, 0), (0, 3, 0)\}, \quad v = (4, 6, 1) \)</div>
+                    <div style="margin-bottom: 20px;">f) \( S = \{(1, 2, -1), (3, 1, 0)\}, \quad v = (0, 0, 0) \)</div>
+                    <div>g) \( S = \{(1, -2), (2, -4)\}, \quad v = (3, -6) \)</div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="box-black">
+        <span class="text-red-bold" style="font-style: italic;">Ví dụ 2:</span> Tìm các giá trị của \( m \) để vector \( u \) là tổ hợp tuyến tính của hệ \( \{u_1, u_2\} \) với \( u_1 = (1, 1, 1); \quad u_2 = (1, 2, 3); \quad u = (1, 4, m) \)
+        
+        <span class="text-blue-sol">Lời giải</span>
+        
+        <p>Lập ma trận \( A \) từ các vector theo cột và tính định thức: 
+            \( \det(A) = \begin{vmatrix} 1 & 1 & 1 \\ 1 & 2 & 3 \\ 1 & 4 & m \end{vmatrix} \)
+        </p>
+        
+        <p style="margin-top: 15px;">Khai triển theo dòng 1:</p>
+        <div class="math-center" style="overflow-x: auto; margin: 15px 0;">
+            \( \det(A) = 1(2m - 12) - 1(m - 3) + 1(4 - 2) = 2m - 12 - m + 3 + 2 = m - 7 \)
+        </div>
+        
+        <p>Để hệ vector phụ thuộc tuyến tính \( \Leftrightarrow \det(A) = 0 \Leftrightarrow m - 7 = 0 \Leftrightarrow m = 7 \)</p>
+        <p style="margin-top: 15px;">Vậy \( m = 7 \) thì vector \( u \) là một tổ hợp tuyến tính của \( \{u_1, u_2\} \)</p>
+    </div>
+
+    <div class="box-blue"> 
+        <p><span class="text-red-bold">Bài 3.</span> Tìm các giá trị của \( m \) để vector \( u \) là tổ hợp tuyến tính của hệ vector tương ứng:</p>
+        <div class="math-scroll">
+            <ul class="exercise-list">
+                <li>a) \( u_1 = (1, 2); \quad u_2 = (2, 4); \quad u = (1, m) \)</li>
+                <li>b) \( u_1 = (1, 2, -1); \quad u_2 = (2, 3, 1); \quad u_3 = (3, 5, 0); \quad u = (8, m, 1) \)</li>
+                <li>c) \( u_1 = (2, 3, 1); \quad u_2 = (-4, -6, 2); \quad u_3 = (6, 9, 1); \quad u = (1, 2, m) \)</li>
+                <li>d) \( u_1 = (1, 2, 4); \quad u_2 = (2, 1, 5); \quad u_3 = (3, -1, 0); \quad u = (m, 3, 1) \)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="box-blue">
+        <p><span class="text-red-bold">Bài 4.</span> Trong không gian véctơ ma trận vuông cấp 2, hãy biểu diễn véctơ \( \begin{pmatrix} 11 & 13 \\ 6 & 5 \end{pmatrix} \) theo 4 véctơ \( \begin{pmatrix} 1 & 1 \\ -1 & 2 \end{pmatrix}, \begin{pmatrix} 0 & 1 \\ 2 & 1 \end{pmatrix}, \begin{pmatrix} 2 & 2 \\ 1 & -1 \end{pmatrix}, \begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix} \)</p>
+    </div>
+
+    <div class="pdf-h1" style="font-size: 1.3rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-top: 40px; margin-bottom: 20px;">Độc lập tuyến tính - Phụ thuộc tuyến tính</div>
+
+    <div class="box-black">
+        <span class="text-red-bold" style="font-style: italic;">Ví dụ:</span> Xét sự ĐLTT hoặc PTTT của hệ \( S = \{u_1 = (1, 2, 1), u_2 = (2, 5, 3), u_3 = (1, 3, 3)\} \) trong không gian \( \mathbb{R}^3 \).
+        
+        <span class="text-blue-sol">Lời giải</span>
+        
+        <p><strong>Cách 1: Sử dụng định nghĩa (Xét hệ phương trình thuần nhất)</strong></p>
+        <p>Xét phương trình vector:</p>
+        <div class="math-center" style="margin-bottom: 10px; overflow-x: auto;">
+            \( c_1u_1 + c_2u_2 + c_3u_3 = \mathbf{0} \)<br>
+            \( \Leftrightarrow c_1 \cdot (1, 2, 1) + c_2 \cdot (2, 5, 3) + c_3 \cdot (1, 3, 3) = (0, 0, 0) \)
+        </div>
+        <p>Hệ phương trình tương ứng:</p>
+        <div class="math-center" style="margin-bottom: 15px;">
+            \( \begin{cases} c_1 + 2c_2 + c_3 = 0 \\ 2c_1 + 5c_2 + 3c_3 = 0 \\ c_1 + 3c_2 + 3c_3 = 0 \end{cases} \)
+        </div>
+        <p>Giải hệ trên, thu được nghiệm duy nhất \( c_1 = c_2 = c_3 = 0 \) (<strong>nghiệm tầm thường</strong>).</p>
+        <p style="margin-top: 10px;">Vậy hệ \( S \) ĐLTT.</p>
+
+        <p style="margin-top: 25px;"><strong>Cách 2: Biện luận hạng của ma trận</strong></p>
+        <p>Lập ma trận \( A \) có các cột là các vector thuộc hệ \( S \) và thực hiện các phép biến đổi sơ cấp:</p>
+        <div class="math-center" style="margin: 15px 0; overflow-x: auto;">
+            \( A = \begin{pmatrix} 1 & 2 & 1 \\ 2 & 5 & 3 \\ 1 & 3 & 3 \end{pmatrix} \xrightarrow[d_3 - d_1]{d_2 - 2d_1} \begin{pmatrix} 1 & 2 & 1 \\ 0 & 1 & 1 \\ 0 & 1 & 2 \end{pmatrix} \xrightarrow{d_3 - d_2} \begin{pmatrix} 1 & 2 & 1 \\ 0 & 1 & 1 \\ 0 & 0 & 1 \end{pmatrix} \)
+        </div>
+        <p>Nhận thấy \( \rho(A) = 3 = n \) (số vector của hệ). Vậy hệ \( S \) ĐLTT.</p>
+
+        <p style="margin-top: 25px;"><strong>Cách 3: Sử dụng định thức (Trường hợp số vector bằng số chiều không gian)</strong></p>
+        <p>Do hệ \( S \) gồm 3 vector trong không gian \( \mathbb{R}^3 \), ta lập ma trận vuông \( A \) và tính định thức:</p>
+        <div class="math-center" style="margin: 15px 0; overflow-x: auto;">
+            \( \det(A) = \begin{vmatrix} 1 & 2 & 1 \\ 2 & 5 & 3 \\ 1 & 3 & 3 \end{vmatrix} = 1(15 - 9) - 2(6 - 3) + 1(6 - 5) = 6 - 6 + 1 = 1 \)
+        </div>
+        <p>Vì \( \det(A) = 1 \neq 0 \), suy ra \( \rho(A) = 3 = \) số vector, do đó hệ vector \( S \) <strong>ĐLTT</strong>.</p>
+    </div>
+
+    <div class="box-blue"> 
+        <p><span class="text-red-bold">Bài 1.</span> Xét tính ĐLTT hoặc PTTT của các hệ vector sau trong không gian tương ứng:</p>
+        <div class="math-scroll" style="margin-top: 15px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <div style="margin-bottom: 20px;">a) \( S = \{(1, 2), (3, 4)\} \) trong \( \mathbb{R}^2 \).</div>
+                    <div style="margin-bottom: 20px;">b) \( S = \{(1, 1), (2, 2)\} \) trong \( \mathbb{R}^2 \).</div>
+                    <div style="margin-bottom: 20px;">c) \( S = \{(1, 0, 0), (0, 1, 0), (0, 0, 1)\} \) trong \( \mathbb{R}^3 \).</div>
+                    <div style="margin-bottom: 20px;">d) \( S = \{(1, 2, 3), (4, 5, 6), (7, 8, 9)\} \) trong \( \mathbb{R}^3 \).</div>
+                    <div style="margin-bottom: 20px;">e) \( S = \{(1, 0, 1), (1, 1, 0), (0, 1, 1)\} \) trong \( \mathbb{R}^3 \).</div>
+                    <div style="margin-bottom: 20px;">f) \( S = \{(2, -1, 3), (4, -2, 6)\} \) trong \( \mathbb{R}^3 \).</div>
+                    <div>g) \( S = \{(1, 1, 1), (1, 2, 3), (0, 1, 2)\} \) trong \( \mathbb{R}^3 \).</div>
+                </div>
+                <div>
+                    <div style="margin-bottom: 20px;">h) \( S = \{(1, 2, 1), (0, 1, 2), (0, 0, 3)\} \) trong \( \mathbb{R}^3 \).</div>
+                    <div style="margin-bottom: 20px;">i) \( S = \{(1, -1, 0), (0, 1, -1), (-1, 0, 1)\} \) trong \( \mathbb{R}^3 \).</div>
+                    <div style="margin-bottom: 20px;">j) \( S = \{(1, 1, 2), (2, 2, 4), (3, 3, 5)\} \) trong \( \mathbb{R}^3 \).</div>
+                    <div style="margin-bottom: 20px;">k) \( S = \{(1, 2, 3), (2, 5, 8), (1, 4, 7)\} \) trong \( \mathbb{R}^3 \).</div>
+                    <div style="margin-bottom: 20px;">l) \( S = \{(1, 0, 1), (0, 1, 0), (2, 1, 3)\} \) trong \( \mathbb{R}^3 \).</div>
+                    <div>m) \( S = \{(1, 1, 0, 1), (1, 0, 0, 1), (1, -1, 0, 1)\} \) trong \( \mathbb{R}^4 \).</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="box-blue"> 
+        <p><span class="text-red-bold">Bài 2.</span> Cho biết các hệ vector sau ĐLTT hay PTTT. Giải thích tại sao?</p>
+        <div class="math-scroll" style="margin-top: 15px;">
+            <ul class="exercise-list">
+                <li style="margin-bottom: 20px;">a) \( S = \{e_1, e_2, e_3, e_4\} \) trong \( \mathbb{R}^4 \) (\( e_i \) là các vector thuộc cơ sở chính tắc của \( \mathbb{R}^4 \)).</li>
+                <li style="margin-bottom: 20px;">b) \( S = \{(1, 2), (2, 3), (3, 4)\} \) trong \( \mathbb{R}^2 \).</li>
+                <li style="margin-bottom: 20px;">c) \( S = \{(1, 0), (0, 1), (1, 1)\} \) trong \( \mathbb{R}^2 \).</li>
+                <li style="margin-bottom: 20px;">d) \( S = \{(1, 2, 3), \mathbf{0}, (4, 5, 6)\} \) trong \( \mathbb{R}^3 \) (với \( \mathbf{0} \) là vector không).</li>
+                <li>e) Cho hai vector \( u, v \) bất kỳ. Xét hệ vector \( S = \{u, v, u + v\} \).</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="box-blue">
+        <p><span class="text-red-bold">Bài 3.</span> Trong không gian \( \mathcal{P}_2[x] \), xét xem hệ vector \( B = \{u_1 = 1 + 2x, u_2 = 3x - x^2, u_3 = 2 - x + x^2\} \) ĐLTT hay PTTT.</p>
+    </div>
+
+    <div class="box-blue">
+        <p><span class="text-red-bold">Bài 4.</span></p>
+        <div class="math-scroll" style="margin-top: 15px;">
+            <ul class="exercise-list">
+                <li style="margin-bottom: 25px;">
+                    a) Trong không gian véctơ \( \mathbb{R}^4 \), các vector sau là ĐLTT hay PTTT:
+                    <div class="math-center" style="margin-top: 15px;">
+                        \( u_1 = (1, 1, 1, 1), \quad u_2 = (1, 1, -1, -1), \quad u_3 = (1, -1, 1, -1), \quad u_4 = (1, -1, -1, 1) \)
+                    </div>
+                </li>
+                <li>
+                    b) Tìm tất cả các giá trị của \( m \) sao cho véctơ \( u = (m, 1, 2, 3) \) là THTT của bốn vector \( u_1, u_2, u_3, u_4 \)
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="download-container">
+        <p style="margin-bottom: 15px; color: var(--text-sub); font-size: 0.95rem;">
+            <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài tập? Tải lời giải về để đối chiếu nhé!
+        </p>
+        <a href="https://drive.google.com/uc?export=download&id=1kNdg5h3YE2NccqCOq-QeA4wwm3mjYfzw" target="_blank" class="btn-download">
+            <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
+        </a>
+    </div>
+</div>
 
         </main>
     </div>

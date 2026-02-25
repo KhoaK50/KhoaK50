@@ -175,6 +175,8 @@ body.dark .main-header {
 .settings-container {
     position: absolute;
     right: 0;
+    z-index: 10050; /* ensure settings sit above other fixed elements */
+    pointer-events: auto; /* guard against accidental overlays */
 }
 
 .icon-btn {
@@ -190,6 +192,8 @@ body.dark .main-header {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    z-index: 10051; /* keep the interactive button above dropdown animation */
 }
 
 .icon-btn:hover {
