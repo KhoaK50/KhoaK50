@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cơ sở và Số chiều - Vectoria Knowledge</title>
+    <title>Hệ phương trình tuyến tính - Vectoria Knowledge</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -826,7 +826,7 @@
             font-size: 1.1rem;
         }
 
-        
+
 
         body.dark .pdf-remark {
             color: #fb7185;
@@ -905,6 +905,160 @@
             box-shadow: 0 0 20px rgba(96, 165, 250, 0.4);
             /* Hiệu ứng phát sáng (Glow) */
         }
+
+        /* 1. Xóa dấu chấm tròn và căn lề gốc */
+        .custom-nav ul,
+        .custom-nav li {
+            list-style: none !important;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 2. Định dạng thẻ Link chuẩn để ăn màu xanh và Hover */
+        .custom-nav .nav-link,
+        .custom-nav .sub-link {
+            display: flex !important;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            color: #475569;
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .custom-nav .nav-link:hover,
+        .custom-nav .sub-link:hover {
+            background: #f8fafc;
+            color: var(--primary);
+        }
+
+        /* 3. Phân cấp thụt lề cho 3 cấp độ */
+        .custom-nav .sub-menu .sub-link {
+            padding-left: 40px;
+        }
+
+        /* Cấp 2 */
+        .custom-nav .sub-menu .sub-menu .sub-link {
+            padding-left: 60px !important;
+            font-size: 0.85rem;
+        }
+
+        /* Cấp 3 */
+
+        /* 4. Trạng thái Active màu xanh */
+        .custom-nav .active {
+            background-color: #eff6ff !important;
+            color: var(--primary) !important;
+            font-weight: 600;
+            border-left: 3px solid var(--primary) !important;
+        }
+
+        body.dark .custom-nav .active {
+            background-color: #1e293b !important;
+        }
+
+        /* Mặc định ẩn tất cả sub-menu */
+        .custom-nav .sub-menu {
+            display: none;
+            list-style: none !important;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Chỉ hiển thị sub-menu khi thẻ li cha có class .open */
+        .custom-nav .has-dropdown.open>.sub-menu {
+            display: block !important;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        /* Hiệu ứng xoay mũi tên chuẩn */
+        .custom-nav .has-dropdown.open>.toggle-btn .arrow-icon {
+            transform: rotate(180deg);
+            /* Hoặc 90deg tùy ông muốn xoay hướng nào */
+        }
+
+        /* Xóa dấu chấm tròn cho tất cả li */
+        .custom-nav li {
+            list-style: none !important;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 1. Mặc định ẩn các menu con */
+        .custom-nav .sub-menu {
+            display: none;
+            list-style: none !important;
+        }
+
+        /* Trạng thái mặc định: Mũi tên trỏ sang phải > */
+        .custom-nav .arrow-icon {
+            transition: transform 0.3s ease;
+            transform: rotate(0deg) !important;
+            display: inline-block;
+        }
+
+        /* Khi mục cha có class .open: Tự xoay 90 độ thành trỏ xuống v */
+        .custom-nav .has-dropdown.open>.nav-link .arrow-icon,
+        .custom-nav .has-dropdown.open>.toggle-btn .arrow-icon {
+            transform: rotate(90deg) !important;
+        }
+
+        /* 4. Thụt lề phân cấp 3 lớp chuẩn đét */
+        .custom-nav .sub-menu .sub-link {
+            padding-left: 35px;
+        }
+
+        .custom-nav .sub-menu .sub-menu .sub-link {
+            padding-left: 55px !important;
+            font-size: 0.85rem;
+        }
+
+        /* 1. Đưa border-left từ thẻ a sang thẻ li để nó nằm ngoài rìa */
+        .custom-nav .nav-item,
+        .custom-nav .sub-menu li {
+            position: relative;
+            border-left: 3px solid transparent;
+            /* Thanh dọc mặc định ẩn */
+            transition: all 0.2s;
+        }
+
+        /* 2. Khi mục đó active, hiện thanh dọc ở sát mép trái Sidebar */
+        .custom-nav .nav-item:has(> .active),
+        .custom-nav .sub-menu li:has(> .active) {
+            border-left: 3px solid var(--primary);
+            background-color: var(--hover-bg);
+            /* Nền xanh nhạt cho cả dòng */
+        }
+
+        /* 3. Bỏ border-left cũ ở thẻ a để không bị trùng */
+        .custom-nav .active {
+            border-left: none !important;
+            background-color: transparent !important;
+            /* Reset lại để không bị đè nền */
+            color: var(--primary) !important;
+        }
+
+        /* 4. Chỉnh lại thụt lề chữ cho đẹp */
+        .custom-nav .sub-link {
+            padding-left: 40px !important;
+            /* Con cấp 1 */
+        }
+
+        .custom-nav .sub-menu .sub-menu .sub-link {
+            padding-left: 60px !important;
+            /* Con cấp 2 (3.1, 5.1) */
+        }
     </style>
 </head>
 
@@ -954,14 +1108,52 @@
     </div>
 
     <div class="container">
-        <aside class="sidebar">
-            <h3><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
-            <div class="menu-list">
-                <a href="#ly-thuyet" class="menu-link active">1. Lý thuyết</a>
-                <a href="#video-truc-quan" class="menu-link">2. Video trực quan</a>
-                <a href="#bai-tap" class="menu-link">3. Bài tập</a>
-
-            </div>
+        <aside class="sidebar custom-nav">
+            <h3 class="nav-title"><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
+            <ul class="nav-list">
+                <li class="nav-item has-dropdown open">
+                    <div class="nav-link toggle-btn">
+                        <a href="#ly-thuyet"
+                            style="text-decoration: none; color: inherit; font-weight: 700; flex-grow: 1;">Lý thuyết</a>
+                        <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                    </div>
+                    <ul class="sub-menu">
+                        <li><a href="#dinh-nghia" class="sub-link active">1. Định nghĩa</a></li>
+                        <li><a href="#dinh-ly-kronecker" class="sub-link">2. Định lý Kronecker-Capelli</a></li>
+                        <li class="nav-item has-dropdown">
+                            <div class="sub-link toggle-btn">
+                                <a href="#he-cramer" style="text-decoration: none; color: inherit; flex-grow: 1;">3. Hệ
+                                    phương trình Cramer</a>
+                                <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                            </div>
+                            <ul class="sub-menu">
+                                <li><a href="#cramer-dinh-nghia" class="sub-link">3.1 Định nghĩa</a></li>
+                                <li><a href="#cramer-quy-tac" class="sub-link">3.2 Quy tắc Cramer</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="#gauss" class="sub-link">4. Giải hệ phương trình bằng phương pháp khử Gauss</a>
+                        </li>
+                        <li class="nav-item has-dropdown">
+                            <div class="sub-link toggle-btn">
+                                <a href="#he-thuan-nhat" style="text-decoration: none; color: inherit; flex-grow: 1;">5.
+                                    Hệ phương trình tuyến tính thuần nhất</a>
+                                <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                            </div>
+                            <ul class="sub-menu">
+                                <li><a href="#thuan-nhat-dinh-nghia" class="sub-link">5.1 Định nghĩa</a></li>
+                                <li><a href="#thuan-nhat-tinh-chat" class="sub-link">5.2 Tính chất nghiệm</a></li>
+                                <li><a href="#thuan-nhat-dinh-nghia-so-nghiem" class="sub-link">5.3 Biện luận số nghiệm
+                                        hệ thuần nhất</a></li>
+                                <li><a href="#thuan-nhat-he-qua" class="sub-link">5.4 Hệ quả từ định lý
+                                        Kronecker-Capelli</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a href="#video-truc-quan" class="nav-link" style="font-weight: 700;">Video trực
+                        quan</a></li>
+                <li class="nav-item"><a href="#bai-tap" class="nav-link" style="font-weight: 700;">Bài tập</a></li>
+            </ul>
         </aside>
 
         <main class="main-content">
@@ -990,7 +1182,7 @@
                 <style>
                     /* === LIGHT MODE (Mặc định) === */
                     #ly-thuyet {
-                        font-family: "Times New Roman", Times, serif;
+                        font-family: 'Inter', sans-serif;
                         color: #000;
                         font-size: 1.15rem;
                         line-height: 1.6;
@@ -1146,7 +1338,7 @@
                     <style>
                         /* === STYLE NỘI BỘ CHO PHẦN LÝ THUYẾT === */
                         #ly-thuyet {
-                            font-family: "Times New Roman", Times, serif;
+                            font-family: 'Inter', sans-serif;
                             color: var(--text-main);
                             font-size: 1.15rem;
                             line-height: 1.7;
@@ -1190,9 +1382,10 @@
                             border-bottom: 2px solid var(--primary);
                             display: inline-block;
                         }
+
                         body.dark .pdf-h1 {
                             color: var(--accent);
-                            
+
                         }
 
                         .pdf-h2 {
@@ -1230,189 +1423,243 @@
                         body.dark .pdf-remark {
                             color: #60a5fa;
                         }
-                        
                     </style>
 
-                    
 
-                    <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-solid fa-book-open"></i> Lý thuyết</h2>
 
-    <div class="pdf-h1">Hệ phương trình tuyến tính</div>
+                    <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-solid fa-book-open"></i> Lý
+                        thuyết</h2>
 
-    <div class="pdf-h2">1 &nbsp; Định nghĩa</div>
-    <p>Một hệ phương trình tuyến tính là một hệ thống gồm \( m \) phương trình bậc nhất với \( n \) ẩn có dạng tổng quát như sau:</p>
-    <div class="math-center">
-        \( 
-        \begin{cases} 
-        a_{11}x_1 + a_{12}x_2 + \dots + a_{1n}x_n &= b_1 \\ 
-        a_{21}x_1 + a_{22}x_2 + \dots + a_{2n}x_n &= b_2 \\ 
-        \dots + \dots + \dots + \dots &= \dots \\ 
-        a_{m1}x_1 + a_{m2}x_2 + \dots + a_{mn}x_n &= b_m 
-        \end{cases} 
-        \quad (*)
-        \)
-    </div>
-    <p>với \( a_{ij}, b_i \in \mathbb{R} \) với \( i = \overline{1, m}, j = \overline{1, n} \) là các hệ số và \( x_i \) với \( i = \overline{1, n} \) là các ẩn.</p>
+                    <div class="pdf-h1">Hệ phương trình tuyến tính</div>
 
-    <p>Ta đặt</p>
-    <div class="math-center" style="overflow-x: auto;">
-        \( A = \begin{pmatrix} a_{11} & a_{12} & \dots & a_{1n} \\ a_{21} & a_{22} & \dots & a_{2n} \\ \vdots & \vdots & \ddots & \vdots \\ a_{m1} & a_{m2} & \dots & a_{mn} \end{pmatrix}, \quad X = \begin{pmatrix} x_1 \\ x_2 \\ \vdots \\ x_n \end{pmatrix}, \quad B = \begin{pmatrix} b_1 \\ b_2 \\ \vdots \\ b_m \end{pmatrix}. \)
-    </div>
+                    <div class="pdf-h2" id="dinh-nghia">1 &nbsp; Định nghĩa</div>
+                    <p>Một hệ phương trình tuyến tính là một hệ thống gồm \( m \) phương trình bậc nhất với \( n \) ẩn
+                        có dạng tổng quát như sau:</p>
+                    <div class="math-center">
+                        \[
+                        \left\{
+                        \begin{array}{rcrcrcrcl}
+                        a_{11}x_1 &+& a_{12}x_2 &+& \cdots &+& a_{1n}x_n & = & b_1 \\
+                        a_{21}x_1 &+& a_{22}x_2 &+& \cdots &+& a_{2n}x_n & = & b_2 \\
+                        \cdots &+& \cdots &+& \cdots &+& \cdots & = & \cdots \\
+                        a_{n1}x_1 &+& a_{n2}x_2 &+& \cdots &+& a_{nn}x_n & = & b_n
+                        \end{array}
+                        \right.
+                        \]
+                    </div>
+                    <p>với \( a_{ij}, b_i \in \mathbb{R} \) với \( i = \overline{1, m}, j = \overline{1, n} \) là các hệ
+                        số và \( x_i \) với \( i = \overline{1, n} \) là các ẩn.</p>
 
-    <p>Rõ ràng hệ phương trình (*) có thể được viết lại dưới dạng phương trình ma trận \( AX = B \). Ta gọi \( A \) là ma trận hệ số, \( X \) là ma trận cột ẩn số và \( B \) là ma trận cột hệ số tự do của hệ phương trình (*).</p>
+                    <p>Ta đặt</p>
+                    <div class="math-center" style="overflow-x: auto;">
+                        \( A = \begin{pmatrix} a_{11} & a_{12} & \dots & a_{1n} \\ a_{21} & a_{22} & \dots & a_{2n} \\
+                        \vdots & \vdots & \ddots & \vdots \\ a_{m1} & a_{m2} & \dots & a_{mn} \end{pmatrix}, \quad X =
+                        \begin{pmatrix} x_1 \\ x_2 \\ \vdots \\ x_n \end{pmatrix}, \quad B = \begin{pmatrix} b_1 \\ b_2
+                        \\ \vdots \\ b_m \end{pmatrix}. \)
+                    </div>
 
-    <p>Ký hiệu</p>
-    <div class="math-center" style="overflow-x: auto;">
-        \( A^{bs} \text{ hay } \bar{A} = (A \mid B) = \left( \begin{array}{cccc|c} a_{11} & a_{12} & \dots & a_{1n} & b_1 \\ a_{21} & a_{22} & \dots & a_{2n} & b_2 \\ \vdots & \vdots & \ddots & \vdots & \vdots \\ a_{m1} & a_{m2} & \dots & a_{mn} & b_m \end{array} \right) \)
-    </div>
-    <p>được gọi là <strong>ma trận hệ số mở rộng</strong> hay ma trận bổ sung của hệ. Nếu biết hệ phương trình tuyến tính thì ta viết ngay được ma trận mở rộng của nó. Ngược lại, nếu biết được ma trận hệ số mở rộng của một hệ phương trình tuyến tính thì ta cũng dễ dàng khôi phục lại hệ phương trình đó.</p>
+                    <p>Rõ ràng hệ phương trình (*) có thể được viết lại dưới dạng phương trình ma trận \( AX = B \). Ta
+                        gọi \( A \) là ma trận hệ số, \( X \) là ma trận cột ẩn số và \( B \) là ma trận cột hệ số tự do
+                        của hệ phương trình (*).</p>
 
-    <div class="box-black">
-        <span class="text-red-bold">Ví dụ:</span> Một hệ phương trình tuyến tính sau có:
-        <div class="math-center">
-            \( 
-            \begin{cases} 
-            2x_1 - 3x_2 + 5x_3 - x_4 &= 2 \\ 
-            4x_1 + x_2 + 8x_3 + 2x_4 &= 0 \\ 
-            3x_1 + 8x_2 - 5x_3 + 3x_4 &= -2 \\ 
-            -4x_2 + 2x_3 - 7x_4 &= 9 
-            \end{cases} 
-            \)
-        </div>
-        <div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin-top: 15px;">
-            <div>• Ma trận hệ số \( A = \begin{pmatrix} 2 & -3 & 5 & -1 \\ 4 & 1 & 8 & 2 \\ 3 & 8 & -5 & 3 \\ 0 & -4 & 2 & -7 \end{pmatrix} \)</div>
-            <div>• Ma trận hệ số tự do \( B = \begin{pmatrix} 2 \\ 0 \\ -2 \\ 9 \end{pmatrix} \)</div>
-        </div>
-        <div style="margin-top: 15px;">
-            • Ma trận cột ẩn số \( X = \begin{pmatrix} x_1 \\ x_2 \\ x_3 \\ x_4 \end{pmatrix} \)
-        </div>
-        <div style="margin-top: 15px;">
-            • Ma trận hệ số mở rộng \( A^{bs} \text{ hay } \bar{A} = (A \mid B) = \left( \begin{array}{cccc|c} 2 & -3 & 5 & -1 & 2 \\ 4 & 1 & 8 & 2 & 0 \\ 3 & 8 & -5 & 3 & -2 \\ 0 & -4 & 2 & -7 & 9 \end{array} \right) \)
-        </div>
-    </div>
+                    <p>Ký hiệu</p>
+                    <div class="math-center" style="overflow-x: auto;">
+                        \( A^{bs} \text{ hay } \bar{A} = (A \mid B) = \left( \begin{array}{cccc|c} a_{11} & a_{12} &
+                        \dots & a_{1n} & b_1 \\ a_{21} & a_{22} & \dots & a_{2n} & b_2 \\ \vdots & \vdots & \ddots &
+                        \vdots & \vdots \\ a_{m1} & a_{m2} & \dots & a_{mn} & b_m \end{array} \right) \)
+                    </div>
+                    <p>được gọi là <strong>ma trận hệ số mở rộng</strong> hay ma trận bổ sung của hệ. Nếu biết hệ phương
+                        trình tuyến tính thì ta viết ngay được ma trận mở rộng của nó. Ngược lại, nếu biết được ma trận
+                        hệ số mở rộng của một hệ phương trình tuyến tính thì ta cũng dễ dàng khôi phục lại hệ phương
+                        trình đó.</p>
 
-    <div class="pdf-h2">2 &nbsp; Định lý Kronecker-Capelli</div>
-    <p>Cho hệ phương trình tuyến tính tổng quát \( n \) ẩn số, với ma trận hệ số \( A \) và ma trận hệ số mở rộng \( \bar{A} \). Điều kiện có nghiệm của hệ được biện luận dựa trên hạng của hai ma trận này như sau:</p>
+                    <div class="box-black">
+                        <span class="text-red-bold">Ví dụ:</span> Một hệ phương trình tuyến tính sau có:
+                        <div class="math-center">
+                            \[
+                            \left\{
+                            \begin{array}{rcrcrcrcl}
+                            2x_1 &-& 3x_2 &+& 5x_3 &-& x_4 & = & 2 \\
+                            4x_1 &+& x_2 &+& 8x_3 &+& 2x_4 & = & 0 \\
+                            3x_1 &+& 8x_2 &-& 5x_3 &+& 3x_4 & = & -2 \\
+                            &-& 4x_2 &+& 2x_3 &-& 7x_4 & = & 9
+                            \end{array}
+                            \right.
+                            \]
+                        </div>
+                        <div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin-top: 15px;">
+                            <div>• Ma trận hệ số \( A = \begin{pmatrix} 2 & -3 & 5 & -1 \\ 4 & 1 & 8 & 2 \\ 3 & 8 & -5 &
+                                3 \\ 0 & -4 & 2 & -7 \end{pmatrix} \)</div>
+                            <div>• Ma trận hệ số tự do \( B = \begin{pmatrix} 2 \\ 0 \\ -2 \\ 9 \end{pmatrix} \)</div>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            • Ma trận cột ẩn số \( X = \begin{pmatrix} x_1 \\ x_2 \\ x_3 \\ x_4 \end{pmatrix} \)
+                        </div>
+                        <div style="margin-top: 15px;">
+                            • Ma trận hệ số mở rộng \( A^{bs} \text{ hay } \bar{A} = (A \mid B) = \left(
+                            \begin{array}{cccc|c} 2 & -3 & 5 & -1 & 2 \\ 4 & 1 & 8 & 2 & 0 \\ 3 & 8 & -5 & 3 & -2 \\ 0 &
+                            -4 & 2 & -7 & 9 \end{array} \right) \)
+                        </div>
+                    </div>
 
-    <ul class="pdf-list" style="list-style-type: none;">
-        <li>i) \( r(A) < r(\bar{A}) \Rightarrow \) Hệ <strong>vô nghiệm</strong>.</li>
-        <li>ii) \( r(A) = r(\bar{A}) = n \Rightarrow \) Hệ có <strong>nghiệm duy nhất</strong>.</li>
-        <li>iii) \( r(A) = r(\bar{A}) = r < n \Rightarrow \) Hệ có <strong>vô số nghiệm</strong> (phụ thuộc vào \( n - r \) tham số).</li>
-    </ul>
+                    <div class="pdf-h2" id="dinh-ly-kronecker">2 &nbsp; Định lý Kronecker-Capelli</div>
+                    <p>Cho hệ phương trình tuyến tính tổng quát \( n \) ẩn số, với ma trận hệ số \( A \) và ma trận hệ
+                        số mở rộng \( \bar{A} \). Điều kiện có nghiệm của hệ được biện luận dựa trên hạng của hai ma
+                        trận này như sau:</p>
 
-    <div class="pdf-h2">3 &nbsp; Hệ phương trình Cramer</div>
-    <div class="pdf-h3">3.1 &nbsp; Định nghĩa</div>
-    <p>Hệ phương trình Cramer là hệ phương trình tuyến tính thỏa mãn đồng thời hai điều kiện:</p>
-    <ul class="pdf-list" style="list-style-type: disc;">
-        <li>Số phương trình bằng số ẩn</li>
-        <li>Ma trận hệ số \( A \) là ma trận <strong>không suy biến</strong> hay \( \det(A) \neq 0 \)</li>
-    </ul>
+                    <ul class="pdf-list" style="list-style-type: none;">
+                        <li>i) \( r(A) < r(\bar{A}) \Rightarrow \) Hệ <strong>vô nghiệm</strong>.</li>
+                        <li>ii) \( r(A) = r(\bar{A}) = n \Rightarrow \) Hệ có <strong>nghiệm duy nhất</strong>.</li>
+                        <li>iii) \( r(A) = r(\bar{A}) = r < n \Rightarrow \) Hệ có <strong>vô số nghiệm</strong> (phụ
+                                thuộc vào \( n - r \) tham số).</li>
+                    </ul>
 
-    <div class="pdf-h3">3.2 &nbsp; Quy tắc Cramer</div>
-    <p>Cho hệ Cramer có dạng ma trận \( AX = B \). Hệ luôn có <strong>nghiệm duy nhất</strong> được xác định bởi công thức:</p>
-    <div class="math-center">\( x_j = \frac{D_j}{D}, \quad \forall j = \overline{1, n} \)</div>
-    <p>Trong đó:</p>
-    <ul class="pdf-list" style="list-style-type: disc;">
-        <li>\( D = \det(A) \neq 0 \) là định thức của ma trận hệ số \( A \).</li>
-        <li>\( D_j \) là định thức của ma trận nhận được bằng cách thay cột thứ \( j \) của \( A \) bằng cột hệ số tự do \( B \).</li>
-    </ul>
+                    <div class="pdf-h2" id="he-cramer">3 &nbsp; Hệ phương trình Cramer</div>
+                    <div class="pdf-h3" id="cramer-dinh-nghia">3.1 &nbsp; Định nghĩa</div>
+                    <p>Hệ phương trình Cramer là hệ phương trình tuyến tính thỏa mãn đồng thời hai điều kiện:</p>
+                    <ul class="pdf-list" style="list-style-type: disc;">
+                        <li>Số phương trình bằng số ẩn</li>
+                        <li>Ma trận hệ số \( A \) là ma trận <strong>không suy biến</strong> hay \( \det(A) \neq 0 \)
+                        </li>
+                    </ul>
 
-    <div class="box-black">
-        <span class="text-red-bold">Ví dụ:</span> Giải hệ phương trình sau: \( \begin{cases} 4x + 3y &= 1 \\ 3x + 2y &= -6 \end{cases} \)
-        
-        <span class="text-blue-sol">Lời giải</span>
-        
-        <div style="text-align: left; padding-left: 10px;">
-            <p>Xét ma trận hệ số \( A = \begin{pmatrix} 4 & 3 \\ 3 & 2 \end{pmatrix} \Rightarrow D = \det(A) = \begin{vmatrix} 4 & 3 \\ 3 & 2 \end{vmatrix} = -1 \neq 0 \)</p>
-            <p>Suy ra hệ trên là hệ Cramer. Xét lần lượt \( D_j \) với \( j = \overline{1, n} \), trong đó \( n \) là số ẩn của hệ phương trình và \( D_j \) là định thức của ma trận hệ số nhưng thay cột thứ \( j \) thành cột hệ số tự do:</p>
-            
-            <div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin-top: 15px;">
-                <div>• \( D_1 = \begin{vmatrix} 1 & 3 \\ -6 & 2 \end{vmatrix} = 20 \)</div>
-                <div>• \( D_2 = \begin{vmatrix} 4 & 1 \\ 3 & -6 \end{vmatrix} = -27 \)</div>
-            </div>
-            
-            <p style="margin-top: 15px;">Vậy hệ phương trình có nghiệm là \( (x, y) = \left( \frac{D_1}{D}, \frac{D_2}{D} \right) = (-20, 27) \)</p>
-        </div>
-    </div>
+                    <div class="pdf-h3" id="cramer-quy-tac">3.2 &nbsp; Quy tắc Cramer</div>
+                    <p>Cho hệ Cramer có dạng ma trận \( AX = B \). Hệ luôn có <strong>nghiệm duy nhất</strong> được xác
+                        định bởi công thức:</p>
+                    <div class="math-center">\( x_j = \frac{D_j}{D}, \quad \forall j = \overline{1, n} \)</div>
+                    <p>Trong đó:</p>
+                    <ul class="pdf-list" style="list-style-type: disc;">
+                        <li>\( D = \det(A) \neq 0 \) là định thức của ma trận hệ số \( A \).</li>
+                        <li>\( D_j \) là định thức của ma trận nhận được bằng cách thay cột thứ \( j \) của \( A \) bằng
+                            cột hệ số tự do \( B \).</li>
+                    </ul>
 
-    <div class="pdf-h2">4 &nbsp; Giải hệ phương trình bằng phương pháp khử Gauss</div>
-    <p>Để giải hệ phương trình tuyến tính bằng phương pháp khử ẩn Gauss, ta làm như sau:</p>
-    <ol class="pdf-list" style="padding-left: 20px;">
-        <li>Xác định ma trận hệ số mở rộng \( \bar{A} = (A \mid B) \)</li>
-        <li>Sử dụng các phép biến đổi sơ cấp trên dòng để biến đổi sao cho ma trận hệ số mở rộng chuyển thành dạng bậc thang.</li>
-        <li>Giải hệ phương trình bằng quá trình ngược.</li>
-    </ol>
+                    <div class="box-black">
+                        <span class="text-red-bold">Ví dụ:</span> Giải hệ phương trình sau: \( \begin{cases} 4x + 3y &=
+                        1 \\ 3x + 2y &= -6 \end{cases} \)
 
-    <div class="box-black">
-        <span class="text-red-bold">Ví dụ:</span> Giải hệ phương trình sau bằng phương pháp Gauss:
-        <div class="math-center">
-            \( 
-            \begin{cases} 
-            x_1 + 2x_2 - x_3 + x_4 &= 0 \\ 
-            2x_1 - 3x_2 + 3x_3 &= 3 \\ 
-            x_2 + x_3 + x_4 &= 1 \\ 
-            -4x_1 + 2x_3 + x_4 &= -2 \\ 
-            x_1 + x_2 + x_3 + x_4 &= 2 
-            \end{cases} 
-            \quad (*)
-            \)
-        </div>
-        
-        <span class="text-blue-sol">Lời giải</span>
-        
-        <div style="text-align: left; padding-left: 10px; overflow-x: auto;">
-            <p>Xét ma trận hệ số mở rộng:</p>
-            <div style="margin-bottom: 25px;">
-                \( A^{bs} = \left( \begin{array}{cccc|c} 1 & 2 & -1 & 1 & 0 \\ 2 & -3 & 3 & 0 & 3 \\ 0 & 1 & 1 & 1 & 1 \\ -4 & 0 & 2 & 1 & -2 \\ 1 & 1 & 1 & 1 & 2 \end{array} \right) \xrightarrow[h_4 = h_4 + 4h_1 \atop h_5 = h_5 - h_1]{h_2 = h_2 - 2h_1} \left( \begin{array}{cccc|c} 1 & 2 & -1 & 1 & 0 \\ 0 & -7 & 5 & -2 & 3 \\ 0 & 1 & 1 & 1 & 1 \\ 0 & 8 & -2 & 5 & -2 \\ 0 & -1 & 2 & 0 & 2 \end{array} \right) \)
-            </div>
+                        <span class="text-blue-sol">Lời giải</span>
 
-            <div style="margin-bottom: 25px;">
-                \( \xrightarrow{h_2 \leftrightarrow h_3} \left( \begin{array}{cccc|c} 1 & 2 & -1 & 1 & 0 \\ 0 & 1 & 1 & 1 & 1 \\ 0 & -7 & 5 & -2 & 3 \\ 0 & 8 & -2 & 5 & -2 \\ 0 & -1 & 2 & 0 & 2 \end{array} \right) \xrightarrow[h_4 = h_4 - 8h_2 \atop h_5 = h_5 + h_2]{h_3 = h_3 + 7h_2} \left( \begin{array}{cccc|c} 1 & 2 & -1 & 1 & 0 \\ 0 & 1 & 1 & 1 & 1 \\ 0 & 0 & 12 & 5 & 10 \\ 0 & 0 & -10 & -3 & -10 \\ 0 & 0 & 3 & 1 & 3 \end{array} \right) \)
-            </div>
+                        <div style="text-align: left; padding-left: 10px;">
+                            <p>Xét ma trận hệ số \( A = \begin{pmatrix} 4 & 3 \\ 3 & 2 \end{pmatrix} \Rightarrow D =
+                                \det(A) = \begin{vmatrix} 4 & 3 \\ 3 & 2 \end{vmatrix} = -1 \neq 0 \)</p>
+                            <p>Suy ra hệ trên là hệ Cramer. Xét lần lượt \( D_j \) với \( j = \overline{1, n} \), trong
+                                đó \( n \) là số ẩn của hệ phương trình và \( D_j \) là định thức của ma trận hệ số
+                                nhưng thay cột thứ \( j \) thành cột hệ số tự do:</p>
 
-            <div style="margin-bottom: 25px;">
-                \( \xrightarrow[h_5 = 4h_5 - h_3]{h_4 = 6h_4 + 5h_3} \left( \begin{array}{cccc|c} 1 & 2 & -1 & 1 & 0 \\ 0 & 1 & 1 & 1 & 1 \\ 0 & 0 & 12 & 5 & 10 \\ 0 & 0 & 0 & 7 & -10 \\ 0 & 0 & 0 & -1 & 2 \end{array} \right) \xrightarrow{h_5 = h_5 + h_4} \left( \begin{array}{cccc|c} 1 & 2 & -1 & 1 & 0 \\ 0 & 1 & 1 & 1 & 1 \\ 0 & 0 & 12 & 5 & 10 \\ 0 & 0 & 0 & 1 & -10 \\ 0 & 0 & 0 & 0 & -8 \end{array} \right) \)
-            </div>
-            
-            <p>Nhận thấy \( r(A) = 4 < r(A^{bs}) = 5 \) nên suy ra hệ phương trình (*) vô nghiệm.</p>
-        </div>
-    </div>
+                            <div
+                                style="display: flex; justify-content: space-around; flex-wrap: wrap; margin-top: 15px;">
+                                <div>• \( D_1 = \begin{vmatrix} 1 & 3 \\ -6 & 2 \end{vmatrix} = 20 \)</div>
+                                <div>• \( D_2 = \begin{vmatrix} 4 & 1 \\ 3 & -6 \end{vmatrix} = -27 \)</div>
+                            </div>
 
-    <div class="pdf-h2">5 &nbsp; Hệ phương trình tuyến tính thuần nhất</div>
-    <div class="pdf-h3">5.1 &nbsp; Định nghĩa</div>
-    <p>Hệ phương trình tuyến tính thuần nhất là hệ có dạng ma trận:</p>
-    <div class="math-center">\( AX = 0 \)</div>
-    <p>Trong đó, cột hệ số tự do \( B = 0 \).</p>
+                            <p style="margin-top: 15px;">Vậy hệ phương trình có nghiệm là \( (x, y) = \left(
+                                \frac{D_1}{D}, \frac{D_2}{D} \right) = (-20, 27) \)</p>
+                        </div>
+                    </div>
 
-    <div class="pdf-h3">5.2 &nbsp; Tính chất nghiệm</div>
-    <p>Hệ \( AX = 0 \) <strong>luôn có nghiệm</strong>, cụ thể:</p>
-    <ul class="pdf-list" style="list-style-type: none;">
-        <li>i) Bộ số \( (0, 0, \dots, 0) \in \mathbb{R}^n \) luôn là một nghiệm của hệ và được gọi là <strong>nghiệm tầm thường</strong>.</li>
-        <li>ii) Ngược lại, mỗi bộ số \( (c_1, c_2, \dots, c_n) \in \mathbb{R}^n \) không đồng thời bằng không nếu là nghiệm của hệ thì được gọi là <strong>nghiệm không tầm thường</strong>.</li>
-        <li>iii) Vì ma trận hệ số mở rộng \( \bar{A} \) chỉ thêm một cột toàn số 0 so với \( A \), nên hạng của chúng luôn bằng nhau: \( r(A) = r(\bar{A}) \). Do đó, khi biện luận hệ thuần nhất, ta chỉ cần quan tâm đến hạng của ma trận hệ số \( A \).</li>
-    </ul>
+                    <div class="pdf-h2" id="gauss">4 &nbsp; Giải hệ phương trình bằng phương pháp khử Gauss</div>
+                    <p>Để giải hệ phương trình tuyến tính bằng phương pháp khử ẩn Gauss, ta làm như sau:</p>
+                    <ol class="pdf-list" style="padding-left: 20px;">
+                        <li>Xác định ma trận hệ số mở rộng \( \bar{A} = (A \mid B) \)</li>
+                        <li>Sử dụng các phép biến đổi sơ cấp trên dòng để biến đổi sao cho ma trận hệ số mở rộng chuyển
+                            thành dạng bậc thang.</li>
+                        <li>Giải hệ phương trình bằng quá trình ngược.</li>
+                    </ol>
 
-    <div class="pdf-h3">5.3 &nbsp; Biện luận số nghiệm hệ thuần nhất</div>
-    <p>Xét hệ thuần nhất có ma trận hệ số \( A \) là ma trận vuông cấp \( n \) (số phương trình bằng số ẩn). Khi đó:</p>
-    <div class="math-center">
-        \( 
-        \begin{cases} 
-        \det(A) \neq 0 \Leftrightarrow \text{Hệ chỉ có duy nhất nghiệm tầm thường } (X = 0). \\ 
-        \det(A) = 0 \Leftrightarrow \text{Hệ có vô số nghiệm} 
-        \end{cases} 
-        \)
-    </div>
+                    <div class="box-black">
+                        <span class="text-red-bold">Ví dụ:</span> Giải hệ phương trình sau bằng phương pháp Gauss:
+                        <div class="math-center">
+                            \[
+                            \left\{
+                            \begin{array}{rcrcrcrcl}
+                            x_1 &+& 2x_2 &-& x_3 &+& x_4 & = & 0 \\
+                            2x_1 &-& 3x_2 &+& 3x_3 & & & = & 3 \\
+                            & & x_2 &+& x_3 &+& x_4 & = & 1 \\
+                            -4x_1 & & &+& 2x_3 &+& x_4 & = & -2 \\
+                            x_1 &+& x_2 &+& x_3 &+& x_4 & = & 2
+                            \end{array}
+                            \right.
+                            \]
+                        </div>
 
-    <div class="pdf-h3">5.4 &nbsp; Hệ quả từ định lý Kronecker-Capelli</div>
-    <p>Vì hệ thuần nhất có cột hệ số tự do \( B = 0 \), nên hiển nhiên \( r(A) = r(A^{bs}) \). Kế thừa định lý tổng quát, hệ thuần nhất <strong>luôn có nghiệm</strong> và việc biện luận được rút gọn lại chỉ còn hai trường hợp:</p>
-    <p>TH1: Nếu \( r(A) = n \): Hệ có <strong>nghiệm duy nhất</strong> (chính là nghiệm tầm thường \( X = 0 \)).</p>
-    <p>TH2: Nếu \( r(A) < n \): Hệ có <strong>vô số nghiệm</strong> và phụ thuộc vào \( n - r(A) \) tham số.</p>
+                        <span class="text-blue-sol">Lời giải</span>
 
-    <script>
-        if (window.MathJax && window.MathJax.typeset) {
-            window.MathJax.typeset();
-        }
-    </script>
+                        <div style="text-align: left; padding-left: 10px; overflow-x: auto;">
+                            <p>Xét ma trận hệ số mở rộng:</p>
+                            <div style="margin-bottom: 25px;">
+                                \( A^{bs} = \left( \begin{array}{cccc|c} 1 & 2 & -1 & 1 & 0 \\ 2 & -3 & 3 & 0 & 3 \\ 0 &
+                                1 & 1 & 1 & 1 \\ -4 & 0 & 2 & 1 & -2 \\ 1 & 1 & 1 & 1 & 2 \end{array} \right)
+                                \xrightarrow[h_4 = h_4 + 4h_1 \atop h_5 = h_5 - h_1]{h_2 = h_2 - 2h_1} \left(
+                                \begin{array}{cccc|c} 1 & 2 & -1 & 1 & 0 \\ 0 & -7 & 5 & -2 & 3 \\ 0 & 1 & 1 & 1 & 1 \\
+                                0 & 8 & -2 & 5 & -2 \\ 0 & -1 & 2 & 0 & 2 \end{array} \right) \)
+                            </div>
+
+                            <div style="margin-bottom: 25px;">
+                                \( \xrightarrow{h_2 \leftrightarrow h_3} \left( \begin{array}{cccc|c} 1 & 2 & -1 & 1 & 0
+                                \\ 0 & 1 & 1 & 1 & 1 \\ 0 & -7 & 5 & -2 & 3 \\ 0 & 8 & -2 & 5 & -2 \\ 0 & -1 & 2 & 0 & 2
+                                \end{array} \right) \xrightarrow[h_4 = h_4 - 8h_2 \atop h_5 = h_5 + h_2]{h_3 = h_3 +
+                                7h_2} \left( \begin{array}{cccc|c} 1 & 2 & -1 & 1 & 0 \\ 0 & 1 & 1 & 1 & 1 \\ 0 & 0 & 12
+                                & 5 & 10 \\ 0 & 0 & -10 & -3 & -10 \\ 0 & 0 & 3 & 1 & 3 \end{array} \right) \)
+                            </div>
+
+                            <div style="margin-bottom: 25px;">
+                                \( \xrightarrow[h_5 = 4h_5 - h_3]{h_4 = 6h_4 + 5h_3} \left( \begin{array}{cccc|c} 1 & 2
+                                & -1 & 1 & 0 \\ 0 & 1 & 1 & 1 & 1 \\ 0 & 0 & 12 & 5 & 10 \\ 0 & 0 & 0 & 7 & -10 \\ 0 & 0
+                                & 0 & -1 & 2 \end{array} \right) \xrightarrow{h_5 = h_5 + h_4} \left(
+                                \begin{array}{cccc|c} 1 & 2 & -1 & 1 & 0 \\ 0 & 1 & 1 & 1 & 1 \\ 0 & 0 & 12 & 5 & 10 \\
+                                0 & 0 & 0 & 1 & -10 \\ 0 & 0 & 0 & 0 & -8 \end{array} \right) \)
+                            </div>
+
+                            <p>Nhận thấy \( r(A) = 4 < r(A^{bs})=5 \) nên suy ra hệ phương trình (*) vô nghiệm.</p>
+                        </div>
+                    </div>
+
+                    <div class="pdf-h2" id="he-thuan-nhat">5 &nbsp; Hệ phương trình tuyến tính thuần nhất</div>
+                    <div class="pdf-h3" id="thuan-nhat-dinh-nghia">5.1 &nbsp; Định nghĩa</div>
+                    <p>Hệ phương trình tuyến tính thuần nhất là hệ có dạng ma trận:</p>
+                    <div class="math-center">\( AX = 0 \)</div>
+                    <p>Trong đó, cột hệ số tự do \( B = 0 \).</p>
+
+                    <div class="pdf-h3" id="thuan-nhat-tinh-chat">5.2 &nbsp; Tính chất nghiệm</div>
+                    <p>Hệ \( AX = 0 \) <strong>luôn có nghiệm</strong>, cụ thể:</p>
+                    <ul class="pdf-list" style="list-style-type: none;">
+                        <li>i) Bộ số \( (0, 0, \dots, 0) \in \mathbb{R}^n \) luôn là một nghiệm của hệ và được gọi là
+                            <strong>nghiệm tầm thường</strong>.</li>
+                        <li>ii) Ngược lại, mỗi bộ số \( (c_1, c_2, \dots, c_n) \in \mathbb{R}^n \) không đồng thời bằng
+                            không nếu là nghiệm của hệ thì được gọi là <strong>nghiệm không tầm thường</strong>.</li>
+                        <li>iii) Vì ma trận hệ số mở rộng \( \bar{A} \) chỉ thêm một cột toàn số 0 so với \( A \), nên
+                            hạng của chúng luôn bằng nhau: \( r(A) = r(\bar{A}) \). Do đó, khi biện luận hệ thuần nhất,
+                            ta chỉ cần quan tâm đến hạng của ma trận hệ số \( A \).</li>
+                    </ul>
+
+                    <div class="pdf-h3" id="thuan-nhat-dinh-nghia-so-nghiem">5.3 &nbsp; Biện luận số nghiệm hệ thuần
+                        nhất</div>
+                    <p>Xét hệ thuần nhất có ma trận hệ số \( A \) là ma trận vuông cấp \( n \) (số phương trình bằng số
+                        ẩn). Khi đó:</p>
+                    <div class="math-center">
+                        \(
+                        \begin{cases}
+                        \det(A) \neq 0 \Leftrightarrow \text{Hệ chỉ có duy nhất nghiệm tầm thường } (X = 0). \\
+                        \det(A) = 0 \Leftrightarrow \text{Hệ có vô số nghiệm}
+                        \end{cases}
+                        \)
+                    </div>
+
+                    <div class="pdf-h3" id="thuan-nhat-he-qua">5.4 &nbsp; Hệ quả từ định lý Kronecker-Capelli</div>
+                    <p>Vì hệ thuần nhất có cột hệ số tự do \( B = 0 \), nên hiển nhiên \( r(A) = r(A^{bs}) \). Kế thừa
+                        định lý tổng quát, hệ thuần nhất <strong>luôn có nghiệm</strong> và việc biện luận được rút gọn
+                        lại chỉ còn hai trường hợp:</p>
+                    <p>TH1: Nếu \( r(A) = n \): Hệ có <strong>nghiệm duy nhất</strong> (chính là nghiệm tầm thường \( X
+                        = 0 \)).</p>
+                    <p>TH2: Nếu \( r(A) < n \): Hệ có <strong>vô số nghiệm</strong> và phụ thuộc vào \( n - r(A) \) tham
+                            số.</p>
+
+                    <script>
+                        if (window.MathJax && window.MathJax.typeset) {
+                            window.MathJax.typeset();
+                        }
+                    </script>
                 </div>
 
             </div>
@@ -1461,124 +1708,155 @@
             </div>
 
             <div class="chapter-card" id="bai-tap">
-    <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Bài tập</h2>
+                <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Bài tập</h2>
 
-    <div class="box-blue">
-        <p><span class="text-red-bold">Bài 1.</span> Giải các hệ phương trình sau bằng quy tắc Cramer:</p>
+                <div class="box-blue">
+                    <p><span class="text-red-bold">Bài 1.</span> Giải các hệ phương trình sau bằng quy tắc Cramer:</p>
 
-        <div class="math-scroll">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: left; margin-top: 15px;">
-                
-                <div>
-                    <div style="margin-bottom: 25px;">
-                        a) \( \begin{cases} 4x + 3y &= 1 \\ 3x + 2y &= -6 \end{cases} \)
+                    <div class="math-scroll">
+                        <div
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: left; margin-top: 15px;">
+
+                            <div>
+                                <div style="margin-bottom: 25px;">
+                                    a) \( \begin{cases} 4x + 3y &= 1 \\ 3x + 2y &= -6 \end{cases} \)
+                                </div>
+                                <div>
+                                    b) \( \begin{cases} 5x + 2y - 3z &= 9 \\ 2x + y - 4z &= 6 \\ 4x + 3y - 12z &= -15
+                                    \end{cases} \)
+                                </div>
+                            </div>
+
+                            <div>
+                                <div style="margin-bottom: 25px;">
+                                    c) \( \begin{cases} x + y - 2z &= 6 \\ 2x + 3y - 7z &= 16 \\ 5x + 2y + z &= 16
+                                    \end{cases} \)
+                                </div>
+                                <div>
+                                    d) \( \begin{cases} x_1 - x_2 + 2x_3 &= 1 \\ 2x_1 + x_2 - 3x_3 &= 5 \\ 3x_1 - 2x_2 +
+                                    x_3 &= 1 \end{cases} \)
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
-                    <div>
-                        b) \( \begin{cases} 5x + 2y - 3z &= 9 \\ 2x + y - 4z &= 6 \\ 4x + 3y - 12z &= -15 \end{cases} \)
+
+                    <p style="margin-top: 25px;"><span class="text-red-bold">Bài 2.</span> Giải các hệ phương trình sau
+                        bằng phương pháp Gauss:</p>
+
+                    <div class="math-scroll">
+                        <div
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: left; margin-top: 15px;">
+
+                            <div>
+                                <div style="margin-bottom: 25px;">
+                                    a) \( \begin{cases} x_1 + 2x_2 - x_3 + x_4 &= 0 \\ 2x_1 - 3x_2 + 3x_3 &= 3 \\ x_2 +
+                                    x_3 + x_4 &= 1 \\ -4x_1 + 2x_3 + x_4 &= -2 \\ x_1 + x_2 + x_3 + x_4 &= 2 \end{cases}
+                                    \)
+                                </div>
+                                <div>
+                                    b) \( \begin{cases} 2x_1 + x_2 - x_3 - x_4 + x_5 &= 1 \\ x_1 - x_2 - x_3 + x_4 -
+                                    2x_5 &= 0 \\ 3x_1 + 3x_2 - 3x_3 - 3x_4 + 4x_5 &= 2 \\ 4x_1 + 5x_2 - 5x_3 - 5x_4 +
+                                    7x_5 &= 3 \end{cases} \)
+                                </div>
+                            </div>
+
+                            <div>
+                                <div style="margin-bottom: 25px;">
+                                    c) \( \begin{cases} x_1 - x_2 + 2x_3 + x_4 &= 2 \\ 2x_1 + x_2 - 3x_3 - 2x_4 &= 2 \\
+                                    3x_2 + 4x_3 - 5x_4 &= -1 \\ -x_1 + x_2 + 2x_3 - 3x_4 &= 0 \end{cases} \)
+                                </div>
+                                <div>
+                                    d) \( \begin{cases} x_1 - 2x_2 - x_3 + 5x_4 &= 1 \\ -x_1 + 3x_2 + 4x_3 - 3x_4 &= -1
+                                    \\ -x_1 + 4x_2 + 7x_3 - x_4 &= -1 \\ 2x_1 - 5x_2 - 5x_3 + 8x_4 &= 2 \end{cases} \)
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
+
+                    <p style="margin-top: 25px;"><span class="text-red-bold">Bài 3.</span> Giải các hệ phương trình sau:
+                    </p>
+
+                    <div class="math-scroll">
+                        <div
+                            style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left; margin-top: 15px;">
+                            <div>
+                                a) \( \begin{cases} x_1 - 2x_2 + x_3 &= 4 \\ 2x_1 + x_2 - x_3 &= 0 \\ -x_1 + x_2 + x_3
+                                &= -1 \end{cases} \)
+                            </div>
+                            <div>
+                                b) \( \begin{cases} 3x + 2y - 5z &= -3 \\ 2x + y + 3z &= 11 \\ 4x + 3y - 12z &= -15
+                                \end{cases} \)
+                            </div>
+                            <div>
+                                c) \( \begin{cases} 2x - y + 4z + 2t &= 2 \\ 3x - 2y + 7z + 2t &= 1 \\ 5x - 3y + 7z + 6t
+                                &= 5 \end{cases} \)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: flex-start; margin-top: 25px;">
+                        <span class="text-red-bold" style="white-space: nowrap;">Bài 4.</span>
+                        <span style="margin-left: 5px;">Biện luận số nghiệm của hệ theo tham số thực \( m \): \(
+                            \begin{cases} x - 2y - z + 3t &= 1 \\ 2x - 4y + z &= 5 \\ x - 2y + 2z - 3t &= m \end{cases}
+                            \)</span>
+                    </div>
+
+                    <div style="display: flex; align-items: flex-start; margin-top: 25px;">
+                        <span class="text-red-bold" style="white-space: nowrap;">Bài 5.</span>
+                        <span style="margin-left: 5px;">Biện luận số nghiệm của hệ theo tham số thực \( a, b \): \(
+                            \begin{cases} 2x - y + az &= 1 \\ 3x + 2y + z &= 3 \\ 4x + 3y + (a + 1)z &= b \end{cases}
+                            \)</span>
+                    </div>
+
+                    <p style="margin-top: 25px;"><span class="text-red-bold">Bài 6.</span> Giải và biện luận số nghiệm
+                        của hệ theo \( m \):</p>
+                    <div class="math-center" style="text-align: left; margin-top: 15px;">
+                        \( \begin{cases} (2m + 1)x + (m + 1)y + 3mz &= m \\ (2m - 1)x + (m - 2)y + (2m - 1)z &= m + 1 \\
+                        3mx + 2my + (4m - 1)z &= 1 \end{cases} \)
+                    </div>
+
+                    <div style="display: flex; align-items: flex-start; margin-top: 25px;">
+                        <span class="text-red-bold" style="white-space: nowrap;">Bài 7.</span>
+                        <span style="margin-left: 5px;">Xét hệ phương trình tuyến tính theo tham số \( m \): \(
+                            \begin{cases} (m - 1)x + y - 3z &= 1 \\ x + y + z &= m - 5 \\ 4x + my - z &= -3 \end{cases}
+                            \)</span>
+                    </div>
+                    <div style="padding-left: 20px; margin-top: 15px;">
+                        <p style="margin-bottom: 10px;">a) Tìm điều kiện của \( m \) để hệ trên là hệ Cramer</p>
+                        <p>b) Tìm điều kiện của \( m \) để hệ có vô số nghiệm. Từ đó, tìm nghiệm tổng quát của hệ trên
+                        </p>
+                    </div>
+
+                    <div style="display: flex; align-items: flex-start; margin-top: 25px;">
+                        <span class="text-red-bold" style="white-space: nowrap;">Bài 8.</span>
+                        <span style="margin-left: 5px;">Xét hệ phương trình tuyến tính theo tham số \( m \): \(
+                            \begin{cases} 2x - y + mz &= 1 \\ x + y + z &= m - 5 \\ 4x + my - z &= -3 \end{cases}
+                            \)</span>
+                    </div>
+                    <div style="padding-left: 20px; margin-top: 15px;">
+                        <p style="margin-bottom: 10px;">a) Tìm điều kiện của \( m \) để hệ trên là hệ Cramer</p>
+                        <p>b) Tìm điều kiện của \( m \) để hệ có vô số nghiệm. Từ đó, tìm nghiệm tổng quát của hệ trên
+                        </p>
+                    </div>
+
                 </div>
 
-                <div>
-                    <div style="margin-bottom: 25px;">
-                        c) \( \begin{cases} x + y - 2z &= 6 \\ 2x + 3y - 7z &= 16 \\ 5x + 2y + z &= 16 \end{cases} \)
-                    </div>
-                    <div>
-                        d) \( \begin{cases} x_1 - x_2 + 2x_3 &= 1 \\ 2x_1 + x_2 - 3x_3 &= 5 \\ 3x_1 - 2x_2 + x_3 &= 1 \end{cases} \)
-                    </div>
-                </div>
+                <div class="download-container">
+                    <p style="margin-bottom: 15px; color: var(--text-sub); font-size: 0.95rem;">
+                        <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài tập? Tải lời giải về để đối
+                        chiếu nhé!
+                    </p>
 
+                    <a href="https://drive.google.com/uc?export=download&id=1kNdg5h3YE2NccqCOq-QeA4wwm3mjYfzw"
+                        target="_blank" class="btn-download">
+                        <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
+                    </a>
+                </div>
             </div>
-        </div>
 
-        <p style="margin-top: 25px;"><span class="text-red-bold">Bài 2.</span> Giải các hệ phương trình sau bằng phương pháp Gauss:</p>
 
-        <div class="math-scroll">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: left; margin-top: 15px;">
-                
-                <div>
-                    <div style="margin-bottom: 25px;">
-                        a) \( \begin{cases} x_1 + 2x_2 - x_3 + x_4 &= 0 \\ 2x_1 - 3x_2 + 3x_3 &= 3 \\ x_2 + x_3 + x_4 &= 1 \\ -4x_1 + 2x_3 + x_4 &= -2 \\ x_1 + x_2 + x_3 + x_4 &= 2 \end{cases} \)
-                    </div>
-                    <div>
-                        b) \( \begin{cases} 2x_1 + x_2 - x_3 - x_4 + x_5 &= 1 \\ x_1 - x_2 - x_3 + x_4 - 2x_5 &= 0 \\ 3x_1 + 3x_2 - 3x_3 - 3x_4 + 4x_5 &= 2 \\ 4x_1 + 5x_2 - 5x_3 - 5x_4 + 7x_5 &= 3 \end{cases} \)
-                    </div>
-                </div>
-
-                <div>
-                    <div style="margin-bottom: 25px;">
-                        c) \( \begin{cases} x_1 - x_2 + 2x_3 + x_4 &= 2 \\ 2x_1 + x_2 - 3x_3 - 2x_4 &= 2 \\ 3x_2 + 4x_3 - 5x_4 &= -1 \\ -x_1 + x_2 + 2x_3 - 3x_4 &= 0 \end{cases} \)
-                    </div>
-                    <div>
-                        d) \( \begin{cases} x_1 - 2x_2 - x_3 + 5x_4 &= 1 \\ -x_1 + 3x_2 + 4x_3 - 3x_4 &= -1 \\ -x_1 + 4x_2 + 7x_3 - x_4 &= -1 \\ 2x_1 - 5x_2 - 5x_3 + 8x_4 &= 2 \end{cases} \)
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <p style="margin-top: 25px;"><span class="text-red-bold">Bài 3.</span> Giải các hệ phương trình sau:</p>
-
-        <div class="math-scroll">
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left; margin-top: 15px;">
-                <div>
-                    a) \( \begin{cases} x_1 - 2x_2 + x_3 &= 4 \\ 2x_1 + x_2 - x_3 &= 0 \\ -x_1 + x_2 + x_3 &= -1 \end{cases} \)
-                </div>
-                <div>
-                    b) \( \begin{cases} 3x + 2y - 5z &= -3 \\ 2x + y + 3z &= 11 \\ 4x + 3y - 12z &= -15 \end{cases} \)
-                </div>
-                <div>
-                    c) \( \begin{cases} 2x - y + 4z + 2t &= 2 \\ 3x - 2y + 7z + 2t &= 1 \\ 5x - 3y + 7z + 6t &= 5 \end{cases} \)
-                </div>
-            </div>
-        </div>
-
-        <div style="display: flex; align-items: flex-start; margin-top: 25px;">
-            <span class="text-red-bold" style="white-space: nowrap;">Bài 4.</span> 
-            <span style="margin-left: 5px;">Biện luận số nghiệm của hệ theo tham số thực \( m \): \( \begin{cases} x - 2y - z + 3t &= 1 \\ 2x - 4y + z &= 5 \\ x - 2y + 2z - 3t &= m \end{cases} \)</span>
-        </div>
-
-        <div style="display: flex; align-items: flex-start; margin-top: 25px;">
-            <span class="text-red-bold" style="white-space: nowrap;">Bài 5.</span> 
-            <span style="margin-left: 5px;">Biện luận số nghiệm của hệ theo tham số thực \( a, b \): \( \begin{cases} 2x - y + az &= 1 \\ 3x + 2y + z &= 3 \\ 4x + 3y + (a + 1)z &= b \end{cases} \)</span>
-        </div>
-
-        <p style="margin-top: 25px;"><span class="text-red-bold">Bài 6.</span> Giải và biện luận số nghiệm của hệ theo \( m \):</p>
-        <div class="math-center" style="text-align: left; margin-top: 15px;">
-            \( \begin{cases} (2m + 1)x + (m + 1)y + 3mz &= m \\ (2m - 1)x + (m - 2)y + (2m - 1)z &= m + 1 \\ 3mx + 2my + (4m - 1)z &= 1 \end{cases} \)
-        </div>
-
-        <div style="display: flex; align-items: flex-start; margin-top: 25px;">
-            <span class="text-red-bold" style="white-space: nowrap;">Bài 7.</span> 
-            <span style="margin-left: 5px;">Xét hệ phương trình tuyến tính theo tham số \( m \): \( \begin{cases} (m - 1)x + y - 3z &= 1 \\ x + y + z &= m - 5 \\ 4x + my - z &= -3 \end{cases} \)</span>
-        </div>
-        <div style="padding-left: 20px; margin-top: 15px;">
-            <p style="margin-bottom: 10px;">a) Tìm điều kiện của \( m \) để hệ trên là hệ Cramer</p>
-            <p>b) Tìm điều kiện của \( m \) để hệ có vô số nghiệm. Từ đó, tìm nghiệm tổng quát của hệ trên</p>
-        </div>
-
-        <div style="display: flex; align-items: flex-start; margin-top: 25px;">
-            <span class="text-red-bold" style="white-space: nowrap;">Bài 8.</span> 
-            <span style="margin-left: 5px;">Xét hệ phương trình tuyến tính theo tham số \( m \): \( \begin{cases} 2x - y + mz &= 1 \\ x + y + z &= m - 5 \\ 4x + my - z &= -3 \end{cases} \)</span>
-        </div>
-        <div style="padding-left: 20px; margin-top: 15px;">
-            <p style="margin-bottom: 10px;">a) Tìm điều kiện của \( m \) để hệ trên là hệ Cramer</p>
-            <p>b) Tìm điều kiện của \( m \) để hệ có vô số nghiệm. Từ đó, tìm nghiệm tổng quát của hệ trên</p>
-        </div>
-
-    </div>
-
-    <div class="download-container">
-        <p style="margin-bottom: 15px; color: var(--text-sub); font-size: 0.95rem;">
-            <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài tập? Tải lời giải về để đối chiếu nhé!
-        </p>
-
-        <a href="https://drive.google.com/uc?export=download&id=1kNdg5h3YE2NccqCOq-QeA4wwm3mjYfzw" target="_blank" class="btn-download">
-            <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
-        </a>
-    </div>
-</div>
-                
-            
 
         </main>
     </div>
@@ -1688,31 +1966,69 @@
 
     </script>
     <script>
-        /* ===== Smooth scroll cho menu sidebar (có trừ topbar) ===== */
-        document.querySelectorAll('.menu-link[href^="#"]').forEach(link => {
-            link.addEventListener('click', e => {
-                e.preventDefault();
+        // HÀM MA THUẬT: Gói tất cả vào một chỗ
+        function bootVectoriaMenu() {
+            console.log("Menu System: Booting...");
+            const topbar = document.getElementById('topbar');
+            const topbarHeight = topbar ? topbar.offsetHeight : 60;
 
-                const targetId = link.getAttribute('href');
-                const target = document.querySelector(targetId);
-                if (!target) return;
+            const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
 
-                const topbar = document.getElementById('topbar');
-                const topbarHeight = topbar ? topbar.offsetHeight : 0;
+            // THAY TOÀN BỘ PHẦN XỬ LÝ CLICK TRONG bootVectoriaMenu BẰNG ĐOẠN NÀY:
+            menuLinks.forEach(link => {
+                link.onclick = function (e) {
+                    const targetId = this.getAttribute('href');
+                    if (!targetId || targetId === "#") return;
+                    e.preventDefault();
 
-                const y = target.getBoundingClientRect().top
-                    + window.pageYOffset
-                    - topbarHeight
-                    - 12; // chừa khoảng thở nhỏ
+                    // --- CHIÊU THỨC PHÂN QUYỀN ---
+                    // Chỉ những link nằm trong .toggle-btn mới được quyền Đóng/Mở (Toggle)
+                    const isParentToggle = this.closest('.toggle-btn');
+                    const parentLi = this.closest('.has-dropdown');
 
-                window.scrollTo({
-                    top: y,
-                    behavior: 'smooth'
-                });
+                    if (isParentToggle && parentLi) {
+                        parentLi.classList.toggle('open');
+                    }
+                    // Nếu là tiểu mục (không có toggle-btn), ta KHÔNG toggle class 'open'
+                    // Điều này giúp bấm 3.1, 3.2 thì menu cha vẫn giữ nguyên trạng thái mở.
+
+                    // --- HIGHLIGHT & CUỘN TRANG ---
+                    menuLinks.forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        const topbarHeight = document.getElementById('topbar')?.offsetHeight || 60;
+                        const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                    }
+                };
             });
-        });
-    </script>
 
+            // SCROLL SPY: Tự động sáng menu
+            window.onscroll = () => {
+                const sections = document.querySelectorAll('.chapter-card, .pdf-h2[id], .pdf-h3[id], #bai-tap');
+                let currentId = '';
+                sections.forEach(section => {
+                    if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - 150) {
+                        currentId = section.getAttribute('id');
+                    }
+                });
+                if (currentId) {
+                    menuLinks.forEach(link => {
+                        link.classList.toggle('active', link.getAttribute('href') === `#${currentId}`);
+                    });
+                }
+            };
+        }
+
+        // KÍCH HOẠT NGAY (Dành cho lật thẻ Ajax)
+        bootVectoriaMenu();
+        // Chạy lại sau 300ms để chắc chắn DOM đã nạp xong sau hiệu ứng lật
+        setTimeout(bootVectoriaMenu, 300);
+
+
+    </script>
 </body>
 
 </html>

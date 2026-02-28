@@ -276,6 +276,26 @@
         body.dark .flip-card-back h3 { color: #60a5fa; }
 
         .cursor-pointer { cursor: pointer; }
+
+        
+    </style>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)'], ['$', '$']],
+                displayMath: [['\\[', '\\]']],
+                processEscapes: true
+            },
+            chtml: { scale: 0.95, displayAlign: 'center' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        .search-dropdown mjx-container {
+            white-space: normal !important;
+            display: inline-block !important;
+            font-size: 100% !important;
+        }
     </style>
 </head>
 <body>
@@ -291,14 +311,17 @@
     </div>
     
     <header class="main-header safe-zone">
-        <div class="container header-flex">
-            <div class="logo" style="flex-grow: 1; display: flex; justify-content: center;">
-                <a href="index.html">
+        <div class="container header-flex" style="display: flex; align-items: center; justify-content: space-between; position: relative;">
+            
+            <div class="logo" style="flex: 1;">
+                <a href="index.html" style="text-decoration: none; color: inherit;">
                     <i class="fa-solid fa-shapes"></i> Vectoria
                 </a>
             </div>
 
-            <div class="settings-container safe-zone">
+            
+
+            <div class="settings-container safe-zone" style="flex: 1; display: flex; justify-content: flex-end;">
                 <button id="btnSettings" class="icon-btn" title="Cài đặt giao diện">
                     <i class="fa-solid fa-gear"></i>
                 </button>
@@ -310,8 +333,15 @@
                             <span class="slider round"></span>
                         </label>
                     </div>
+                    <hr style="border: 0; border-top: 1px solid var(--border); margin: 0; opacity: 0.5; display: block !important;">
+
+<a href="contact.html" class="setting-item" style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
+    <span><i class="fa-solid fa-envelope"></i> Liên hệ / Góp ý</span>
+    <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted);"></i>
+</a>
                 </div>
             </div>
+
         </div>
     </header>
 
@@ -515,5 +545,6 @@
             }
         });
     </script>
+    
 </body>
 </html>

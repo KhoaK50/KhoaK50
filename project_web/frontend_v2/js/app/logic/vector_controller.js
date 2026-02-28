@@ -676,7 +676,7 @@
         if (App.handleEmptyListAction()) return;
         const vectors = App.getCheckedVectors(container);
         if (!vectors.length) {
-            App.showToast("⚠️ Hãy tick chọn ít nhất 1 vector!");
+            App.showToast("Hãy tick chọn ít nhất 1 vector!");
             return;
         }
         try {
@@ -693,7 +693,7 @@
         if (App.handleEmptyListAction()) return;
         const vectors = App.getCheckedVectors(container);
         if (!vectors.length) {
-            App.showToast("⚠️ Hãy tick chọn ít nhất 1 vector!");
+            App.showToast("Hãy tick chọn ít nhất 1 vector!");
             return;
         }
 

@@ -356,27 +356,7 @@
             color: var(--text-main);
         }
 
-        .menu-link {
-            display: block;
-            padding: 10px 12px;
-            color: var(--text-sub);
-            text-decoration: none;
-            border-radius: 6px;
-            transition: 0.2s;
-            border-left: 3px solid transparent;
-        }
-
-        .menu-link:hover,
-        .menu-link.active {
-            background: #eff6ff;
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        body.dark .menu-link:hover,
-        body.dark .menu-link.active {
-            background: #2d3748;
-        }
+        
 
         .main-content {
             flex-grow: 1;
@@ -807,32 +787,7 @@
                 display: none;
             }
 
-            .menu-list {
-                display: flex;
-                gap: 10px;
-                overflow-x: auto;
-                padding: 0 15px;
-                white-space: nowrap;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .menu-list::-webkit-scrollbar {
-                display: none;
-            }
-
-            .menu-link {
-                background: var(--bg-card);
-                border: 1px solid var(--border);
-                padding: 8px 16px;
-                font-size: 0.9rem;
-                border-radius: 20px;
-            }
-
-            .menu-link.active {
-                background: var(--primary);
-                color: #fff;
-                border-color: #fff;
-            }
+            
 
             .chapter-card {
                 scroll-margin-top: 130px;
@@ -866,6 +821,36 @@
             }
 
         }
+/* =================== STYLE MENU MỤC LỤC ĐA CẤP =================== */
+        .custom-nav { padding: 15px 0 !important; }
+        .custom-nav .nav-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); padding: 0 20px 15px 20px; margin: 0; border-bottom: 1px solid var(--border); }
+        .custom-nav .nav-list { list-style: none; padding: 10px 0 0 0; margin: 0; }
+        .custom-nav .nav-item { margin-bottom: 2px; }
+        
+        /* Chỉnh padding cho các cấp */
+        .custom-nav .nav-link { padding: 12px 20px; }
+        .custom-nav .sub-link { padding: 10px 20px 10px 35px; font-size: 0.9rem; }
+        .custom-nav .sub-sub-link { display: block; padding: 8px 20px 8px 50px; font-size: 0.85rem; }
+
+        /* Style chung cho link */
+        .custom-nav .nav-link, .custom-nav .sub-link, .custom-nav .sub-sub-link {
+            display: flex; justify-content: space-between; align-items: center; color: #475569; text-decoration: none; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent;
+        }
+        .custom-nav .nav-link:hover, .custom-nav .sub-link:hover, .custom-nav .sub-sub-link:hover { color: var(--primary); background: #f8fafc; }
+        .custom-nav .arrow-icon { font-size: 0.8rem; color: #94a3b8; transition: transform 0.3s ease; }
+        
+        /* Menu con thả xuống */
+        .custom-nav .sub-menu { list-style: none; padding: 0; margin: 0; display: none; }
+        .custom-nav .has-dropdown.open > .sub-menu { display: block; animation: slideDown 0.3s ease-out; }
+        
+        /* Trạng thái Active */
+        .custom-nav .active { background-color: #eff6ff; color: var(--primary) !important; font-weight: 600; border-left: 3px solid var(--primary); }
+
+        /* --- Dark Mode --- */
+        body.dark .custom-nav .nav-link, body.dark .custom-nav .sub-link, body.dark .custom-nav .sub-sub-link { color: #cbd5e1; }
+        body.dark .custom-nav .nav-link:hover, body.dark .custom-nav .sub-link:hover, body.dark .custom-nav .sub-sub-link:hover { color: #60a5fa; background: #1e293b; }
+        body.dark .custom-nav .active { background-color: #1e293b; color: #60a5fa !important; border-left-color: #60a5fa; }
+        
     </style>
 </head>
 
@@ -912,13 +897,45 @@
     </div>
 
     <div class="container">
-        <aside class="sidebar">
-            <h3><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
-            <div class="menu-list">
-                <a href="#ly-thuyet" class="menu-link active">1. Lý thuyết</a>
-                <a href="#video-truc-quan" class="menu-link">2. Video trực quan</a>
-                <a href="#bai-tap" class="menu-link">3. Bài tập</a>
-            </div>
+        <aside class="sidebar custom-nav">
+            <h3 class="nav-title"><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
+            <ul class="nav-list">
+                
+                <li class="nav-item has-dropdown open"> 
+                    <a href="#ly-thuyet" class="nav-link toggle-btn">
+                        <span style="font-weight: 700; flex-grow: 1;">Lý thuyết</span>
+                        <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                    </a>
+                    <ul class="sub-menu">
+                        <li><a href="#to-hop" class="sub-link active" style="font-weight: 600;">1. Tổ hợp tuyến tính</a></li>
+
+                        <li class="has-dropdown">
+                            <a href="#doc-lap" class="sub-link toggle-btn">
+                                <span style="font-weight: 600; flex-grow: 1;">2. Độc lập tuyến tính và Phụ thuộc tuyến tính</span>
+                                <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                            </a>
+                            <ul class="sub-menu">
+                                <li><a href="#tinh-chat-co-ban" class="sub-sub-link">2.1 Các tính chất cơ bản</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#video-truc-quan" class="nav-link section-link" style="font-weight: 700;">Video trực quan</a>
+                </li>
+
+                <li class="nav-item has-dropdown">
+                    <a href="#bai-tap" class="nav-link toggle-btn">
+                        <span style="font-weight: 700; flex-grow: 1;">Bài tập</span>
+                        <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                    </a>
+                    <ul class="sub-menu">
+                        <li><a href="#bai-tap-1" class="sub-link" style="font-weight: 600;">Tổ hợp tuyến tính</a></li>
+                        <li><a href="#bai-tap-2" class="sub-link" style="font-weight: 600;">Độc lập tuyến tính - Phụ thuộc tuyến tính</a></li>
+                    </ul>
+                </li>
+            </ul>
         </aside>
 
         <main class="main-content">
@@ -947,7 +964,7 @@
                 <style>
                     /* === LIGHT MODE (Mặc định) === */
                     #ly-thuyet {
-                        font-family: "Times New Roman", Times, serif;
+                        font-family: 'Inter', sans-serif;
                         color: #000;
                         font-size: 1.15rem;
                         line-height: 1.6;
@@ -958,7 +975,7 @@
                 </h2>
 
                 <div class="pdf-h1" style="font-size: 1.5rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-bottom: 20px;">Tổ hợp - Độc lập - Phụ thuộc tuyến tính</div>
-                <div class="pdf-h3">1 &nbsp; Tổ hợp tuyến tính</div>
+                <div class="pdf-h3" id="to-hop">1 &nbsp; Tổ hợp tuyến tính</div>
                 <p>Cho \( v_1, v_2, \dots, v_n \) là \( n \) vector (\( n \ge 1 \)) của \( \mathbb{K}- \) không gian
                     vector \( V \) và \( c_1, c_2, \dots, c_n \) là \( n \) vô hướng trong trường \( \mathbb{K} \). Lúc
                     này, vector:</p>
@@ -1041,7 +1058,7 @@
                 </div>
                 <p>Vậy \( v \) là một tổ hợp tuyến tính có dạng \( v = -6u_1 + 3u_2 + 2u_3 \).</p>
 
-                <div class="pdf-h3">2 &nbsp; Độc lập tuyến tính và Phụ thuộc tuyến tính</div>
+                <div class="pdf-h3" id="doc-lap">2 &nbsp; Độc lập tuyến tính và Phụ thuộc tuyến tính</div>
                 <p>Cho \( V \) là không gian vector và \( S = \{v_1, v_2 \dots, v_n\} \) là một hệ vector của \( V \),
                     ta nói:</p>
                 <p>Hệ \( S \) <strong>phụ thuộc tuyến tính</strong> (PTTT) nếu tồn tại các số thực hay các vô hướng \(
@@ -1059,7 +1076,7 @@
                 </div>
                 <p>chỉ có <strong>nghiệm tầm thường</strong> là \( c_1 = c_2 = \dots = c_n = 0 \)</p>
 
-                <div class="pdf-h3" style="font-size: 1.15rem;">2.1 &nbsp; Các tính chất cơ bản</div>
+                <div class="pdf-h3" id="tinh-chat-co-ban" style="font-size: 1.15rem;">2.1 &nbsp; Các tính chất cơ bản</div>
                 <ul class="pdf-list" style="list-style-type: disc; padding-left: 20px;">
                     <li>Hệ chứa vector không luôn PTTT.</li>
                     <li>Hệ gồm 1 vector PTTT khi và chỉ khi vector đó bằng 0, hệ gồm 2 vector PTTT khi và chỉ khi 2
@@ -1172,7 +1189,7 @@
             <div class="chapter-card" id="bai-tap">
     <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Bài tập</h2>
 
-    <div class="pdf-h1" style="font-size: 1.3rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-bottom: 20px;">Tổ hợp tuyến tính</div>
+    <div class="pdf-h1" id="bai-tap-1" style="font-size: 1.3rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-bottom: 20px;">Tổ hợp tuyến tính</div>
 
     <div class="box-black">
         <span class="text-red-bold" style="font-style: italic;">Ví dụ 1:</span> Trong \( \mathbb{R}^3 \), cho hệ vector \( S = \{v_1 = (1, 1, 0), v_2 = (0, 2, 1)\} \) và vector \( v = (2, 6, 2) \). Hỏi \( v \) có phải là THTT của \( S \) không?
@@ -1259,7 +1276,7 @@
         <p><span class="text-red-bold">Bài 4.</span> Trong không gian véctơ ma trận vuông cấp 2, hãy biểu diễn véctơ \( \begin{pmatrix} 11 & 13 \\ 6 & 5 \end{pmatrix} \) theo 4 véctơ \( \begin{pmatrix} 1 & 1 \\ -1 & 2 \end{pmatrix}, \begin{pmatrix} 0 & 1 \\ 2 & 1 \end{pmatrix}, \begin{pmatrix} 2 & 2 \\ 1 & -1 \end{pmatrix}, \begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix} \)</p>
     </div>
 
-    <div class="pdf-h1" style="font-size: 1.3rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-top: 40px; margin-bottom: 20px;">Độc lập tuyến tính - Phụ thuộc tuyến tính</div>
+    <div class="pdf-h1" id="bai-tap-2" style="font-size: 1.3rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-top: 40px; margin-bottom: 20px;">Độc lập tuyến tính - Phụ thuộc tuyến tính</div>
 
     <div class="box-black">
         <span class="text-red-bold" style="font-style: italic;">Ví dụ:</span> Xét sự ĐLTT hoặc PTTT của hệ \( S = \{u_1 = (1, 2, 1), u_2 = (2, 5, 3), u_3 = (1, 3, 3)\} \) trong không gian \( \mathbb{R}^3 \).
@@ -1457,45 +1474,98 @@
             el.classList.add('playing');
         }
 
-        // 3. SCROLL SPY
-        const cards = document.querySelectorAll('.chapter-card');
-        const links = document.querySelectorAll('.menu-link');
-        window.addEventListener('scroll', () => {
-            let current = '';
-            cards.forEach(card => {
-                if (scrollY >= card.offsetTop - 150) current = card.getAttribute('id');
-            });
-            links.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href').includes(current)) link.classList.add('active');
-            });
-        });
+        
     </script>
     <script>
-        /* ===== Smooth scroll cho menu sidebar (có trừ topbar) ===== */
-        document.querySelectorAll('.menu-link[href^="#"]').forEach(link => {
-            link.addEventListener('click', e => {
-                e.preventDefault();
+        document.addEventListener("DOMContentLoaded", () => {
+            
+            // Hàm xử lý cuộn trang mượt
+            const smoothScrollTo = (targetElement) => {
+                if (!targetElement) return;
+                const executeScroll = () => {
+                    const topbar = document.getElementById('topbar');
+                    const topbarHeight = topbar ? topbar.offsetHeight : 60;
+                    const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                };
 
-                const targetId = link.getAttribute('href');
-                const target = document.querySelector(targetId);
-                if (!target) return;
+                if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
+                    MathJax.startup.promise.then(() => requestAnimationFrame(executeScroll));
+                } else {
+                    executeScroll();
+                }
+            };
 
-                const topbar = document.getElementById('topbar');
-                const topbarHeight = topbar ? topbar.offsetHeight : 0;
+            const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
 
-                const y = target.getBoundingClientRect().top
-                    + window.pageYOffset
-                    - topbarHeight
-                    - 12; // chừa khoảng thở nhỏ
+            // XỬ LÝ CLICK: Cho các dòng CÓ CHỨA MŨI TÊN (Vừa cuộn vừa xổ/thu menu)
+            const toggleBtns = document.querySelectorAll('.custom-nav .toggle-btn');
+            toggleBtns.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault(); 
+                    
+                    // Toggle menu
+                    const parentLi = this.closest('.has-dropdown');
+                    if (parentLi) {
+                        parentLi.classList.toggle('open');
+                        const icon = this.querySelector('.arrow-icon');
+                        if (icon) {
+                            icon.classList.remove('fa-chevron-right', 'fa-chevron-down');
+                            icon.classList.add(parentLi.classList.contains('open') ? 'fa-chevron-down' : 'fa-chevron-right');
+                        }
+                    }
 
-                window.scrollTo({
-                    top: y,
-                    behavior: 'smooth'
+                    // Scroll và đổi màu
+                    const link = this.querySelector('a');
+                    if(link) {
+                        menuLinks.forEach(el => el.classList.remove('active'));
+                        link.classList.add('active');
+                        const target = document.querySelector(link.getAttribute('href'));
+                        smoothScrollTo(target);
+                    }
                 });
+            });
+
+            // XỬ LÝ CLICK: Cho các TỪ KHÓA BÌNH THƯỜNG (Chỉ cuộn, không đóng/mở menu)
+            menuLinks.forEach(link => {
+                if (link.closest('.toggle-btn')) return; // Bỏ qua nếu là dòng có mũi tên
+
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    menuLinks.forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+
+                    const target = document.querySelector(this.getAttribute('href'));
+                    smoothScrollTo(target);
+                });
+            });
+
+            // SCROLL SPY (TỰ ĐỘNG SÁNG KHI LĂN CHUỘT)
+            const sections = document.querySelectorAll('.chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id]');
+            
+            window.addEventListener('scroll', () => {
+                let currentId = '';
+                
+                sections.forEach(section => {
+                    const sectionTop = section.getBoundingClientRect().top + window.pageYOffset;
+                    if (window.pageYOffset >= sectionTop - 150) {
+                        currentId = section.getAttribute('id');
+                    }
+                });
+                
+                if (currentId) {
+                    menuLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${currentId}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
             });
         });
     </script>
+    
 </body>
 
 </html>

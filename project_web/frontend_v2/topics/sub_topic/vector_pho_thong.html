@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cơ sở và Số chiều - Vectoria Knowledge</title>
+    <title>Vector ở phổ thông - Vectoria Knowledge</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -905,6 +905,165 @@
             box-shadow: 0 0 20px rgba(96, 165, 250, 0.4);
             /* Hiệu ứng phát sáng (Glow) */
         }
+        /* 1. Xóa dấu chấm tròn và căn lề gốc */
+.custom-nav ul, .custom-nav li {
+    list-style: none !important;
+    margin: 0;
+    padding: 0;
+}
+
+/* 2. Định dạng thẻ Link chuẩn để ăn màu xanh và Hover */
+.custom-nav .nav-link, .custom-nav .sub-link {
+        display: flex !important; 
+        justify-content: flex-start; /* FIX: Ép các phần tử dính lại bên trái */
+        align-items: center;
+        gap: 5px; /* Tạo khoảng cách nhỏ 5px giữa chữ và công thức cho đẹp */
+        padding: 12px 20px; 
+        color: var(--text-sub); 
+        text-decoration: none;
+        font-size: 0.95rem; 
+        cursor: pointer; 
+        transition: all 0.2s;
+        border-left: none !important;
+    }
+
+.custom-nav .nav-link:hover, .custom-nav .sub-link:hover {
+    background: #f8fafc;
+    color: var(--primary);
+}
+
+/* 3. Phân cấp thụt lề cho 3 cấp độ */
+.custom-nav .sub-menu .sub-link { padding-left: 40px; } /* Cấp 2 */
+.custom-nav .sub-menu .sub-menu .sub-link { padding-left: 60px !important; font-size: 0.85rem; } /* Cấp 3 */
+
+/* 4. Trạng thái Active màu xanh */
+.custom-nav .active {
+    background-color: #eff6ff !important;
+    color: var(--primary) !important;
+    font-weight: 600;
+    border-left: 3px solid var(--primary) !important;
+}
+
+body.dark .custom-nav .active { background-color: #1e293b !important; }
+    /* Mặc định ẩn tất cả sub-menu */
+.custom-nav .sub-menu {
+    display: none; 
+    list-style: none !important;
+    padding: 0;
+    margin: 0;
+}
+
+/* Chỉ hiển thị sub-menu khi thẻ li cha có class .open */
+.custom-nav .has-dropdown.open > .sub-menu {
+    display: block !important;
+    animation: slideDown 0.3s ease-out;
+}
+
+/* Hiệu ứng xoay mũi tên chuẩn */
+.custom-nav .has-dropdown.open > .toggle-btn .arrow-icon {
+    transform: rotate(180deg); /* Hoặc 90deg tùy ông muốn xoay hướng nào */
+}
+
+/* Xóa dấu chấm tròn cho tất cả li */
+.custom-nav li {
+    list-style: none !important;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+/* 1. Mặc định ẩn các menu con */
+.custom-nav .sub-menu {
+    display: none; 
+    list-style: none !important;
+}
+
+/* Trạng thái mặc định: Mũi tên trỏ sang phải > */
+.custom-nav .arrow-icon { 
+        margin-left: auto; /* MAGIC: Tự động đẩy mũi tên ra tít mép phải */
+        transition: transform 0.3s ease; 
+        transform: rotate(0deg); 
+        font-size: 0.7rem; 
+    }
+
+/* Khi mục cha có class .open: Tự xoay 90 độ thành trỏ xuống v */
+.custom-nav .has-dropdown.open > .nav-link .arrow-icon,
+.custom-nav .has-dropdown.open > .toggle-btn .arrow-icon {
+    transform: rotate(90deg) !important;
+}
+
+/* 4. Thụt lề phân cấp 3 lớp chuẩn đét */
+.custom-nav .sub-menu .sub-link { padding-left: 35px; } 
+.custom-nav .sub-menu .sub-menu .sub-link { padding-left: 55px !important; font-size: 0.85rem; }
+    /* 1. Đưa border-left từ thẻ a sang thẻ li để nó nằm ngoài rìa */
+.custom-nav .nav-item, .custom-nav .sub-menu li {
+    position: relative;
+    border-left: 3px solid transparent; /* Thanh dọc mặc định ẩn */
+    transition: all 0.2s;
+}
+
+/* 2. Khi mục đó active, hiện thanh dọc ở sát mép trái Sidebar */
+.custom-nav .nav-item:has(> .active), 
+.custom-nav .sub-menu li:has(> .active) {
+    border-left: 3px solid var(--primary);
+    background-color: var(--hover-bg); /* Nền xanh nhạt cho cả dòng */
+}
+
+/* 3. Bỏ border-left cũ ở thẻ a để không bị trùng */
+.custom-nav .active {
+    border-left: none !important; 
+    background-color: transparent !important; /* Reset lại để không bị đè nền */
+    color: var(--primary) !important;
+}
+
+/* 4. Chỉnh lại thụt lề chữ cho đẹp */
+.custom-nav .sub-link { 
+    padding-left: 40px !important; /* Con cấp 1 */
+}
+.custom-nav .sub-menu .sub-menu .sub-link { 
+    padding-left: 60px !important; /* Con cấp 2 (3.1, 5.1) */
+}
+/* Giao diện khung Sidebar (Đã thêm cuộn dọc chuẩn) */
+.sidebar {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+    position: sticky;
+    top: 100px;
+    height: fit-content; /* Ôm vừa khít nội dung nếu menu ngắn */
+    max-height: calc(100vh - 140px); /* Chỉ dãn tối đa tới mức này, vượt quá mới bắt đầu cuộn */
+    overflow-y: auto; /* Bật thanh cuộn dọc khi nội dung quá dài */
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 20px 0; 
+    transition: background 0.3s, border 0.3s;
+}
+
+/* Các thuộc tính scrollbar bên dưới ông giữ nguyên */
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 10px; }
+body.dark .sidebar::-webkit-scrollbar-thumb { background-color: #475569; }
+/* Chỉnh lại khoảng cách cho chữ Mục lục */
+.sidebar h3, .custom-nav .nav-title {
+    margin: 0;
+    padding: 0 20px 15px 20px; /* BÍ QUYẾT LÀ ĐÂY: Thêm 20px lề trái và phải */
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border);
+}
+/* Style cho Tiêu đề phân nhóm (h1) trong Menu */
+.custom-nav .group-label {
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--primary);
+    padding-left: 20px !important; /* Thụt vào ít hơn so với mục con */
+    margin-top: 10px; /* Cách cụm trên ra một chút cho thoáng */
+    letter-spacing: 0.5px;
+}
     </style>
 </head>
 
@@ -954,7 +1113,56 @@
     </div>
 
     <div class="container">
+        <aside class="sidebar custom-nav">
+    <h3 class="nav-title"><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
+    <ul class="nav-list">
+        <li class="nav-item has-dropdown open">
+            <div class="nav-link toggle-btn">
+                <a href="#ly-thuyet" style="text-decoration: none; color: inherit; font-weight: 700; flex-grow: 1;">Lý thuyết</a>
+                <i class="fa-solid fa-chevron-right arrow-icon"></i>
+            </div>
+            <ul class="sub-menu">
+    <li><a href="#on-tap-vector" class="sub-link group-label" style="margin-top: 0;">Ôn tập về Vector</a></li>
+    
+    <li><a href="#vector-la-gi" class="sub-link active">1. Vector là gì?</a></li>
+    <li><a href="#do-dai-vector" class="sub-link">2. Độ dài của vector</a></li>
+    <li><a href="#vector-cung-phuong" class="sub-link">3. Hai vector cùng phương, cùng hướng, bằng nhau</a></li>
+    
+    <li class="nav-item has-dropdown">
+        <div class="sub-link toggle-btn">
+            <a href="#tong-vector" style="text-decoration: none; color: inherit; flex-grow: 1;">4. Tổng của hai vector</a>
+            <i class="fa-solid fa-chevron-right arrow-icon"></i>
+        </div>
+        <ul class="sub-menu">
+            <li><a href="#quy-tac-3-diem" class="sub-link">4.1 Quy tắc ba điểm (quy tắc nối đuôi)</a></li>
+            <li><a href="#quy-tac-hbh" class="sub-link">4.2 Quy tắc hình bình hành (Dùng cho 2 vector chung gốc)</a></li>
+        </ul>
+    </li>
+
+    <li class="nav-item has-dropdown">
+        <div class="sub-link toggle-btn">
+            <a href="#hieu-vector" style="text-decoration: none; color: inherit; flex-grow: 1;">5. Hiệu của hai vector</a>
+            <i class="fa-solid fa-chevron-right arrow-icon"></i>
+        </div>
+        <ul class="sub-menu">
+            <li><a href="#vector-khong" class="sub-link">5.1 Vector không</a></li>
+            <li><a href="#vector-doi" class="sub-link">5.2 Vector đối</a></li>
+            <li><a href="#hieu-hai-vector" class="sub-link">5.3 Định nghĩa hiệu hai vector</a></li>
+        </ul>
+    </li>
+    
+    <li><a href="#nhan-vector-voi-so" class="sub-link">6. Nhân vector với số thực</a></li>
+    
+    <li><a href="#vector-trong-rn" class="sub-link group-label">Vector trong $\mathbb{R}^n$</a></li>
+    
+    <li><a href="#rn-khai-niem" class="sub-link">1. Khái niệm và sự bằng nhau</a></li>
+    <li><a href="#rn-phep-toan" class="sub-link">2. Các phép toán trong $\mathbb{R}^n$</a></li>
+</ul>
+        </li>
+
         
+    </ul>
+</aside>
 
         <main class="main-content">
             <div class="chapter-card" id="ly-thuyet">
@@ -982,7 +1190,7 @@
                 <style>
                     /* === LIGHT MODE (Mặc định) === */
                     #ly-thuyet {
-                        font-family: "Times New Roman", Times, serif;
+                        font-family: 'Inter', sans-serif;
                         color: #000;
                         font-size: 1.15rem;
                         line-height: 1.6;
@@ -1138,7 +1346,7 @@
                     <style>
                         /* === STYLE NỘI BỘ CHO PHẦN LÝ THUYẾT === */
                         #ly-thuyet {
-                            font-family: "Times New Roman", Times, serif;
+                            font-family: 'Inter', sans-serif;
                             color: var(--text-main);
                             font-size: 1.15rem;
                             line-height: 1.7;
@@ -1227,9 +1435,9 @@
 
                     
 
-                    <div class="pdf-h1">Ôn tập về Vector</div>
+                    <div class="pdf-h1" id="on-tap-vector">Ôn tập về Vector</div>
 
-                    <div class="pdf-h2">1 &nbsp; Vector là gì?</div>
+                    <div class="pdf-h2" id="vector-la-gi">1 &nbsp; Vector là gì?</div>
                     <p>Ở phổ thông, vector được định nghĩa là một đoạn thẳng có hướng, với điểm đầu (điểm gốc) là \( A
                         \) và điểm cuối (điểm ngọn) là \( B \), được ký hiệu là \( \overrightarrow{AB} \). Nghĩa là
                         trong hai điểm mút của đoạn thẳng đã chỉ rõ điểm đầu và điểm cuối.</p>
@@ -1248,7 +1456,7 @@
                     <p>Các giá trị \( v_1 \) và \( v_2 \) được gọi là các <strong>thành phần</strong> (hay tọa độ) của
                         vector \( \vec{v} \).</p>
 
-                    <div class="pdf-h2">2 &nbsp; Độ dài của vector</div>
+                    <div class="pdf-h2" id="do-dai-vector">2 &nbsp; Độ dài của vector</div>
                     <p>Độ dài của vector (còn gọi là chuẩn của vector) là khoảng cách giữa điểm đầu và điểm cuối của
                         vector đó. Kí hiệu là \( |\overrightarrow{AB}| \), như vậy \( |\overrightarrow{AB}| = AB \).
                         Vector có độ dài bằng 1 gọi là vector đơn vị.</p>
@@ -1267,7 +1475,7 @@
                         </li>
                     </ul>
 
-                    <div class="pdf-h2">3 &nbsp; Hai vector cùng phương, cùng hướng, bằng nhau</div>
+                    <div class="pdf-h2" id="vector-cung-phuong">3 &nbsp; Hai vector cùng phương, cùng hướng, bằng nhau</div>
                     <p>Đường thẳng đi qua điểm đầu và điểm cuối của một vector được gọi là giá của vector đó.</p>
                     <div style="margin: 25px 0; text-align: center;">
                         <img src="../../assets/images/gia_vector_light.png" alt="Hình 2" class="single-vector-img">
@@ -1284,8 +1492,8 @@
                     </div>
                     <p>Hai vector được gọi là bằng nhau nếu chúng có cùng độ dài và cùng hướng.</p>
 
-                    <div class="pdf-h2">4 &nbsp; Tổng của hai vector</div>
-                    <div class="pdf-h3">4.1 &nbsp; Quy tắc ba điểm (quy tắc nối đuôi)</div>
+                    <div class="pdf-h2" id="tong-vector">4 &nbsp; Tổng của hai vector</div>
+                    <div class="pdf-h3" id="quy-tac-3-diem">4.1 &nbsp; Quy tắc ba điểm (quy tắc nối đuôi)</div>
                     <p>Từ một điểm \( A \) tùy ý, ta thực hiện các bước dựng hình:</p>
                     <p style="padding-left: 20px;">i) Dựng vector \( \overrightarrow{AB} = \vec{a} \).</p>
                     <p style="padding-left: 20px;">ii) Từ điểm \( B \), tiếp tục dựng vector \( \overrightarrow{BC} =
@@ -1295,7 +1503,7 @@
                     <div class="math-center">\( \vec{a} + \vec{b} = \overrightarrow{AB} + \overrightarrow{BC} =
                         \overrightarrow{AC} \)</div>
 
-                    <div class="pdf-h3">4.2 &nbsp; Quy tắc hình bình hành (Dùng cho 2 vector chung gốc)</div>
+                    <div class="pdf-h3" id="quy-tac-hbh">4.2 &nbsp; Quy tắc hình bình hành (Dùng cho 2 vector chung gốc)</div>
                     <p>Nếu hai vector \( \vec{a} \) và \( \vec{b} \) được biểu diễn chung một gốc \( A \), tức là \(
                         \vec{a} = \overrightarrow{AB} \) và \( \vec{b} = \overrightarrow{AD} \). Khi đó, tổng của chúng
                         là vector đường chéo \( \overrightarrow{AC} \) của hình bình hành \( ABCD \):</p>
@@ -1309,15 +1517,15 @@
                     <div class="math-center">\( \vec{u} + \vec{v} = (u_1, u_2) + (v_1, v_2) = (u_1 + v_1, u_2 + v_2) \)
                     </div>
 
-                    <div class="pdf-h2">5 &nbsp; Hiệu của hai vector</div>
-                    <div class="pdf-h3">5.1 &nbsp; Vector không</div>
+                    <div class="pdf-h2" id="hieu-vector">5 &nbsp; Hiệu của hai vector</div>
+                    <div class="pdf-h3" id="vector-khong">5.1 &nbsp; Vector không</div>
                     <p><strong>Vector không</strong>, ký hiệu là \( \vec{0} \), là một vector đặc biệt có độ dài bằng 0
                         và hướng tùy ý (hoặc không xác định hướng).</p>
                     <p>Về mặt đại số, vector \( \vec{0} = (0, 0) \) đóng vai trò là phần tử trung hòa của phép cộng. Với
                         mọi vector \( \vec{v} \), ta luôn có:</p>
                     <div class="math-center">\( \vec{v} + \vec{0} = \vec{0} + \vec{v} = \vec{v} \)</div>
 
-                    <div class="pdf-h3">5.2 &nbsp; Vector đối</div>
+                    <div class="pdf-h3" id="vector-doi">5.2 &nbsp; Vector đối</div>
                     <p>Vector có <strong>cùng độ dài</strong> nhưng <strong>ngược hướng</strong> với vector \( \vec{v}
                         \) được gọi là vector đối của vector \( \vec{v} \), ký hiệu là \( -\vec{v} \).</p>
                     <p>Đặc điểm quan trọng nhất của vector đối là tổng của nó với vector ban đầu luôn bằng vector không:
@@ -1326,7 +1534,7 @@
                     <p><span class="pdf-note" style="color: #dc2626;">Lưu ý:</span> Vector \( \vec{0} \) được coi là
                         vector đối của chính nó.</p>
 
-                    <div class="pdf-h3">5.3 &nbsp; Định nghĩa hiệu hai vector</div>
+                    <div class="pdf-h3" id="hieu-hai-vector">5.3 &nbsp; Định nghĩa hiệu hai vector</div>
                     <p>Từ khái niệm vector đối, ta định nghĩa <strong>hiệu</strong> của hai vector \( \vec{a} \) và \(
                         \vec{b} \) (ký hiệu là \( \vec{a} - \vec{b} \)) thực chất là tổng của vector \( \vec{a} \) với
                         vector đối của \( \vec{b} \):</p>
@@ -1341,7 +1549,7 @@
                         chúng:</p>
                     <div class="math-center">\( \vec{a} - \vec{b} = (a_1 - b_1, a_2 - b_2) \)</div>
 
-                    <div class="pdf-h2">6 &nbsp; Phép nhân vector với số thực</div>
+                    <div class="pdf-h2" id="nhan-vector-voi-so">6 &nbsp; Phép nhân vector với số thực</div>
                     <p>Tích của một vector \( \vec{v} \) với một số thực \( k \neq 0 \) là một vector mới, ký hiệu là \(
                         k \cdot \vec{v} \), thỏa mãn các điều kiện sau:</p>
                     <ul class="pdf-list" style="list-style-type: disc; padding-left: 20px;">
@@ -1364,9 +1572,9 @@
                     <p>Ở hình trên, vector \( \vec{v} = (1, 2) \) nhân với số thực \( k = 2 \) để tạo thành vector mới
                         màu xanh lá có tọa độ là \( k \cdot \vec{v} = (2, 4) \).</p>
 
-                    <div class="pdf-h1">Vector trong \( \mathbb{R}^n \)</div>
+                    <div class="pdf-h1" id="vector-trong-rn">Vector trong \( \mathbb{R}^n \)</div>
 
-                    <div class="pdf-h2">1 &nbsp; Khái niệm và sự bằng nhau</div>
+                    <div class="pdf-h2" id="rn-khai-niem">1 &nbsp; Khái niệm và sự bằng nhau</div>
                     <p>Vector có thể được mở rộng từ mặt phẳng lên không gian \( n \) chiều. Một vector trong không gian
                         \( n \) chiều được biểu diễn bởi một bộ \( n \) phần tử theo thứ tự. Bộ tất cả các vector như
                         vậy tạo thành không gian \( n \) chiều, ký hiệu là \( \mathbb{R}^n \).</p>
@@ -1377,7 +1585,7 @@
                         \( \mathbb{R}^n \) là bằng nhau khi và chỉ khi mọi thành phần tương ứng của chúng bằng nhau.
                         Nghĩa là \( u_i = v_i \) với mọi \( i = \overline{1, n} \).</p>
 
-                    <div class="pdf-h2">2 &nbsp; Các phép toán cơ bản trong \( \mathbb{R}^n \)</div>
+                    <div class="pdf-h2" id="rn-phep-toan">2 &nbsp; Các phép toán cơ bản trong $\mathbb{R}^n$</div>
                     <p>Cho hai vector \( \vec{u} = (u_1, u_2, \dots, u_n) \) và \( \vec{v} = (v_1, v_2, \dots, v_n) \)
                         trong \( \mathbb{R}^n \), cùng với một số thực \( k \). Các phép toán cơ bản được mở rộng tự
                         nhiên từ mặt phẳng như sau:</p>
@@ -1526,31 +1734,69 @@
 
     </script>
     <script>
-        /* ===== Smooth scroll cho menu sidebar (có trừ topbar) ===== */
-        document.querySelectorAll('.menu-link[href^="#"]').forEach(link => {
-            link.addEventListener('click', e => {
-                e.preventDefault();
+    // HÀM MA THUẬT: Gói tất cả vào một chỗ
+    function bootVectoriaMenu() {
+        console.log("Menu System: Booting...");
+        const topbar = document.getElementById('topbar');
+        const topbarHeight = topbar ? topbar.offsetHeight : 60;
 
-                const targetId = link.getAttribute('href');
-                const target = document.querySelector(targetId);
-                if (!target) return;
+        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
 
-                const topbar = document.getElementById('topbar');
-                const topbarHeight = topbar ? topbar.offsetHeight : 0;
+        // THAY TOÀN BỘ PHẦN XỬ LÝ CLICK TRONG bootVectoriaMenu BẰNG ĐOẠN NÀY:
+menuLinks.forEach(link => {
+    link.onclick = function(e) {
+        const targetId = this.getAttribute('href');
+        if (!targetId || targetId === "#") return;
+        e.preventDefault();
 
-                const y = target.getBoundingClientRect().top
-                    + window.pageYOffset
-                    - topbarHeight
-                    - 12; // chừa khoảng thở nhỏ
+        // --- CHIÊU THỨC PHÂN QUYỀN ---
+        // Chỉ những link nằm trong .toggle-btn mới được quyền Đóng/Mở (Toggle)
+        const isParentToggle = this.closest('.toggle-btn');
+        const parentLi = this.closest('.has-dropdown');
 
-                window.scrollTo({
-                    top: y,
-                    behavior: 'smooth'
-                });
+        if (isParentToggle && parentLi) {
+            parentLi.classList.toggle('open');
+        } 
+        // Nếu là tiểu mục (không có toggle-btn), ta KHÔNG toggle class 'open'
+        // Điều này giúp bấm 3.1, 3.2 thì menu cha vẫn giữ nguyên trạng thái mở.
+
+        // --- HIGHLIGHT & CUỘN TRANG ---
+        menuLinks.forEach(el => el.classList.remove('active'));
+        this.classList.add('active');
+
+        const targetElement = document.querySelector(targetId);
+        if (targetElement) {
+            const topbarHeight = document.getElementById('topbar')?.offsetHeight || 60;
+            const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+    };
+});
+
+        // SCROLL SPY: Tự động sáng menu
+        window.onscroll = () => {
+            const sections = document.querySelectorAll('.chapter-card, .pdf-h2[id], .pdf-h3[id], #bai-tap');
+            let currentId = '';
+            sections.forEach(section => {
+                if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - 150) {
+                    currentId = section.getAttribute('id');
+                }
             });
-        });
-    </script>
+            if (currentId) {
+                menuLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === `#${currentId}`);
+                });
+            }
+        };
+    }
 
+    // KÍCH HOẠT NGAY (Dành cho lật thẻ Ajax)
+    bootVectoriaMenu();
+    // Chạy lại sau 300ms để chắc chắn DOM đã nạp xong sau hiệu ứng lật
+    setTimeout(bootVectoriaMenu, 300);
+
+    
+</script>
 </body>
-
 </html>
+

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cơ sở và Số chiều - Vectoria Knowledge</title>
+    <title>Ma trận nghịch đảo - Vectoria Knowledge</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -905,6 +905,121 @@
             box-shadow: 0 0 20px rgba(96, 165, 250, 0.4);
             /* Hiệu ứng phát sáng (Glow) */
         }
+        /* 1. Xóa dấu chấm tròn và căn lề gốc */
+.custom-nav ul, .custom-nav li {
+    list-style: none !important;
+    margin: 0;
+    padding: 0;
+}
+
+/* 2. Định dạng thẻ Link chuẩn để ăn màu xanh và Hover */
+.custom-nav .nav-link, .custom-nav .sub-link {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    color: #475569;
+    text-decoration: none;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.custom-nav .nav-link:hover, .custom-nav .sub-link:hover {
+    background: #f8fafc;
+    color: var(--primary);
+}
+
+/* 3. Phân cấp thụt lề cho 3 cấp độ */
+.custom-nav .sub-menu .sub-link { padding-left: 40px; } /* Cấp 2 */
+.custom-nav .sub-menu .sub-menu .sub-link { padding-left: 60px !important; font-size: 0.85rem; } /* Cấp 3 */
+
+/* 4. Trạng thái Active màu xanh */
+.custom-nav .active {
+    background-color: #eff6ff !important;
+    color: var(--primary) !important;
+    font-weight: 600;
+    border-left: 3px solid var(--primary) !important;
+}
+
+body.dark .custom-nav .active { background-color: #1e293b !important; }
+    /* Mặc định ẩn tất cả sub-menu */
+.custom-nav .sub-menu {
+    display: none; 
+    list-style: none !important;
+    padding: 0;
+    margin: 0;
+}
+
+/* Chỉ hiển thị sub-menu khi thẻ li cha có class .open */
+.custom-nav .has-dropdown.open > .sub-menu {
+    display: block !important;
+    animation: slideDown 0.3s ease-out;
+}
+
+/* Hiệu ứng xoay mũi tên chuẩn */
+.custom-nav .has-dropdown.open > .toggle-btn .arrow-icon {
+    transform: rotate(180deg); /* Hoặc 90deg tùy ông muốn xoay hướng nào */
+}
+
+/* Xóa dấu chấm tròn cho tất cả li */
+.custom-nav li {
+    list-style: none !important;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+/* 1. Mặc định ẩn các menu con */
+.custom-nav .sub-menu {
+    display: none; 
+    list-style: none !important;
+}
+
+/* Trạng thái mặc định: Mũi tên trỏ sang phải > */
+.custom-nav .arrow-icon {
+    transition: transform 0.3s ease;
+    transform: rotate(0deg) !important; 
+    display: inline-block;
+}
+
+/* Khi mục cha có class .open: Tự xoay 90 độ thành trỏ xuống v */
+.custom-nav .has-dropdown.open > .nav-link .arrow-icon,
+.custom-nav .has-dropdown.open > .toggle-btn .arrow-icon {
+    transform: rotate(90deg) !important;
+}
+
+/* 4. Thụt lề phân cấp 3 lớp chuẩn đét */
+.custom-nav .sub-menu .sub-link { padding-left: 35px; } 
+.custom-nav .sub-menu .sub-menu .sub-link { padding-left: 55px !important; font-size: 0.85rem; }
+    /* 1. Đưa border-left từ thẻ a sang thẻ li để nó nằm ngoài rìa */
+.custom-nav .nav-item, .custom-nav .sub-menu li {
+    position: relative;
+    border-left: 3px solid transparent; /* Thanh dọc mặc định ẩn */
+    transition: all 0.2s;
+}
+
+/* 2. Khi mục đó active, hiện thanh dọc ở sát mép trái Sidebar */
+.custom-nav .nav-item:has(> .active), 
+.custom-nav .sub-menu li:has(> .active) {
+    border-left: 3px solid var(--primary);
+    background-color: var(--hover-bg); /* Nền xanh nhạt cho cả dòng */
+}
+
+/* 3. Bỏ border-left cũ ở thẻ a để không bị trùng */
+.custom-nav .active {
+    border-left: none !important; 
+    background-color: transparent !important; /* Reset lại để không bị đè nền */
+    color: var(--primary) !important;
+}
+
+/* 4. Chỉnh lại thụt lề chữ cho đẹp */
+.custom-nav .sub-link { 
+    padding-left: 40px !important; /* Con cấp 1 */
+}
+.custom-nav .sub-menu .sub-menu .sub-link { 
+    padding-left: 60px !important; /* Con cấp 2 (3.1, 5.1) */
+}
     </style>
 </head>
 
@@ -954,15 +1069,30 @@
     </div>
 
     <div class="container">
-        <aside class="sidebar">
-            <h3><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
-            <div class="menu-list">
-                <a href="#ly-thuyet" class="menu-link active">1. Lý thuyết</a>
-                <a href="#video-truc-quan" class="menu-link">2. Video trực quan</a>
-                <a href="#bai-tap" class="menu-link">3. Bài tập</a>
-
+        <aside class="sidebar custom-nav">
+    <h3 class="nav-title"><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
+    <ul class="nav-list">
+        <li class="nav-item has-dropdown open">
+            <div class="nav-link toggle-btn">
+                <a href="#ly-thuyet" style="text-decoration: none; color: inherit; font-weight: 700; flex-grow: 1;">Lý thuyết</a>
+                <i class="fa-solid fa-chevron-right arrow-icon"></i>
             </div>
-        </aside>
+            <ul class="sub-menu">
+                <li><a href="#dinh-nghia" class="sub-link active">1. Định nghĩa</a></li>
+                <li><a href="#ma-tran-phu-hop" class="sub-link">2. Ma trận phụ hợp</a></li>
+                <li><a href="#phuong-phap-gauss-nghich-dao" class="sub-link">3. Tìm ma trận nghịch đảo bằng phương pháp Gauss</a></li>
+            </ul>
+        </li>
+
+        <li class="nav-item">
+            <a href="#video-truc-quan" class="nav-link" style="font-weight: 700;">Video trực quan</a>
+        </li>
+
+        <li class="nav-item">
+            <a href="#bai-tap" class="nav-link" style="font-weight: 700;">Bài tập</a>
+        </li>
+    </ul>
+</aside>
 
         <main class="main-content">
             <div class="chapter-card" id="ly-thuyet">
@@ -990,7 +1120,7 @@
                 <style>
                     /* === LIGHT MODE (Mặc định) === */
                     #ly-thuyet {
-                        font-family: "Times New Roman", Times, serif;
+                        font-family: 'Inter', sans-serif;
                         color: #000;
                         font-size: 1.15rem;
                         line-height: 1.6;
@@ -1146,7 +1276,7 @@
                     <style>
                         /* === STYLE NỘI BỘ CHO PHẦN LÝ THUYẾT === */
                         #ly-thuyet {
-                            font-family: "Times New Roman", Times, serif;
+                            font-family: 'Inter', sans-serif;
                             color: var(--text-main);
                             font-size: 1.15rem;
                             line-height: 1.7;
@@ -1239,7 +1369,7 @@
 
     <div class="pdf-h1">Ma trận nghịch đảo</div>
 
-    <div class="pdf-h2">1 &nbsp; Định nghĩa</div>
+    <div class="pdf-h2" id="dinh-nghia">1 &nbsp; Định nghĩa</div>
     <p>Cho \( A \) là ma trận vuông cấp \( n \), ma trận \( A \) gọi là ma trận <strong>khả nghịch</strong> nếu tồn tại ma trận \( B \) vuông cấp \( n \) sao cho:</p>
     <div class="math-center">
         \( AB = BA = I_n \quad (I_n \text{ là ma trận đơn vị cấp } n) \)
@@ -1266,7 +1396,7 @@
         </li>
     </ul>
 
-    <div class="pdf-h2">2 &nbsp; Ma trận phụ hợp</div>
+    <div class="pdf-h2" id="ma-tran-phu-hop">2 &nbsp; Ma trận phụ hợp</div>
     <p>Cho \( A \) là ma trận vuông cấp \( n \). Ma trận phụ hợp của \( A \), ký hiệu \( P_A \) được định nghĩa như sau:</p>
     <div class="math-center" style="overflow-x: auto;">
         \( P_A = \begin{pmatrix} A_{11} & A_{21} & \dots & A_{n1} \\ A_{12} & A_{22} & \dots & A_{n2} \\ \vdots & \vdots & \ddots & \vdots \\ A_{1n} & A_{2n} & \dots & A_{nn} \end{pmatrix} \)
@@ -1308,7 +1438,7 @@
         \( A^{-1} = \frac{1}{\det(A)} \cdot P_A \)
     </div>
 
-    <div class="pdf-h2">3 &nbsp; Tìm ma trận nghịch đảo bằng phương pháp Gauss</div>
+    <div class="pdf-h2" id="phuong-phap-gauss-nghich-dao">3 &nbsp; Tìm ma trận nghịch đảo bằng phương pháp Gauss</div>
     <p>Để tìm ma trận nghịch đảo của một ma trận vuông \( A \) cấp \( n \), ta lập mở trận mở rộng (hay bổ sung) bằng cách thêm ma trận đơn vị cùng cấp vào bên phải ma trận \( A \), ký hiệu là \( [A \mid I_n] \). Sau đó, thực hiện các phép biến đổi sơ cấp để đưa về dạng \( [I_n \mid A^{-1}] \):</p>
     <div class="math-center">
         \( [A \mid I_n] \xrightarrow{\text{Biến đổi sơ cấp}} [I_n \mid A^{-1}] \)
@@ -1512,7 +1642,7 @@
             <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài tập? Tải lời giải về để đối chiếu nhé!
         </p>
 
-        <a href="https://drive.google.com/uc?export=download&id=1kNdg5h3YE2NccqCOq-QeA4wwm3mjYfzw" target="_blank" class="btn-download">
+        <a href="https://drive.google.com/uc?export=download&id=1t6qXrAnIBmk8dsvFylh-ayUxI1hJx3Fr" target="_blank" class="btn-download">
             <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
         </a>
     </div>
@@ -1628,31 +1758,69 @@
 
     </script>
     <script>
-        /* ===== Smooth scroll cho menu sidebar (có trừ topbar) ===== */
-        document.querySelectorAll('.menu-link[href^="#"]').forEach(link => {
-            link.addEventListener('click', e => {
-                e.preventDefault();
+    // HÀM MA THUẬT: Gói tất cả vào một chỗ
+    function bootVectoriaMenu() {
+        console.log("Menu System: Booting...");
+        const topbar = document.getElementById('topbar');
+        const topbarHeight = topbar ? topbar.offsetHeight : 60;
 
-                const targetId = link.getAttribute('href');
-                const target = document.querySelector(targetId);
-                if (!target) return;
+        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
 
-                const topbar = document.getElementById('topbar');
-                const topbarHeight = topbar ? topbar.offsetHeight : 0;
+        // THAY TOÀN BỘ PHẦN XỬ LÝ CLICK TRONG bootVectoriaMenu BẰNG ĐOẠN NÀY:
+menuLinks.forEach(link => {
+    link.onclick = function(e) {
+        const targetId = this.getAttribute('href');
+        if (!targetId || targetId === "#") return;
+        e.preventDefault();
 
-                const y = target.getBoundingClientRect().top
-                    + window.pageYOffset
-                    - topbarHeight
-                    - 12; // chừa khoảng thở nhỏ
+        // --- CHIÊU THỨC PHÂN QUYỀN ---
+        // Chỉ những link nằm trong .toggle-btn mới được quyền Đóng/Mở (Toggle)
+        const isParentToggle = this.closest('.toggle-btn');
+        const parentLi = this.closest('.has-dropdown');
 
-                window.scrollTo({
-                    top: y,
-                    behavior: 'smooth'
-                });
+        if (isParentToggle && parentLi) {
+            parentLi.classList.toggle('open');
+        } 
+        // Nếu là tiểu mục (không có toggle-btn), ta KHÔNG toggle class 'open'
+        // Điều này giúp bấm 3.1, 3.2 thì menu cha vẫn giữ nguyên trạng thái mở.
+
+        // --- HIGHLIGHT & CUỘN TRANG ---
+        menuLinks.forEach(el => el.classList.remove('active'));
+        this.classList.add('active');
+
+        const targetElement = document.querySelector(targetId);
+        if (targetElement) {
+            const topbarHeight = document.getElementById('topbar')?.offsetHeight || 60;
+            const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+    };
+});
+
+        // SCROLL SPY: Tự động sáng menu
+        window.onscroll = () => {
+            const sections = document.querySelectorAll('.chapter-card, .pdf-h2[id], .pdf-h3[id], #bai-tap');
+            let currentId = '';
+            sections.forEach(section => {
+                if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - 150) {
+                    currentId = section.getAttribute('id');
+                }
             });
-        });
-    </script>
+            if (currentId) {
+                menuLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === `#${currentId}`);
+                });
+            }
+        };
+    }
 
+    // KÍCH HOẠT NGAY (Dành cho lật thẻ Ajax)
+    bootVectoriaMenu();
+    // Chạy lại sau 300ms để chắc chắn DOM đã nạp xong sau hiệu ứng lật
+    setTimeout(bootVectoriaMenu, 300);
+
+    
+</script>
 </body>
-
 </html>
+
