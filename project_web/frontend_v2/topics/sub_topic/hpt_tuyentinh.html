@@ -1059,6 +1059,145 @@
             padding-left: 60px !important;
             /* Con cấp 2 (3.1, 5.1) */
         }
+
+        /* =================== MÀN CHE VIDEO SCI-FI =================== */
+        .temp-video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #050b14;
+            /* Nền xanh đen sâu thẳm */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            overflow: hidden;
+            border-right: 1px solid #334155;
+        }
+
+        /* Vẽ lưới Grid Toán học nền sau */
+        .temp-video-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background-image:
+                linear-gradient(rgba(58, 120, 255, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(58, 120, 255, 0.08) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 0;
+            animation: panGrid 20s linear infinite;
+        }
+
+        /* Quả cầu phát sáng lơ lửng */
+        .temp-video-overlay::after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: var(--primary);
+            filter: blur(90px);
+            opacity: 0.4;
+            z-index: 0;
+            animation: floatOrb 6s infinite alternate ease-in-out;
+        }
+
+        /* Khung kính mờ Glassmorphism */
+        .tv-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            padding: 35px 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(58, 120, 255, 0.05);
+        }
+
+        /* Vòng xoay quanh Icon */
+        .tv-icon-wrapper {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .tv-icon-wrapper i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            text-shadow: 0 0 15px var(--primary);
+        }
+
+        .tv-spinner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px dashed rgba(96, 165, 250, 0.6);
+            border-radius: 50%;
+            animation: spinDash 12s linear infinite;
+        }
+
+        /* Định dạng chữ */
+        .tv-content h4 {
+            margin: 0 0 12px;
+            color: #f8fafc;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 800;
+        }
+
+        .tv-content p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 1rem;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        /* Animations */
+        @keyframes panGrid {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(-40px, -40px);
+            }
+        }
+
+        @keyframes floatOrb {
+            0% {
+                transform: translate(-50px, -30px) scale(0.8);
+            }
+
+            100% {
+                transform: translate(50px, 30px) scale(1.2);
+            }
+        }
+
+        @keyframes spinDash {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
@@ -1118,6 +1257,10 @@
                         <i class="fa-solid fa-chevron-right arrow-icon"></i>
                     </div>
                     <ul class="sub-menu">
+                        <li
+                            style="padding: 15px 20px 5px 20px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">
+                            Hệ phương trình tuyến tính
+                        </li>
                         <li><a href="#dinh-nghia" class="sub-link active">1. Định nghĩa</a></li>
                         <li><a href="#dinh-ly-kronecker" class="sub-link">2. Định lý Kronecker-Capelli</a></li>
                         <li class="nav-item has-dropdown">
@@ -1150,7 +1293,7 @@
                         </li>
                     </ul>
                 </li>
-                <li class="nav-item"><a href="#video-truc-quan" class="nav-link" style="font-weight: 700;">Video trực
+                <li class="nav-item"><a href="#coming-soon" class="nav-link" style="font-weight: 700;">Video trực
                         quan</a></li>
                 <li class="nav-item"><a href="#bai-tap" class="nav-link" style="font-weight: 700;">Bài tập</a></li>
             </ul>
@@ -1625,7 +1768,8 @@
                     <p>Hệ \( AX = 0 \) <strong>luôn có nghiệm</strong>, cụ thể:</p>
                     <ul class="pdf-list" style="list-style-type: none;">
                         <li>i) Bộ số \( (0, 0, \dots, 0) \in \mathbb{R}^n \) luôn là một nghiệm của hệ và được gọi là
-                            <strong>nghiệm tầm thường</strong>.</li>
+                            <strong>nghiệm tầm thường</strong>.
+                        </li>
                         <li>ii) Ngược lại, mỗi bộ số \( (c_1, c_2, \dots, c_n) \in \mathbb{R}^n \) không đồng thời bằng
                             không nếu là nghiệm của hệ thì được gọi là <strong>nghiệm không tầm thường</strong>.</li>
                         <li>iii) Vì ma trận hệ số mở rộng \( \bar{A} \) chỉ thêm một cột toàn số 0 so với \( A \), nên
@@ -1664,47 +1808,20 @@
 
             </div>
 
-            <div class="chapter-card" id="video-truc-quan"
-                style="padding: 0; overflow: hidden; border: none; background: transparent;">
-                <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-brands fa-youtube"></i> Video trực
-                    quan</h2>
-
-                <div class="cinema-container">
-                    <div class="video-box">
-                        <div id="youtube-player"></div>
-                    </div>
-
-                    <div class="playlist-box">
-                        <div class="playlist-header">
-                            <span>Nội dung</span>
-                            <span style="font-size: 0.8rem; color: #94a3b8;">4 phần</span>
+            <div class="video-box" id="coming-soon">
+                <div class="temp-video-overlay">
+                    <div class="tv-content">
+                        <div class="tv-icon-wrapper">
+                            <div class="tv-spinner"></div>
+                            <i class="fa-solid fa-hourglass-half"></i>
                         </div>
-                        <div class="chapter-list">
-                            <div class="chapter-item playing" onclick="seekTo(0); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Vector ở phổ thông</span></div>
-                                <div class="time-badge">00:00</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(60); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Quy tắc nối đuôi</span></div>
-                                <div class="time-badge">01:00</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(230); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Quy tắc hình bình hành</span>
-                                </div>
-                                <div class="time-badge">03:50</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(307); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Phép nhân vector với số
-                                        thực</span></div>
-                                <div class="time-badge">05:07</div>
-                            </div>
-                        </div>
+                        <h4>Sắp ra mắt</h4>
+                        <p>Video trực quan đang trong quá trình biên tập.<br>Hệ thống sẽ cập nhật trong thời gian tới.
+                        </p>
                     </div>
                 </div>
+
+                <div id="youtube-player"></div>
             </div>
 
             <div class="chapter-card" id="bai-tap">
@@ -1849,7 +1966,7 @@
                         chiếu nhé!
                     </p>
 
-                    <a href="https://drive.google.com/uc?export=download&id=1kNdg5h3YE2NccqCOq-QeA4wwm3mjYfzw"
+                    <a href="https://drive.google.com/uc?export=download&id=1EZWTO61SDNLQJouyhtullzN9b84U1yA_"
                         target="_blank" class="btn-download">
                         <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
                     </a>
@@ -1860,7 +1977,11 @@
 
         </main>
     </div>
-
+    
+    <footer
+        style="text-align: center; padding: 30px 20px; margin-top: 20px; margin-bottom: 20px; color: var(--text-sub); font-size: 0.95rem; border-top: 1px solid var(--border); width: 100%;">
+        <p style="margin: 0;">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
+    </footer>
     <script>
         // 1. THEME HANDLING & ANIMATION
         // Theme is auto-initialized by theme-manager.js script

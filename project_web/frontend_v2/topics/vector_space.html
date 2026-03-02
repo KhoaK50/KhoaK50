@@ -557,7 +557,7 @@
             display: block;
             margin: 15px 0;
             font-size: 1.1rem;
-            text-decoration: underline;
+
         }
 
         .pdf-table {
@@ -784,6 +784,7 @@
             margin-top: 40px;
             margin-bottom: 20px;
             color: #000;
+            display: inline-block;
         }
 
         /* 2. Dòng Nhận xét (Chữ màu nâu đỏ) */
@@ -1075,38 +1076,34 @@
                     </div>
                     <ul class="sub-menu">
 
-                        <li class="nav-item has-dropdown open">
-                            <div class="sub-link toggle-btn"
-                                style="display: flex; justify-content: space-between; align-items: center; padding-right: 15px; cursor: pointer;">
-                                <a href="#kg-vector" style="text-decoration: none; color: inherit; flex-grow: 1;">1.
-                                    Không gian vector</a>
-                                <i class="fa-solid fa-chevron-down arrow-icon"></i>
-                            </div>
-                            <ul class="sub-menu">
-                                <li><a href="#kg-vector-1-1" class="sub-link active"
-                                        style="padding-left: 55px; font-size: 0.85rem;">1.1 Định nghĩa về không gian
-                                        vector</a></li>
-                                <li><a href="#kg-vector-1-2" class="sub-link"
-                                        style="padding-left: 55px; font-size: 0.85rem;">1.2 Các không gian vector phổ
-                                        biến</a></li>
-                            </ul>
+                        <li
+                            style="padding: 15px 20px 5px 20px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">
+                            Không gian vector
                         </li>
 
-                        <li class="nav-item has-dropdown">
-                            <div class="sub-link toggle-btn"
-                                style="display: flex; justify-content: space-between; align-items: center; padding-right: 15px; cursor: pointer;">
-                                <a href="#kg-vector-con" style="text-decoration: none; color: inherit; flex-grow: 1;">2.
-                                    Không gian vector con</a>
-                                <i class="fa-solid fa-chevron-right arrow-icon"></i>
-                            </div>
-                            <ul class="sub-menu">
-                                <li><a href="#kg-vector-con-2-1" class="sub-link"
-                                        style="padding-left: 55px; font-size: 0.85rem;">2.1 Định nghĩa</a></li>
-                                <li><a href="#kg-vector-con-2-2" class="sub-link"
-                                        style="padding-left: 55px; font-size: 0.85rem;">2.2 Kiểm tra không gian vector
-                                        con</a></li>
-                            </ul>
+                        <li><a href="#kg-vector-1-1" class="sub-link active"
+                                style="padding-left: 55px; font-size: 0.85rem;">1. Định nghĩa</a></li>
+                        <li><a href="#kg-vector-1-2" class="sub-link" style="padding-left: 55px; font-size: 0.85rem;">2.
+                                Các không gian vector phổ
+                                biến</a></li>
+
+
+
+
+
+                        <li
+                            style="padding: 15px 20px 5px 20px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">
+                            Không gian vector con
                         </li>
+
+
+                        <li><a href="#kg-vector-con-2-1" class="sub-link"
+                                style="padding-left: 55px; font-size: 0.85rem;">1. Định nghĩa</a></li>
+                        <li><a href="#kg-vector-con-2-2" class="sub-link"
+                                style="padding-left: 55px; font-size: 0.85rem;">2. Kiểm tra không gian vector
+                                con</a></li>
+
+
 
                     </ul>
                 </li>
@@ -1202,7 +1199,7 @@
                         display: block;
                         margin: 15px 0;
                         font-size: 1.1rem;
-                        text-decoration: underline;
+
                     }
 
                     /* Bảng Tiên đề */
@@ -1290,9 +1287,11 @@
                 </style>
                 <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-solid fa-book-open"></i> Lý thuyết
                 </h2>
-                <div class="pdf-h2" id="kg-vector">1 &nbsp; Không gian vector</div>
+                <div class="pdf-h1"
+                    style="font-size: 1.5rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-bottom: 20px;">
+                    Không gian vector</div>
 
-                <div class="pdf-h3" id="kg-vector-1-1">1.1 &nbsp; Định nghĩa về không gian vector</div>
+                <div class="pdf-h3" id="kg-vector-1-1">1 &nbsp; Định nghĩa</div>
                 <p>Cho 1 tập hợp \( V \neq \varnothing \) và một trường số \( \mathbb{K} \) (ở đây chỉ xét \( \mathbb{K}
                     = \mathbb{R} \)). Trong \( V \) xác định hai phép toán dưới dạng ánh xạ:</p>
 
@@ -1317,8 +1316,8 @@
                 <table class="pdf-table">
                     <thead>
                         <tr>
-                            <th width="50%">Nhóm tính chất phép cộng</th>
-                            <th width="50%">Nhóm tính chất phép nhân</th>
+                            <th width="50%">Nhóm tiên đề phép cộng</th>
+                            <th width="50%">Nhóm tiên đề phép nhân</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1349,10 +1348,10 @@
                     <li>Vector \( -v \) là vector đối của \( v \)</li>
                 </ul>
 
-                <p><span class="pdf-note">Nhận xét 1:</span> Một không gian vector bao gồm bốn thành phần: tập hợp các
+                <p><span class="pdf-note">Nhận xét:</span> Một không gian vector bao gồm bốn thành phần: tập hợp các
                     vector, tập hợp các vô hướng và hai phép toán.</p>
 
-                <div class="pdf-h3" id="kg-vector-1-2">1.2 &nbsp; Các không gian vector phổ biến</div>
+                <div class="pdf-h3" id="kg-vector-1-2">2 &nbsp; Các không gian vector phổ biến</div>
                 <ul class="pdf-list" style="list-style-type: disc; padding-left: 20px;">
                     <li>\( \mathbb{R} = \) Không gian thực 1 chiều hay tập hợp tất cả các số thực</li>
                     <li>\( \mathbb{R}^2 = \) Không gian thực 2 chiều (2D) hay tập hợp các cặp số thực dưới dạng \( (x,
@@ -1371,10 +1370,10 @@
                         Viết gọn là \( \mathcal{M}_{n} \)</li>
                 </ul>
 
-                <p><span class="pdf-note">Nhận xét 2:</span> Không gian vector \( V \) có thể là bất cứ tập hợp nào thỏa
+                <p><span class="pdf-note">Nhận xét:</span> Không gian vector \( V \) có thể là bất cứ tập hợp nào thỏa
                     mãn 2 phép toán cộng 2 vector và nhân vô hướng cùng với 8 tiên đề ràng buộc.</p>
 
-                <p><strong>Ví dụ 1:</strong></p>
+                <p class="pdf-note">Ví dụ:</p>
                 <ol class="pdf-list" style="padding-left: 20px;">
                     <li>Khi \( V \equiv \mathbb{R}^3 \), một vector \( v \in V \) lúc này là một bộ 3 số có dạng \( v =
                         (x, y, z) \)</li>
@@ -1424,12 +1423,14 @@
                         \( 1 \cdot u = (1 \cdot x_1, 1 \cdot x_2) = (x_1, x_2) = u \). &emsp; (Thỏa mãn)
                     </li>
                 </ol>
-                <p><strong>Kết luận:</strong> Vì thỏa mãn đầy đủ 8 tiên đề, \( V = \mathbb{R}^2 \) là một không gian
+                <p> Vì thỏa mãn đầy đủ 8 tiên đề, \( V = \mathbb{R}^2 \) là một không gian
                     vector.</p>
 
-                <div class="pdf-h2" id="kg-vector-con">2 &nbsp; Không gian vector con</div>
+                <div class="pdf-h1"
+                    style="font-size: 1.5rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-bottom: 20px;">
+                    Không gian vector con</div>
 
-                <div class="pdf-h3" id="kg-vector-con-2-1">2.1 &nbsp; Định nghĩa</div>
+                <div class="pdf-h3" id="kg-vector-con-2-1">1 &nbsp; Định nghĩa</div>
                 <p>Một tập con \( W \) của một không gian vector \( V \) được gọi là một <strong>không gian con</strong>
                     của \( V \) nếu \( W \) là một không gian vector dưới các phép tính cộng và nhân vô hướng được xác
                     định trong \( V \). Nghĩa là \( W \) phải thỏa mãn 3 điều kiện sau:</p>
@@ -1442,7 +1443,7 @@
                         &emsp;&emsp;&emsp;&nbsp; (Đóng kín với phép nhân vô hướng)</li>
                 </ol>
 
-                <div class="pdf-h3" id="kg-vector-con-2-2">2.2 &nbsp; Kiểm tra không gian vector con</div>
+                <div class="pdf-h3" id="kg-vector-con-2-2">2 &nbsp; Kiểm tra không gian vector con</div>
                 <p>Để kiểm tra xem \( W \) có là một không gian con của một không gian vector \( V \) hay không, ta kiểm
                     tra tính đúng đắn của 3 mệnh đề sau:</p>
                 <ol class="pdf-list" style="padding-left: 20px;">
@@ -1483,7 +1484,7 @@
                             (\text{Thỏa mãn}) \)</div>
                     </li>
                 </ol>
-                <p><strong>Kết luận:</strong> Vì \( W \) thỏa mãn cả 3 điều kiện trên nên \( W \) là một không gian
+                <p> Vì \( W \) thỏa mãn cả 3 điều kiện trên nên \( W \) là một không gian
                     vector con của \( \mathbb{R}^3 \).</p>
 
                 <div class="pdf-box">
@@ -1515,7 +1516,7 @@
                         <div class="math-center">\( \Rightarrow u + v \notin W \quad (\text{Không thỏa mãn}) \)</div>
                     </li>
                 </ol>
-                <p><strong>Kết luận:</strong> Vì \( W \) vi phạm điều kiện đóng kín với phép cộng nên \( W \)
+                <p>Vì \( W \) vi phạm điều kiện đóng kín với phép cộng nên \( W \)
                     <strong>không</strong> là một không gian vector con của \( \mathbb{R}^3 \).
                 </p>
 
@@ -1548,26 +1549,22 @@
                         <div class="chapter-list">
                             <div class="chapter-item playing" onclick="seekTo(0); setActive(this)">
                                 <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Vector ở phổ thông</span></div>
+                                <div class="chapter-info"><span class="chapter-title">Giới thiệu</span></div>
                                 <div class="time-badge">00:00</div>
                             </div>
-                            <div class="chapter-item" onclick="seekTo(60); setActive(this)">
+                            <div class="chapter-item" onclick="seekTo(100); setActive(this)">
                                 <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Quy tắc nối đuôi</span></div>
-                                <div class="time-badge">01:00</div>
+                                <div class="chapter-info"><span class="chapter-title">Định nghĩa không gian
+                                        vector</span></div>
+                                <div class="time-badge">01:40</div>
                             </div>
-                            <div class="chapter-item" onclick="seekTo(230); setActive(this)">
+                            <div class="chapter-item" onclick="seekTo(285); setActive(this)">
                                 <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Quy tắc hình bình hành</span>
+                                <div class="chapter-info"><span class="chapter-title">Không gian vector con</span>
                                 </div>
-                                <div class="time-badge">03:50</div>
+                                <div class="time-badge">04:45</div>
                             </div>
-                            <div class="chapter-item" onclick="seekTo(307); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Phép nhân vector với số
-                                        thực</span></div>
-                                <div class="time-badge">05:07</div>
-                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -1576,10 +1573,10 @@
             <div class="chapter-card" id="bai-tap">
                 <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Bài tập</h2>
 
-                <div class="pdf-h1" id="bai-tap-1">1 &nbsp; Định nghĩa Không gian vector</div>
+
 
                 <div class="box-blue">
-                    <span class="text-red-bold">Bài 1.1</span> Kiểm tra tập \( V \) với các phép toán được định nghĩa
+                    <span class="text-red-bold">Bài 1</span> Kiểm tra tập \( V \) với các phép toán được định nghĩa
                     như sau có là không gian vector không?
 
                     <ul class="exercise-list">
@@ -1602,7 +1599,6 @@
                     </ul>
                 </div>
 
-                <div class="pdf-h1" id="bai-tap-2">2 &nbsp; Không gian vector con</div>
 
                 <p>
                     <span class="pdf-remark">Nhận xét:</span> Một tập con trong \( \mathbb{R}^n \) định nghĩa bởi các
@@ -1658,7 +1654,7 @@
                 </div>
 
                 <div class="box-blue">
-                    <span class="text-red-bold">Bài 2.1</span> Chứng minh các tập hợp \( W \) sau đây là không gian con
+                    <span class="text-red-bold">Bài 2</span> Chứng minh các tập hợp \( W \) sau đây là không gian con
                     của các không gian vector tương ứng:
 
                     <ul class="exercise-list">
@@ -1674,7 +1670,7 @@
                 </div>
 
                 <div class="box-blue">
-                    <span class="text-red-bold">Bài 2.2</span> Giải thích tại sao các tập hợp \( W \) sau <strong>không
+                    <span class="text-red-bold">Bài 3</span> Giải thích tại sao các tập hợp \( W \) sau <strong>không
                         phải</strong> là không gian con của không gian vector tương ứng:
 
                     <ul class="exercise-list">
@@ -1690,7 +1686,7 @@
                     </ul>
                 </div>
                 <div class="box-blue">
-                    <span class="text-red-bold">Bài 2.3</span> Kiểm tra các tập sau đây có là không gian con của các
+                    <span class="text-red-bold">Bài 4</span> Kiểm tra các tập sau đây có là không gian con của các
                     không gian vector tương ứng không?
 
                     <div class="math-scroll" style="margin-top: 10px;">
@@ -1707,7 +1703,7 @@
                 </div>
 
                 <div class="box-blue">
-                    <span class="text-red-bold">Bài 2.4</span> Chứng minh các tập hợp con của các không gian vector quen
+                    <span class="text-red-bold">Bài 5</span> Chứng minh các tập hợp con của các không gian vector quen
                     thuộc sau là các không gian con của chúng:
 
                     <div class="math-scroll" style="margin-top: 10px;">
@@ -1737,7 +1733,10 @@
 
         </main>
     </div>
-
+    <footer
+        style="text-align: center; padding: 30px 20px; margin-top: 20px; margin-bottom: 20px; color: var(--text-sub); font-size: 0.95rem; border-top: 1px solid var(--border); width: 100%;">
+        <p style="margin: 0;">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
+    </footer>
     <script>
         // 1. THEME HANDLING & ANIMATION
         // Theme is auto-initialized by theme-manager.js script
@@ -1801,7 +1800,7 @@
             var originUrl = window.location.origin;
             player = new YT.Player('youtube-player', {
                 height: '100%', width: '100%',
-                videoId: 'woM6wsymvsc',
+                videoId: 'lFuaQHRd2oI',
                 playerVars: { 'playsinline': 1, 'rel': 0, 'origin': originUrl },
                 events: { 'onReady': onPlayerReady, 'onError': onPlayerError }
             });

@@ -826,7 +826,7 @@
             font-size: 1.1rem;
         }
 
-        
+
 
         body.dark .pdf-remark {
             color: #fb7185;
@@ -905,121 +905,299 @@
             box-shadow: 0 0 20px rgba(96, 165, 250, 0.4);
             /* Hiệu ứng phát sáng (Glow) */
         }
+
         /* 1. Xóa dấu chấm tròn và căn lề gốc */
-.custom-nav ul, .custom-nav li {
-    list-style: none !important;
-    margin: 0;
-    padding: 0;
-}
+        .custom-nav ul,
+        .custom-nav li {
+            list-style: none !important;
+            margin: 0;
+            padding: 0;
+        }
 
-/* 2. Định dạng thẻ Link chuẩn để ăn màu xanh và Hover */
-.custom-nav .nav-link, .custom-nav .sub-link {
-    display: flex !important;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 20px;
-    color: #475569;
-    text-decoration: none;
-    transition: all 0.2s;
-    border-left: 3px solid transparent;
-}
+        /* 2. Định dạng thẻ Link chuẩn để ăn màu xanh và Hover */
+        .custom-nav .nav-link,
+        .custom-nav .sub-link {
+            display: flex !important;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            color: #475569;
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
 
-.custom-nav .nav-link:hover, .custom-nav .sub-link:hover {
-    background: #f8fafc;
-    color: var(--primary);
-}
+        .custom-nav .nav-link:hover,
+        .custom-nav .sub-link:hover {
+            background: #f8fafc;
+            color: var(--primary);
+        }
 
-/* 3. Phân cấp thụt lề cho 3 cấp độ */
-.custom-nav .sub-menu .sub-link { padding-left: 40px; } /* Cấp 2 */
-.custom-nav .sub-menu .sub-menu .sub-link { padding-left: 60px !important; font-size: 0.85rem; } /* Cấp 3 */
+        /* 3. Phân cấp thụt lề cho 3 cấp độ */
+        .custom-nav .sub-menu .sub-link {
+            padding-left: 40px;
+        }
 
-/* 4. Trạng thái Active màu xanh */
-.custom-nav .active {
-    background-color: #eff6ff !important;
-    color: var(--primary) !important;
-    font-weight: 600;
-    border-left: 3px solid var(--primary) !important;
-}
+        /* Cấp 2 */
+        .custom-nav .sub-menu .sub-menu .sub-link {
+            padding-left: 60px !important;
+            font-size: 0.85rem;
+        }
 
-body.dark .custom-nav .active { background-color: #1e293b !important; }
-    /* Mặc định ẩn tất cả sub-menu */
-.custom-nav .sub-menu {
-    display: none; 
-    list-style: none !important;
-    padding: 0;
-    margin: 0;
-}
+        /* Cấp 3 */
 
-/* Chỉ hiển thị sub-menu khi thẻ li cha có class .open */
-.custom-nav .has-dropdown.open > .sub-menu {
-    display: block !important;
-    animation: slideDown 0.3s ease-out;
-}
+        /* 4. Trạng thái Active màu xanh */
+        .custom-nav .active {
+            background-color: #eff6ff !important;
+            color: var(--primary) !important;
+            font-weight: 600;
+            border-left: 3px solid var(--primary) !important;
+        }
 
-/* Hiệu ứng xoay mũi tên chuẩn */
-.custom-nav .has-dropdown.open > .toggle-btn .arrow-icon {
-    transform: rotate(180deg); /* Hoặc 90deg tùy ông muốn xoay hướng nào */
-}
+        body.dark .custom-nav .active {
+            background-color: #1e293b !important;
+        }
 
-/* Xóa dấu chấm tròn cho tất cả li */
-.custom-nav li {
-    list-style: none !important;
-}
+        /* Mặc định ẩn tất cả sub-menu */
+        .custom-nav .sub-menu {
+            display: none;
+            list-style: none !important;
+            padding: 0;
+            margin: 0;
+        }
 
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-/* 1. Mặc định ẩn các menu con */
-.custom-nav .sub-menu {
-    display: none; 
-    list-style: none !important;
-}
+        /* Chỉ hiển thị sub-menu khi thẻ li cha có class .open */
+        .custom-nav .has-dropdown.open>.sub-menu {
+            display: block !important;
+            animation: slideDown 0.3s ease-out;
+        }
 
-/* Trạng thái mặc định: Mũi tên trỏ sang phải > */
-.custom-nav .arrow-icon {
-    transition: transform 0.3s ease;
-    transform: rotate(0deg) !important; 
-    display: inline-block;
-}
+        /* Hiệu ứng xoay mũi tên chuẩn */
+        .custom-nav .has-dropdown.open>.toggle-btn .arrow-icon {
+            transform: rotate(180deg);
+            /* Hoặc 90deg tùy ông muốn xoay hướng nào */
+        }
 
-/* Khi mục cha có class .open: Tự xoay 90 độ thành trỏ xuống v */
-.custom-nav .has-dropdown.open > .nav-link .arrow-icon,
-.custom-nav .has-dropdown.open > .toggle-btn .arrow-icon {
-    transform: rotate(90deg) !important;
-}
+        /* Xóa dấu chấm tròn cho tất cả li */
+        .custom-nav li {
+            list-style: none !important;
+        }
 
-/* 4. Thụt lề phân cấp 3 lớp chuẩn đét */
-.custom-nav .sub-menu .sub-link { padding-left: 35px; } 
-.custom-nav .sub-menu .sub-menu .sub-link { padding-left: 55px !important; font-size: 0.85rem; }
-    /* 1. Đưa border-left từ thẻ a sang thẻ li để nó nằm ngoài rìa */
-.custom-nav .nav-item, .custom-nav .sub-menu li {
-    position: relative;
-    border-left: 3px solid transparent; /* Thanh dọc mặc định ẩn */
-    transition: all 0.2s;
-}
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
 
-/* 2. Khi mục đó active, hiện thanh dọc ở sát mép trái Sidebar */
-.custom-nav .nav-item:has(> .active), 
-.custom-nav .sub-menu li:has(> .active) {
-    border-left: 3px solid var(--primary);
-    background-color: var(--hover-bg); /* Nền xanh nhạt cho cả dòng */
-}
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-/* 3. Bỏ border-left cũ ở thẻ a để không bị trùng */
-.custom-nav .active {
-    border-left: none !important; 
-    background-color: transparent !important; /* Reset lại để không bị đè nền */
-    color: var(--primary) !important;
-}
+        /* 1. Mặc định ẩn các menu con */
+        .custom-nav .sub-menu {
+            display: none;
+            list-style: none !important;
+        }
 
-/* 4. Chỉnh lại thụt lề chữ cho đẹp */
-.custom-nav .sub-link { 
-    padding-left: 40px !important; /* Con cấp 1 */
-}
-.custom-nav .sub-menu .sub-menu .sub-link { 
-    padding-left: 60px !important; /* Con cấp 2 (3.1, 5.1) */
-}
+        /* Trạng thái mặc định: Mũi tên trỏ sang phải > */
+        .custom-nav .arrow-icon {
+            transition: transform 0.3s ease;
+            transform: rotate(0deg) !important;
+            display: inline-block;
+        }
+
+        /* Khi mục cha có class .open: Tự xoay 90 độ thành trỏ xuống v */
+        .custom-nav .has-dropdown.open>.nav-link .arrow-icon,
+        .custom-nav .has-dropdown.open>.toggle-btn .arrow-icon {
+            transform: rotate(90deg) !important;
+        }
+
+        /* 4. Thụt lề phân cấp 3 lớp chuẩn đét */
+        .custom-nav .sub-menu .sub-link {
+            padding-left: 35px;
+        }
+
+        .custom-nav .sub-menu .sub-menu .sub-link {
+            padding-left: 55px !important;
+            font-size: 0.85rem;
+        }
+
+        /* 1. Đưa border-left từ thẻ a sang thẻ li để nó nằm ngoài rìa */
+        .custom-nav .nav-item,
+        .custom-nav .sub-menu li {
+            position: relative;
+            border-left: 3px solid transparent;
+            /* Thanh dọc mặc định ẩn */
+            transition: all 0.2s;
+        }
+
+        /* 2. Khi mục đó active, hiện thanh dọc ở sát mép trái Sidebar */
+        .custom-nav .nav-item:has(> .active),
+        .custom-nav .sub-menu li:has(> .active) {
+            border-left: 3px solid var(--primary);
+            background-color: var(--hover-bg);
+            /* Nền xanh nhạt cho cả dòng */
+        }
+
+        /* 3. Bỏ border-left cũ ở thẻ a để không bị trùng */
+        .custom-nav .active {
+            border-left: none !important;
+            background-color: transparent !important;
+            /* Reset lại để không bị đè nền */
+            color: var(--primary) !important;
+        }
+
+        /* 4. Chỉnh lại thụt lề chữ cho đẹp */
+        .custom-nav .sub-link {
+            padding-left: 40px !important;
+            /* Con cấp 1 */
+        }
+
+        .custom-nav .sub-menu .sub-menu .sub-link {
+            padding-left: 60px !important;
+            /* Con cấp 2 (3.1, 5.1) */
+        }
+
+        /* =================== MÀN CHE VIDEO SCI-FI =================== */
+        .temp-video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #050b14;
+            /* Nền xanh đen sâu thẳm */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            overflow: hidden;
+            border-right: 1px solid #334155;
+        }
+
+        /* Vẽ lưới Grid Toán học nền sau */
+        .temp-video-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background-image:
+                linear-gradient(rgba(58, 120, 255, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(58, 120, 255, 0.08) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 0;
+            animation: panGrid 20s linear infinite;
+        }
+
+        /* Quả cầu phát sáng lơ lửng */
+        .temp-video-overlay::after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: var(--primary);
+            filter: blur(90px);
+            opacity: 0.4;
+            z-index: 0;
+            animation: floatOrb 6s infinite alternate ease-in-out;
+        }
+
+        /* Khung kính mờ Glassmorphism */
+        .tv-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            padding: 35px 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(58, 120, 255, 0.05);
+        }
+
+        /* Vòng xoay quanh Icon */
+        .tv-icon-wrapper {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .tv-icon-wrapper i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            text-shadow: 0 0 15px var(--primary);
+        }
+
+        .tv-spinner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px dashed rgba(96, 165, 250, 0.6);
+            border-radius: 50%;
+            animation: spinDash 12s linear infinite;
+        }
+
+        /* Định dạng chữ */
+        .tv-content h4 {
+            margin: 0 0 12px;
+            color: #f8fafc;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 800;
+        }
+
+        .tv-content p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 1rem;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        /* Animations */
+        @keyframes panGrid {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(-40px, -40px);
+            }
+        }
+
+        @keyframes floatOrb {
+            0% {
+                transform: translate(-50px, -30px) scale(0.8);
+            }
+
+            100% {
+                transform: translate(50px, 30px) scale(1.2);
+            }
+        }
+
+        @keyframes spinDash {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
@@ -1070,29 +1248,35 @@ body.dark .custom-nav .active { background-color: #1e293b !important; }
 
     <div class="container">
         <aside class="sidebar custom-nav">
-    <h3 class="nav-title"><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
-    <ul class="nav-list">
-        <li class="nav-item has-dropdown open">
-            <div class="nav-link toggle-btn">
-                <a href="#ly-thuyet" style="text-decoration: none; color: inherit; font-weight: 700; flex-grow: 1;">Lý thuyết</a>
-                <i class="fa-solid fa-chevron-right arrow-icon"></i>
-            </div>
-            <ul class="sub-menu">
-                <li><a href="#dinh-nghia" class="sub-link active">1. Định nghĩa</a></li>
-                <li><a href="#ma-tran-phu-hop" class="sub-link">2. Ma trận phụ hợp</a></li>
-                <li><a href="#phuong-phap-gauss-nghich-dao" class="sub-link">3. Tìm ma trận nghịch đảo bằng phương pháp Gauss</a></li>
+            <h3 class="nav-title"><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
+            <ul class="nav-list">
+                <li class="nav-item has-dropdown open">
+                    <div class="nav-link toggle-btn">
+                        <a href="#ly-thuyet"
+                            style="text-decoration: none; color: inherit; font-weight: 700; flex-grow: 1;">Lý thuyết</a>
+                        <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                    </div>
+                    <ul class="sub-menu">
+                        <li
+                            style="padding: 15px 20px 5px 20px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">
+                            Ma trận nghịch đảo
+                        </li>
+                        <li><a href="#dinh-nghia" class="sub-link active">1. Định nghĩa</a></li>
+                        <li><a href="#ma-tran-phu-hop" class="sub-link">2. Ma trận phụ hợp</a></li>
+                        <li><a href="#phuong-phap-gauss-nghich-dao" class="sub-link">3. Tìm ma trận nghịch đảo bằng
+                                phương pháp Gauss</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#coming-soon" class="nav-link" style="font-weight: 700;">Video trực quan</a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#bai-tap" class="nav-link" style="font-weight: 700;">Bài tập</a>
+                </li>
             </ul>
-        </li>
-
-        <li class="nav-item">
-            <a href="#video-truc-quan" class="nav-link" style="font-weight: 700;">Video trực quan</a>
-        </li>
-
-        <li class="nav-item">
-            <a href="#bai-tap" class="nav-link" style="font-weight: 700;">Bài tập</a>
-        </li>
-    </ul>
-</aside>
+        </aside>
 
         <main class="main-content">
             <div class="chapter-card" id="ly-thuyet">
@@ -1320,9 +1504,10 @@ body.dark .custom-nav .active { background-color: #1e293b !important; }
                             border-bottom: 2px solid var(--primary);
                             display: inline-block;
                         }
+
                         body.dark .pdf-h1 {
                             color: var(--accent);
-                            
+
                         }
 
                         .pdf-h2 {
@@ -1360,299 +1545,356 @@ body.dark .custom-nav .active { background-color: #1e293b !important; }
                         body.dark .pdf-remark {
                             color: #60a5fa;
                         }
-                        
                     </style>
 
-                    
 
-                    <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-solid fa-book-open"></i> Lý thuyết</h2>
 
-    <div class="pdf-h1">Ma trận nghịch đảo</div>
+                    <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-solid fa-book-open"></i> Lý
+                        thuyết</h2>
 
-    <div class="pdf-h2" id="dinh-nghia">1 &nbsp; Định nghĩa</div>
-    <p>Cho \( A \) là ma trận vuông cấp \( n \), ma trận \( A \) gọi là ma trận <strong>khả nghịch</strong> nếu tồn tại ma trận \( B \) vuông cấp \( n \) sao cho:</p>
-    <div class="math-center">
-        \( AB = BA = I_n \quad (I_n \text{ là ma trận đơn vị cấp } n) \)
-    </div>
-    <p>Nếu \( A \) là ma trận khả nghịch thì ma trận \( B \) thỏa điều kiện trên là duy nhất và \( B \) được gọi là ma trận <strong>nghịch đảo</strong> (ma trận ngược) của ma trận \( A \), ký hiệu là \( A^{-1} \). Như vậy, ta có:</p>
-    <div class="math-center">
-        \( A \cdot A^{-1} = A^{-1} \cdot A = I_n \)
-    </div>
+                    <div class="pdf-h1">Ma trận nghịch đảo</div>
 
-    <p><span class="pdf-note" style="color: #9f1239;">Lưu ý:</span> Ta nhấn mạnh rằng tính khả nghịch chỉ có nghĩa đối với ma trận vuông. Tuy nhiên không phải ma trận vuông nào cũng khả nghịch. Tập hợp các ma trận vuông khả nghịch cấp \( n \) trên \( \mathbb{R} \) được kí hiệu là \( GL_n(\mathbb{R}) \).</p>
-
-    <p>Các tính chất quan trọng:</p>
-    <ul class="pdf-list" style="list-style-type: none;">
-        <li>i) Ma trận đơn vị \( I_n \) luôn khả nghịch và \( I_n^{-1} = I_n \quad \forall n \in \mathbb{N}^* \)</li>
-        <li>ii) Ma trận không \( O_n \) không khả nghịch vì
-            <div class="math-center">\( O_n \cdot A = A \cdot O_n = O_n \neq I_n \quad \forall A \in \mathcal{M}_n(\mathbb{N}^*) \)</div>
-        </li>
-        <li>iii) Tích của các ma trận khả nghịch là ma trận khả nghịch. Nghĩa là nếu \( A, B \in GL_n(\mathbb{R}) \) thì tích \( AB \in GL_n(\mathbb{R}) \), hơn nữa:
-            <ul style="list-style-type: disc; padding-left: 20px; display: flex; justify-content: space-around; margin-top: 15px; flex-wrap: wrap;">
-                <li>\( (AB)^{-1} = B^{-1} \cdot A^{-1} \)</li>
-                <li>\( (A^{-1})^{-1} = A \)</li>
-                <li>\( (A^{-1})^T = (A^T)^{-1} \)</li>
-            </ul>
-        </li>
-    </ul>
-
-    <div class="pdf-h2" id="ma-tran-phu-hop">2 &nbsp; Ma trận phụ hợp</div>
-    <p>Cho \( A \) là ma trận vuông cấp \( n \). Ma trận phụ hợp của \( A \), ký hiệu \( P_A \) được định nghĩa như sau:</p>
-    <div class="math-center" style="overflow-x: auto;">
-        \( P_A = \begin{pmatrix} A_{11} & A_{21} & \dots & A_{n1} \\ A_{12} & A_{22} & \dots & A_{n2} \\ \vdots & \vdots & \ddots & \vdots \\ A_{1n} & A_{2n} & \dots & A_{nn} \end{pmatrix} \)
-    </div>
-    <p>trong đó \( A_{ij} \) là phần bù đại số của phần tử \( a_{ij} \) của ma trận \( A \).</p>
-
-    <p><span class="pdf-note" style="color: #9f1239;">Lưu ý:</span> Ma trận phụ hợp được thiết lập từ các <strong>phần bù đại số</strong> \( (A_{ij}) \), nhưng được sắp xếp theo vị trí <strong>chuyển vị</strong> (hàng thành cột). Cụ thể, nếu gọi \( A_{ij} \) là phần bù đại số của phần tử hàng \( i \), cột \( j \) trong ma trận gốc, thì ma trận phụ hợp \( P_A \) có dạng:</p>
-    <div class="math-center" style="overflow-x: auto;">
-        \( P_A = \begin{pmatrix} A_{11} & A_{12} & \dots & A_{1n} \\ A_{21} & A_{22} & \dots & A_{2n} \\ \vdots & \vdots & \ddots & \vdots \\ A_{n1} & A_{n2} & \dots & A_{nn} \end{pmatrix}^T = \begin{pmatrix} A_{11} & A_{21} & \dots & A_{n1} \\ A_{12} & A_{22} & \dots & A_{n2} \\ \vdots & \vdots & \ddots & \vdots \\ A_{1n} & A_{2n} & \dots & A_{nn} \end{pmatrix} \)
-    </div>
-
-    <div class="box-black">
-        <span class="text-red-bold">Ví dụ:</span> Tìm ma trận phụ hợp của ma trận \( A = \begin{pmatrix} 1 & 2 & 3 \\ -2 & 4 & 0 \\ 4 & -5 & 7 \end{pmatrix} \)
-        
-        <span class="text-blue-sol">Lời giải</span>
-        
-        <p>Ta có: \( A_{11} = (-1)^{1+1} \cdot \begin{vmatrix} 4 & 0 \\ -5 & 7 \end{vmatrix} = 28 \)</p>
-        <p>Tương tự, ta có:</p>
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0;">
-            <div>• \( A_{12} = 14 \)</div>
-            <div>• \( A_{21} = -29 \)</div>
-            <div>• \( A_{23} = 13 \)</div>
-            <div>• \( A_{32} = -6 \)</div>
-            
-            <div>• \( A_{13} = -6 \)</div>
-            <div>• \( A_{22} = -5 \)</div>
-            <div>• \( A_{31} = -12 \)</div>
-            <div>• \( A_{33} = 8 \)</div>
-        </div>
-        
-        <p>Suy ra:</p>
-        <div class="math-center" style="overflow-x: auto;">
-            \( P_A = \begin{pmatrix} A_{11} & A_{21} & A_{31} \\ A_{12} & A_{22} & A_{32} \\ A_{13} & A_{23} & A_{33} \end{pmatrix} = \begin{pmatrix} 28 & -29 & -12 \\ 14 & -5 & -6 \\ -6 & 13 & 8 \end{pmatrix} \)
-        </div>
-    </div>
-
-    <p><span style="color: blue; font-weight: bold; font-style: italic;">Nhận xét:</span> Một ma trận vuông khả nghịch khi và chỉ khi định thức của nó khác không. Khi đó ta có công thức:</p>
-    <div class="math-center">
-        \( A^{-1} = \frac{1}{\det(A)} \cdot P_A \)
-    </div>
-
-    <div class="pdf-h2" id="phuong-phap-gauss-nghich-dao">3 &nbsp; Tìm ma trận nghịch đảo bằng phương pháp Gauss</div>
-    <p>Để tìm ma trận nghịch đảo của một ma trận vuông \( A \) cấp \( n \), ta lập mở trận mở rộng (hay bổ sung) bằng cách thêm ma trận đơn vị cùng cấp vào bên phải ma trận \( A \), ký hiệu là \( [A \mid I_n] \). Sau đó, thực hiện các phép biến đổi sơ cấp để đưa về dạng \( [I_n \mid A^{-1}] \):</p>
-    <div class="math-center">
-        \( [A \mid I_n] \xrightarrow{\text{Biến đổi sơ cấp}} [I_n \mid A^{-1}] \)
-    </div>
-
-    <div class="box-black">
-        <span class="text-red-bold">Ví dụ:</span> Tìm ma trận nghịch đảo của ma trận \( A \) sau đây: \( A = \begin{pmatrix} 0 & 2 & 3 \\ 1 & 0 & -1 \\ 4 & 5 & 0 \end{pmatrix} \)
-        
-        <span class="text-blue-sol">Lời giải</span>
-        
-        <div style="text-align: left; padding-left: 10px; overflow-x: auto;">
-            
-            <p><strong>Cách 1: Dùng ma trận phụ hợp</strong></p>
-            
-            <div style="margin-bottom: 20px; text-align: left;">
-    <p style="margin-bottom: 10px;">Ta có:</p>
-    <div style="overflow-x: auto; margin-bottom: 10px;">
-        \( A = \begin{pmatrix} 0 & 2 & 3 \\ 1 & 0 & -1 \\ 4 & 5 & 0 \end{pmatrix} \Rightarrow \det A = \begin{vmatrix} 0 & 2 & 3 \\ 1 & 0 & -1 \\ 4 & 5 & 0 \end{vmatrix} = 7 \neq 0 \)
-    </div>
-    <p>Suy ra \( A \) khả nghịch.</p>
-</div>
-            
-            <p>Ta có:</p>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 15px 0;">
-                <div>1. \( c_{11} = \begin{vmatrix} 0 & -1 \\ 5 & 0 \end{vmatrix} = 5 \)</div>
-                <div>4. \( c_{21} = -\begin{vmatrix} 2 & 3 \\ 5 & 0 \end{vmatrix} = 15 \)</div>
-                <div>7. \( c_{31} = \begin{vmatrix} 2 & 3 \\ 0 & -1 \end{vmatrix} = -2 \)</div>
-
-                <div>2. \( c_{12} = -\begin{vmatrix} 1 & -1 \\ 4 & 0 \end{vmatrix} = -4 \)</div>
-                <div>5. \( c_{22} = \begin{vmatrix} 0 & 3 \\ 4 & 0 \end{vmatrix} = -12 \)</div>
-                <div>8. \( c_{32} = -\begin{vmatrix} 0 & 3 \\ 1 & -1 \end{vmatrix} = 3 \)</div>
-
-                <div>3. \( c_{13} = \begin{vmatrix} 1 & 0 \\ 4 & 5 \end{vmatrix} = 5 \)</div>
-                <div>6. \( c_{23} = -\begin{vmatrix} 0 & 2 \\ 4 & 5 \end{vmatrix} = 8 \)</div>
-                <div>9. \( c_{33} = \begin{vmatrix} 0 & 2 \\ 1 & 0 \end{vmatrix} = -2 \)</div>
-            </div>
-
-            <div style="margin-bottom: 25px;">
-                Thiết lập ma trận phụ hợp \( C = \begin{pmatrix} c_{11} & c_{12} & c_{13} \\ c_{21} & c_{22} & c_{23} \\ c_{31} & c_{32} & c_{33} \end{pmatrix} = \begin{pmatrix} 5 & -4 & 5 \\ 15 & -12 & 8 \\ -2 & 3 & -2 \end{pmatrix} \)
-            </div>
-            
-            <div style="margin-bottom: 30px;">
-                Suy ra \( A^{-1} = \frac{1}{detA} \cdot C^T = \frac{1}{7} \cdot \begin{pmatrix} 5 & 15 & -2 \\ -4 & -12 & 3 \\ 5 & 8 & -2 \end{pmatrix} \quad \text{Vậy } A^{-1} = \frac{1}{7} \cdot \begin{pmatrix} 5 & 15 & -2 \\ -4 & -12 & 3 \\ 5 & 8 & -2 \end{pmatrix} \)
-            </div>
-
-            <p><strong>Cách 2: Dùng phương pháp khử Gauss</strong></p>
-            <p>Xét ma trận mở rộng</p>
-            
-            <div style="margin-bottom: 25px; margin-top: 15px;">
-                \( A \mid I_3 = \left( \begin{array}{ccc|ccc} 0 & 2 & 3 & 1 & 0 & 0 \\ 1 & 0 & -1 & 0 & 1 & 0 \\ 4 & 5 & 0 & 0 & 0 & 1 \end{array} \right) \xrightarrow{h_2 \leftrightarrow h_1} \left( \begin{array}{ccc|ccc} 1 & 0 & -1 & 0 & 1 & 0 \\ 0 & 2 & 3 & 1 & 0 & 0 \\ 4 & 5 & 0 & 0 & 0 & 1 \end{array} \right) \)
-            </div>
-            
-            <div style="margin-bottom: 25px;">
-                \( \xrightarrow{h_3 = h_3 - 4h_1} \left( \begin{array}{ccc|ccc} 1 & 0 & -1 & 0 & 1 & 0 \\ 0 & 2 & 3 & 1 & 0 & 0 \\ 0 & 5 & 4 & 0 & -4 & 1 \end{array} \right) \xrightarrow{h_2 = \frac{1}{2}h_2} \left( \begin{array}{ccc|ccc} 1 & 0 & -1 & 0 & 1 & 0 \\ 0 & 1 & \frac{3}{2} & \frac{1}{2} & 0 & 0 \\ 0 & 5 & 4 & 0 & -4 & 1 \end{array} \right) \)
-            </div>
-            
-            <div style="margin-bottom: 25px;">
-                \( \xrightarrow{h_3 = h_3 - 5h_2} \left( \begin{array}{ccc|ccc} 1 & 0 & -1 & 0 & 1 & 0 \\ 0 & 1 & \frac{3}{2} & \frac{1}{2} & 0 & 0 \\ 0 & 0 & -\frac{7}{2} & -\frac{5}{2} & -4 & 1 \end{array} \right) \xrightarrow{h_3 = -\frac{2}{7}h_3} \left( \begin{array}{ccc|ccc} 1 & 0 & -1 & 0 & 1 & 0 \\ 0 & 1 & \frac{3}{2} & \frac{1}{2} & 0 & 0 \\ 0 & 0 & 1 & \frac{5}{7} & \frac{8}{7} & -\frac{2}{7} \end{array} \right) \)
-            </div>
-            
-            <div style="margin-bottom: 15px;">
-                \( \xrightarrow[h_2 = h_2 - \frac{3}{2}h_3]{h_1 = h_1 + h_3} \left( \begin{array}{ccc|ccc} 1 & 0 & 0 & \frac{5}{7} & \frac{15}{7} & -\frac{2}{7} \\ 0 & 1 & 0 & -\frac{4}{7} & -\frac{12}{7} & \frac{3}{7} \\ 0 & 0 & 1 & \frac{5}{7} & \frac{8}{7} & -\frac{2}{7} \end{array} \right) = I_3 \mid A^{-1} \)
-            </div>
-            
-            <div style="margin-top: 25px;">
-                \( \text{Vậy } A^{-1} = \begin{pmatrix} \frac{5}{7} & \frac{15}{7} & -\frac{2}{7} \\ -\frac{4}{7} & -\frac{12}{7} & \frac{3}{7} \\ \frac{5}{7} & \frac{8}{7} & -\frac{2}{7} \end{pmatrix} \)
-            </div>
-            
-        </div>
-    </div>
-
-    <script>
-        if (window.MathJax && window.MathJax.typeset) {
-            window.MathJax.typeset();
-        }
-    </script>
-                </div>
-
-            </div>
-
-            <div class="chapter-card" id="video-truc-quan"
-                style="padding: 0; overflow: hidden; border: none; background: transparent;">
-                <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-brands fa-youtube"></i> Video trực
-                    quan</h2>
-
-                <div class="cinema-container">
-                    <div class="video-box">
-                        <div id="youtube-player"></div>
+                    <div class="pdf-h2" id="dinh-nghia">1 &nbsp; Định nghĩa</div>
+                    <p>Cho \( A \) là ma trận vuông cấp \( n \), ma trận \( A \) gọi là ma trận <strong>khả
+                            nghịch</strong> nếu tồn tại ma trận \( B \) vuông cấp \( n \) sao cho:</p>
+                    <div class="math-center">
+                        \( AB = BA = I_n \quad (I_n \text{ là ma trận đơn vị cấp } n) \)
+                    </div>
+                    <p>Nếu \( A \) là ma trận khả nghịch thì ma trận \( B \) thỏa điều kiện trên là duy nhất và \( B \)
+                        được gọi là ma trận <strong>nghịch đảo</strong> (ma trận ngược) của ma trận \( A \), ký hiệu là
+                        \( A^{-1} \). Như vậy, ta có:</p>
+                    <div class="math-center">
+                        \( A \cdot A^{-1} = A^{-1} \cdot A = I_n \)
                     </div>
 
-                    <div class="playlist-box">
-                        <div class="playlist-header">
-                            <span>Nội dung</span>
-                            <span style="font-size: 0.8rem; color: #94a3b8;">4 phần</span>
+                    <p><span class="pdf-note" style="color: #9f1239;">Lưu ý:</span> Ta nhấn mạnh rằng tính khả nghịch
+                        chỉ có nghĩa đối với ma trận vuông. Tuy nhiên không phải ma trận vuông nào cũng khả nghịch. Tập
+                        hợp các ma trận vuông khả nghịch cấp \( n \) trên \( \mathbb{R} \) được kí hiệu là \(
+                        GL_n(\mathbb{R}) \).</p>
+
+                    <p>Các tính chất quan trọng:</p>
+                    <ul class="pdf-list" style="list-style-type: none;">
+                        <li>i) Ma trận đơn vị \( I_n \) luôn khả nghịch và \( I_n^{-1} = I_n \quad \forall n \in
+                            \mathbb{N}^* \)</li>
+                        <li>ii) Ma trận không \( O_n \) không khả nghịch vì
+                            <div class="math-center">\( O_n \cdot A = A \cdot O_n = O_n \neq I_n \quad \forall A \in
+                                \mathcal{M}_n(\mathbb{N}^*) \)</div>
+                        </li>
+                        <li>iii) Tích của các ma trận khả nghịch là ma trận khả nghịch. Nghĩa là nếu \( A, B \in
+                            GL_n(\mathbb{R}) \) thì tích \( AB \in GL_n(\mathbb{R}) \), hơn nữa:
+                            <ul
+                                style="list-style-type: disc; padding-left: 20px; display: flex; justify-content: space-around; margin-top: 15px; flex-wrap: wrap;">
+                                <li>\( (AB)^{-1} = B^{-1} \cdot A^{-1} \)</li>
+                                <li>\( (A^{-1})^{-1} = A \)</li>
+                                <li>\( (A^{-1})^T = (A^T)^{-1} \)</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <div class="pdf-h2" id="ma-tran-phu-hop">2 &nbsp; Ma trận phụ hợp</div>
+                    <p>Cho \( A \) là ma trận vuông cấp \( n \). Ma trận phụ hợp của \( A \), ký hiệu \( P_A \) được
+                        định nghĩa như sau:</p>
+                    <div class="math-center" style="overflow-x: auto;">
+                        \( P_A = \begin{pmatrix} A_{11} & A_{21} & \dots & A_{n1} \\ A_{12} & A_{22} & \dots & A_{n2} \\
+                        \vdots & \vdots & \ddots & \vdots \\ A_{1n} & A_{2n} & \dots & A_{nn} \end{pmatrix} \)
+                    </div>
+                    <p>trong đó \( A_{ij} \) là phần bù đại số của phần tử \( a_{ij} \) của ma trận \( A \).</p>
+
+                    <p><span class="pdf-note" style="color: #9f1239;">Lưu ý:</span> Ma trận phụ hợp được thiết lập từ
+                        các <strong>phần bù đại số</strong> \( (A_{ij}) \), nhưng được sắp xếp theo vị trí
+                        <strong>chuyển vị</strong> (hàng thành cột). Cụ thể, nếu gọi \( A_{ij} \) là phần bù đại số của
+                        phần tử hàng \( i \), cột \( j \) trong ma trận gốc, thì ma trận phụ hợp \( P_A \) có dạng:
+                    </p>
+                    <div class="math-center" style="overflow-x: auto;">
+                        \( P_A = \begin{pmatrix} A_{11} & A_{12} & \dots & A_{1n} \\ A_{21} & A_{22} & \dots & A_{2n} \\
+                        \vdots & \vdots & \ddots & \vdots \\ A_{n1} & A_{n2} & \dots & A_{nn} \end{pmatrix}^T =
+                        \begin{pmatrix} A_{11} & A_{21} & \dots & A_{n1} \\ A_{12} & A_{22} & \dots & A_{n2} \\ \vdots &
+                        \vdots & \ddots & \vdots \\ A_{1n} & A_{2n} & \dots & A_{nn} \end{pmatrix} \)
+                    </div>
+
+                    <div class="box-black">
+                        <span class="text-red-bold">Ví dụ:</span> Tìm ma trận phụ hợp của ma trận \( A = \begin{pmatrix}
+                        1 & 2 & 3 \\ -2 & 4 & 0 \\ 4 & -5 & 7 \end{pmatrix} \)
+
+                        <span class="text-blue-sol">Lời giải</span>
+
+                        <p>Ta có: \( A_{11} = (-1)^{1+1} \cdot \begin{vmatrix} 4 & 0 \\ -5 & 7 \end{vmatrix} = 28 \)</p>
+                        <p>Tương tự, ta có:</p>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0;">
+                            <div>• \( A_{12} = 14 \)</div>
+                            <div>• \( A_{21} = -29 \)</div>
+                            <div>• \( A_{23} = 13 \)</div>
+                            <div>• \( A_{32} = -6 \)</div>
+
+                            <div>• \( A_{13} = -6 \)</div>
+                            <div>• \( A_{22} = -5 \)</div>
+                            <div>• \( A_{31} = -12 \)</div>
+                            <div>• \( A_{33} = 8 \)</div>
                         </div>
-                        <div class="chapter-list">
-                            <div class="chapter-item playing" onclick="seekTo(0); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Vector ở phổ thông</span></div>
-                                <div class="time-badge">00:00</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(60); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Quy tắc nối đuôi</span></div>
-                                <div class="time-badge">01:00</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(230); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Quy tắc hình bình hành</span>
+
+                        <p>Suy ra:</p>
+                        <div class="math-center" style="overflow-x: auto;">
+                            \( P_A = \begin{pmatrix} A_{11} & A_{21} & A_{31} \\ A_{12} & A_{22} & A_{32} \\ A_{13} &
+                            A_{23} & A_{33} \end{pmatrix} = \begin{pmatrix} 28 & -29 & -12 \\ 14 & -5 & -6 \\ -6 & 13 &
+                            8 \end{pmatrix} \)
+                        </div>
+                    </div>
+
+                    <p><span style="color: blue; font-weight: bold; font-style: italic;">Nhận xét:</span> Một ma trận
+                        vuông khả nghịch khi và chỉ khi định thức của nó khác không. Khi đó ta có công thức:</p>
+                    <div class="math-center">
+                        \( A^{-1} = \frac{1}{\det(A)} \cdot P_A \)
+                    </div>
+
+                    <div class="pdf-h2" id="phuong-phap-gauss-nghich-dao">3 &nbsp; Tìm ma trận nghịch đảo bằng phương
+                        pháp Gauss</div>
+                    <p>Để tìm ma trận nghịch đảo của một ma trận vuông \( A \) cấp \( n \), ta lập mở trận mở rộng (hay
+                        bổ sung) bằng cách thêm ma trận đơn vị cùng cấp vào bên phải ma trận \( A \), ký hiệu là \( [A
+                        \mid I_n] \). Sau đó, thực hiện các phép biến đổi sơ cấp để đưa về dạng \( [I_n \mid A^{-1}] \):
+                    </p>
+                    <div class="math-center">
+                        \( [A \mid I_n] \xrightarrow{\text{Biến đổi sơ cấp}} [I_n \mid A^{-1}] \)
+                    </div>
+
+                    <div class="box-black">
+                        <span class="text-red-bold">Ví dụ:</span> Tìm ma trận nghịch đảo của ma trận \( A \) sau đây: \(
+                        A = \begin{pmatrix} 0 & 2 & 3 \\ 1 & 0 & -1 \\ 4 & 5 & 0 \end{pmatrix} \)
+
+                        <span class="text-blue-sol">Lời giải</span>
+
+                        <div style="text-align: left; padding-left: 10px; overflow-x: auto;">
+
+                            <p><strong>Cách 1: Dùng ma trận phụ hợp</strong></p>
+
+                            <div style="margin-bottom: 20px; text-align: left;">
+                                <p style="margin-bottom: 10px;">Ta có:</p>
+                                <div style="overflow-x: auto; margin-bottom: 10px;">
+                                    \( A = \begin{pmatrix} 0 & 2 & 3 \\ 1 & 0 & -1 \\ 4 & 5 & 0 \end{pmatrix}
+                                    \Rightarrow \det A = \begin{vmatrix} 0 & 2 & 3 \\ 1 & 0 & -1 \\ 4 & 5 & 0
+                                    \end{vmatrix} = 7 \neq 0 \)
                                 </div>
-                                <div class="time-badge">03:50</div>
+                                <p>Suy ra \( A \) khả nghịch.</p>
                             </div>
-                            <div class="chapter-item" onclick="seekTo(307); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Phép nhân vector với số
-                                        thực</span></div>
-                                <div class="time-badge">05:07</div>
+
+                            <p>Ta có:</p>
+                            <div
+                                style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 15px 0;">
+                                <div>1. \( c_{11} = \begin{vmatrix} 0 & -1 \\ 5 & 0 \end{vmatrix} = 5 \)</div>
+                                <div>4. \( c_{21} = -\begin{vmatrix} 2 & 3 \\ 5 & 0 \end{vmatrix} = 15 \)</div>
+                                <div>7. \( c_{31} = \begin{vmatrix} 2 & 3 \\ 0 & -1 \end{vmatrix} = -2 \)</div>
+
+                                <div>2. \( c_{12} = -\begin{vmatrix} 1 & -1 \\ 4 & 0 \end{vmatrix} = -4 \)</div>
+                                <div>5. \( c_{22} = \begin{vmatrix} 0 & 3 \\ 4 & 0 \end{vmatrix} = -12 \)</div>
+                                <div>8. \( c_{32} = -\begin{vmatrix} 0 & 3 \\ 1 & -1 \end{vmatrix} = 3 \)</div>
+
+                                <div>3. \( c_{13} = \begin{vmatrix} 1 & 0 \\ 4 & 5 \end{vmatrix} = 5 \)</div>
+                                <div>6. \( c_{23} = -\begin{vmatrix} 0 & 2 \\ 4 & 5 \end{vmatrix} = 8 \)</div>
+                                <div>9. \( c_{33} = \begin{vmatrix} 0 & 2 \\ 1 & 0 \end{vmatrix} = -2 \)</div>
                             </div>
+
+                            <div style="margin-bottom: 25px;">
+                                Thiết lập ma trận phụ hợp \( C = \begin{pmatrix} c_{11} & c_{12} & c_{13} \\ c_{21} &
+                                c_{22} & c_{23} \\ c_{31} & c_{32} & c_{33} \end{pmatrix} = \begin{pmatrix} 5 & -4 & 5
+                                \\ 15 & -12 & 8 \\ -2 & 3 & -2 \end{pmatrix} \)
+                            </div>
+
+                            <div style="margin-bottom: 30px;">
+                                Suy ra \( A^{-1} = \frac{1}{detA} \cdot C^T = \frac{1}{7} \cdot \begin{pmatrix} 5 & 15 &
+                                -2 \\ -4 & -12 & 3 \\ 5 & 8 & -2 \end{pmatrix} \quad \text{Vậy } A^{-1} = \frac{1}{7}
+                                \cdot \begin{pmatrix} 5 & 15 & -2 \\ -4 & -12 & 3 \\ 5 & 8 & -2 \end{pmatrix} \)
+                            </div>
+
+                            <p><strong>Cách 2: Dùng phương pháp khử Gauss</strong></p>
+                            <p>Xét ma trận mở rộng</p>
+
+                            <div style="margin-bottom: 25px; margin-top: 15px;">
+                                \( A \mid I_3 = \left( \begin{array}{ccc|ccc} 0 & 2 & 3 & 1 & 0 & 0 \\ 1 & 0 & -1 & 0 &
+                                1 & 0 \\ 4 & 5 & 0 & 0 & 0 & 1 \end{array} \right) \xrightarrow{h_2 \leftrightarrow h_1}
+                                \left( \begin{array}{ccc|ccc} 1 & 0 & -1 & 0 & 1 & 0 \\ 0 & 2 & 3 & 1 & 0 & 0 \\ 4 & 5 &
+                                0 & 0 & 0 & 1 \end{array} \right) \)
+                            </div>
+
+                            <div style="margin-bottom: 25px;">
+                                \( \xrightarrow{h_3 = h_3 - 4h_1} \left( \begin{array}{ccc|ccc} 1 & 0 & -1 & 0 & 1 & 0
+                                \\ 0 & 2 & 3 & 1 & 0 & 0 \\ 0 & 5 & 4 & 0 & -4 & 1 \end{array} \right) \xrightarrow{h_2
+                                = \frac{1}{2}h_2} \left( \begin{array}{ccc|ccc} 1 & 0 & -1 & 0 & 1 & 0 \\ 0 & 1 &
+                                \frac{3}{2} & \frac{1}{2} & 0 & 0 \\ 0 & 5 & 4 & 0 & -4 & 1 \end{array} \right) \)
+                            </div>
+
+                            <div style="margin-bottom: 25px;">
+                                \( \xrightarrow{h_3 = h_3 - 5h_2} \left( \begin{array}{ccc|ccc} 1 & 0 & -1 & 0 & 1 & 0
+                                \\ 0 & 1 & \frac{3}{2} & \frac{1}{2} & 0 & 0 \\ 0 & 0 & -\frac{7}{2} & -\frac{5}{2} & -4
+                                & 1 \end{array} \right) \xrightarrow{h_3 = -\frac{2}{7}h_3} \left(
+                                \begin{array}{ccc|ccc} 1 & 0 & -1 & 0 & 1 & 0 \\ 0 & 1 & \frac{3}{2} & \frac{1}{2} & 0 &
+                                0 \\ 0 & 0 & 1 & \frac{5}{7} & \frac{8}{7} & -\frac{2}{7} \end{array} \right) \)
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                \( \xrightarrow[h_2 = h_2 - \frac{3}{2}h_3]{h_1 = h_1 + h_3} \left(
+                                \begin{array}{ccc|ccc} 1 & 0 & 0 & \frac{5}{7} & \frac{15}{7} & -\frac{2}{7} \\ 0 & 1 &
+                                0 & -\frac{4}{7} & -\frac{12}{7} & \frac{3}{7} \\ 0 & 0 & 1 & \frac{5}{7} & \frac{8}{7}
+                                & -\frac{2}{7} \end{array} \right) = I_3 \mid A^{-1} \)
+                            </div>
+
+                            <div style="margin-top: 25px;">
+                                \( \text{Vậy } A^{-1} = \begin{pmatrix} \frac{5}{7} & \frac{15}{7} & -\frac{2}{7} \\
+                                -\frac{4}{7} & -\frac{12}{7} & \frac{3}{7} \\ \frac{5}{7} & \frac{8}{7} & -\frac{2}{7}
+                                \end{pmatrix} \)
+                            </div>
+
                         </div>
                     </div>
+
+                    <script>
+                        if (window.MathJax && window.MathJax.typeset) {
+                            window.MathJax.typeset();
+                        }
+                    </script>
                 </div>
+
+            </div>
+
+            <div class="video-box" id="coming-soon">
+                <div class="temp-video-overlay">
+                    <div class="tv-content">
+                        <div class="tv-icon-wrapper">
+                            <div class="tv-spinner"></div>
+                            <i class="fa-solid fa-hourglass-half"></i>
+                        </div>
+                        <h4>Sắp ra mắt</h4>
+                        <p>Video trực quan đang trong quá trình biên tập.<br>Hệ thống sẽ cập nhật trong thời gian tới.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="youtube-player"></div>
             </div>
 
             <div class="chapter-card" id="bai-tap">
-    <div class="chapter-card" id="bai-tap">
-    <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Bài tập</h2>
+                <div class="chapter-card" id="bai-tap">
+                    <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Bài tập</h2>
 
-    <div class="box-blue">
-        <p><span class="text-red-bold">Bài 1.</span> Tìm ma trận nghịch đảo của các ma trận sau:</p>
+                    <div class="box-blue">
+                        <p><span class="text-red-bold">Bài 1.</span> Tìm ma trận nghịch đảo của các ma trận sau:</p>
 
-        <div class="math-scroll">
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left; margin-top: 15px;">
-                <div>
-                    <div style="margin-bottom: 25px;">a) \( A = \begin{pmatrix} 3 & 4 \\ 5 & 7 \end{pmatrix} \)</div>
-                    <div style="margin-bottom: 25px;">b) \( A = \begin{pmatrix} 3 & -1 \\ 5 & 2 \end{pmatrix} \)</div>
-                    <div>c) \( A = \begin{pmatrix} 3 & -4 & 5 \\ 2 & -3 & 1 \\ 3 & -5 & 1 \end{pmatrix} \)</div>
+                        <div class="math-scroll">
+                            <div
+                                style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left; margin-top: 15px;">
+                                <div>
+                                    <div style="margin-bottom: 25px;">a) \( A = \begin{pmatrix} 3 & 4 \\ 5 & 7
+                                        \end{pmatrix} \)</div>
+                                    <div style="margin-bottom: 25px;">b) \( A = \begin{pmatrix} 3 & -1 \\ 5 & 2
+                                        \end{pmatrix} \)</div>
+                                    <div>c) \( A = \begin{pmatrix} 3 & -4 & 5 \\ 2 & -3 & 1 \\ 3 & -5 & 1 \end{pmatrix}
+                                        \)</div>
+                                </div>
+
+                                <div>
+                                    <div style="margin-bottom: 25px;">d) \( A = \begin{pmatrix} 1 & 0 & 2 \\ 2 & -1 & 3
+                                        \\ 4 & 1 & 8 \end{pmatrix} \)</div>
+                                    <div>e) \( A = \begin{pmatrix} 1 & 2 & 3 & 4 \\ 2 & 2 & 1 & 2 \\ 1 & 1 & 1 & -1 \\ 1
+                                        & 0 & -2 & 6 \end{pmatrix} \)</div>
+                                </div>
+
+                                <div>
+                                    <div>f) \( A = \begin{pmatrix} 1 & -a & 0 & 0 \\ 0 & 1 & -a & 0 \\ 0 & 0 & 1 & -a \\
+                                        0 & 0 & 0 & 1 \end{pmatrix} \)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p style="margin-top: 25px;"><span class="text-red-bold">Bài 2.</span> Giải các phương trình ma
+                            trận sau:</p>
+
+                        <div class="math-scroll">
+                            <div style="text-align: left; margin-top: 15px;">
+                                <div style="margin-bottom: 25px;">
+                                    a) \( X \begin{pmatrix} 1 & -2 \\ -2 & 5 \end{pmatrix} - 3 \begin{pmatrix} 0 & 2 \\
+                                    -4 & 1 \\ 3 & -2 \end{pmatrix} = 2 \begin{pmatrix} 1 & 3 \\ 5 & 1 \\ -3 & 1
+                                    \end{pmatrix} \)
+                                </div>
+                                <div style="margin-bottom: 25px;">
+                                    b) \( \begin{pmatrix} 2 & 1 & -1 \\ 1 & 1 & 2 \end{pmatrix} \begin{pmatrix} 2 & -1 &
+                                    -1 \\ -1 & 3 & 2 \\ 3 & -2 & 2 \end{pmatrix} + X \begin{pmatrix} 1 & 2 & -3 \\ 3 & 1
+                                    & -4 \\ 1 & 1 & -3 \end{pmatrix} = \begin{pmatrix} 2 & 1 & -1 \\ -2 & 3 & 1
+                                    \end{pmatrix} \)
+                                </div>
+                                <div style="margin-bottom: 25px;">
+                                    c) \( \begin{pmatrix} 2 & -1 & -1 \\ -1 & 3 & 2 \\ 3 & -2 & 2 \end{pmatrix}
+                                    \begin{pmatrix} 1 & -2 \\ 2 & 1 \\ 3 & 1 \end{pmatrix} + \begin{pmatrix} -1 & 1 & 2
+                                    \\ -2 & 1 & 3 \\ 1 & 1 & -1 \end{pmatrix} X = \begin{pmatrix} 2 & 3 \\ -1 & 2 \\ 1 &
+                                    1 \end{pmatrix} \)
+                                </div>
+                                <div style="margin-bottom: 25px;">
+                                    d) \( AX = B; \quad \text{biết } A = \begin{pmatrix} 1 & 2 \\ 5 & 8 \end{pmatrix};
+                                    \quad B = \begin{pmatrix} -2 & 1 \\ 6 & -3 \end{pmatrix} \)
+                                </div>
+                                <div style="margin-bottom: 25px;">
+                                    e) \( AXB = C; \quad \text{biết } A = \begin{pmatrix} 3 & -1 \\ 5 & -2
+                                    \end{pmatrix}; \quad B = \begin{pmatrix} 5 & 6 \\ 7 & 8 \end{pmatrix}; \quad C =
+                                    \begin{pmatrix} 14 & 16 \\ 9 & 10 \end{pmatrix} \)
+                                </div>
+                                <div style="margin-bottom: 25px;">
+                                    f) \( B^T - XA = 2X; \quad \text{biết } A = \begin{pmatrix} 1 & 2 \\ -1 & 1
+                                    \end{pmatrix}; \quad B = \begin{pmatrix} 1 & -1 & 2 \\ 1 & 4 & 0 \end{pmatrix} \)
+                                </div>
+                                <div>
+                                    g) \( XB = A \quad \text{biết } A = \begin{pmatrix} 1 & 3 & -2 \\ -2 & 4 & 1 \\ 3 &
+                                    -5 & 2 \end{pmatrix}; \quad B = \begin{pmatrix} 3 & -2 & 4 \\ 2 & 5 & -2 \\ 1 & 3 &
+                                    -1 \end{pmatrix} \)
+                                </div>
+                            </div>
+                        </div>
+
+                        <p style="margin-top: 25px;"><span class="text-red-bold">Bài 3.</span> Cho \( A =
+                            \begin{pmatrix} 1 & 3 \\ 1 & 2 \end{pmatrix}; \quad B = \begin{pmatrix} 0 & 4 \\ -2 & 1
+                            \end{pmatrix} \)</p>
+
+                        <div class="math-scroll" style="margin-top: 15px;">
+                            <ul style="list-style: none; padding-left: 10px;">
+                                <li style="margin-bottom: 15px;">a) Xét đa thức \( P(x) = x^2 - 3x - 2 \). Tính \( P(A)
+                                    \)</li>
+                                <li>b) Tìm ma trận X sao cho \( (A^3 - 3A^2 - 2A)XA = AB^T \)</li>
+                            </ul>
+                        </div>
+
+                        <p style="margin-top: 25px;"><span class="text-red-bold">Bài 4.</span> Tìm tất cả giá trị \( m
+                            \) để các ma trận sau khả nghịch:</p>
+
+                        <div class="math-scroll">
+                            <div
+                                style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left; margin-top: 15px;">
+                                <div>\( A = \begin{pmatrix} m & -3 & 1 \\ 2 & 4 & m \\ 3 & 1 & 2 \end{pmatrix} \)</div>
+                                <div>\( B = \begin{pmatrix} m & 2 & 2 \\ 2 & m & 2 \\ 2 & 2 & m \end{pmatrix} \)</div>
+                                <div>\( C = \begin{pmatrix} m+1 & -1 & m \\ 3 & m+1 & 3 \\ m-1 & 0 & m-1 \end{pmatrix}
+                                    \)</div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="download-container">
+                        <p style="margin-bottom: 15px; color: var(--text-sub); font-size: 0.95rem;">
+                            <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài tập? Tải lời giải về để
+                            đối chiếu nhé!
+                        </p>
+
+                        <a href="https://drive.google.com/uc?export=download&id=1t6qXrAnIBmk8dsvFylh-ayUxI1hJx3Fr"
+                            target="_blank" class="btn-download">
+                            <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
+                        </a>
+                    </div>
                 </div>
 
-                <div>
-                    <div style="margin-bottom: 25px;">d) \( A = \begin{pmatrix} 1 & 0 & 2 \\ 2 & -1 & 3 \\ 4 & 1 & 8 \end{pmatrix} \)</div>
-                    <div>e) \( A = \begin{pmatrix} 1 & 2 & 3 & 4 \\ 2 & 2 & 1 & 2 \\ 1 & 1 & 1 & -1 \\ 1 & 0 & -2 & 6 \end{pmatrix} \)</div>
-                </div>
 
-                <div>
-                    <div>f) \( A = \begin{pmatrix} 1 & -a & 0 & 0 \\ 0 & 1 & -a & 0 \\ 0 & 0 & 1 & -a \\ 0 & 0 & 0 & 1 \end{pmatrix} \)</div>
-                </div>
-            </div>
-        </div>
-
-        <p style="margin-top: 25px;"><span class="text-red-bold">Bài 2.</span> Giải các phương trình ma trận sau:</p>
-
-        <div class="math-scroll">
-            <div style="text-align: left; margin-top: 15px;">
-                <div style="margin-bottom: 25px;">
-                    a) \( X \begin{pmatrix} 1 & -2 \\ -2 & 5 \end{pmatrix} - 3 \begin{pmatrix} 0 & 2 \\ -4 & 1 \\ 3 & -2 \end{pmatrix} = 2 \begin{pmatrix} 1 & 3 \\ 5 & 1 \\ -3 & 1 \end{pmatrix} \)
-                </div>
-                <div style="margin-bottom: 25px;">
-                    b) \( \begin{pmatrix} 2 & 1 & -1 \\ 1 & 1 & 2 \end{pmatrix} \begin{pmatrix} 2 & -1 & -1 \\ -1 & 3 & 2 \\ 3 & -2 & 2 \end{pmatrix} + X \begin{pmatrix} 1 & 2 & -3 \\ 3 & 1 & -4 \\ 1 & 1 & -3 \end{pmatrix} = \begin{pmatrix} 2 & 1 & -1 \\ -2 & 3 & 1 \end{pmatrix} \)
-                </div>
-                <div style="margin-bottom: 25px;">
-                    c) \( \begin{pmatrix} 2 & -1 & -1 \\ -1 & 3 & 2 \\ 3 & -2 & 2 \end{pmatrix} \begin{pmatrix} 1 & -2 \\ 2 & 1 \\ 3 & 1 \end{pmatrix} + \begin{pmatrix} -1 & 1 & 2 \\ -2 & 1 & 3 \\ 1 & 1 & -1 \end{pmatrix} X = \begin{pmatrix} 2 & 3 \\ -1 & 2 \\ 1 & 1 \end{pmatrix} \)
-                </div>
-                <div style="margin-bottom: 25px;">
-                    d) \( AX = B; \quad \text{biết } A = \begin{pmatrix} 1 & 2 \\ 5 & 8 \end{pmatrix}; \quad B = \begin{pmatrix} -2 & 1 \\ 6 & -3 \end{pmatrix} \)
-                </div>
-                <div style="margin-bottom: 25px;">
-                    e) \( AXB = C; \quad \text{biết } A = \begin{pmatrix} 3 & -1 \\ 5 & -2 \end{pmatrix}; \quad B = \begin{pmatrix} 5 & 6 \\ 7 & 8 \end{pmatrix}; \quad C = \begin{pmatrix} 14 & 16 \\ 9 & 10 \end{pmatrix} \)
-                </div>
-                <div style="margin-bottom: 25px;">
-                    f) \( B^T - XA = 2X; \quad \text{biết } A = \begin{pmatrix} 1 & 2 \\ -1 & 1 \end{pmatrix}; \quad B = \begin{pmatrix} 1 & -1 & 2 \\ 1 & 4 & 0 \end{pmatrix} \)
-                </div>
-                <div>
-                    g) \( XB = A \quad \text{biết } A = \begin{pmatrix} 1 & 3 & -2 \\ -2 & 4 & 1 \\ 3 & -5 & 2 \end{pmatrix}; \quad B = \begin{pmatrix} 3 & -2 & 4 \\ 2 & 5 & -2 \\ 1 & 3 & -1 \end{pmatrix} \)
-                </div>
-            </div>
-        </div>
-
-        <p style="margin-top: 25px;"><span class="text-red-bold">Bài 3.</span> Cho \( A = \begin{pmatrix} 1 & 3 \\ 1 & 2 \end{pmatrix}; \quad B = \begin{pmatrix} 0 & 4 \\ -2 & 1 \end{pmatrix} \)</p>
-
-        <div class="math-scroll" style="margin-top: 15px;">
-            <ul style="list-style: none; padding-left: 10px;">
-                <li style="margin-bottom: 15px;">a) Xét đa thức \( P(x) = x^2 - 3x - 2 \). Tính \( P(A) \)</li>
-                <li>b) Tìm ma trận X sao cho \( (A^3 - 3A^2 - 2A)XA = AB^T \)</li>
-            </ul>
-        </div>
-
-        <p style="margin-top: 25px;"><span class="text-red-bold">Bài 4.</span> Tìm tất cả giá trị \( m \) để các ma trận sau khả nghịch:</p>
-
-        <div class="math-scroll">
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left; margin-top: 15px;">
-                <div>\( A = \begin{pmatrix} m & -3 & 1 \\ 2 & 4 & m \\ 3 & 1 & 2 \end{pmatrix} \)</div>
-                <div>\( B = \begin{pmatrix} m & 2 & 2 \\ 2 & m & 2 \\ 2 & 2 & m \end{pmatrix} \)</div>
-                <div>\( C = \begin{pmatrix} m+1 & -1 & m \\ 3 & m+1 & 3 \\ m-1 & 0 & m-1 \end{pmatrix} \)</div>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="download-container">
-        <p style="margin-bottom: 15px; color: var(--text-sub); font-size: 0.95rem;">
-            <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài tập? Tải lời giải về để đối chiếu nhé!
-        </p>
-
-        <a href="https://drive.google.com/uc?export=download&id=1t6qXrAnIBmk8dsvFylh-ayUxI1hJx3Fr" target="_blank" class="btn-download">
-            <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
-        </a>
-    </div>
-</div>
-                
-            
 
         </main>
     </div>
-
+    
+    <footer
+        style="text-align: center; padding: 30px 20px; margin-top: 20px; margin-bottom: 20px; color: var(--text-sub); font-size: 0.95rem; border-top: 1px solid var(--border); width: 100%;">
+        <p style="margin: 0;">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
+    </footer>
     <script>
         // 1. THEME HANDLING & ANIMATION
         // Theme is auto-initialized by theme-manager.js script
@@ -1758,69 +2000,69 @@ body.dark .custom-nav .active { background-color: #1e293b !important; }
 
     </script>
     <script>
-    // HÀM MA THUẬT: Gói tất cả vào một chỗ
-    function bootVectoriaMenu() {
-        console.log("Menu System: Booting...");
-        const topbar = document.getElementById('topbar');
-        const topbarHeight = topbar ? topbar.offsetHeight : 60;
+        // HÀM MA THUẬT: Gói tất cả vào một chỗ
+        function bootVectoriaMenu() {
+            console.log("Menu System: Booting...");
+            const topbar = document.getElementById('topbar');
+            const topbarHeight = topbar ? topbar.offsetHeight : 60;
 
-        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
+            const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
 
-        // THAY TOÀN BỘ PHẦN XỬ LÝ CLICK TRONG bootVectoriaMenu BẰNG ĐOẠN NÀY:
-menuLinks.forEach(link => {
-    link.onclick = function(e) {
-        const targetId = this.getAttribute('href');
-        if (!targetId || targetId === "#") return;
-        e.preventDefault();
+            // THAY TOÀN BỘ PHẦN XỬ LÝ CLICK TRONG bootVectoriaMenu BẰNG ĐOẠN NÀY:
+            menuLinks.forEach(link => {
+                link.onclick = function (e) {
+                    const targetId = this.getAttribute('href');
+                    if (!targetId || targetId === "#") return;
+                    e.preventDefault();
 
-        // --- CHIÊU THỨC PHÂN QUYỀN ---
-        // Chỉ những link nằm trong .toggle-btn mới được quyền Đóng/Mở (Toggle)
-        const isParentToggle = this.closest('.toggle-btn');
-        const parentLi = this.closest('.has-dropdown');
+                    // --- CHIÊU THỨC PHÂN QUYỀN ---
+                    // Chỉ những link nằm trong .toggle-btn mới được quyền Đóng/Mở (Toggle)
+                    const isParentToggle = this.closest('.toggle-btn');
+                    const parentLi = this.closest('.has-dropdown');
 
-        if (isParentToggle && parentLi) {
-            parentLi.classList.toggle('open');
-        } 
-        // Nếu là tiểu mục (không có toggle-btn), ta KHÔNG toggle class 'open'
-        // Điều này giúp bấm 3.1, 3.2 thì menu cha vẫn giữ nguyên trạng thái mở.
+                    if (isParentToggle && parentLi) {
+                        parentLi.classList.toggle('open');
+                    }
+                    // Nếu là tiểu mục (không có toggle-btn), ta KHÔNG toggle class 'open'
+                    // Điều này giúp bấm 3.1, 3.2 thì menu cha vẫn giữ nguyên trạng thái mở.
 
-        // --- HIGHLIGHT & CUỘN TRANG ---
-        menuLinks.forEach(el => el.classList.remove('active'));
-        this.classList.add('active');
+                    // --- HIGHLIGHT & CUỘN TRANG ---
+                    menuLinks.forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
 
-        const targetElement = document.querySelector(targetId);
-        if (targetElement) {
-            const topbarHeight = document.getElementById('topbar')?.offsetHeight || 60;
-            const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
-            window.scrollTo({ top: y, behavior: 'smooth' });
-        }
-    };
-});
-
-        // SCROLL SPY: Tự động sáng menu
-        window.onscroll = () => {
-            const sections = document.querySelectorAll('.chapter-card, .pdf-h2[id], .pdf-h3[id], #bai-tap');
-            let currentId = '';
-            sections.forEach(section => {
-                if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - 150) {
-                    currentId = section.getAttribute('id');
-                }
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        const topbarHeight = document.getElementById('topbar')?.offsetHeight || 60;
+                        const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                    }
+                };
             });
-            if (currentId) {
-                menuLinks.forEach(link => {
-                    link.classList.toggle('active', link.getAttribute('href') === `#${currentId}`);
+
+            // SCROLL SPY: Tự động sáng menu
+            window.onscroll = () => {
+                const sections = document.querySelectorAll('.chapter-card, .pdf-h2[id], .pdf-h3[id], #bai-tap');
+                let currentId = '';
+                sections.forEach(section => {
+                    if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - 150) {
+                        currentId = section.getAttribute('id');
+                    }
                 });
-            }
-        };
-    }
+                if (currentId) {
+                    menuLinks.forEach(link => {
+                        link.classList.toggle('active', link.getAttribute('href') === `#${currentId}`);
+                    });
+                }
+            };
+        }
 
-    // KÍCH HOẠT NGAY (Dành cho lật thẻ Ajax)
-    bootVectoriaMenu();
-    // Chạy lại sau 300ms để chắc chắn DOM đã nạp xong sau hiệu ứng lật
-    setTimeout(bootVectoriaMenu, 300);
+        // KÍCH HOẠT NGAY (Dành cho lật thẻ Ajax)
+        bootVectoriaMenu();
+        // Chạy lại sau 300ms để chắc chắn DOM đã nạp xong sau hiệu ứng lật
+        setTimeout(bootVectoriaMenu, 300);
 
-    
-</script>
+
+    </script>
 </body>
-</html>
 
+</html>

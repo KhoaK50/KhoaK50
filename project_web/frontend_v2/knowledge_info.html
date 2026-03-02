@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kho Tàng Kiến Thức - Vectoria Knowledge</title>
-    
+
     <link rel="stylesheet" href="css/knowledge.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    
+
+
 
     <style>
         /* =================== NÚT GẠT (THEME TOGGLE) =================== */
@@ -50,30 +51,31 @@
             border-radius: 50%;
         }
 
-        input:checked + .slider {
+        input:checked+.slider {
             background-color: var(--primary, #3a78ff);
             opacity: 1;
         }
 
-        input:checked + .slider:before {
+        input:checked+.slider:before {
             transform: translateX(18px);
         }
 
         /* =================== HIỆU ỨNG MẶT TRĂNG/MẶT TRỜI (BẢN CHỐNG ĐÈ CSS) =================== */
         div.theme-transition-icons {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    z-index: 999999 !important;
-    pointer-events: none !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    opacity: 0; /* Giữ nguyên 0, JS sẽ bật lên 1 khi chạy animation */
-    visibility: visible !important;
-}
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 999999 !important;
+            pointer-events: none !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            opacity: 0;
+            /* Giữ nguyên 0, JS sẽ bật lên 1 khi chạy animation */
+            visibility: visible !important;
+        }
 
         div.theme-transition-icons i {
             font-size: 8rem !important;
@@ -81,17 +83,33 @@
             margin: 0 !important;
         }
 
-        div.theme-transition-icons #sunIcon { color: #f59e0b !important; }
-        div.theme-transition-icons #moonIcon { color: #f8fafc !important; }
+        div.theme-transition-icons #sunIcon {
+            color: #f59e0b !important;
+        }
+
+        div.theme-transition-icons #moonIcon {
+            color: #f8fafc !important;
+        }
 
         div.theme-transition-icons.animate-rise-fade {
             animation: vectoriaRiseFade 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
         }
 
         @keyframes vectoriaRiseFade {
-            0% { opacity: 0; transform: translateY(150px) scale(0.5); }
-            40% { opacity: 1; transform: translateY(0px) scale(1.2); }
-            100% { opacity: 0; transform: translateY(-100px) scale(0.8); }
+            0% {
+                opacity: 0;
+                transform: translateY(150px) scale(0.5);
+            }
+
+            40% {
+                opacity: 1;
+                transform: translateY(0px) scale(1.2);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(0.8);
+            }
         }
 
         /* =================== HIỆU ỨNG LẬT THẺ & FOCUS MODE =================== */
@@ -140,27 +158,68 @@
             position: fixed;
             font-size: 5rem;
             color: var(--primary, #3a78ff);
-            opacity: 0; 
+            opacity: 0;
             z-index: 999;
             transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
             pointer-events: none;
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.1));
         }
 
         body.dark .study-decor {
             color: #60a5fa;
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5));
         }
 
-        .decor-1 { top: 20%; left: -150px; transform: rotate(-60deg); }
-        .decor-2 { top: 60%; right: -150px; transform: rotate(60deg); font-size: 6rem; }
-        .decor-3 { bottom: -150px; left: 15%; transform: rotate(30deg); }
-        .decor-4 { bottom: -150px; right: 15%; transform: rotate(-30deg); font-size: 4rem;}
+        .decor-1 {
+            top: 20%;
+            left: -150px;
+            transform: rotate(-60deg);
+        }
 
-        .show-decor .decor-1 { left: 40px; transform: rotate(-15deg); opacity: 0.1; }
-        .show-decor .decor-2 { right: 40px; transform: rotate(15deg); opacity: 0.1; }
-        .show-decor .decor-3 { bottom: 40px; transform: rotate(10deg); opacity: 0.1; }
-        .show-decor .decor-4 { bottom: 60px; right: 20%; transform: rotate(-10deg); opacity: 0.1; }
+        .decor-2 {
+            top: 60%;
+            right: -150px;
+            transform: rotate(60deg);
+            font-size: 6rem;
+        }
+
+        .decor-3 {
+            bottom: -150px;
+            left: 15%;
+            transform: rotate(30deg);
+        }
+
+        .decor-4 {
+            bottom: -150px;
+            right: 15%;
+            transform: rotate(-30deg);
+            font-size: 4rem;
+        }
+
+        .show-decor .decor-1 {
+            left: 40px;
+            transform: rotate(-15deg);
+            opacity: 0.1;
+        }
+
+        .show-decor .decor-2 {
+            right: 40px;
+            transform: rotate(15deg);
+            opacity: 0.1;
+        }
+
+        .show-decor .decor-3 {
+            bottom: 40px;
+            transform: rotate(10deg);
+            opacity: 0.1;
+        }
+
+        .show-decor .decor-4 {
+            bottom: 60px;
+            right: 20%;
+            transform: rotate(-10deg);
+            opacity: 0.1;
+        }
 
         .distraction-element {
             transition: opacity 0.4s, transform 0.4s, max-height 0.4s, margin 0.4s;
@@ -206,7 +265,7 @@
             margin-right: 8px;
             font-size: 1.2rem;
         }
-        
+
         .flip-card {
             background-color: transparent;
             perspective: 1000px;
@@ -224,18 +283,36 @@
             transform-style: preserve-3d;
         }
 
-        .flip-card:nth-child(1) .flip-card-inner { transition-delay: 0s; }
-        .flip-card:nth-child(2) .flip-card-inner { transition-delay: 0.08s; }
-        .flip-card:nth-child(3) .flip-card-inner { transition-delay: 0.16s; }
-        .flip-card:nth-child(4) .flip-card-inner { transition-delay: 0.08s; }
-        .flip-card:nth-child(5) .flip-card-inner { transition-delay: 0.16s; }
-        .flip-card:nth-child(6) .flip-card-inner { transition-delay: 0.24s; }
+        .flip-card:nth-child(1) .flip-card-inner {
+            transition-delay: 0s;
+        }
+
+        .flip-card:nth-child(2) .flip-card-inner {
+            transition-delay: 0.08s;
+        }
+
+        .flip-card:nth-child(3) .flip-card-inner {
+            transition-delay: 0.16s;
+        }
+
+        .flip-card:nth-child(4) .flip-card-inner {
+            transition-delay: 0.08s;
+        }
+
+        .flip-card:nth-child(5) .flip-card-inner {
+            transition-delay: 0.16s;
+        }
+
+        .flip-card:nth-child(6) .flip-card-inner {
+            transition-delay: 0.24s;
+        }
 
         .flip-card.is-flipped .flip-card-inner {
             transform: rotateY(180deg);
         }
 
-        .flip-card-front, .flip-card-back {
+        .flip-card-front,
+        .flip-card-back {
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
             width: 100%;
@@ -253,8 +330,9 @@
 
         .flip-card-back {
             position: absolute !important;
-            top: 0; left: 0;
-            transform: rotateY(180deg); 
+            top: 0;
+            left: 0;
+            transform: rotateY(180deg);
             background: linear-gradient(135deg, rgba(58, 120, 255, 0.05), rgba(37, 99, 235, 0.02)) !important;
             border: 2px dashed var(--primary, #3a78ff) !important;
             justify-content: center;
@@ -272,12 +350,17 @@
             border-color: #60a5fa !important;
         }
 
-        .flip-card-back h3 { color: var(--primary, #3a78ff); }
-        body.dark .flip-card-back h3 { color: #60a5fa; }
+        .flip-card-back h3 {
+            color: var(--primary, #3a78ff);
+        }
 
-        .cursor-pointer { cursor: pointer; }
+        body.dark .flip-card-back h3 {
+            color: #60a5fa;
+        }
 
-        
+        .cursor-pointer {
+            cursor: pointer;
+        }
     </style>
     <script>
         window.MathJax = {
@@ -298,6 +381,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <i class="fa-solid fa-ruler-combined study-decor decor-1"></i>
@@ -309,38 +393,47 @@
         <i class="fa-solid fa-sun" id="sunIcon"></i>
         <i class="fa-solid fa-moon" id="moonIcon"></i>
     </div>
-    
-    <header class="main-header safe-zone">
-        <div class="container header-flex" style="display: flex; align-items: center; justify-content: space-between; position: relative;">
-            
-            <div class="logo" style="flex: 1;">
-                <a href="index.html" style="text-decoration: none; color: inherit;">
-                    <i class="fa-solid fa-shapes"></i> Vectoria
-                </a>
-            </div>
 
-            
+    <header class="main-header safe-zone">
+        <div class="container header-flex"
+            style="display: flex; align-items: center; justify-content: space-between; position: relative;">
+
+            <div class="logo" style="flex: 1; display: flex; justify-content: center; align-items: center;">
+    <div style="text-decoration: none; color: inherit; font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5px;">
+        <i class="fa-solid fa-shapes"></i> Vectoria Knowledge
+    </div>
+</div>
+
+
 
             <div class="settings-container safe-zone" style="flex: 1; display: flex; justify-content: flex-end;">
-                <button id="btnSettings" class="icon-btn" title="Cài đặt giao diện">
-                    <i class="fa-solid fa-gear"></i>
-                </button>
-                <div class="settings-dropdown" id="settingsDropdown">
-                    <div class="setting-item">
-                        <span><i class="fa-solid fa-moon"></i> Chế độ tối</span>
-                        <label class="switch">
-                            <input type="checkbox" id="themeToggle">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    <hr style="border: 0; border-top: 1px solid var(--border); margin: 0; opacity: 0.5; display: block !important;">
+    <button id="btnSettings" class="icon-btn" title="Cài đặt giao diện">
+        <i class="fa-solid fa-gear"></i>
+    </button>
+    <div class="settings-dropdown" id="settingsDropdown">
+        <div class="setting-item">
+            <span><i class="fa-solid fa-moon"></i> Chế độ tối</span>
+            <label class="switch">
+                <input type="checkbox" id="themeToggle">
+                <span class="slider round"></span>
+            </label>
+        </div>
+        
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 0; opacity: 0.5; display: block !important;">
 
-<a href="contact.html" class="setting-item" style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
-    <span><i class="fa-solid fa-envelope"></i> Liên hệ / Góp ý</span>
-    <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted);"></i>
-</a>
-                </div>
-            </div>
+        <a href="tltk.html" class="setting-item"
+            style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
+            <span><i class="fa-solid fa-book-bookmark"></i> Tài liệu tham khảo</span>
+            <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted);"></i>
+        </a>
+
+        <a href="contact.html" class="setting-item"
+            style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
+            <span><i class="fa-solid fa-envelope"></i> Liên hệ / Góp ý</span>
+            <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted);"></i>
+        </a>
+    </div>
+</div>
 
         </div>
     </header>
@@ -358,15 +451,17 @@
         <div id="falling-heading-container">
             <div id="falling-heading">Kiến thức chuẩn bị</div>
         </div>
-        
+
         <div class="topic-grid" id="main-topic-grid">
-            
+
             <div class="flip-card">
                 <div class="flip-card-inner">
-                    <div class="flip-card-front topic-card cursor-pointer" onclick="triggerFlip(event)" title="Nhấn để mở rộng Chủ đề">
+                    <div class="flip-card-front topic-card cursor-pointer" onclick="triggerFlip(event)"
+                        title="Nhấn để mở rộng Chủ đề">
                         <div class="icon-box"><i class="fa-solid fa-book-open"></i></div>
                         <h3>Kiến thức chuẩn bị</h3>
-                        <p>Ôn tập kiến thức vector THPT, ma trận, định thức, hạng, ma trận nghịch đảo và hệ phương trình tuyến tính.</p>
+                        <p>Ôn tập kiến thức vector THPT, ma trận, định thức, hạng, ma trận nghịch đảo và hệ phương trình
+                            tuyến tính.</p>
                     </div>
                     <a href="topics/sub_topic/vector_pho_thong.html" class="flip-card-back topic-card">
                         <div class="icon-box"><i class="fa-solid fa-arrow-trend-up"></i></div>
@@ -459,20 +554,27 @@
             </div>
         </div>
 
-        <h2 class="section-heading distraction-element" style="max-height: 50px;">Luyện tập</h2>
+        <h2 class="section-heading distraction-element" style="max-height: 50px;">Tiện ích</h2>
         <div class="topic-grid distraction-element">
             <a href="calculation.html" class="topic-card">
                 <div class="icon-box"><i class="fa-solid fa-calculator"></i></div>
                 <h3>Công cụ tính toán <br>trực quan hóa</h3>
                 <p>Thực hành tính toán vector, tìm cơ sở, số chiều và tọa độ vector ngay trên web.</p>
             </a>
+
+            <a href="tltk.html" class="topic-card">
+                <div class="icon-box"><i class="fa-solid fa-book-bookmark"></i></div>
+                <h3>Tài liệu <br>tham khảo</h3>
+                <p>Tổng hợp các tài liệu phục vụ cho việc xây dựng các nội dung kiến thức.</p>
+            </a>
         </div>
+        
     </main>
 
     <footer class="main-footer">
         <p>© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
     </footer>
-<script src="js/utils/theme-manager.js"></script>
+    <script src="js/utils/theme-manager.js"></script>
     <script src="js/utils/theme-transition.js"></script>
     <script>
         // === CHỈ XỬ LÝ MENU BÁNH RĂNG (THEME ĐÃ ĐƯỢC THEME-TRANSITION.JS LO TOÀN BỘ) ===
@@ -501,9 +603,9 @@
                 e.preventDefault();
                 e.stopPropagation();
             }
-            
+
             isGridFlipped = true;
-            
+
             document.querySelectorAll('.flip-card').forEach(card => {
                 card.classList.add('is-flipped');
             });
@@ -517,7 +619,7 @@
 
         function revertFlip() {
             isGridFlipped = false;
-            
+
             document.querySelectorAll('.flip-card').forEach(card => {
                 card.classList.remove('is-flipped');
             });
@@ -528,14 +630,14 @@
                 document.querySelectorAll('.distraction-element').forEach(el => {
                     el.classList.remove('hidden-mode');
                 });
-            }, 200); 
+            }, 200);
         }
 
         document.addEventListener('click', (e) => {
             if (!isGridFlipped) return;
 
             const grid = document.getElementById('main-topic-grid');
-            
+
             if (e.target.closest('.safe-zone') || e.target.closest('#btnSettings') || e.target.closest('#settingsDropdown')) {
                 return;
             }
@@ -545,6 +647,7 @@
             }
         });
     </script>
-    
+
 </body>
+
 </html>

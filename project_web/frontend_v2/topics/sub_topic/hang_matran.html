@@ -724,11 +724,13 @@
             }
 
         }
+
         /* =================== 6. STYLE CHO PHẦN BÀI TẬP (MỚI) =================== */
         /* Khung viền đen giống PDF */
         .box-black {
             border: 2px solid #000;
-            background-color: #f9fafb; /* Nền xám rất nhạt cho dịu mắt */
+            background-color: #f9fafb;
+            /* Nền xám rất nhạt cho dịu mắt */
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 30px;
@@ -737,7 +739,7 @@
 
         /* Chữ màu đỏ đậm cho tiêu đề bài tập (VD: Bài 1.1) */
         .text-red-bold {
-            color: #dc2626; 
+            color: #dc2626;
             font-weight: bold;
             margin-right: 5px;
         }
@@ -748,6 +750,7 @@
             padding-left: 5px;
             margin-top: 10px;
         }
+
         .exercise-list li {
             margin-bottom: 12px;
             line-height: 1.6;
@@ -761,16 +764,19 @@
             margin-top: 5px;
             margin-left: 15px;
         }
-        
+
         /* Dark mode cho khung bài tập */
         body.dark .box-black {
             background-color: #1e293b;
             border-color: #475569;
             color: #e2e8f0;
         }
+
         body.dark .text-red-bold {
-            color: #fb7185; /* Đỏ sáng hơn trên nền tối */
+            color: #fb7185;
+            /* Đỏ sáng hơn trên nền tối */
         }
+
         /* 1. Tiêu đề mục lớn (VD: 1. Định nghĩa...) */
         .pdf-h1 {
             font-size: 1.5rem;
@@ -782,17 +788,20 @@
 
         /* 2. Dòng Nhận xét (Chữ màu nâu đỏ) */
         .pdf-remark {
-            color: #9f1239; /* Màu đỏ thẫm */
+            color: #9f1239;
+            /* Màu đỏ thẫm */
             font-weight: bold;
             font-style: italic;
             margin-bottom: 15px;
-            
+
         }
 
         /* 3. Khung Ví dụ (Viền Đỏ - Nền Hồng nhạt) */
         .box-blue {
-            border: 2px solid #2563eb; /* Viền xanh dương đậm */
-            background-color: #eff6ff; /* Nền xanh cực nhạt */
+            border: 2px solid #2563eb;
+            /* Viền xanh dương đậm */
+            background-color: #eff6ff;
+            /* Nền xanh cực nhạt */
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 30px;
@@ -818,30 +827,46 @@
         }
 
         /* Hỗ trợ Dark Mode cho các thành phần mới */
-        body.dark .pdf-h1 { color: #fff; }
-        body.dark .pdf-remark { color: #fb7185; }
+        body.dark .pdf-h1 {
+            color: #fff;
+        }
+
+        body.dark .pdf-remark {
+            color: #fb7185;
+        }
+
         body.dark .box-blue {
             background-color: rgba(58, 120, 255, 0.1);
             border-color: #60a5fa;
             color: #e2e8f0;
         }
-        body.dark .text-example-blue { color: #60a5fa; }
-        body.dark .text-blue-sol { color: #60a5fa; }
+
+        body.dark .text-example-blue {
+            color: #60a5fa;
+        }
+
+        body.dark .text-blue-sol {
+            color: #60a5fa;
+        }
+
         /* =================== 7. NÚT TẢI ĐÁP ÁN (NEW) =================== */
         .download-container {
             margin-top: 40px;
             text-align: center;
             padding-bottom: 20px;
-            border-top: 1px dashed var(--border); /* Đường kẻ ngăn cách nhẹ */
+            border-top: 1px dashed var(--border);
+            /* Đường kẻ ngăn cách nhẹ */
             padding-top: 30px;
         }
 
         .btn-download {
-            background: linear-gradient(135deg, var(--primary), #2563eb); /* Màu gradient xanh */
+            background: linear-gradient(135deg, var(--primary), #2563eb);
+            /* Màu gradient xanh */
             color: #ffffff;
             border: none;
             padding: 12px 28px;
-            border-radius: 50px; /* Bo tròn hình viên thuốc */
+            border-radius: 50px;
+            /* Bo tròn hình viên thuốc */
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
@@ -849,12 +874,15 @@
             align-items: center;
             gap: 10px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(58, 120, 255, 0.3); /* Bóng đổ xanh */
-            text-decoration: none; /* Bỏ gạch chân nếu dùng thẻ a */
+            box-shadow: 0 4px 15px rgba(58, 120, 255, 0.3);
+            /* Bóng đổ xanh */
+            text-decoration: none;
+            /* Bỏ gạch chân nếu dùng thẻ a */
         }
 
         .btn-download:hover {
-            transform: translateY(-3px); /* Bay lên nhẹ */
+            transform: translateY(-3px);
+            /* Bay lên nhẹ */
             box-shadow: 0 8px 25px rgba(58, 120, 255, 0.5);
         }
 
@@ -868,53 +896,263 @@
         }
 
         body.dark .btn-download {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8); /* Xanh sáng hơn trên nền tối */
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            /* Xanh sáng hơn trên nền tối */
             color: #fff;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Bóng đen sâu */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            /* Bóng đen sâu */
         }
 
         body.dark .btn-download:hover {
             background: linear-gradient(135deg, #60a5fa, #2563eb);
-            box-shadow: 0 0 20px rgba(96, 165, 250, 0.4); /* Hiệu ứng phát sáng (Glow) */
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.4);
+            /* Hiệu ứng phát sáng (Glow) */
         }
 
         /* =================== STYLE MENU MỤC LỤC ĐA CẤP =================== */
-        .custom-nav { padding: 15px 0 !important; }
+        .custom-nav {
+            padding: 15px 0 !important;
+        }
+
         .custom-nav .nav-title {
-            font-size: 1.1rem; font-weight: 700; color: var(--text-main);
-            padding: 0 20px 15px 20px; margin: 0; border-bottom: 1px solid var(--border);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            padding: 0 20px 15px 20px;
+            margin: 0;
+            border-bottom: 1px solid var(--border);
         }
-        .custom-nav .nav-list { list-style: none; padding: 10px 0 0 0; margin: 0; }
-        .custom-nav .nav-item { margin-bottom: 2px; }
-        
+
+        .custom-nav .nav-list {
+            list-style: none;
+            padding: 10px 0 0 0;
+            margin: 0;
+        }
+
+        .custom-nav .nav-item {
+            margin-bottom: 2px;
+        }
+
         .custom-nav .nav-link {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 20px; color: #475569; text-decoration: none;
-            font-size: 0.95rem; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            color: #475569;
+            text-decoration: none;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
         }
-        .custom-nav .nav-link:hover { color: var(--primary); background: #f8fafc; }
-        .custom-nav .arrow-icon { font-size: 0.8rem; color: #94a3b8; transition: transform 0.3s ease; }
-        
+
+        .custom-nav .nav-link:hover {
+            color: var(--primary);
+            background: #f8fafc;
+        }
+
+        .custom-nav .arrow-icon {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            transition: transform 0.3s ease;
+        }
+
         /* Menu con thả xuống */
-        .custom-nav .sub-menu { list-style: none; padding: 0; margin: 0; display: none; }
-        .custom-nav .nav-item.open > .sub-menu { display: block; animation: slideDown 0.3s ease-out; }
-        
-        .custom-nav .sub-link {
-            display: block; padding: 10px 20px 10px 40px; color: #64748b;
-            text-decoration: none; font-size: 0.9rem; transition: all 0.2s; border-left: 3px solid transparent;
+        .custom-nav .sub-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: none;
         }
-        .custom-nav .sub-link:hover { color: var(--primary); }
+
+        .custom-nav .nav-item.open>.sub-menu {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .custom-nav .sub-link {
+            display: block;
+            padding: 10px 20px 10px 40px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .custom-nav .sub-link:hover {
+            color: var(--primary);
+        }
+
         .custom-nav .sub-link.active {
-            background-color: #eff6ff; color: var(--primary); font-weight: 600; border-left: 3px solid var(--primary);
+            background-color: #eff6ff;
+            color: var(--primary);
+            font-weight: 600;
+            border-left: 3px solid var(--primary);
         }
 
         /* --- Dark Mode --- */
-        body.dark .custom-nav .nav-link { color: #cbd5e1; }
-        body.dark .custom-nav .nav-link:hover { color: #60a5fa; background: #1e293b; }
-        body.dark .custom-nav .sub-link { color: #94a3b8; }
-        body.dark .custom-nav .sub-link:hover { color: #f1f5f9; }
-        body.dark .custom-nav .sub-link.active { background-color: #1e293b; color: #60a5fa; border-left-color: #60a5fa; }
-        
+        body.dark .custom-nav .nav-link {
+            color: #cbd5e1;
+        }
+
+        body.dark .custom-nav .nav-link:hover {
+            color: #60a5fa;
+            background: #1e293b;
+        }
+
+        body.dark .custom-nav .sub-link {
+            color: #94a3b8;
+        }
+
+        body.dark .custom-nav .sub-link:hover {
+            color: #f1f5f9;
+        }
+
+        body.dark .custom-nav .sub-link.active {
+            background-color: #1e293b;
+            color: #60a5fa;
+            border-left-color: #60a5fa;
+        }
+
+        /* =================== MÀN CHE VIDEO SCI-FI =================== */
+        .temp-video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #050b14;
+            /* Nền xanh đen sâu thẳm */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            overflow: hidden;
+            border-right: 1px solid #334155;
+        }
+
+        /* Vẽ lưới Grid Toán học nền sau */
+        .temp-video-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background-image:
+                linear-gradient(rgba(58, 120, 255, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(58, 120, 255, 0.08) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 0;
+            animation: panGrid 20s linear infinite;
+        }
+
+        /* Quả cầu phát sáng lơ lửng */
+        .temp-video-overlay::after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: var(--primary);
+            filter: blur(90px);
+            opacity: 0.4;
+            z-index: 0;
+            animation: floatOrb 6s infinite alternate ease-in-out;
+        }
+
+        /* Khung kính mờ Glassmorphism */
+        .tv-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            padding: 35px 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(58, 120, 255, 0.05);
+        }
+
+        /* Vòng xoay quanh Icon */
+        .tv-icon-wrapper {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .tv-icon-wrapper i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            text-shadow: 0 0 15px var(--primary);
+        }
+
+        .tv-spinner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px dashed rgba(96, 165, 250, 0.6);
+            border-radius: 50%;
+            animation: spinDash 12s linear infinite;
+        }
+
+        /* Định dạng chữ */
+        .tv-content h4 {
+            margin: 0 0 12px;
+            color: #f8fafc;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 800;
+        }
+
+        .tv-content p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 1rem;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        /* Animations */
+        @keyframes panGrid {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(-40px, -40px);
+            }
+        }
+
+        @keyframes floatOrb {
+            0% {
+                transform: translate(-50px, -30px) scale(0.8);
+            }
+
+            100% {
+                transform: translate(50px, 30px) scale(1.2);
+            }
+        }
+
+        @keyframes spinDash {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
@@ -949,9 +1187,9 @@
                         </label>
                     </div>
 
-                   
 
-                    
+
+
                     <hr style="border: 0; border-top: 1px solid var(--border); margin: 0; opacity: 0.5;">
 
                     <a href="../../contact.html" class="setting-item" style="text-decoration: none; color: inherit;">
@@ -975,6 +1213,10 @@
                         <i class="fa-solid fa-chevron-down arrow-icon"></i>
                     </div>
                     <ul class="sub-menu">
+                        <li
+                            style="padding: 15px 20px 5px 20px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">
+                            Hạng ma trận
+                        </li>
                         <li><a href="#ma-tran-con" class="sub-link active">1. Ma trận con</a></li>
                         <li><a href="#dinh-nghia" class="sub-link">2. Định nghĩa hạng ma trận </a></li>
                         <li><a href="#ma-tran-bac-thang" class="sub-link">3. Ma trận bậc thang</a></li>
@@ -985,15 +1227,15 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="#video-truc-quan" class="nav-link" style="font-weight: 700;">Video trực quan</a>
+                    <a href="#coming-soon" class="nav-link" style="font-weight: 700;">Video trực quan</a>
                 </li>
 
-                
+
                 <li class="nav-item">
                     <a href="#bai-tap" class="nav-link" style="font-weight: 700;">Bài tập</a>
                 </li>
-                    
-                
+
+
             </ul>
         </aside>
 
@@ -1392,47 +1634,20 @@
 
             </div>
 
-            <div class="chapter-card" id="video-truc-quan"
-                style="padding: 0; overflow: hidden; border: none; background: transparent;">
-                <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-brands fa-youtube"></i> Video trực
-                    quan</h2>
-
-                <div class="cinema-container">
-                    <div class="video-box">
-                        <div id="youtube-player"></div>
-                    </div>
-
-                    <div class="playlist-box">
-                        <div class="playlist-header">
-                            <span>Nội dung</span>
-                            <span style="font-size: 0.8rem; color: #94a3b8;">4 phần</span>
+            <div class="video-box" id="coming-soon">
+                <div class="temp-video-overlay">
+                    <div class="tv-content">
+                        <div class="tv-icon-wrapper">
+                            <div class="tv-spinner"></div>
+                            <i class="fa-solid fa-hourglass-half"></i>
                         </div>
-                        <div class="chapter-list">
-                            <div class="chapter-item playing" onclick="seekTo(0); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Vector ở phổ thông</span></div>
-                                <div class="time-badge">00:00</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(60); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Quy tắc nối đuôi</span></div>
-                                <div class="time-badge">01:00</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(230); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Quy tắc hình bình hành</span>
-                                </div>
-                                <div class="time-badge">03:50</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(307); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Phép nhân vector với số
-                                        thực</span></div>
-                                <div class="time-badge">05:07</div>
-                            </div>
-                        </div>
+                        <h4>Sắp ra mắt</h4>
+                        <p>Video trực quan đang trong quá trình biên tập.<br>Hệ thống sẽ cập nhật trong thời gian tới.
+                        </p>
                     </div>
                 </div>
+
+                <div id="youtube-player"></div>
             </div>
 
             <div class="chapter-card" id="bai-tap">
@@ -1533,7 +1748,6 @@
                     </p>
 
                     <a href="https://drive.google.com/uc?export=download&id=1aMVQ4Nim5ePDRZfM0sjN__uqqywgeLDT"
-                    
                         target="_blank" class="btn-download">
                         <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
                     </a>
@@ -1544,7 +1758,11 @@
 
         </main>
     </div>
-
+    
+    <footer
+        style="text-align: center; padding: 30px 20px; margin-top: 20px; margin-bottom: 20px; color: var(--text-sub); font-size: 0.95rem; border-top: 1px solid var(--border); width: 100%;">
+        <p style="margin: 0;">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
+    </footer>
     <script>
         // 1. THEME HANDLING & ANIMATION
         // Theme is auto-initialized by theme-manager.js script
@@ -1632,66 +1850,66 @@
             el.classList.add('playing');
         }
 
-        
+
 
 
 
     </script>
     <script>
-    // Hàm này dùng để kích hoạt toàn bộ menu
-    function bootVectoriaMenu() {
-        console.log("Menu System: Booting...");
+        // Hàm này dùng để kích hoạt toàn bộ menu
+        function bootVectoriaMenu() {
+            console.log("Menu System: Booting...");
 
-        const smoothScrollTo = (targetElement) => {
-            if (!targetElement) return;
-            const topbarHeight = document.getElementById('topbar')?.offsetHeight || 60;
-            const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
-            window.scrollTo({ top: y, behavior: 'smooth' });
-        };
+            const smoothScrollTo = (targetElement) => {
+                if (!targetElement) return;
+                const topbarHeight = document.getElementById('topbar')?.offsetHeight || 60;
+                const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+            };
 
-        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
-        const toggleBtns = document.querySelectorAll('.custom-nav .toggle-btn');
+            const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
+            const toggleBtns = document.querySelectorAll('.custom-nav .toggle-btn');
 
-        // Dùng .onclick để ép sự kiện bám thẳng vào thẻ, chấp mọi loại load động
-        toggleBtns.forEach(btn => {
-            btn.onclick = function(e) {
-                e.preventDefault();
-                const parentLi = this.closest('.has-dropdown');
-                if (parentLi) {
-                    parentLi.classList.toggle('open');
-                    const icon = this.querySelector('.arrow-icon');
-                    if (icon) {
-                        icon.classList.toggle('fa-chevron-down');
-                        icon.classList.toggle('fa-chevron-right');
+            // Dùng .onclick để ép sự kiện bám thẳng vào thẻ, chấp mọi loại load động
+            toggleBtns.forEach(btn => {
+                btn.onclick = function (e) {
+                    e.preventDefault();
+                    const parentLi = this.closest('.has-dropdown');
+                    if (parentLi) {
+                        parentLi.classList.toggle('open');
+                        const icon = this.querySelector('.arrow-icon');
+                        if (icon) {
+                            icon.classList.toggle('fa-chevron-down');
+                            icon.classList.toggle('fa-chevron-right');
+                        }
                     }
-                }
-                const link = this.querySelector('a');
-                if(link) {
+                    const link = this.querySelector('a');
+                    if (link) {
+                        menuLinks.forEach(el => el.classList.remove('active'));
+                        link.classList.add('active');
+                        smoothScrollTo(document.querySelector(link.getAttribute('href')));
+                    }
+                };
+            });
+
+            menuLinks.forEach(link => {
+                if (link.closest('.toggle-btn')) return;
+                link.onclick = function (e) {
+                    e.preventDefault();
                     menuLinks.forEach(el => el.classList.remove('active'));
-                    link.classList.add('active');
-                    smoothScrollTo(document.querySelector(link.getAttribute('href')));
-                }
-            };
-        });
+                    this.classList.add('active');
+                    smoothScrollTo(document.querySelector(this.getAttribute('href')));
+                };
+            });
+        }
 
-        menuLinks.forEach(link => {
-            if (link.closest('.toggle-btn')) return;
-            link.onclick = function(e) {
-                e.preventDefault();
-                menuLinks.forEach(el => el.classList.remove('active'));
-                this.classList.add('active');
-                smoothScrollTo(document.querySelector(this.getAttribute('href')));
-            };
-        });
-    }
+        // TUYỆT CHIÊU: Chạy ngay lập tức và thử lại sau đó để chống đơ khi load Ajax
+        bootVectoriaMenu();
+        setTimeout(bootVectoriaMenu, 100);
+        setTimeout(bootVectoriaMenu, 500);
 
-    // TUYỆT CHIÊU: Chạy ngay lập tức và thử lại sau đó để chống đơ khi load Ajax
-    bootVectoriaMenu(); 
-    setTimeout(bootVectoriaMenu, 100);
-    setTimeout(bootVectoriaMenu, 500);
 
-    
-</script>
+    </script>
 
 </body>
 

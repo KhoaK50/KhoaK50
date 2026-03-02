@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cơ sở và Số chiều - Vectoria Knowledge</title>
+    <title>Hạng của hệ vector và hệ sinh - Vectoria Knowledge</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -724,11 +724,13 @@
             }
 
         }
+
         /* =================== 6. STYLE CHO PHẦN BÀI TẬP (MỚI) =================== */
         /* Khung viền đen giống PDF */
         .box-black {
             border: 2px solid #000;
-            background-color: #f9fafb; /* Nền xám rất nhạt cho dịu mắt */
+            background-color: #f9fafb;
+            /* Nền xám rất nhạt cho dịu mắt */
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 30px;
@@ -737,7 +739,7 @@
 
         /* Chữ màu đỏ đậm cho tiêu đề bài tập (VD: Bài 1.1) */
         .text-red-bold {
-            color: #dc2626; 
+            color: #dc2626;
             font-weight: bold;
             margin-right: 5px;
         }
@@ -748,6 +750,7 @@
             padding-left: 5px;
             margin-top: 10px;
         }
+
         .exercise-list li {
             margin-bottom: 12px;
             line-height: 1.6;
@@ -761,16 +764,19 @@
             margin-top: 5px;
             margin-left: 15px;
         }
-        
+
         /* Dark mode cho khung bài tập */
         body.dark .box-black {
             background-color: #1e293b;
             border-color: #475569;
             color: #e2e8f0;
         }
+
         body.dark .text-red-bold {
-            color: #fb7185; /* Đỏ sáng hơn trên nền tối */
+            color: #fb7185;
+            /* Đỏ sáng hơn trên nền tối */
         }
+
         /* 1. Tiêu đề mục lớn (VD: 1. Định nghĩa...) */
         .pdf-h1 {
             font-size: 1.5rem;
@@ -782,17 +788,20 @@
 
         /* 2. Dòng Nhận xét (Chữ màu nâu đỏ) */
         .pdf-remark {
-            color: #9f1239; /* Màu đỏ thẫm */
+            color: #9f1239;
+            /* Màu đỏ thẫm */
             font-weight: bold;
             font-style: italic;
             margin-bottom: 15px;
-            
+
         }
 
         /* 3. Khung Ví dụ (Viền Đỏ - Nền Hồng nhạt) */
         .box-blue {
-            border: 2px solid #2563eb; /* Viền xanh dương đậm */
-            background-color: #eff6ff; /* Nền xanh cực nhạt */
+            border: 2px solid #2563eb;
+            /* Viền xanh dương đậm */
+            background-color: #eff6ff;
+            /* Nền xanh cực nhạt */
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 30px;
@@ -818,30 +827,46 @@
         }
 
         /* Hỗ trợ Dark Mode cho các thành phần mới */
-        body.dark .pdf-h1 { color: #fff; }
-        body.dark .pdf-remark { color: #fb7185; }
+        body.dark .pdf-h1 {
+            color: #fff;
+        }
+
+        body.dark .pdf-remark {
+            color: #fb7185;
+        }
+
         body.dark .box-blue {
             background-color: rgba(58, 120, 255, 0.1);
             border-color: #60a5fa;
             color: #e2e8f0;
         }
-        body.dark .text-example-blue { color: #60a5fa; }
-        body.dark .text-blue-sol { color: #60a5fa; }
+
+        body.dark .text-example-blue {
+            color: #60a5fa;
+        }
+
+        body.dark .text-blue-sol {
+            color: #60a5fa;
+        }
+
         /* =================== 7. NÚT TẢI ĐÁP ÁN (NEW) =================== */
         .download-container {
             margin-top: 40px;
             text-align: center;
             padding-bottom: 20px;
-            border-top: 1px dashed var(--border); /* Đường kẻ ngăn cách nhẹ */
+            border-top: 1px dashed var(--border);
+            /* Đường kẻ ngăn cách nhẹ */
             padding-top: 30px;
         }
 
         .btn-download {
-            background: linear-gradient(135deg, var(--primary), #2563eb); /* Màu gradient xanh */
+            background: linear-gradient(135deg, var(--primary), #2563eb);
+            /* Màu gradient xanh */
             color: #ffffff;
             border: none;
             padding: 12px 28px;
-            border-radius: 50px; /* Bo tròn hình viên thuốc */
+            border-radius: 50px;
+            /* Bo tròn hình viên thuốc */
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
@@ -849,12 +874,15 @@
             align-items: center;
             gap: 10px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(58, 120, 255, 0.3); /* Bóng đổ xanh */
-            text-decoration: none; /* Bỏ gạch chân nếu dùng thẻ a */
+            box-shadow: 0 4px 15px rgba(58, 120, 255, 0.3);
+            /* Bóng đổ xanh */
+            text-decoration: none;
+            /* Bỏ gạch chân nếu dùng thẻ a */
         }
 
         .btn-download:hover {
-            transform: translateY(-3px); /* Bay lên nhẹ */
+            transform: translateY(-3px);
+            /* Bay lên nhẹ */
             box-shadow: 0 8px 25px rgba(58, 120, 255, 0.5);
         }
 
@@ -868,14 +896,262 @@
         }
 
         body.dark .btn-download {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8); /* Xanh sáng hơn trên nền tối */
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            /* Xanh sáng hơn trên nền tối */
             color: #fff;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Bóng đen sâu */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            /* Bóng đen sâu */
         }
 
         body.dark .btn-download:hover {
             background: linear-gradient(135deg, #60a5fa, #2563eb);
-            box-shadow: 0 0 20px rgba(96, 165, 250, 0.4); /* Hiệu ứng phát sáng (Glow) */
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.4);
+            /* Hiệu ứng phát sáng (Glow) */
+        }
+
+        /* =================== STYLE MENU MỤC LỤC ĐA CẤP =================== */
+        .custom-nav {
+            padding: 15px 0 !important;
+        }
+
+        .custom-nav .nav-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            padding: 0 20px 15px 20px;
+            margin: 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .custom-nav .nav-list {
+            list-style: none;
+            padding: 10px 0 0 0;
+            margin: 0;
+        }
+
+        .custom-nav .nav-item {
+            margin-bottom: 2px;
+        }
+
+        .custom-nav .nav-link {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            color: #475569;
+            text-decoration: none;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .custom-nav .nav-link:hover {
+            color: var(--primary);
+            background: #f8fafc;
+        }
+
+        .custom-nav .arrow-icon {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            transition: transform 0.3s ease;
+        }
+
+        /* Menu con thả xuống */
+        .custom-nav .sub-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: none;
+        }
+
+        .custom-nav .nav-item.open>.sub-menu {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .custom-nav .sub-link {
+            display: block;
+            padding: 10px 20px 10px 40px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .custom-nav .sub-link:hover {
+            color: var(--primary);
+        }
+
+        .custom-nav .sub-link.active {
+            background-color: #eff6ff;
+            color: var(--primary);
+            font-weight: 600;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* --- Dark Mode --- */
+        body.dark .custom-nav .nav-link {
+            color: #cbd5e1;
+        }
+
+        body.dark .custom-nav .nav-link:hover {
+            color: #60a5fa;
+            background: #1e293b;
+        }
+
+        body.dark .custom-nav .sub-link {
+            color: #94a3b8;
+        }
+
+        body.dark .custom-nav .sub-link:hover {
+            color: #f1f5f9;
+        }
+
+        body.dark .custom-nav .sub-link.active {
+            background-color: #1e293b;
+            color: #60a5fa;
+            border-left-color: #60a5fa;
+        }
+
+        /* =================== MÀN CHE VIDEO SCI-FI =================== */
+        .temp-video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #050b14;
+            /* Nền xanh đen sâu thẳm */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            overflow: hidden;
+            border-right: 1px solid #334155;
+        }
+
+        /* Vẽ lưới Grid Toán học nền sau */
+        .temp-video-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background-image:
+                linear-gradient(rgba(58, 120, 255, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(58, 120, 255, 0.08) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 0;
+            animation: panGrid 20s linear infinite;
+        }
+
+        /* Quả cầu phát sáng lơ lửng */
+        .temp-video-overlay::after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: var(--primary);
+            filter: blur(90px);
+            opacity: 0.4;
+            z-index: 0;
+            animation: floatOrb 6s infinite alternate ease-in-out;
+        }
+
+        /* Khung kính mờ Glassmorphism */
+        .tv-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            padding: 35px 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(58, 120, 255, 0.05);
+        }
+
+        /* Vòng xoay quanh Icon */
+        .tv-icon-wrapper {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .tv-icon-wrapper i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            text-shadow: 0 0 15px var(--primary);
+        }
+
+        .tv-spinner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px dashed rgba(96, 165, 250, 0.6);
+            border-radius: 50%;
+            animation: spinDash 12s linear infinite;
+        }
+
+        /* Định dạng chữ */
+        .tv-content h4 {
+            margin: 0 0 12px;
+            color: #f8fafc;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 800;
+        }
+
+        .tv-content p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 1rem;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        /* Animations */
+        @keyframes panGrid {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(-40px, -40px);
+            }
+        }
+
+        @keyframes floatOrb {
+            0% {
+                transform: translate(-50px, -30px) scale(0.8);
+            }
+
+            100% {
+                transform: translate(50px, 30px) scale(1.2);
+            }
+        }
+
+        @keyframes spinDash {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
@@ -911,9 +1187,9 @@
                         </label>
                     </div>
 
-                   
 
-                    
+
+
                     <hr style="border: 0; border-top: 1px solid var(--border); margin: 0; opacity: 0.5;">
 
                     <a href="../contact.html" class="setting-item" style="text-decoration: none; color: inherit;">
@@ -926,14 +1202,57 @@
     </div>
 
     <div class="container">
-        <aside class="sidebar">
-            <h3><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
-            <div class="menu-list">
-                <a href="#ly-thuyet" class="menu-link active">1. Lý thuyết</a>
-                <a href="#video-truc-quan" class="menu-link">2. Video trực quan</a>
-                <a href="#bai-tap" class="menu-link">3. Bài tập</a>
+        <aside class="sidebar custom-nav">
+            <h3 class="nav-title"><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
+            <ul class="nav-list">
 
-            </div>
+                <li class="nav-item has-dropdown open">
+                    <div class="nav-link toggle-btn">
+                        <a href="#ly-thuyet" style="text-decoration: none; color: inherit; font-weight: 700;">Lý
+                            thuyết</a>
+                        <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                    </div>
+                    <ul class="sub-menu">
+                        <li class="nav-item has-dropdown open">
+
+                            <ul class="sub-menu">
+                                <li
+                                    style="padding: 15px 20px 5px 20px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">
+                                    Hạng của hệ vector
+                                </li>
+                                <li><a href="#hang-1" class="sub-link active"
+                                        style="padding-left: 55px; font-size: 0.85rem;">1. Hệ con độc lập tuyến tính tối
+                                        đại</a></li>
+                                <li><a href="#hang-2" class="sub-link"
+                                        style="padding-left: 55px; font-size: 0.85rem;">2. Hạng của hệ vector</a></li>
+                            </ul>
+                        </li>
+
+
+
+
+                        <li
+                            style="padding: 15px 20px 5px 20px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">
+                            Hệ sinh
+                        </li>
+                        <li><a href="#sinh-1" class="sub-link" style="padding-left: 55px; font-size: 0.85rem;">1. Không
+                                gian con sinh bởi một tập hợp</a></li>
+                        <li><a href="#sinh-2" class="sub-link" style="padding-left: 55px; font-size: 0.85rem;">2. Hệ
+                                sinh của không gian vector</a></li>
+
+                    </ul>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#coming-soon" class="nav-link section-link" style="font-weight: 700;">Video trực
+                        quan</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#bai-tap" class="nav-link section-link" style="font-weight: 700;">Bài tập</a>
+                </li>
+
+
+            </ul>
         </aside>
 
         <main class="main-content">
@@ -1100,235 +1419,128 @@
                         fill: #e2e8f0 !important;
                         stroke: #e2e8f0 !important;
                     }
+
+                    .pdf-main-title {
+                        color: var(--primary);
+                        font-size: 1.5rem;
+                        font-weight: bold;
+                        margin-top: 40px;
+                        margin-bottom: 30px;
+                        padding-bottom: 8px;
+                        /* Khoảng cách từ chữ xuống đường gạch */
+                        border-bottom: 3px solid var(--primary);
+                        /* Đường kẻ xanh */
+                        width: fit-content;
+                        /* Tuyệt chiêu ôm khít chữ giống vector_pho_thong */
+
+                    }
+
+                    /* Đổi màu sáng hơn khi ở Dark Mode */
+                    body.dark .pdf-main-title {
+                        color: #60a5fa;
+                        border-bottom-color: #60a5fa;
+                    }
                 </style>
-<h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-solid fa-book-open"></i> Lý thuyết</h2>
-                <div class="pdf-h2">1 &nbsp; Không gian vector</div>
+                <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-solid fa-book-open"></i> Lý thuyết
+                </h2>
 
-                <div class="pdf-h3">1.1 &nbsp; Định nghĩa về không gian vector</div>
-                <p>Cho 1 tập hợp \( V \neq \varnothing \) và một trường số \( \mathbb{K} \) (ở đây chỉ xét \( \mathbb{K}
-                    = \mathbb{R} \)). Trong \( V \) xác định hai phép toán dưới dạng ánh xạ:</p>
+                <h1 class="pdf-main-title" id="hang-he-vector">Hạng của hệ vector</h1>
 
-                <ol class="pdf-list">
-                    <li><strong>Phép cộng hai vector</strong>
-                        <div class="math-center">
-                            \( V \times V \longrightarrow V \) <br>
-                            \( (u, v) \longmapsto u + v \)
-                        </div>
-                    </li>
-                    <li><strong>Phép nhân vector với vô hướng</strong>
-                        <div class="math-center">
-                            \( \mathbb{K} \times V \longrightarrow V \) <br>
-                            \( (k, v) \longmapsto k \cdot v \)
-                        </div>
-                    </li>
-                </ol>
-
-                <p>Khi đó, \( V \) cùng với hai phép toán trên lập thành một không gian vector trên \( \mathbb{K} \) hay
-                    \( \mathbb{K}- \) không gian vector nếu thỏa mãn 8 tiên đề sau:</p>
-
-                <table class="pdf-table">
-                    <thead>
-                        <tr>
-                            <th width="50%">Nhóm tính chất phép cộng</th>
-                            <th width="50%">Nhóm tính chất phép nhân</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>1. \( u + v = v + u \)</td>
-                            <td>5. \( \alpha(u + v) = \alpha u + \alpha v \)</td>
-                        </tr>
-                        <tr>
-                            <td>2. \( (u + v) + w = u + (v + w) \)</td>
-                            <td>6. \( (\alpha + \beta)u = \alpha u + \beta u \)</td>
-                        </tr>
-                        <tr>
-                            <td>3. \( u + 0_V = u \)</td>
-                            <td>7. \( (\alpha \beta)u = \alpha(\beta u) \)</td>
-                        </tr>
-                        <tr>
-                            <td>4. \( u + (-u) = 0_V \)</td>
-                            <td>8. \( 1 \cdot u = u \)</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <p>Lúc này, ta gọi:</p>
-                <ul class="pdf-list" style="list-style-type: disc; padding-left: 20px;">
-                    <li>Mỗi phần tử \( v \in V \) là một vector</li>
-                    <li>Mỗi số thực \( k \in \mathbb{R} \) là một vô hướng</li>
-                    <li>Vector \( 0_V \) là vector không hay phần tử trung hòa của không gian vector \( V \)</li>
-                    <li>Vector \( -v \) là vector đối của \( v \)</li>
+                <div class="pdf-h2" id="hang-1">1 &nbsp; Hệ con độc lập tuyến tính tối đại</div>
+                <p>Cho \( S \) là một tập hợp các vector thuộc không gian vector \( V \). Một hệ con \( W = \{v_1, v_2,
+                    \dots, v_k\} \subseteq S \) được xác định là <strong>hệ con độc lập tuyến tính tối đại</strong> của
+                    \( S \) nếu thỏa mãn đồng thời hai điều kiện:</p>
+                <ul class="pdf-list" style="list-style-type: none; padding-left: 20px;">
+                    <li>i) \( W \) độc lập tuyến tính</li>
+                    <li style="margin-top: 10px;">ii) Khi bổ sung bất kỳ vector \( u \) nào thuộc \( S \) vào \( W \),
+                        hệ mới \( W \cup \{u\} \) trở thành hệ PTTT.</li>
                 </ul>
 
-                <p><span class="pdf-note">Nhận xét 1:</span> Một không gian vector bao gồm bốn thành phần: tập hợp các
-                    vector, tập hợp các vô hướng và hai phép toán.</p>
-
-                <div class="pdf-h3">1.2 &nbsp; Các không gian vector phổ biến</div>
-                <ul class="pdf-list" style="list-style-type: disc; padding-left: 20px;">
-                    <li>\( \mathbb{R} = \) Không gian thực 1 chiều hay tập hợp tất cả các số thực</li>
-                    <li>\( \mathbb{R}^2 = \) Không gian thực 2 chiều (2D) hay tập hợp các cặp số thực dưới dạng \( (x,
-                        y) \)</li>
-                    <li>\( \mathbb{R}^3 = \) Không gian thực 3 chiều (3D) hay tập hợp bộ 3 số thực dưới dạng \( (x, y,
-                        z) \)</li>
-                    <li>\( \mathbb{R}^n = \) Không gian thực \( n \) chiều tập hợp bộ \( n \) số thực dưới dạng \( (x_1,
-                        x_2, \dots, x_n) \)</li>
-                    <li>\( C(-\infty, \infty) = \) Tập hợp tất cả các hàm số liên tục xác định trên trục số thực</li>
-                    <li>\( C[a, b] = \) Tập hợp tất cả các hàm số liên tục xác định trên khoảng đóng \( [a, b] \)</li>
-                    <li>\( P = \) Tập hợp tất cả các đa thức</li>
-                    <li>\( P_n = \) Tập hợp tất cả các đa thức bậc không vượt quá \( n \)</li>
-                    <li>\( \mathcal{M}_{m,n}(\mathbb{R}) = \) Tập hợp tất cả các ma trận thực cỡ \( m \times n \). Viết
-                        gọn là \( \mathcal{M}_{m,n} \)</li>
-                    <li>\( \mathcal{M}_{n,n}(\mathbb{R}) = \) Tập hợp tất cả các ma trận vuông hệ số thực cấp \( n \).
-                        Viết gọn là \( \mathcal{M}_{n} \)</li>
-                </ul>
-
-                <p><span class="pdf-note">Nhận xét 2:</span> Không gian vector \( V \) có thể là bất cứ tập hợp nào thỏa
-                    mãn 2 phép toán cộng 2 vector và nhân vô hướng cùng với 8 tiên đề ràng buộc.</p>
-
-                <p><strong>Ví dụ 1:</strong></p>
-                <ol class="pdf-list" style="padding-left: 20px;">
-                    <li>Khi \( V \equiv \mathbb{R}^3 \), một vector \( v \in V \) lúc này là một bộ 3 số có dạng \( v =
-                        (x, y, z) \)</li>
-                    <li>Khi \( V \equiv P_2[x] \), một vector \( v \in V \) lúc này là một đa thức bậc không quá 2 có
-                        dạng \( v = ax^2 + bx + c \)</li>
-                    <li>Khi \( V \equiv \mathcal{M}_3 \), một vector \( v \in V \) lúc này là một ma trận vuông cấp 3 có
-                        dạng \( v = \begin{pmatrix} v_{11} & v_{12} & v_{13} \\ v_{21} & v_{22} & v_{23} \\ v_{31} &
-                        v_{32} & v_{33} \end{pmatrix} \)</li>
-                </ol>
-
-                <div class="pdf-box">
-                    <span class="pdf-box-title">Ví dụ:</span> Chứng minh \( V \equiv \mathbb{R}^2 \) là một không
-                    gian vector
-                </div>
-
-                <span class="pdf-sol-title">Lời giải</span>
-                <p>Ta kiểm tra 8 tiên đề sau đây với \( u = (x_1, x_2), v = (y_1, y_2), w = (z_1, z_2) \in V \) và \(
-                    \alpha, \beta \in \mathbb{R} \):</p>
-                <ol class="pdf-list" style="padding-left: 20px;">
-                    <li><strong>Tính giao hoán:</strong><br>
-                        \( u + v = (x_1 + y_1, x_2 + y_2) = (y_1 + x_1, y_2 + x_2) = v + u \). &emsp; (Thỏa mãn)
-                    </li>
-                    <li><strong>Tính kết hợp:</strong><br>
-                        \( (u + v) + w = (x_1 + y_1 + z_1, x_2 + y_2 + z_2) = u + (v + w) \). &emsp; (Thỏa mãn)
-                    </li>
-                    <li><strong>Phần tử trung hòa:</strong><br>
-                        \( \exists 0_V = (0, 0) \in V \) sao cho \( u + 0_V = (x_1 + 0, x_2 + 0) = (x_1, x_2) = u \).
-                        &emsp; (Thỏa mãn)
-                    </li>
-                    <li><strong>Phần tử đối:</strong><br>
-                        \( \forall u = (x_1, x_2), \exists -u = (-x_1, -x_2) \in V \) sao cho \( u + (-u) = (0, 0) = 0_V
-                        \). &emsp; (Thỏa mãn)
-                    </li>
-                    <li><strong>Tính phân phối 1:</strong><br>
-                        \( \alpha(u + v) = \alpha(x_1 + y_1, x_2 + y_2) = (\alpha x_1 + \alpha y_1, \alpha x_2 + \alpha
-                        y_2) = \alpha u + \alpha v \). &emsp; (Thỏa mãn)
-                    </li>
-                    <li><strong>Tính phân phối 2:</strong><br>
-                        \( (\alpha + \beta)u = ((\alpha + \beta)x_1, (\alpha + \beta)x_2) = (\alpha x_1 + \beta x_1,
-                        \alpha x_2 + \beta x_2) = \alpha u + \beta u \). &emsp; (Thỏa mãn)
-                    </li>
-                    <li><strong>Tính kết hợp với vô hướng:</strong><br>
-                        \( (\alpha \beta)u = ((\alpha \beta)x_1, (\alpha \beta)x_2) = \alpha(\beta x_1, \beta x_2) =
-                        \alpha(\beta(x_1, x_2)) = \alpha(\beta u) \). &emsp; (Thỏa mãn)
-                    </li>
-                    <li><strong>Phần tử đơn vị:</strong><br>
-                        \( 1 \cdot u = (1 \cdot x_1, 1 \cdot x_2) = (x_1, x_2) = u \). &emsp; (Thỏa mãn)
-                    </li>
-                </ol>
-                <p><strong>Kết luận:</strong> Vì thỏa mãn đầy đủ 8 tiên đề, \( V = \mathbb{R}^2 \) là một không gian
-                    vector.</p>
-
-                <div class="pdf-h2">2 &nbsp; Không gian vector con</div>
-
-                <div class="pdf-h3">2.1 &nbsp; Định nghĩa</div>
-                <p>Một tập con \( W \) của một không gian vector \( V \) được gọi là một <strong>không gian con</strong>
-                    của \( V \) nếu \( W \) là một không gian vector dưới các phép tính cộng và nhân vô hướng được xác
-                    định trong \( V \). Nghĩa là \( W \) phải thỏa mãn 3 điều kiện sau:</p>
-                <ol class="pdf-list" style="padding-left: 20px;">
-                    <li>\( W \neq \varnothing \) &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; (Tập con khác
-                        rỗng)</li>
-                    <li>\( \forall u, v \in W \Rightarrow u + v \in W \) &emsp;&emsp;&emsp;&emsp; (Đóng kín với phép
-                        cộng)</li>
-                    <li>\( \forall u \in W, \forall \alpha \in \mathbb{K} \Rightarrow \alpha u \in W \)
-                        &emsp;&emsp;&emsp;&nbsp; (Đóng kín với phép nhân vô hướng)</li>
-                </ol>
-
-                <div class="pdf-h3">2.2 &nbsp; Kiểm tra không gian vector con</div>
-                <p>Để kiểm tra xem \( W \) có là một không gian con của một không gian vector \( V \) hay không, ta kiểm
-                    tra tính đúng đắn của 3 mệnh đề sau:</p>
-                <ol class="pdf-list" style="padding-left: 20px;">
-                    <li>Nếu \( W \) là một không gian con của \( V \) thì cả \( W \) và \( V \) phải có cùng vector 0.
-                    </li>
-                    <li>Nếu \( u \) và \( v \) thuộc \( W \) khi đó \( u + v \) cũng thuộc \( W \).</li>
-                    <li>Nếu \( u \) thuộc \( W \) và \( k \) là vô hướng bất kì, khi đó \( k \cdot u \) cũng thuộc \( W
-                        \).</li>
-                </ol>
-
-                <div class="pdf-box">
-                    <span class="pdf-box-title">Ví dụ:</span> Kiểm tra xem tập \( W = \{(x_1, x_2, x_3) \in
-                    \mathbb{R}^3 \mid x_1 = 2x_2\} \) có là không gian vector con trong \( \mathbb{R}^3 \) hay không?
-                </div>
-
-                <span class="pdf-sol-title">Lời giải</span>
-                <p>Để \( W \) là một không gian con của \( \mathbb{R}^3 \), tập \( W \) phải thỏa mãn 3 điều kiện sau:
+                <div class="pdf-h2" id="hang-2">2 &nbsp; Hạng của hệ vector</div>
+                <p>Số lượng các vector thuộc một hệ con độc lập tuyến tính tối đại của hệ \( S \) được gọi là
+                    <strong>hạng</strong> của \( S \), ký hiệu là \( r(S) \) hoặc \( \text{rank}(S) \).
                 </p>
-                <ol class="pdf-list" style="padding-left: 20px;">
-                    <li><strong>\( W \) chứa vector không (\( W \neq \varnothing \))</strong><br>
-                        Xét vector không \( 0_{\mathbb{R}^3} = (0, 0, 0) \). Thay \( 0_{\mathbb{R}^3} \) vào \( W \), ta
-                        có:<br>
-                        <div class="math-center">\( 0 = 2 \cdot 0 \Rightarrow 0_{\mathbb{R}^3} \in W \). &nbsp; Vậy \( W
-                            \neq \varnothing \)</div>
-                    </li>
-                    <li><strong>Đóng kín với phép cộng</strong><br>
-                        Lấy hai vector bất kỳ \( u = (x_1, x_2, x_3) \in W \) và \( v = (y_1, y_2, y_3) \in W \).<br>
-                        Theo đề bài, ta có: \( x_1 = 2x_2 \) và \( y_1 = 2y_2 \).<br>
-                        Xét tổng \( u + v = (x_1 + y_1, x_2 + y_2, x_3 + y_3) \). Thay \( u + v \) vào \( W \), ta
-                        có:<br>
-                        <div class="math-center">\( x_1 + y_1 = 2x_2 + 2y_2 = 2(x_2 + y_2) \Rightarrow u + v \in W \quad
-                            (\text{Thỏa mãn}) \)</div>
-                    </li>
-                    <li><strong>Đóng kín với phép nhân vô hướng</strong><br>
-                        Lấy vector bất kỳ \( u = (x_1, x_2, x_3) \in W \) và một vô hướng \( k \in \mathbb{R} \).<br>
-                        Xét \( k \cdot u = (kx_1, kx_2, kx_3) \). Thay \( k \cdot u \) vào \( W \), ta có:<br>
-                        <div class="math-center">\( kx_1 = k(2x_2) = 2(kx_2) \Rightarrow k \cdot u \in W \quad
-                            (\text{Thỏa mãn}) \)</div>
-                    </li>
-                </ol>
-                <p><strong>Kết luận:</strong> Vì \( W \) thỏa mãn cả 3 điều kiện trên nên \( W \) là một không gian
-                    vector con của \( \mathbb{R}^3 \).</p>
 
-                <div class="pdf-box">
-                    <span class="pdf-box-title">Ví dụ:</span> Kiểm tra tập \( W = \{(x_1, x_2, x_3) \in
-                    \mathbb{R}^3 \mid x_3 = x_1 x_2\} \) có là không gian vector con trong \( \mathbb{R}^3 \) hay không?
+                <div class="box-black">
+                    <p><span class="text-red-bold" style="font-style: italic;">Ví dụ:</span> Hạng của họ vector \( M \)
+                        bằng 5 hay \( r(M) = 5 \), có nghĩa là tồn tại 5 vector của \( M \) tạo thành tập hợp ĐLTT và
+                        mọi tập con của \( M \) chứa nhiều hơn 5 vector đều là tập PTTT. Từ đó, ta có các nhận xét sau:
+                    </p>
+                    <ul class="pdf-list" style="list-style-type: none; padding-left: 20px; margin-top: 15px;">
+                        <li>i) Nếu ta chọn nhiều hơn 5 vector của \( M \), thì ta thu được một họ PTTT</li>
+                        <li style="margin-top: 10px;">ii) Nếu ta chọn đúng 5 vector của \( M \), thì tập hợp thu được có
+                            thể ĐLTT hoặc có thể PTTT.</li>
+                        <li style="margin-top: 10px;">iii) Trong \( M \) chắc chắn phải tồn tại một tập hợp con chứa 5
+                            vector ĐLTT.</li>
+                    </ul>
                 </div>
 
-                <span class="pdf-sol-title">Lời giải</span>
-                <p>Để \( W \) là một không gian con của \( \mathbb{R}^3 \), tập \( W \) phải thỏa mãn 3 điều kiện sau:
-                </p>
-                <ol class="pdf-list" style="padding-left: 20px;">
-                    <li><strong>\( W \) chứa vector không (\( W \neq \varnothing \))</strong><br>
-                        Xét vector không \( 0_{\mathbb{R}^3} = (0, 0, 0) \). Thay \( 0_{\mathbb{R}^3} \) vào \( W \) (\(
-                        x_3 = x_1 x_2 \)), ta có:<br>
-                        <div class="math-center">\( 0 = 0 \cdot 0 \Rightarrow 0_{\mathbb{R}^3} \in W \). &nbsp; Vậy \( W
-                            \neq \varnothing \)</div>
-                    </li>
-                    <li><strong>Đóng kín với phép cộng</strong><br>
-                        Lấy hai vector bất kỳ \( u = (x_1, x_2, x_3) \in W \) và \( v = (y_1, y_2, y_3) \in W \).<br>
-                        Theo đề bài, các thành phần phải thỏa mãn: \( x_3 = x_1 x_2 \) và \( y_3 = y_1 y_2 \).<br>
-                        Xét tổng \( u + v = (x_1 + y_1, x_2 + y_2, x_3 + y_3) \). Thay \( u + v \) vào điều kiện của \(
-                        W \), ta cần kiểm tra xem thành phần thứ 3 có bằng tích hai thành phần đầu hay không:<br>
-                        <div class="math-center">\((x_1 + y_1)(x_2 + y_2) = x_1 x_2 + x_1 y_2 + x_2 y_1 + y_1 y_2 \)
-                        </div>
+                <h1 class="pdf-main-title" id="he-sinh">Hệ sinh</h1>
 
-                        Ta thấy:<br>
-                        <div class="math-center">\( x_1 x_2 + y_1 y_2 \neq x_1 x_2 + x_1 y_2 + x_2 y_1 + y_1 y_2 \quad
-                            (= x_3 + y_3) \)</div>
-                        <div class="math-center">\( \Rightarrow u + v \notin W \quad (\text{Không thỏa mãn}) \)</div>
-                    </li>
-                </ol>
-                <p><strong>Kết luận:</strong> Vì \( W \) vi phạm điều kiện đóng kín với phép cộng nên \( W \)
-                    <strong>không</strong> là một không gian vector con của \( \mathbb{R}^3 \).</p>
+                <div class="pdf-h2" id="sinh-1">1 &nbsp; Không gian con sinh bởi một tập hợp</div>
+                <p>Cho \( S = \{v_1, v_2, \dots, v_k\} \) là một tập hợp các vector trong không gian vector \( V \).
+                    Không gian con sinh bởi \( S \) hay bao tuyến tính của \( S \), ký hiệu là \( \text{span}(S) \) hoặc
+                    \( \text{span}\{v_1, \dots, v_k\} \), là tập hợp tất cả các tổ hợp tuyến tính của các vector trong
+                    \( S \).</p>
+                <div class="math-center math-scroll" style="margin: 20px 0;">
+                    \( \text{span}(S) = \{c_1v_1 + c_2v_2 + \dots + c_kv_k \mid c_1, c_2, \dots, c_k \in \mathbb{R}\} \)
+                </div>
+                <p><span class="text-red-bold" style="font-style: italic;">Quy ước:</span> Nếu \( S = \varnothing \) thì
+                    \( \text{span}(S) = \{\mathbf{0}\} \) và \( \text{span}(S) \) là không gian con nhỏ nhất của \( V \)
+                    chứa \( S \).</p>
+
+                <div class="pdf-h2" id="sinh-2">2 &nbsp; Hệ sinh của không gian vector</div>
+                <p>Cho \( V \) là một không gian vector và \( S = \{u_1, u_2, \dots, u_n\} \) là một họ vector thuộc \(
+                    V \). Nếu mọi \( u \in V \) đều có biểu diễn dưới dạng tổ hợp tuyến tính:</p>
+                <div class="math-center math-scroll" style="margin: 15px 0;">
+                    \( u = c_1u_1 + c_2u_2 + \dots + c_nu_n \)
+                </div>
+                <p>thì ta nói họ \( S \) sinh ra \( V \) hay \( S \) là một <strong>hệ sinh</strong> của \( V \). Ký
+                    hiệu: \( V = \text{span}(S) \).</p>
+                <p style="margin-top: 15px;">Nếu không gian vector \( V \) sở hữu ít nhất một hệ sinh hữu hạn thì \( V
+                    \) được gọi là <strong>không gian hữu hạn sinh</strong>.</p>
+
+                <p><span class="pdf-note">Nhận xét:</span> Việc xác định một không gian là hữu hạn sinh rất quan trọng,
+                    vì nó cho phép chúng ta nghiên cứu toàn bộ cấu trúc không gian vô hạn chỉ thông qua một tập hợp hữu
+                    hạn các vector đại diện.</p>
+
+                <div class="box-black" style="margin-top: 25px;">
+                    <p><span class="text-red-bold" style="font-style: italic;">Ví dụ 1:</span> Trong không gian vector
+                        \( \mathbb{R}^2 \), xét hệ vector \( E = \{e_1 = (1, 0); e_2 = (0, 1)\} \). Chứng minh rằng \( E
+                        \) là một hệ sinh của \( \mathbb{R}^2 \).</p>
+                    <p style="margin-top: 15px;"><strong><em>Lời giải:</em></strong> Thật vậy, với mọi vector \( x = (a,
+                        b) \in \mathbb{R}^2 \), ta luôn có:</p>
+                    <div class="math-center math-scroll" style="margin: 15px 0;">
+                        \( x = (a, b) = a(1, 0) + b(0, 1) = ae_1 + be_2 \)
+                    </div>
+                    <p>Vì \( x \) luôn biểu diễn được dưới dạng tổ hợp tuyến tính của \( e_1, e_2 \) nên \( E \) là hệ
+                        sinh của \( \mathbb{R}^2 \).</p>
+                </div>
+
+                <div class="box-black">
+                    <p><span class="text-red-bold" style="font-style: italic;">Ví dụ 2:</span> Trong không gian vector
+                        \( \mathbb{R}^2 \), xét hệ vector \( E' = \{e_1 = (1, 0); e_2 = (0, 1); e_3 = (2, 5)\} \). Chứng
+                        minh rằng \( E' \) là một hệ sinh của \( \mathbb{R}^2 \).</p>
+                    <p style="margin-top: 15px;"><strong><em>Lời giải:</em></strong> Thật vậy, với mọi \( x = (a, b) \in
+                        \mathbb{R}^2 \), ta có thể biểu diễn:</p>
+                    <div class="math-center math-scroll" style="margin: 15px 0;">
+                        \( x = (a, b) = a(1, 0) + b(0, 1) + 0(2, 5) = ae_1 + be_2 + 0e_3 \)
+                    </div>
+                    <p>Do đó, \( E' \) là một hệ sinh của \( \mathbb{R}^2 \).</p>
+                </div>
+
+                <p><span class="pdf-note">Nhận xét:</span> Ở ví dụ 2, một hệ sinh có thể chứa các vector "dư thừa" (như
+                    \( e_3 \)) mà việc loại bỏ chúng vẫn không làm thay đổi không gian được sinh ra. Điều này đặt ra một
+                    câu hỏi quan trọng:</p>
+
+                <p style="font-style: italic; text-align: center; margin: 25px 40px; color: var(--text-sub);">
+                    "Làm thế nào để tìm được một hệ sinh <strong>tiết kiệm</strong> nhất (chứa ít vector nhất) mà vẫn
+                    bao phủ được toàn bộ không gian?"
+                </p>
+
+                <p>Hệ sinh "vừa đủ" đó chính là một hệ sinh đồng thời thỏa mãn sự <strong>độc lập tuyến tính</strong>.
+                    Đây là cầu nối dẫn dắt chúng ta đến với khái niệm quan trọng nhất của chương này là <strong>cơ sở
+                        của không gian vector</strong>.</p>
 
                 <script>
                     if (window.MathJax && window.MathJax.typesetPromise) {
@@ -1341,193 +1553,118 @@
                 </script>
             </div>
 
-            <div class="chapter-card" id="video-truc-quan"
-                style="padding: 0; overflow: hidden; border: none; background: transparent;">
-                <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-brands fa-youtube"></i> Video trực quan</h2>
-
-                <div class="cinema-container">
-                    <div class="video-box">
-                        <div id="youtube-player"></div>
-                    </div>
-
-                    <div class="playlist-box">
-                        <div class="playlist-header">
-                            <span>Nội dung</span>
-                            <span style="font-size: 0.8rem; color: #94a3b8;">4 phần</span>
+            <div class="video-box" id="coming-soon">
+                <div class="temp-video-overlay">
+                    <div class="tv-content">
+                        <div class="tv-icon-wrapper">
+                            <div class="tv-spinner"></div>
+                            <i class="fa-solid fa-hourglass-half"></i>
                         </div>
-                        <div class="chapter-list">
-                            <div class="chapter-item playing" onclick="seekTo(0); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Vector ở phổ thông</span></div>
-                                <div class="time-badge">00:00</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(60); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Quy tắc nối đuôi</span></div>
-                                <div class="time-badge">01:00</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(230); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Quy tắc hình bình hành</span>
-                                </div>
-                                <div class="time-badge">03:50</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(307); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Phép nhân vector với số
-                                        thực</span></div>
-                                <div class="time-badge">05:07</div>
-                            </div>
-                        </div>
+                        <h4>Sắp ra mắt</h4>
+                        <p>Video trực quan đang trong quá trình biên tập.<br>Hệ thống sẽ cập nhật trong thời gian tới.
+                        </p>
                     </div>
                 </div>
+
+                <div id="youtube-player"></div>
             </div>
 
             <div class="chapter-card" id="bai-tap">
                 <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Bài tập</h2>
 
-                <div class="pdf-h1">1 &nbsp; Định nghĩa Không gian vector</div>
-
                 <div class="box-blue">
-                    <span class="text-red-bold">Bài 1.1</span> Kiểm tra tập \( V \) với các phép toán được định nghĩa như sau có là không gian vector không?
-                    
-                    <ul class="exercise-list">
-                        <li>
-                            a) \( V = \{(x, y, z) \mid x, y, z \in \mathbb{R}\} \subset \mathbb{R}^3 \) với các phép toán được xác định như sau:
-                            <div class="math-scroll">
-                                \( - \) Phép cộng: \( (x, y, z) + (x', y', z') = (x+x', y+y', z+z') \) <br>
-                                \( - \) Phép nhân: \( k \cdot (x, y, z) = (|k|x, |k|y, |k|z) \quad k \in \mathbb{R} \)
-                            </div>
-                        </li>
-                        <li>
-                            b) \( V = \{x = (x_1, x_2) \mid x_1, x_2 > 0\} \subset \mathbb{R}^2 \) với các phép toán được xác định như sau:
-                            <div class="math-scroll">
-                                \( - \) Phép cộng: \( (x_1, y_1) + (x_2, y_2) = (x_1 x_2, y_1 y_2) \) <br>
-                                \( - \) Phép nhân: \( k \cdot (x_1, x_2) = (x_1^k, x_2^k) \quad k \in \mathbb{R} \)
-                            </div>
-                        </li>
-                    </ul>
-                </div>
+                    <span class="text-red-bold">Bài 1.</span> Tìm hạng của các hệ véc tơ sau:
 
-                <div class="pdf-h1">2 &nbsp; Không gian vector con</div>
-
-                <p>
-    <span class="pdf-remark">Nhận xét:</span> Một tập con trong \( \mathbb{R}^n \) định nghĩa bởi các phương trình/hệ phương trình sẽ là không gian con nếu tất cả các phương trình đó là <strong>bậc nhất</strong> và <strong>thuần nhất</strong> (vế phải bằng 0).
-</p>
-
-                <div class="box-black">
-                    <span class="text-example-blue">Ví dụ:</span> Trong \( \mathbb{R}^3 \), xét tập hợp \( W = \{(x, y, z) \in \mathbb{R}^3 \mid x - 2y + z = 0\} \). Chứng minh \( W \) là không gian vector con của \( \mathbb{R}^3 \).
-
-                    <span class="pdf-sol-title">Lời giải</span>
-
-                    <p>Để \( W \) là không gian con của \( \mathbb{R}^3 \), \( W \) phải thỏa mãn 3 điều kiện sau:</p>
-
-                    <p><strong>1. \( W \) chứa vector không (\( W \neq \varnothing \))</strong></p>
-                    <div class="math-scroll math-center">
-                        Xét vector không \( 0_{\mathbb{R}^3} = (0, 0, 0) \). Thay vào phương trình của \( W \) (\( x - 2y + z = 0 \)), ta có:<br>
-                        \( 0 - 2(0) + 0 = 0 \Rightarrow 0_{\mathbb{R}^3} \in W \quad (\text{Thỏa mãn}) \)
-                    </div>
-                    <p>Vậy \( W \neq \varnothing \).</p>
-
-                    <p><strong>2. Đóng kín với phép cộng</strong></p>
-                    <div class="math-scroll">
-                        Lấy hai vector bất kỳ \( u = (x_1, y_1, z_1) \in W \) và \( v = (x_2, y_2, z_2) \in W \).<br>
-                        Theo đề bài, các thành phần phải thỏa mãn:<br>
-                        <div class="math-center">\( x_1 - 2y_1 + z_1 = 0 \) và \( x_2 - 2y_2 + z_2 = 0 \)</div>
-                        Xét tổng:
-                        <div class="math-center">\( u + v = (x_1 + x_2, y_1 + y_2, z_1 + z_2) \)</div>
-                        Thay \( u + v \) vào \( W \), ta có:
-                        <div class="math-center">
-                            \( (x_1 + x_2) - 2(y_1 + y_2) + (z_1 + z_2) = (x_1 - 2y_1 + z_1) + (x_2 - 2y_2 + z_2) \) <br>
-                            \( = 0 + 0 = 0 \Rightarrow u + v \in W \quad (\text{Thỏa mãn}) \)
-                        </div>
-                    </div>
-
-                    <p><strong>3. Đóng kín với phép nhân vô hướng</strong></p>
-                    <div class="math-scroll">
-                        Lấy vector bất kỳ \( u = (x_1, y_1, z_1) \in W \) và một vô hướng \( k \in \mathbb{R} \).<br>
-                        Xét \( k \cdot u = (kx_1, ky_1, kz_1) \). Thay \( k \cdot u \) vào \( W \), ta có:
-                        <div class="math-center">
-                            \( kx_1 - 2(ky_1) + kz_1 = k(x_1 - 2y_1 + z_1) = k \cdot 0 = 0 \Rightarrow k \cdot u \in W \quad (\text{Thỏa mãn}) \)
-                        </div>
-                    </div>
-
-                    <p>Vì \( W \) thỏa mãn cả 3 điều kiện trên nên \( W \) là một không gian vector con của \( \mathbb{R}^3 \).</p>
-                    <p><em>Nhờ nhận xét trên, ta dễ dàng đoán được \( W \) là không gian vector con.</em></p>
-                </div>
-
-                <div class="box-blue">
-                    <span class="text-red-bold">Bài 2.1</span> Chứng minh các tập hợp \( W \) sau đây là không gian con của các không gian vector tương ứng:
-                    
-                    <ul class="exercise-list">
-                        <li>a) \( W = \{(x, y, z) \in \mathbb{R}^3 \mid 2x + y = 0\} \)</li>
-                        <li>b) \( W = \{(x, y) \in \mathbb{R}^2 \mid x = 3y\} \)</li>
-                        <li>c) \( W = \{(x, y, z) \in \mathbb{R}^3 \mid x + y = 0 \text{ và } x - z = 0\} \)</li>
-                        <li>d) \( W = \{(x_1, x_2, x_3, x_4) \in \mathbb{R}^4 \mid x_1 - x_4 = 0\} \)</li>
-                        <li>e) \( W = \{(x, y, z) \in \mathbb{R}^3 \mid x = y = z\} \)</li>
-                        <li>f) \( W = \{(x_1, x_2, x_3) \in \mathbb{R}^3 \mid x_3 = x_1 + x_2\} \)</li>
-                        <li>g) \( W = \{(x, y, z) \in \mathbb{R}^3 \mid 3x - 5z = 0\} \)</li>
-                        <li>h) \( W = \{P(x) \in P_2[x] \mid P(0) = 0\} \)</li>
-                    </ul>
-                </div>
-
-                <div class="box-blue">
-                    <span class="text-red-bold">Bài 2.2</span> Giải thích tại sao các tập hợp \( W \) sau <strong>không phải</strong> là không gian con của không gian vector tương ứng:
-                    
-                    <ul class="exercise-list">
-                        <li>a) \( W = \{(x, y, z) \in \mathbb{R}^3 \mid x + y + z = 1\} \)</li>
-                        <li>b) \( W = \{(x, y, z) \in \mathbb{R}^3 \mid x + 2y - 3z = 2\} \)</li>
-                        <li>c) \( W = \{(x, y) \in \mathbb{R}^2 \mid y = x^2\} \)</li>
-                        <li>d) \( W = \{(x, y, z) \in \mathbb{R}^3 \mid xy = 0\} \)</li>
-                        <li>e) \( W = \{(x, y) \in \mathbb{R}^2 \mid |x| = |y|\} \)</li>
-                        <li>f) \( W = \{(x, y, z) \in \mathbb{R}^3 \mid x^2 - y^2 = 0\} \)</li>
-                        <li>g) \( W = \{(x, y) \in \mathbb{R}^2 \mid \sqrt{x^2} = y\} \)</li>
-                        <li>h) \( W = \{(x, y, z) \in \mathbb{R}^3 \mid x \ge 0\} \)</li>
-                        <li>i) \( W = \{(x, y, z) \in \mathbb{R}^3 \mid x \in \mathbb{Z}\} \)</li>
-                    </ul>
-                </div>
-                <div class="box-blue">
-                    <span class="text-red-bold">Bài 2.3</span> Kiểm tra các tập sau đây có là không gian con của các không gian vector tương ứng không?
-                    
                     <div class="math-scroll" style="margin-top: 10px;">
                         <ul class="exercise-list">
-                            <li>a) \( U = \{(x, y, z) \in \mathbb{R}^3 \mid 2x - y + 3z = 0\} \)</li>
-                            <li>b) \( W = \{(x, y) \in \mathbb{R}^2 \mid x - 2y = 1\} \)</li>
-                            <li>c) \( M = \{x(t) = at^2 + bt + c \in P_2[t] \mid a - b + c = 0\} \)</li>
-                            <li>
-                                d) \( N = \left\{ A = \begin{pmatrix} a_{11} & a_{12} \\ a_{21} & a_{22} \end{pmatrix} \in \mathcal{M}_2(\mathbb{R}) \mid a_{11} + a_{12} - a_{21} + 2a_{22} = 0 \right\} \)
-                            </li>
+                            <li>a) \( u_1 = (2, 3, 5, 7), u_2 = (4, 1, 3, 2), u_3 = (8, 7, 13, 16), u_4 = (6, 4, 8, 9)
+                                \).</li>
+                            <li>b) \( u_1 = (1, 1, 5, 7), u_2 = (6, 2, 2, 2), u_3 = (13, 1, 8, 17), u_4 = (0, 1, 1, 2)
+                                \).</li>
                         </ul>
                     </div>
                 </div>
 
                 <div class="box-blue">
-                    <span class="text-red-bold">Bài 2.4</span> Chứng minh các tập hợp con của các không gian vector quen thuộc sau là các không gian con của chúng:
-                    
+                    <span class="text-red-bold">Bài 2.</span> Tìm \( m \) để hệ sau có hạng bằng 2:
+
                     <div class="math-scroll" style="margin-top: 10px;">
                         <ul class="exercise-list">
-                            <li>a) Tập \( V = \{(x_1, x_2, x_3) \in \mathbb{R}^3 \mid 2x_1 - 5x_2 + 3x_3 = 0\} \)</li>
-                            <li>b) Tập các đa thức có hệ số bậc nhất bằng 0 (hệ số của \( x \)) của không gian vector \( P_n[x] \)</li>
-                            <li>c) Tập các ma trận tam giác trên của các ma trận vuông cấp \( n \)</li>
-                            <li>d) Tập các ma trận đối xứng của các ma trận vuông cấp \( n \)</li>
-                            <li>e) Tập các ma trận phản đối xứng của các ma trận vuông cấp \( n \quad (a_{ij} = -a_{ji}) \)</li>
+                            <li>a) \( u = (1, 3, 1), v = (1, m + 3, 3), w = (1, m + 6, m + 3) \).</li>
+                            <li>b) \( u = (m, 1, 0, 2), v = (m, m + 1, -1, 2), w = (2m, m + 2, -1, 5) \).</li>
+                            <li>c) \( u = (m, 1, 1), v = (1, m, 1), w = (1, 1, m) \).</li>
                         </ul>
                     </div>
                 </div>
+
+                <div class="box-blue">
+                    <span class="text-red-bold">Bài 3.</span> Tìm hạng và hệ con độc lập tuyến tính tối đại của các hệ
+                    sau:
+
+                    <div class="math-scroll" style="margin-top: 10px;">
+                        <ul class="exercise-list">
+                            <li>a) \( \alpha_1 = (1, 0, -1, 0), \alpha_2 = (1, 2, 1, 1), \alpha_3 = (3, 2, 3, 2),
+                                \alpha_4 = (1, 1, 2, 1) \).</li>
+                            <li>b) \( \alpha_1 = (1, 0, 0, -1), \alpha_2 = (2, 1, 1, 0), \alpha_3 = (1, 1, 1, 1),
+                                \alpha_4 = (1, 2, 3, 4), \alpha_5 = (0, 1, 2, 3) \).</li>
+                            <li>c) \( \alpha_1 = (1, 2, 0, 1), \alpha_2 = (1, 1, 1, 0), \alpha_3 = (1, 0, 1, 0),
+                                \alpha_4 = (1, 3, 0, 1) \).</li>
+                            <li>d) \( \alpha_1 = (1, 1, 1, 1), \alpha_2 = (1, 3, 1, 3), \alpha_3 = (1, 2, 0, 2),
+                                \alpha_4 = (1, 2, 1, 2), \alpha_5 = (3, 1, 3, 1) \).</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box-blue">
+                    <p style="margin: 0; line-height: 1.6;">
+                        <span class="text-red-bold">Bài 4.</span> Trong không gian \( \mathcal{P}_2[x] \), cho tập hợp
+                        con \( S = \{x^2 + 2x - 1; 2x^2 + x - 3; 5x^2 + x - 8; 4x^2 + mx + 1\} \). Tìm tất cả các giá
+                        trị thực của \( m \) để \( S \) là một hệ sinh của \( \mathcal{P}_2[x] \).
+                    </p>
+                </div>
+
+                <div class="box-blue">
+                    <p style="margin: 0; line-height: 1.6;">
+                        <span class="text-red-bold">Bài 5.</span> Trong \( \mathbb{R}^3 \), cho hai tập hợp con \( S_1 =
+                        \{(1; 2; -1), (2; 5; 1), (3; 7; m)\} \) và \( S_2 = \{(1; 3; 2), (5; 12; 1), (4; 7; m)\} \). Tìm
+                        \( m \) để \( S_1 \) và \( S_2 \) sinh ra cùng một không gian vector.
+                    </p>
+                </div>
+
+                <div class="box-blue">
+                    <span class="text-red-bold">Bài 6.</span> Trong không gian vector \( \mathcal{M}_2[\mathbb{R}] \),
+                    cho hệ vector sau:
+
+                    <div class="math-center math-scroll" style="margin: 15px 0;">
+                        \( S = \left\{ \begin{pmatrix} 1 & 2 \\ -1 & 1 \end{pmatrix} ; \begin{pmatrix} 2 & 4 \\ -4 & 5
+                        \end{pmatrix} ; \begin{pmatrix} 3 & 2 \\ -5 & 2 \end{pmatrix} ; \begin{pmatrix} 5 & 3 \\ 1 & m
+                        \end{pmatrix} \right\} \)
+                    </div>
+
+                    <p style="margin: 0; line-height: 1.6;">
+                        Tìm tất cả các số thực \( m \) để \( S \) không là hệ sinh của \( \mathcal{M}_2[\mathbb{R}] \).
+                    </p>
+                </div>
+
                 <div class="download-container">
-    <p style="margin-bottom: 15px; color: var(--text-sub); font-size: 0.95rem;">
-        <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài tập? Tải lời giải về để đối chiếu nhé!
-    </p>
-    
-    <a href="https://drive.google.com/uc?export=download&id=1kNdg5h3YE2NccqCOq-QeA4wwm3mjYfzw" target="_blank" class="btn-download">
-        <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
-    </a>
-</div>
+                    <p style="margin-bottom: 15px; color: var(--text-sub); font-size: 0.95rem;">
+                        <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài tập? Tải lời giải về để đối
+                        chiếu nhé!
+                    </p>
+
+                    <a href="https://drive.google.com/uc?export=download&id=1jLKpLAmjPvmusQzUuR2-HCYPKuhBSM41"
+                        target="_blank" class="btn-download">
+                        <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
+                    </a>
+                </div>
             </div>
 
         </main>
     </div>
-
+    <footer
+        style="text-align: center; padding: 30px 20px; margin-top: 20px; margin-bottom: 20px; color: var(--text-sub); font-size: 0.95rem; border-top: 1px solid var(--border); width: 100%;">
+        <p style="margin: 0;">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
+    </footer>
     <script>
         // 1. THEME HANDLING & ANIMATION
         // Theme is auto-initialized by theme-manager.js script
@@ -1615,48 +1752,106 @@
             el.classList.add('playing');
         }
 
-        // 3. SCROLL SPY
-        const cards = document.querySelectorAll('.chapter-card');
-        const links = document.querySelectorAll('.menu-link');
-        window.addEventListener('scroll', () => {
-            let current = '';
-            cards.forEach(card => {
-                if (scrollY >= card.offsetTop - 150) current = card.getAttribute('id');
-            });
-            links.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href').includes(current)) link.classList.add('active');
-            });
-        });
+
 
 
 
     </script>
     <script>
-/* ===== Smooth scroll cho menu sidebar (có trừ topbar) ===== */
-document.querySelectorAll('.menu-link[href^="#"]').forEach(link => {
-    link.addEventListener('click', e => {
-        e.preventDefault();
+        document.addEventListener("DOMContentLoaded", () => {
 
-        const targetId = link.getAttribute('href');
-        const target = document.querySelector(targetId);
-        if (!target) return;
+            // 1. HÀM XỬ LÝ CUỘN TRANG (Có chờ MathJax render xong để không sai lệch tọa độ)
+            const smoothScrollTo = (targetElement) => {
+                if (!targetElement) return;
+                const executeScroll = () => {
+                    const topbar = document.getElementById('topbar');
+                    const topbarHeight = topbar ? topbar.offsetHeight : 60;
+                    // Trừ thêm 20px để phần chữ không bị dính sát mép trên
+                    const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                };
 
-        const topbar = document.getElementById('topbar');
-        const topbarHeight = topbar ? topbar.offsetHeight : 0;
+                if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
+                    MathJax.startup.promise.then(() => requestAnimationFrame(executeScroll));
+                } else {
+                    executeScroll();
+                }
+            };
 
-        const y = target.getBoundingClientRect().top
-                + window.pageYOffset
-                - topbarHeight
-                - 12; // chừa khoảng thở nhỏ
+            const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
 
-        window.scrollTo({
-            top: y,
-            behavior: 'smooth'
+            // 2. XỬ LÝ CHO CÁC DÒNG CÓ CHỨA MŨI TÊN (Vừa cuộn vừa xổ/thu menu)
+            const toggleBtns = document.querySelectorAll('.custom-nav .toggle-btn');
+            toggleBtns.forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    // --- Đóng / Mở menu ---
+                    const parentLi = this.closest('.has-dropdown');
+                    if (parentLi) {
+                        parentLi.classList.toggle('open');
+                        const icon = this.querySelector('.arrow-icon');
+                        if (icon) {
+                            icon.classList.remove('fa-chevron-right', 'fa-chevron-down');
+                            // Nếu đang mở thì trỏ xuống, đóng thì trỏ ngang
+                            icon.classList.add(parentLi.classList.contains('open') ? 'fa-chevron-down' : 'fa-chevron-right');
+                        }
+                    }
+
+                    // --- Cuộn trang và đổi màu ---
+                    const link = this.querySelector('a');
+                    if (link) {
+                        menuLinks.forEach(el => el.classList.remove('active'));
+                        link.classList.add('active');
+                        const target = document.querySelector(link.getAttribute('href'));
+                        smoothScrollTo(target);
+                    }
+                });
+            });
+
+            // 3. XỬ LÝ CHO CÁC TIỂU MỤC BÊN TRONG (Chỉ cuộn, KHÔNG đóng/mở menu)
+            menuLinks.forEach(link => {
+                // Bỏ qua các link nằm trong dòng có mũi tên (vì đã xử lý ở bước 2 rồi)
+                if (link.closest('.toggle-btn')) return;
+
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    // Đổi màu xanh cho mục đang chọn
+                    menuLinks.forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Cuộn đến mục tiêu
+                    const target = document.querySelector(this.getAttribute('href'));
+                    smoothScrollTo(target);
+                });
+            });
+
+            // 4. SCROLL SPY (TỰ ĐỘNG SÁNG MENU KHI LĂN CHUỘT)
+            const sections = document.querySelectorAll('.chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id]');
+
+            window.addEventListener('scroll', () => {
+                let currentId = '';
+
+                sections.forEach(section => {
+                    const sectionTop = section.getBoundingClientRect().top + window.pageYOffset;
+                    // Trừ hao 150px để khi cuộn vừa ló chữ là menu đã bắt được
+                    if (window.pageYOffset >= sectionTop - 150) {
+                        currentId = section.getAttribute('id');
+                    }
+                });
+
+                if (currentId) {
+                    menuLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${currentId}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
         });
-    });
-});
-</script>
+    </script>
 
 </body>
 

@@ -356,7 +356,7 @@
             color: var(--text-main);
         }
 
-        
+
 
         .main-content {
             flex-grow: 1;
@@ -641,7 +641,7 @@
                 display: none;
             }
 
-            
+
 
             .chapter-card {
                 scroll-margin-top: 130px;
@@ -781,7 +781,7 @@
             font-size: 1.1rem;
         }
 
-        
+
 
         body.dark .pdf-remark {
             color: #fb7185;
@@ -860,6 +860,145 @@
             box-shadow: 0 0 20px rgba(96, 165, 250, 0.4);
             /* Hiệu ứng phát sáng (Glow) */
         }
+
+        /* =================== MÀN CHE VIDEO SCI-FI =================== */
+        .temp-video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #050b14;
+            /* Nền xanh đen sâu thẳm */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            overflow: hidden;
+            border-right: 1px solid #334155;
+        }
+
+        /* Vẽ lưới Grid Toán học nền sau */
+        .temp-video-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background-image:
+                linear-gradient(rgba(58, 120, 255, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(58, 120, 255, 0.08) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 0;
+            animation: panGrid 20s linear infinite;
+        }
+
+        /* Quả cầu phát sáng lơ lửng */
+        .temp-video-overlay::after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: var(--primary);
+            filter: blur(90px);
+            opacity: 0.4;
+            z-index: 0;
+            animation: floatOrb 6s infinite alternate ease-in-out;
+        }
+
+        /* Khung kính mờ Glassmorphism */
+        .tv-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            padding: 35px 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(58, 120, 255, 0.05);
+        }
+
+        /* Vòng xoay quanh Icon */
+        .tv-icon-wrapper {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .tv-icon-wrapper i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            text-shadow: 0 0 15px var(--primary);
+        }
+
+        .tv-spinner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px dashed rgba(96, 165, 250, 0.6);
+            border-radius: 50%;
+            animation: spinDash 12s linear infinite;
+        }
+
+        /* Định dạng chữ */
+        .tv-content h4 {
+            margin: 0 0 12px;
+            color: #f8fafc;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 800;
+        }
+
+        .tv-content p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 1rem;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        /* Animations */
+        @keyframes panGrid {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(-40px, -40px);
+            }
+        }
+
+        @keyframes floatOrb {
+            0% {
+                transform: translate(-50px, -30px) scale(0.8);
+            }
+
+            100% {
+                transform: translate(50px, 30px) scale(1.2);
+            }
+        }
+
+        @keyframes spinDash {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
@@ -912,35 +1051,43 @@
         <aside class="sidebar custom-nav">
             <h3 class="nav-title"><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
             <ul class="nav-list">
-                
-                <li class="nav-item has-dropdown open"> 
-                    <a href="#ly-thuyet" class="nav-link toggle-btn">
-                        <span style="font-weight: 700; flex-grow: 1;">Lý thuyết</span>
+
+                <li class="nav-item has-dropdown open">
+                    <div class="nav-link toggle-btn">
+                        <a href="#ly-thuyet"
+                            style="text-decoration: none; color: inherit; font-weight: 700; flex-grow: 1;">Lý thuyết</a>
                         <i class="fa-solid fa-chevron-down arrow-icon"></i>
-                    </a>
-                    
+                    </div>
+
                     <ul class="sub-menu">
-                        <li><a href="#dinh-nghia" class="sub-link active" style="font-weight: 600;">1. Định nghĩa</a></li>
-                        <li><a href="#dinh-thuc-cap-2" class="sub-link" style="font-weight: 600;">2. Định thức cấp 2</a></li>
-                        <li><a href="#dinh-thuc-cap-3" class="sub-link" style="font-weight: 600;">3. Định thức cấp 3</a></li>
-                        <li class="sub-item has-dropdown">
-                            <a href="#dinh-thuc-cap-n" class="sub-link toggle-btn">
-                                <span style="font-weight: 600; flex-grow: 1;">4. Định thức cấp n</span>
+                        <li
+                            style="padding: 15px 20px 5px 20px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">
+                            Định thức
+                        </li>
+
+                        <li><a href="#dinh-nghia" class="sub-link active">1. Định nghĩa</a></li>
+                        <li><a href="#dinh-thuc-cap-2" class="sub-link">2. Định thức cấp 2</a></li>
+                        <li><a href="#dinh-thuc-cap-3" class="sub-link">3. Định thức cấp 3</a></li>
+
+                        <li class="nav-item has-dropdown">
+                            <div class="sub-link toggle-btn">
+                                <a href="#dinh-thuc-cap-n"
+                                    style="text-decoration: none; color: inherit; flex-grow: 1;">4. Định thức cấp n</a>
                                 <i class="fa-solid fa-chevron-right arrow-icon"></i>
-                            </a>
+                            </div>
                             <ul class="sub-menu">
-                                <li><a href="#phan-bu-dai-so" class="sub-sub-link">Phần bù đại số</a></li>
+                                <li><a href="#phan-bu-dai-so" class="sub-link">Phần bù đại số</a></li>
                             </ul>
                         </li>
                     </ul>
                 </li>
 
                 <li class="nav-item">
-                    <a href="#video-truc-quan" class="nav-link section-link" style="font-weight: 700;">Video trực quan</a>
+                    <a href="#coming-soon" class="nav-link section-link" style="font-weight: 700;">Video trực quan</a>
                 </li>
 
                 <li class="nav-item">
-                    <a href="#bai-tap" class="nav-link" style="font-weight: 700;">Bài tập</a>
+                    <a href="#bai-tap" class="nav-link section-link" style="font-weight: 700;">Bài tập</a>
                 </li>
 
             </ul>
@@ -1172,9 +1319,10 @@
                             border-bottom: 2px solid var(--primary);
                             display: inline-block;
                         }
+
                         body.dark .pdf-h1 {
                             color: var(--accent);
-                            
+
                         }
 
                         .pdf-h2 {
@@ -1212,340 +1360,458 @@
                         body.dark .pdf-remark {
                             color: #60a5fa;
                         }
-                        
+
 
                         /* =================== STYLE MENU MỤC LỤC ĐA CẤP =================== */
-        .custom-nav { padding: 15px 0 !important; }
-        .custom-nav .nav-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); padding: 0 20px 15px 20px; margin: 0; border-bottom: 1px solid var(--border); }
-        .custom-nav .nav-list { list-style: none; padding: 10px 0 0 0; margin: 0; }
-        .custom-nav .nav-item { margin-bottom: 2px; }
-        
-        .custom-nav .nav-link { padding: 12px 20px; }
-        .custom-nav .sub-link { padding: 10px 20px 10px 35px; font-size: 0.9rem; }
-        .custom-nav .sub-sub-link { display: block; padding: 8px 20px 8px 50px; font-size: 0.85rem; }
+                        .custom-nav {
+                            padding: 15px 0 !important;
+                        }
 
-        .custom-nav .nav-link, .custom-nav .sub-link, .custom-nav .sub-sub-link {
-            display: flex; justify-content: space-between; align-items: center; color: #475569; text-decoration: none; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent;
-        }
-        .custom-nav .nav-link:hover, .custom-nav .sub-link:hover, .custom-nav .sub-sub-link:hover { color: var(--primary); background: #f8fafc; }
-        .custom-nav .arrow-icon { font-size: 0.8rem; color: #94a3b8; transition: transform 0.3s ease; }
-        
-        .custom-nav .sub-menu { list-style: none; padding: 0; margin: 0; display: none; }
-        .custom-nav .has-dropdown.open > .sub-menu { display: block; animation: slideDown 0.3s ease-out; }
-        
-        .custom-nav .active { background-color: #eff6ff; color: var(--primary) !important; font-weight: 600; border-left: 3px solid var(--primary); }
+                        .custom-nav .nav-title {
+                            font-size: 1.1rem;
+                            font-weight: 700;
+                            color: var(--text-main);
+                            padding: 0 20px 15px 20px;
+                            margin: 0;
+                            border-bottom: 1px solid var(--border);
+                        }
 
-        /* Dark Mode Menu */
-        body.dark .custom-nav .nav-link, body.dark .custom-nav .sub-link, body.dark .custom-nav .sub-sub-link { color: #cbd5e1; }
-        body.dark .custom-nav .nav-link:hover, body.dark .custom-nav .sub-link:hover, body.dark .custom-nav .sub-sub-link:hover { color: #60a5fa; background: #1e293b; }
-        body.dark .custom-nav .active { background-color: #1e293b; color: #60a5fa !important; border-left-color: #60a5fa; }
+                        .custom-nav .nav-list {
+                            list-style: none;
+                            padding: 10px 0 0 0;
+                            margin: 0;
+                        }
+
+                        .custom-nav .nav-item {
+                            margin-bottom: 2px;
+                        }
+
+                        .custom-nav .nav-link {
+                            padding: 12px 20px;
+                        }
+
+                        .custom-nav .sub-link {
+                            padding: 10px 20px 10px 35px;
+                            font-size: 0.9rem;
+                        }
+
+                        .custom-nav .sub-sub-link {
+                            display: block;
+                            padding: 8px 20px 8px 50px;
+                            font-size: 0.85rem;
+                        }
+
+                        .custom-nav .nav-link,
+                        .custom-nav .sub-link,
+                        .custom-nav .sub-sub-link {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            color: #475569;
+                            text-decoration: none;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                            border-left: 3px solid transparent;
+                        }
+
+                        .custom-nav .nav-link:hover,
+                        .custom-nav .sub-link:hover,
+                        .custom-nav .sub-sub-link:hover {
+                            color: var(--primary);
+                            background: #f8fafc;
+                        }
+
+                        .custom-nav .arrow-icon {
+                            font-size: 0.8rem;
+                            color: #94a3b8;
+                            transition: transform 0.3s ease;
+                        }
+
+                        .custom-nav .sub-menu {
+                            list-style: none;
+                            padding: 0;
+                            margin: 0;
+                            display: none;
+                        }
+
+                        .custom-nav .has-dropdown.open>.sub-menu {
+                            display: block;
+                            animation: slideDown 0.3s ease-out;
+                        }
+
+                        .custom-nav .active {
+                            background-color: #eff6ff;
+                            color: var(--primary) !important;
+                            font-weight: 600;
+                            border-left: 3px solid var(--primary);
+                        }
+
+                        /* Dark Mode Menu */
+                        body.dark .custom-nav .nav-link,
+                        body.dark .custom-nav .sub-link,
+                        body.dark .custom-nav .sub-sub-link {
+                            color: #cbd5e1;
+                        }
+
+                        body.dark .custom-nav .nav-link:hover,
+                        body.dark .custom-nav .sub-link:hover,
+                        body.dark .custom-nav .sub-sub-link:hover {
+                            color: #60a5fa;
+                            background: #1e293b;
+                        }
+
+                        body.dark .custom-nav .active {
+                            background-color: #1e293b;
+                            color: #60a5fa !important;
+                            border-left-color: #60a5fa;
+                        }
                     </style>
 
-                    
 
-                    <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-solid fa-book-open"></i> Lý thuyết</h2>
 
-    <div class="pdf-h1">Định thức</div>
+                    <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-solid fa-book-open"></i> Lý
+                        thuyết</h2>
 
-    <div class="pdf-h2" id="dinh-nghia">1 &nbsp; Định nghĩa</div>
-    <p>Với mỗi ma trận vuông \( A \) cấp \( n \), tồn tại một số thực được gọi là định thức của ma trận \( A \), được ký hiệu là \( det(A) \) hay \( |A| \):</p>
-    <div class="math-center">
-        \( det(A) = |A| = \begin{vmatrix} a_{11} & a_{12} & \dots & a_{1n} \\ a_{21} & a_{22} & \dots & a_{2n} \\ \dots & \dots & \dots & \dots \\ a_{n1} & a_{n2} & \dots & a_{nn} \end{vmatrix} \)
-    </div>
+                    <div class="pdf-h1">Định thức</div>
 
-    <div class="pdf-h2" id="dinh-thuc-cap-2">2 &nbsp; Định thức cấp 2</div>
-    <p>Cho \( A \) là ma trận vuông cấp 2, định thức (cấp 2) của \( A \) được xác định như sau:</p>
-    <div class="math-center">
-        \( detA = |A| = \begin{vmatrix} a_{11} & a_{12} \\ a_{21} & a_{22} \end{vmatrix} = a_{11}a_{22} - a_{12}a_{21} \)
-    </div>
-    <p><span class="pdf-remark">Nhận xét:</span> Định thức cấp 2 được tính bằng cách <strong>lấy đường chéo chính trừ đường chéo phụ</strong>. Định thức cấp 2 được dùng để xác định tích có hướng của hai vector, diện tích hình bình hành và diện tích tam giác trong hình học.</p>
+                    <div class="pdf-h2" id="dinh-nghia">1 &nbsp; Định nghĩa</div>
+                    <p>Với mỗi ma trận vuông \( A \) cấp \( n \), tồn tại một số thực được gọi là định thức của ma trận
+                        \( A \), được ký hiệu là \( det(A) \) hay \( |A| \):</p>
+                    <div class="math-center">
+                        \( det(A) = |A| = \begin{vmatrix} a_{11} & a_{12} & \dots & a_{1n} \\ a_{21} & a_{22} & \dots &
+                        a_{2n} \\ \dots & \dots & \dots & \dots \\ a_{n1} & a_{n2} & \dots & a_{nn} \end{vmatrix} \)
+                    </div>
 
-    <div class="pdf-h2" id="dinh-thuc-cap-3">3 &nbsp; Định thức cấp 3</div>
-    <p>Cho \( A \) là ma trận vuông cấp 3, định thức (cấp 3) của \( A \) được xác định như sau:</p>
-    <div class="math-center">
-        \( det(A) = \begin{vmatrix} a_{11} & a_{12} & a_{13} \\ a_{21} & a_{22} & a_{23} \\ a_{31} & a_{32} & a_{33} \end{vmatrix} = (a_{11}a_{22}a_{33} + a_{21}a_{32}a_{13} + a_{12}a_{23}a_{31}) - (a_{13}a_{22}a_{31} + a_{32}a_{23}a_{11} + a_{21}a_{12}a_{33}) \)
-    </div>
-    
-    <p><span class="pdf-remark">Nhận xét:</span> Công thức khai triển thường được nhớ theo quy tắc Sarrus như sau:</p>
-    
-    <div style="margin: 25px 0;">
-        <img src="../../assets/images/sarrus_1.png" alt="Quy tắc Sarrus 1" class="single-vector-img" style="max-width: 60%;">
-    </div>
-    <p>Hoặc có thể ghi nhớ bằng cách thêm 2 cột vào sau định thức như sau:</p>
-    <div style="margin: 25px 0;">
-        <img src="../../assets/images/sarrus_2.png" alt="Quy tắc Sarrus 2" class="single-vector-img" style="max-width: 50%;">
-    </div>
+                    <div class="pdf-h2" id="dinh-thuc-cap-2">2 &nbsp; Định thức cấp 2</div>
+                    <p>Cho \( A \) là ma trận vuông cấp 2, định thức (cấp 2) của \( A \) được xác định như sau:</p>
+                    <div class="math-center">
+                        \( detA = |A| = \begin{vmatrix} a_{11} & a_{12} \\ a_{21} & a_{22} \end{vmatrix} = a_{11}a_{22}
+                        - a_{12}a_{21} \)
+                    </div>
+                    <p><span class="pdf-remark">Nhận xét:</span> Định thức cấp 2 được tính bằng cách <strong>lấy đường
+                            chéo chính trừ đường chéo phụ</strong>. Định thức cấp 2 được dùng để xác định tích có hướng
+                        của hai vector, diện tích hình bình hành và diện tích tam giác trong hình học.</p>
 
-    <div class="box-black">
-        <span class="text-red-bold">Ví dụ:</span>
-        <div class="math-center">
-            \( \begin{vmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{vmatrix} = [(1.5.9) + (4.8.3) + (2.6.7)] - [(3.5.7) + (8.6.1) + (4.2.9)] = 0 \)
-        </div>
-    </div>
-    <p><span class="pdf-remark">Nhận xét:</span> Định thức cấp 3 được dùng để xác định tích hỗn tạp của ba vector, thể tích hình hộp (xiên) và thể tích khối tứ diện trong hình học.</p>
+                    <div class="pdf-h2" id="dinh-thuc-cap-3">3 &nbsp; Định thức cấp 3</div>
+                    <p>Cho \( A \) là ma trận vuông cấp 3, định thức (cấp 3) của \( A \) được xác định như sau:</p>
+                    <div class="math-center">
+                        \( det(A) = \begin{vmatrix} a_{11} & a_{12} & a_{13} \\ a_{21} & a_{22} & a_{23} \\ a_{31} &
+                        a_{32} & a_{33} \end{vmatrix} = (a_{11}a_{22}a_{33} + a_{21}a_{32}a_{13} + a_{12}a_{23}a_{31}) -
+                        (a_{13}a_{22}a_{31} + a_{32}a_{23}a_{11} + a_{21}a_{12}a_{33}) \)
+                    </div>
 
-    <div class="pdf-h2" id="dinh-thuc-cap-n">4 &nbsp; Định thức cấp n</div>
-    <div class="pdf-h3" id="phan-bu-dai-so">*&nbsp; Phần bù đại số</div>
-    <p>Xét ma trận</p>
-    <div class="math-center">
-        \( A = \begin{pmatrix} a_{11} & a_{12} & \dots & a_{1n} \\ a_{21} & a_{22} & \dots & a_{2n} \\ \dots & \dots & \dots & \dots \\ a_{n1} & a_{n2} & \dots & a_{nn} \end{pmatrix} \)
-    </div>
-    <p>Ta định nghĩa phần bù đại số của \( a_{ij} \), được ký hiệu là \( A_{ij} \) và được xác định bởi:</p>
-    <div class="math-center">\( A_{ij} = (-1)^{i+j} \cdot det(M_{ij}) \)</div>
-    <p>Trong đó, \( M_{ij} \) là ma trận được tạo thành từ ma trận \( A \) sau khi bỏ đi hàng \( i \) và cột \( j \).</p>
+                    <p><span class="pdf-remark">Nhận xét:</span> Công thức khai triển thường được nhớ theo quy tắc
+                        Sarrus như sau:</p>
 
-    <div class="box-black">
-        <span class="text-red-bold">Ví dụ:</span> Cho ma trận \( A = \begin{pmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{pmatrix} \). Ta có
-        <div class="math-center" style="display: flex; justify-content: space-around; flex-wrap: wrap;">
-            <span>\( \bullet \ A_{11} = (-1)^{1+1} \cdot \begin{vmatrix} 5 & 6 \\ 8 & 9 \end{vmatrix} = 5.9 - 6.8 = -3 \)</span>
-            <span>\( \bullet \ A_{21} = (-1)^{2+1} \cdot \begin{vmatrix} 2 & 3 \\ 8 & 9 \end{vmatrix} = -(2.9 - 3.8) = 6 \)</span>
-        </div>
-    </div>
+                    <div style="margin: 25px 0;">
+                        <img src="../../assets/images/sarrus_1.png" alt="Quy tắc Sarrus 1" class="single-vector-img"
+                            style="max-width: 60%;">
+                    </div>
+                    <p>Hoặc có thể ghi nhớ bằng cách thêm 2 cột vào sau định thức như sau:</p>
+                    <div style="margin: 25px 0;">
+                        <img src="../../assets/images/sarrus_2.png" alt="Quy tắc Sarrus 2" class="single-vector-img"
+                            style="max-width: 50%;">
+                    </div>
 
-    <p>Từ định nghĩa phần bù đại số, định thức của ma trận vuông \( A \) được xác định như sau:</p>
-    <div class="math-center">\( detA = a_{i1}A_{i1} + a_{i2}A_{i2} + \dots + a_{in}A_{in}, \ \forall i = \overline{1,n} \)</div>
-    <p>Công thức trên được gọi là công thức khai triển định thức theo hàng thứ \( i \), hay:</p>
-    <div class="math-center">\( detA = a_{1j}A_{1j} + a_{2j}A_{2j} + \dots + a_{nj}A_{nj}, \ \forall j = \overline{1,n} \)</div>
-    <p>Công thức trên được gọi là công thức khai triển định thức theo cột thứ \( j \).</p>
-    
-    <p><span class="pdf-note">Lưu ý:</span> Cần chú ý đến đại lượng xác định dấu \( (-1)^{i+j} \) trong công thức phần bù đại số để tránh nhầm lẫn trong việc tính toán. Các công thức khai triển định thức theo hàng hoặc theo cột gọi chung là <strong>khai triển Laplace</strong>.</p>
+                    <div class="box-black">
+                        <span class="text-red-bold">Ví dụ:</span>
+                        <div class="math-center">
+                            \( \begin{vmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{vmatrix} = [(1.5.9) + (4.8.3) +
+                            (2.6.7)] - [(3.5.7) + (8.6.1) + (4.2.9)] = 0 \)
+                        </div>
+                    </div>
+                    <p><span class="pdf-remark">Nhận xét:</span> Định thức cấp 3 được dùng để xác định tích hỗn tạp của
+                        ba vector, thể tích hình hộp (xiên) và thể tích khối tứ diện trong hình học.</p>
 
-    <p style="margin-top: 30px;">Các tính chất quan trọng:</p>
-    
-    <div style="margin-top: 15px;">
-        <p>1. Định thức không thay đổi qua phép chuyển vị, tức là: \( detA^T = detA \) (Trong đó \( A^T \): ma trận chuyển vị của ma trận \( A \))</p>
-        <div class="box-black">
-            <span class="text-red-bold">Ví dụ:</span>
-            <div class="math-center">
-                \( det(A) = \begin{vmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{vmatrix} = \begin{vmatrix} 1 & 4 & 7 \\ 2 & 5 & 8 \\ 3 & 6 & 9 \end{vmatrix} = det(A^T) \)
-            </div>
-        </div>
-        <p><span class="pdf-remark">Nhận xét:</span> Từ tính chất này, một mệnh đề hay tính chất về định thức nếu đúng với hàng thì cũng đúng với cột và ngược lại.</p>
+                    <div class="pdf-h2" id="dinh-thuc-cap-n">4 &nbsp; Định thức cấp n</div>
+                    <div class="pdf-h3" id="phan-bu-dai-so">*&nbsp; Phần bù đại số</div>
+                    <p>Xét ma trận</p>
+                    <div class="math-center">
+                        \( A = \begin{pmatrix} a_{11} & a_{12} & \dots & a_{1n} \\ a_{21} & a_{22} & \dots & a_{2n} \\
+                        \dots & \dots & \dots & \dots \\ a_{n1} & a_{n2} & \dots & a_{nn} \end{pmatrix} \)
+                    </div>
+                    <p>Ta định nghĩa phần bù đại số của \( a_{ij} \), được ký hiệu là \( A_{ij} \) và được xác định bởi:
+                    </p>
+                    <div class="math-center">\( A_{ij} = (-1)^{i+j} \cdot det(M_{ij}) \)</div>
+                    <p>Trong đó, \( M_{ij} \) là ma trận được tạo thành từ ma trận \( A \) sau khi bỏ đi hàng \( i \) và
+                        cột \( j \).</p>
 
-        <p>2. Nếu ta đổi chỗ hai hàng (hoặc 2 cột bất kỳ) của định thức thì định thức đổi dấu.</p>
-        <div class="box-black">
-            <span class="text-red-bold">Ví dụ:</span> Khi đổi chỗ hàng 2 và hàng 3, định thức sẽ đổi dấu:
-            <div class="math-center">
-                \( \begin{vmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{vmatrix} = - \begin{vmatrix} 1 & 2 & 3 \\ 7 & 8 & 9 \\ 4 & 5 & 6 \end{vmatrix} \)
-            </div>
-        </div>
+                    <div class="box-black">
+                        <span class="text-red-bold">Ví dụ:</span> Cho ma trận \( A = \begin{pmatrix} 1 & 2 & 3 \\ 4 & 5
+                        & 6 \\ 7 & 8 & 9 \end{pmatrix} \). Ta có
+                        <div class="math-center" style="display: flex; justify-content: space-around; flex-wrap: wrap;">
+                            <span>\( \bullet \ A_{11} = (-1)^{1+1} \cdot \begin{vmatrix} 5 & 6 \\ 8 & 9 \end{vmatrix} =
+                                5.9 - 6.8 = -3 \)</span>
+                            <span>\( \bullet \ A_{21} = (-1)^{2+1} \cdot \begin{vmatrix} 2 & 3 \\ 8 & 9 \end{vmatrix} =
+                                -(2.9 - 3.8) = 6 \)</span>
+                        </div>
+                    </div>
 
-        <p>3. Nếu tất cả các phần tử của một hàng (hoặc một cột) của định thức được nhân với \( \lambda \) thì định thức mới bằng định thức ban đầu nhân với \( \lambda \)</p>
-        <div class="box-black">
-            <span class="text-red-bold">Ví dụ:</span>
-            <div class="math-center">
-                \( \begin{vmatrix} 1 & 2 & 3 \\ 4 & 2 & 6 \\ 7 & 8 & 9 \end{vmatrix} = 2 \cdot \begin{vmatrix} 1 & 2 & 3 \\ 2 & 1 & 3 \\ 7 & 8 & 9 \end{vmatrix} \)
-            </div>
-        </div>
-        <p><span class="pdf-remark">Nhận xét:</span> Từ tính chất này ta có nếu \( A \) là ma trận vuông cấp \( n \) thì \( det(\lambda A) = \lambda^n detA \)</p>
+                    <p>Từ định nghĩa phần bù đại số, định thức của ma trận vuông \( A \) được xác định như sau:</p>
+                    <div class="math-center">\( detA = a_{i1}A_{i1} + a_{i2}A_{i2} + \dots + a_{in}A_{in}, \ \forall i =
+                        \overline{1,n} \)</div>
+                    <p>Công thức trên được gọi là công thức khai triển định thức theo hàng thứ \( i \), hay:</p>
+                    <div class="math-center">\( detA = a_{1j}A_{1j} + a_{2j}A_{2j} + \dots + a_{nj}A_{nj}, \ \forall j =
+                        \overline{1,n} \)</div>
+                    <p>Công thức trên được gọi là công thức khai triển định thức theo cột thứ \( j \).</p>
 
-        <p>4. Cho \( A \) là ma trận vuông cấp \( n \). Giả sử hàng thứ \( i \) của ma trận \( A \) có thể biểu diễn dưới dạng: \( a_{ij} = a'_{ij} + a''_{ij} \) với \( j = \overline{1,n} \). Khi đó ta có:</p>
-        <div class="math-center">
-            \( detA = \begin{vmatrix} \dots & \dots & \dots & \dots \\ a'_{i1} + a''_{i1} & a'_{i2} + a''_{i2} & \dots & a'_{in} + a''_{in} \\ \dots & \dots & \dots & \dots \end{vmatrix} = \begin{vmatrix} \dots & \dots & \dots & \dots \\ a'_{i1} & a'_{i2} & \dots & a'_{in} \\ \dots & \dots & \dots & \dots \end{vmatrix} + \begin{vmatrix} \dots & \dots & \dots & \dots \\ a''_{i1} & a''_{i2} & \dots & a''_{in} \\ \dots & \dots & \dots & \dots \end{vmatrix} \)
-        </div>
-        <p>Trong đó các dòng còn lại của 3 định thức ở 2 vế là hoàn toàn như nhau và chính là các hàng còn lại của ma trận \( A \). Ta cũng có kết quả tương tự đối với cột.</p>
-        <div class="box-black">
-            <span class="text-red-bold">Ví dụ:</span>
-            <div class="math-center">
-                \( \begin{vmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{vmatrix} = \begin{vmatrix} 1 & 2 & 3 \\ 6 & 5 & 4 \\ 7 & 8 & 9 \end{vmatrix} + \begin{vmatrix} 1 & 2 & 3 \\ -2 & 0 & 2 \\ 7 & 8 & 9 \end{vmatrix} \)
-            </div>
-        </div>
-        <p><span class="pdf-remark">Nhận xét:</span> Các tính chất 2, 3, 4 chính là tính đa tuyến tính thay phiên của định thức. Từ các tính chất trên, dễ dàng suy ra các tính chất sau của định thức:</p>
+                    <p><span class="pdf-note">Lưu ý:</span> Cần chú ý đến đại lượng xác định dấu \( (-1)^{i+j} \) trong
+                        công thức phần bù đại số để tránh nhầm lẫn trong việc tính toán. Các công thức khai triển định
+                        thức theo hàng hoặc theo cột gọi chung là <strong>khai triển Laplace</strong>.</p>
 
-        <p>5. Định thức sẽ bằng 0 nếu:</p>
-        <ul class="pdf-list" style="list-style-type: disc;">
-            <li>Có hai hàng (hai cột) bằng nhau hoặc tỉ lệ với nhau.</li>
-            <li>Có một hàng (một cột) là tổ hợp tuyến tính của các hàng (cột khác).</li>
-        </ul>
+                    <p style="margin-top: 30px;">Các tính chất quan trọng:</p>
 
-        <p>6. Định thức sẽ không thay đổi nếu:</p>
-        <ul class="pdf-list" style="list-style-type: disc;">
-            <li>Nhân một hàng (một cột) với một số bất kỳ rồi cộng vào hàng khác (cột khác).</li>
-            <li>Cộng vào một hàng (một cột) một tổ hợp tuyến tính của các hàng (cột khác)</li>
-        </ul>
-        
-        <div class="box-black">
-            <span class="text-red-bold">Ví dụ:</span> Tính định thức ma trận \( A = \begin{pmatrix} 1 & 2 & -1 & 3 \\ 2 & 3 & 1 & 5 \\ -1 & 6 & 5 & -2 \\ 3 & 4 & -2 & 7 \end{pmatrix} \)
-            <span class="text-blue-sol">Lời giải</span>
-            <div class="math-center">
-                \( det(A) \xrightarrow{h_2=h_2-2h_1} \begin{vmatrix} 1 & 2 & -1 & 3 \\ 0 & -1 & 3 & -1 \\ -1 & 6 & 5 & -2 \\ 3 & 4 & -2 & 7 \end{vmatrix} \xrightarrow[h_4=h_4-3h_1]{h_3=h_3+h_1} \begin{vmatrix} 1 & 2 & -1 & 3 \\ 0 & -1 & 3 & -1 \\ 0 & 8 & 4 & 1 \\ 0 & -2 & 1 & -2 \end{vmatrix} \xrightarrow{j=1} \begin{vmatrix} -1 & 3 & -1 \\ 8 & 4 & 1 \\ -2 & 1 & -2 \end{vmatrix} = \dots \)
-            </div>
-        </div>
-        <p><span class="pdf-remark">Nhận xét:</span> Ta sử dụng các phép biến đổi sơ cấp để tạo ra nhiều số 0 nhất có thể trong 1 hàng hay 1 cột để khi khai triển định thức theo hàng hoặc cột đó sẽ được rút gọn một cách tối ưu.</p>
+                    <div style="margin-top: 15px;">
+                        <p>1. Định thức không thay đổi qua phép chuyển vị, tức là: \( detA^T = detA \) (Trong đó \( A^T
+                            \): ma trận chuyển vị của ma trận \( A \))</p>
+                        <div class="box-black">
+                            <span class="text-red-bold">Ví dụ:</span>
+                            <div class="math-center">
+                                \( det(A) = \begin{vmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{vmatrix} =
+                                \begin{vmatrix} 1 & 4 & 7 \\ 2 & 5 & 8 \\ 3 & 6 & 9 \end{vmatrix} = det(A^T) \)
+                            </div>
+                        </div>
+                        <p><span class="pdf-remark">Nhận xét:</span> Từ tính chất này, một mệnh đề hay tính chất về định
+                            thức nếu đúng với hàng thì cũng đúng với cột và ngược lại.</p>
 
-        <p>7. Nếu \( A \) là ma trận tam giác trên, (hoặc tam giác dưới) thì \( detA \) bằng tích của tất cả các phần tử trên đường chéo chính.</p>
-        <div class="box-black">
-            <span class="text-red-bold">Ví dụ:</span> Cho \( A \) là ma trận tam giác dưới, ta có:
-            <div class="math-center">
-                \( |A| = \begin{vmatrix} -1 & 0 & 0 \\ 8 & 4 & 0 \\ -2 & 1 & -2 \end{vmatrix} = (-1).4.(-2) = 8 \)
-            </div>
-        </div>
+                        <p>2. Nếu ta đổi chỗ hai hàng (hoặc 2 cột bất kỳ) của định thức thì định thức đổi dấu.</p>
+                        <div class="box-black">
+                            <span class="text-red-bold">Ví dụ:</span> Khi đổi chỗ hàng 2 và hàng 3, định thức sẽ đổi
+                            dấu:
+                            <div class="math-center">
+                                \( \begin{vmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{vmatrix} = - \begin{vmatrix}
+                                1 & 2 & 3 \\ 7 & 8 & 9 \\ 4 & 5 & 6 \end{vmatrix} \)
+                            </div>
+                        </div>
 
-        <p>8. (<strong>Định lý nhân định thức</strong>). Giả sử \( A = (a_{ij})_n \) và \( B = (b_{ij})_n \) là hai ma trận vuông cùng cấp \( n \), khi đó ta có:</p>
-        <div class="math-center">\( det(AB) = det(A) \cdot det(B) \)</div>
-    </div>
+                        <p>3. Nếu tất cả các phần tử của một hàng (hoặc một cột) của định thức được nhân với \( \lambda
+                            \) thì định thức mới bằng định thức ban đầu nhân với \( \lambda \)</p>
+                        <div class="box-black">
+                            <span class="text-red-bold">Ví dụ:</span>
+                            <div class="math-center">
+                                \( \begin{vmatrix} 1 & 2 & 3 \\ 4 & 2 & 6 \\ 7 & 8 & 9 \end{vmatrix} = 2 \cdot
+                                \begin{vmatrix} 1 & 2 & 3 \\ 2 & 1 & 3 \\ 7 & 8 & 9 \end{vmatrix} \)
+                            </div>
+                        </div>
+                        <p><span class="pdf-remark">Nhận xét:</span> Từ tính chất này ta có nếu \( A \) là ma trận vuông
+                            cấp \( n \) thì \( det(\lambda A) = \lambda^n detA \)</p>
 
-    <script>
-        if (window.MathJax && window.MathJax.typeset) {
-            window.MathJax.typeset();
-        }
-    </script>
+                        <p>4. Cho \( A \) là ma trận vuông cấp \( n \). Giả sử hàng thứ \( i \) của ma trận \( A \) có
+                            thể biểu diễn dưới dạng: \( a_{ij} = a'_{ij} + a''_{ij} \) với \( j = \overline{1,n} \). Khi
+                            đó ta có:</p>
+                        <div class="math-center">
+                            \( detA = \begin{vmatrix} \dots & \dots & \dots & \dots \\ a'_{i1} + a''_{i1} & a'_{i2} +
+                            a''_{i2} & \dots & a'_{in} + a''_{in} \\ \dots & \dots & \dots & \dots \end{vmatrix} =
+                            \begin{vmatrix} \dots & \dots & \dots & \dots \\ a'_{i1} & a'_{i2} & \dots & a'_{in} \\
+                            \dots & \dots & \dots & \dots \end{vmatrix} + \begin{vmatrix} \dots & \dots & \dots & \dots
+                            \\ a''_{i1} & a''_{i2} & \dots & a''_{in} \\ \dots & \dots & \dots & \dots \end{vmatrix} \)
+                        </div>
+                        <p>Trong đó các dòng còn lại của 3 định thức ở 2 vế là hoàn toàn như nhau và chính là các hàng
+                            còn lại của ma trận \( A \). Ta cũng có kết quả tương tự đối với cột.</p>
+                        <div class="box-black">
+                            <span class="text-red-bold">Ví dụ:</span>
+                            <div class="math-center">
+                                \( \begin{vmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{vmatrix} = \begin{vmatrix} 1
+                                & 2 & 3 \\ 6 & 5 & 4 \\ 7 & 8 & 9 \end{vmatrix} + \begin{vmatrix} 1 & 2 & 3 \\ -2 & 0 &
+                                2 \\ 7 & 8 & 9 \end{vmatrix} \)
+                            </div>
+                        </div>
+                        <p><span class="pdf-remark">Nhận xét:</span> Các tính chất 2, 3, 4 chính là tính đa tuyến tính
+                            thay phiên của định thức. Từ các tính chất trên, dễ dàng suy ra các tính chất sau của định
+                            thức:</p>
+
+                        <p>5. Định thức sẽ bằng 0 nếu:</p>
+                        <ul class="pdf-list" style="list-style-type: disc;">
+                            <li>Có hai hàng (hai cột) bằng nhau hoặc tỉ lệ với nhau.</li>
+                            <li>Có một hàng (một cột) là tổ hợp tuyến tính của các hàng (cột khác).</li>
+                        </ul>
+
+                        <p>6. Định thức sẽ không thay đổi nếu:</p>
+                        <ul class="pdf-list" style="list-style-type: disc;">
+                            <li>Nhân một hàng (một cột) với một số bất kỳ rồi cộng vào hàng khác (cột khác).</li>
+                            <li>Cộng vào một hàng (một cột) một tổ hợp tuyến tính của các hàng (cột khác)</li>
+                        </ul>
+
+                        <div class="box-black">
+                            <span class="text-red-bold">Ví dụ:</span> Tính định thức ma trận \( A = \begin{pmatrix} 1 &
+                            2 & -1 & 3 \\ 2 & 3 & 1 & 5 \\ -1 & 6 & 5 & -2 \\ 3 & 4 & -2 & 7 \end{pmatrix} \)
+                            <span class="text-blue-sol">Lời giải</span>
+                            <div class="math-center">
+                                \( det(A) \xrightarrow{h_2=h_2-2h_1} \begin{vmatrix} 1 & 2 & -1 & 3 \\ 0 & -1 & 3 & -1
+                                \\ -1 & 6 & 5 & -2 \\ 3 & 4 & -2 & 7 \end{vmatrix}
+                                \xrightarrow[h_4=h_4-3h_1]{h_3=h_3+h_1} \begin{vmatrix} 1 & 2 & -1 & 3 \\ 0 & -1 & 3 &
+                                -1 \\ 0 & 8 & 4 & 1 \\ 0 & -2 & 1 & -2 \end{vmatrix} \xrightarrow{j=1} \begin{vmatrix}
+                                -1 & 3 & -1 \\ 8 & 4 & 1 \\ -2 & 1 & -2 \end{vmatrix} = \dots \)
+                            </div>
+                        </div>
+                        <p><span class="pdf-remark">Nhận xét:</span> Ta sử dụng các phép biến đổi sơ cấp để tạo ra nhiều
+                            số 0 nhất có thể trong 1 hàng hay 1 cột để khi khai triển định thức theo hàng hoặc cột đó sẽ
+                            được rút gọn một cách tối ưu.</p>
+
+                        <p>7. Nếu \( A \) là ma trận tam giác trên, (hoặc tam giác dưới) thì \( detA \) bằng tích của
+                            tất cả các phần tử trên đường chéo chính.</p>
+                        <div class="box-black">
+                            <span class="text-red-bold">Ví dụ:</span> Cho \( A \) là ma trận tam giác dưới, ta có:
+                            <div class="math-center">
+                                \( |A| = \begin{vmatrix} -1 & 0 & 0 \\ 8 & 4 & 0 \\ -2 & 1 & -2 \end{vmatrix} =
+                                (-1).4.(-2) = 8 \)
+                            </div>
+                        </div>
+
+                        <p>8. (<strong>Định lý nhân định thức</strong>). Giả sử \( A = (a_{ij})_n \) và \( B =
+                            (b_{ij})_n \) là hai ma trận vuông cùng cấp \( n \), khi đó ta có:</p>
+                        <div class="math-center">\( det(AB) = det(A) \cdot det(B) \)</div>
+                    </div>
+
+                    <script>
+                        if (window.MathJax && window.MathJax.typeset) {
+                            window.MathJax.typeset();
+                        }
+                    </script>
                 </div>
 
             </div>
 
-            <div class="chapter-card" id="video-truc-quan"
-                style="padding: 0; overflow: hidden; border: none; background: transparent;">
-                <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-brands fa-youtube"></i> Video trực
-                    quan</h2>
-
-                <div class="cinema-container">
-                    <div class="video-box">
-                        <div id="youtube-player"></div>
-                    </div>
-
-                    <div class="playlist-box">
-                        <div class="playlist-header">
-                            <span>Nội dung</span>
-                            <span style="font-size: 0.8rem; color: #94a3b8;">4 phần</span>
+            <div class="video-box" id="coming-soon">
+                <div class="temp-video-overlay">
+                    <div class="tv-content">
+                        <div class="tv-icon-wrapper">
+                            <div class="tv-spinner"></div>
+                            <i class="fa-solid fa-hourglass-half"></i>
                         </div>
-                        <div class="chapter-list">
-                            <div class="chapter-item playing" onclick="seekTo(0); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Vector ở phổ thông</span></div>
-                                <div class="time-badge">00:00</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(60); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Quy tắc nối đuôi</span></div>
-                                <div class="time-badge">01:00</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(230); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Quy tắc hình bình hành</span>
-                                </div>
-                                <div class="time-badge">03:50</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(307); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Phép nhân vector với số
-                                        thực</span></div>
-                                <div class="time-badge">05:07</div>
-                            </div>
-                        </div>
+                        <h4>Sắp ra mắt</h4>
+                        <p>Video trực quan đang trong quá trình biên tập.<br>Hệ thống sẽ cập nhật trong thời gian tới.
+                        </p>
                     </div>
                 </div>
+
+                <div id="youtube-player"></div>
             </div>
 
             <div class="chapter-card" id="bai-tap">
-    <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Bài tập</h2>
+                <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Bài tập</h2>
 
-    <div class="box-blue">
-        <p id="bai-tap-1"><span class="text-red-bold">Bài 1.</span> Tính các định thức sau:</p>
+                <div class="box-blue">
+                    <p id="bai-tap-1"><span class="text-red-bold">Bài 1.</span> Tính các định thức sau:</p>
 
-        <div class="math-scroll">
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left;">
-                
-                <div>
-                    <div style="margin-bottom: 50px;">
-                        a) \( \begin{vmatrix} 2 & 3 \\ 5 & 6 \end{vmatrix} \)
-                    </div>
-                    <div style="margin-bottom: 50px;">
-                        b) \( \begin{vmatrix} 3 & 1 & 4 \\ 5 & -2 & 0 \\ 6 & 1 & -7 \end{vmatrix} \)
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        c) \( \begin{vmatrix} 2 & 1 & 5 \\ -1 & 4 & 0 \\ 3 & 6 & -2 \end{vmatrix} \)
+                    <div class="math-scroll">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left;">
+
+                            <div>
+                                <div style="margin-bottom: 50px;">
+                                    a) \( \begin{vmatrix} 2 & 3 \\ 5 & 6 \end{vmatrix} \)
+                                </div>
+                                <div style="margin-bottom: 50px;">
+                                    b) \( \begin{vmatrix} 3 & 1 & 4 \\ 5 & -2 & 0 \\ 6 & 1 & -7 \end{vmatrix} \)
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    c) \( \begin{vmatrix} 2 & 1 & 5 \\ -1 & 4 & 0 \\ 3 & 6 & -2 \end{vmatrix} \)
+                                </div>
+                            </div>
+
+                            <div>
+                                <div style="margin-bottom: 20px;">
+                                    d) \( \begin{vmatrix} -6 & 1 & 5 \\ 3 & 4 & 7 \\ -8 & 9 & -2 \end{vmatrix} \)
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    e) \( \begin{vmatrix} 2 & 2 & 1 & 0 \\ -3 & 1 & 2 & 1 \\ 0 & 4 & -3 & 1 \\ 5 & 0 & 4
+                                    & -2 \end{vmatrix} \)
+                                </div>
+                                <div>
+                                    f) \( \begin{vmatrix} 1 & 1 & 1 & 1 \\ 1 & 2 & 3 & 4 \\ 1 & 4 & 9 & 16 \\ 1 & 8 & 27
+                                    & 64 \end{vmatrix} \)
+                                </div>
+
+                            </div>
+
+                            <div>
+                                <div style="margin-bottom: 60px;">
+                                    g) \( \begin{vmatrix} 1 & 1 & -4 & 3 \\ 5 & 9 & -12 & 7 \\ 12 & -5 & 2 & 2 \\ -3 & 1
+                                    & 4 & -5 \end{vmatrix} \)
+                                </div>
+                                <div>
+                                    h) \( \begin{vmatrix} 1 & 0 & 1 & -1 & 2 \\ 0 & 1 & 1 & 2 & -1 \\ 1 & 2 & 1 & 0 & 1
+                                    \\ -1 & 0 & 1 & 0 & 2 \\ -1 & 1 & 1 & 1 & 1 \end{vmatrix} \)
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
 
-                <div>
-                    <div style="margin-bottom: 20px;">
-                        d) \( \begin{vmatrix} -6 & 1 & 5 \\ 3 & 4 & 7 \\ -8 & 9 & -2 \end{vmatrix} \)
+                <div class="box-blue">
+                    <p id="bai-tap-2"><span class="text-red-bold">Bài 2.</span> Tính các định thức sau theo tham số:</p>
+
+                    <div class="math-scroll">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left;">
+                            <div>
+                                a) \( \begin{vmatrix} 1 & 1 & 2 & 3 \\ 1 & 2x^2 & 2 & 5 \\ 2 & 3 & 1 & 5 \\ 2 & 3 & 1 &
+                                9-x^2 \end{vmatrix} \)
+                            </div>
+                            <div>
+                                b) \( \begin{vmatrix} 1 & a & 0 & 2 \\ 2 & -1 & 1 & 3 \\ -2 & 0 & 1 & -1 \\ 3 & 2 & b &
+                                0 \end{vmatrix} \)
+                            </div>
+                            <div>
+                                c) \( \begin{vmatrix} 1 & 0 & -1 & -1 \\ 0 & -1 & -1 & 1 \\ a & b & c & d \\ -1 & -1 & 1
+                                & 1 \end{vmatrix} \)
+                            </div>
+                        </div>
                     </div>
-                    <div style="margin-bottom: 20px;">
-                        e) \( \begin{vmatrix} 2 & 2 & 1 & 0 \\ -3 & 1 & 2 & 1 \\ 0 & 4 & -3 & 1 \\ 5 & 0 & 4 & -2 \end{vmatrix} \)
-                    </div>
-                    <div>
-                        f) \( \begin{vmatrix} 1 & 1 & 1 & 1 \\ 1 & 2 & 3 & 4 \\ 1 & 4 & 9 & 16 \\ 1 & 8 & 27 & 64 \end{vmatrix} \)
-                    </div>
-                    
                 </div>
 
-                <div>
-                    <div style="margin-bottom: 60px;">
-                        g) \( \begin{vmatrix} 1 & 1 & -4 & 3 \\ 5 & 9 & -12 & 7 \\ 12 & -5 & 2 & 2 \\ -3 & 1 & 4 & -5 \end{vmatrix} \)
-                    </div>
-                    <div>
-                        h) \( \begin{vmatrix} 1 & 0 & 1 & -1 & 2 \\ 0 & 1 & 1 & 2 & -1 \\ 1 & 2 & 1 & 0 & 1 \\ -1 & 0 & 1 & 0 & 2 \\ -1 & 1 & 1 & 1 & 1 \end{vmatrix} \)
+                <div class="box-blue">
+                    <p id="bai-tap-3"><span class="text-red-bold">Bài 3.</span> Giải các phương trình sau:</p>
+
+                    <div class="math-scroll">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: left;">
+
+                            <div>
+                                <div style="margin-bottom: 40px;">
+                                    a) \( \begin{vmatrix} 1 & -2 & 4 \\ 1 & x & x^2 \\ 1 & 3 & 9 \end{vmatrix} = 0 \)
+                                </div>
+                                <div>
+                                    b) \( \begin{vmatrix} 1 & x & -2 \\ -1 & 1 & 2 \\ x & 2 & 3 \end{vmatrix} = 0 \)
+                                </div>
+                            </div>
+
+                            <div>
+                                <div style="margin-bottom: 25px;">
+                                    c) \( \begin{vmatrix} 2 & x & 2 \\ 2 & 2x-1 & x+1 \\ 3 & -1 & x^2 \end{vmatrix} = 0
+                                    \)
+                                </div>
+                                <div>
+                                    d) \( \begin{vmatrix} 1 & x & x^2 & x^3 \\ 1 & 2 & 4 & 8 \\ 1 & 3 & 9 & 27 \\ 1 & 4
+                                    & 16 & 64 \end{vmatrix} = 0 \)
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
+
+                <div class="download-container">
+                    <p style="margin-bottom: 15px; color: var(--text-sub); font-size: 0.95rem;">
+                        <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài tập? Tải lời giải về để đối
+                        chiếu nhé!
+                    </p>
+
+                    <a href="https://drive.google.com/uc?export=download&id=1FeMuNL_uTyrx9_h15xyqb1fMuD0QaTmG"
+                        target="_blank" class="btn-download">
+
+                        <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
+                    </a>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <div class="box-blue">
-        <p id="bai-tap-2"><span class="text-red-bold">Bài 2.</span> Tính các định thức sau theo tham số:</p>
 
-        <div class="math-scroll">
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left;">
-                <div>
-                    a) \( \begin{vmatrix} 1 & 1 & 2 & 3 \\ 1 & 2x^2 & 2 & 5 \\ 2 & 3 & 1 & 5 \\ 2 & 3 & 1 & 9-x^2 \end{vmatrix} \)
-                </div>
-                <div>
-                    b) \( \begin{vmatrix} 1 & a & 0 & 2 \\ 2 & -1 & 1 & 3 \\ -2 & 0 & 1 & -1 \\ 3 & 2 & b & 0 \end{vmatrix} \)
-                </div>
-                <div>
-                    c) \( \begin{vmatrix} 1 & 0 & -1 & -1 \\ 0 & -1 & -1 & 1 \\ a & b & c & d \\ -1 & -1 & 1 & 1 \end{vmatrix} \)
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="box-blue">
-        <p id="bai-tap-3"><span class="text-red-bold">Bài 3.</span> Giải các phương trình sau:</p>
-
-        <div class="math-scroll">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: left;">
-                
-                <div>
-                    <div style="margin-bottom: 40px;">
-                        a) \( \begin{vmatrix} 1 & -2 & 4 \\ 1 & x & x^2 \\ 1 & 3 & 9 \end{vmatrix} = 0 \)
-                    </div>
-                    <div>
-                        b) \( \begin{vmatrix} 1 & x & -2 \\ -1 & 1 & 2 \\ x & 2 & 3 \end{vmatrix} = 0 \)
-                    </div>
-                </div>
-
-                <div>
-                    <div style="margin-bottom: 25px;">
-                        c) \( \begin{vmatrix} 2 & x & 2 \\ 2 & 2x-1 & x+1 \\ 3 & -1 & x^2 \end{vmatrix} = 0 \)
-                    </div>
-                    <div>
-                        d) \( \begin{vmatrix} 1 & x & x^2 & x^3 \\ 1 & 2 & 4 & 8 \\ 1 & 3 & 9 & 27 \\ 1 & 4 & 16 & 64 \end{vmatrix} = 0 \)
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="download-container">
-        <p style="margin-bottom: 15px; color: var(--text-sub); font-size: 0.95rem;">
-            <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài tập? Tải lời giải về để đối chiếu nhé!
-        </p>
-
-        <a href="https://drive.google.com/uc?export=download&id=1FeMuNL_uTyrx9_h15xyqb1fMuD0QaTmG" target="_blank" class="btn-download">
-            
-            <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
-        </a>
-    </div>
-</div>
-                
-            
 
         </main>
-    </div>
 
+    </div>
+    <footer
+        style="text-align: center; padding: 30px 20px; margin-top: 20px; margin-bottom: 20px; color: var(--text-sub); font-size: 0.95rem; border-top: 1px solid var(--border); width: 100%;">
+        <p style="margin: 0;">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
+    </footer>
     <script>
         // 1. THEME HANDLING & ANIMATION
         // Theme is auto-initialized by theme-manager.js script
@@ -1633,80 +1899,80 @@
             el.classList.add('playing');
         }
 
-        
+
     </script>
     <script>
-    // Hàm này dùng để kích hoạt toàn bộ menu
-    function bootVectoriaMenu() {
-        console.log("Menu System: Booting Dinh Thuc...");
+        // Hàm này dùng để kích hoạt toàn bộ menu
+        function bootVectoriaMenu() {
+            console.log("Menu System: Booting Dinh Thuc...");
 
-        const smoothScrollTo = (targetElement) => {
-            if (!targetElement) return;
-            const topbarHeight = document.getElementById('topbar')?.offsetHeight || 60;
-            const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
-            window.scrollTo({ top: y, behavior: 'smooth' });
-        };
+            const smoothScrollTo = (targetElement) => {
+                if (!targetElement) return;
+                const topbarHeight = document.getElementById('topbar')?.offsetHeight || 60;
+                const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+            };
 
-        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
-        
-        // Bắt tất cả các nút có khả năng đóng/mở hoặc là link
-        const allLinks = document.querySelectorAll('.custom-nav a');
+            const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
 
-        allLinks.forEach(link => {
-            link.onclick = function(e) {
-                const targetId = this.getAttribute('href');
-                if (!targetId || !targetId.startsWith('#')) return;
+            // Bắt tất cả các nút có khả năng đóng/mở hoặc là link
+            const allLinks = document.querySelectorAll('.custom-nav a');
 
-                e.preventDefault();
-                
-                // 1. Xử lý Đóng/Mở nếu là nút cha
-                const parentLi = this.closest('.has-dropdown');
-                if (this.classList.contains('toggle-btn') || this.parentElement.classList.contains('toggle-btn')) {
-                    if (parentLi) {
-                        parentLi.classList.toggle('open');
-                        const icon = parentLi.querySelector('.arrow-icon');
-                        if (icon) {
-                            icon.classList.toggle('fa-chevron-down');
-                            icon.classList.toggle('fa-chevron-right');
+            allLinks.forEach(link => {
+                link.onclick = function (e) {
+                    const targetId = this.getAttribute('href');
+                    if (!targetId || !targetId.startsWith('#')) return;
+
+                    e.preventDefault();
+
+                    // 1. Xử lý Đóng/Mở nếu là nút cha
+                    const parentLi = this.closest('.has-dropdown');
+                    if (this.classList.contains('toggle-btn') || this.parentElement.classList.contains('toggle-btn')) {
+                        if (parentLi) {
+                            parentLi.classList.toggle('open');
+                            const icon = parentLi.querySelector('.arrow-icon');
+                            if (icon) {
+                                icon.classList.toggle('fa-chevron-down');
+                                icon.classList.toggle('fa-chevron-right');
+                            }
                         }
                     }
-                }
 
-                // 2. Highlight màu xanh
-                menuLinks.forEach(el => el.classList.remove('active'));
-                this.classList.add('active');
+                    // 2. Highlight màu xanh
+                    menuLinks.forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
 
-                // 3. Cuộn trang
-                const targetElement = document.querySelector(targetId);
-                if (targetElement) smoothScrollTo(targetElement);
-            };
-        });
-
-        // SCROLL SPY - Tự động sáng menu khi lăn chuột
-        window.onscroll = () => {
-            const sections = document.querySelectorAll('.chapter-card, .pdf-h2[id], .pdf-h3[id], p[id]');
-            let currentId = '';
-            sections.forEach(section => {
-                if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - 150) {
-                    currentId = section.getAttribute('id');
-                }
+                    // 3. Cuộn trang
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) smoothScrollTo(targetElement);
+                };
             });
-            if (currentId) {
-                menuLinks.forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('href') === `#${currentId}`) link.classList.add('active');
+
+            // SCROLL SPY - Tự động sáng menu khi lăn chuột
+            window.onscroll = () => {
+                const sections = document.querySelectorAll('.chapter-card, .pdf-h2[id], .pdf-h3[id], p[id]');
+                let currentId = '';
+                sections.forEach(section => {
+                    if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - 150) {
+                        currentId = section.getAttribute('id');
+                    }
                 });
-            }
-        };
-    }
+                if (currentId) {
+                    menuLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${currentId}`) link.classList.add('active');
+                    });
+                }
+            };
+        }
 
-    // GỌI HÀM NGAY LẬP TỨC VÀ GỌI LẠI ĐỂ CHỐNG ĐƠ AJAX
-    bootVectoriaMenu();
-    setTimeout(bootVectoriaMenu, 100);
-    setTimeout(bootVectoriaMenu, 500);
+        // GỌI HÀM NGAY LẬP TỨC VÀ GỌI LẠI ĐỂ CHỐNG ĐƠ AJAX
+        bootVectoriaMenu();
+        setTimeout(bootVectoriaMenu, 100);
+        setTimeout(bootVectoriaMenu, 500);
 
-    
-</script>
+
+    </script>
 
 </body>
 

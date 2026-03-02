@@ -356,7 +356,7 @@
             color: var(--text-main);
         }
 
-        
+
 
         .main-content {
             flex-grow: 1;
@@ -504,6 +504,8 @@
             margin-top: 40px;
             margin-bottom: 20px;
             color: #000;
+            display: inline-block;
+
         }
 
         .pdf-h2 {
@@ -522,7 +524,8 @@
 
         /* 2. Dòng Nhận xét (Chữ màu nâu đỏ) */
         .pdf-remark {
-            color: #9f1239; /* Màu đỏ thẫm */
+            color: #9f1239;
+            /* Màu đỏ thẫm */
             font-weight: bold;
             font-style: italic;
             margin-bottom: 15px;
@@ -593,7 +596,8 @@
         /* Khung viền đen giống PDF */
         .box-black {
             border: 2px solid #000;
-            background-color: #f9fafb; /* Nền xám rất nhạt cho dịu mắt */
+            background-color: #f9fafb;
+            /* Nền xám rất nhạt cho dịu mắt */
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 30px;
@@ -602,15 +606,17 @@
 
         /* Chữ màu đỏ đậm cho tiêu đề bài tập (VD: Bài 1.1) */
         .text-red-bold {
-            color: #dc2626; 
+            color: #dc2626;
             font-weight: bold;
             margin-right: 5px;
         }
 
         /* 3. Khung Ví dụ (Viền xanh - Nền xanh nhạt) */
         .box-blue {
-            border: 2px solid #2563eb; /* Viền xanh dương đậm */
-            background-color: #eff6ff; /* Nền xanh cực nhạt */
+            border: 2px solid #2563eb;
+            /* Viền xanh dương đậm */
+            background-color: #eff6ff;
+            /* Nền xanh cực nhạt */
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 30px;
@@ -656,25 +662,55 @@
         }
 
         /* =================== ẨN/HIỆN ẢNH THEO THEME =================== */
-        .img-light { display: inline-block !important; }
-        .img-dark { display: none !important; }
-        body.dark .img-light { display: none !important; }
-        body.dark .img-dark { display: inline-block !important; }
+        .img-light {
+            display: inline-block !important;
+        }
+
+        .img-dark {
+            display: none !important;
+        }
+
+        body.dark .img-light {
+            display: none !important;
+        }
+
+        body.dark .img-dark {
+            display: inline-block !important;
+        }
 
         /* === DARK MODE === */
         /* Hỗ trợ Dark Mode cho các thành phần */
-        body.dark #ly-thuyet { color: #e2e8f0; }
-        body.dark .pdf-h1, body.dark .pdf-h2, body.dark .pdf-h3 { color: #fff; }
-        body.dark .pdf-remark { color: #fb7185; }
+        body.dark #ly-thuyet {
+            color: #e2e8f0;
+        }
+
+        body.dark .pdf-h1,
+        body.dark .pdf-h2,
+        body.dark .pdf-h3 {
+            color: #fff;
+        }
+
+        body.dark .pdf-remark {
+            color: #fb7185;
+        }
 
         body.dark .pdf-box {
             background-color: rgba(58, 120, 255, 0.1);
             border-color: #60a5fa;
             color: #e2e8f0;
         }
-        body.dark .pdf-box-title { color: #60a5fa; }
-        body.dark .pdf-note { color: #60a5fa; }
-        body.dark .pdf-sol-title { color: #60a5fa; }
+
+        body.dark .pdf-box-title {
+            color: #60a5fa;
+        }
+
+        body.dark .pdf-note {
+            color: #60a5fa;
+        }
+
+        body.dark .pdf-sol-title {
+            color: #60a5fa;
+        }
 
         /* Dark mode cho khung bài tập */
         body.dark .box-black {
@@ -682,22 +718,35 @@
             border-color: #475569;
             color: #e2e8f0;
         }
-        body.dark .text-red-bold { color: #fb7185; /* Đỏ sáng hơn trên nền tối */ }
+
+        body.dark .text-red-bold {
+            color: #fb7185;
+            /* Đỏ sáng hơn trên nền tối */
+        }
 
         body.dark .box-blue {
             background-color: rgba(58, 120, 255, 0.1);
             border-color: #60a5fa;
             color: #e2e8f0;
         }
-        body.dark .text-example-blue { color: #60a5fa; }
-        body.dark .text-blue-sol { color: #60a5fa; }
+
+        body.dark .text-example-blue {
+            color: #60a5fa;
+        }
+
+        body.dark .text-blue-sol {
+            color: #60a5fa;
+        }
 
         body.dark .pdf-table th {
             background-color: #1e293b;
             color: #fff;
             border-color: #475569;
         }
-        body.dark .pdf-table td { border-color: #475569; }
+
+        body.dark .pdf-table td {
+            border-color: #475569;
+        }
 
         body.dark mjx-container path {
             fill: #e2e8f0 !important;
@@ -709,16 +758,19 @@
             margin-top: 40px;
             text-align: center;
             padding-bottom: 20px;
-            border-top: 1px dashed var(--border); /* Đường kẻ ngăn cách nhẹ */
+            border-top: 1px dashed var(--border);
+            /* Đường kẻ ngăn cách nhẹ */
             padding-top: 30px;
         }
 
         .btn-download {
-            background: linear-gradient(135deg, var(--primary), #2563eb); /* Màu gradient xanh */
+            background: linear-gradient(135deg, var(--primary), #2563eb);
+            /* Màu gradient xanh */
             color: #ffffff;
             border: none;
             padding: 12px 28px;
-            border-radius: 50px; /* Bo tròn hình viên thuốc */
+            border-radius: 50px;
+            /* Bo tròn hình viên thuốc */
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
@@ -726,12 +778,15 @@
             align-items: center;
             gap: 10px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(58, 120, 255, 0.3); /* Bóng đổ xanh */
-            text-decoration: none; /* Bỏ gạch chân nếu dùng thẻ a */
+            box-shadow: 0 4px 15px rgba(58, 120, 255, 0.3);
+            /* Bóng đổ xanh */
+            text-decoration: none;
+            /* Bỏ gạch chân nếu dùng thẻ a */
         }
 
         .btn-download:hover {
-            transform: translateY(-3px); /* Bay lên nhẹ */
+            transform: translateY(-3px);
+            /* Bay lên nhẹ */
             box-shadow: 0 8px 25px rgba(58, 120, 255, 0.5);
         }
 
@@ -745,14 +800,17 @@
         }
 
         body.dark .btn-download {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8); /* Xanh sáng hơn trên nền tối */
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            /* Xanh sáng hơn trên nền tối */
             color: #fff;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Bóng đen sâu */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            /* Bóng đen sâu */
         }
 
         body.dark .btn-download:hover {
             background: linear-gradient(135deg, #60a5fa, #2563eb);
-            box-shadow: 0 0 20px rgba(96, 165, 250, 0.4); /* Hiệu ứng phát sáng (Glow) */
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.4);
+            /* Hiệu ứng phát sáng (Glow) */
         }
 
         /* =================== 5. MOBILE RESPONSIVE (DƯỚI 960PX) =================== */
@@ -787,7 +845,7 @@
                 display: none;
             }
 
-            
+
 
             .chapter-card {
                 scroll-margin-top: 130px;
@@ -821,36 +879,253 @@
             }
 
         }
-/* =================== STYLE MENU MỤC LỤC ĐA CẤP =================== */
-        .custom-nav { padding: 15px 0 !important; }
-        .custom-nav .nav-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); padding: 0 20px 15px 20px; margin: 0; border-bottom: 1px solid var(--border); }
-        .custom-nav .nav-list { list-style: none; padding: 10px 0 0 0; margin: 0; }
-        .custom-nav .nav-item { margin-bottom: 2px; }
-        
+
+        /* =================== STYLE MENU MỤC LỤC ĐA CẤP =================== */
+        .custom-nav {
+            padding: 15px 0 !important;
+        }
+
+        .custom-nav .nav-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            padding: 0 20px 15px 20px;
+            margin: 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .custom-nav .nav-list {
+            list-style: none;
+            padding: 10px 0 0 0;
+            margin: 0;
+        }
+
+        .custom-nav .nav-item {
+            margin-bottom: 2px;
+        }
+
         /* Chỉnh padding cho các cấp */
-        .custom-nav .nav-link { padding: 12px 20px; }
-        .custom-nav .sub-link { padding: 10px 20px 10px 35px; font-size: 0.9rem; }
-        .custom-nav .sub-sub-link { display: block; padding: 8px 20px 8px 50px; font-size: 0.85rem; }
+        .custom-nav .nav-link {
+            padding: 12px 20px;
+        }
+
+        .custom-nav .sub-link {
+            padding: 10px 20px 10px 35px;
+            font-size: 0.9rem;
+        }
+
+        .custom-nav .sub-sub-link {
+            display: block;
+            padding: 8px 20px 8px 50px;
+            font-size: 0.85rem;
+        }
 
         /* Style chung cho link */
-        .custom-nav .nav-link, .custom-nav .sub-link, .custom-nav .sub-sub-link {
-            display: flex; justify-content: space-between; align-items: center; color: #475569; text-decoration: none; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent;
+        .custom-nav .nav-link,
+        .custom-nav .sub-link,
+        .custom-nav .sub-sub-link {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #475569;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
         }
-        .custom-nav .nav-link:hover, .custom-nav .sub-link:hover, .custom-nav .sub-sub-link:hover { color: var(--primary); background: #f8fafc; }
-        .custom-nav .arrow-icon { font-size: 0.8rem; color: #94a3b8; transition: transform 0.3s ease; }
-        
+
+        .custom-nav .nav-link:hover,
+        .custom-nav .sub-link:hover,
+        .custom-nav .sub-sub-link:hover {
+            color: var(--primary);
+            background: #f8fafc;
+        }
+
+        .custom-nav .arrow-icon {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            transition: transform 0.3s ease;
+        }
+
         /* Menu con thả xuống */
-        .custom-nav .sub-menu { list-style: none; padding: 0; margin: 0; display: none; }
-        .custom-nav .has-dropdown.open > .sub-menu { display: block; animation: slideDown 0.3s ease-out; }
-        
+        .custom-nav .sub-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: none;
+        }
+
+        .custom-nav .has-dropdown.open>.sub-menu {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
         /* Trạng thái Active */
-        .custom-nav .active { background-color: #eff6ff; color: var(--primary) !important; font-weight: 600; border-left: 3px solid var(--primary); }
+        .custom-nav .active {
+            background-color: #eff6ff;
+            color: var(--primary) !important;
+            font-weight: 600;
+            border-left: 3px solid var(--primary);
+        }
 
         /* --- Dark Mode --- */
-        body.dark .custom-nav .nav-link, body.dark .custom-nav .sub-link, body.dark .custom-nav .sub-sub-link { color: #cbd5e1; }
-        body.dark .custom-nav .nav-link:hover, body.dark .custom-nav .sub-link:hover, body.dark .custom-nav .sub-sub-link:hover { color: #60a5fa; background: #1e293b; }
-        body.dark .custom-nav .active { background-color: #1e293b; color: #60a5fa !important; border-left-color: #60a5fa; }
-        
+        body.dark .custom-nav .nav-link,
+        body.dark .custom-nav .sub-link,
+        body.dark .custom-nav .sub-sub-link {
+            color: #cbd5e1;
+        }
+
+        body.dark .custom-nav .nav-link:hover,
+        body.dark .custom-nav .sub-link:hover,
+        body.dark .custom-nav .sub-sub-link:hover {
+            color: #60a5fa;
+            background: #1e293b;
+        }
+
+        body.dark .custom-nav .active {
+            background-color: #1e293b;
+            color: #60a5fa !important;
+            border-left-color: #60a5fa;
+        }
+
+        /* =================== MÀN CHE VIDEO SCI-FI =================== */
+        .temp-video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #050b14;
+            /* Nền xanh đen sâu thẳm */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            overflow: hidden;
+            border-right: 1px solid #334155;
+        }
+
+        /* Vẽ lưới Grid Toán học nền sau */
+        .temp-video-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background-image:
+                linear-gradient(rgba(58, 120, 255, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(58, 120, 255, 0.08) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 0;
+            animation: panGrid 20s linear infinite;
+        }
+
+        /* Quả cầu phát sáng lơ lửng */
+        .temp-video-overlay::after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: var(--primary);
+            filter: blur(90px);
+            opacity: 0.4;
+            z-index: 0;
+            animation: floatOrb 6s infinite alternate ease-in-out;
+        }
+
+        /* Khung kính mờ Glassmorphism */
+        .tv-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            padding: 35px 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(58, 120, 255, 0.05);
+        }
+
+        /* Vòng xoay quanh Icon */
+        .tv-icon-wrapper {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .tv-icon-wrapper i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            text-shadow: 0 0 15px var(--primary);
+        }
+
+        .tv-spinner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px dashed rgba(96, 165, 250, 0.6);
+            border-radius: 50%;
+            animation: spinDash 12s linear infinite;
+        }
+
+        /* Định dạng chữ */
+        .tv-content h4 {
+            margin: 0 0 12px;
+            color: #f8fafc;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 800;
+        }
+
+        .tv-content p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 1rem;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        /* Animations */
+        @keyframes panGrid {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(-40px, -40px);
+            }
+        }
+
+        @keyframes floatOrb {
+            0% {
+                transform: translate(-50px, -30px) scale(0.8);
+            }
+
+            100% {
+                transform: translate(50px, 30px) scale(1.2);
+            }
+        }
+
+        @keyframes spinDash {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
@@ -900,18 +1175,24 @@
         <aside class="sidebar custom-nav">
             <h3 class="nav-title"><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
             <ul class="nav-list">
-                
-                <li class="nav-item has-dropdown open"> 
+
+                <li class="nav-item has-dropdown open">
                     <a href="#ly-thuyet" class="nav-link toggle-btn">
                         <span style="font-weight: 700; flex-grow: 1;">Lý thuyết</span>
                         <i class="fa-solid fa-chevron-down arrow-icon"></i>
                     </a>
                     <ul class="sub-menu">
-                        <li><a href="#to-hop" class="sub-link active" style="font-weight: 600;">1. Tổ hợp tuyến tính</a></li>
+                        <li
+                            style="padding: 15px 20px 5px 20px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">
+                            Tổ hợp - Độc lập - Phụ thuộc tuyến tính
+                        </li>
+                        <li><a href="#to-hop" class="sub-link active" style="font-weight: 600;">1. Tổ hợp tuyến tính</a>
+                        </li>
 
                         <li class="has-dropdown">
                             <a href="#doc-lap" class="sub-link toggle-btn">
-                                <span style="font-weight: 600; flex-grow: 1;">2. Độc lập tuyến tính và Phụ thuộc tuyến tính</span>
+                                <span style="font-weight: 600; flex-grow: 1;">2. Độc lập tuyến tính và Phụ thuộc tuyến
+                                    tính</span>
                                 <i class="fa-solid fa-chevron-right arrow-icon"></i>
                             </a>
                             <ul class="sub-menu">
@@ -922,19 +1203,15 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="#video-truc-quan" class="nav-link section-link" style="font-weight: 700;">Video trực quan</a>
+                    <a href="#coming-soon" class="nav-link section-link" style="font-weight: 700;">Video trực quan</a>
                 </li>
 
-                <li class="nav-item has-dropdown">
-                    <a href="#bai-tap" class="nav-link toggle-btn">
-                        <span style="font-weight: 700; flex-grow: 1;">Bài tập</span>
-                        <i class="fa-solid fa-chevron-right arrow-icon"></i>
-                    </a>
-                    <ul class="sub-menu">
-                        <li><a href="#bai-tap-1" class="sub-link" style="font-weight: 600;">Tổ hợp tuyến tính</a></li>
-                        <li><a href="#bai-tap-2" class="sub-link" style="font-weight: 600;">Độc lập tuyến tính - Phụ thuộc tuyến tính</a></li>
-                    </ul>
+
+                <li class="nav-item">
+                    <a href="#bai-tap" class="nav-link section-link" style="font-weight: 700;">Bài tập</a>
                 </li>
+
+
             </ul>
         </aside>
 
@@ -974,7 +1251,9 @@
                 <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-solid fa-book-open"></i> Lý thuyết
                 </h2>
 
-                <div class="pdf-h1" style="font-size: 1.5rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-bottom: 20px;">Tổ hợp - Độc lập - Phụ thuộc tuyến tính</div>
+                <div class="pdf-h1"
+                    style="font-size: 1.5rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-bottom: 20px;">
+                    Tổ hợp - Độc lập - Phụ thuộc tuyến tính</div>
                 <div class="pdf-h3" id="to-hop">1 &nbsp; Tổ hợp tuyến tính</div>
                 <p>Cho \( v_1, v_2, \dots, v_n \) là \( n \) vector (\( n \ge 1 \)) của \( \mathbb{K}- \) không gian
                     vector \( V \) và \( c_1, c_2, \dots, c_n \) là \( n \) vô hướng trong trường \( \mathbb{K} \). Lúc
@@ -988,7 +1267,8 @@
                 </p>
 
                 <p>Khi vector \( v \) là một tổ hợp tuyến tính của hệ \( \{v_1, v_2, \dots, v_n\} \) thì ta bảo \( v \)
-                    <strong>biểu diễn tuyến tính</strong> được qua hệ \( \{v_1, v_2, \dots, v_n\} \).</p>
+                    <strong>biểu diễn tuyến tính</strong> được qua hệ \( \{v_1, v_2, \dots, v_n\} \).
+                </p>
 
                 <div style="text-align: center; margin: 25px 0; width: 100%;">
                     <img src="../assets/images/dltt-minhhoa1a.png" alt="Hình 1: Ví dụ về tổ hợp tuyến tính"
@@ -1076,7 +1356,8 @@
                 </div>
                 <p>chỉ có <strong>nghiệm tầm thường</strong> là \( c_1 = c_2 = \dots = c_n = 0 \)</p>
 
-                <div class="pdf-h3" id="tinh-chat-co-ban" style="font-size: 1.15rem;">2.1 &nbsp; Các tính chất cơ bản</div>
+                <div class="pdf-h3" id="tinh-chat-co-ban" style="font-size: 1.15rem;">2.1 &nbsp; Các tính chất cơ bản
+                </div>
                 <ul class="pdf-list" style="list-style-type: disc; padding-left: 20px;">
                     <li>Hệ chứa vector không luôn PTTT.</li>
                     <li>Hệ gồm 1 vector PTTT khi và chỉ khi vector đó bằng 0, hệ gồm 2 vector PTTT khi và chỉ khi 2
@@ -1145,244 +1426,287 @@
                 </script>
             </div>
 
-            <div class="chapter-card" id="video-truc-quan"
-                style="padding: 0; overflow: hidden; border: none; background: transparent;">
-                <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-brands fa-youtube"></i> Video trực quan</h2>
-
-                <div class="cinema-container">
-                    <div class="video-box">
-                        <div id="youtube-player"></div>
-                    </div>
-
-                    <div class="playlist-box">
-                        <div class="playlist-header">
-                            <span>Nội dung</span>
-                            <span style="font-size: 0.8rem; color: #94a3b8;">4 phần</span>
+            <div class="video-box" id="coming-soon">
+                <div class="temp-video-overlay">
+                    <div class="tv-content">
+                        <div class="tv-icon-wrapper">
+                            <div class="tv-spinner"></div>
+                            <i class="fa-solid fa-hourglass-half"></i>
                         </div>
-                        <div class="chapter-list">
-                            <div class="chapter-item playing" onclick="seekTo(0); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Tổ hợp tuyến tính</span></div>
-                                <div class="time-badge">00:00</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(60); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Ví dụ Tổ hợp</span></div>
-                                <div class="time-badge">01:00</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(230); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Độc lập tuyến tính</span>
-                                </div>
-                                <div class="time-badge">03:50</div>
-                            </div>
-                            <div class="chapter-item" onclick="seekTo(307); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
-                                <div class="chapter-info"><span class="chapter-title">Phụ thuộc tuyến tính</span></div>
-                                <div class="time-badge">05:07</div>
-                            </div>
-                        </div>
+                        <h4>Sắp ra mắt</h4>
+                        <p>Video trực quan đang trong quá trình biên tập.<br>Hệ thống sẽ cập nhật trong thời gian tới.
+                        </p>
                     </div>
                 </div>
+
+                <div id="youtube-player"></div>
             </div>
 
             <div class="chapter-card" id="bai-tap">
-    <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Bài tập</h2>
+                <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Bài tập</h2>
 
-    <div class="pdf-h1" id="bai-tap-1" style="font-size: 1.3rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-bottom: 20px;">Tổ hợp tuyến tính</div>
+                <div class="pdf-h1" id="bai-tap-1"
+                    style="font-size: 1.3rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-bottom: 20px;">
+                    Tổ hợp tuyến tính</div>
 
-    <div class="box-black">
-        <span class="text-red-bold" style="font-style: italic;">Ví dụ 1:</span> Trong \( \mathbb{R}^3 \), cho hệ vector \( S = \{v_1 = (1, 1, 0), v_2 = (0, 2, 1)\} \) và vector \( v = (2, 6, 2) \). Hỏi \( v \) có phải là THTT của \( S \) không?
-        
-        <span class="text-blue-sol">Lời giải</span>
-        
-        <p>Xét ma trận mở rộng:</p>
-        <div class="math-center" style="overflow-x: auto; margin-bottom: 15px; margin-top: 10px;">
-            \( \bar{A} = \left( \begin{array}{cc|c} 1 & 0 & 2 \\ 1 & 2 & 6 \\ 0 & 1 & 2 \end{array} \right) \xrightarrow{d_2 \rightarrow d_2 - d_1} \left( \begin{array}{cc|c} 1 & 0 & 2 \\ 0 & 2 & 4 \\ 0 & 1 & 2 \end{array} \right) \xrightarrow{d_3 \rightarrow d_3 - \frac{1}{2}d_2} \left( \begin{array}{cc|c} 1 & 0 & 2 \\ 0 & 2 & 4 \\ 0 & 0 & 0 \end{array} \right) \)
-        </div>
-        <p>Ta có \( rank(A) = rank(\bar{A}) = 2 \). Suy ra, hệ có nghiệm duy nhất \( (c_1, c_2) = (2, 2) \).</p>
-        <p style="margin-top: 15px;">Vậy \( v \) là THTT của \( S \) và \( v = 2v_1 + 2v_2 \).</p>
-    </div>
+                <div class="box-black">
+                    <span class="text-red-bold" style="font-style: italic;">Ví dụ 1:</span> Trong \( \mathbb{R}^3 \),
+                    cho hệ vector \( S = \{v_1 = (1, 1, 0), v_2 = (0, 2, 1)\} \) và vector \( v = (2, 6, 2) \). Hỏi \( v
+                    \) có phải là THTT của \( S \) không?
 
-    <div class="box-blue"> 
-        <p><span class="text-red-bold">Bài 1.</span> Xét xem vector \( v \) có phải là một THTT của hệ \( S \) không? Nếu có, hãy tìm một bộ hệ số \( c_i \) thỏa mãn:</p>
-        <div class="math-scroll">
-            <ul class="exercise-list">
-                <li>a) \( S = \{(1, 2), (-1, 3)\}, \quad v = (0, 5) \).</li>
-                <li>b) \( S = \{(1, 0), (0, 1)\}, \quad v = (3, -4) \).</li>
-                <li>c) \( S = \{(1, 1, 1), (1, 0, 1)\}, \quad v = (2, 1, 2) \).</li>
-                <li>d) \( S = \{(1, -1, 0), (0, 1, -1)\}, \quad v = (1, 0, -1) \).</li>
-                <li>e) \( S = \{(1, 2, 3), (0, 1, 2), (0, 0, 1)\}, \quad v = (1, 4, 9) \).</li>
-                <li>f) \( S = \{e_1, e_2, e_3\} \) (với \( e_i \) là cơ sở chính tắc của \( \mathbb{R}^3 \)), \( \quad v = (x, y, z) \).</li>
-                <li>g) \( S = \{(1, 2, 1), (2, 1, 3), (1, 1, 1)\}, \quad v = (1, 1, 0) \).</li>
-                <li>h) \( S = \{(1, 0, 0), (1, 1, 0), (1, 1, 1)\}, \quad v = (2, 3, 4) \).</li>
-                <li>i) \( S = \{(1, 2, 1), (2, 5, 2), (1, 3, 2)\}, \quad v = (1, 1, 1) \).</li>
-                <li>j) \( S = \{(1, 1, 0), (1, 0, 1), (0, 1, 1)\}, \quad v = (2, 2, 2) \).</li>
-                <li>k) \( S = \{(1, 2, 3), (4, 5, 6)\}, \quad v = (7, 8, 9) \).</li>
-            </ul>
-        </div>
-    </div>
+                    <span class="text-blue-sol">Lời giải</span>
 
-    <div class="box-blue"> 
-        <p><span class="text-red-bold">Bài 2.</span> Giải thích tại sao các vector \( v \) sau đây <strong>không</strong> phải (hoặc có tính chất đặc biệt) là THTT của hệ \( S \):</p>
-        <div class="math-scroll" style="margin-top: 10px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div>
-                    <div style="margin-bottom: 20px;">a) \( S = \{(2, 1), (6, 3)\}, \quad v = (1, 0) \)</div>
-                    <div style="margin-bottom: 20px;">b) \( S = \{(1, 1), (2, 2)\}, \quad v = (1, 2) \)</div>
-                    <div style="margin-bottom: 20px;">c) \( S = \{(1, 0), (2, 0)\}, \quad v = (0, 1) \)</div>
-                    <div>d) \( S = \{(1, 2, 3), (2, 4, 6)\}, \quad v = (3, 6, 9) \)</div>
-                </div>
-                <div>
-                    <div style="margin-bottom: 20px;">e) \( S = \{(2, 0, 0), (0, 3, 0)\}, \quad v = (4, 6, 1) \)</div>
-                    <div style="margin-bottom: 20px;">f) \( S = \{(1, 2, -1), (3, 1, 0)\}, \quad v = (0, 0, 0) \)</div>
-                    <div>g) \( S = \{(1, -2), (2, -4)\}, \quad v = (3, -6) \)</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="box-black">
-        <span class="text-red-bold" style="font-style: italic;">Ví dụ 2:</span> Tìm các giá trị của \( m \) để vector \( u \) là tổ hợp tuyến tính của hệ \( \{u_1, u_2\} \) với \( u_1 = (1, 1, 1); \quad u_2 = (1, 2, 3); \quad u = (1, 4, m) \)
-        
-        <span class="text-blue-sol">Lời giải</span>
-        
-        <p>Lập ma trận \( A \) từ các vector theo cột và tính định thức: 
-            \( \det(A) = \begin{vmatrix} 1 & 1 & 1 \\ 1 & 2 & 3 \\ 1 & 4 & m \end{vmatrix} \)
-        </p>
-        
-        <p style="margin-top: 15px;">Khai triển theo dòng 1:</p>
-        <div class="math-center" style="overflow-x: auto; margin: 15px 0;">
-            \( \det(A) = 1(2m - 12) - 1(m - 3) + 1(4 - 2) = 2m - 12 - m + 3 + 2 = m - 7 \)
-        </div>
-        
-        <p>Để hệ vector phụ thuộc tuyến tính \( \Leftrightarrow \det(A) = 0 \Leftrightarrow m - 7 = 0 \Leftrightarrow m = 7 \)</p>
-        <p style="margin-top: 15px;">Vậy \( m = 7 \) thì vector \( u \) là một tổ hợp tuyến tính của \( \{u_1, u_2\} \)</p>
-    </div>
-
-    <div class="box-blue"> 
-        <p><span class="text-red-bold">Bài 3.</span> Tìm các giá trị của \( m \) để vector \( u \) là tổ hợp tuyến tính của hệ vector tương ứng:</p>
-        <div class="math-scroll">
-            <ul class="exercise-list">
-                <li>a) \( u_1 = (1, 2); \quad u_2 = (2, 4); \quad u = (1, m) \)</li>
-                <li>b) \( u_1 = (1, 2, -1); \quad u_2 = (2, 3, 1); \quad u_3 = (3, 5, 0); \quad u = (8, m, 1) \)</li>
-                <li>c) \( u_1 = (2, 3, 1); \quad u_2 = (-4, -6, 2); \quad u_3 = (6, 9, 1); \quad u = (1, 2, m) \)</li>
-                <li>d) \( u_1 = (1, 2, 4); \quad u_2 = (2, 1, 5); \quad u_3 = (3, -1, 0); \quad u = (m, 3, 1) \)</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="box-blue">
-        <p><span class="text-red-bold">Bài 4.</span> Trong không gian véctơ ma trận vuông cấp 2, hãy biểu diễn véctơ \( \begin{pmatrix} 11 & 13 \\ 6 & 5 \end{pmatrix} \) theo 4 véctơ \( \begin{pmatrix} 1 & 1 \\ -1 & 2 \end{pmatrix}, \begin{pmatrix} 0 & 1 \\ 2 & 1 \end{pmatrix}, \begin{pmatrix} 2 & 2 \\ 1 & -1 \end{pmatrix}, \begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix} \)</p>
-    </div>
-
-    <div class="pdf-h1" id="bai-tap-2" style="font-size: 1.3rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-top: 40px; margin-bottom: 20px;">Độc lập tuyến tính - Phụ thuộc tuyến tính</div>
-
-    <div class="box-black">
-        <span class="text-red-bold" style="font-style: italic;">Ví dụ:</span> Xét sự ĐLTT hoặc PTTT của hệ \( S = \{u_1 = (1, 2, 1), u_2 = (2, 5, 3), u_3 = (1, 3, 3)\} \) trong không gian \( \mathbb{R}^3 \).
-        
-        <span class="text-blue-sol">Lời giải</span>
-        
-        <p><strong>Cách 1: Sử dụng định nghĩa (Xét hệ phương trình thuần nhất)</strong></p>
-        <p>Xét phương trình vector:</p>
-        <div class="math-center" style="margin-bottom: 10px; overflow-x: auto;">
-            \( c_1u_1 + c_2u_2 + c_3u_3 = \mathbf{0} \)<br>
-            \( \Leftrightarrow c_1 \cdot (1, 2, 1) + c_2 \cdot (2, 5, 3) + c_3 \cdot (1, 3, 3) = (0, 0, 0) \)
-        </div>
-        <p>Hệ phương trình tương ứng:</p>
-        <div class="math-center" style="margin-bottom: 15px;">
-            \( \begin{cases} c_1 + 2c_2 + c_3 = 0 \\ 2c_1 + 5c_2 + 3c_3 = 0 \\ c_1 + 3c_2 + 3c_3 = 0 \end{cases} \)
-        </div>
-        <p>Giải hệ trên, thu được nghiệm duy nhất \( c_1 = c_2 = c_3 = 0 \) (<strong>nghiệm tầm thường</strong>).</p>
-        <p style="margin-top: 10px;">Vậy hệ \( S \) ĐLTT.</p>
-
-        <p style="margin-top: 25px;"><strong>Cách 2: Biện luận hạng của ma trận</strong></p>
-        <p>Lập ma trận \( A \) có các cột là các vector thuộc hệ \( S \) và thực hiện các phép biến đổi sơ cấp:</p>
-        <div class="math-center" style="margin: 15px 0; overflow-x: auto;">
-            \( A = \begin{pmatrix} 1 & 2 & 1 \\ 2 & 5 & 3 \\ 1 & 3 & 3 \end{pmatrix} \xrightarrow[d_3 - d_1]{d_2 - 2d_1} \begin{pmatrix} 1 & 2 & 1 \\ 0 & 1 & 1 \\ 0 & 1 & 2 \end{pmatrix} \xrightarrow{d_3 - d_2} \begin{pmatrix} 1 & 2 & 1 \\ 0 & 1 & 1 \\ 0 & 0 & 1 \end{pmatrix} \)
-        </div>
-        <p>Nhận thấy \( \rho(A) = 3 = n \) (số vector của hệ). Vậy hệ \( S \) ĐLTT.</p>
-
-        <p style="margin-top: 25px;"><strong>Cách 3: Sử dụng định thức (Trường hợp số vector bằng số chiều không gian)</strong></p>
-        <p>Do hệ \( S \) gồm 3 vector trong không gian \( \mathbb{R}^3 \), ta lập ma trận vuông \( A \) và tính định thức:</p>
-        <div class="math-center" style="margin: 15px 0; overflow-x: auto;">
-            \( \det(A) = \begin{vmatrix} 1 & 2 & 1 \\ 2 & 5 & 3 \\ 1 & 3 & 3 \end{vmatrix} = 1(15 - 9) - 2(6 - 3) + 1(6 - 5) = 6 - 6 + 1 = 1 \)
-        </div>
-        <p>Vì \( \det(A) = 1 \neq 0 \), suy ra \( \rho(A) = 3 = \) số vector, do đó hệ vector \( S \) <strong>ĐLTT</strong>.</p>
-    </div>
-
-    <div class="box-blue"> 
-        <p><span class="text-red-bold">Bài 1.</span> Xét tính ĐLTT hoặc PTTT của các hệ vector sau trong không gian tương ứng:</p>
-        <div class="math-scroll" style="margin-top: 15px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div>
-                    <div style="margin-bottom: 20px;">a) \( S = \{(1, 2), (3, 4)\} \) trong \( \mathbb{R}^2 \).</div>
-                    <div style="margin-bottom: 20px;">b) \( S = \{(1, 1), (2, 2)\} \) trong \( \mathbb{R}^2 \).</div>
-                    <div style="margin-bottom: 20px;">c) \( S = \{(1, 0, 0), (0, 1, 0), (0, 0, 1)\} \) trong \( \mathbb{R}^3 \).</div>
-                    <div style="margin-bottom: 20px;">d) \( S = \{(1, 2, 3), (4, 5, 6), (7, 8, 9)\} \) trong \( \mathbb{R}^3 \).</div>
-                    <div style="margin-bottom: 20px;">e) \( S = \{(1, 0, 1), (1, 1, 0), (0, 1, 1)\} \) trong \( \mathbb{R}^3 \).</div>
-                    <div style="margin-bottom: 20px;">f) \( S = \{(2, -1, 3), (4, -2, 6)\} \) trong \( \mathbb{R}^3 \).</div>
-                    <div>g) \( S = \{(1, 1, 1), (1, 2, 3), (0, 1, 2)\} \) trong \( \mathbb{R}^3 \).</div>
-                </div>
-                <div>
-                    <div style="margin-bottom: 20px;">h) \( S = \{(1, 2, 1), (0, 1, 2), (0, 0, 3)\} \) trong \( \mathbb{R}^3 \).</div>
-                    <div style="margin-bottom: 20px;">i) \( S = \{(1, -1, 0), (0, 1, -1), (-1, 0, 1)\} \) trong \( \mathbb{R}^3 \).</div>
-                    <div style="margin-bottom: 20px;">j) \( S = \{(1, 1, 2), (2, 2, 4), (3, 3, 5)\} \) trong \( \mathbb{R}^3 \).</div>
-                    <div style="margin-bottom: 20px;">k) \( S = \{(1, 2, 3), (2, 5, 8), (1, 4, 7)\} \) trong \( \mathbb{R}^3 \).</div>
-                    <div style="margin-bottom: 20px;">l) \( S = \{(1, 0, 1), (0, 1, 0), (2, 1, 3)\} \) trong \( \mathbb{R}^3 \).</div>
-                    <div>m) \( S = \{(1, 1, 0, 1), (1, 0, 0, 1), (1, -1, 0, 1)\} \) trong \( \mathbb{R}^4 \).</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="box-blue"> 
-        <p><span class="text-red-bold">Bài 2.</span> Cho biết các hệ vector sau ĐLTT hay PTTT. Giải thích tại sao?</p>
-        <div class="math-scroll" style="margin-top: 15px;">
-            <ul class="exercise-list">
-                <li style="margin-bottom: 20px;">a) \( S = \{e_1, e_2, e_3, e_4\} \) trong \( \mathbb{R}^4 \) (\( e_i \) là các vector thuộc cơ sở chính tắc của \( \mathbb{R}^4 \)).</li>
-                <li style="margin-bottom: 20px;">b) \( S = \{(1, 2), (2, 3), (3, 4)\} \) trong \( \mathbb{R}^2 \).</li>
-                <li style="margin-bottom: 20px;">c) \( S = \{(1, 0), (0, 1), (1, 1)\} \) trong \( \mathbb{R}^2 \).</li>
-                <li style="margin-bottom: 20px;">d) \( S = \{(1, 2, 3), \mathbf{0}, (4, 5, 6)\} \) trong \( \mathbb{R}^3 \) (với \( \mathbf{0} \) là vector không).</li>
-                <li>e) Cho hai vector \( u, v \) bất kỳ. Xét hệ vector \( S = \{u, v, u + v\} \).</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="box-blue">
-        <p><span class="text-red-bold">Bài 3.</span> Trong không gian \( \mathcal{P}_2[x] \), xét xem hệ vector \( B = \{u_1 = 1 + 2x, u_2 = 3x - x^2, u_3 = 2 - x + x^2\} \) ĐLTT hay PTTT.</p>
-    </div>
-
-    <div class="box-blue">
-        <p><span class="text-red-bold">Bài 4.</span></p>
-        <div class="math-scroll" style="margin-top: 15px;">
-            <ul class="exercise-list">
-                <li style="margin-bottom: 25px;">
-                    a) Trong không gian véctơ \( \mathbb{R}^4 \), các vector sau là ĐLTT hay PTTT:
-                    <div class="math-center" style="margin-top: 15px;">
-                        \( u_1 = (1, 1, 1, 1), \quad u_2 = (1, 1, -1, -1), \quad u_3 = (1, -1, 1, -1), \quad u_4 = (1, -1, -1, 1) \)
+                    <p>Xét ma trận mở rộng:</p>
+                    <div class="math-center" style="overflow-x: auto; margin-bottom: 15px; margin-top: 10px;">
+                        \( \bar{A} = \left( \begin{array}{cc|c} 1 & 0 & 2 \\ 1 & 2 & 6 \\ 0 & 1 & 2 \end{array} \right)
+                        \xrightarrow{d_2 \rightarrow d_2 - d_1} \left( \begin{array}{cc|c} 1 & 0 & 2 \\ 0 & 2 & 4 \\ 0 &
+                        1 & 2 \end{array} \right) \xrightarrow{d_3 \rightarrow d_3 - \frac{1}{2}d_2} \left(
+                        \begin{array}{cc|c} 1 & 0 & 2 \\ 0 & 2 & 4 \\ 0 & 0 & 0 \end{array} \right) \)
                     </div>
-                </li>
-                <li>
-                    b) Tìm tất cả các giá trị của \( m \) sao cho véctơ \( u = (m, 1, 2, 3) \) là THTT của bốn vector \( u_1, u_2, u_3, u_4 \)
-                </li>
-            </ul>
-        </div>
-    </div>
+                    <p>Ta có \( rank(A) = rank(\bar{A}) = 2 \). Suy ra, hệ có nghiệm duy nhất \( (c_1, c_2) = (2, 2) \).
+                    </p>
+                    <p style="margin-top: 15px;">Vậy \( v \) là THTT của \( S \) và \( v = 2v_1 + 2v_2 \).</p>
+                </div>
 
-    <div class="download-container">
-        <p style="margin-bottom: 15px; color: var(--text-sub); font-size: 0.95rem;">
-            <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài tập? Tải lời giải về để đối chiếu nhé!
-        </p>
-        <a href="https://drive.google.com/uc?export=download&id=1kNdg5h3YE2NccqCOq-QeA4wwm3mjYfzw" target="_blank" class="btn-download">
-            <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
-        </a>
-    </div>
-</div>
+                <div class="box-blue">
+                    <p><span class="text-red-bold">Bài 1.</span> Xét xem vector \( v \) có phải là một THTT của hệ \( S
+                        \) không? Nếu có, hãy tìm một bộ hệ số \( c_i \) thỏa mãn:</p>
+                    <div class="math-scroll">
+                        <ul class="exercise-list">
+                            <li>a) \( S = \{(1, 2), (-1, 3)\}, \quad v = (0, 5) \).</li>
+                            <li>b) \( S = \{(1, 0), (0, 1)\}, \quad v = (3, -4) \).</li>
+                            <li>c) \( S = \{(1, 1, 1), (1, 0, 1)\}, \quad v = (2, 1, 2) \).</li>
+                            <li>d) \( S = \{(1, -1, 0), (0, 1, -1)\}, \quad v = (1, 0, -1) \).</li>
+                            <li>e) \( S = \{(1, 2, 3), (0, 1, 2), (0, 0, 1)\}, \quad v = (1, 4, 9) \).</li>
+                            <li>f) \( S = \{e_1, e_2, e_3\} \) (với \( e_i \) là cơ sở chính tắc của \( \mathbb{R}^3
+                                \)), \( \quad v = (x, y, z) \).</li>
+                            <li>g) \( S = \{(1, 2, 1), (2, 1, 3), (1, 1, 1)\}, \quad v = (1, 1, 0) \).</li>
+                            <li>h) \( S = \{(1, 0, 0), (1, 1, 0), (1, 1, 1)\}, \quad v = (2, 3, 4) \).</li>
+                            <li>i) \( S = \{(1, 2, 1), (2, 5, 2), (1, 3, 2)\}, \quad v = (1, 1, 1) \).</li>
+                            <li>j) \( S = \{(1, 1, 0), (1, 0, 1), (0, 1, 1)\}, \quad v = (2, 2, 2) \).</li>
+                            <li>k) \( S = \{(1, 2, 3), (4, 5, 6)\}, \quad v = (7, 8, 9) \).</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box-blue">
+                    <p><span class="text-red-bold">Bài 2.</span> Giải thích tại sao các vector \( v \) sau đây
+                        <strong>không</strong> phải (hoặc có tính chất đặc biệt) là THTT của hệ \( S \):
+                    </p>
+                    <div class="math-scroll" style="margin-top: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <div style="margin-bottom: 20px;">a) \( S = \{(2, 1), (6, 3)\}, \quad v = (1, 0) \)
+                                </div>
+                                <div style="margin-bottom: 20px;">b) \( S = \{(1, 1), (2, 2)\}, \quad v = (1, 2) \)
+                                </div>
+                                <div style="margin-bottom: 20px;">c) \( S = \{(1, 0), (2, 0)\}, \quad v = (0, 1) \)
+                                </div>
+                                <div>d) \( S = \{(1, 2, 3), (2, 4, 6)\}, \quad v = (3, 6, 9) \)</div>
+                            </div>
+                            <div>
+                                <div style="margin-bottom: 20px;">e) \( S = \{(2, 0, 0), (0, 3, 0)\}, \quad v = (4, 6,
+                                    1) \)</div>
+                                <div style="margin-bottom: 20px;">f) \( S = \{(1, 2, -1), (3, 1, 0)\}, \quad v = (0, 0,
+                                    0) \)</div>
+                                <div>g) \( S = \{(1, -2), (2, -4)\}, \quad v = (3, -6) \)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box-black">
+                    <span class="text-red-bold" style="font-style: italic;">Ví dụ 2:</span> Tìm các giá trị của \( m \)
+                    để vector \( u \) là tổ hợp tuyến tính của hệ \( \{u_1, u_2\} \) với \( u_1 = (1, 1, 1); \quad u_2 =
+                    (1, 2, 3); \quad u = (1, 4, m) \)
+
+                    <span class="text-blue-sol">Lời giải</span>
+
+                    <p>Lập ma trận \( A \) từ các vector theo cột và tính định thức:
+                        \( \det(A) = \begin{vmatrix} 1 & 1 & 1 \\ 1 & 2 & 3 \\ 1 & 4 & m \end{vmatrix} \)
+                    </p>
+
+                    <p style="margin-top: 15px;">Khai triển theo dòng 1:</p>
+                    <div class="math-center" style="overflow-x: auto; margin: 15px 0;">
+                        \( \det(A) = 1(2m - 12) - 1(m - 3) + 1(4 - 2) = 2m - 12 - m + 3 + 2 = m - 7 \)
+                    </div>
+
+                    <p>Để hệ vector phụ thuộc tuyến tính \( \Leftrightarrow \det(A) = 0 \Leftrightarrow m - 7 = 0
+                        \Leftrightarrow m = 7 \)</p>
+                    <p style="margin-top: 15px;">Vậy \( m = 7 \) thì vector \( u \) là một tổ hợp tuyến tính của \(
+                        \{u_1, u_2\} \)</p>
+                </div>
+
+                <div class="box-blue">
+                    <p><span class="text-red-bold">Bài 3.</span> Tìm các giá trị của \( m \) để vector \( u \) là tổ hợp
+                        tuyến tính của hệ vector tương ứng:</p>
+                    <div class="math-scroll">
+                        <ul class="exercise-list">
+                            <li>a) \( u_1 = (1, 2); \quad u_2 = (2, 4); \quad u = (1, m) \)</li>
+                            <li>b) \( u_1 = (1, 2, -1); \quad u_2 = (2, 3, 1); \quad u_3 = (3, 5, 0); \quad u = (8, m,
+                                1) \)</li>
+                            <li>c) \( u_1 = (2, 3, 1); \quad u_2 = (-4, -6, 2); \quad u_3 = (6, 9, 1); \quad u = (1, 2,
+                                m) \)</li>
+                            <li>d) \( u_1 = (1, 2, 4); \quad u_2 = (2, 1, 5); \quad u_3 = (3, -1, 0); \quad u = (m, 3,
+                                1) \)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box-blue">
+                    <p><span class="text-red-bold">Bài 4.</span> Trong không gian véctơ ma trận vuông cấp 2, hãy biểu
+                        diễn véctơ \( \begin{pmatrix} 11 & 13 \\ 6 & 5 \end{pmatrix} \) theo 4 véctơ \( \begin{pmatrix}
+                        1 & 1 \\ -1 & 2 \end{pmatrix}, \begin{pmatrix} 0 & 1 \\ 2 & 1 \end{pmatrix}, \begin{pmatrix} 2 &
+                        2 \\ 1 & -1 \end{pmatrix}, \begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix} \)</p>
+                </div>
+
+                <div class="pdf-h1" id="bai-tap-2"
+                    style="font-size: 1.3rem; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-top: 40px; margin-bottom: 20px;">
+                    Độc lập tuyến tính - Phụ thuộc tuyến tính</div>
+
+                <div class="box-black">
+                    <span class="text-red-bold" style="font-style: italic;">Ví dụ:</span> Xét sự ĐLTT hoặc PTTT của hệ
+                    \( S = \{u_1 = (1, 2, 1), u_2 = (2, 5, 3), u_3 = (1, 3, 3)\} \) trong không gian \( \mathbb{R}^3 \).
+
+                    <span class="text-blue-sol">Lời giải</span>
+
+                    <p><strong>Cách 1: Sử dụng định nghĩa (Xét hệ phương trình thuần nhất)</strong></p>
+                    <p>Xét phương trình vector:</p>
+                    <div class="math-center" style="margin-bottom: 10px; overflow-x: auto;">
+                        \( c_1u_1 + c_2u_2 + c_3u_3 = \mathbf{0} \)<br>
+                        \( \Leftrightarrow c_1 \cdot (1, 2, 1) + c_2 \cdot (2, 5, 3) + c_3 \cdot (1, 3, 3) = (0, 0, 0)
+                        \)
+                    </div>
+                    <p>Hệ phương trình tương ứng:</p>
+                    <div class="math-center" style="margin-bottom: 15px;">
+                        \( \begin{cases} c_1 + 2c_2 + c_3 = 0 \\ 2c_1 + 5c_2 + 3c_3 = 0 \\ c_1 + 3c_2 + 3c_3 = 0
+                        \end{cases} \)
+                    </div>
+                    <p>Giải hệ trên, thu được nghiệm duy nhất \( c_1 = c_2 = c_3 = 0 \) (<strong>nghiệm tầm
+                            thường</strong>).</p>
+                    <p style="margin-top: 10px;">Vậy hệ \( S \) ĐLTT.</p>
+
+                    <p style="margin-top: 25px;"><strong>Cách 2: Biện luận hạng của ma trận</strong></p>
+                    <p>Lập ma trận \( A \) có các cột là các vector thuộc hệ \( S \) và thực hiện các phép biến đổi sơ
+                        cấp:</p>
+                    <div class="math-center" style="margin: 15px 0; overflow-x: auto;">
+                        \( A = \begin{pmatrix} 1 & 2 & 1 \\ 2 & 5 & 3 \\ 1 & 3 & 3 \end{pmatrix} \xrightarrow[d_3 -
+                        d_1]{d_2 - 2d_1} \begin{pmatrix} 1 & 2 & 1 \\ 0 & 1 & 1 \\ 0 & 1 & 2 \end{pmatrix}
+                        \xrightarrow{d_3 - d_2} \begin{pmatrix} 1 & 2 & 1 \\ 0 & 1 & 1 \\ 0 & 0 & 1 \end{pmatrix} \)
+                    </div>
+                    <p>Nhận thấy \( \rho(A) = 3 = n \) (số vector của hệ). Vậy hệ \( S \) ĐLTT.</p>
+
+                    <p style="margin-top: 25px;"><strong>Cách 3: Sử dụng định thức (Trường hợp số vector bằng số chiều
+                            không gian)</strong></p>
+                    <p>Do hệ \( S \) gồm 3 vector trong không gian \( \mathbb{R}^3 \), ta lập ma trận vuông \( A \) và
+                        tính định thức:</p>
+                    <div class="math-center" style="margin: 15px 0; overflow-x: auto;">
+                        \( \det(A) = \begin{vmatrix} 1 & 2 & 1 \\ 2 & 5 & 3 \\ 1 & 3 & 3 \end{vmatrix} = 1(15 - 9) - 2(6
+                        - 3) + 1(6 - 5) = 6 - 6 + 1 = 1 \)
+                    </div>
+                    <p>Vì \( \det(A) = 1 \neq 0 \), suy ra \( \rho(A) = 3 = \) số vector, do đó hệ vector \( S \)
+                        <strong>ĐLTT</strong>.
+                    </p>
+                </div>
+
+                <div class="box-blue">
+                    <p><span class="text-red-bold">Bài 1.</span> Xét tính ĐLTT hoặc PTTT của các hệ vector sau trong
+                        không gian tương ứng:</p>
+                    <div class="math-scroll" style="margin-top: 15px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <div style="margin-bottom: 20px;">a) \( S = \{(1, 2), (3, 4)\} \) trong \( \mathbb{R}^2
+                                    \).</div>
+                                <div style="margin-bottom: 20px;">b) \( S = \{(1, 1), (2, 2)\} \) trong \( \mathbb{R}^2
+                                    \).</div>
+                                <div style="margin-bottom: 20px;">c) \( S = \{(1, 0, 0), (0, 1, 0), (0, 0, 1)\} \) trong
+                                    \( \mathbb{R}^3 \).</div>
+                                <div style="margin-bottom: 20px;">d) \( S = \{(1, 2, 3), (4, 5, 6), (7, 8, 9)\} \) trong
+                                    \( \mathbb{R}^3 \).</div>
+                                <div style="margin-bottom: 20px;">e) \( S = \{(1, 0, 1), (1, 1, 0), (0, 1, 1)\} \) trong
+                                    \( \mathbb{R}^3 \).</div>
+                                <div style="margin-bottom: 20px;">f) \( S = \{(2, -1, 3), (4, -2, 6)\} \) trong \(
+                                    \mathbb{R}^3 \).</div>
+                                <div>g) \( S = \{(1, 1, 1), (1, 2, 3), (0, 1, 2)\} \) trong \( \mathbb{R}^3 \).</div>
+                            </div>
+                            <div>
+                                <div style="margin-bottom: 20px;">h) \( S = \{(1, 2, 1), (0, 1, 2), (0, 0, 3)\} \) trong
+                                    \( \mathbb{R}^3 \).</div>
+                                <div style="margin-bottom: 20px;">i) \( S = \{(1, -1, 0), (0, 1, -1), (-1, 0, 1)\} \)
+                                    trong \( \mathbb{R}^3 \).</div>
+                                <div style="margin-bottom: 20px;">j) \( S = \{(1, 1, 2), (2, 2, 4), (3, 3, 5)\} \) trong
+                                    \( \mathbb{R}^3 \).</div>
+                                <div style="margin-bottom: 20px;">k) \( S = \{(1, 2, 3), (2, 5, 8), (1, 4, 7)\} \) trong
+                                    \( \mathbb{R}^3 \).</div>
+                                <div style="margin-bottom: 20px;">l) \( S = \{(1, 0, 1), (0, 1, 0), (2, 1, 3)\} \) trong
+                                    \( \mathbb{R}^3 \).</div>
+                                <div>m) \( S = \{(1, 1, 0, 1), (1, 0, 0, 1), (1, -1, 0, 1)\} \) trong \( \mathbb{R}^4
+                                    \).</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box-blue">
+                    <p><span class="text-red-bold">Bài 2.</span> Cho biết các hệ vector sau ĐLTT hay PTTT. Giải thích
+                        tại sao?</p>
+                    <div class="math-scroll" style="margin-top: 15px;">
+                        <ul class="exercise-list">
+                            <li style="margin-bottom: 20px;">a) \( S = \{e_1, e_2, e_3, e_4\} \) trong \( \mathbb{R}^4
+                                \) (\( e_i \) là các vector thuộc cơ sở chính tắc của \( \mathbb{R}^4 \)).</li>
+                            <li style="margin-bottom: 20px;">b) \( S = \{(1, 2), (2, 3), (3, 4)\} \) trong \(
+                                \mathbb{R}^2 \).</li>
+                            <li style="margin-bottom: 20px;">c) \( S = \{(1, 0), (0, 1), (1, 1)\} \) trong \(
+                                \mathbb{R}^2 \).</li>
+                            <li style="margin-bottom: 20px;">d) \( S = \{(1, 2, 3), \mathbf{0}, (4, 5, 6)\} \) trong \(
+                                \mathbb{R}^3 \) (với \( \mathbf{0} \) là vector không).</li>
+                            <li>e) Cho hai vector \( u, v \) bất kỳ. Xét hệ vector \( S = \{u, v, u + v\} \).</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box-blue">
+                    <p><span class="text-red-bold">Bài 3.</span> Trong không gian \( \mathcal{P}_2[x] \), xét xem hệ
+                        vector \( B = \{u_1 = 1 + 2x, u_2 = 3x - x^2, u_3 = 2 - x + x^2\} \) ĐLTT hay PTTT.</p>
+                </div>
+
+                <div class="box-blue">
+                    <p><span class="text-red-bold">Bài 4.</span></p>
+                    <div class="math-scroll" style="margin-top: 15px;">
+                        <ul class="exercise-list">
+                            <li style="margin-bottom: 25px;">
+                                a) Trong không gian véctơ \( \mathbb{R}^4 \), các vector sau là ĐLTT hay PTTT:
+                                <div class="math-center" style="margin-top: 15px;">
+                                    \( u_1 = (1, 1, 1, 1), \quad u_2 = (1, 1, -1, -1), \quad u_3 = (1, -1, 1, -1), \quad
+                                    u_4 = (1, -1, -1, 1) \)
+                                </div>
+                            </li>
+                            <li>
+                                b) Tìm tất cả các giá trị của \( m \) sao cho véctơ \( u = (m, 1, 2, 3) \) là THTT của
+                                bốn vector \( u_1, u_2, u_3, u_4 \)
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="download-container">
+                    <p style="margin-bottom: 15px; color: var(--text-sub); font-size: 0.95rem;">
+                        <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài tập? Tải lời giải về để đối
+                        chiếu nhé!
+                    </p>
+                    <a href="https://drive.google.com/uc?export=download&id=1mmAe1p4wHEXY2MmcpCNwo7hiHjj_FQUi"
+                        target="_blank" class="btn-download">
+                        <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
+                    </a>
+                </div>
+            </div>
 
         </main>
     </div>
-
+    <footer
+        style="text-align: center; padding: 30px 20px; margin-top: 20px; margin-bottom: 20px; color: var(--text-sub); font-size: 0.95rem; border-top: 1px solid var(--border); width: 100%;">
+        <p style="margin: 0;">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
+    </footer>
     <script>
         // 1. THEME HANDLING & ANIMATION
         (function () {
@@ -1474,11 +1798,11 @@
             el.classList.add('playing');
         }
 
-        
+
     </script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            
+
             // Hàm xử lý cuộn trang mượt
             const smoothScrollTo = (targetElement) => {
                 if (!targetElement) return;
@@ -1501,9 +1825,9 @@
             // XỬ LÝ CLICK: Cho các dòng CÓ CHỨA MŨI TÊN (Vừa cuộn vừa xổ/thu menu)
             const toggleBtns = document.querySelectorAll('.custom-nav .toggle-btn');
             toggleBtns.forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault(); 
-                    
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+
                     // Toggle menu
                     const parentLi = this.closest('.has-dropdown');
                     if (parentLi) {
@@ -1517,7 +1841,7 @@
 
                     // Scroll và đổi màu
                     const link = this.querySelector('a');
-                    if(link) {
+                    if (link) {
                         menuLinks.forEach(el => el.classList.remove('active'));
                         link.classList.add('active');
                         const target = document.querySelector(link.getAttribute('href'));
@@ -1530,9 +1854,9 @@
             menuLinks.forEach(link => {
                 if (link.closest('.toggle-btn')) return; // Bỏ qua nếu là dòng có mũi tên
 
-                link.addEventListener('click', function(e) {
+                link.addEventListener('click', function (e) {
                     e.preventDefault();
-                    
+
                     menuLinks.forEach(el => el.classList.remove('active'));
                     this.classList.add('active');
 
@@ -1543,17 +1867,17 @@
 
             // SCROLL SPY (TỰ ĐỘNG SÁNG KHI LĂN CHUỘT)
             const sections = document.querySelectorAll('.chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id]');
-            
+
             window.addEventListener('scroll', () => {
                 let currentId = '';
-                
+
                 sections.forEach(section => {
                     const sectionTop = section.getBoundingClientRect().top + window.pageYOffset;
                     if (window.pageYOffset >= sectionTop - 150) {
                         currentId = section.getAttribute('id');
                     }
                 });
-                
+
                 if (currentId) {
                     menuLinks.forEach(link => {
                         link.classList.remove('active');
@@ -1565,7 +1889,7 @@
             });
         });
     </script>
-    
+
 </body>
 
 </html>
