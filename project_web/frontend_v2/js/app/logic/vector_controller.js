@@ -94,7 +94,7 @@
        PHẦN 1: TIỆN ÍCH & GIAO DIỆN
        ======================================================================= */
 
-    // Hiển thị thông báo Toast
+    // Hiển thị thông báo Toast (Đồng bộ cây đỏ + Hiệu ứng trượt ngang)
     App.showToast = function (message, type = 'error') {
         let container = document.getElementById("toast-container");
         if (!container) {
@@ -103,8 +103,41 @@
             document.body.appendChild(container);
         }
 
+        // --- HÀM XỬ LÝ ẢO THUẬT V3: Bay sang phải rồi mới xẹp ---
+        const removeToastSmoothly = (t) => {
+            if (t.isRemoving) return; 
+            t.isRemoving = true;
+            
+            t.style.opacity = '0';
+            t.style.transform = 'translateX(120%)';
+            
+            setTimeout(() => {
+                t.style.marginTop = '0';
+                t.style.marginBottom = '0';
+                t.style.paddingTop = '0';
+                t.style.paddingBottom = '0';
+                t.style.height = '0';
+            }, 150); 
+            
+            setTimeout(() => {
+                if (t.parentNode) t.remove();
+            }, 400);
+        };
+
+        // --- FIX SPAM: Ép thẻ cũ nhất bay màu nếu quá 3 cái ---
+        let activeToasts = Array.from(container.children).filter(t => !t.isRemoving);
+        while (activeToasts.length >= 3) {
+            let oldest = activeToasts.shift();
+            removeToastSmoothly(oldest);
+        }
+
         const toast = document.createElement("div");
         toast.className = "toast-item";
+        
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        toast.style.transition = "all 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55)";
+        toast.style.overflow = "hidden"; 
 
         let iconSVG = '';
         if (type === 'error') {
@@ -114,23 +147,30 @@
         }
 
         toast.innerHTML = `
-            <div class="toast-content">
+            <div class="toast-content" style="cursor: pointer;">
                 <span class="toast-icon">${iconSVG}</span>
                 <span>${message}</span>
             </div>
             <div class="toast-progress"></div>
         `;
 
+        toast.onclick = function() {
+            removeToastSmoothly(toast);
+        };
+
         container.appendChild(toast);
+
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0) translateX(0)'; 
+        });
+
         setTimeout(function () {
-            toast.classList.add("hide");
-            toast.addEventListener("animationend", function () {
-                toast.remove();
-            });
-        }, 5000);
+            removeToastSmoothly(toast);
+        }, 5000); 
     };
 
-    // Xử lý khi danh sách vector trống
+    // Xử lý khi danh sách vector trống (FIX LỖI KẸT VIỀN ĐỎ)
     App.handleEmptyListAction = function () {
         if (App.vectorList.length === 0) {
             App.showToast("Danh sách trống! Hãy tạo vector ở đây trước 👇");
@@ -140,9 +180,11 @@
                 const inp = document.getElementById("vectorInput");
                 if (inp) {
                     inp.focus();
-                    inp.style.transition = "box-shadow 0.2s";
-                    inp.style.boxShadow = "0 0 0 4px rgba(255, 77, 79, 0.4)";
-                    setTimeout(function () { inp.style.boxShadow = ""; }, 1000);
+                    // Dùng CSS class thay vì ép cứng style để không bao giờ bị kẹt màu
+                    inp.classList.remove("input-error-flash");
+                    void inp.offsetWidth; // Kích hoạt chạy lại animation
+                    inp.classList.add("input-error-flash");
+                    setTimeout(() => inp.classList.remove("input-error-flash"), 1000);
                 }
             }
             return true;
@@ -325,31 +367,60 @@
     App.onAddVector = function () {
         const inp = document.getElementById("vectorInput");
         if (!inp) return;
+        
+        // 1. Lấy dữ liệu thô và dọn dẹp khoảng trắng
         const raw = inp.value.trim();
+        
+        // --- CHỐT CHẶN 1: BẮT BUỘC PHẢI CÓ NGOẶC VUÔNG ---
+        if (!raw.startsWith('[') || !raw.endsWith(']')) {
+            App.showToast("Sai cú pháp! Vui lòng nhập tọa độ trong ngoặc vuông (VD: [1, 2])");
+            inp.style.animation = 'none';
+            inp.offsetHeight; 
+            inp.style.animation = 'shakeError 0.4s ease-in-out';
+            return;
+        }
+
+        // Lấy ruột bên trong ngoặc vuông
+        const innerContent = raw.slice(1, -1).trim();
+
+        // --- CHỐT CHẶN 2: KHÔNG CHO PHÉP RỖNG HOẶC DẤU PHẨY BẬY BẠ ---
+        if (innerContent === "" || innerContent.startsWith(',') || innerContent.endsWith(',') || innerContent.includes(',,')) {
+            App.showToast("Tọa độ không hợp lệ (Dư hoặc thiếu dấu phẩy)");
+            return;
+        }
+
+        // 3. Tiến hành parse vector như bình thường
         let v;
         try {
             v = App.parseVectorExpr(raw);
             if (!Array.isArray(v) || v.length < 2) throw new Error("Vector phải có ít nhất 2 toạ độ");
-        } catch (err) { App.showToast("Lỗi nhập liệu: " + err.message); return; }
+            
+            // --- CHỐT CHẶN 3: BẮT LỖI TỌA ĐỘ VÔ LÝ ---
+            if (v.some(val => val === null || val === undefined || isNaN(Number(val)))) {
+                throw new Error("Có chứa giá trị không phải là số hợp lệ.");
+            }
+
+        } catch (err) { 
+            App.showToast("Lỗi nhập liệu: " + err.message); 
+            return; 
+        }
 
         App.currentVector = v.slice();
         App.firstDrawForVector = true;
         const hue = App._pickUniqueHue ? App._pickUniqueHue() : (Math.random() * 360);
         const item = App._attachVectorItem(v, hue);
 
-        // --- [ĐOẠN LOGIC QUAN TRỌNG ĐÃ SỬA] ---
-        // Kiểm tra xem có hàm cần tính toán (sin, log...) không?
+        // --- KIỂM TRA HÀM TOÁN HỌC & FORMAT LATEX ---
         const needsCalc = /(sin|cos|tan|cot|log|ln|pi|e\^|e\s|e$)/i.test(raw);
 
         if (needsCalc) {
-            // Tính ra số -> Rồi ép ngược về phân số đẹp (VD: 0.5 -> 1/2)
             const latexArr = v.map(val => smartFormat(val));
             item.latex = `[${latexArr.join(", ")}]`;
         } else {
-            // Nếu là căn, phân số hoặc số thường -> Giữ nguyên
-            item.latex = raw;
+            // Lắp ráp lại mảng sạch sẽ, loại bỏ khoảng trắng/số dư thừa
+            const cleanArray = v.map(val => Number(val).toString()); 
+            item.latex = `[${cleanArray.join(", ")}]`;
         }
-        // ---------------------------------------
 
         App.vectorList.push(item);
 
@@ -366,15 +437,28 @@
         if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
     };
 
-    // Hàm xóa hết vector
+    // Hàm xóa hết vector (FIX LỖI DANH SÁCH VECTOR KHÔNG BIẾN MẤT)
     App.clearAllVectors = function () {
         App.vectorList.length = 0;
         nextVectorId = 1;
         if (App.usedHues) App.usedHues.clear();
 
+        const toastContainer = document.getElementById("toast-container");
+        if (toastContainer) toastContainer.innerHTML = "";
+
         App.clearAngleOverlay();
-        App.renderVectorList();
-        App.refreshCalcVectorOptions();
+        
+        // --- CHỖ NÀY QUAN TRỌNG: Cập nhật TẤT CẢ giao diện ---
+        if (App.renderVectorList) App.renderVectorList();
+        if (App.refreshCalcVectorOptions) App.refreshCalcVectorOptions(); 
+        if (App.renderExtraCalcOptions) App.renderExtraCalcOptions(); // Lệnh này giúp dọn dẹp mấy cái Checklist cũ!
+
+        // Xóa luôn text kết quả cũ đang hiển thị
+        ['result_indep', 'result_rank', 'result_basis', 'result_coord'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = "—";
+        });
+
         App.redrawAll({ frame: true });
     };
 
@@ -529,7 +613,7 @@
                 App.vectorList.push(newItem);
                 App.renderVectorList();
                 App.refreshCalcVectorOptions();
-
+                if (App.renderExtraCalcOptions) App.renderExtraCalcOptions();
                 if (!App.useAnimation) {
                     newItem.alpha = 1;      // Hiện ngay
                     newItem.vec = vecRes;   // Gán giá trị cuối

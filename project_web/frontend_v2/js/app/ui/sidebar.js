@@ -37,7 +37,9 @@
     .tab-content {
         display: none !important; flex: 1 1 auto; 
         overflow-y: auto !important; overflow-x: hidden;
-        padding: 10px 0; height: auto !important; -webkit-overflow-scrolling: touch;
+        /* Thêm 120px đệm dưới đáy để không bị che bởi Taskbar/Thanh điều hướng đt */
+        padding: 10px 0 120px 0 !important; 
+        height: auto !important; -webkit-overflow-scrolling: touch;
     }
     .tab-content.active { display: block !important; animation: fadeIn 0.2s ease-out; }
     .tab-content .card { box-shadow: none !important; border: none !important; background: transparent !important; padding: 5px !important; margin-bottom: 15px !important; }
@@ -106,6 +108,30 @@
     .nice-result-box { display: block; margin-top: 15px; padding: 15px; background: #e8f5e9; border-left: 5px solid #4caf50; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 1.2em; color: #2e7d32; box-shadow: 0 2px 5px rgba(0,0,0,0.05); word-break: break-all; line-height: 1.5; }
     .nice-result-box strong { color: #1b5e20; text-transform: uppercase; font-size: 0.85em; display: block; margin-bottom: 5px; }
 
+    .extra-form pre {
+        font-family: inherit !important; /* Đè font hệ thống lên, bỏ font code xấu xí */
+        font-size: 1.15rem !important; /* Chữ to rõ ràng hơn */
+        font-weight: 700 !important; /* In đậm chữ */
+        color: #1e293b; /* Màu chữ xanh đen sang trọng */
+        background: #f8fafc; /* Nền xám xanh cực nhạt */
+        border: 2px dashed #cbd5e1; /* Viền nét đứt hiện đại */
+        border-radius: 8px; /* Bo góc mềm mại */
+        padding: 12px 15px;
+        text-align: center; /* Căn giữa chữ */
+        margin-top: 12px;
+        white-space: pre-wrap; /* Tự động xuống dòng nếu chữ quá dài */
+        transition: all 0.3s ease;
+    }
+
+    /* Hiệu ứng khi có kết quả mới (cho nó nháy sáng nhẹ) */
+    .extra-form pre:not(:empty) {
+        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+        0% { transform: scale(0.95); opacity: 0.5; }
+        100% { transform: scale(1); opacity: 1; }
+    }
     /* DARK MODE */
     body.dark .sidebar-tabs { background: #111; border-color: #333; }
     body.dark .tab-btn { color: #888; }
@@ -148,6 +174,12 @@
         animation: shakeError 0.4s ease-in-out;
         border-color: #ff4444 !important;
         background: #fff5f5 !important;
+    }
+        /* --- DARK MODE CHO Ô KẾT QUẢ --- */
+    body.dark .extra-form pre {
+        background: #0f172a; /* Nền tối sâu */
+        color: #60a5fa; /* Chữ xanh dương sáng */
+        border-color: #334155;
     }
     `;
     document.head.appendChild(style);
