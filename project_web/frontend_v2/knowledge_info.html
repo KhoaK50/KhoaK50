@@ -7,6 +7,7 @@
     <title>Kho Tàng Kiến Thức - Vectoria Knowledge</title>
 
     <link rel="stylesheet" href="css/knowledge.css">
+    <link rel="stylesheet" href="css/footer.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 
@@ -361,25 +362,9 @@
         .cursor-pointer {
             cursor: pointer;
         }
+        
     </style>
-    <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['\\(', '\\)'], ['$', '$']],
-                displayMath: [['\\[', '\\]']],
-                processEscapes: true
-            },
-            chtml: { scale: 0.95, displayAlign: 'center' }
-        };
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <style>
-        .search-dropdown mjx-container {
-            white-space: normal !important;
-            display: inline-block !important;
-            font-size: 100% !important;
-        }
-    </style>
+    
 </head>
 
 <body>
@@ -399,41 +384,45 @@
             style="display: flex; align-items: center; justify-content: space-between; position: relative;">
 
             <div class="logo" style="flex: 1; display: flex; justify-content: center; align-items: center;">
-    <div style="text-decoration: none; color: inherit; font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5px;">
-        <i class="fa-solid fa-shapes"></i> Vectoria Knowledge
-    </div>
-</div>
+                <a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 10px; font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5px;">
+                    
+                    <i class="fa-solid fa-shapes"></i> 
+                    
+                    Vectoria Knowledge
+                </a>
+            </div>
 
 
 
             <div class="settings-container safe-zone" style="flex: 1; display: flex; justify-content: flex-end;">
-    <button id="btnSettings" class="icon-btn" title="Cài đặt giao diện">
-        <i class="fa-solid fa-gear"></i>
-    </button>
-    <div class="settings-dropdown" id="settingsDropdown">
-        <div class="setting-item">
-            <span><i class="fa-solid fa-moon"></i> Chế độ tối</span>
-            <label class="switch">
-                <input type="checkbox" id="themeToggle">
-                <span class="slider round"></span>
-            </label>
-        </div>
-        
-        <hr style="border: 0; border-top: 1px solid var(--border); margin: 0; opacity: 0.5; display: block !important;">
+                <button id="btnSettings" class="icon-btn" title="Cài đặt giao diện">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+                <div class="settings-dropdown" id="settingsDropdown">
+                    <div class="setting-item">
+                        <span><i class="fa-solid fa-moon"></i> Chế độ tối</span>
+                        <label class="switch">
+                            <input type="checkbox" id="themeToggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
 
-        <a href="tltk.html" class="setting-item"
-            style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
-            <span><i class="fa-solid fa-book-bookmark"></i> Tài liệu tham khảo</span>
-            <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted);"></i>
-        </a>
+                    <hr
+                        style="border: 0; border-top: 1px solid var(--border); margin: 0; opacity: 0.5; display: block !important;">
 
-        <a href="contact.html" class="setting-item"
-            style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
-            <span><i class="fa-solid fa-envelope"></i> Liên hệ / Góp ý</span>
-            <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted);"></i>
-        </a>
-    </div>
-</div>
+                    <a href="hdsd.html" class="setting-item"
+                        style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
+                        <span><i class="fa-solid fa-book-open-reader"></i> Hướng dẫn sử dụng</span>
+                        <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted);"></i>
+                    </a>
+
+                    <a href="contact.html" class="setting-item"
+                        style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
+                        <span><i class="fa-solid fa-envelope"></i> Liên hệ / Góp ý</span>
+                        <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted);"></i>
+                    </a>
+                </div>
+            </div>
 
         </div>
     </header>
@@ -568,12 +557,34 @@
                 <p>Tổng hợp các tài liệu phục vụ cho việc xây dựng các nội dung kiến thức.</p>
             </a>
         </div>
-        
+
     </main>
 
-    <footer class="main-footer">
-        <p>© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
-    </footer>
+    <footer class="vectoria-footer distraction-element">
+    <div class="footer-container">
+        <div class="brand-col">
+            <div class="partner-logo" style="display: flex; align-items: center; gap: 10px;">
+                <img src="assets/images/logoMoi.png" alt="Logo Nhóm/Trường">
+                <img src="assets/images/logoChu.png" id="textLogo" alt="Logo Chữ Vectoria" style="height: 35px; width: auto;"> </div>
+            <p>
+                Vectoria — Vương quốc của những Vector — được kiến tạo để thay đổi hoàn toàn cách chúng ta nhìn nhận về vector. Không còn là những khái niệm khô khan, tại nơi đây, mỗi vector đều mang một hình hài, một hướng đi và sinh khí riêng. Chúng tôi khao khát trao cho bạn một góc nhìn thấu thị để toàn bộ vẻ đẹp trừu tượng của không gian vector được thu trọn vào tầm mắt.
+            </p>
+        </div> <div class="footer-col">
+            <h4>Thông tin liên hệ</h4>
+            <ul>
+                <li>
+                    <i class="fa-solid fa-envelope"></i>
+                    <a href="mailto:vectoria.connect@gmail.com">vectoria.connect@gmail.com</a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+    
+    <div class="footer-bottom">
+        <p style="margin: 0;">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
+    </div>
+</footer>
     <script src="js/utils/theme-manager.js"></script>
     <script src="js/utils/theme-transition.js"></script>
     <script>

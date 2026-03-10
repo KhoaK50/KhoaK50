@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Định thức - Vectoria Knowledge</title>
 
+    <link rel="stylesheet" href="../../css/footer.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -165,7 +166,7 @@
             transition: all 0.2s;
             font-size: 1.1rem;
             text-decoration: none;
-            margin-right: 25px;
+            margin-right: 0px;
         }
 
         .topbar-icon:hover,
@@ -999,6 +1000,7 @@
                 transform: rotate(360deg);
             }
         }
+        
     </style>
 </head>
 
@@ -1015,12 +1017,18 @@
                 <i class="fa-solid fa-arrow-left"></i>
             </a>
             
+            <a href="../../index.html" class="topbar-icon" title="Về trang chủ">
+        <i class="fa-solid fa-house"></i>
+      </a>
+      <a href="../../tltk.html" class="topbar-icon" title="Tài liệu tham khảo">
+        <i class="fa-solid fa-file-lines"></i>
+      </a>
         </div>
         
 
         <div class="brand">Vectoria Knowledge</div>
 
-        <div class="topbar-right">
+        <div class="topbar-right" style="margin-right: 25px;">
             <div class="settings-container">
                 <button id="btnSettings" class="icon-btn" title="Cài đặt">
                     <i class="fa-solid fa-gear"></i>
@@ -1040,6 +1048,11 @@
 
                     <hr style="border: 0; border-top: 1px solid var(--border); margin: 0; opacity: 0.5;">
 
+                    <a href="../../hdsd.html" class="setting-item"
+                        style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
+                        <span><i class="fa-solid fa-book-open-reader"></i> Hướng dẫn sử dụng</span>
+                        <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted);"></i>
+                    </a>
                     <a href="../../contact.html" class="setting-item" style="text-decoration: none; color: inherit;">
                         <span><i class="fa-solid fa-envelope"></i> Liên hệ / Góp ý</span>
                         <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted);"></i>
@@ -1810,10 +1823,31 @@
         </main>
 
     </div>
-    <footer
-        style="text-align: center; padding: 30px 20px; margin-top: 20px; margin-bottom: 20px; color: var(--text-sub); font-size: 0.95rem; border-top: 1px solid var(--border); width: 100%;">
+    <footer class="vectoria-footer distraction-element">
+    <div class="footer-container">
+        <div class="brand-col">
+            <div class="partner-logo" style="display: flex; align-items: center; gap: 10px;">
+                <img src="../../assets/images/logoMoi.png" alt="Logo Nhóm/Trường">
+                <img src="../../assets/images/logoChu.png" id="textLogo" alt="Logo Chữ Vectoria" style="height: 35px; width: auto;"> </div>
+            <p>
+                Vectoria — Vương quốc của những Vector — được kiến tạo để thay đổi hoàn toàn cách chúng ta nhìn nhận về vector. Không còn là những khái niệm khô khan, tại nơi đây, mỗi vector đều mang một hình hài, một hướng đi và sinh khí riêng. Chúng tôi khao khát trao cho bạn một góc nhìn thấu thị để toàn bộ vẻ đẹp trừu tượng của không gian vector được thu trọn vào tầm mắt.
+            </p>
+        </div> <div class="footer-col">
+            <h4>Thông tin liên hệ</h4>
+            <ul>
+                <li>
+                    <i class="fa-solid fa-envelope"></i>
+                    <a href="mailto:vectoria.connect@gmail.com">vectoria.connect@gmail.com</a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+    
+    <div class="footer-bottom">
         <p style="margin: 0;">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
-    </footer>
+    </div>
+</footer>
     <script>
         // 1. THEME HANDLING & ANIMATION
         // Theme is auto-initialized by theme-manager.js script

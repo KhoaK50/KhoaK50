@@ -205,7 +205,7 @@ body.dark .main-header {
     position: absolute;
     top: 50px;
     right: 0;
-    width: 200px;
+    width: 250px;
     background: var(--bg-card);
     border: 1px solid var(--card-border);
     border-radius: 8px;
