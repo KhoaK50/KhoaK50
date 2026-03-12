@@ -445,6 +445,7 @@
 
         .chapter-item {
             display: flex;
+            align-items: center;
             gap: 12px;
             padding: 15px 20px;
             border-bottom: 1px solid #334155;
@@ -1127,7 +1128,6 @@
                 transform: rotate(360deg);
             }
         }
-        
     </style>
 </head>
 
@@ -1144,11 +1144,11 @@
                 <i class="fa-solid fa-arrow-left"></i>
             </a>
             <a href="../index.html" class="topbar-icon" title="Về trang chủ">
-        <i class="fa-solid fa-house"></i>
-      </a>
-      <a href="../tltk.html" class="topbar-icon" title="Tài liệu tham khảo">
-        <i class="fa-solid fa-file-lines"></i>
-      </a>
+                <i class="fa-solid fa-house"></i>
+            </a>
+            <a href="../tltk.html" class="topbar-icon" title="Tài liệu tham khảo">
+                <i class="fa-solid fa-file-lines"></i>
+            </a>
         </div>
 
         <div class="brand">Vectoria Knowledge</div>
@@ -1216,7 +1216,8 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="#coming-soon" class="nav-link section-link" style="font-weight: 700;">Video trực quan</a>
+                    <a href="#video-truc-quan" class="nav-link section-link" style="font-weight: 700;">Video trực
+                        quan</a>
                 </li>
 
 
@@ -1439,20 +1440,49 @@
                 </script>
             </div>
 
-            <div class="video-box" id="coming-soon">
-                <div class="temp-video-overlay">
-                    <div class="tv-content">
-                        <div class="tv-icon-wrapper">
-                            <div class="tv-spinner"></div>
-                            <i class="fa-solid fa-hourglass-half"></i>
+            <div class="chapter-card" id="video-truc-quan"
+                style="padding: 0; overflow: hidden; border: none; background: transparent;">
+                <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-brands fa-youtube"></i> Video trực
+                    quan</h2>
+
+                <div class="cinema-container">
+                    <div class="video-box">
+                        <div id="youtube-player"></div>
+                    </div>
+
+                    <div class="playlist-box">
+                        <div class="playlist-header">
+                            <span>Nội dung</span>
+                            <span style="font-size: 0.8rem; color: #94a3b8;">4 phần</span>
                         </div>
-                        <h4>Sắp ra mắt</h4>
-                        <p>Video trực quan đang trong quá trình biên tập.<br>Hệ thống sẽ cập nhật trong thời gian tới.
-                        </p>
+                        <div class="chapter-list">
+                            <div class="chapter-item playing" onclick="seekTo(0); setActive(this)">
+                                <i class="fa-solid fa-circle-play chapter-icon"></i>
+                                <div class="chapter-info"><span class="chapter-title">Đặt vấn đề</span></div>
+                                <div class="time-badge">00:00</div>
+                            </div>
+                            <div class="chapter-item" onclick="seekTo(45); setActive(this)">
+                                <i class="fa-solid fa-circle-play chapter-icon"></i>
+                                <div class="chapter-info"><span class="chapter-title">Kiến thức chuẩn bị</span></div>
+                                <div class="time-badge">00:45</div>
+                            </div>
+                            <div class="chapter-item" onclick="seekTo(130); setActive(this)">
+                                <i class="fa-solid fa-circle-play chapter-icon"></i>
+                                <div class="chapter-info"><span class="chapter-title">Tổ hợp - Độc lập - <br>Phụ thuộc
+                                        tuyến tính</span>
+                                </div>
+                                <div class="time-badge">02:10</div>
+                            </div>
+
+                            <div class="chapter-item" onclick="seekTo(470); setActive(this)">
+                                <i class="fa-solid fa-circle-play chapter-icon"></i>
+                                <div class="chapter-info"><span class="chapter-title">Giải quyết vấn đề</span>
+                                </div>
+                                <div class="time-badge">07:50</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <div id="youtube-player"></div>
             </div>
 
             <div class="chapter-card" id="bai-tap">
@@ -1717,30 +1747,36 @@
         </main>
     </div>
     <footer class="vectoria-footer distraction-element">
-    <div class="footer-container">
-        <div class="brand-col">
-            <div class="partner-logo" style="display: flex; align-items: center; gap: 10px;">
-                <img src="../assets/images/logoMoi.png" alt="Logo Nhóm/Trường">
-                <img src="../assets/images/logoChu.png" id="textLogo" alt="Logo Chữ Vectoria" style="height: 35px; width: auto;"> </div>
-            <p>
-                Vectoria — Vương quốc của những Vector — được kiến tạo để thay đổi hoàn toàn cách chúng ta nhìn nhận về vector. Không còn là những khái niệm khô khan, tại nơi đây, mỗi vector đều mang một hình hài, một hướng đi và sinh khí riêng. Chúng tôi khao khát trao cho bạn một góc nhìn thấu thị để toàn bộ vẻ đẹp trừu tượng của không gian vector được thu trọn vào tầm mắt.
-            </p>
-        </div> <div class="footer-col">
-            <h4>Thông tin liên hệ</h4>
-            <ul>
-                <li>
-                    <i class="fa-solid fa-envelope"></i>
-                    <a href="mailto:vectoria.connect@gmail.com">vectoria.connect@gmail.com</a>
-                </li>
-                
-            </ul>
+        <div class="footer-container">
+            <div class="brand-col">
+                <div class="partner-logo" style="display: flex; align-items: center; gap: 10px;">
+                    <img src="../assets/images/logoMoi.png" alt="Logo Nhóm/Trường">
+                    <img src="../assets/images/logoChu.png" id="textLogo" alt="Logo Chữ Vectoria"
+                        style="height: 35px; width: auto;">
+                </div>
+                <p>
+                    Vectoria — Vương quốc của những Vector — được kiến tạo để thay đổi hoàn toàn cách chúng ta nhìn nhận
+                    về vector. Không còn là những khái niệm khô khan, tại nơi đây, mỗi vector đều mang một hình hài, một
+                    hướng đi và sinh khí riêng. Chúng tôi khao khát trao cho bạn một góc nhìn thấu thị để toàn bộ vẻ đẹp
+                    trừu tượng của không gian vector được thu trọn vào tầm mắt.
+                </p>
+            </div>
+            <div class="footer-col">
+                <h4>Thông tin liên hệ</h4>
+                <ul>
+                    <li>
+                        <i class="fa-solid fa-envelope"></i>
+                        <a href="mailto:vectoria.connect@gmail.com">vectoria.connect@gmail.com</a>
+                    </li>
+
+                </ul>
+            </div>
         </div>
-    </div>
-    
-    <div class="footer-bottom">
-        <p style="margin: 0;">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
-    </div>
-</footer>
+
+        <div class="footer-bottom">
+            <p style="margin: 0;">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
+        </div>
+    </footer>
     <script>
         // 1. THEME HANDLING & ANIMATION
         (function () {
@@ -1802,38 +1838,14 @@
             });
         });
 
-        // 2. YOUTUBE API
-        var player;
-        function onYouTubeIframeAPIReady() {
-            var originUrl = window.location.origin;
-            player = new YT.Player('youtube-player', {
-                height: '100%', width: '100%',
-                videoId: 'woM6wsymvsc',
-                playerVars: { 'playsinline': 1, 'rel': 0, 'origin': originUrl },
-                events: { 'onReady': onPlayerReady, 'onError': onPlayerError }
-            });
-        }
-        function onPlayerReady(event) { console.log("Video ready"); }
-        function onPlayerError(event) {
-            console.error("Lỗi video: " + event.data);
-            document.querySelector('.video-box').innerHTML = '<div style="color:white;text-align:center;padding-top:20%;">Lỗi tải video (Mã: ' + event.data + ')</div>';
-        }
-
-        var tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        var firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-        function seekTo(seconds) {
-            if (player && player.seekTo) { player.seekTo(seconds, true); player.playVideo(); }
-        }
-        function setActive(el) {
-            document.querySelectorAll('.chapter-item').forEach(i => i.classList.remove('playing'));
-            el.classList.add('playing');
-        }
-
 
     </script>
+    <script>
+        const VIDEO_ID = '3ioHzSV6PJs';
+        const CHAPTER_TIMES = [0, 45, 130, 470]; 
+    </script>
+
+    <script src="../js/utils/auto-update_timeline.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
 

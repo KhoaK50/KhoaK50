@@ -28,6 +28,10 @@ function setupGuidedTour(buttonId, tourSteps, onEndCallback) { // Thêm tham s�
             nextBtnText: 'Tiếp tục &rarr;',
             prevBtnText: '&larr; Quay lại',
             doneBtnText: 'Hoàn tất',
+            
+            // 🔥 THÊM ĐÚNG DÒNG NÀY ĐỂ CẤM DRIVER.JS TỰ Ý CUỘN BẬY BẠ 🔥
+            scrollIntoViewOptions: { behavior: 'instant', block: 'nearest' },
+            
             steps: tourSteps,
             // SỰ KIỆN QUAN TRỌNG: Khi tắt tour thì gọi hàm dọn dẹp
             onDestroyed: () => {

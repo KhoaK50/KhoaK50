@@ -136,25 +136,31 @@ body.dark .driver-popover-arrow-side-right { border-right-color: #1e293b !import
    ============================================================ */
 #tour-graph-flashlight {
     position: fixed;
-    /* Canh tọa độ ra khu vực hiển thị đồ thị 3D (bên phải màn hình) */
-    top: 50%;
-    left: 55%;
-    transform: translate(-50%, -50%);
-    width: 500px;
-    height: 500px;
     border: 2px dashed #4ade80; /* Viền đứt nét màu xanh Neon */
-    border-radius: 16px;
+    border-radius: 12px;
     box-shadow: 0 0 40px rgba(74, 222, 128, 0.4), inset 0 0 30px rgba(74, 222, 128, 0.2);
     z-index: 1000000; /* Nằm trên mặt nạ đen của Driver.js */
     pointer-events: none; /* Không cản trở click chuột */
     
-    /* Phép thuật: Khử độ tối của mặt nạ đen, làm khu vực này sáng rực lại */
+    /* Phép thuật: Khử độ tối của mặt nạ đen */
     backdrop-filter: brightness(2.5) contrast(1.2);
     -webkit-backdrop-filter: brightness(2.5) contrast(1.2);
     opacity: 0;
-    transition: opacity 0.4s ease;
+    
+    /* Hiệu ứng chuyển động mượt khi khung thay đổi kích thước/vị trí */
+    transition: opacity 0.4s ease, top 0.4s ease, left 0.4s ease, width 0.4s ease, height 0.4s ease;
 }
 
 #tour-graph-flashlight.active {
     opacity: 1;
+}
+
+@media (max-width: 768px) {
+    #tour-graph-flashlight {
+        /* Đẩy lên nửa trên màn hình (Khu vực Đồ thị) */
+        top: calc(50px + 22vh); /* 50px Topbar + một nửa chiều cao đồ thị 45vh */
+        left: 50%;
+        width: 90vw;   /* Thu nhỏ vừa khung điện thoại */
+        height: 40vh;
+    }
 }

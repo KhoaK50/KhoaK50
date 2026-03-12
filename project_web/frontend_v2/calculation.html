@@ -776,6 +776,158 @@
       color: #60a5fa !important;
       /* Xanh dương sáng (Blue-400) để nổi trên nền đen */
     }
+    /* ================= TỐI ƯU MOBILE + NÚT MŨI TÊN ================= */
+    
+    /* Mặc định trên Desktop: Ẩn nút mũi tên đi */
+    #btnTogglePanel { 
+      display: none !important; 
+    }
+
+    /* Style chung cho cả 2 nút nổi (Bỏ right: 15px ở đây đi để chỉnh riêng) */
+    .view-tool-btn {
+      position: absolute !important;
+      z-index: 10 !important;
+      width: 45px !important;
+      height: 45px !important;
+      border-radius: 50% !important;
+      border: 1px solid var(--border) !important;
+      background: var(--card, #fff) !important;
+      color: var(--fg, #333) !important;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      transition: all 0.3s ease !important;
+      font-size: 1.2rem !important;
+    }
+
+    /* Khi ở Mobile (< 768px) */
+    @media (max-width: 768px) {
+      
+      /* Hiện nút mũi tên lên */
+      #btnTogglePanel { 
+        display: flex !important; 
+      }
+
+      /* --- CHIA 2 NÚT ĐỐI XỨNG NGANG Ở ĐÁY ĐỒ THỊ --- */
+      #btnTogglePanel { 
+        left: 15px !important;  /* Nút mũi tên nằm BÊN TRÁI */
+        bottom: 15px !important; 
+      }
+      #btnResetView { 
+        right: 15px !important; /* Nút Crosshair nằm BÊN PHẢI */
+        bottom: 15px !important; 
+      }
+
+      /* --- CHIA BỐ CỤC THEO GRID (ĐỘNG) --- */
+      #app {
+        display: grid !important;
+        /* Biến --panel-height sẽ bị JS đổi: mặc định 45vh */
+        grid-template-rows: 1fr var(--panel-height, 45vh) !important; 
+        height: calc(100vh - var(--topbar-h, 50px)) !important;
+        overflow: hidden !important;
+        transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      }
+
+      /* Vùng Đồ Thị (Nằm Trên) */
+      #viewerWrap {
+        grid-row: 1 !important; 
+        height: 100% !important; 
+        position: relative !important;
+        border-bottom: 2px solid var(--border) !important;
+      }
+
+      /* Vùng Điều Khiển (Nằm Dưới) */
+      #controls {
+        grid-row: 2 !important;
+        height: 100% !important;
+        max-height: none !important;
+        overflow-y: auto !important; 
+        display: block !important; 
+        background: var(--bg) !important;
+        padding: 0 !important; 
+      }
+      
+      .sidebar-tabs {
+         position: sticky; 
+         top: 0;
+         z-index: 100;
+      }
+
+      .tab-content { 
+         padding: 10px 12px 50px 12px !important; 
+         height: auto !important; 
+      }
+
+      /* Xử lý Header: Dấu bớt 2 icon khi bị chật */
+      .topbar-left a.topbar-icon[title="Thư viện kiến thức"],
+      .topbar-left a.topbar-icon[title="Tài liệu tham khảo"] { display: none !important; }
+      .brand { font-size: 1.2rem !important; margin-left: -5px; }
+      .mobile-only-hr-book, .mobile-only-link-book,
+      .mobile-only-hr-file, .mobile-only-link-file { display: flex !important; }
+    }
+    /* ================= BÀN PHÍM VECTORIA (TONE XANH) & FIX CUỘN ================= */
+    
+    #mathKeypad {
+      position: fixed !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+      width: 100% !important; 
+      background: #f0f4f9; /* Nền xanh xám cực nhạt */
+      border-top: 1px solid #dbeafe;
+      box-shadow: 0 -4px 20px rgba(59, 130, 246, 0.15); /* Bóng đổ tone xanh */
+      z-index: 2147483647; transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      display: flex; flex-direction: column;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    #mathKeypad.open { transform: translateY(0); }
+
+    /* Header của bàn phím */
+    .keypad-header {
+      width: 100%; height: 32px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 15px; background: #e0f2fe; border-bottom: 1px solid #bfdbfe;
+    }
+    .keypad-title { font-size: 0.8em; color: #1e40af; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;}
+    #keypadClose { background: transparent; border: none; font-size: 15px; font-weight: bold; color: #1d4ed8; cursor: pointer; padding: 5px; }
+    
+    .keypad-page { display: none; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 8px; }
+    .keypad-page.active { display: grid; }
+
+    /* Nút bấm (Bo tròn đẹp hơn, bóng nhẹ) */
+    .k-btn {
+      height: 42px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; color: #1e293b;
+      font-size: 1.15rem; font-weight: 600; font-family: "JetBrains Mono", sans-serif;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.1s ease;
+    }
+    .k-btn:active { background: #eff6ff; border-color: #bfdbfe; transform: scale(0.95); box-shadow: 0 0 2px rgba(0,0,0,0.1); }
+    
+    /* Nút Công thức (Màu xanh dương nhạt) */
+    .k-btn.op { background: #e0f2fe; color: #1d4ed8; border-color: #bae6fd; font-size: 1.1rem; }
+    /* Nút Lật mặt (Màu xanh đậm hơn chút) */
+    .k-btn.switch-btn { background: #bfdbfe; color: #1e40af; font-weight: 800; font-size: 1.05rem; border-color: #93c5fd; }
+    /* Nút OK */
+    .k-btn.action { background: var(--accent, #3b82f6); color: #fff; font-weight: 800; border-color: transparent;}
+    .k-btn.action:active { background: #2563eb; }
+    
+    .k-btn.math-font { font-family: "Times New Roman", Times, serif; font-style: italic; font-weight: 600; font-size: 1.25rem;}
+
+    /* DARK MODE TONE NAVY/SLATE CỰC NGẦU */
+    body.dark #mathKeypad { background: #0f172a; border-color: #1e293b; box-shadow: 0 -4px 20px rgba(0,0,0,0.5); }
+    body.dark .keypad-header { background: #1e293b; border-color: #334155; }
+    body.dark .keypad-title, body.dark #keypadClose { color: #93c5fd; }
+    body.dark .k-btn { background: #1e293b; color: #f8fafc; border-color: #334155; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+    body.dark .k-btn:active { background: #334155; border-color: #475569; }
+    body.dark .k-btn.op { background: #1e3a8a; color: #bfdbfe; border-color: #1e40af; }
+    body.dark .k-btn.switch-btn { background: #3b82f6; color: #ffffff; border-color: #2563eb; }
+
+    /* Tạo khoảng đệm đáy an toàn */
+    body.has-keypad #controls { padding-bottom: 70vh !important; }
+
+    @media (max-width: 768px) {
+      .custom-menu-btn, .vec-menu-btn { display: none !important; }
+      math-field { padding-right: 10px !important; }
+    }
   </style>
 </head>
 
@@ -824,6 +976,19 @@
               <span class="slider round"></span>
             </label>
           </div>
+          
+          <hr class="mobile-only-hr-book" style="border: 0; border-top: 1px solid var(--border, #ddd); margin: 0; opacity: 0.5; display: none;">
+          <a href="knowledge_info.html" class="setting-item link-item mobile-only-link-book" style="text-decoration: none; cursor: pointer; display: none;">
+            <span><i class="fa-solid fa-book-open"></i> Thư viện kiến thức</span>
+            <i class="fa-solid fa-chevron-right" style="font-size: 0.8em;"></i>
+          </a>
+          
+          <hr class="mobile-only-hr-file" style="border: 0; border-top: 1px solid var(--border, #ddd); margin: 0; opacity: 0.5; display: none;">
+          <a href="tltk.html" class="setting-item link-item mobile-only-link-file" style="text-decoration: none; cursor: pointer; display: none;">
+            <span><i class="fa-solid fa-file-lines"></i> Tài liệu tham khảo</span>
+            <i class="fa-solid fa-chevron-right" style="font-size: 0.8em;"></i>
+          </a>
+
           <hr style="border: 0; border-top: 1px solid var(--border, #ddd); margin: 0; opacity: 0.5;">
 
           <a href="contact.html" class="setting-item link-item" style="text-decoration: none; cursor: pointer;">
@@ -835,6 +1000,63 @@
     </div>
   </div>
 
+  <div id="mathKeypad">
+    <div class="keypad-header">
+      <span class="keypad-title">MathBoard</span>
+      <button id="keypadClose">Xong</button>
+    </div>
+
+    <div id="keypad-page-1" class="keypad-page active">
+      <button class="k-btn op" data-val="[">[</button>
+      <button class="k-btn op" data-val="]">]</button>
+      <button class="k-btn op" data-val=",">,</button>
+      <button class="k-btn op" data-val="-">−</button>
+      <button class="k-btn op" data-cmd="delete"><i class="fa-solid fa-delete-left"></i></button>
+
+      <button class="k-btn" data-val="7">7</button>
+      <button class="k-btn" data-val="8">8</button>
+      <button class="k-btn" data-val="9">9</button>
+      <button class="k-btn op" data-cmd="left"><i class="fa-solid fa-arrow-left"></i></button>
+      <button class="k-btn op" data-cmd="right"><i class="fa-solid fa-arrow-right"></i></button>
+
+      <button class="k-btn" data-val="4">4</button>
+      <button class="k-btn" data-val="5">5</button>
+      <button class="k-btn" data-val="6">6</button>
+      <button class="k-btn op" data-val="(">(</button>
+      <button class="k-btn op" data-val=")">)</button>
+
+      <button class="k-btn switch-btn math-font" data-cmd="page2">f(x)</button>
+      <button class="k-btn" data-val="1">1</button>
+      <button class="k-btn" data-val="2">2</button>
+      <button class="k-btn" data-val="3">3</button>
+      <button class="k-btn" data-val="0">0</button>
+    </div>
+
+    <div id="keypad-page-2" class="keypad-page">
+      <button class="k-btn op math-font" data-val="\sqrt{#0}">√x</button>
+      <button class="k-btn op math-font" data-val="\sqrt[#?]{#0}">ⁿ√x</button>
+      <button class="k-btn op math-font" data-val="\sin(#0)">sin</button>
+      <button class="k-btn op math-font" data-val="\cos(#0)">cos</button>
+      <button class="k-btn op" data-cmd="delete"><i class="fa-solid fa-delete-left"></i></button>
+
+      <button class="k-btn op math-font" data-val="\tan(#0)">tan</button>
+      <button class="k-btn op math-font" data-val="\cot(#0)">cot</button>
+      <button class="k-btn op math-font" data-val="\log_{#?}(#0)">log<sub>a</sub></button>
+      <button class="k-btn op math-font" data-val="\ln(#0)">ln</button>
+      <button class="k-btn op" data-cmd="left"><i class="fa-solid fa-arrow-left"></i></button>
+
+      <button class="k-btn op math-font" data-val="\pi">π</button>
+      <button class="k-btn op math-font" data-val="e">e</button>
+      <button class="k-btn op" data-val="[">[</button>
+      <button class="k-btn op" data-val="]">]</button>
+      <button class="k-btn op" data-cmd="right"><i class="fa-solid fa-arrow-right"></i></button>
+
+      <button class="k-btn switch-btn" style="font-family: sans-serif;" data-cmd="page1">123</button>
+      <button class="k-btn op" data-val=",">,</button>
+      <button class="k-btn op" data-val="-">−</button>
+      <button class="k-btn" style="visibility: hidden;"></button> <button class="k-btn action" data-cmd="enter">OK</button>
+    </div>
+  </div>
   <div id="overlay"></div>
 
   <div id="app">
@@ -1020,7 +1242,12 @@
         <canvas id="canvas2d"></canvas>
         <div id="threeLayer" tabindex="0" aria-label="3D viewer"></div>
       </div>
-      <button id="btnResetView" title="Quay về gốc tọa độ">
+      
+      <button id="btnTogglePanel" class="view-tool-btn" title="Thu gọn/Mở rộng bảng điều khiển">
+        <i class="fa-solid fa-chevron-down"></i>
+      </button>
+
+      <button id="btnResetView" class="view-tool-btn" title="Quay về gốc tọa độ">
         <svg viewBox="0 0 24 24" width="24" height="24">
           <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" />
           <circle cx="12" cy="12" r="2" fill="currentColor" />
@@ -1194,33 +1421,131 @@
     });
   </script>
   <script>
+    // ================= LOGIC BÀN PHÍM VIBE WEB (CHỈ KÉO ĐÚNG KHUNG NHẬP LIỆU) =================
     window.addEventListener('DOMContentLoaded', () => {
-      // 1. Cấu hình Global tắt bàn phím ảo MathLive
-      if (window.mathVirtualKeyboard) {
-        window.mathVirtualKeyboard.policy = "manual";
-      }
+      if (window.mathVirtualKeyboard) window.mathVirtualKeyboard.policy = "manual";
 
-      const mf = document.getElementById('vectorInput');
-      if (mf) {
-        // 2. Khi người dùng bấm vào ô nhập
-        mf.addEventListener('focusin', () => {
-          // Ép ẩn bàn phím MathLive
-          if (window.mathVirtualKeyboard) {
-            window.mathVirtualKeyboard.hide();
+      const keypad = document.getElementById('mathKeypad');
+      const btnClose = document.getElementById('keypadClose');
+      const page1 = document.getElementById('keypad-page-1');
+      const page2 = document.getElementById('keypad-page-2');
+      const controlsArea = document.getElementById('controls');
+      let activeMf = null;
+
+      // Cục đệm tàng hình dưới đáy
+      const spacer = document.createElement('div');
+      spacer.style.transition = "height 0.3s";
+      spacer.style.height = "0px";
+      controlsArea.appendChild(spacer);
+
+      // Xử lý chạm vào ô nhập
+      document.addEventListener('touchstart', (e) => {
+        const mf = e.target.closest('math-field'); // Nhắm thẳng vào ô nhập liệu
+        if (mf) {
+          if (window.mathVirtualKeyboard) window.mathVirtualKeyboard.hide();
+          
+          if (window.innerWidth <= 768) {
+            activeMf = mf;
+            keypad.classList.add('open');
+            document.body.classList.add('has-keypad'); 
+            spacer.style.height = "500px"; // Nới đáy ra để luôn có đủ chỗ cuộn
+
+            // THUẬT TOÁN CHỈ BỐC Ô NHẬP
+            setTimeout(() => {
+               const tabs = document.querySelector('.sidebar-tabs');
+               if (controlsArea && tabs) {
+                   // Chỉ đo tọa độ của chính cái ô đang gõ (bỏ qua thẻ Card, bỏ qua Label)
+                   const mfRect = mf.getBoundingClientRect();
+                   const tabsRect = tabs.getBoundingClientRect();
+                   
+                   // Tính khoảng cách: Đỉnh ô nhập trừ đi Đáy thanh Tab
+                   // Trừ thêm 15px để ô nhập nằm hở ra ngay dưới Tab một chút cho đẹp
+                   const distanceToScroll = mfRect.top - tabsRect.bottom - 15;
+
+                   // Cuộn!
+                   controlsArea.scrollBy({ 
+                       top: distanceToScroll, 
+                       behavior: 'smooth' 
+                   });
+               }
+            }, 300); // Chờ 300ms cho bàn phím trượt lên
+          }
+        }
+      }, { passive: true, capture: true });
+
+      // Nút Xong (Đóng)
+      if (btnClose) {
+        btnClose.addEventListener('click', () => {
+          keypad.classList.remove('open');
+          document.body.classList.remove('has-keypad');
+          spacer.style.height = "0px"; // Thu hồi không gian
+          if (activeMf) {
+            activeMf.dispatchEvent(new Event('input', { bubbles: true }));
+            activeMf = null;
           }
         });
+      }
 
-        // 3. Hack nhẹ: Focus vào ô nhập để kích hoạt bàn phím điện thoại
-        // Lưu ý: MathLive chặn khá kỹ, nhưng cách này giúp báo hiệu cho trình duyệt
-        mf.addEventListener('click', () => {
-          if (window.mathVirtualKeyboard) {
-            window.mathVirtualKeyboard.hide();
+      // Xử lý Gõ phím & Lật mặt
+      document.querySelectorAll('.k-btn').forEach(btn => {
+        btn.addEventListener('pointerdown', (e) => {
+          e.preventDefault(); 
+          const cmd = btn.getAttribute('data-cmd');
+
+          if (cmd === 'page1') { page2.classList.remove('active'); page1.classList.add('active'); return; }
+          if (cmd === 'page2') { page1.classList.remove('active'); page2.classList.add('active'); return; }
+
+          if (!activeMf) return;
+          const val = btn.getAttribute('data-val');
+
+          if (val) activeMf.executeCommand(['insert', val]);
+          else if (cmd === 'delete') activeMf.executeCommand('deleteBackward');
+          else if (cmd === 'left') activeMf.executeCommand('moveToPreviousChar');
+          else if (cmd === 'right') activeMf.executeCommand('moveToNextChar');
+          else if (cmd === 'enter') {
+            keypad.classList.remove('open');
+            document.body.classList.remove('has-keypad');
+            spacer.style.height = "0px";
+            activeMf.dispatchEvent(new Event('input', { bubbles: true }));
+            activeMf = null;
+            return;
           }
+          activeMf.focus(); 
+        });
+      });
+    });
+  </script>
+  <script src="js/app/tour_calculation.js"></script>
+  <script>
+    // --- LOGIC NÚT THU/PHÓNG PANEL TRÊN MOBILE ---
+    document.addEventListener("DOMContentLoaded", () => {
+      const btnToggle = document.getElementById("btnTogglePanel");
+      const appContainer = document.getElementById("app");
+      let isPanelCollapsed = false;
+
+      if (btnToggle && appContainer) {
+        btnToggle.addEventListener("click", () => {
+          isPanelCollapsed = !isPanelCollapsed;
+          
+          if (isPanelCollapsed) {
+            // THU GỌN: Panel chỉ còn 45px (Vừa đủ thanh Tab)
+            appContainer.style.setProperty("--panel-height", "45px");
+            btnToggle.innerHTML = '<i class="fa-solid fa-chevron-up"></i>'; // Mũi tên chĩa lên
+          } else {
+            // MỞ RỘNG: Panel cao 45vh (như cũ)
+            appContainer.style.setProperty("--panel-height", "45vh");
+            btnToggle.innerHTML = '<i class="fa-solid fa-chevron-down"></i>'; // Mũi tên chĩa xuống
+          }
+
+          // [ĐÃ FIX LỖI CONSOLE] Chờ CSS giãn xong (0.4s), bắn tín hiệu Resize hệ thống
+          // Cách này ép toàn bộ thư viện 2D/3D tự động canh lại tỷ lệ mà không lo sai tên hàm
+          setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+          }, 450); 
         });
       }
     });
   </script>
-  <script src="js/app/tour_calculation.js"></script>
 </body>
 
 </html>

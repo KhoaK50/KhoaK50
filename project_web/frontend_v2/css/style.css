@@ -121,10 +121,7 @@
     font-size: 15px;
   }
 
-  #btnResetView {
-    bottom: 15px;
-    right: 15px;
-  }
+  
 }
 
 
@@ -135,30 +132,80 @@
   overflow: hidden;
 }
 
-#btnResetView {
-  position: absolute !important;
-  bottom: 15px;
-  right: 15px;
-  z-index: 10;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--fg);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+/* --- CSS CHO 2 NÚT CÔNG CỤ TRÊN GÓC PHẢI DƯỚI --- */
+    .view-tool-btn {
+        position: absolute;
+        right: 15px;
+        z-index: 10;
+        width: 40px; /* Thu nhỏ lại 1 chút cho đỡ thô */
+        height: 40px;
+        border-radius: 50%;
+        border: 1px solid var(--border);
+        background: var(--card, #fff);
+        color: var(--fg, #333);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1.2rem;
+    }
 
-#btnResetView:hover {
-  transform: scale(1.1);
-  background: var(--bg);
-  color: var(--accent);
-}
+    .view-tool-btn:hover {
+        background: var(--accent, #3b82f6);
+        color: #fff;
+        border-color: var(--accent, #3b82f6);
+    }
+
+    /* Vị trí mặc định trên Desktop */
+    #btnTogglePanel {
+        bottom: 65px; /* Nằm trên nút crosshair */
+        display: none; /* TRÊN DESKTOP ẨN NÚT NÀY ĐI VÌ KHÔNG CẦN THIẾT */
+    }
+    #btnResetView { bottom: 15px; }
+
+    body.dark .view-tool-btn { background: #1e1e1e; border-color: #444; color: #fff; }
+
+    /* ================= TỐI ƯU MOBILE - LÀM LẠI CHUẨN GRID ================= */
+    @media (max-width: 768px) {
+      /* Hiện nút mũi tên trên Mobile */
+      #btnTogglePanel { display: flex !important; }
+
+      /* CẤU TRÚC GRID ĐỘNG ĐỂ JS CAN THIỆP */
+      #app {
+        display: grid !important;
+        /* Mặc định Panel hiển thị 40vh. Biến CSS này sẽ bị JS thay đổi khi bấm nút */
+        grid-template-rows: var(--app-grid-rows, 1fr 40vh) !important;
+        height: calc(100vh - 50px) !important;
+        overflow: hidden !important;
+        transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      }
+
+      #viewerWrap {
+        grid-row: 1 !important; 
+        height: 100% !important;
+        position: relative !important;
+      }
+
+      #controls {
+        grid-row: 2 !important;
+        height: 100% !important;
+        overflow-y: auto !important; 
+        display: block !important; 
+        background: var(--bg);
+        padding-bottom: 20px !important;
+      }
+
+      .tab-content { padding-bottom: 50px !important; height: auto !important; }
+      
+      /* Cập nhật Header Icon */
+      .topbar-left a.topbar-icon[title="Thư viện kiến thức"],
+      .topbar-left a.topbar-icon[title="Tài liệu tham khảo"] { display: none !important; }
+      .brand { font-size: 1.2rem !important; margin-left: -5px; }
+      .mobile-only-hr-book, .mobile-only-link-book,
+      .mobile-only-hr-file, .mobile-only-link-file { display: flex !important; }
+    }
 
 
 /* =================== 3. PRO TOAST NOTIFICATION (POPUP ĐỘNG) =================== */

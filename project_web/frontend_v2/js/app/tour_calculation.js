@@ -3,7 +3,7 @@
 /* =========================================================
    1. HỆ THỐNG GIẢ LẬP HÀNH VI CON NGƯỜI (AUTO-PILOT)
    ========================================================= */
-let tourTimeouts = []; 
+let tourTimeouts = [];
 
 function clearTourTimeouts() {
     tourTimeouts.forEach(clearTimeout);
@@ -40,23 +40,52 @@ function unlockTour() {
         nextBtn.style.cursor = 'pointer';
     }
 }
-// Thay thế hàm toggleGraphHighlight cũ bằng hàm này
-function toggleGraphHighlight(isActive) {
+// Hàm tính toán Bounding Box chính xác ôm sát vector
+function toggleGraphHighlight(isActive, vectors = []) {
     let flashlight = document.getElementById('tour-graph-flashlight');
-    
-    // Nếu chưa có khung đèn pin thì tự động tạo ra
     if (!flashlight) {
         flashlight = document.createElement('div');
         flashlight.id = 'tour-graph-flashlight';
         document.body.appendChild(flashlight);
     }
-    
-    // Bật/tắt khung sáng
-    if (isActive) {
-        flashlight.classList.add('active');
-    } else {
+
+    if (!isActive) {
         flashlight.classList.remove('active');
+        return;
     }
+
+    try {
+        if (vectors.length > 0 && window.App.mode === '3D' && window.Vec3D && Vec3D._camera) {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            const points = [[0, 0, 0], ...vectors];
+
+            const canvasRect = Vec3D._renderer.domElement.getBoundingClientRect();
+            const u = Vec3D.S3D ? Math.max(1e-12, Vec3D.S3D.unitsPerWorld) : 1;
+
+            points.forEach(v => {
+                const vec3 = new THREE.Vector3(v[0] || 0, v[1] || 0, v[2] || 0).multiplyScalar(u);
+                vec3.project(Vec3D._camera);
+                const px = (vec3.x * 0.5 + 0.5) * canvasRect.width + canvasRect.left;
+                const py = (-(vec3.y * 0.5) + 0.5) * canvasRect.height + canvasRect.top;
+
+                minX = Math.min(minX, px); maxX = Math.max(maxX, px);
+                minY = Math.min(minY, py); maxY = Math.max(maxY, py);
+            });
+
+            // [ĐÃ SỬA] Bóp đệm nhỏ lại cho vừa khít 2 vector
+            const padding = 20;
+            flashlight.style.left = (minX - padding) + 'px';
+            flashlight.style.top = (minY - padding) + 'px';
+            flashlight.style.width = (maxX - minX + padding * 2) + 'px';
+            flashlight.style.height = (maxY - minY + padding * 2) + 'px';
+            flashlight.style.transform = 'none';
+        } else {
+            flashlight.style.top = '10%'; flashlight.style.left = '10%';
+            flashlight.style.width = '80%'; flashlight.style.height = '40vh';
+        }
+    } catch (e) { console.warn("Lỗi tính toán khung sáng:", e); }
+
+    flashlight.classList.add('active');
 }
 
 function getFakeCursor() {
@@ -65,7 +94,7 @@ function getFakeCursor() {
         cursor = document.createElement('div');
         cursor.id = 'tour-fake-cursor';
         cursor.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 3.21V20.8C5.5 21.46 6.25 21.84 6.78 21.44L11.44 17.96C11.66 17.8 11.93 17.71 12.21 17.71H19.5C20.18 17.71 20.55 16.92 20.12 16.42L5.5 3.21Z" fill="#111" stroke="white" stroke-width="2"/></svg>`;
-        
+
         cursor.style.position = 'fixed';
         cursor.style.zIndex = '999999999';
         cursor.style.transition = 'top 0.8s ease-in-out, left 0.8s ease-in-out, transform 0.2s';
@@ -90,15 +119,15 @@ function moveCursorTo(target, callback) {
     cursor.style.top = (rect.top + rect.height / 2) + 'px';
     cursor.style.left = (rect.left + rect.width / 2) + 'px';
 
-    if (callback) tourSetTimeout(callback, 850); 
+    if (callback) tourSetTimeout(callback, 850);
 }
 
 function clickCursor(targetElement, callback) {
     const cursor = getFakeCursor();
-    cursor.style.transform = 'scale(0.8)'; 
+    cursor.style.transform = 'scale(0.8)';
     tourSetTimeout(() => {
-        cursor.style.transform = 'scale(1)'; 
-        if (targetElement) targetElement.click(); 
+        cursor.style.transform = 'scale(1)';
+        if (targetElement) targetElement.click();
         if (callback) tourSetTimeout(callback, 300);
     }, 150);
 }
@@ -106,10 +135,10 @@ function clickCursor(targetElement, callback) {
 // [TUYỆT CHIÊU MỚI]: Giả lập gõ phím y hệt người thật bằng Core của MathLive
 function simulateHumanTyping(mf, text, callback) {
     if (!mf) return callback && callback();
-    
+
     mf.focus();
     mf.executeCommand('deleteAll'); // Xóa sạch bảng
-    
+
     let i = 0;
     const typeNext = () => {
         if (i < text.length) {
@@ -161,7 +190,7 @@ function restoreUserState() {
     const btnDraw = document.getElementById('btnDraw');
     if (mf && btnDraw) {
         userPreTourState.vectors.forEach(vec => {
-            mf.value = vec; 
+            mf.value = vec;
             mf.dispatchEvent(new Event('input', { bubbles: true }));
             btnDraw.click();
         });
@@ -170,23 +199,22 @@ function restoreUserState() {
     }
 }
 
-// [ĐÃ FIX]: Dùng Text thuần túy thay vì LaTeX để tránh mọi lỗi cú pháp khi Lùi bước
 const stepStates = {
-    1: { v: [], i: '' },
-    2: { v: [], i: '[1, 3]' },
-    3: { v: [], i: '[1, 3]' },
-    4: { v: ['[1, 3]'], i: '[1, 3]' },
-    5: { v: ['[1, 3]'], i: '[1, 3]' },
-    6: { v: ['[1, 3]'], i: '[1, 2, 3]' },
-    7: { v: ['[1, 3]', '[1, 2, 3]'], i: '[1, 2, 3]' },
-    8: { v: ['[1, 3]', '[1, 2, 3]'], i: '[1, 2, 3]' },
-    9: { v: ['[1, 3]', '[1, 2, 3]'], i: '[1, 2, 3]' },
-    10: { v: ['[1, 3]', '[1, 2, 3]'], i: '[1, 2, 3]' },
-    11: { v: ['[1, 2, 3]'], i: '[1, 2, 3]' } 
+    'step-nhap-1': { v: [], i: '' },
+    'step-menu': { v: [], i: '[1, 3]' },
+    'step-add-1': { v: [], i: '[1, 3]' },
+    'step-auto': { v: ['[1, 3]'], i: '[1, 3]' },
+    'step-nhap-2': { v: ['[1, 3]'], i: '[1, 3]' },
+    'step-add-2': { v: ['[1, 3]'], i: '[1, 2, 3]' },
+    'step-search': { v: ['[1, 3]', '[1, 2, 3]'], i: '[1, 2, 3]' },
+    'step-focus': { v: ['[1, 3]', '[1, 2, 3]'], i: '[1, 2, 3]' },
+    'step-toggle': { v: ['[1, 3]', '[1, 2, 3]'], i: '[1, 2, 3]' },
+    'step-delete': { v: ['[1, 3]', '[1, 2, 3]'], i: '[1, 2, 3]' },
+    'step-clear': { v: ['[1, 2, 3]'], i: '[1, 2, 3]' }
 };
 
-function syncStepState(stepNum) {
-    const state = stepStates[stepNum];
+function syncStepState(stepId) {
+    const state = stepStates[stepId];
     if (!state) return;
     const btnClear = document.getElementById('btnClearAll');
     if (btnClear) btnClear.click();
@@ -202,199 +230,223 @@ function syncStepState(stepNum) {
 }
 
 /* =========================================================
-   KỊCH BẢN ĐẠO DIỄN: ĐÃ TÍCH HỢP CHỐNG LỖI KHI ĐI LÙI
+   THUẬT TOÁN CUỘN ĐỘNG (CHỈ CUỘN KHI BỊ CHE KHUẤT)
+   ========================================================= */
+function smartScrollTo(targetSelector) {
+    const targetEl = typeof targetSelector === 'string' ? document.querySelector(targetSelector) : targetSelector;
+    const container = document.getElementById('controls');
+    const tabs = document.querySelector('.sidebar-tabs');
+
+    if (!container || !targetEl) return;
+
+    // Lấy tọa độ trên màn hình thực tế
+    const tRect = targetEl.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect();
+    const tabsRect = tabs ? tabs.getBoundingClientRect() : { bottom: cRect.top };
+
+    // XÁC ĐỊNH VÙNG NHÌN THẤY AN TOÀN (Giữa Menu và Đáy)
+    const safeTop = tabsRect.bottom;
+    const safeBottom = cRect.bottom;
+
+    // NẾU ĐÃ NHÌN THẤY TRỌN VẸN -> TỪ CHỐI CUỘN! MÀN HÌNH SẼ ĐỨNG IM!
+    if (tRect.top >= safeTop && tRect.bottom <= safeBottom) {
+        return;
+    }
+
+    // NẾU BỊ CHE (Hoặc mép trên đụng trần, hoặc mép dưới lố đáy) -> TÍNH TOÁN CUỘN
+    let offsetTop = 0;
+    let el = targetEl;
+    while (el && el !== container && container.contains(el)) {
+        offsetTop += el.offsetTop;
+        el = el.offsetParent;
+    }
+
+    // Ép đối tượng nằm ngay ngắn dưới thanh Tab (cách 10px cho thoáng)
+    const targetScrollPos = offsetTop - (tabs ? tabs.offsetHeight : 0) - 10;
+
+    // Cuộn tức thời để Tour Guide vẽ khung không bị lệch
+    container.scrollTo({ top: targetScrollPos, behavior: 'instant' });
+
+    // Ép trình duyệt ghi nhận giao diện mới ngay lập tức
+    void container.offsetHeight;
+}
+
+/* =========================================================
+   KỊCH BẢN ĐẠO DIỄN
    ========================================================= */
 const khoiTaoVectorSteps = [
     {
-        element: '#vectorInput', 
-        popover: { title: 'Khu vực nhập liệu', description: 'Trong Vectoria, tọa độ của vector là mảng một chiều chứa các giá trị tọa độ theo thứ tự tăng dần về chiều không gian. Ví dụ ta có vector <b>[1, 3]</b>, trong đó giá trị tọa độ của chiều thứ nhất là 1, giá trị tọa độ của chiều thứ hai là 3.', side: 'bottom' },
+        id: 'step-nhap-1', // ID mới
+        element: '#vectorInput',
+        popover: { title: 'Khu vực nhập liệu', description: 'Trong Vectoria, tọa độ của vector là mảng một chiều chứa các giá trị tọa độ... Ví dụ ta có vector <b>[1, 3]</b>.', side: 'bottom' },
         onHighlighted: () => {
             if (!isTourRunning) { backupUserState(); isTourRunning = true; }
-            syncStepState(1); 
-            clearTourTimeouts();
-            lockTour('Đang nhập liệu...'); 
-            moveCursorTo('#vectorInput', () => {
-                clickCursor(null, () => {
-                    const mf = document.getElementById('vectorInput');
-                    // Giao toàn bộ việc diễn mổ cò cho MathLive lo
-                    simulateHumanTyping(mf, '[1, 3]', unlockTour);
+            syncStepState('step-nhap-1'); // GỌI BẰNG ID
+            clearTourTimeouts(); lockTour('Đang nhập liệu...'); toggleGraphHighlight(false);
+            forceScrollToTop();
+            tourSetTimeout(() => {
+                moveCursorTo('#vectorInput', () => {
+                    clickCursor(null, () => {
+                        const mf = document.getElementById('vectorInput'); simulateHumanTyping(mf, '[1, 3]', unlockTour);
+                    });
                 });
-            });
+            }, 50);
         }
     },
     {
-        element: '#myMenuBtn', 
+        id: 'step-menu', // Gắn ID 
+        element: '#myMenuBtn',
         popover: { title: 'Danh sách các lệnh', description: 'Đây là danh sách chứa các lệnh để chèn hàm vào trong khu vực nhập liệu gồm dấu khai căn, logarit, lũy thừa,...', side: 'bottom' },
         onHighlighted: () => {
-            syncStepState(2);
-            clearTourTimeouts();
-            lockTour('Đang di chuyển...');
-            moveCursorTo('#myMenuBtn', unlockTour);
+            syncStepState('step-menu');
+            clearTourTimeouts(); lockTour('Đang di chuyển...'); forceScrollToTop();
+            tourSetTimeout(() => moveCursorTo('#myMenuBtn', unlockTour), 50);
         }
     },
     {
-        element: '#btnDraw', 
+        id: 'step-add-1',
+        element: '#btnDraw',
         popover: { title: 'Khởi tạo Vector', description: 'Sau khi nhập tọa độ xong, bấm nút <b>Thêm vector</b> để tạo vector trên đồ thị.', side: 'right' },
         onHighlighted: () => {
-            syncStepState(3);
-            clearTourTimeouts();
-            lockTour('Đang click...');
-            moveCursorTo('#btnDraw', () => clickCursor(document.getElementById('btnDraw'), unlockTour));
+            syncStepState('step-add-1');
+            clearTourTimeouts(); lockTour('Đang click...'); forceScrollToTop();
+            tourSetTimeout(() => moveCursorTo('#btnDraw', () => clickCursor(document.getElementById('btnDraw'), unlockTour)), 50);
         }
     },
     {
-        element: '#btnAuto', 
-        popover: { title: 'Chuyển chiều không gian tự động', description: 'Tính năng này mặc định <b>BẬT</b>. Tác dụng của nó là đồng bộ chiều không gian của đồ thị với vector mà mình đã tạo. Đơn cử, khi mình tạo vector có 3 giá trị tọa độ, đồ thị sẽ chuyển sang không gian 3 chiều. Nếu vector có hơn 3 giá trị tọa độ, đồ thị vẫn sẽ chuyển qua không gian 3 chiều và từ giá trị tọa độ thứ tư trở đi của vector mặc định bằng 0.', side: 'right' },
+        id: 'step-auto',
+        element: '#btnAuto',
+        popover: { title: 'Chuyển chiều không gian tự động', description: 'Tính năng này mặc định <b>BẬT</b>...', side: 'right' },
         onHighlighted: () => {
-            syncStepState(4);
-            clearTourTimeouts();
-            lockTour('Đang di chuyển...');
-            moveCursorTo('#btnAuto', unlockTour);
+            syncStepState('step-auto');
+            clearTourTimeouts(); lockTour('Đang di chuyển...'); forceScrollToTop();
+            tourSetTimeout(() => moveCursorTo('#btnAuto', unlockTour), 50);
         }
     },
     {
-        element: '#vectorInput', 
-        popover: { title: 'Thử nghiệm tính năng "Chuyển chiều không gian tự động" [1]', description: 'Hiện tại, đồ thị đang là không gian 2 chiều, ta nhập tiếp một vector 3 chiều: <b>[1, 2, 3]</b>.', side: 'bottom' },
+        id: 'step-nhap-2',
+        element: '#vectorInput',
+        popover: { title: 'Thử nghiệm [1]', description: 'Ta nhập tiếp một vector 3 chiều: <b>[1, 2, 3]</b>.', side: 'bottom' },
         onHighlighted: () => {
-            syncStepState(5);
-            clearTourTimeouts();
-            lockTour('Đang nhập liệu...');
-            moveCursorTo('#vectorInput', () => {
-                clickCursor(null, () => {
-                    const mf = document.getElementById('vectorInput');
-                    // Tự động gõ phím 3D mượt mà
-                    simulateHumanTyping(mf, '[1, 2, 3]', unlockTour);
+            syncStepState('step-nhap-2');
+            clearTourTimeouts(); lockTour('Đang nhập liệu...'); forceScrollToTop();
+            tourSetTimeout(() => {
+                moveCursorTo('#vectorInput', () => {
+                    clickCursor(null, () => {
+                        const mf = document.getElementById('vectorInput'); simulateHumanTyping(mf, '[1, 2, 3]', unlockTour);
+                    });
                 });
-            });
+            }, 50);
         }
     },
     {
-        element: '#btnDraw', 
-        popover: { title: 'Thử nghiệm tính năng "Chuyển chiều không gian tự động" [2]', description: 'Kết quả là đồ thị tự đồng bộ chiều không gian với vector vừa được tạo.', side: 'right' },
+        id: 'step-add-2',
+        element: '#btnDraw',
+        popover: { title: 'Thử nghiệm [2]', description: 'Kết quả là đồ thị tự đồng bộ...', side: 'right' },
         onHighlighted: () => {
-            syncStepState(6);
-            clearTourTimeouts();
-            lockTour('Đang click...');
-            moveCursorTo('#btnDraw', () => clickCursor(document.getElementById('btnDraw'), unlockTour));
+            syncStepState('step-add-2');
+            clearTourTimeouts(); lockTour('Đang click...'); forceScrollToTop();
+            tourSetTimeout(() => moveCursorTo('#btnDraw', () => clickCursor(document.getElementById('btnDraw'), unlockTour)), 50);
         }
     },
     {
-        element: '#mainVecSearch', 
-        popover: { title: 'Khu vực tìm kiếm vector', description: 'Khi có hàng tá vector trong danh sách, để tìm nhanh một vector nhằm mục đích thao tác trên vector đó, ta cứ gõ tọa độ vào đây, hệ thống sẽ tìm cho ta vector tương ứng.', side: 'top' },
+        id: 'step-search',
+        element: '#mainVecSearch',
+        popover: { title: 'Khu vực tìm kiếm vector', description: 'Khi có hàng tá vector trong danh sách, để tìm nhanh một vector...', side: 'top' },
         onHighlighted: () => {
-            syncStepState(7);
-            clearTourTimeouts();
-            lockTour('Đang di chuyển...');
-            moveCursorTo('#mainVecSearch', unlockTour);
-        }
-    },
-    {
-        element: '.section-list', 
-        popover: { title: '8. Nút "Chú ý"', description: 'Nút <b>Chú ý</b> giúp vector [1, 3] được nổi bật và làm mờ các vector khác.', side: 'top' },
-        onHighlighted: () => {
-            syncStepState(8);
-            clearTourTimeouts();
-            lockTour('Đang test nút...');
-            toggleGraphHighlight(true); // Bật viền sáng cho đồ thị
+            syncStepState('step-search');
+            clearTourTimeouts(); lockTour('Đang di chuyển...'); toggleGraphHighlight(false);
 
-            tourSetTimeout(() => {
-                const list = document.getElementById('vectorList');
-                if (list && list.firstElementChild) {
-                    const btns = Array.from(list.firstElementChild.querySelectorAll('button'));
-                    const targetBtn = btns.find(b => b.textContent.includes('Chú ý'));
-                    
-                    if (targetBtn) {
-                        moveCursorTo(targetBtn, () => {
-                            clickCursor(targetBtn, () => {
-                                // Nghỉ 1.5 giây cho user ngắm đồ thị, sau đó click tắt đi
-                                tourSetTimeout(() => clickCursor(targetBtn, unlockTour), 1500);
-                            });
-                        });
-                    } else unlockTour();
-                } else unlockTour();
-            }, 400);
+            smartScrollTo('#mainVecSearch');
+            tourSetTimeout(() => moveCursorTo('#mainVecSearch', unlockTour), 50);
         }
     },
     {
-        element: '.section-list', 
-        popover: { title: '9. Nút "Ẩn/Hiện"', description: 'Nút <b>Ẩn</b> làm ẩn vector được chỉ định. Nút <b>Hiện</b> làm hiện vector được chỉ định ẩn trước đó.', side: 'top' },
+        id: 'step-focus',
+        element: '.vec-item:nth-child(1) .vec-actions button:nth-child(1)',
+        popover: { title: 'Nút "Chú ý"', description: 'Nút <b>Chú ý</b> giúp vector [1, 3] được nổi bật...', side: 'top' },
         onHighlighted: () => {
-            syncStepState(9);
-            clearTourTimeouts();
-            lockTour('Đang test nút...');
-            toggleGraphHighlight(true); // Bật viền sáng cho đồ thị
+            syncStepState('step-focus');
+            clearTourTimeouts(); lockTour('Đang thao tác...'); toggleGraphHighlight(false);
 
-            tourSetTimeout(() => {
-                const list = document.getElementById('vectorList');
-                if (list && list.firstElementChild) {
-                    const btns = Array.from(list.firstElementChild.querySelectorAll('button'));
-                    const targetBtn = btns.find(b => b.textContent.includes('Ẩn') || b.textContent.includes('Hiện'));
-                    
-                    if (targetBtn) {
-                        moveCursorTo(targetBtn, () => {
-                            clickCursor(targetBtn, () => {
-                                // Nghỉ 1.5 giây, sau đó click bật lại
-                                tourSetTimeout(() => clickCursor(targetBtn, unlockTour), 1500);
-                            });
-                        });
-                    } else unlockTour();
-                } else unlockTour();
-            }, 400);
+            const targetBtn = document.querySelector('.vec-item:nth-child(1) .vec-actions button:nth-child(1)');
+            if (targetBtn) {
+                smartScrollTo('.vec-item:nth-child(1)');
+                tourSetTimeout(() => {
+                    toggleGraphHighlight(true, [[1, 3], [1, 2, 3]]);
+                    moveCursorTo(targetBtn, () => clickCursor(targetBtn, () => {
+                        tourSetTimeout(() => clickCursor(targetBtn, unlockTour), 1500);
+                    }));
+                }, 50);
+            } else unlockTour();
         }
     },
     {
-        element: '.section-list', 
-        popover: { title: '10. Nút "Xóa"', description: 'Nút <b>Xóa</b> sẽ loại bỏ hoàn toàn vector ra khỏi danh sách và đồ thị.', side: 'top' },
+        id: 'step-toggle',
+        element: '.vec-item:nth-child(1) .vec-actions button:nth-child(2)',
+        popover: { title: 'Nút "Ẩn/Hiện"', description: 'Nút <b>Ẩn</b> làm ẩn vector được chỉ định...', side: 'top' },
         onHighlighted: () => {
-            syncStepState(10);
-            clearTourTimeouts();
-            lockTour('Đang test nút...');
-            toggleGraphHighlight(true); // Bật viền sáng cho đồ thị
+            syncStepState('step-toggle');
+            clearTourTimeouts(); lockTour('Đang thao tác...');
 
-            tourSetTimeout(() => {
-                const list = document.getElementById('vectorList');
-                if (list && list.firstElementChild) {
-                    const btns = Array.from(list.firstElementChild.querySelectorAll('button'));
-                    const targetBtn = btns.find(b => b.textContent.includes('Xóa'));
-                    
-                    if (targetBtn) moveCursorTo(targetBtn, () => clickCursor(targetBtn, unlockTour));
-                    else unlockTour();
-                } else unlockTour();
-            }, 400);
+            const targetBtn = document.querySelector('.vec-item:nth-child(1) .vec-actions button:nth-child(2)');
+            if (targetBtn) {
+                smartScrollTo('.vec-item:nth-child(1)');
+                tourSetTimeout(() => {
+                    toggleGraphHighlight(true, [[1, 3], [1, 2, 3]]);
+                    moveCursorTo(targetBtn, () => clickCursor(targetBtn, () => {
+                        tourSetTimeout(() => clickCursor(targetBtn, unlockTour), 1500);
+                    }));
+                }, 50);
+            } else unlockTour();
         }
     },
     {
-        element: '#btnClearAll', 
+        id: 'step-delete',
+        element: '.vec-item:nth-child(1) .vec-actions button:nth-child(3)',
+        popover: { title: 'Nút "Xóa"', description: 'Nút <b>Xóa</b> sẽ loại bỏ hoàn toàn vector...', side: 'top' },
+        onHighlighted: () => {
+            syncStepState('step-delete');
+            clearTourTimeouts(); lockTour('Đang thao tác...');
+
+            const targetBtn = document.querySelector('.vec-item:nth-child(1) .vec-actions button:nth-child(3)');
+            if (targetBtn) {
+                smartScrollTo('.vec-item:nth-child(1)');
+                tourSetTimeout(() => {
+                    toggleGraphHighlight(true, [[1, 3], [1, 2, 3]]);
+                    moveCursorTo(targetBtn, () => clickCursor(targetBtn, unlockTour));
+                }, 50);
+            } else unlockTour();
+        }
+    },
+    {
+        id: 'step-clear',
+        element: '#btnClearAll',
         popover: { title: 'Nút "Xóa hết vector"', description: 'Loại bỏ hết các vector có trong danh sách và đồ thị', side: 'right' },
         onHighlighted: () => {
-            syncStepState(11);
-            clearTourTimeouts();
-            lockTour('Đang dọn dẹp...');
-            toggleGraphHighlight(false); // Tắt viền sáng đồ thị
-            
-            moveCursorTo('#btnClearAll', () => clickCursor(document.getElementById('btnClearAll'), unlockTour));
+            syncStepState('step-clear');
+            clearTourTimeouts(); lockTour('Đang dọn dẹp...'); toggleGraphHighlight(false);
+
+            smartScrollTo('#btnClearAll');
+            tourSetTimeout(() => moveCursorTo('#btnClearAll', () => clickCursor(document.getElementById('btnClearAll'), unlockTour)), 50);
         }
     }
 ];
 
-/* =========================================================
-   DỌN DẸP HIỆN TRƯỜNG KHI KẾT THÚC (HOẶC USER BẤM DẤU X)
-   ========================================================= */
 function cleanupTour() {
     clearTourTimeouts();
-    toggleGraphHighlight(false); 
-    
+    toggleGraphHighlight(false);
     const cursor = document.getElementById('tour-fake-cursor');
     if (cursor) cursor.style.opacity = '0';
-
-    const menu = document.getElementById('myCustomMenu');
-    if (menu) menu.style.display = 'none';
-
-    // [QUAN TRỌNG]: Đóng tour là phải trả lại đồ đạc cho User
     restoreUserState();
     isTourRunning = false;
 }
 
-// Khởi chạy Tour
-setupGuidedTour('btn-tour-khoitao', khoiTaoVectorSteps, cleanupTour);
+let finalSteps = khoiTaoVectorSteps;
 
+// Xóa mảng qua ID thay vì tham chiếu (An toàn 100%)
+if (window.innerWidth <= 768) {
+    finalSteps = khoiTaoVectorSteps.filter(step => step.id !== 'step-menu');
+}
+
+setupGuidedTour('btn-tour-khoitao', finalSteps, cleanupTour);

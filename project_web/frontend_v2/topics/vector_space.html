@@ -465,6 +465,7 @@
 
         .chapter-item {
             display: flex;
+            align-items: center;
             gap: 12px;
             padding: 15px 20px;
             border-bottom: 1px solid #334155;
@@ -1016,7 +1017,6 @@
             color: #60a5fa;
             border-left-color: #60a5fa;
         }
-        
     </style>
 </head>
 
@@ -1033,11 +1033,11 @@
                 <i class="fa-solid fa-arrow-left"></i>
             </a>
             <a href="../index.html" class="topbar-icon" title="Về trang chủ">
-        <i class="fa-solid fa-house"></i>
-      </a>
-      <a href="../tltk.html" class="topbar-icon" title="Tài liệu tham khảo">
-        <i class="fa-solid fa-file-lines"></i>
-      </a>
+                <i class="fa-solid fa-house"></i>
+            </a>
+            <a href="../tltk.html" class="topbar-icon" title="Tài liệu tham khảo">
+                <i class="fa-solid fa-file-lines"></i>
+            </a>
         </div>
 
         <div class="brand">Vectoria Knowledge</div>
@@ -1398,7 +1398,8 @@
                 </ol>
 
                 <div class="pdf-box">
-                    <span class="pdf-box-title" style="color:#dc2626;">Ví dụ:</span> Chứng minh \( V \equiv \mathbb{R}^2 \) là một không
+                    <span class="pdf-box-title" style="color:#dc2626;">Ví dụ:</span> Chứng minh \( V \equiv \mathbb{R}^2
+                    \) là một không
                     gian vector
                 </div>
 
@@ -1468,7 +1469,8 @@
                 </ol>
 
                 <div class="pdf-box">
-                    <span class="pdf-box-title" style="color:#dc2626;">Ví dụ:</span> Kiểm tra xem tập \( W = \{(x_1, x_2, x_3) \in
+                    <span class="pdf-box-title" style="color:#dc2626;">Ví dụ:</span> Kiểm tra xem tập \( W = \{(x_1,
+                    x_2, x_3) \in
                     \mathbb{R}^3 \mid x_1 = 2x_2\} \) có là không gian vector con trong \( \mathbb{R}^3 \) hay không?
                 </div>
 
@@ -1501,7 +1503,8 @@
                     vector con của \( \mathbb{R}^3 \).</p>
 
                 <div class="pdf-box">
-                    <span class="pdf-box-title" style="color:#dc2626;">Ví dụ:</span> Kiểm tra tập \( W = \{(x_1, x_2, x_3) \in
+                    <span class="pdf-box-title" style="color:#dc2626;">Ví dụ:</span> Kiểm tra tập \( W = \{(x_1, x_2,
+                    x_3) \in
                     \mathbb{R}^3 \mid x_3 = x_1 x_2\} \) có là không gian vector con trong \( \mathbb{R}^3 \) hay không?
                 </div>
 
@@ -1557,7 +1560,7 @@
                     <div class="playlist-box">
                         <div class="playlist-header">
                             <span>Nội dung</span>
-                            <span style="font-size: 0.8rem; color: #94a3b8;">4 phần</span>
+                            <span style="font-size: 0.8rem; color: #94a3b8;">3 phần</span>
                         </div>
                         <div class="chapter-list">
                             <div class="chapter-item playing" onclick="seekTo(0); setActive(this)">
@@ -1747,30 +1750,36 @@
         </main>
     </div>
     <footer class="vectoria-footer distraction-element">
-    <div class="footer-container">
-        <div class="brand-col">
-            <div class="partner-logo" style="display: flex; align-items: center; gap: 10px;">
-                <img src="../assets/images/logoMoi.png" alt="Logo Nhóm/Trường">
-                <img src="../assets/images/logoChu.png" id="textLogo" alt="Logo Chữ Vectoria" style="height: 35px; width: auto;"> </div>
-            <p>
-                Vectoria — Vương quốc của những Vector — được kiến tạo để thay đổi hoàn toàn cách chúng ta nhìn nhận về vector. Không còn là những khái niệm khô khan, tại nơi đây, mỗi vector đều mang một hình hài, một hướng đi và sinh khí riêng. Chúng tôi khao khát trao cho bạn một góc nhìn thấu thị để toàn bộ vẻ đẹp trừu tượng của không gian vector được thu trọn vào tầm mắt.
-            </p>
-        </div> <div class="footer-col">
-            <h4>Thông tin liên hệ</h4>
-            <ul>
-                <li>
-                    <i class="fa-solid fa-envelope"></i>
-                    <a href="mailto:vectoria.connect@gmail.com">vectoria.connect@gmail.com</a>
-                </li>
-                
-            </ul>
+        <div class="footer-container">
+            <div class="brand-col">
+                <div class="partner-logo" style="display: flex; align-items: center; gap: 10px;">
+                    <img src="../assets/images/logoMoi.png" alt="Logo Nhóm/Trường">
+                    <img src="../assets/images/logoChu.png" id="textLogo" alt="Logo Chữ Vectoria"
+                        style="height: 35px; width: auto;">
+                </div>
+                <p>
+                    Vectoria — Vương quốc của những Vector — được kiến tạo để thay đổi hoàn toàn cách chúng ta nhìn nhận
+                    về vector. Không còn là những khái niệm khô khan, tại nơi đây, mỗi vector đều mang một hình hài, một
+                    hướng đi và sinh khí riêng. Chúng tôi khao khát trao cho bạn một góc nhìn thấu thị để toàn bộ vẻ đẹp
+                    trừu tượng của không gian vector được thu trọn vào tầm mắt.
+                </p>
+            </div>
+            <div class="footer-col">
+                <h4>Thông tin liên hệ</h4>
+                <ul>
+                    <li>
+                        <i class="fa-solid fa-envelope"></i>
+                        <a href="mailto:vectoria.connect@gmail.com">vectoria.connect@gmail.com</a>
+                    </li>
+
+                </ul>
+            </div>
         </div>
-    </div>
-    
-    <div class="footer-bottom">
-        <p style="margin: 0;">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
-    </div>
-</footer>
+
+        <div class="footer-bottom">
+            <p style="margin: 0;">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
+        </div>
+    </footer>
     <script>
         // 1. THEME HANDLING & ANIMATION
         // Theme is auto-initialized by theme-manager.js script
@@ -1828,41 +1837,14 @@
             });
         });
 
-        // 2. YOUTUBE API
-        var player;
-        function onYouTubeIframeAPIReady() {
-            var originUrl = window.location.origin;
-            player = new YT.Player('youtube-player', {
-                height: '100%', width: '100%',
-                videoId: 'lFuaQHRd2oI',
-                playerVars: { 'playsinline': 1, 'rel': 0, 'origin': originUrl },
-                events: { 'onReady': onPlayerReady, 'onError': onPlayerError }
-            });
-        }
-        function onPlayerReady(event) { console.log("Video ready"); }
-        function onPlayerError(event) {
-            console.error("Lỗi video: " + event.data);
-            document.querySelector('.video-box').innerHTML = '<div style="color:white;text-align:center;padding-top:20%;">Lỗi tải video (Mã: ' + event.data + ')</div>';
-        }
-
-        var tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        var firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-        function seekTo(seconds) {
-            if (player && player.seekTo) { player.seekTo(seconds, true); player.playVideo(); }
-        }
-        function setActive(el) {
-            document.querySelectorAll('.chapter-item').forEach(i => i.classList.remove('playing'));
-            el.classList.add('playing');
-        }
-
-
-
-
 
     </script>
+    <script>
+        const VIDEO_ID = 'lFuaQHRd2oI';
+        const CHAPTER_TIMES = [0, 100, 285]; 
+    </script>
+
+    <script src="../js/utils/auto-update_timeline.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
 

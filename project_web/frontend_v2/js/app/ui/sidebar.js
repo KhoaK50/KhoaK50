@@ -11,9 +11,28 @@
     style.id = 'sidebar-dynamic-styles';
     style.textContent = `
     /* --- KHUNG CHÍNH --- */
+    /* Mặc định trên Desktop */
     #controls {
         display: flex !important; flex-direction: column !important;
         height: 100vh !important; overflow: hidden !important; padding: 0 !important;
+    }
+
+    /* ĐÂY LÀ ĐOẠN THÊM VÀO ĐỂ CỨU CÁI GIAO DIỆN MOBILE */
+    @media (max-width: 768px) {
+        #controls {
+            /* Hủy cái flexbox phiền toái làm cắt chữ */
+            display: block !important;
+            
+            /* Ép cứng lại 40% màn hình thay vì 100vh */
+            height: 40vh !important;
+            max-height: 40vh !important;
+            
+            /* Cho phép cuộn thay vì ẩn đi */
+            overflow-y: auto !important;
+            
+            /* Thêm lề dưới để vuốt tới đáy thoải mái */
+            padding-bottom: 20px !important;
+        }
     }
 
     /* --- THANH TAB --- */
@@ -427,7 +446,7 @@
       mf.value = App.formatVectorShort(item.vec);
       mf.setAttribute("smart-fence", "false");
       mf.setAttribute("smart-mode", "false");
-      mf.setAttribute("virtual-keyboard-policy", "manual");
+      mf.setAttribute("math-virtual-keyboard-policy", "manual");
 
       // Sự kiện Edit Vector
       // [FIX LỖI TOÁN] Sửa lại đoạn sự kiện input của math-field
@@ -769,7 +788,7 @@
       mf.className = "checklist-math";
       mf.value = it.latex || App.formatVectorShort(it.vec);
       mf.setAttribute("read-only", "true");
-      mf.setAttribute("virtual-keyboard-policy", "manual");
+      mf.setAttribute("math-virtual-keyboard-policy", "manual");
 
       left.appendChild(badge);
       left.appendChild(mf);
