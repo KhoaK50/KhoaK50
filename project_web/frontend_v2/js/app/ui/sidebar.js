@@ -23,9 +23,9 @@
             /* Hủy cái flexbox phiền toái làm cắt chữ */
             display: block !important;
             
-            /* Ép cứng lại 40% màn hình thay vì 100vh */
-            height: 40vh !important;
-            max-height: 40vh !important;
+            /* [ĐÃ SỬA]: Ép nó ăn 100% theo không gian của Grid (45vh), KHÔNG DÙNG 40vh NỮA */
+            height: 100% !important;
+            max-height: 100% !important;
             
             /* Cho phép cuộn thay vì ẩn đi */
             overflow-y: auto !important;
