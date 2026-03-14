@@ -2,7 +2,9 @@
 (function () {
   window.App = window.App || {};
 
-  function $(id) { return document.getElementById(id); }
+  function $(id) {
+    return document.getElementById(id);
+  }
 
   // DOM Elements
   const overlay = $("solutionOverlay");
@@ -26,15 +28,17 @@
     titleMath: "",
 
     // Nội dung HTML
-    htmlTab1: "", htmlTab2Main: "", htmlTab2Sub: "",
+    htmlTab1: "",
+    htmlTab2Main: "",
+    htmlTab2Sub: "",
 
-    active: "mat",      // Tab đang chọn
+    active: "mat", // Tab đang chọn
     eqVariant: "general", // Subtab đang chọn
 
     // [MỚI] Cấu hình hiển thị (Mặc định)
     tab1Label: "Cách 1",
     tab2Label: "Cách 2",
-    showSubTabs: true
+    showSubTabs: true,
   };
 
   // Hàm render MathJax
@@ -81,12 +85,20 @@
     eqBtnGeneral = document.createElement("button");
     eqBtnGeneral.className = "sol-subtab is-active";
     eqBtnGeneral.textContent = "Tổng quát";
-    eqBtnGeneral.onclick = () => { state.eqVariant = "general"; renderEqSubtabs(); renderBody(); };
+    eqBtnGeneral.onclick = () => {
+      state.eqVariant = "general";
+      renderEqSubtabs();
+      renderBody();
+    };
 
     eqBtnStep = document.createElement("button");
     eqBtnStep.className = "sol-subtab";
     eqBtnStep.textContent = "Xét từng vector";
-    eqBtnStep.onclick = () => { state.eqVariant = "step"; renderEqSubtabs(); renderBody(); };
+    eqBtnStep.onclick = () => {
+      state.eqVariant = "step";
+      renderEqSubtabs();
+      renderBody();
+    };
 
     eqSubWrap.appendChild(eqBtnGeneral);
     eqSubWrap.appendChild(eqBtnStep);
@@ -98,13 +110,15 @@
     if (!eqSubWrap) return;
 
     // Chỉ hiện nếu đang ở Tab 2 VÀ Config cho phép hiện
-    const show = (state.active === "eq" && state.showSubTabs);
+    const show = state.active === "eq" && state.showSubTabs;
 
     eqSubWrap.classList.toggle("is-visible", show);
     eqSubWrap.style.display = show ? "inline-flex" : "none";
 
-    if (eqBtnGeneral) eqBtnGeneral.classList.toggle("is-active", state.eqVariant === "general");
-    if (eqBtnStep) eqBtnStep.classList.toggle("is-active", state.eqVariant === "step");
+    if (eqBtnGeneral)
+      eqBtnGeneral.classList.toggle("is-active", state.eqVariant === "general");
+    if (eqBtnStep)
+      eqBtnStep.classList.toggle("is-active", state.eqVariant === "step");
   }
 
   // Render Nội dung chính (Thay innerHTML bằng HTML string)
@@ -118,11 +132,13 @@
       content = state.htmlTab1; // <--- SỬA: Dùng htmlTab1
     } else {
       // Tab 2: Chọn Main (Tổng quát) hay Sub (Từng bước)
-      content = (state.eqVariant === "step") ? state.htmlTab2Sub : state.htmlTab2Main;
+      content =
+        state.eqVariant === "step" ? state.htmlTab2Sub : state.htmlTab2Main;
 
       // Fallback: Nếu subtab chưa có, hiện cái kia
       if (!content && state.eqVariant === "step") content = state.htmlTab2Main;
-      if (!content && state.eqVariant === "general") content = state.htmlTab2Sub;
+      if (!content && state.eqVariant === "general")
+        content = state.htmlTab2Sub;
     }
 
     // Hiển thị
@@ -166,7 +182,7 @@
     // 2. Nạp Config giao diện (Tên tab, Ẩn/Hiện subtab)
     state.tab1Label = config.tab1Label || "Cách 1";
     state.tab2Label = config.tab2Label || "Cách 2";
-    state.showSubTabs = (config.showSubTabs !== false); // Mặc định là hiện
+    state.showSubTabs = config.showSubTabs !== false; // Mặc định là hiện
 
     // 3. Reset trạng thái
     state.active = "mat";
@@ -190,7 +206,7 @@
       content2Sub: pack.allSolutions ? pack.allSolutions.step : "",
       tab1Label: "Cách 1: Ma trận",
       tab2Label: "Cách 2: Hệ phương trình",
-      showSubTabs: true
+      showSubTabs: true,
     });
   };
 
@@ -203,7 +219,9 @@
       if (!btnCopy) return;
       const old = btnCopy.textContent;
       btnCopy.textContent = "Đã copy!";
-      setTimeout(() => { btnCopy.textContent = old || "Copy Text"; }, 900);
+      setTimeout(() => {
+        btnCopy.textContent = old || "Copy Text";
+      }, 900);
     };
 
     if (navigator.clipboard) {
@@ -237,15 +255,21 @@
       if (e.key === "Escape") setOpen(false);
     });
 
-    if (tabMat) tabMat.addEventListener("click", () => {
-      state.active = "mat";
-      renderTabs(); renderEqSubtabs(); renderBody();
-    });
+    if (tabMat)
+      tabMat.addEventListener("click", () => {
+        state.active = "mat";
+        renderTabs();
+        renderEqSubtabs();
+        renderBody();
+      });
 
-    if (tabEq) tabEq.addEventListener("click", () => {
-      state.active = "eq";
-      renderTabs(); renderEqSubtabs(); renderBody();
-    });
+    if (tabEq)
+      tabEq.addEventListener("click", () => {
+        state.active = "eq";
+        renderTabs();
+        renderEqSubtabs();
+        renderBody();
+      });
 
     if (btnCopy) btnCopy.addEventListener("click", copyActiveContent);
   }
@@ -255,5 +279,4 @@
   } else {
     bind();
   }
-
 })();

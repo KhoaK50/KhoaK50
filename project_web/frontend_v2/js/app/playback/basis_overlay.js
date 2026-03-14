@@ -3,8 +3,8 @@
   const App = window.App;
 
   // ========= CONFIG =========
-  const RED = { css: "#ff3b30", hex: 0xff3b30 };     // đỏ
-  const GREEN = { css: "#34c759", hex: 0x34c759 };   // xanh lá
+  const RED = { css: "#ff3b30", hex: 0xff3b30 }; // đỏ
+  const GREEN = { css: "#34c759", hex: 0x34c759 }; // xanh lá
 
   const DURATION_FADE_OUT = 260;
   const DURATION_FADE_IN_SUBSPACE = 260;
@@ -20,26 +20,31 @@
   BO._snapshot = null;
   BO._tempIds = new Set();
 
-  function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+  function clamp01(x) {
+    return Math.max(0, Math.min(1, x));
+  }
 
   function vecEqual(a, b, eps = 1e-9) {
     if (!Array.isArray(a) || !Array.isArray(b)) return false;
     if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) if (Math.abs((a[i] || 0) - (b[i] || 0)) > eps) return false;
+    for (let i = 0; i < a.length; i++)
+      if (Math.abs((a[i] || 0) - (b[i] || 0)) > eps) return false;
     return true;
   }
 
   function findItemByVector(vec, eps = 1e-9) {
-    return (App.vectorList || []).find(it => vecEqual(it.vec, vec, eps)) || null;
+    return (
+      (App.vectorList || []).find((it) => vecEqual(it.vec, vec, eps)) || null
+    );
   }
 
   function deepSnapshotVectorList(list) {
-    return list.map(v => ({
+    return list.map((v) => ({
       id: v.id,
       vec: Array.isArray(v.vec) ? v.vec.slice() : null,
       visible: v.visible !== false,
       focus: !!v.focus,
-      alpha: (typeof v.alpha === "number") ? v.alpha : 1,
+      alpha: typeof v.alpha === "number" ? v.alpha : 1,
       // giữ màu cũ để restore
       colorCss: v.colorCss,
       colorHex: v.colorHex,
@@ -54,14 +59,16 @@
 
     // xóa temp vectors đã tạo
     if (BO._tempIds.size) {
-      App.vectorList = (App.vectorList || []).filter(it => !BO._tempIds.has(it.id));
+      App.vectorList = (App.vectorList || []).filter(
+        (it) => !BO._tempIds.has(it.id),
+      );
       BO._tempIds.clear();
     }
 
     // restore các item cũ theo id
     const snap = BO._snapshot;
-    const map = new Map(snap.vectorList.map(s => [s.id, s]));
-    for (const it of (App.vectorList || [])) {
+    const map = new Map(snap.vectorList.map((s) => [s.id, s]));
+    for (const it of App.vectorList || []) {
       const s = map.get(it.id);
       if (!s) continue;
       it.visible = s.visible;
@@ -91,17 +98,17 @@
 
   function setAllAlpha(alpha) {
     alpha = clamp01(alpha);
-    for (const it of (App.vectorList || [])) it.alpha = alpha;
+    for (const it of App.vectorList || []) it.alpha = alpha;
   }
 
   function hideAllExcept(setIds) {
-    for (const it of (App.vectorList || [])) {
+    for (const it of App.vectorList || []) {
       it.visible = setIds.has(it.id);
     }
   }
 
   function setColorForIds(setIds, css, hex) {
-    for (const it of (App.vectorList || [])) {
+    for (const it of App.vectorList || []) {
       if (!setIds.has(it.id)) continue;
       it.colorCss = css;
       it.colorHex = hex;
@@ -124,7 +131,7 @@
       colorHex: hex,
       haloCss: css,
       highlighted: false,
-      _tempBasis: true
+      _tempBasis: true,
     };
     App.vectorList.push(item);
     BO._tempIds.add(id);
@@ -138,7 +145,7 @@
 
   function tween(duration, onUpdate) {
     const t0 = performance.now();
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const step = () => {
         const t = performance.now();
         const p = clamp01((t - t0) / Math.max(1, duration));
@@ -167,7 +174,7 @@
       // snapshot trước
       BO._snapshot = {
         vectorList: deepSnapshotVectorList(App.vectorList || []),
-        currentVector: App.currentVector ? App.currentVector.slice() : null
+        currentVector: App.currentVector ? App.currentVector.slice() : null,
       };
 
       // ========== PHASE 1: fade out all ==========
@@ -188,11 +195,11 @@
       setColorForIds(subIds, RED.css, RED.hex);
 
       // alpha 0 trước rồi fade in
-      for (const it of (App.vectorList || [])) {
+      for (const it of App.vectorList || []) {
         if (subIds.has(it.id)) it.alpha = 0;
       }
       await tween(DURATION_FADE_IN_SUBSPACE, (p) => {
-        for (const it of (App.vectorList || [])) {
+        for (const it of App.vectorList || []) {
           if (subIds.has(it.id)) it.alpha = p;
         }
       });
@@ -217,7 +224,7 @@
       if (basisInList.length) {
         await tween(DURATION_COLOR_SWAP, (p) => {
           // chuyển màu “nhảy” cho nhanh: tới 50% thì đổi luôn
-          const sw = (p >= 0.5);
+          const sw = p >= 0.5;
           for (const it of basisInList) {
             it.colorCss = sw ? GREEN.css : RED.css;
             it.colorHex = sw ? GREEN.hex : RED.hex;
@@ -240,7 +247,6 @@
 
       // kết thúc: giữ trạng thái overlay (active)
       redrawFast();
-
     } catch (e) {
       console.error(e);
       BO.stop();
@@ -255,5 +261,7 @@
     BO._active = false;
   };
 
-  BO.isActive = function () { return !!BO._active; };
+  BO.isActive = function () {
+    return !!BO._active;
+  };
 })();

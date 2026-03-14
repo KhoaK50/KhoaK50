@@ -10,10 +10,18 @@
 }
 
 /* =================== SECTION ACCENTS =================== */
-.section-create { --acc: #3a78ff; }
-.section-list { --acc: #8b5cf6; }
-.section-calc-new { --acc: #22c55e; }
-.section-calc-info { --acc: #f59e0b; }
+.section-create {
+  --acc: #3a78ff;
+}
+.section-list {
+  --acc: #8b5cf6;
+}
+.section-calc-new {
+  --acc: #22c55e;
+}
+.section-calc-info {
+  --acc: #f59e0b;
+}
 
 .section-create,
 .section-list,
@@ -22,7 +30,11 @@
   padding-left: 16px;
   border-left: 4px solid var(--acc);
   background:
-    linear-gradient(90deg, color-mix(in oklab, var(--acc) 10%, transparent) 0%, transparent 38%),
+    linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--acc) 10%, transparent) 0%,
+      transparent 38%
+    ),
     var(--card);
 }
 
@@ -30,7 +42,9 @@
 .section-list:hover,
 .section-calc-new:hover,
 .section-calc-info:hover {
-  box-shadow: 0 1px 0 0 color-mix(in oklab, var(--acc) 30%, transparent) inset, var(--shadow-sm);
+  box-shadow:
+    0 1px 0 0 color-mix(in oklab, var(--acc) 30%, transparent) inset,
+    var(--shadow-sm);
 }
 
 .section-calc-new details.calc summary:hover {
@@ -49,17 +63,25 @@ label {
 }
 
 /* =================== FORM ELEMENTS =================== */
-input, select, button {
+input,
+select,
+button {
   font: inherit;
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--fg);
   border-radius: var(--r-sm);
   padding: 10px 12px;
-  transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
+    background var(--t-fast);
 }
 
-input, select { width: 100%; }
+input,
+select {
+  width: 100%;
+}
 
 input:focus,
 select:focus,
@@ -76,7 +98,7 @@ button {
 }
 
 button:disabled {
-  opacity: .55;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
@@ -94,17 +116,23 @@ button:disabled {
   border-color: color-mix(in oklab, var(--border) 70%, var(--fg) 30%);
 }
 
-.btn:active { transform: translateY(0.5px); }
+.btn:active {
+  transform: translateY(0.5px);
+}
 
 .btn.primary {
   background: var(--accent);
   color: #fff;
   border-color: color-mix(in oklab, var(--accent) 80%, #000 0%);
-  box-shadow: 0 6px 18px rgba(58, 120, 255, .25);
+  box-shadow: 0 6px 18px rgba(58, 120, 255, 0.25);
 }
 
-.btn.primary:hover { background: var(--accent-600); }
-.btn.primary:active { background: var(--accent-700); }
+.btn.primary:hover {
+  background: var(--accent-600);
+}
+.btn.primary:active {
+  background: var(--accent-700);
+}
 
 .btn.ghost {
   background: transparent;
@@ -136,11 +164,17 @@ button:disabled {
   border: 1px solid var(--border);
   background: var(--chip-bg);
   cursor: pointer;
-  transition: background var(--t-fast), box-shadow var(--t-fast);
+  transition:
+    background var(--t-fast),
+    box-shadow var(--t-fast);
 }
 
-.mini-keys .kbtn:hover { box-shadow: var(--shadow-sm); }
-.mini-keys .kbtn:active { transform: translateY(0.5px); }
+.mini-keys .kbtn:hover {
+  box-shadow: var(--shadow-sm);
+}
+.mini-keys .kbtn:active {
+  transform: translateY(0.5px);
+}
 
 /* =================== LAYOUT HELPERS =================== */
 .row {
@@ -162,7 +196,9 @@ button:disabled {
   margin-top: 6px;
 }
 
-.small { font-size: 12px; }
+.small {
+  font-size: 12px;
+}
 
 /* =================== PRE =================== */
 pre {
@@ -186,7 +222,7 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 350px; 
+  max-height: 350px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -199,7 +235,10 @@ pre {
   border-radius: var(--r-lg);
   padding: 10px 12px;
   background: var(--card);
-  transition: border-color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
+  transition:
+    border-color var(--t-fast),
+    background var(--t-fast),
+    box-shadow var(--t-fast);
   flex-shrink: 0;
 }
 
@@ -247,8 +286,13 @@ pre {
   gap: 10px;
 }
 
-.vec-header .tag { flex: 0 0 auto; }
-.vec-header .lbl { flex: 1 1 auto; min-width: 0; }
+.vec-header .tag {
+  flex: 0 0 auto;
+}
+.vec-header .lbl {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 
 .vec-actions {
   display: flex;
@@ -257,17 +301,24 @@ pre {
   margin-top: 2px;
 }
 
-.vec-actions .btn { padding: 6px 10px; }
+.vec-actions .btn {
+  padding: 6px 10px;
+}
 
 @media (max-width: 420px) {
-  .grid2 { grid-template-columns: 1fr; }
-  .vec-actions .btn { flex: 1 0 auto; }
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+  .vec-actions .btn {
+    flex: 1 0 auto;
+  }
 }
 
 .vec-item.active {
   background: color-mix(in oklab, var(--accent) 8%, var(--card) 92%);
   border-color: color-mix(in oklab, var(--accent) 35%, var(--border) 65%);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in oklab, var(--accent) 35%, transparent);
 }
 
 /* =================== CALC SECTIONS =================== */
@@ -303,14 +354,20 @@ details.calc summary::-webkit-details-marker {
 
 details.calc summary .chev {
   margin-left: auto;
-  opacity: .6;
+  opacity: 0.6;
   transition: transform var(--t-fast);
 }
 
-details.calc[open] summary .chev { transform: rotate(180deg); }
+details.calc[open] summary .chev {
+  transform: rotate(180deg);
+}
 
-.extra-form { display: none; }
-.extra-form.active { display: block; }
+.extra-form {
+  display: none;
+}
+.extra-form.active {
+  display: block;
+}
 
 .checklist {
   display: flex;
@@ -324,7 +381,7 @@ details.calc[open] summary .chev { transform: rotate(180deg); }
 }
 
 /* =================== "Lời giải" giống nút thường (như "Tính cơ sở") =================== */
-.btn-solution{
+.btn-solution {
   /* giống hệt button base */
   font: inherit;
   border: 1px solid var(--border);
@@ -333,86 +390,109 @@ details.calc[open] summary .chev { transform: rotate(180deg); }
   border-radius: var(--r-sm);
   padding: 10px 12px;
   cursor: pointer;
-  transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
+    background var(--t-fast);
 }
 
-.btn-solution:hover{
+.btn-solution:hover {
   /* nhẹ giống cảm giác nút thường */
   background: color-mix(in oklab, var(--card) 92%, var(--fg) 8%);
   border-color: color-mix(in oklab, var(--border) 70%, var(--fg) 30%);
 }
 
-.btn-solution:active{ transform: translateY(0.5px); }
+.btn-solution:active {
+  transform: translateY(0.5px);
+}
 
 /* =================== Basis animation controls =================== */
-.basis-anim-controls{
-  border: 1px solid var(--border, rgba(0,0,0,0.10));
-  background: var(--card, rgba(0,0,0,0.03));
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+.basis-anim-controls {
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.1));
+  background: var(--card, rgba(0, 0, 0, 0.03));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
-.basis-anim-controls #basisSpeedVal{ color: var(--fg, #111); }
-.basis-anim-controls #basisSpeedHelp{ color: var(--muted, rgba(0,0,0,0.70)); }
+.basis-anim-controls #basisSpeedVal {
+  color: var(--fg, #111);
+}
+.basis-anim-controls #basisSpeedHelp {
+  color: var(--muted, rgba(0, 0, 0, 0.7));
+}
 
-.btn.basis-anim-stop{
-  border: 1px solid var(--border, rgba(0,0,0,0.18));
+.btn.basis-anim-stop {
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.18));
   background: var(--card, #fff);
   color: var(--fg, #111);
-  transition: background-color .12s ease, border-color .12s ease, transform .06s ease;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    transform 0.06s ease;
 }
 
-.btn.basis-anim-stop:hover{ background: rgba(0,0,0,0.04); }
-.btn.basis-anim-stop:active{ transform: translateY(1px); background: rgba(0,0,0,0.06); }
+.btn.basis-anim-stop:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+.btn.basis-anim-stop:active {
+  transform: translateY(1px);
+  background: rgba(0, 0, 0, 0.06);
+}
 
-.btn.basis-anim-stop:focus{ outline: none; }
-.btn.basis-anim-stop:focus-visible{ box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25); }
+.btn.basis-anim-stop:focus {
+  outline: none;
+}
+.btn.basis-anim-stop:focus-visible {
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25);
+}
 
 /* DARK THEME: đúng selector của bạn */
-body.dark .basis-anim-controls{
-  box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+body.dark .basis-anim-controls {
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
 }
 
-body.dark .btn.basis-anim-stop{
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.92);
-  border-color: rgba(255,255,255,0.14);
+body.dark .btn.basis-anim-stop {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
-body.dark .btn.basis-anim-stop:hover{
-  background: rgba(255,255,255,0.10);
-  border-color: rgba(255,255,255,0.20);
+body.dark .btn.basis-anim-stop:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-body.dark .btn.basis-anim-stop:active{
-  background: rgba(255,255,255,0.14);
+body.dark .btn.basis-anim-stop:active {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 /* Range slider */
-#basisAnimControls input[type="range"]{
+#basisAnimControls input[type="range"] {
   width: 100%;
   accent-color: var(--accent, #0a84ff);
 }
 
-#basisAnimControls input[type="range"]::-webkit-slider-runnable-track{
+#basisAnimControls input[type="range"]::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
-  background: rgba(0,0,0,0.10);
+  background: rgba(0, 0, 0, 0.1);
 }
 
-#basisAnimControls input[type="range"]::-webkit-slider-thumb{
+#basisAnimControls input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 16px;
   height: 16px;
   border-radius: 999px;
   background: var(--accent, #0a84ff);
-  border: 2px solid rgba(255,255,255,0.65);
+  border: 2px solid rgba(255, 255, 255, 0.65);
   margin-top: -5px;
 }
 
-body.dark #basisAnimControls input[type="range"]::-webkit-slider-runnable-track{
-  background: rgba(255,255,255,0.14);
+body.dark
+  #basisAnimControls
+  input[type="range"]::-webkit-slider-runnable-track {
+  background: rgba(255, 255, 255, 0.14);
 }
 
-body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb{
-  border-color: rgba(0,0,0,0.35);
+body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb {
+  border-color: rgba(0, 0, 0, 0.35);
 }

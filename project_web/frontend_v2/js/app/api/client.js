@@ -7,7 +7,8 @@
     console.log(s);
     const el = document.getElementById("logOut");
     if (!el) return;
-    el.innerText = (el.innerText === "—" ? "" : el.innerText + "\n") + String(s);
+    el.innerText =
+      (el.innerText === "—" ? "" : el.innerText + "\n") + String(s);
   };
 
   App.pingBackend = async function () {
@@ -18,10 +19,13 @@
     } catch (e) {
       App.log(`Không gọi được /api/health — ${e}`);
       // THAY ALERT BẰNG TOAST
-      if (typeof App.showToast === 'function') {
-          App.showToast(`Không kết nối được Backend tại ${App.API_BASE}. Đang khởi động lại server, vui lòng đợi xíu nhé!`, "error");
+      if (typeof App.showToast === "function") {
+        App.showToast(
+          `Không kết nối được Backend tại ${App.API_BASE}. Đang khởi động lại server, vui lòng đợi xíu nhé!`,
+          "error",
+        );
       } else {
-          console.warn("Backend error: " + e.message);
+        console.warn("Backend error: " + e.message);
       }
     }
   };

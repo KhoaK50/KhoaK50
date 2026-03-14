@@ -10,7 +10,10 @@
     const vectorInput = document.getElementById("vectorInput");
     if (vectorInput) {
       vectorInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") { e.preventDefault(); App.onAddVector(); }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          App.onAddVector();
+        }
       });
     }
 
@@ -35,9 +38,8 @@
 
     // Nút tính toán & xem trước
     const btnCompute = document.getElementById("btnCompute");
-    if (btnCompute) btnCompute.addEventListener("click", () => App.runCalc(true));
-
-    
+    if (btnCompute)
+      btnCompute.addEventListener("click", () => App.runCalc(true));
 
     // Select phép tính phụ
     const opExtraSelect = document.getElementById("opExtraSelect");
@@ -65,7 +67,10 @@
 
     // prevent wheel scroll in viewer wrap
     const viewerWrap = document.getElementById("viewerWrap");
-    if (viewerWrap) viewerWrap.addEventListener("wheel", (e) => e.preventDefault(), { passive: false });
+    if (viewerWrap)
+      viewerWrap.addEventListener("wheel", (e) => e.preventDefault(), {
+        passive: false,
+      });
 
     // First show 2D by default
     if (App.applyTheme) App.applyTheme();
@@ -76,7 +81,8 @@
 
     if (App.refreshCalcVectorOptions) App.refreshCalcVectorOptions();
     if (App.renderExtraCalcOptions) App.renderExtraCalcOptions();
-    if (opExtraSelect && App.showExtraForm) App.showExtraForm(opExtraSelect.value);
+    if (opExtraSelect && App.showExtraForm)
+      App.showExtraForm(opExtraSelect.value);
 
     // =========================
     // GẮN GUARD CHO CÁC <select>
@@ -85,9 +91,12 @@
       if (typeof App.guardEmptyVectorSelect !== "function") return;
 
       const ids = [
-        "v1Select", "v2Select",
-        "v1DotSelect", "v2DotSelect",
-        "v1AngleSelect", "v2AngleSelect",
+        "v1Select",
+        "v2Select",
+        "v1DotSelect",
+        "v2DotSelect",
+        "v1AngleSelect",
+        "v2AngleSelect",
         "vNormSelect",
         "vCoordSelect",
         "vProjSelect",
@@ -133,7 +142,11 @@
     }
 
     // Init Solution Panel
-    if (window.App && App.SolutionPanel && typeof App.SolutionPanel.init === "function") {
+    if (
+      window.App &&
+      App.SolutionPanel &&
+      typeof App.SolutionPanel.init === "function"
+    ) {
       App.SolutionPanel.init();
     }
     // --- XỬ LÝ NÚT RESET VIEW (QUAY VỀ GỐC) ---
@@ -145,7 +158,7 @@
         if (icon) {
           icon.style.transition = "transform 0.5s";
           icon.style.transform = "rotate(360deg)";
-          setTimeout(() => icon.style.transform = "none", 500);
+          setTimeout(() => (icon.style.transform = "none"), 500);
         }
 
         // Gọi hàm reset tùy theo chế độ 2D hay 3D
@@ -163,8 +176,8 @@
     document.addEventListener("DOMContentLoaded", () => {
       App.init();
       if (App.log) {
-        App.log("three typeof: " + (typeof THREE));
-        App.log("OrbitControls " + (typeof THREE?.OrbitControls));
+        App.log("three typeof: " + typeof THREE);
+        App.log("OrbitControls " + typeof THREE?.OrbitControls);
       }
     });
   } else {

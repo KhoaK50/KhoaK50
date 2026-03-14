@@ -5,9 +5,14 @@
     if (!Array.isArray(M) || !M.length) return "(rỗng)";
     const rows = M.map((row) => row.map((x) => App.formatScalar(x)));
     const widths = [];
-    rows.forEach((r) => r.forEach((s, i) => (widths[i] = Math.max(widths[i] || 0, s.length))));
+    rows.forEach((r) =>
+      r.forEach((s, i) => (widths[i] = Math.max(widths[i] || 0, s.length))),
+    );
     return rows
-      .map((r) => "| " + r.map((s, i) => s.padStart(widths[i], " ")).join("  ") + " |")
+      .map(
+        (r) =>
+          "| " + r.map((s, i) => s.padStart(widths[i], " ")).join("  ") + " |",
+      )
       .join("\n");
   }
 

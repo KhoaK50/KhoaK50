@@ -11,7 +11,7 @@
   // Angle visualization state
   App.currentAngleVisual2D = null; // { a:[x,y], b:[x,y], deg }
   App.currentAngleVisual3D = null; // THREE.Group
-  App.currentListInput = null;     // focused <input> in list
+  App.currentListInput = null; // focused <input> in list
 
   // vectorList items: { id, vec, hue, colorCss, colorHex, haloCss, haloHex, focus, visible, highlighted }
   App.vectorList = [];
@@ -23,17 +23,17 @@
 
 // ===== Basis Overlay Animator (2D/3D) =====
 (function () {
-  const App = window.App = window.App || {};
+  const App = (window.App = window.App || {});
 
   // trạng thái overlay
   App._basisOverlay = {
     active: false,
     snapshot: null,
-    raf: null
+    raf: null,
   };
 
   function deepCloneVectorList(list) {
-    return (list || []).map(v => ({
+    return (list || []).map((v) => ({
       id: v.id,
       name: v.name,
       vec: Array.isArray(v.vec) ? v.vec.slice() : [0, 0, 0],
@@ -44,15 +44,23 @@
       colorHex: v.colorHex,
       colorCss: v.colorCss,
       haloCss: v.haloCss,
-      alpha: (typeof v.alpha === "number") ? v.alpha : 1
+      alpha: typeof v.alpha === "number" ? v.alpha : 1,
     }));
   }
 
   function vecEq(a, b, eps = 1e-9) {
     if (!a || !b) return false;
-    const ax = a[0] || 0, ay = a[1] || 0, az = a[2] || 0;
-    const bx = b[0] || 0, by = b[1] || 0, bz = b[2] || 0;
-    return Math.abs(ax - bx) < eps && Math.abs(ay - by) < eps && Math.abs(az - bz) < eps;
+    const ax = a[0] || 0,
+      ay = a[1] || 0,
+      az = a[2] || 0;
+    const bx = b[0] || 0,
+      by = b[1] || 0,
+      bz = b[2] || 0;
+    return (
+      Math.abs(ax - bx) < eps &&
+      Math.abs(ay - by) < eps &&
+      Math.abs(az - bz) < eps
+    );
   }
 
   function ensureStyle(v) {
@@ -65,8 +73,10 @@
   }
 
   function renderNow() {
-    if (App.mode === "2D" && window.Vec2D?.draw2DAllVectors) window.Vec2D.draw2DAllVectors();
-    if (App.mode === "3D" && window.Vec3D?.hardRefresh3D) window.Vec3D.hardRefresh3D(false);
+    if (App.mode === "2D" && window.Vec2D?.draw2DAllVectors)
+      window.Vec2D.draw2DAllVectors();
+    if (App.mode === "3D" && window.Vec3D?.hardRefresh3D)
+      window.Vec3D.hardRefresh3D(false);
   }
 
   function animateAlpha(targetIdsOrAll, fromA, toA, ms = 250) {
@@ -76,7 +86,8 @@
     // set from
     for (const it of list) {
       ensureStyle(it);
-      if (targetIdsOrAll === "ALL" || targetIdsOrAll.has(it.id)) it.alpha = fromA;
+      if (targetIdsOrAll === "ALL" || targetIdsOrAll.has(it.id))
+        it.alpha = fromA;
     }
     renderNow();
 
@@ -88,7 +99,8 @@
 
         for (const it of list) {
           ensureStyle(it);
-          if (targetIdsOrAll === "ALL" || targetIdsOrAll.has(it.id)) it.alpha = a;
+          if (targetIdsOrAll === "ALL" || targetIdsOrAll.has(it.id))
+            it.alpha = a;
         }
 
         renderNow();
@@ -108,7 +120,15 @@
     // đổi màu tuyến tính (đủ dùng cho đỏ->xanh)
     function hexToRgb(h) {
       const x = h.replace("#", "");
-      const n = parseInt(x.length === 3 ? x.split("").map(c => c + c).join("") : x, 16);
+      const n = parseInt(
+        x.length === 3
+          ? x
+              .split("")
+              .map((c) => c + c)
+              .join("")
+          : x,
+        16,
+      );
       return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
     }
     function rgbToHex(r, g, b) {
@@ -147,7 +167,10 @@
   }
 
   // API: chạy overlay
-  App.startBasisOverlay = async function ({ subspaceVecs = [], basisVecs = [] }) {
+  App.startBasisOverlay = async function ({
+    subspaceVecs = [],
+    basisVecs = [],
+  }) {
     // tránh bấm liên tục
     if (App._basisOverlay.active) return;
     App._basisOverlay.active = true;
@@ -167,7 +190,7 @@
 
     for (const sv of subspaceVecs) {
       // tìm item sẵn có theo vec
-      let found = (App.vectorList || []).find(it => vecEq(it.vec, sv));
+      let found = (App.vectorList || []).find((it) => vecEq(it.vec, sv));
       if (!found) {
         // nếu subspace vector không có trong list thì tạo (tuỳ bạn muốn; ở mô tả bạn fade in các vector "được chọn làm không gian con"
         // thường là chính các vector nhập => nên đa số sẽ có. Nhưng vẫn tạo fallback cho chắc)
@@ -180,7 +203,7 @@
           alpha: 0,
           colorHex: red,
           colorCss: red,
-          haloCss: red
+          haloCss: red,
         };
         App.vectorList.push(found);
       }
@@ -204,11 +227,12 @@
 
     for (let i = 0; i < basisVecs.length; i++) {
       const bv = basisVecs[i];
-      let found = (App.vectorList || []).find(it => vecEq(it.vec, bv));
+      let found = (App.vectorList || []).find((it) => vecEq(it.vec, bv));
 
       if (!found) {
         found = {
-          id: "basis:auto:" + (i + 1) + ":" + Math.random().toString(16).slice(2),
+          id:
+            "basis:auto:" + (i + 1) + ":" + Math.random().toString(16).slice(2),
           name: "b" + (i + 1),
           vec: bv.slice(),
           visible: true,
@@ -216,7 +240,7 @@
           alpha: 0,
           colorHex: green,
           colorCss: green,
-          haloCss: green
+          haloCss: green,
         };
         App.vectorList.push(found);
       } else {
@@ -232,8 +256,11 @@
     }
 
     // đổi màu đỏ->xanh cho những vector basis đang nằm trong subspace
-    const needColorAnim = basisItems.filter(it => (it.colorHex || "").toLowerCase() === red.toLowerCase());
-    if (needColorAnim.length) await animateColor(needColorAnim, red, green, 220);
+    const needColorAnim = basisItems.filter(
+      (it) => (it.colorHex || "").toLowerCase() === red.toLowerCase(),
+    );
+    if (needColorAnim.length)
+      await animateColor(needColorAnim, red, green, 220);
 
     // set hẳn xanh cho toàn bộ basis
     for (const it of basisItems) {

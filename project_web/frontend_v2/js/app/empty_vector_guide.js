@@ -8,9 +8,7 @@
 
     // "card" bao quanh phần nhập vector
     const card =
-      input?.closest(".section-create") ||
-      input?.closest(".card") ||
-      null;
+      input?.closest(".section-create") || input?.closest(".card") || null;
 
     return { controls, input, card };
   }
@@ -45,7 +43,9 @@
 
       // focus nhẹ cho user biết chỗ nhập
       setTimeout(() => {
-        try { input.focus(); } catch (_) {}
+        try {
+          input.focus();
+        } catch (_) {}
       }, 450);
     });
   };
@@ -63,21 +63,24 @@
     selectEl.addEventListener(
       "pointerdown",
       (e) => {
-        const empty = !Array.isArray(App.vectorList) || App.vectorList.length === 0;
+        const empty =
+          !Array.isArray(App.vectorList) || App.vectorList.length === 0;
         if (!empty) return;
 
         // chặn trước khi select kịp mở
         e.preventDefault();
         e.stopPropagation();
-        if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+        if (typeof e.stopImmediatePropagation === "function")
+          e.stopImmediatePropagation();
 
         // bỏ focus ngay để khỏi nháy/giật
-        try { selectEl.blur(); } catch (_) {}
+        try {
+          selectEl.blur();
+        } catch (_) {}
 
         App.nudgeToCreateVector();
       },
-      true // CAPTURE
+      true, // CAPTURE
     );
   };
-
 })();

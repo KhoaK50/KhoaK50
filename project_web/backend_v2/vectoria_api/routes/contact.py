@@ -1,32 +1,36 @@
 import sqlite3
 import os
-import requests 
-import threading 
+import requests
+import threading
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 import base64
 
-contact_bp = Blueprint('contact', __name__)
+contact_bp = Blueprint("contact", __name__)
 
 # --- CẤU HÌNH ---
 # Link Google Script của bạn
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQtYiblsalJRXXo1P85Cio1L9Q3mO2OreWNiJdvxHtZJsNIqMlJHT1FVjNOoX3grNfSw/exec" 
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQtYiblsalJRXXo1P85Cio1L9Q3mO2OreWNiJdvxHtZJsNIqMlJHT1FVjNOoX3grNfSw/exec"
 
 # (Đã xóa hết phần cấu hình SMTP/Email ở đây cho nhẹ gánh)
+
 
 # --- 1. HÀM KHỞI TẠO DB ---
 def init_feedback_db():
     try:
-        conn = sqlite3.connect('feedback.db')
+        conn = sqlite3.connect("feedback.db")
         c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS feedbacks 
+        c.execute(
+            """CREATE TABLE IF NOT EXISTS feedbacks 
                       (id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                       name TEXT, email TEXT, message TEXT, created_at TEXT)''')
+                       name TEXT, email TEXT, message TEXT, created_at TEXT)"""
+        )
         conn.commit()
         conn.close()
         print(">> [Database] Ready.")
     except Exception as e:
         print(f">> [Database Error] {e}")
+
 
 # --- 2. HÀM GỬI SANG GOOGLE (QUAN TRỌNG) ---
 # Hàm này sẽ chạy trực tiếp để đảm bảo dữ liệu sang được Google trước khi trả về
@@ -39,16 +43,17 @@ def send_to_google_direct(payload):
     except Exception as e:
         print(f">> [Google Error] {e}")
 
+
 # --- 3. API CHÍNH ---
-@contact_bp.route('/api/contact', methods=['POST'])
+@contact_bp.route("/api/contact", methods=["POST"])
 def handle_contact():
     try:
         # A. Lấy dữ liệu
-        user_name = request.form.get('user_name', 'Ẩn danh')
-        user_email = request.form.get('user_email', '')
-        message = request.form.get('message', '')
-        uploaded_file = request.files.get('attachment')
-        
+        user_name = request.form.get("user_name", "Ẩn danh")
+        user_email = request.form.get("user_email", "")
+        message = request.form.get("message", "")
+        uploaded_file = request.files.get("attachment")
+
         file_payload = None
         file_name_str = ""
 
@@ -57,11 +62,11 @@ def handle_contact():
             try:
                 file_name_str = uploaded_file.filename
                 file_content = uploaded_file.read()
-                file_b64 = base64.b64encode(file_content).decode('utf-8')
+                file_b64 = base64.b64encode(file_content).decode("utf-8")
                 file_payload = {
                     "name": file_name_str,
                     "mimeType": uploaded_file.content_type,
-                    "data": file_b64
+                    "data": file_b64,
                 }
             except Exception as e:
                 print(f">> [File Error] {e}")
@@ -75,7 +80,7 @@ def handle_contact():
             "email": user_email,
             "message": full_msg,
             "file": file_payload,
-            "send_email": True  # Cờ báo hiệu cho Google Script biết là hãy gửi mail đi
+            "send_email": True,  # Cờ báo hiệu cho Google Script biết là hãy gửi mail đi
         }
 
         # D. Gửi sang Google (Chạy Sync để đảm bảo Vercel không kill process)

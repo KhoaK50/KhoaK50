@@ -84,7 +84,9 @@
 
       // focus để user gõ luôn
       setTimeout(() => {
-        try { input.focus(); } catch (_) {}
+        try {
+          input.focus();
+        } catch (_) {}
       }, 250);
     });
   };
@@ -103,20 +105,24 @@
     selectEl.addEventListener(
       "pointerdown",
       (e) => {
-        const empty = !Array.isArray(App.vectorList) || App.vectorList.length === 0;
+        const empty =
+          !Array.isArray(App.vectorList) || App.vectorList.length === 0;
         if (!empty) return;
 
         // chặn trước khi select kịp mở + kịp focus
         e.preventDefault();
         e.stopPropagation();
-        if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+        if (typeof e.stopImmediatePropagation === "function")
+          e.stopImmediatePropagation();
 
         // tránh browser nhảy focus về select rồi mới scroll
-        try { selectEl.blur(); } catch (_) {}
+        try {
+          selectEl.blur();
+        } catch (_) {}
 
         App.nudgeToCreateVector();
       },
-      true // CAPTURE
+      true, // CAPTURE
     );
   };
 })();

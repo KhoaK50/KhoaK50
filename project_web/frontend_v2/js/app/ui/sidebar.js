@@ -5,10 +5,10 @@
   // 1. CSS CHO TAB & QUY HOẠCH GIAO DIỆN
   // =========================================================================
   function injectSidebarStyles() {
-    if (document.getElementById('sidebar-dynamic-styles')) return;
+    if (document.getElementById("sidebar-dynamic-styles")) return;
 
-    const style = document.createElement('style');
-    style.id = 'sidebar-dynamic-styles';
+    const style = document.createElement("style");
+    style.id = "sidebar-dynamic-styles";
     style.textContent = `
     /* --- KHUNG CHÍNH --- */
     /* Mặc định trên Desktop */
@@ -216,7 +216,7 @@
     const cardCreate = sidebar.querySelector(".section-create");
     const cardList = sidebar.querySelector(".section-list");
     const cardSpace = sidebar.querySelector(".section-calc-info"); // Không gian
-    const cardCalc = sidebar.querySelector(".section-calc-new");   // Phép tính
+    const cardCalc = sidebar.querySelector(".section-calc-new"); // Phép tính
 
     // 2. Tạo cấu trúc Tab mới
     const tabNav = document.createElement("div");
@@ -226,7 +226,8 @@
     const btnList = document.createElement("button");
     btnList.className = "tab-btn active";
     // Mẹo: Thêm icon để người dùng dễ nhận biết hơn khi chữ bị nhỏ
-    btnList.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> KHỞI TẠO VECTOR';
+    btnList.innerHTML =
+      '<i class="fa-solid fa-pen-to-square"></i> KHỞI TẠO VECTOR';
 
     const btnSpace = document.createElement("button");
     btnSpace.className = "tab-btn";
@@ -241,9 +242,12 @@
     tabNav.appendChild(btnCalc);
 
     // 3. Tạo các Container chứa nội dung
-    const tabContentList = document.createElement("div"); tabContentList.className = "tab-content active";
-    const tabContentSpace = document.createElement("div"); tabContentSpace.className = "tab-content";
-    const tabContentCalc = document.createElement("div"); tabContentCalc.className = "tab-content";
+    const tabContentList = document.createElement("div");
+    tabContentList.className = "tab-content active";
+    const tabContentSpace = document.createElement("div");
+    tabContentSpace.className = "tab-content";
+    const tabContentCalc = document.createElement("div");
+    tabContentCalc.className = "tab-content";
 
     // 4. "Gắp" các Card cũ bỏ vào Tab mới (Move DOM)
     // Việc này giữ nguyên toàn bộ sự kiện click/input đã gán trước đó
@@ -277,8 +281,8 @@
 
     tabs.forEach((btn, index) => {
       btn.onclick = () => {
-        tabs.forEach(t => t.classList.remove("active"));
-        panels.forEach(p => p.classList.remove("active"));
+        tabs.forEach((t) => t.classList.remove("active"));
+        panels.forEach((p) => p.classList.remove("active"));
         btn.classList.add("active");
         panels[index].classList.add("active");
       };
@@ -289,8 +293,8 @@
   injectSidebarStyles();
 
   // Đợi DOM load xong để chắc chắn tìm thấy element
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSidebarLayout);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initSidebarLayout);
   } else {
     initSidebarLayout();
   }
@@ -300,13 +304,16 @@
 
   function nearAxisHue(h) {
     const anchors = [0, 120, 240];
-    return anchors.some((a) => Math.abs((((h - a + 540) % 360) - 180)) < 14);
+    return anchors.some((a) => Math.abs(((h - a + 540) % 360) - 180) < 14);
   }
 
   function pickUniqueHue() {
     const golden = 137.508;
     let h = (App.vectorList.length * golden) % 360;
-    while ([...(App.usedHues)].some((uh) => Math.abs(uh - h) < 8) || nearAxisHue(h)) {
+    while (
+      [...App.usedHues].some((uh) => Math.abs(uh - h) < 8) ||
+      nearAxisHue(h)
+    ) {
       h = (h + 23) % 360;
     }
     App.usedHues.add(h);
@@ -318,8 +325,12 @@
     l /= 100;
     const k = (n) => (n + h / 30) % 12;
     const a = s * Math.min(l, 1 - l);
-    const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-    const toHex = (x) => Math.round(255 * x).toString(16).padStart(2, "0");
+    const f = (n) =>
+      l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    const toHex = (x) =>
+      Math.round(255 * x)
+        .toString(16)
+        .padStart(2, "0");
     return "#" + toHex(f(0)) + toHex(f(8)) + toHex(f(4));
   }
 
@@ -338,7 +349,8 @@
       hue,
       colorCss: `hsl(${hue} 75% 52%)`,
       colorHex: computeVectorColorHex(hue),
-      haloCss: App.theme === "dark" ? `hsl(${hue} 95% 80%)` : `hsl(${hue} 80% 30%)`,
+      haloCss:
+        App.theme === "dark" ? `hsl(${hue} 95% 80%)` : `hsl(${hue} 80% 30%)`,
       haloHex: computeHaloHex(hue, App.theme),
       focus: false,
       visible: true,
@@ -353,20 +365,26 @@
   App.refreshHaloColors = function () {
     App.vectorList.forEach((v) => {
       v.haloHex = computeHaloHex(v.hue, App.theme);
-      v.haloCss = App.theme === "dark" ? `hsl(${v.hue} 95% 80%)` : `hsl(${v.hue} 80% 30%)`;
+      v.haloCss =
+        App.theme === "dark"
+          ? `hsl(${v.hue} 95% 80%)`
+          : `hsl(${v.hue} 80% 30%)`;
     });
   };
   App.smartFormat = function (num) {
     if (Math.abs(num - Math.round(num)) < 1e-9) return String(Math.round(num));
     for (let d = 2; d <= 100; d++) {
       let n = num * d;
-      if (Math.abs(n - Math.round(n)) < 1e-5) return `\\frac{${Math.round(n)}}{${d}}`;
+      if (Math.abs(n - Math.round(n)) < 1e-5)
+        return `\\frac{${Math.round(n)}}{${d}}`;
     }
-    return Number(num).toFixed(4).replace(/\.?0+$/, "");
+    return Number(num)
+      .toFixed(4)
+      .replace(/\.?0+$/, "");
   };
   App.displayIndexOf = (item) => App.vectorList.indexOf(item) + 1;
-  App.optionLabelFor = (it) => `#${App.displayIndexOf(it)} ${App.formatVectorShort(it.vec)}`;
-
+  App.optionLabelFor = (it) =>
+    `#${App.displayIndexOf(it)} ${App.formatVectorShort(it.vec)}`;
 
   // =========================================================================
   // 3. MAIN RENDER FUNCTION: App.renderVectorList
@@ -378,7 +396,9 @@
     el.innerHTML = "";
 
     // Tự tìm ô input search
-    let searchInp = document.getElementById("vecSearch") || document.querySelector('input[placeholder*="Tìm vector"]');
+    let searchInp =
+      document.getElementById("vecSearch") ||
+      document.querySelector('input[placeholder*="Tìm vector"]');
 
     // Nếu chưa gắn sự kiện thì gắn 1 lần thôi
     if (searchInp && !searchInp._searchAttached) {
@@ -388,17 +408,22 @@
     // Lấy từ khóa đang gõ
     const searchTerm = searchInp ? searchInp.value.trim().toLowerCase() : "";
 
-
     // --- B. SỰ KIỆN CLICK RA NGOÀI & SCROLL (RESET KHUNG) ---
     if (!window._sidebarEventsAttached) {
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.vec-input-wrapper')) {
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".vec-input-wrapper")) {
           // Đóng menu
-          document.querySelectorAll('.vec-dropdown').forEach(d => d.classList.remove('show'));
-          document.querySelectorAll('.vec-item').forEach(it => it.classList.remove('active-z'));
+          document
+            .querySelectorAll(".vec-dropdown")
+            .forEach((d) => d.classList.remove("show"));
+          document
+            .querySelectorAll(".vec-item")
+            .forEach((it) => it.classList.remove("active-z"));
 
           // [QUAN TRỌNG] Thu hồi margin (khung co lại như cũ)
-          document.querySelectorAll('.vec-input-wrapper').forEach(w => w.style.marginBottom = "0px");
+          document
+            .querySelectorAll(".vec-input-wrapper")
+            .forEach((w) => (w.style.marginBottom = "0px"));
         }
       });
       window._sidebarEventsAttached = true;
@@ -406,7 +431,6 @@
 
     // --- C. VÒNG LẶP RENDER (CÓ LỌC TÌM KIẾM) ---
     for (const item of App.vectorList) {
-
       // [QUAN TRỌNG] Logic Lọc: Tạo chuỗi hiển thị để so sánh
       // Ví dụ: "#1 [1, 2]"
       const displayLabel = `#${App.displayIndexOf(item)} ${App.formatVectorShort(item.vec)}`;
@@ -418,7 +442,8 @@
 
       // --- TỪ ĐÂY TRỞ XUỐNG LÀ CODE RENDER GIAO DIỆN (GIỮ NGUYÊN) ---
       const li = document.createElement("li");
-      li.className = "vec-item hover-gradient" + (item.highlighted ? " active" : "");
+      li.className =
+        "vec-item hover-gradient" + (item.highlighted ? " active" : "");
 
       const sw = document.createElement("div");
       sw.className = "sw";
@@ -482,9 +507,11 @@
             item.vec = v;
 
             // Giữ nguyên logic hiển thị LaTeX đẹp
-            const needsCalc = /(sin|cos|tan|cot|log|ln|pi|e\^|e\s|e$)/i.test(rawValue);
+            const needsCalc = /(sin|cos|tan|cot|log|ln|pi|e\^|e\s|e$)/i.test(
+              rawValue,
+            );
             if (needsCalc) {
-              const latexArr = v.map(val => App.smartFormat(val));
+              const latexArr = v.map((val) => App.smartFormat(val));
               item.latex = `[${latexArr.join(", ")}]`;
             } else {
               item.latex = rawValue;
@@ -500,7 +527,7 @@
             else if (window.Vec2D) Vec2D.draw2DAllVectors();
           }
         } catch (err) {
-          // console.log("Lỗi nhập liệu:", err); 
+          // console.log("Lỗi nhập liệu:", err);
         }
       });
 
@@ -525,10 +552,10 @@
         { label: "Logarit tự nhiên", latex: "\\ln(#0)", preview: "ln" },
         { separator: true },
         { label: "Số Pi", latex: "\\pi", preview: "π" },
-        { label: "Số e", latex: "e", preview: "e" }
+        { label: "Số e", latex: "e", preview: "e" },
       ];
 
-      menuItems.forEach(m => {
+      menuItems.forEach((m) => {
         if (m.separator) {
           const hr = document.createElement("div");
           hr.style.borderTop = "1px solid #eee";
@@ -540,9 +567,9 @@
           row.innerHTML = `<span>${m.label}</span><span class="latex-preview">${m.preview}</span>`;
           row.onclick = (e) => {
             e.stopPropagation();
-            mf.executeCommand(['insert', m.latex]);
+            mf.executeCommand(["insert", m.latex]);
             mf.focus();
-            dropdown.classList.remove('show');
+            dropdown.classList.remove("show");
           };
           dropdown.appendChild(row);
         }
@@ -551,37 +578,43 @@
       // --- SỰ KIỆN MENU (ĐÃ FIX LỖI KẸT) ---
       btn.onclick = (e) => {
         e.stopPropagation();
-        const topMenu = document.getElementById('myCustomMenu');
-        if (topMenu) topMenu.style.display = 'none';
-        
+        const topMenu = document.getElementById("myCustomMenu");
+        if (topMenu) topMenu.style.display = "none";
+
         // Tìm wrapper chứa input và nút này
-        const currentWrapper = btn.closest('.vec-input-wrapper');
-        const isClosed = !dropdown.classList.contains('show');
+        const currentWrapper = btn.closest(".vec-input-wrapper");
+        const isClosed = !dropdown.classList.contains("show");
 
         // 1. Reset toàn bộ (Đóng tất cả menu khác và thu hồi khoảng trống)
-        document.querySelectorAll('.vec-dropdown').forEach(d => d.classList.remove('show'));
-        document.querySelectorAll('.vec-input-wrapper').forEach(w => w.style.marginBottom = "0px"); // Reset margin
-        document.querySelectorAll('.vec-item').forEach(it => it.classList.remove('active-z'));
+        document
+          .querySelectorAll(".vec-dropdown")
+          .forEach((d) => d.classList.remove("show"));
+        document
+          .querySelectorAll(".vec-input-wrapper")
+          .forEach((w) => (w.style.marginBottom = "0px")); // Reset margin
+        document
+          .querySelectorAll(".vec-item")
+          .forEach((it) => it.classList.remove("active-z"));
 
         if (isClosed) {
           // 2. Mở menu
-          dropdown.classList.add('show');
-          li.classList.add('active-z'); // Đẩy z-index lên cao nhất
+          dropdown.classList.add("show");
+          li.classList.add("active-z"); // Đẩy z-index lên cao nhất
 
           // 3. Tính chiều cao menu để đẩy khung ra
           // Phải chờ 1 tick để trình duyệt render menu xong mới lấy được chiều cao
           requestAnimationFrame(() => {
             const menuHeight = dropdown.offsetHeight;
             // Cộng thêm margin-bottom cho wrapper bằng đúng chiều cao menu + chút khoảng hở
-            currentWrapper.style.marginBottom = (menuHeight + 10) + "px";
+            currentWrapper.style.marginBottom = menuHeight + 10 + "px";
 
             // Nếu menu bị khuất dưới đáy màn hình -> Cuộn xuống cho thấy
             const rect = dropdown.getBoundingClientRect();
             const listEl = document.getElementById("vectorList");
-            const viewHeight = listEl.closest('.tab-content').offsetHeight; // Hoặc window.innerHeight
+            const viewHeight = listEl.closest(".tab-content").offsetHeight; // Hoặc window.innerHeight
 
             // Logic cuộn thông minh (nếu cần)
-            dropdown.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            dropdown.scrollIntoView({ behavior: "smooth", block: "nearest" });
           });
         }
       };
@@ -657,7 +690,7 @@
   App.refreshCalcVectorOptions = function () {
     const ids = ["v1Select", "v2Select"]; // Chỉ áp dụng cho 2 ô chọn phép tính chính
 
-    ids.forEach(id => {
+    ids.forEach((id) => {
       const sel = document.getElementById(id);
       if (!sel) return;
 
@@ -675,7 +708,7 @@
       sel.appendChild(placeholder);
 
       // 2. Đổ danh sách vector vào
-      App.vectorList.forEach(it => {
+      App.vectorList.forEach((it) => {
         const o = document.createElement("option");
         o.value = it.id;
         o.textContent = App.optionLabelFor(it);
@@ -683,7 +716,7 @@
       });
 
       // 3. Nếu giá trị cũ vẫn còn trong danh sách thì giữ nguyên, không thì về rỗng
-      if (oldValue && App.vectorList.some(v => v.id == oldValue)) {
+      if (oldValue && App.vectorList.some((v) => v.id == oldValue)) {
         sel.value = oldValue;
       } else {
         sel.value = "";
@@ -714,7 +747,8 @@
 
     // 1. Báo trống
     if (App.vectorList.length === 0) {
-      container.innerHTML = '<div style="padding:15px; text-align:center; color:#999; font-style:italic;">(Chưa có vector nào)</div>';
+      container.innerHTML =
+        '<div style="padding:15px; text-align:center; color:#999; font-style:italic;">(Chưa có vector nào)</div>';
       return;
     }
 
@@ -735,9 +769,11 @@
 
     // Logic Select All
     const toggleAll = () => {
-      const inputs = listDiv.querySelectorAll('.checkitem:not([style*="display: none"]) input[type="checkbox"]');
+      const inputs = listDiv.querySelectorAll(
+        '.checkitem:not([style*="display: none"]) input[type="checkbox"]',
+      );
       const isChecked = cbAll.checked;
-      inputs.forEach(input => input.checked = isChecked);
+      inputs.forEach((input) => (input.checked = isChecked));
     };
     cbAll.onchange = toggleAll;
     lbl.onclick = (e) => {
@@ -807,7 +843,7 @@
         cb.checked = !cb.checked;
 
         // Dispatch event để báo hiệu thay đổi (nếu có logic lắng nghe change)
-        cb.dispatchEvent(new Event('change', { bubbles: true }));
+        cb.dispatchEvent(new Event("change", { bubbles: true }));
       };
 
       row.appendChild(left);
@@ -817,7 +853,7 @@
       items.push({
         row: row,
         text: mf.value.toLowerCase(),
-        idStr: badge.textContent.toLowerCase()
+        idStr: badge.textContent.toLowerCase(),
       });
     });
 
@@ -826,7 +862,7 @@
     // 5. Search Logic
     searchInp.addEventListener("input", () => {
       const term = searchInp.value.trim().toLowerCase();
-      items.forEach(item => {
+      items.forEach((item) => {
         const match = item.text.includes(term) || item.idStr.includes(term);
         item.row.style.display = match ? "flex" : "none";
       });
@@ -854,11 +890,13 @@
 
     if (App.vectorList.length) {
       if (v1AngleSelect) v1AngleSelect.value = App.vectorList[0].id;
-      if (v2AngleSelect) v2AngleSelect.value = (App.vectorList[1]?.id ?? App.vectorList[0].id);
+      if (v2AngleSelect)
+        v2AngleSelect.value = App.vectorList[1]?.id ?? App.vectorList[0].id;
       if (vNormSelect) vNormSelect.value = App.vectorList[0].id;
       if (vCoordSelect) vCoordSelect.value = App.vectorList[0].id;
       if (v1DotSelect) v1DotSelect.value = App.vectorList[0].id;
-      if (v2DotSelect) v2DotSelect.value = (App.vectorList[1]?.id ?? App.vectorList[0].id);
+      if (v2DotSelect)
+        v2DotSelect.value = App.vectorList[1]?.id ?? App.vectorList[0].id;
     }
 
     makeChecklist(basisCoordChecklist, "coord");
@@ -870,11 +908,17 @@
   App.updateCalcSelectLabels = function () {
     // 1. Cập nhật các Menu xổ xuống (Select Box) - Giữ nguyên logic cũ
     const selectIds = [
-      "v1Select", "v2Select", "v1AngleSelect", "v2AngleSelect",
-      "vNormSelect", "vCoordSelect", "v1DotSelect", "v2DotSelect"
+      "v1Select",
+      "v2Select",
+      "v1AngleSelect",
+      "v2AngleSelect",
+      "vNormSelect",
+      "vCoordSelect",
+      "v1DotSelect",
+      "v2DotSelect",
     ];
 
-    selectIds.forEach(id => {
+    selectIds.forEach((id) => {
       const sel = document.getElementById(id);
       if (!sel) return;
       Array.from(sel.options).forEach((opt) => {
@@ -886,13 +930,13 @@
     // 2. [MỚI] Cập nhật các Checklist (Độc lập tuyến tính, Cơ sở, Hạng...)
     // Hàm con để tìm và sửa chữ trong checklist mà không làm mất dấu tích chọn
     const syncChecklistText = (prefix) => {
-      App.vectorList.forEach(it => {
+      App.vectorList.forEach((it) => {
         const checkbox = document.getElementById(`chk_${prefix}_${it.id}`);
         if (checkbox) {
-          const row = checkbox.closest('.checkitem');
+          const row = checkbox.closest(".checkitem");
           if (row) {
             // [SỬA LẠI ĐOẠN NÀY] Tìm thẻ math-field thay vì .vec-text
-            const mf = row.querySelector('math-field');
+            const mf = row.querySelector("math-field");
             if (mf) {
               // Cập nhật giá trị mới (ưu tiên latex)
               mf.value = it.latex || App.formatVectorShort(it.vec);
@@ -905,7 +949,7 @@
     // Chạy đồng bộ cho tất cả các loại checklist đang có
     syncChecklistText("indep"); // Độc lập tuyến tính
     syncChecklistText("basis"); // Hệ cơ sở
-    syncChecklistText("rank");  // Tìm hạng
+    syncChecklistText("rank"); // Tìm hạng
     syncChecklistText("coord"); // Tìm tọa độ
   };
 
@@ -925,41 +969,46 @@
     // --- IF EMPTY: ---
 
     // 1. Show Toast Message (Missing part)
-    if (window.App && typeof App.showToast === 'function') {
-      App.showToast("Danh sách trống! Hãy tạo vector ở đây trước 👇", "warning");
+    if (window.App && typeof App.showToast === "function") {
+      App.showToast(
+        "Danh sách trống! Hãy tạo vector ở đây trước 👇",
+        "warning",
+      );
     } else {
       // Fallback if toast system isn't ready
       alert("Danh sách trống! Hãy tạo vector trước.");
     }
 
     // 2. Switch to "Create" Tab
-    const firstTab = document.querySelector('.sidebar-tabs .tab-btn');
+    const firstTab = document.querySelector(".sidebar-tabs .tab-btn");
     if (firstTab) {
       firstTab.click();
     }
 
     // 3. Focus and Shake Input
     setTimeout(() => {
-      const input = document.querySelector('#card-create math-field') || document.querySelector('#vectorInput');
+      const input =
+        document.querySelector("#card-create math-field") ||
+        document.querySelector("#vectorInput");
       if (input) {
-        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        input.scrollIntoView({ behavior: "smooth", block: "center" });
 
         // Reset animation
-        input.style.animation = 'none';
+        input.style.animation = "none";
         input.offsetHeight; /* trigger reflow */
-        input.style.animation = 'shakeError 0.4s ease-in-out';
+        input.style.animation = "shakeError 0.4s ease-in-out";
 
         // Add red border/shadow
-        input.style.borderColor = '#ff4444';
-        input.style.boxShadow = '0 0 0 4px rgba(255, 68, 68, 0.1)';
+        input.style.borderColor = "#ff4444";
+        input.style.boxShadow = "0 0 0 4px rgba(255, 68, 68, 0.1)";
 
         input.focus();
 
         // Clear red styles after 2s
         setTimeout(() => {
-          input.style.borderColor = '';
-          input.style.boxShadow = '';
-          input.style.animation = '';
+          input.style.borderColor = "";
+          input.style.boxShadow = "";
+          input.style.animation = "";
         }, 2000);
       }
     }, 150);
@@ -976,19 +1025,30 @@
 
       // 2. Gắn chốt chặn cho các nút tính toán
       // Danh sách các từ khóa trên nút cần chặn
-      const keywords = ["Thực hiện", "Kiểm tra", "Tính hạng", "Tính cơ sở", "Xuất tọa độ", "Tính toán"];
+      const keywords = [
+        "Thực hiện",
+        "Kiểm tra",
+        "Tính hạng",
+        "Tính cơ sở",
+        "Xuất tọa độ",
+        "Tính toán",
+      ];
       const btnText = btn.textContent.trim();
 
-      if (keywords.some(k => btnText.includes(k))) {
+      if (keywords.some((k) => btnText.includes(k))) {
         if (!btn.dataset.hasCheck) {
           btn.dataset.hasCheck = "true";
           // Dùng capture phase (true) để chặn sự kiện trước khi nó chạy vào logic cũ
-          btn.addEventListener("click", (e) => {
-            if (!App.requireVectors()) {
-              e.stopImmediatePropagation();
-              e.preventDefault();
-            }
-          }, true);
+          btn.addEventListener(
+            "click",
+            (e) => {
+              if (!App.requireVectors()) {
+                e.stopImmediatePropagation();
+                e.preventDefault();
+              }
+            },
+            true,
+          );
         }
       }
     }
@@ -996,18 +1056,23 @@
     // 3. Làm đẹp kết quả (như cũ)
     const divs = document.querySelectorAll("div");
     for (let div of divs) {
-      if (div.textContent.trim().startsWith("Kết quả:") && !div.classList.contains('nice-result-box')) {
-        div.classList.add('nice-result-box');
-        div.innerHTML = div.innerHTML.replace("Kết quả:", "<strong>KẾT QUẢ:</strong>");
+      if (
+        div.textContent.trim().startsWith("Kết quả:") &&
+        !div.classList.contains("nice-result-box")
+      ) {
+        div.classList.add("nice-result-box");
+        div.innerHTML = div.innerHTML.replace(
+          "Kết quả:",
+          "<strong>KẾT QUẢ:</strong>",
+        );
         // Fix số xấu
         if (/\d+\.\d{5,}/.test(div.innerHTML)) {
           div.innerHTML = div.innerHTML.replace(/(\d+\.\d+)/g, (m) => {
             const v = parseFloat(m);
-            return (!isNaN(v) && window.App.smartFormat) ? App.smartFormat(v) : m;
+            return !isNaN(v) && window.App.smartFormat ? App.smartFormat(v) : m;
           });
         }
       }
     }
   }, 500);
-
 })();

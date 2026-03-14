@@ -38,7 +38,7 @@
       // Thử khử vector v bằng các vector cơ sở đã tìm thấy trước đó
       for (const basisRow of basisRows) {
         // Tìm phần tử khác 0 đầu tiên (pivot) của basisRow
-        let pivotIdx = basisRow.findIndex(val => Math.abs(val) > EPSILON);
+        let pivotIdx = basisRow.findIndex((val) => Math.abs(val) > EPSILON);
         if (pivotIdx === -1) continue; // Không nên xảy ra
 
         const factor = v[pivotIdx] / basisRow[pivotIdx];
@@ -52,7 +52,7 @@
       }
 
       // Kiểm tra xem sau khi khử, v có biến thành vector 0 không?
-      const isZero = v.every(val => Math.abs(val) < EPSILON);
+      const isZero = v.every((val) => Math.abs(val) < EPSILON);
 
       if (!isZero) {
         // Nếu KHÔNG phải vector 0 -> Nó độc lập -> Thêm vào cơ sở
@@ -108,10 +108,14 @@
     const phaseMs = Math.max(120, Number(opts?.phaseMs) || 900);
 
     // 1. Xác định danh sách đầu vào
-    const selectedIds = new Set(Array.isArray(opts?.selectedIds) ? opts.selectedIds.map(Number) : []);
+    const selectedIds = new Set(
+      Array.isArray(opts?.selectedIds) ? opts.selectedIds.map(Number) : [],
+    );
 
     // Lấy các object vector thật từ list (theo đúng thứ tự hiển thị)
-    const candidateItems = (App.vectorList || []).filter(it => selectedIds.has(it.id));
+    const candidateItems = (App.vectorList || []).filter((it) =>
+      selectedIds.has(it.id),
+    );
 
     // 2. [QUAN TRỌNG] Tự tính toán lại cơ sở (Subset) ngay tại đây
     // Bỏ qua opts.basisVectors vì nó có thể là cơ sở chuẩn (sai ý đồ)

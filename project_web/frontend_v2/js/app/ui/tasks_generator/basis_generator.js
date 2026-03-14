@@ -2,7 +2,7 @@
 (function () {
   window.App = window.App || {};
   App.TasksGen = App.TasksGen || {}; // Namespace cha
-  App.TasksGen.Basis = {};           // Namespace con (Đã sửa)
+  App.TasksGen.Basis = {}; // Namespace con (Đã sửa)
 
   /* =======================================================================
       PHẦN 1: GIỮ NGUYÊN CÁC HÀM BỔ TRỢ CỦA BẢN CŨ
@@ -10,20 +10,24 @@
   function fmtScalarLatex(x) {
     let val = x;
     // 1. Ép số nguyên (1.0000001 -> 1)
-    if (typeof val === 'number' && Math.abs(val - Math.round(val)) < 1e-4) {
+    if (typeof val === "number" && Math.abs(val - Math.round(val)) < 1e-4) {
       val = Math.round(val);
     }
     // 2. Ép phân số đơn giản (1.3333 -> 4/3) - phòng hờ backend gửi số thực
-    if (typeof val === 'number') {
+    if (typeof val === "number") {
       for (let d = 2; d <= 12; d++) {
         if (Math.abs(val - Math.round(val * d) / d) < 1e-4) {
           // Nếu App.formatScalar xịn thì để nó lo, ko thì tự xử
-          if (typeof App.formatScalar !== "function") return "\\frac{" + Math.round(val * d) + "}{" + d + "}";
+          if (typeof App.formatScalar !== "function")
+            return "\\frac{" + Math.round(val * d) + "}{" + d + "}";
         }
       }
     }
 
-    let s = (typeof App.formatScalar === "function") ? App.formatScalar(val) : String(val);
+    let s =
+      typeof App.formatScalar === "function"
+        ? App.formatScalar(val)
+        : String(val);
     s = String(s).trim();
     s = s.replace(/sqrt\(([^)]+)\)/g, "\\sqrt{$1}");
     return s.replace(/(\d)\s*\*\s*(\\sqrt|\w)/g, "$1\\cdot $2");
@@ -34,10 +38,11 @@
     return `\\left(${items.join(",\\, ")}\\right)`;
   }
 
-
   function matrixToLatex(M) {
     if (!Array.isArray(M) || !M.length) return "\\begin{pmatrix}\\end{pmatrix}";
-    const rows = M.map(row => (row || []).map(fmtScalarLatex).join(" & ")).join(" \\\\ ");
+    const rows = M.map((row) =>
+      (row || []).map(fmtScalarLatex).join(" & "),
+    ).join(" \\\\ ");
     return `\\begin{pmatrix} ${rows} \\end{pmatrix}`;
   }
 
@@ -46,7 +51,7 @@
     let c = 0;
     for (const row of M) {
       if (!Array.isArray(row)) continue;
-      const allZero = row.every(x => {
+      const allZero = row.every((x) => {
         const s = String(x);
         return x === 0 || s === "0" || s === "0.0";
       });
@@ -57,7 +62,7 @@
 
   function isZeroRow(row) {
     if (!Array.isArray(row)) return true;
-    return row.every(x => {
+    return row.every((x) => {
       const s = String(x);
       return x === 0 || s === "0" || s === "0.0";
     });
@@ -65,7 +70,7 @@
 
   function isZeroVector(v, tol = 1e-10) {
     if (!Array.isArray(v) || !v.length) return true;
-    return v.every(x => Math.abs(Number(x)) < tol);
+    return v.every((x) => Math.abs(Number(x)) < tol);
   }
 
   function normCell(x) {
@@ -84,7 +89,8 @@
     if (!Array.isArray(A) || !Array.isArray(B)) return false;
     if (A.length !== B.length) return false;
     for (let i = 0; i < A.length; i++) {
-      const ra = A[i], rb = B[i];
+      const ra = A[i],
+        rb = B[i];
       if (!Array.isArray(ra) || !Array.isArray(rb)) return false;
       if (ra.length !== rb.length) return false;
       for (let j = 0; j < ra.length; j++) {
@@ -125,9 +131,12 @@
       const k = Number(op.factor);
       if (!Number.isFinite(dst) || !Number.isFinite(src)) return "";
       if (Math.abs(k) < 1e-12) return `d_{${dst}}\\;\\to\\;d_{${dst}}`;
-      if (Math.abs(k - 1) < 1e-12) return `d_{${dst}}\\;\\to\\;d_{${dst}}-d_{${src}}`;
-      if (Math.abs(k + 1) < 1e-12) return `d_{${dst}}\\;\\to\\;d_{${dst}}+d_{${src}}`;
-      if (k > 0) return `d_{${dst}}\\;\\to\\;d_{${dst}}-${fmtNumForOp(k)}d_{${src}}`;
+      if (Math.abs(k - 1) < 1e-12)
+        return `d_{${dst}}\\;\\to\\;d_{${dst}}-d_{${src}}`;
+      if (Math.abs(k + 1) < 1e-12)
+        return `d_{${dst}}\\;\\to\\;d_{${dst}}+d_{${src}}`;
+      if (k > 0)
+        return `d_{${dst}}\\;\\to\\;d_{${dst}}-${fmtNumForOp(k)}d_{${src}}`;
       return `d_{${dst}}\\;\\to\\;d_{${dst}}+${fmtNumForOp(Math.abs(k))}d_{${src}}`;
     }
     if (kind === "scale") {
@@ -148,18 +157,15 @@
     // d1tod2-d1 , d2tod2+3d1 , d10tod3-d2
     s = s.replace(
       /d(\d+)\s*to\s*d(\d+)\s*-\s*(\d*)d(\d+)/gi,
-      (_, a, b, k, c) => `d_{${a}}\\;\\to\\;d_{${b}}-${k ? k : ""}d_{${c}}`
+      (_, a, b, k, c) => `d_{${a}}\\;\\to\\;d_{${b}}-${k ? k : ""}d_{${c}}`,
     );
 
     s = s.replace(
       /d(\d+)\s*to\s*d(\d+)\s*\+\s*(\d*)d(\d+)/gi,
-      (_, a, b, k, c) => `d_{${a}}\\;\\to\\;d_{${b}}+${k ? k : ""}d_{${c}}`
+      (_, a, b, k, c) => `d_{${a}}\\;\\to\\;d_{${b}}+${k ? k : ""}d_{${c}}`,
     );
 
-    s = s.replace(
-      /d(\d+)\s*to\s*d(\d+)/gi,
-      "d_{$1}\\;\\to\\;d_{$2}"
-    );
+    s = s.replace(/d(\d+)\s*to\s*d(\d+)/gi, "d_{$1}\\;\\to\\;d_{$2}");
 
     s = s.replace(/^Bước\s*[^:]*:\s*/i, "").trim();
     s = s.replace(/↔/g, "\\leftrightarrow").replace(/→/g, "\\to");
@@ -172,7 +178,10 @@
     s = s.replace(/\\+leftrightarrow/g, "\\leftrightarrow");
 
     s = s.replace(/d_(\d+)\s*\\to\s*d_(\d+)/g, "d_{$1}\\;\\to\\;d_{$2}");
-    s = s.replace(/d_(\d+)\s*\\leftrightarrow\s*d_(\d+)/g, "d_{$1}\\;\\leftrightarrow\\;d_{$2}");
+    s = s.replace(
+      /d_(\d+)\s*\\leftrightarrow\s*d_(\d+)/g,
+      "d_{$1}\\;\\leftrightarrow\\;d_{$2}",
+    );
     s = s.replace(/d_(\d+)/g, "d_{$1}");
 
     return s.replace(/\s+/g, " ").trim();
@@ -182,14 +191,18 @@
     return label ? `\\xrightarrow{\\;${label}\\;}` : "\\to";
   }
 
-
   function buildChainFromSteps(steps) {
     const list = Array.isArray(steps) ? steps : [];
 
     // 1. Tìm ma trận đầu tiên (Giữ nguyên)
     let firstMatrix = null;
     for (const st of list) {
-      if (st && (st.kind === "matrix" || st.kind === "info") && Array.isArray(st.matrix) && st.matrix.length) {
+      if (
+        st &&
+        (st.kind === "matrix" || st.kind === "info") &&
+        Array.isArray(st.matrix) &&
+        st.matrix.length
+      ) {
         firstMatrix = st.matrix;
         break;
       }
@@ -199,9 +212,7 @@
     const mats = [];
     for (const st of list) {
       if (st && st.kind === "matrix" && Array.isArray(st.matrix)) {
-
         let label = "";
-
 
         // Bất chấp Backend có gửi text hay không.
         if (st.row_op) {
@@ -217,8 +228,10 @@
       }
     }
 
-    if (!mats.length) return { chain: matrixToLatex(firstMatrix), lastMatrix: firstMatrix };
-    if (!matrixEqual(firstMatrix, mats[0].M)) mats.unshift({ M: firstMatrix, label: "" });
+    if (!mats.length)
+      return { chain: matrixToLatex(firstMatrix), lastMatrix: firstMatrix };
+    if (!matrixEqual(firstMatrix, mats[0].M))
+      mats.unshift({ M: firstMatrix, label: "" });
 
     let chain = matrixToLatex(mats[0].M);
     let prevM = mats[0].M;
@@ -239,9 +252,10 @@
       PHẦN 2: CÁCH 1 - MA TRẬN (HTML Version - Text gốc)
       ======================================================================= */
   App.TasksGen.Basis.buildBasisByMatrix = function (selectedItems, apiData) {
-    const vecs = (selectedItems || []).map(it => (it.vec || []).slice());
+    const vecs = (selectedItems || []).map((it) => (it.vec || []).slice());
     const n = vecs[0]?.length ?? 0;
-    const dim = (typeof apiData?.dimension === "number") ? apiData.dimension : null;
+    const dim =
+      typeof apiData?.dimension === "number" ? apiData.dimension : null;
     const A = vecs;
 
     const steps = Array.isArray(apiData?.steps) ? apiData.steps : [];
@@ -251,10 +265,14 @@
 
     const chainLatex = chain ? chain : `${matrixToLatex(A)}`;
 
-    const rankFromE = Array.isArray(lastMatrix) ? nonZeroRowCount(lastMatrix) : null;
-    const rank = (dim !== null) ? dim : (rankFromE ?? null);
+    const rankFromE = Array.isArray(lastMatrix)
+      ? nonZeroRowCount(lastMatrix)
+      : null;
+    const rank = dim !== null ? dim : (rankFromE ?? null);
 
-    const vecListLatex = (selectedItems || []).map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`).join(",\\; ");
+    const vecListLatex = (selectedItems || [])
+      .map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`)
+      .join(",\\; ");
 
     // CƠ SỞ LẤY TỪ CÁC DÒNG KHÁC 0 CỦA MA TRẬN CUỐI
     let basisFromMatrix = [];
@@ -269,7 +287,6 @@
     const basisRowsLatex = basisFromMatrix.length
       ? `\\left\\{${basisFromMatrix.map(vecToLatex).join(",\\; ")}\\right\\}`
       : "\\left\\{\\;\\right\\}";
-
 
     // --- CHUYỂN TEXT CŨ SANG HTML ---
     let html = `<div class="sol-step-container">`;
@@ -291,7 +308,7 @@
       titleText: "Cơ sở và số chiều trong",
       titleMath: `\\(\\mathbb{R}^{${n}}\\)`,
       htmlContent: html,
-      basisVectors: basisFromMatrix
+      basisVectors: basisFromMatrix,
     };
   };
 
@@ -315,23 +332,32 @@
         }
       }
       let lhs = parts.join(" ");
-      lhs = lhs.replace(/\+\s*0k_\{\d+\}/g, "").replace(/-\s*0k_\{\d+\}/g, "").replace(/\s+/g, " ").trim();
+      lhs = lhs
+        .replace(/\+\s*0k_\{\d+\}/g, "")
+        .replace(/-\s*0k_\{\d+\}/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
       eqs.push(`${lhs} = 0\\;(${i + 1})`);
     }
     return `\\left\\{\\begin{array}{l}\n${eqs.join(" \\\\\n")}\n\\end{array}\\right.`;
   }
 
   function rref(A, tol = 1e-10) {
-    const M = A.map(r => r.map(x => Number(x)));
+    const M = A.map((r) => r.map((x) => Number(x)));
     const rows = M.length;
     const cols = M[0]?.length ?? 0;
     let r = 0;
     const pivotCols = [];
     for (let c = 0; c < cols && r < rows; c++) {
       let piv = r;
-      for (let i = r; i < rows; i++) if (Math.abs(M[i][c]) > Math.abs(M[piv][c])) piv = i;
+      for (let i = r; i < rows; i++)
+        if (Math.abs(M[i][c]) > Math.abs(M[piv][c])) piv = i;
       if (Math.abs(M[piv][c]) < tol) continue;
-      if (piv !== r) { const tmp = M[piv]; M[piv] = M[r]; M[r] = tmp; }
+      if (piv !== r) {
+        const tmp = M[piv];
+        M[piv] = M[r];
+        M[r] = tmp;
+      }
       const pv = M[r][c];
       for (let j = c; j < cols; j++) M[r][j] /= pv;
       for (let i = 0; i < rows; i++) {
@@ -343,7 +369,8 @@
       pivotCols.push(c);
       r++;
     }
-    for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) if (Math.abs(M[i][j]) < tol) M[i][j] = 0;
+    for (let i = 0; i < rows; i++)
+      for (let j = 0; j < cols; j++) if (Math.abs(M[i][j]) < tol) M[i][j] = 0;
     return { M, pivotCols, rank: pivotCols.length };
   }
 
@@ -357,18 +384,30 @@
     if (freeCols.length === 0) {
       const lines = [];
       for (let j = 0; j < m; j++) lines.push(`k_{${j + 1}} = 0`);
-      return { freeCount: 0, freeCols, latex: "\\left\\{\\begin{array}{l}\n" + lines.join(" \\\\\n") + "\n\\end{array}\\right." };
+      return {
+        freeCount: 0,
+        freeCols,
+        latex:
+          "\\left\\{\\begin{array}{l}\n" +
+          lines.join(" \\\\\n") +
+          "\n\\end{array}\\right.",
+      };
     }
 
     const tNames = freeCols.map((_, idx) => `t_{${idx + 1}}`);
     const lines = [];
-    for (let idx = 0; idx < freeCols.length; idx++) lines.push(`k_{${freeCols[idx] + 1}} = ${tNames[idx]}`);
+    for (let idx = 0; idx < freeCols.length; idx++)
+      lines.push(`k_{${freeCols[idx] + 1}} = ${tNames[idx]}`);
 
     function findPivotRow(pc) {
       for (let i = 0; i < n; i++) {
         if (R[i][pc] !== 1) continue;
         let ok = true;
-        for (let j = 0; j < pc; j++) if (Math.abs(Number(R[i][j])) > 1e-12) { ok = false; break; }
+        for (let j = 0; j < pc; j++)
+          if (Math.abs(Number(R[i][j])) > 1e-12) {
+            ok = false;
+            break;
+          }
         if (ok) return i;
       }
       return -1;
@@ -387,36 +426,61 @@
         else if (Math.abs(c + 1) < 1e-12) terms.push(`- ${tNames[idx]}`);
         else terms.push(`${fmtScalarLatex(c)}${tNames[idx]}`);
       }
-      const rhs = terms.length ? terms.join(" + ").replace(/\+\s*-\s*/g, "- ") : "0";
+      const rhs = terms.length
+        ? terms.join(" + ").replace(/\+\s*-\s*/g, "- ")
+        : "0";
       lines.push(`k_{${pc + 1}} = ${rhs}`);
     }
-    return { freeCount: freeCols.length, freeCols, latex: "\\left\\{\\begin{array}{l}\n" + lines.join(" \\\\\n") + "\n\\end{array}\\right." };
+    return {
+      freeCount: freeCols.length,
+      freeCols,
+      latex:
+        "\\left\\{\\begin{array}{l}\n" +
+        lines.join(" \\\\\n") +
+        "\n\\end{array}\\right.",
+    };
   }
 
   /* =======================================================================
       PHẦN 4: CÁCH 2A - GIẢI HỆ (HTML Version - Text gốc)
       ======================================================================= */
-  App.TasksGen.Basis.buildBasisByEquationsGeneral = function (selectedItems, apiData) {
-    const vecs = (selectedItems || []).map(it => (it.vec || []).slice());
+  App.TasksGen.Basis.buildBasisByEquationsGeneral = function (
+    selectedItems,
+    apiData,
+  ) {
+    const vecs = (selectedItems || []).map((it) => (it.vec || []).slice());
     const n = vecs[0]?.length ?? 0;
     const m = vecs.length;
-    const dim = (typeof apiData?.dimension === "number") ? apiData.dimension : null;
-    const pivotFromApi = Array.isArray(apiData?.pivot_indices) ? apiData.pivot_indices : null;
+    const dim =
+      typeof apiData?.dimension === "number" ? apiData.dimension : null;
+    const pivotFromApi = Array.isArray(apiData?.pivot_indices)
+      ? apiData.pivot_indices
+      : null;
 
-    const vecListLatex = (selectedItems || []).map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`).join(",\\; ");
-    const eq0 = Array.from({ length: m }, (_, i) => `k_{${i + 1}}v_{${i + 1}}`).join(" + ") + " = \\vec{0}";
+    const vecListLatex = (selectedItems || [])
+      .map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`)
+      .join(",\\; ");
+    const eq0 =
+      Array.from({ length: m }, (_, i) => `k_{${i + 1}}v_{${i + 1}}`).join(
+        " + ",
+      ) + " = \\vec{0}";
     const sysLatex = buildComponentSystemLatex(vecs);
 
-    const A = Array.from({ length: n }, (_, i) => Array.from({ length: m }, (_, j) => Number(vecs[j][i] ?? 0)));
+    const A = Array.from({ length: n }, (_, i) =>
+      Array.from({ length: m }, (_, j) => Number(vecs[j][i] ?? 0)),
+    );
     const { M: R, pivotCols, rank: rnk } = rref(A, 1e-10);
     const sol = solutionFromRrefLatex(R, pivotCols);
-    const independent = (sol.freeCount === 0);
+    const independent = sol.freeCount === 0;
 
     let piv = pivotFromApi;
     if (!Array.isArray(piv) || !piv.length) piv = pivotCols.slice();
-    const basisFromSet = piv.length ? piv.map(i => vecs[i]) : [];
-    const basisLatex = basisFromSet.length ? `\\left\\{${basisFromSet.map(vecToLatex).join(",\\; ")}\\right\\}` : "\\left\\{\\;\\right\\}";
-    const rank = (typeof dim === "number") ? dim : (typeof rnk === "number" ? rnk : null);
+    const basisFromSet = piv.length ? piv.map((i) => vecs[i]) : [];
+    const basisLatex = basisFromSet.length
+      ? `\\left\\{${basisFromSet.map(vecToLatex).join(",\\; ")}\\right\\}`
+      : "\\left\\{\\;\\right\\}";
+    const rank =
+      typeof dim === "number" ? dim : typeof rnk === "number" ? rnk : null;
 
     // --- HTML OUTPUT ---
     let html = `<div class="sol-step-container">`;
@@ -435,21 +499,23 @@
     html += `<div class="sol-math-block">\\[ ${sol.latex} \\]</div>`;
 
     html += `<div class="sol-bold">Bước 3: Kết luận.</div>`;
-    if (independent) html += `<div class="sol-text">Hệ chỉ có nghiệm tầm thường nên các vectơ độc lập tuyến tính.</div>`;
-    else html += `<div class="sol-text">Hệ có nghiệm không tầm thường nên các vectơ phụ thuộc tuyến tính.</div>`;
+    if (independent)
+      html += `<div class="sol-text">Hệ chỉ có nghiệm tầm thường nên các vectơ độc lập tuyến tính.</div>`;
+    else
+      html += `<div class="sol-text">Hệ có nghiệm không tầm thường nên các vectơ phụ thuộc tuyến tính.</div>`;
 
     html += `<div class="sol-bullet">Số chiều: $\\dim(V) = ${rank != null ? String(rank) : "?"}$.</div>`;
-    
+
     // [FIX FINAL] Tách dòng cho Cách 2 (Tổng quát)
     html += `<div class="sol-bullet" style="margin-bottom: 5px;">Một cơ sở (lấy từ hệ sinh) là:</div>`;
     html += `<div class="sol-math-block" style="overflow-x: auto; padding-bottom: 5px;">\\[ B = ${basisLatex} \\]</div>`;
-    
+
     html += `</div>`;
 
     return {
       titleText: "Cơ sở & số chiều trong",
       titleMath: `\\(\\mathbb{R}^{${n}}\\)`,
-      htmlContent: html
+      htmlContent: html,
     };
   };
 
@@ -467,19 +533,28 @@
   function solveCoeffs(B, v) {
     const n = v.length;
     const r = B.length;
-    const BT = Array.from({ length: n }, (_, i) => Array.from({ length: r }, (_, j) => Number(B[j][i] ?? 0)));
+    const BT = Array.from({ length: n }, (_, i) =>
+      Array.from({ length: r }, (_, j) => Number(B[j][i] ?? 0)),
+    );
     const rhs = Array.from({ length: n }, (_, i) => Number(v[i] ?? 0));
     const idxs = Array.from({ length: n }, (_, i) => i);
-    function det2(A) { return A[0][0] * A[1][1] - A[0][1] * A[1][0]; }
+    function det2(A) {
+      return A[0][0] * A[1][1] - A[0][1] * A[1][0];
+    }
     function det3(A) {
-      return A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1])
-        - A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0])
-        + A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+      return (
+        A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) -
+        A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]) +
+        A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0])
+      );
     }
     function combinations(arr, k) {
       const out = [];
       const rec = (start, cur) => {
-        if (cur.length === k) { out.push(cur.slice()); return; }
+        if (cur.length === k) {
+          out.push(cur.slice());
+          return;
+        }
         for (let i = start; i < arr.length; i++) {
           cur.push(arr[i]);
           rec(i + 1, cur);
@@ -493,20 +568,30 @@
     if (r === 1) rows = [0];
     else if (r === 2 || r === 3) {
       for (const cand of combinations(idxs, r)) {
-        const A = cand.map(i => BT[i].slice());
-        const d = (r === 2) ? det2(A) : det3(A);
-        if (Math.abs(d) > 1e-10) { rows = cand; break; }
+        const A = cand.map((i) => BT[i].slice());
+        const d = r === 2 ? det2(A) : det3(A);
+        if (Math.abs(d) > 1e-10) {
+          rows = cand;
+          break;
+        }
       }
-    } else { rows = Array.from({ length: r }, (_, i) => i); }
+    } else {
+      rows = Array.from({ length: r }, (_, i) => i);
+    }
     if (!rows) return { rowsUsed: [0], coeffs: Array(r).fill(0), ok: false };
-    const A = rows.map(i => BT[i].slice());
-    const b = rows.map(i => rhs[i]);
+    const A = rows.map((i) => BT[i].slice());
+    const b = rows.map((i) => rhs[i]);
     const M = A.map((row, i) => row.concat([b[i]]));
     for (let col = 0; col < r; col++) {
       let piv = col;
-      for (let i = col; i < r; i++) if (Math.abs(M[i][col]) > Math.abs(M[piv][col])) piv = i;
+      for (let i = col; i < r; i++)
+        if (Math.abs(M[i][col]) > Math.abs(M[piv][col])) piv = i;
       if (Math.abs(M[piv][col]) < 1e-12) continue;
-      if (piv !== col) { const tmp = M[piv]; M[piv] = M[col]; M[col] = tmp; }
+      if (piv !== col) {
+        const tmp = M[piv];
+        M[piv] = M[col];
+        M[col] = tmp;
+      }
       const pv = M[col][col];
       for (let j = col; j <= r; j++) M[col][j] /= pv;
       for (let i = 0; i < r; i++) {
@@ -519,8 +604,11 @@
     let ok = true;
     for (let i = 0; i < n; i++) {
       let s = 0;
-      for (let j = 0; j < r; j++) s += (Number(B[j][i] ?? 0) * coeffs[j]);
-      if (Math.abs(s - rhs[i]) > 1e-6) { ok = false; break; }
+      for (let j = 0; j < r; j++) s += Number(B[j][i] ?? 0) * coeffs[j];
+      if (Math.abs(s - rhs[i]) > 1e-6) {
+        ok = false;
+        break;
+      }
     }
     return { rowsUsed: rows, coeffs, ok };
   }
@@ -533,13 +621,19 @@
     return String(Number(x.toFixed(6)));
   }
 
-  App.TasksGen.Basis.buildBasisByEquationsStepwise = function (selectedItems, apiData) {
-    const vecs = (selectedItems || []).map(it => (it.vec || []).slice());
+  App.TasksGen.Basis.buildBasisByEquationsStepwise = function (
+    selectedItems,
+    apiData,
+  ) {
+    const vecs = (selectedItems || []).map((it) => (it.vec || []).slice());
     const n = vecs[0]?.length ?? 0;
     const m = vecs.length;
     const basisFromApi = Array.isArray(apiData?.basis) ? apiData.basis : [];
-    const dim = (typeof apiData?.dimension === "number") ? apiData.dimension : null;
-    const vecListLatex = (selectedItems || []).map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`).join(",\\; ");
+    const dim =
+      typeof apiData?.dimension === "number" ? apiData.dimension : null;
+    const vecListLatex = (selectedItems || [])
+      .map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`)
+      .join(",\\; ");
 
     // --- HTML OUTPUT ---
     let html = `<div class="sol-step-container">`;
@@ -548,8 +642,10 @@
 
     if (m === 1) {
       html += `<div class="sol-bold">Bước 1: Xét hệ $\\left\\{v_{1}\\right\\}$.</div>`;
-      if (isZeroVector(vecs[0])) html += `<div class="sol-text">Vì $v_{1}=\\vec{0}$ nên $\\left\\{v_{1}\\right\\}$ phụ thuộc tuyến tính.</div>`;
-      else html += `<div class="sol-text">Vì $v_{1}\\neq\\vec{0}$ nên $\\left\\{v_{1}\\right\\}$ độc lập tuyến tính.</div>`;
+      if (isZeroVector(vecs[0]))
+        html += `<div class="sol-text">Vì $v_{1}=\\vec{0}$ nên $\\left\\{v_{1}\\right\\}$ phụ thuộc tuyến tính.</div>`;
+      else
+        html += `<div class="sol-text">Vì $v_{1}\\neq\\vec{0}$ nên $\\left\\{v_{1}\\right\\}$ độc lập tuyến tính.</div>`;
     } else {
       html += `<div class="sol-bold">Bước 1: Xét hệ $\\left\\{v_{1},\\,v_{2}\\right\\}$.</div>`;
       if (isZeroVector(vecs[0]) && isZeroVector(vecs[1])) {
@@ -570,8 +666,12 @@
         html += `<div class="sol-text">Giả sử $${viName} = a\\cdot v_{1} + b\\cdot v_{2}$. Ta xét 2 thành phần đầu tiên:</div>`;
 
         // 1. Lấy dữ liệu
-        const a11 = fmtScalarLatex(vecs[0][0]), a12 = fmtScalarLatex(vecs[1][0]), b1 = fmtScalarLatex(vecs[i][0]);
-        const a21 = fmtScalarLatex(vecs[0][1] ?? 0), a22 = fmtScalarLatex(vecs[1][1] ?? 0), b2 = fmtScalarLatex(vecs[i][1] ?? 0);
+        const a11 = fmtScalarLatex(vecs[0][0]),
+          a12 = fmtScalarLatex(vecs[1][0]),
+          b1 = fmtScalarLatex(vecs[i][0]);
+        const a21 = fmtScalarLatex(vecs[0][1] ?? 0),
+          a22 = fmtScalarLatex(vecs[1][1] ?? 0),
+          b2 = fmtScalarLatex(vecs[i][1] ?? 0);
 
         // 2. Hệ phương trình 2 ẩn
         const sys = `\\left\\{\\begin{array}{l} ${a11}a + ${a12}b = ${b1}\\\\ ${a21}a + ${a22}b = ${b2} \\end{array}\\right.`;
@@ -618,7 +718,8 @@
 
               // Nếu hệ số nguyên đẹp (như 1, -2) thì dùng style a(v) giống PDF
               // Nếu v âm thì đóng ngoặc
-              const vDisplay = (vStr.startsWith("-") || vStr.includes("/")) ? `(${vStr})` : vStr;
+              const vDisplay =
+                vStr.startsWith("-") || vStr.includes("/") ? `(${vStr})` : vStr;
 
               if (cStr === "1") return vDisplay;
               if (cStr === "-1") return `-${vDisplay}`;
@@ -655,14 +756,17 @@
           }
         } else {
           // Trường hợp không gian 2 chiều (không còn dòng để thử)
-          if (ok) html += `<div class="sol-text">Vậy $${viName} = ${aValStr}v_{1} + ${bValStr}v_{2}$. Loại $${viName}$.</div>`;
-          else html += `<div class="sol-text">Hệ vô nghiệm. $${viName}$ độc lập tuyến tính.</div>`;
+          if (ok)
+            html += `<div class="sol-text">Vậy $${viName} = ${aValStr}v_{1} + ${bValStr}v_{2}$. Loại $${viName}$.</div>`;
+          else
+            html += `<div class="sol-text">Hệ vô nghiệm. $${viName}$ độc lập tuyến tính.</div>`;
         }
       }
-
     }
 
-    const basisLatex = basisFromApi.length ? `\\left\\{${basisFromApi.map(vecToLatex).join(",\\; ")}\\right\\}` : "\\left\\{\\;\\right\\}";
+    const basisLatex = basisFromApi.length
+      ? `\\left\\{${basisFromApi.map(vecToLatex).join(",\\; ")}\\right\\}`
+      : "\\left\\{\\;\\right\\}";
 
     html += `<div class="sol-bold">Kết luận.</div>`;
     html += `<div class="sol-bullet">Số chiều: $\\dim(V) = ${dim != null ? String(dim) : "?"}$.</div>`;
@@ -676,8 +780,7 @@
     return {
       titleText: "Cơ sở & số chiều trong",
       titleMath: `\\(\\mathbb{R}^{${n}}\\)`,
-      htmlContent: html
+      htmlContent: html,
     };
   };
-
 })();

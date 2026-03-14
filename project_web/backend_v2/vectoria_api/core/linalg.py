@@ -90,8 +90,7 @@ def gaussian_elimination_rows_with_ops(
         elif pivot_strategy == "pretty":
             # ưu tiên vector đẹp, tie-break: |A[i,c]| lớn hơn để pivot không quá yếu
             pivot_pos = min(
-                candidates,
-                key=lambda i: (vector_pretty_score(A[i, :]), -abs(A[i, c]))
+                candidates, key=lambda i: (vector_pretty_score(A[i, :]), -abs(A[i, c]))
             )
 
         else:

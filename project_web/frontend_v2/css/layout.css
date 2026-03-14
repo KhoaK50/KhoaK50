@@ -18,10 +18,12 @@
   text-align: center;
   font-weight: 800;
   font-size: 18px;
-  letter-spacing: .2px;
+  letter-spacing: 0.2px;
 }
 
-#topbar .spacer { width: 30px; }
+#topbar .spacer {
+  width: 30px;
+}
 
 /* Hamburger */
 #hamburger {
@@ -41,7 +43,9 @@
   height: 3px;
   border-radius: 2px;
   background: var(--fg);
-  transition: transform var(--t-fast), opacity var(--t-fast);
+  transition:
+    transform var(--t-fast),
+    opacity var(--t-fast);
 }
 
 /* =================== APP LAYOUT =================== */
@@ -72,24 +76,25 @@
   -webkit-overflow-scrolling: touch;
 }
 
-#controls.open { transform: translateX(0); }
+#controls.open {
+  transform: translateX(0);
+}
 
 /* Overlay: tồn tại nhưng KHÔNG chặn tương tác (theo yêu cầu vừa input vừa kéo/zoom đồ thị) */
-#overlay{
+#overlay {
   position: fixed;
   inset: var(--topbar-h) 0 0 0;
-  background: transparent;   /* không làm tối */
+  background: transparent; /* không làm tối */
   opacity: 0;
-  pointer-events: none;      /* QUAN TRỌNG: không chặn viewer */
+  pointer-events: none; /* QUAN TRỌNG: không chặn viewer */
   z-index: 200;
-  display: block;            /* luôn tồn tại nhưng vô hình */
+  display: block; /* luôn tồn tại nhưng vô hình */
   transition: opacity 180ms ease;
 }
 
-#overlay.show{
-  opacity: 0;                /* vẫn 0 theo yêu cầu không tối */
+#overlay.show {
+  opacity: 0; /* vẫn 0 theo yêu cầu không tối */
 }
-
 
 /* =================== VIEWER LAYOUT =================== */
 #viewerWrap {
@@ -146,7 +151,9 @@
 
 /* =================== RESPONSIVE =================== */
 @media (min-width: 1100px) {
-  #controls { width: 380px; }
+  #controls {
+    width: 380px;
+  }
 }
 
 /* ================= TOPBAR ICON BUTTONS ================= */
@@ -193,4 +200,3 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-

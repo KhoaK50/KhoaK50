@@ -1,9 +1,10 @@
 from flask import Flask
+
 # 1. BỎ dòng import middleware/cors tự viết
-# from vectoria_api.middleware.cors import attach_cors_middleware 
+# from vectoria_api.middleware.cors import attach_cors_middleware
 
 # 2. THÊM thư viện chuẩn này
-from flask_cors import CORS 
+from flask_cors import CORS
 
 from vectoria_api.routes import register_blueprints
 from vectoria_api.config import HOST, PORT, DEBUG
@@ -12,8 +13,9 @@ from vectoria_api.explainers import init_explainers
 # Import module contact
 from vectoria_api.routes.contact import contact_bp, init_feedback_db
 
+
 def create_app():
-    print(">> FORCE UPDATE VERCEL V1") # Thêm dòng này
+    print(">> FORCE UPDATE VERCEL V1")  # Thêm dòng này
     app = Flask(__name__)
 
     # ============================================================
@@ -22,7 +24,7 @@ def create_app():
     # Dòng này tương đương với việc ông viết 20 dòng code thủ công.
     # Nó tự động cho phép mọi nguồn (*), mọi method (GET, POST, OPTIONS...),
     # và tự động xử lý Preflight check cho việc upload file.
-    CORS(app) 
+    CORS(app)
     # ============================================================
 
     # 2) Nạp explainers
@@ -38,6 +40,7 @@ def create_app():
     app.register_blueprint(contact_bp)
 
     return app
+
 
 # Tạo instance global
 app = create_app()
