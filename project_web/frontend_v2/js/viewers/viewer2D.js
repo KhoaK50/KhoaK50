@@ -26,6 +26,7 @@
     lastCentroidY: null,
     lastDist: null,
     zoomVel: 0,
+    pinchCooldown: 0,
   };
 
   Vec2D.gridInfo2D = null;
@@ -207,10 +208,41 @@
           Vec2D.S2D.lastTime = now;
           return;
         }
+
+        // [VŨ KHÍ MỚI]: CHỐT CHẶN COOLDOWN 200ms
+        if (Vec2D.S2D.pinchCooldown && now < Vec2D.S2D.pinchCooldown) {
+          // Vẫn cập nhật tọa độ ngầm để khi hết 200ms nó không bị giật
+          Vec2D.S2D.startX = e.clientX - Vec2D.S2D.offsetX;
+          Vec2D.S2D.startY = e.clientY - Vec2D.S2D.offsetY;
+          Vec2D.S2D.lastX = e.clientX;
+          Vec2D.S2D.lastY = e.clientY;
+          Vec2D.S2D.lastTime = now;
+          Vec2D.S2D.lastTime = now;
+          return;
+        }
+
+        // THÊM: Đang trong thời gian cooldown sau khi Zoom thì KHÔNG di chuyển đồ thị
+        if (Vec2D.S2D.pinchCooldown && now < Vec2D.S2D.pinchCooldown) {
+          Vec2D.S2D.startX = e.clientX - Vec2D.S2D.offsetX;
+          Vec2D.S2D.startY = e.clientY - Vec2D.S2D.offsetY;
+          Vec2D.S2D.lastX = e.clientX;
+          Vec2D.S2D.lastY = e.clientY;
+          Vec2D.S2D.lastTime = now;
+          return;
+        }
+
         Vec2D.S2D.offsetX = e.clientX - Vec2D.S2D.startX;
         Vec2D.S2D.offsetY = e.clientY - Vec2D.S2D.startY;
-        Vec2D.S2D.velX = (e.clientX - Vec2D.S2D.lastX) / dt;
-        Vec2D.S2D.velY = (e.clientY - Vec2D.S2D.lastY) / dt;
+
+        // SỬA: Lọc nhiễu vận tốc, khóa trần vận tốc chống trôi vô cực
+        const rawVelX = (e.clientX - Vec2D.S2D.lastX) / Math.max(dt, 5);
+        const rawVelY = (e.clientY - Vec2D.S2D.lastY) / Math.max(dt, 5);
+        Vec2D.S2D.velX = Vec2D.S2D.velX * 0.5 + rawVelX * 0.5;
+        Vec2D.S2D.velY = Vec2D.S2D.velY * 0.5 + rawVelY * 0.5;
+        const MAX_VEL = 2.5;
+        Vec2D.S2D.velX = Math.max(-MAX_VEL, Math.min(MAX_VEL, Vec2D.S2D.velX));
+        Vec2D.S2D.velY = Math.max(-MAX_VEL, Math.min(MAX_VEL, Vec2D.S2D.velY));
+
         Vec2D.S2D.lastX = e.clientX;
         Vec2D.S2D.lastY = e.clientY;
         Vec2D.S2D.lastTime = now;
@@ -224,42 +256,22 @@
       const n = Vec2D.S2D.pointers.size;
 
       if (n === 0) {
+        // Nhấc hết tay -> Dừng hẳn ngay lập tức (Bỏ Momentum)
         if (canvas2d.releasePointerCapture)
           canvas2d.releasePointerCapture(e.pointerId);
         canvas2d.style.cursor = "default";
         Vec2D.S2D.isPanningOne = false;
         Vec2D.S2D.lastCentroidX = Vec2D.S2D.lastCentroidY = null;
         Vec2D.S2D.lastDist = null;
-        const panSpeed = Math.hypot(Vec2D.S2D.velX, Vec2D.S2D.velY);
-        const hasPanMomentum = panSpeed > 0.01;
-        const hasZoomMomentum = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
-
-        if (hasPanMomentum || hasZoomMomentum) {
-          const decayPan = 0.85,
-            decayZoom = 0.8;
-          const step = () => {
-            if (hasPanMomentum) {
-              Vec2D.S2D.offsetX += Vec2D.S2D.velX * 16;
-              Vec2D.S2D.offsetY += Vec2D.S2D.velY * 16;
-              Vec2D.S2D.velX *= decayPan;
-              Vec2D.S2D.velY *= decayPan;
-            }
-            if (hasZoomMomentum) {
-              const factor = Math.exp(Vec2D.S2D.zoomVel * 16);
-              const { w, h } = getLogicalSize();
-              applyZoomAboutScreenPoint(w / 2, h / 2, factor);
-              Vec2D.S2D.zoomVel *= decayZoom;
-            }
-            const stillPan = Math.hypot(Vec2D.S2D.velX, Vec2D.S2D.velY) > 0.01;
-            const stillZoom = Math.abs(Vec2D.S2D.zoomVel) > 1e-4;
-            if (stillPan || stillZoom) {
-              Vec2D.S2D.momentumId = requestAnimationFrame(step);
-            }
-          };
-          Vec2D.S2D.momentumId = requestAnimationFrame(step);
-        }
+        Vec2D.S2D.velX = 0;
+        Vec2D.S2D.velY = 0;
         Vec2D.S2D.zoomVel = 0;
+        if (Vec2D.S2D.momentumId) {
+          cancelAnimationFrame(Vec2D.S2D.momentumId);
+          Vec2D.S2D.momentumId = null;
+        }
       } else if (n === 1) {
+        // Vừa nhấc 1 ngón (còn 1 ngón)
         const remain = Vec2D.S2D.pointers.values().next().value;
         Vec2D.S2D.isPanningOne = true;
         Vec2D.S2D.startX = remain.x - Vec2D.S2D.offsetX;
@@ -269,7 +281,12 @@
         Vec2D.S2D.lastTime = performance.now();
         Vec2D.S2D.lastCentroidX = Vec2D.S2D.lastCentroidY = null;
         Vec2D.S2D.lastDist = null;
+        Vec2D.S2D.velX = 0;
+        Vec2D.S2D.velY = 0;
         Vec2D.S2D.zoomVel = 0;
+
+        // Bật khiên khóa Drag trong 200ms để chống giật đồ thị
+        Vec2D.S2D.pinchCooldown = performance.now() + 200;
       } else {
         const c = centroidOfPointers(Vec2D.S2D.pointers);
         Vec2D.S2D.lastCentroidX = c.x;

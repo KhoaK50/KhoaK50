@@ -153,24 +153,30 @@
     Vec3D._controls.enableDamping = true;
     Vec3D._controls.dampingFactor = 0.07;
     Vec3D._controls.rotateSpeed = 0.6;
-    Vec3D._controls.enablePan = true;
-    Vec3D._controls.enableZoom = false; // Custom Zoom logic below
+
+    // [CẤM KÉO & CẤM ZOOM CAMERA]
+    Vec3D._controls.enablePan = false;
+    Vec3D._controls.enableZoom = false;
+
+    // Cấu hình chuột: Chỉ cho phép xoay
     Vec3D._controls.mouseButtons = {
       LEFT: THREE.MOUSE.ROTATE,
-      MIDDLE: THREE.MOUSE.PAN,
-      RIGHT: THREE.MOUSE.PAN,
-    };
-    Vec3D._controls.touches = {
-      ONE: THREE.TOUCH.ROTATE,
-      TWO: THREE.TOUCH.PAN,
+      MIDDLE: THREE.MOUSE.ROTATE,
+      RIGHT: THREE.MOUSE.ROTATE,
     };
 
-    // --- Custom Wheel Zoom ---
-    const wheelHandler = (e) => {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      const dir = e.deltaY < 0 ? +1 : -1;
-      const factor = dir > 0 ? 1.12 : 1 / 1.12;
+    // Cấu hình cảm ứng: Cấm kéo 2 ngón (TWO), chỉ cho 1 ngón xoay
+    Vec3D._controls.touches = {
+      ONE: THREE.TOUCH.ROTATE,
+      TWO: THREE.TOUCH.ROTATE,
+    };
+
+    // ==========================================
+    // CƠ CHẾ MATH ZOOM (LĂN CHUỘT + CHỤM 2 NGÓN)
+    // ==========================================
+
+    // 1. Hàm tính toán Math Zoom chung
+    const applyMathZoom = (dir, factor) => {
       if (
         (Vec3D.S3D.zoomTarget >= Vec3D._ZOOM_MAX && dir > 0) ||
         (Vec3D.S3D.zoomTarget <= Vec3D._ZOOM_MIN && dir < 0)
@@ -187,13 +193,77 @@
         Math.max(Vec3D._ZOOM_MIN, next),
       );
     };
-    Vec3D._renderer.domElement.addEventListener("wheel", wheelHandler, {
+
+    // 2. Xử lý Lăn Chuột (PC)
+    const wheelHandler = (e) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const dir = e.deltaY < 0 ? +1 : -1;
+      const factor = dir > 0 ? 1.12 : 1 / 1.12;
+      applyMathZoom(dir, factor);
+    };
+
+    // 3. Xử lý Chụm 2 ngón tay (Mobile)
+    let lastTouchDistance = null;
+    const touchStartHandler = (e) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastTouchDistance = Math.hypot(dx, dy);
+      } else {
+        lastTouchDistance = null;
+      }
+    };
+
+    const touchMoveHandler = (e) => {
+      if (e.touches.length === 2 && lastTouchDistance !== null) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const currentDist = Math.hypot(dx, dy);
+        const distDiff = currentDist - lastTouchDistance;
+
+        // Ngưỡng nhiễu: Phải di chuyển > 1px mới bắt đầu tính Zoom
+        if (Math.abs(distDiff) > 1) {
+          const dir = distDiff > 0 ? 1 : -1;
+          // Độ nhạy Zoom trên Mobile: 1.05 (nhẹ hơn chuột để mượt hơn)
+          const factor = dir > 0 ? 1.05 : 1 / 1.05;
+          applyMathZoom(dir, factor);
+          lastTouchDistance = currentDist;
+        }
+      }
+    };
+
+    // 4. Gắn Sự Kiện (Events)
+    const renderDom = Vec3D._renderer.domElement;
+    const labelDom = Vec3D._labelRenderer.domElement;
+
+    // Gắn cho lăn chuột
+    renderDom.addEventListener("wheel", wheelHandler, { passive: false });
+    labelDom.addEventListener("wheel", wheelHandler, { passive: false });
+
+    // Gắn cho cảm ứng
+    renderDom.addEventListener("touchstart", touchStartHandler, {
       passive: false,
     });
-    Vec3D._labelRenderer.domElement.addEventListener("wheel", wheelHandler, {
+    renderDom.addEventListener("touchmove", touchMoveHandler, {
+      passive: false,
+    });
+    labelDom.addEventListener("touchstart", touchStartHandler, {
+      passive: false,
+    });
+    labelDom.addEventListener("touchmove", touchMoveHandler, {
       passive: false,
     });
 
+    // Reset khoảng cách khi nhấc tay
+    const touchEndHandler = () => {
+      lastTouchDistance = null;
+    };
+    renderDom.addEventListener("touchend", touchEndHandler);
+    labelDom.addEventListener("touchend", touchEndHandler);
     // --- Event Listeners ---
     Vec3D._controls.addEventListener("change", () => {
       if (App.mode !== "3D") return;
