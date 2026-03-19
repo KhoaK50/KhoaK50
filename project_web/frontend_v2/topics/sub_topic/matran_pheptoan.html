@@ -641,98 +641,88 @@
         stroke: #e2e8f0 !important;
       }
 
-      /* =================== 5. MOBILE RESPONSIVE (DƯỚI 960PX) =================== */
-      @media (max-width: 960px) {
-        .container {
-          flex-direction: column;
-          padding: 0;
-          gap: 0;
-        }
-
-        .main-content {
-          padding: 15px;
-        }
+      /* =================== 5. BỘ ĐIỀU KHIỂN GIAO DIỆN MOBILE =================== */
+      @media screen and (max-width: 960px) {
+        .container { flex-direction: column !important; padding: 0 !important; gap: 0 !important; display: block !important; }
+        .main-content { padding: 15px !important; width: 100% !important; box-sizing: border-box !important; overflow-x: hidden !important; }
 
         .sidebar {
-          width: 100%;
-          height: auto;
-          z-index: 990;
-          position: sticky;
-          top: 60px;
-          /* Dính ngay dưới header */
-          border-radius: 0;
-          border: none;
-          border-bottom: 1px solid var(--border);
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-          background-color: var(--bg-body);
-          padding: 10px 0;
-          margin: 0;
+          width: 100% !important; height: auto !important; max-height: none !important; z-index: 990 !important;
+          position: sticky !important; top: var(--topbar-h) !important;
+          border-radius: 0 !important; border: none !important; border-bottom: 1px solid var(--border) !important;
+          background-color: var(--bg-body) !important; padding: 10px 15px !important; margin: 0 !important; overflow-y: visible !important;
         }
 
-        .sidebar h3 {
-          display: none;
+        .sidebar h3.nav-title {
+          display: flex !important; justify-content: space-between !important; align-items: center !important;
+          background: var(--bg-card) !important; padding: 15px 20px !important; margin: 0 !important;
+          border-radius: 12px !important; border: 1px solid var(--border) !important;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important; cursor: pointer !important; color: var(--primary) !important; transition: all 0.3s ease !important;
+        }
+        
+        .sidebar h3.nav-title i:not(.fa-list-ul) { display: none !important; }
+        .sidebar h3.nav-title::after { content: '\f054'; font-family: "Font Awesome 6 Free"; font-weight: 900; transition: transform 0.3s ease; }
+        .sidebar.mobile-open h3.nav-title::after { transform: rotate(90deg) !important; }
+
+        /* ÉP MENU MOBILE CAO TỐI ĐA 50% MÀN HÌNH VÀ CÓ SCROLL */
+        .custom-nav .nav-list {
+          display: none !important; flex-direction: column !important; background: var(--bg-card) !important;
+          padding: 10px 0 15px 0 !important; margin: -5px 0 0 0 !important; border-radius: 0 0 12px 12px !important;
+          border: 1px solid var(--border) !important; border-top: none !important; box-shadow: 0 10px 15px rgba(0,0,0,0.1) !important;
+          max-height: 50vh !important; overflow-y: auto !important; overflow-x: hidden !important;
+        }
+        .custom-nav .nav-list::-webkit-scrollbar { width: 4px; }
+        .custom-nav .nav-list::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 10px; }
+
+        .sidebar.mobile-open h3.nav-title { border-radius: 12px 12px 0 0 !important; border-bottom: 1px dashed var(--border) !important; }
+        .sidebar.mobile-open .nav-list { display: flex !important; }
+
+        .custom-nav .sub-menu { display: none !important; flex-direction: column !important; }
+        .custom-nav .has-dropdown.open > .sub-menu { display: flex !important; }
+        .custom-nav .sub-heading, .custom-nav div.toggle-btn, .custom-nav .arrow-icon { display: flex !important; }
+
+        .custom-nav a.nav-link, .custom-nav a.sub-link, .custom-nav a.sub-sub-link {
+          background: transparent !important; border: none !important; border-left: 3px solid transparent !important;
+          border-radius: 0 !important; margin-bottom: 0 !important; padding-top: 12px !important; padding-bottom: 12px !important; padding-right: 15px !important;
         }
 
-        .menu-list {
-          display: flex;
-          gap: 10px;
-          overflow-x: auto;
-          padding: 0 15px;
-          white-space: nowrap;
-          -webkit-overflow-scrolling: touch;
+        .custom-nav a.nav-link { padding-left: 20px !important; } 
+        .custom-nav a.sub-link { padding-left: 40px !important; } 
+
+        .custom-nav a.nav-link.active, .custom-nav a.sub-link.active, .custom-nav a.sub-sub-link.active {
+          background: #eff6ff !important; color: var(--primary) !important; border-left-color: var(--primary) !important;
         }
 
-        .menu-list::-webkit-scrollbar {
-          display: none;
+        .custom-nav a.sub-heading, .custom-nav li.sub-heading, .custom-nav a.group-label {
+          padding-top: 15px !important; padding-bottom: 5px !important; padding-left: 20px !important;
+          pointer-events: none !important; border: none !important; background: transparent !important;
         }
 
-        .menu-link {
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          padding: 8px 16px;
-          font-size: 0.9rem;
-          border-radius: 20px;
+        body.dark .sidebar { background-color: var(--bg-body) !important; }
+        body.dark .sidebar h3.nav-title { background: #1e293b !important; border-color: #334155 !important; }
+        body.dark .custom-nav .nav-list { background: #1e293b !important; border-color: #334155 !important; }
+        body.dark .custom-nav .nav-list::-webkit-scrollbar-thumb { background-color: #475569 !important; }
+        body.dark .custom-nav a.nav-link.active, body.dark .custom-nav a.sub-link.active {
+          background: #1e293b !important; color: #60a5fa !important; border-left-color: #60a5fa !important;
         }
+        body.dark .sidebar.mobile-open h3.nav-title { border-bottom-color: #334155 !important; }
 
-        .menu-link.active {
-          background: var(--primary);
-          color: #fff;
-          border-color: #fff;
+        /* TRỊ LẰN KẺ NGANG: TẮT OVERFLOW CHO CARD LÝ THUYẾT */
+        .chapter-card { scroll-margin-top: 130px !important; padding: 20px !important; }
+        .cinema-container { flex-direction: column !important; }
+        .video-box { aspect-ratio: 16/9 !important; width: 100% !important; }
+        .playlist-box { height: 300px !important; border-left: none !important; border-top: 1px solid #334155 !important; }
+        
+        #ly-thuyet { 
+            overflow-x: hidden !important; 
+            overflow-y: hidden !important; 
+            max-width: 100%; 
+            display: block !important;
         }
-
-        .chapter-card {
-          scroll-margin-top: 130px;
-          padding: 20px;
-        }
-
-        .cinema-container {
-          flex-direction: column;
-        }
-
-        .video-box {
-          aspect-ratio: 16/9;
-          width: 100%;
-        }
-
-        .playlist-box {
-          height: 300px;
-          border-left: none;
-          border-top: 1px solid #334155;
-        }
-
-        /* ===== SCROLL NGANG RIÊNG CHO MỤC LÝ THUYẾT (#ly-thuyet) ===== */
-        #ly-thuyet {
-          overflow-x: auto;
-          overflow-y: visible;
-
-          -webkit-overflow-scrolling: touch;
-          overscroll-behavior-x: contain;
-
-          max-width: 100%;
-        }
-
-        #ly-thuyet > * {
-          min-width: max-content;
+        
+        /* CHỈ BẬT SCROLL CỤC BỘ TẠI VỊ TRÍ CÔNG THỨC */
+        .math-center, mjx-container[display="true"], .math-scroll {
+            overflow-x: auto !important; max-width: 100vw !important; padding-bottom: 8px !important; -webkit-overflow-scrolling: touch;
         }
       }
 
@@ -1032,40 +1022,86 @@
         font-size: 0.85rem;
       }
 
-      /* 1. Đưa border-left từ thẻ a sang thẻ li để nó nằm ngoài rìa */
-      .custom-nav .nav-item,
-      .custom-nav .sub-menu li {
-        position: relative;
-        border-left: 3px solid transparent;
-        /* Thanh dọc mặc định ẩn */
-        transition: all 0.2s;
+      /* =========================================================================
+         XỬ LÝ HOVER, ACTIVE (CHỐNG LÂY LAN NỀN XANH)
+         ========================================================================= */
+
+      /* Trả lại border cho thẻ A (nav-link, sub-link) thay vì gán vào thẻ LI */
+      .custom-nav .nav-link,
+      .custom-nav .sub-link {
+        border-left: 3px solid transparent !important;
       }
 
-      /* 2. Khi mục đó active, hiện thanh dọc ở sát mép trái Sidebar */
-      .custom-nav .nav-item:has(> .active),
-      .custom-nav .sub-menu li:has(> .active) {
-        border-left: 3px solid var(--primary);
-        background-color: var(--hover-bg);
-        /* Nền xanh nhạt cho cả dòng */
+      /* Chỉ bôi nền và hiện vạch cho đúng cái link đang được chọn */
+      .custom-nav .nav-link.active,
+      .custom-nav .sub-link.active {
+        background-color: var(--hover-bg) !important;
+        border-left-color: var(--primary) !important;
+        color: var(--primary) !important;
+        font-weight: 600;
       }
 
-      /* 3. Bỏ border-left cũ ở thẻ a để không bị trùng */
-      .custom-nav .active {
-        border-left: none !important;
-        background-color: transparent !important;
-        /* Reset lại để không bị đè nền */
+      /* Hover bình thường (chỉ đổi màu nền, không vạch) */
+      .custom-nav .nav-link:not(.toggle-btn):hover,
+      .custom-nav .sub-link:not(.toggle-btn):not(.group-label):hover {
+        background-color: var(--hover-bg) !important;
         color: var(--primary) !important;
       }
 
-      /* 4. Chỉnh lại thụt lề chữ cho đẹp */
-      .custom-nav .sub-link {
-        padding-left: 40px !important;
-        /* Con cấp 1 */
+      /* =========================================================================
+         ĐẶC TRỊ CHO TIÊU ĐỀ: DÒNG MŨI TÊN (.toggle-btn) VÀ DÒNG CHỮ XANH (.group-label)
+         ========================================================================= */
+
+      /* CẤM HOÀN TOÀN màu nền và vạch dọc cho Tiêu Đề */
+      .custom-nav .toggle-btn,
+      .custom-nav .toggle-btn.active,
+      .custom-nav .group-label,
+      .custom-nav .group-label.active {
+        background-color: transparent !important;
+        border-left: none !important;
       }
 
-      .custom-nav .sub-menu .sub-menu .sub-link {
-        padding-left: 60px !important;
-        /* Con cấp 2 (3.1, 5.1) */
+      .custom-nav .group-label {
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        pointer-events: none; /* Khóa chuột */
+        color: var(--primary) !important;
+      }
+
+      /* Light Mode: Mũi tên Hover chỉ đổi màu chữ */
+      .custom-nav .toggle-btn:hover {
+        background-color: transparent !important;
+        color: var(--primary) !important;
+      }
+
+      /* ================= DARK MODE CHO TOÀN BỘ MENU ================= */
+      body.dark .custom-nav .nav-link,
+      body.dark .custom-nav .sub-link { color: #94a3b8; }
+      
+      body.dark .custom-nav .nav-link:not(.toggle-btn):hover,
+      body.dark .custom-nav .sub-link:not(.toggle-btn):not(.group-label):hover {
+        background-color: #1e293b !important; 
+        color: #60a5fa !important;
+      }
+
+      body.dark .custom-nav .active {
+        background-color: #1e293b !important;
+        color: #60a5fa !important;
+        border-left-color: #60a5fa !important;
+      }
+
+      /* DARK MODE ĐẶC TRỊ: Glow chữ cho Tiêu Đề */
+      body.dark .custom-nav .group-label,
+      body.dark .custom-nav .toggle-btn {
+        color: #60a5fa !important;
+      }
+
+      body.dark .custom-nav .toggle-btn:hover {
+        background-color: transparent !important; 
+        color: #93c5fd !important;
+        text-shadow: 0 0 10px rgba(147, 197, 253, 0.7) !important; 
       }
 
       /* Giao diện khung Sidebar (Đã thêm cuộn dọc chuẩn) */
@@ -2563,96 +2599,147 @@
         el.classList.add("playing");
       }
 
-      // 3. SCROLL SPY
-      const cards = document.querySelectorAll(".chapter-card");
-      const links = document.querySelectorAll(".menu-link");
-      window.addEventListener("scroll", () => {
-        let current = "";
-        cards.forEach((card) => {
-          if (scrollY >= card.offsetTop - 150)
-            current = card.getAttribute("id");
-        });
-        links.forEach((link) => {
-          link.classList.remove("active");
-          if (link.getAttribute("href").includes(current))
-            link.classList.add("active");
-        });
-      });
     </script>
     <script>
-      // HÀM MA THUẬT: Gói tất cả vào một chỗ
       function bootVectoriaMenu() {
+        if (window.menuInitialized) return;
+        window.menuInitialized = true;
+        
         console.log("Menu System: Booting...");
-        const topbar = document.getElementById("topbar");
-        const topbarHeight = topbar ? topbar.offsetHeight : 60;
+        const topbarHeight = document.getElementById("topbar")?.offsetHeight || 60;
+        let isClicking = false; 
 
-        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
-
-        // THAY TOÀN BỘ PHẦN XỬ LÝ CLICK TRONG bootVectoriaMenu BẰNG ĐOẠN NÀY:
-        menuLinks.forEach((link) => {
-          link.onclick = function (e) {
-            const targetId = this.getAttribute("href");
-            if (!targetId || targetId === "#") return;
-            e.preventDefault();
-
-            // --- CHIÊU THỨC PHÂN QUYỀN ---
-            // Chỉ những link nằm trong .toggle-btn mới được quyền Đóng/Mở (Toggle)
-            const isParentToggle = this.closest(".toggle-btn");
-            const parentLi = this.closest(".has-dropdown");
-
-            if (isParentToggle && parentLi) {
-              parentLi.classList.toggle("open");
+        // 0. AUTO-FIX MŨI TÊN
+        document.querySelectorAll('.custom-nav .arrow-icon').forEach(icon => {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-right');
+            const parentLi = icon.closest(".has-dropdown");
+            if (parentLi && parentLi.classList.contains('open')) {
+                setTimeout(() => { icon.style.transform = 'rotate(90deg)'; }, 0);
+            } else {
+                icon.style.transform = 'rotate(0deg)';
             }
-            // Nếu là tiểu mục (không có toggle-btn), ta KHÔNG toggle class 'open'
-            // Điều này giúp bấm 3.1, 3.2 thì menu cha vẫn giữ nguyên trạng thái mở.
-
-            // --- HIGHLIGHT & CUỘN TRANG ---
-            menuLinks.forEach((el) => el.classList.remove("active"));
-            this.classList.add("active");
-
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) {
-              const topbarHeight =
-                document.getElementById("topbar")?.offsetHeight || 60;
-              const y =
-                targetElement.getBoundingClientRect().top +
-                window.pageYOffset -
-                topbarHeight -
-                20;
-              window.scrollTo({ top: y, behavior: "smooth" });
-            }
-          };
         });
 
-        // SCROLL SPY: Tự động sáng menu
-        window.onscroll = () => {
-          const sections = document.querySelectorAll(
-            ".chapter-card, .pdf-h2[id], .pdf-h3[id], #bai-tap",
-          );
-          let currentId = "";
-          sections.forEach((section) => {
-            if (
-              window.pageYOffset >=
-              section.getBoundingClientRect().top + window.pageYOffset - 150
-            ) {
-              currentId = section.getAttribute("id");
-            }
-          });
-          if (currentId) {
-            menuLinks.forEach((link) => {
-              link.classList.toggle(
-                "active",
-                link.getAttribute("href") === `#${currentId}`,
-              );
+        // 1. NÚT "MỤC LỤC" THU GỌN TRÊN MOBILE
+        const sidebar = document.querySelector('.sidebar');
+        const navTitle = document.querySelector('.sidebar h3.nav-title');
+        if (navTitle) {
+            // Clone để xóa bỏ các event listener cũ tránh bị lặp
+            const newNavTitle = navTitle.cloneNode(true);
+            navTitle.replaceWith(newNavTitle);
+            
+            newNavTitle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                // Lệnh then chốt để mở menu đây
+                sidebar.classList.toggle('mobile-open');
             });
-          }
+        }
+
+        // 2. CUỘN TRANG THÔNG MINH (KẾT HỢP TOGGLE MENU)
+        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
+
+        menuLinks.forEach((link) => {
+          link.addEventListener("click", function (e) {
+            const targetId = this.getAttribute("href");
+            if (!targetId || targetId === "#") return;
+
+            // --- MÀNG LỌC CHẶN SCROLL ---
+            // 1. Nếu là dòng chứa mũi tên (.toggle-btn) -> CHỈ MỞ MENU, CẤM CUỘN
+            if (this.closest('.toggle-btn')) {
+              e.preventDefault();
+              const parentLi = this.closest(".has-dropdown");
+              if (parentLi) {
+                isClicking = true;
+                parentLi.classList.toggle("open");
+                const icon = this.closest('.toggle-btn').querySelector('.arrow-icon');
+                if (icon) {
+                  icon.style.transform = parentLi.classList.contains('open') ? 'rotate(90deg)' : 'rotate(0deg)';
+                }
+                setTimeout(() => { isClicking = false; }, 800);
+              }
+              return; 
+            }
+
+            // 2. Nếu là chữ tĩnh in hoa (.group-label) -> CẤM CUỘN
+            if (this.classList.contains("group-label") || this.classList.contains("sub-heading")) {
+              e.preventDefault(); 
+              return;
+            }
+
+            // --- NẾU LÀ LINK BÀI HỌC BÌNH THƯỜNG -> CHO PHÉP CUỘN ---
+            e.preventDefault();
+            isClicking = true;
+            
+            document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
+            this.classList.add("active");
+            
+            const parentDiv = this.closest('.nav-link') || this.closest('.sub-link');
+            if (parentDiv) parentDiv.classList.add("active");
+
+            // Đóng menu mobile sau khi chọn bài xong
+            if (window.innerWidth <= 960 && sidebar) {
+                sidebar.classList.remove('mobile-open');
+            }
+
+            setTimeout(() => {
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                  const currentTopbar = document.getElementById("topbar")?.offsetHeight || 60;
+                  const y = targetElement.getBoundingClientRect().top + window.pageYOffset - currentTopbar - 20;
+                  window.scrollTo({ top: y, behavior: "smooth" });
+                  setTimeout(() => { isClicking = false; }, 800);
+                }
+            }, window.innerWidth <= 960 ? 150 : 0);
+          });
+        });
+
+        // 3. SCROLL SPY
+        let isScrolling;
+        window.onscroll = () => {
+          window.clearTimeout(isScrolling);
+          isScrolling = setTimeout(() => {
+              if (isClicking) return; 
+
+              const sections = document.querySelectorAll(".chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id], #bai-tap, .video-box[id]");
+              let currentId = "";
+              const offsetSpy = window.innerWidth <= 960 ? topbarHeight + 80 : topbarHeight + 50;
+              
+              sections.forEach((section) => {
+                if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - offsetSpy - 50) {
+                  currentId = section.getAttribute("id");
+                }
+              });
+              
+              if (currentId) {
+                menuLinks.forEach((link) => {
+                  if (link.getAttribute("href") === `#${currentId}`) {
+                    const inGroupLabel = link.classList.contains("sub-heading") || link.classList.contains("group-label");
+                    const isToggleBtn = link.closest('.toggle-btn');
+                    
+                    if (!inGroupLabel && !isToggleBtn) {
+                      document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
+                      link.classList.add("active");
+                      const parentDiv = link.closest('.nav-link') || link.closest('.sub-link') || link.closest('.sub-sub-link');
+                      if (parentDiv) parentDiv.classList.add("active");
+                      
+                      if (window.innerWidth > 960) {
+                          let parentDropdown = link.closest(".has-dropdown");
+                          while (parentDropdown) {
+                            parentDropdown.classList.add("open");
+                            const icon = parentDropdown.querySelector('.toggle-btn .arrow-icon');
+                            if(icon) icon.style.transform = 'rotate(90deg)';
+                            parentDropdown = parentDropdown.parentElement.closest(".has-dropdown");
+                          }
+                      }
+                    }
+                  }
+                });
+              }
+          }, 50);
         };
       }
-
-      // KÍCH HOẠT NGAY (Dành cho lật thẻ Ajax)
-      bootVectoriaMenu();
-      // Chạy lại sau 300ms để chắc chắn DOM đã nạp xong sau hiệu ứng lật
-      setTimeout(bootVectoriaMenu, 300);
     </script>
   </body>
 </html>

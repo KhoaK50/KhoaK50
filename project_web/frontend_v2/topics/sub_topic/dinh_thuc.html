@@ -1005,6 +1005,18 @@
           transform: rotate(360deg);
         }
       }
+      /* ÉP BUỘC XOAY MŨI TÊN CHUẨN XÁC 100% */
+      .custom-nav .arrow-icon {
+        transition: transform 0.3s ease !important;
+        transform: rotate(0deg) !important; /* Mặc định chĩa sang phải */
+        display: inline-block;
+      }
+
+      /* Khi mở menu, ép mũi tên xoay 90 độ (chĩa xuống) */
+      .custom-nav .has-dropdown.open > .toggle-btn .arrow-icon,
+      .custom-nav .has-dropdown.open > .nav-link .arrow-icon {
+        transform: rotate(90deg) !important;
+      }
     </style>
   </head>
 
@@ -1112,7 +1124,7 @@
                 "
                 >Lý thuyết</a
               >
-              <i class="fa-solid fa-chevron-down arrow-icon"></i>
+              <i class="fa-solid fa-chevron-right arrow-icon"></i>
             </div>
 
             <ul class="sub-menu">
@@ -2218,85 +2230,92 @@
       }
     </script>
     <script>
-      // Hàm này dùng để kích hoạt toàn bộ menu
       function bootVectoriaMenu() {
         console.log("Menu System: Booting Dinh Thuc...");
-
-        const smoothScrollTo = (targetElement) => {
-          if (!targetElement) return;
-          const topbarHeight =
-            document.getElementById("topbar")?.offsetHeight || 60;
-          const y =
-            targetElement.getBoundingClientRect().top +
-            window.pageYOffset -
-            topbarHeight -
-            20;
-          window.scrollTo({ top: y, behavior: "smooth" });
-        };
-
-        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
-
-        // Bắt tất cả các nút có khả năng đóng/mở hoặc là link
-        const allLinks = document.querySelectorAll(".custom-nav a");
-
-        allLinks.forEach((link) => {
-          link.onclick = function (e) {
-            const targetId = this.getAttribute("href");
-            if (!targetId || !targetId.startsWith("#")) return;
-
-            e.preventDefault();
-
-            // 1. Xử lý Đóng/Mở nếu là nút cha
+        const topbarHeight = document.getElementById("topbar")?.offsetHeight || 60;
+        
+        // 1. GẮN SỰ KIỆN RIÊNG CHO NÚT BẤM CÓ MŨI TÊN (ĐỂ ĐÓNG MỞ MENU)
+        const toggleBtns = document.querySelectorAll('.custom-nav .toggle-btn');
+        toggleBtns.forEach((btn) => {
+          btn.onclick = function (e) {
+            e.preventDefault(); 
             const parentLi = this.closest(".has-dropdown");
-            if (
-              this.classList.contains("toggle-btn") ||
-              this.parentElement.classList.contains("toggle-btn")
-            ) {
-              if (parentLi) {
-                parentLi.classList.toggle("open");
-                const icon = parentLi.querySelector(".arrow-icon");
-                if (icon) {
-                  icon.classList.toggle("fa-chevron-down");
-                  icon.classList.toggle("fa-chevron-right");
-                }
-              }
+            if (parentLi) {
+              parentLi.classList.toggle("open"); // Chỉ đóng/mở menu, CSS sẽ lo vụ xoay mũi tên
             }
-
-            // 2. Highlight màu xanh
-            menuLinks.forEach((el) => el.classList.remove("active"));
-            this.classList.add("active");
-
-            // 3. Cuộn trang
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) smoothScrollTo(targetElement);
           };
         });
 
-        // SCROLL SPY - Tự động sáng menu khi lăn chuột
+        // 2. GẮN SỰ KIỆN CHO CÁC LINK BÌNH THƯỜNG (ĐỂ CUỘN TRANG)
+        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
+        menuLinks.forEach((link) => {
+          link.onclick = function (e) {
+            const targetId = this.getAttribute("href");
+            if (!targetId || targetId === "#") return;
+            
+            // Nếu click trúng thẻ A nằm trong dòng chữ xanh -> Bỏ qua
+            if (this.classList.contains("group-label") || this.closest(".group-label")) {
+               e.preventDefault();
+               return; 
+            }
+            
+            // Nếu click trúng thẻ A nhưng nó thuộc dòng mũi tên -> Bỏ qua (vì đã xử lý đóng mở ở mục 1)
+            if (this.closest('.toggle-btn')) {
+                return;
+            }
+
+            e.preventDefault();
+            // Highlight màu xanh
+            menuLinks.forEach((el) => el.classList.remove("active"));
+            this.classList.add("active");
+
+            // Cuộn trang
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+              const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
+              window.scrollTo({ top: y, behavior: "smooth" });
+            }
+          };
+        });
+
+        // 3. SCROLL SPY CHỐNG BÁM NHẦM VÀO TIÊU ĐỀ
         window.onscroll = () => {
-          const sections = document.querySelectorAll(
-            ".chapter-card, .pdf-h2[id], .pdf-h3[id], p[id]",
-          );
+          const sections = document.querySelectorAll(".chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id], #bai-tap, .video-box[id]");
           let currentId = "";
+          
           sections.forEach((section) => {
-            if (
-              window.pageYOffset >=
-              section.getBoundingClientRect().top + window.pageYOffset - 150
-            ) {
+            if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - 150) {
               currentId = section.getAttribute("id");
             }
           });
+          
           if (currentId) {
             menuLinks.forEach((link) => {
               link.classList.remove("active");
-              if (link.getAttribute("href") === `#${currentId}`)
-                link.classList.add("active");
+              if (link.getAttribute("href") === `#${currentId}`) {
+                
+                // LƯỚI LỌC: Không active nếu là mũi tên hoặc chữ xanh
+                const inToggleBtn = link.closest(".toggle-btn");
+                const inGroupLabel = link.closest(".group-label") || link.classList.contains("group-label");
+                
+                if (!inToggleBtn && !inGroupLabel) {
+                  link.classList.add("active");
+                  
+                  // Tự bung menu
+                  let parentDropdown = link.closest(".has-dropdown");
+                  while (parentDropdown) {
+                    if (!parentDropdown.classList.contains("open")) {
+                      parentDropdown.classList.add("open");
+                    }
+                    parentDropdown = parentDropdown.parentElement.closest(".has-dropdown");
+                  }
+                }
+              }
             });
           }
         };
       }
 
-      // GỌI HÀM NGAY LẬP TỨC VÀ GỌI LẠI ĐỂ CHỐNG ĐƠ AJAX
       bootVectoriaMenu();
       setTimeout(bootVectoriaMenu, 100);
       setTimeout(bootVectoriaMenu, 500);

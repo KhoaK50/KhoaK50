@@ -2,7 +2,7 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Vector ở phổ thông - Vectoria Knowledge</title>
 
     <link rel="stylesheet" href="../../css/footer.css" />
@@ -642,98 +642,153 @@
         stroke: #e2e8f0 !important;
       }
 
-      /* =================== 5. MOBILE RESPONSIVE (DƯỚI 960PX) =================== */
-      @media (max-width: 960px) {
+      /* =================== 5. BỘ ĐIỀU KHIỂN GIAO DIỆN MOBILE =================== */
+      @media screen and (max-width: 960px) {
         .container {
-          flex-direction: column;
-          padding: 0;
-          gap: 0;
+          flex-direction: column !important;
+          padding: 0 !important;
+          gap: 0 !important;
+          display: block !important;
         }
 
         .main-content {
-          padding: 15px;
+          padding: 15px !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+          overflow-x: hidden !important;
         }
 
+        /* 1. Biến Sidebar thành thanh ngang dính sát Topbar */
         .sidebar {
-          width: 100%;
-          height: auto;
-          z-index: 990;
-          position: sticky;
-          top: 60px;
-          /* Dính ngay dưới header */
-          border-radius: 0;
-          border: none;
-          border-bottom: 1px solid var(--border);
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-          background-color: var(--bg-body);
-          padding: 10px 0;
-          margin: 0;
+          width: 100% !important;
+          height: auto !important;
+          max-height: none !important;
+          z-index: 990 !important;
+          position: sticky !important;
+          top: var(--topbar-h) !important;
+          border-radius: 0 !important;
+          border: none !important;
+          border-bottom: 1px solid var(--border) !important;
+          background-color: var(--bg-body) !important;
+          padding: 10px 15px !important; 
+          margin: 0 !important;
+          overflow-y: visible !important;
         }
 
-        .sidebar h3 {
-          display: none;
+        /* 2. Cục "Mục lục" hiện ra như một nút bấm */
+        .sidebar h3.nav-title {
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          background: var(--bg-card) !important;
+          padding: 15px 20px !important;
+          margin: 0 !important;
+          border-radius: 12px !important;
+          border: 1px solid var(--border) !important;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+          cursor: pointer !important;
+          color: var(--primary) !important;
+          transition: all 0.3s ease !important;
+        }
+        
+        .sidebar h3.nav-title i:not(.fa-list-ul) { display: none !important; }
+        .sidebar h3.nav-title::after { 
+            content: '\f054'; 
+            font-family: "Font Awesome 6 Free"; 
+            font-weight: 900; 
+            transition: transform 0.3s ease; 
+        }
+        .sidebar.mobile-open h3.nav-title::after { transform: rotate(90deg) !important; }
+
+        /* 3. BẢNG DANH SÁCH MỤC LỤC XỔ XUỐNG */
+        .custom-nav .nav-list {
+          display: none !important; 
+          flex-direction: column !important;
+          background: var(--bg-card) !important;
+          padding: 10px 0 15px 0 !important; 
+          margin: -5px 0 0 0 !important; 
+          border-radius: 0 0 12px 12px !important;
+          border: 1px solid var(--border) !important;
+          border-top: none !important;
+          box-shadow: 0 10px 15px rgba(0,0,0,0.1) !important;
+          max-height: 50vh !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+        }
+        
+        .custom-nav .nav-list::-webkit-scrollbar { width: 4px; }
+        .custom-nav .nav-list::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 10px; }
+
+        .sidebar.mobile-open h3.nav-title {
+          border-radius: 12px 12px 0 0 !important;
+          border-bottom: 1px dashed var(--border) !important; 
+        }
+        .sidebar.mobile-open .nav-list { display: flex !important; }
+
+        .custom-nav .sub-menu { display: none !important; flex-direction: column !important; }
+        .custom-nav .has-dropdown.open > .sub-menu { display: flex !important; }
+        .custom-nav .sub-heading, .custom-nav div.toggle-btn, .custom-nav .arrow-icon { display: flex !important; }
+
+        .custom-nav a.nav-link, .custom-nav a.sub-link, .custom-nav a.sub-sub-link {
+          background: transparent !important;
+          border: none !important;
+          border-left: 3px solid transparent !important;
+          border-radius: 0 !important;
+          margin-bottom: 0 !important;
+          padding-top: 12px !important;
+          padding-bottom: 12px !important;
+          padding-right: 15px !important;
         }
 
-        .menu-list {
-          display: flex;
-          gap: 10px;
-          overflow-x: auto;
-          padding: 0 15px;
-          white-space: nowrap;
-          -webkit-overflow-scrolling: touch;
+        .custom-nav a.nav-link { padding-left: 20px !important; } 
+        .custom-nav a.sub-link { padding-left: 40px !important; } 
+        .custom-nav a.sub-sub-link { padding-left: 60px !important; } 
+
+        .custom-nav a.nav-link.active, .custom-nav a.sub-link.active, .custom-nav a.sub-sub-link.active {
+          background: #eff6ff !important;
+          color: var(--primary) !important;
+          border-left-color: var(--primary) !important;
         }
 
-        .menu-list::-webkit-scrollbar {
-          display: none;
+        .custom-nav a.sub-heading, .custom-nav li.sub-heading, .custom-nav a.group-label {
+          padding-top: 15px !important;
+          padding-bottom: 5px !important;
+          padding-left: 20px !important;
+          pointer-events: none !important;
+          border: none !important;
+          background: transparent !important;
         }
 
-        .menu-link {
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          padding: 8px 16px;
-          font-size: 0.9rem;
-          border-radius: 20px;
+        body.dark .sidebar { background-color: var(--bg-body) !important; }
+        body.dark .sidebar h3.nav-title { background: #1e293b !important; border-color: #334155 !important; }
+        body.dark .custom-nav .nav-list { background: #1e293b !important; border-color: #334155 !important; }
+        body.dark .custom-nav .nav-list::-webkit-scrollbar-thumb { background-color: #475569 !important; }
+        body.dark .custom-nav a.nav-link.active, body.dark .custom-nav a.sub-link.active, body.dark .custom-nav a.sub-sub-link.active {
+          background: #1e293b !important;
+          color: #60a5fa !important;
+          border-left-color: #60a5fa !important;
         }
+        body.dark .sidebar.mobile-open h3.nav-title { border-bottom-color: #334155 !important; }
 
-        .menu-link.active {
-          background: var(--primary);
-          color: #fff;
-          border-color: #fff;
+        /* 7. XÓA SẠCH VẠCH KẺ MẢNH - CHỈNH LẠI SCROLL LÝ THUYẾT */
+        .chapter-card { scroll-margin-top: 130px !important; padding: 20px !important; }
+        .cinema-container { flex-direction: column !important; }
+        .video-box { aspect-ratio: 16/9 !important; width: 100% !important; }
+        .playlist-box { height: 300px !important; border-left: none !important; border-top: 1px solid #334155 !important; }
+        
+        /* BÍ QUYẾT XÓA VẠCH LÀ ĐÂY: Không ép `#ly-thuyet` scroll nữa, để nó tự nhiên! */
+        #ly-thuyet { 
+            overflow-x: hidden !important; /* TRỊ BỆNH LẰN KẺ */
+            overflow-y: hidden !important; 
+            max-width: 100%; 
+            display: block !important;
         }
-
-        .chapter-card {
-          scroll-margin-top: 130px;
-          padding: 20px;
-        }
-
-        .cinema-container {
-          flex-direction: column;
-        }
-
-        .video-box {
-          aspect-ratio: 16/9;
-          width: 100%;
-        }
-
-        .playlist-box {
-          height: 300px;
-          border-left: none;
-          border-top: 1px solid #334155;
-        }
-
-        /* ===== SCROLL NGANG RIÊNG CHO MỤC LÝ THUYẾT (#ly-thuyet) ===== */
-        #ly-thuyet {
-          overflow-x: auto;
-          overflow-y: visible;
-
-          -webkit-overflow-scrolling: touch;
-          overscroll-behavior-x: contain;
-
-          max-width: 100%;
-        }
-
-        #ly-thuyet > * {
-          min-width: max-content;
+        
+        /* Chỉ cho phép cuộn ngang ở NHỮNG VÙNG THẬT SỰ CẦN THIẾT (ví dụ đoạn công thức) */
+        .math-center, mjx-container[display="true"], .math-scroll {
+            overflow-x: auto !important;
+            max-width: 100vw !important;
+            padding-bottom: 8px !important;
         }
       }
 
@@ -1076,55 +1131,33 @@
         /* Con cấp 2 (3.1, 5.1) */
       }
 
-      /* Giao diện khung Sidebar (Đã thêm cuộn dọc chuẩn) */
       .sidebar {
         width: var(--sidebar-width);
         flex-shrink: 0;
+        height: fit-content;
         position: sticky;
         top: 100px;
-        height: fit-content;
-        /* Ôm vừa khít nội dung nếu menu ngắn */
-        max-height: calc(100vh - 140px);
-        /* Chỉ dãn tối đa tới mức này, vượt quá mới bắt đầu cuộn */
-        overflow-y: auto;
-        /* Bật thanh cuộn dọc khi nội dung quá dài */
+        max-height: calc(100vh - 140px); /* BẬT SCROLL CHO DESKTOP */
+        overflow-y: auto;                /* BẬT SCROLL CHO DESKTOP */
         background: var(--bg-card);
         border-radius: 12px;
         border: 1px solid var(--border);
-        padding: 20px 0;
-        transition:
-          background 0.3s,
-          border 0.3s;
+        padding: 20px 0; /* Thu lề để thanh scroll mượt hơn */
+        transition: background 0.3s, border 0.3s;
       }
 
-      /* Các thuộc tính scrollbar bên dưới ông giữ nguyên */
-      .sidebar::-webkit-scrollbar {
-        width: 5px;
-      }
+      .sidebar::-webkit-scrollbar { width: 5px; }
+      .sidebar::-webkit-scrollbar-track { background: transparent; }
+      .sidebar::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 10px; }
+      body.dark .sidebar::-webkit-scrollbar-thumb { background-color: #475569; }
 
-      .sidebar::-webkit-scrollbar-track {
-        background: transparent;
-      }
-
-      .sidebar::-webkit-scrollbar-thumb {
-        background-color: var(--border);
-        border-radius: 10px;
-      }
-
-      body.dark .sidebar::-webkit-scrollbar-thumb {
-        background-color: #475569;
-      }
-
-      /* Chỉnh lại khoảng cách cho chữ Mục lục */
       .sidebar h3,
       .custom-nav .nav-title {
         margin: 0;
         padding: 0 20px 15px 20px;
-        /* BÍ QUYẾT LÀ ĐÂY: Thêm 20px lề trái và phải */
         font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--text-main);
         border-bottom: 1px solid var(--border);
+        color: var(--text-main);
       }
 
       /* Style cho Tiêu đề phân nhóm (h1) trong Menu */
@@ -1138,6 +1171,84 @@
         margin-top: 10px;
         /* Cách cụm trên ra một chút cho thoáng */
         letter-spacing: 0.5px;
+      }
+      /* =========================================================================
+         XỬ LÝ HOVER & ACTIVE CHO MENU (FIX LỖI BÔI NỀN)
+         ========================================================================= */
+
+      /* 1. HOVER BÌNH THƯỜNG (Chỉ áp dụng cho các link có thể click) */
+      /* Sử dụng :not() để loại trừ hoàn toàn các thẻ chứa toggle-btn và group-label khỏi hiệu ứng hover nền */
+      .custom-nav .nav-link:not(.toggle-btn):hover,
+      .custom-nav .sub-link:not(.group-label):not(.toggle-btn):hover {
+        background: var(--hover-bg);
+        color: var(--primary);
+      }
+
+      /* 2. ACTIVE BÌNH THƯỜNG */
+      .custom-nav .nav-link.active,
+      .custom-nav .sub-link.active {
+        background-color: #eff6ff !important;
+        color: var(--primary) !important;
+        font-weight: 600;
+        border-left-color: var(--primary) !important;
+      }
+
+      /* 3. XỬ LÝ RIÊNG CHO TIÊU ĐỀ CHỮ XANH (.group-label) */
+      .custom-nav .group-label {
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        pointer-events: none; /* Khóa click */
+        border-left: none !important;
+        background-color: transparent !important;
+        color: var(--primary) !important;
+      }
+
+      /* 4. XỬ LÝ RIÊNG CHO DÒNG CÓ MŨI TÊN (.toggle-btn) */
+      .custom-nav .toggle-btn,
+      .custom-nav .toggle-btn.active {
+        border-left: none !important;
+        background-color: transparent !important; /* Luôn vô hiệu hóa nền */
+      }
+
+      /* Khi hover vào dòng có mũi tên (Light mode) */
+      .custom-nav .toggle-btn:hover {
+        background-color: transparent !important; /* Đảm bảo không bôi nền */
+        color: var(--primary) !important;
+      }
+
+      /* --- CHẾ ĐỘ DARK MODE --- */
+      body.dark .custom-nav .nav-link,
+      body.dark .custom-nav .sub-link { 
+          color: #94a3b8; 
+      }
+      
+      /* Hover cho link bình thường trong Dark Mode */
+      body.dark .custom-nav .nav-link:not(.toggle-btn):hover,
+      body.dark .custom-nav .sub-link:not(.group-label):not(.toggle-btn):hover {
+        background: #1e293b; 
+        color: #60a5fa;
+      }
+
+      /* Active cho link bình thường trong Dark Mode */
+      body.dark .custom-nav .active {
+        background-color: #1e293b !important;
+        color: #60a5fa !important;
+        border-left-color: #60a5fa !important;
+      }
+
+      /* Đặt lại màu cho tiêu đề tĩnh (.group-label) trong Dark Mode */
+      body.dark .custom-nav .group-label {
+        color: #60a5fa !important;
+        background-color: transparent !important;
+      }
+
+      /* Hover vào dòng mũi tên trong Dark Mode: Glow chữ, Không nền */
+      body.dark .custom-nav .toggle-btn:hover {
+        background-color: transparent !important; /* Bắt buộc không nền */
+        color: #93c5fd !important;
+        text-shadow: 0 0 10px rgba(147, 197, 253, 0.6); /* Hiệu ứng Glow chữ */
       }
     </style>
   </head>
@@ -2231,21 +2342,7 @@
         });
       });
 
-      // 3. SCROLL SPY
-      const cards = document.querySelectorAll(".chapter-card");
-      const links = document.querySelectorAll(".menu-link");
-      window.addEventListener("scroll", () => {
-        let current = "";
-        cards.forEach((card) => {
-          if (scrollY >= card.offsetTop - 150)
-            current = card.getAttribute("id");
-        });
-        links.forEach((link) => {
-          link.classList.remove("active");
-          if (link.getAttribute("href").includes(current))
-            link.classList.add("active");
-        });
-      });
+      
     </script>
     <script>
       const VIDEO_ID = "woM6wsymvsc";
@@ -2254,79 +2351,177 @@
 
     <script src="../../js/utils/auto-update_timeline.js"></script>
     <script>
-      // HÀM MA THUẬT: Gói tất cả vào một chỗ
       function bootVectoriaMenu() {
+        if (window.menuInitialized) return;
+        window.menuInitialized = true;
+        
         console.log("Menu System: Booting...");
-        const topbar = document.getElementById("topbar");
-        const topbarHeight = topbar ? topbar.offsetHeight : 60;
+        const topbarHeight = document.getElementById("topbar")?.offsetHeight || 60;
+        let isClicking = false; 
 
-        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
-
-        // THAY TOÀN BỘ PHẦN XỬ LÝ CLICK TRONG bootVectoriaMenu BẰNG ĐOẠN NÀY:
-        menuLinks.forEach((link) => {
-          link.onclick = function (e) {
-            const targetId = this.getAttribute("href");
-            if (!targetId || targetId === "#") return;
-            e.preventDefault();
-
-            // --- CHIÊU THỨC PHÂN QUYỀN ---
-            // Chỉ những link nằm trong .toggle-btn mới được quyền Đóng/Mở (Toggle)
-            const isParentToggle = this.closest(".toggle-btn");
-            const parentLi = this.closest(".has-dropdown");
-
-            if (isParentToggle && parentLi) {
-              parentLi.classList.toggle("open");
+        // 0. AUTO-FIX TẬN GỐC
+        document.querySelectorAll('.custom-nav .arrow-icon').forEach(icon => {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-right');
+            const parentLi = icon.closest(".has-dropdown");
+            if (parentLi && parentLi.classList.contains('open')) {
+                setTimeout(() => { icon.style.transform = 'rotate(90deg)'; }, 0);
+            } else {
+                icon.style.transform = 'rotate(0deg)';
             }
-            // Nếu là tiểu mục (không có toggle-btn), ta KHÔNG toggle class 'open'
-            // Điều này giúp bấm 3.1, 3.2 thì menu cha vẫn giữ nguyên trạng thái mở.
-
-            // --- HIGHLIGHT & CUỘN TRANG ---
-            menuLinks.forEach((el) => el.classList.remove("active"));
-            this.classList.add("active");
-
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) {
-              const topbarHeight =
-                document.getElementById("topbar")?.offsetHeight || 60;
-              const y =
-                targetElement.getBoundingClientRect().top +
-                window.pageYOffset -
-                topbarHeight -
-                20;
-              window.scrollTo({ top: y, behavior: "smooth" });
-            }
-          };
         });
 
-        // SCROLL SPY: Tự động sáng menu
-        window.onscroll = () => {
-          const sections = document.querySelectorAll(
-            ".chapter-card, .pdf-h2[id], .pdf-h3[id], #bai-tap",
-          );
-          let currentId = "";
-          sections.forEach((section) => {
-            if (
-              window.pageYOffset >=
-              section.getBoundingClientRect().top + window.pageYOffset - 150
-            ) {
-              currentId = section.getAttribute("id");
+        // 1. NÚT "MỤC LỤC" THU GỌN TRÊN MOBILE
+        const sidebar = document.querySelector('.sidebar');
+        const navTitle = document.querySelector('.sidebar h3.nav-title');
+        if (navTitle) {
+            const newNavTitle = navTitle.cloneNode(true);
+            navTitle.replaceWith(newNavTitle);
+            newNavTitle.addEventListener('click', () => {
+                sidebar.classList.toggle('mobile-open');
+            });
+        }
+
+        // 2. MŨI TÊN ĐÓNG/MỞ CÁC MỤC BÊN TRONG
+        document.querySelectorAll('.custom-nav .toggle-btn').forEach((btn) => {
+          btn.addEventListener("click", function (e) {
+            const link = this.querySelector('a');
+            if(link && link.getAttribute('href')) e.preventDefault();
+            e.stopPropagation(); 
+            
+            const parentLi = this.closest(".has-dropdown");
+            if (parentLi) {
+              isClicking = true;
+              parentLi.classList.toggle("open"); 
+              
+              const icon = this.querySelector(".arrow-icon");
+              if (icon) {
+                 icon.style.transform = parentLi.classList.contains('open') ? 'rotate(90deg)' : 'rotate(0deg)';
+              }
+
+               if(link && link.getAttribute('href') !== '#') {
+                    const targetId = link.getAttribute("href");
+                    const targetElement = document.querySelector(targetId);
+                     if (targetElement) {
+                        const offset = window.innerWidth <= 960 ? 140 : topbarHeight + 20;
+                        const executeScroll = () => {
+                          const y = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+                          window.scrollTo({ top: y, behavior: "smooth" });
+                        };
+                        if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
+                           MathJax.startup.promise.then(() => requestAnimationFrame(executeScroll));
+                        } else { executeScroll(); }
+                     }
+               }
+              setTimeout(() => { isClicking = false; }, 800);
             }
           });
-          if (currentId) {
-            menuLinks.forEach((link) => {
-              link.classList.toggle(
-                "active",
-                link.getAttribute("href") === `#${currentId}`,
-              );
-            });
-          }
+        });
+
+        // 3. CUỘN TRANG THÔNG MINH
+        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
+        menuLinks.forEach((link) => {
+          link.addEventListener("click", function (e) {
+            const targetId = this.getAttribute("href");
+            if (!targetId || targetId === "#") return;
+            
+            // KIỂM TRA: Cấm cuộn trang nếu thẻ này chứa nút mũi tên (toggle-btn)
+            // HOẶC nếu nó là tiêu đề nhóm (sub-heading, group-label)
+            if (
+              this.closest('.toggle-btn') || 
+              this.classList.contains("sub-heading") || 
+              this.classList.contains("group-label") || 
+              (this.hasAttribute('style') && this.getAttribute('style').includes('uppercase'))
+            ) {
+                e.preventDefault(); // CHẶN HÀNH VI CUỘN TRANG
+                return; // Dừng luôn, không chạy các lệnh cuộn ở dưới nữa
+            }
+
+            e.preventDefault();
+            isClicking = true;
+
+            document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
+            
+            this.classList.add("active");
+            const parentDiv = this.closest('.nav-link') || this.closest('.sub-link') || this.closest('.sub-sub-link');
+            if (parentDiv) parentDiv.classList.add("active");
+
+            const parentDropdown = this.closest(".has-dropdown");
+            if (parentDropdown) {
+              parentDropdown.classList.add("open");
+              const icon = parentDropdown.querySelector('.arrow-icon');
+              if (icon) icon.style.transform = 'rotate(90deg)';
+            }
+
+            if (window.innerWidth <= 960 && sidebar) {
+                sidebar.classList.remove('mobile-open');
+            }
+
+            setTimeout(() => {
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                  const offset = window.innerWidth <= 960 ? 140 : topbarHeight + 20;
+                  const executeScroll = () => {
+                    const y = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+                    window.scrollTo({ top: y, behavior: "smooth" });
+                    setTimeout(() => { isClicking = false; }, 800); 
+                  };
+                  if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
+                     MathJax.startup.promise.then(() => requestAnimationFrame(executeScroll));
+                  } else { executeScroll(); }
+                }
+            }, window.innerWidth <= 960 ? 150 : 0);
+          });
+        });
+
+        // 4. SCROLL SPY
+        let isScrolling;
+        window.onscroll = () => {
+          window.clearTimeout(isScrolling);
+          isScrolling = setTimeout(() => {
+              if (isClicking) return; 
+
+              const sections = document.querySelectorAll(".chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id], #bai-tap, .video-box[id]");
+              let currentId = "";
+              const offsetSpy = window.innerWidth <= 960 ? topbarHeight + 80 : topbarHeight + 50;
+              
+              sections.forEach((section) => {
+                if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - offsetSpy - 50) {
+                  currentId = section.getAttribute("id");
+                }
+              });
+              
+              if (currentId) {
+                menuLinks.forEach((link) => {
+                  if (link.getAttribute("href") === `#${currentId}`) {
+                    const inGroupLabel = link.classList.contains("sub-heading") || link.classList.contains("group-label") || (link.hasAttribute('style') && link.getAttribute('style').includes('uppercase'));
+                    const isToggleBtn = link.closest('.toggle-btn');
+                    
+                    if (!inGroupLabel && !isToggleBtn) {
+                      document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
+                      link.classList.add("active");
+                      const parentDiv = link.closest('.nav-link') || link.closest('.sub-link') || link.closest('.sub-sub-link');
+                      if (parentDiv) parentDiv.classList.add("active");
+                      
+                      if (window.innerWidth > 960) {
+                          let parentDropdown = link.closest(".has-dropdown");
+                          while (parentDropdown) {
+                            parentDropdown.classList.add("open");
+                            const icon = parentDropdown.querySelector('.toggle-btn .arrow-icon');
+                            if(icon) icon.style.transform = 'rotate(90deg)';
+                            parentDropdown = parentDropdown.parentElement.closest(".has-dropdown");
+                          }
+                      }
+                    }
+                  }
+                });
+              }
+          }, 50);
         };
       }
 
-      // KÍCH HOẠT NGAY (Dành cho lật thẻ Ajax)
-      bootVectoriaMenu();
-      // Chạy lại sau 300ms để chắc chắn DOM đã nạp xong sau hiệu ứng lật
-      setTimeout(bootVectoriaMenu, 300);
+      document.addEventListener("DOMContentLoaded", bootVectoriaMenu);
+      setTimeout(bootVectoriaMenu, 500);
     </script>
   </body>
 </html>

@@ -2165,59 +2165,95 @@
       }
     </script>
     <script>
-      // Hàm này dùng để kích hoạt toàn bộ menu
       function bootVectoriaMenu() {
-        console.log("Menu System: Booting...");
-
-        const smoothScrollTo = (targetElement) => {
-          if (!targetElement) return;
-          const topbarHeight =
-            document.getElementById("topbar")?.offsetHeight || 60;
-          const y =
-            targetElement.getBoundingClientRect().top +
-            window.pageYOffset -
-            topbarHeight -
-            20;
-          window.scrollTo({ top: y, behavior: "smooth" });
-        };
-
+        console.log("Menu System: Booting Dinh Thuc...");
+        const topbarHeight = document.getElementById("topbar")?.offsetHeight || 60;
+        
+        // Chỉ lấy thẻ A, không lấy DIV
         const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
-        const toggleBtns = document.querySelectorAll(".custom-nav .toggle-btn");
 
-        // Dùng .onclick để ép sự kiện bám thẳng vào thẻ, chấp mọi loại load động
-        toggleBtns.forEach((btn) => {
-          btn.onclick = function (e) {
+        menuLinks.forEach((link) => {
+          link.onclick = function (e) {
+            const targetId = this.getAttribute("href");
+            if (!targetId || targetId === "#") return;
             e.preventDefault();
+
+            // KIỂM TRA PHÂN QUYỀN
+            const parentToggle = this.closest(".toggle-btn");
+            const isGroupLabel = this.classList.contains("group-label") || this.closest(".group-label");
             const parentLi = this.closest(".has-dropdown");
-            if (parentLi) {
+
+            // NẾU LÀ DÒNG CÓ MŨI TÊN -> Đóng mở menu, CẤM CUỘN
+            if (parentToggle && parentLi) {
               parentLi.classList.toggle("open");
-              const icon = this.querySelector(".arrow-icon");
+              const icon = parentToggle.querySelector(".arrow-icon");
               if (icon) {
                 icon.classList.toggle("fa-chevron-down");
                 icon.classList.toggle("fa-chevron-right");
               }
+              return; // Chặn đứng
             }
-            const link = this.querySelector("a");
-            if (link) {
-              menuLinks.forEach((el) => el.classList.remove("active"));
-              link.classList.add("active");
-              smoothScrollTo(document.querySelector(link.getAttribute("href")));
-            }
-          };
-        });
 
-        menuLinks.forEach((link) => {
-          if (link.closest(".toggle-btn")) return;
-          link.onclick = function (e) {
-            e.preventDefault();
+            // NẾU LÀ DÒNG CHỮ XANH -> CẤM CUỘN
+            if (isGroupLabel) return; 
+
+            // HIGHLIGHT & CUỘN TRANG (Cho link hợp lệ)
             menuLinks.forEach((el) => el.classList.remove("active"));
             this.classList.add("active");
-            smoothScrollTo(document.querySelector(this.getAttribute("href")));
+
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+              const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
+              window.scrollTo({ top: y, behavior: "smooth" });
+            }
           };
         });
+
+        // SCROLL SPY - Tự động sáng menu
+        window.onscroll = () => {
+          const sections = document.querySelectorAll(".chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id], p[id], #bai-tap, .video-box[id]");
+          let currentId = "";
+          
+          sections.forEach((section) => {
+            if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - 150) {
+              currentId = section.getAttribute("id");
+            }
+          });
+          
+          if (currentId) {
+            menuLinks.forEach((link) => {
+              link.classList.remove("active");
+              
+              if (link.getAttribute("href") === `#${currentId}`) {
+                
+                // LƯỚI LỌC SCROLL SPY: Chặn active vào Tiêu Đề
+                const inToggleBtn = link.closest(".toggle-btn");
+                const inGroupLabel = link.classList.contains("group-label") || link.closest(".group-label");
+                
+                // Chỉ Active nếu không vi phạm
+                if (!inToggleBtn && !inGroupLabel) {
+                  link.classList.add("active");
+                  
+                  // Tự bung menu
+                  let parentDropdown = link.closest(".has-dropdown");
+                  while(parentDropdown){
+                     if(!parentDropdown.classList.contains("open")){
+                         parentDropdown.classList.add("open");
+                         const icon = parentDropdown.querySelector('.toggle-btn .arrow-icon');
+                         if(icon){
+                             icon.classList.remove("fa-chevron-right");
+                             icon.classList.add("fa-chevron-down");
+                         }
+                     }
+                     parentDropdown = parentDropdown.parentElement.closest(".has-dropdown");
+                  }
+                }
+              }
+            });
+          }
+        };
       }
 
-      // TUYỆT CHIÊU: Chạy ngay lập tức và thử lại sau đó để chống đơ khi load Ajax
       bootVectoriaMenu();
       setTimeout(bootVectoriaMenu, 100);
       setTimeout(bootVectoriaMenu, 500);

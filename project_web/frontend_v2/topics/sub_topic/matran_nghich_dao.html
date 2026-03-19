@@ -1003,17 +1003,16 @@
         }
 
         /* Trạng thái mặc định: Mũi tên trỏ sang phải > */
-        .custom-nav .arrow-icon {
-            transition: transform 0.3s ease;
-            transform: rotate(0deg) !important;
-            display: inline-block;
-        }
+      .custom-nav .arrow-icon {
+        transition: transform 0.3s ease;
+        display: inline-block;
+      }
 
-        /* Khi mục cha có class .open: Tự xoay 90 độ thành trỏ xuống v */
-        .custom-nav .has-dropdown.open>.nav-link .arrow-icon,
-        .custom-nav .has-dropdown.open>.toggle-btn .arrow-icon {
-            transform: rotate(90deg) !important;
-        }
+      /* Khôi phục xoay cho thẻ cha .open */
+      .custom-nav .has-dropdown.open > .nav-link .arrow-icon,
+      .custom-nav .has-dropdown.open > div.toggle-btn .arrow-icon {
+        transform: rotate(90deg); 
+      }
 
         /* 4. Thụt lề phân cấp 3 lớp chuẩn đét */
         .custom-nav .sub-menu .sub-link {
@@ -1025,41 +1024,99 @@
             font-size: 0.85rem;
         }
 
-        /* 1. Đưa border-left từ thẻ a sang thẻ li để nó nằm ngoài rìa */
-        .custom-nav .nav-item,
-        .custom-nav .sub-menu li {
-            position: relative;
-            border-left: 3px solid transparent;
-            /* Thanh dọc mặc định ẩn */
-            transition: all 0.2s;
-        }
+        /* =========================================================================
+         XỬ LÝ HOVER, ACTIVE VÀ GLOW CHO MENU 3 CẤP
+         ========================================================================= */
 
-        /* 2. Khi mục đó active, hiện thanh dọc ở sát mép trái Sidebar */
-        .custom-nav .nav-item:has(> .active),
-        .custom-nav .sub-menu li:has(> .active) {
-            border-left: 3px solid var(--primary);
-            background-color: var(--hover-bg);
-            /* Nền xanh nhạt cho cả dòng */
-        }
+      /* 1. Xử lý Vạch dọc bên trái */
+      .custom-nav .nav-item,
+      .custom-nav .sub-menu li {
+        position: relative;
+        border-left: 3px solid transparent;
+        transition: all 0.2s;
+      }
 
-        /* 3. Bỏ border-left cũ ở thẻ a để không bị trùng */
-        .custom-nav .active {
-            border-left: none !important;
-            background-color: transparent !important;
-            /* Reset lại để không bị đè nền */
-            color: var(--primary) !important;
-        }
+      /* Chỉ bôi nền và vạch xanh cho thẻ <li> nếu link hợp lệ (không phải toggle-btn, group-label) bên trong active */
+      .custom-nav li:has(> a.active:not(.toggle-btn):not(.group-label)),
+      .custom-nav li:has(> div.active:not(.toggle-btn)) {
+        border-left: 3px solid var(--primary);
+        background-color: var(--hover-bg);
+      }
 
-        /* 4. Chỉnh lại thụt lề chữ cho đẹp */
-        .custom-nav .sub-link {
-            padding-left: 40px !important;
-            /* Con cấp 1 */
-        }
+      /* Xóa background/border mặc định của class active */
+      .custom-nav .active {
+        border-left: none !important;
+        background-color: transparent !important;
+        color: var(--primary) !important;
+      }
 
-        .custom-nav .sub-menu .sub-menu .sub-link {
-            padding-left: 60px !important;
-            /* Con cấp 2 (3.1, 5.1) */
-        }
+      /* 2. Thụt lề chữ */
+      .custom-nav .sub-link { padding-left: 40px !important; }
+      .custom-nav .sub-menu .sub-menu .sub-link { padding-left: 60px !important; }
+
+      /* =================== ĐẶC TRỊ TIÊU ĐỀ: CHỮ XANH VÀ MŨI TÊN =================== */
+
+      /* Cấm toàn bộ màu nền và vạch cho group-label và toggle-btn */
+      .custom-nav .group-label,
+      .custom-nav .toggle-btn,
+      .custom-nav .group-label.active,
+      .custom-nav .toggle-btn.active,
+      .custom-nav li:has(> .group-label),
+      .custom-nav li:has(> .toggle-btn) {
+        background-color: transparent !important;
+        border-left: none !important;
+      }
+
+      /* Thiết lập cho chữ xanh (Tĩnh) */
+      .custom-nav .group-label {
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        color: var(--primary) !important;
+        pointer-events: none; /* Vô hiệu hóa chuột */
+      }
+
+      /* Mũi tên Hover (Light Mode) - Đổi màu chữ, không đổi nền */
+      .custom-nav .toggle-btn:hover {
+        background-color: transparent !important;
+        color: var(--primary) !important;
+      }
+
+      /* ================= DARK MODE CHO TOÀN BỘ MENU ================= */
+      body.dark .custom-nav .nav-link,
+      body.dark .custom-nav .sub-link { color: #94a3b8; }
+      
+      body.dark .custom-nav .active { color: #60a5fa !important; }
+      
+      /* Nền active trong Dark mode (Chỉ cho link hợp lệ) */
+      body.dark .custom-nav li:has(> a.active:not(.toggle-btn):not(.group-label)) {
+        background-color: #1e293b !important;
+        border-left-color: #60a5fa !important;
+      }
+
+      /* Hover bình thường (Dark Mode) */
+      body.dark .custom-nav .nav-link:not(.toggle-btn):hover,
+      body.dark .custom-nav .sub-link:not(.toggle-btn):not(.group-label):hover {
+        color: #f1f5f9;
+        background-color: transparent !important; /* Xóa nền hover ở thẻ a, để thẻ li lo */
+      }
+      body.dark .custom-nav li:has(> a:not(.toggle-btn):not(.group-label):hover) {
+          background-color: #1e293b !important;
+      }
+
+      /* DARK MODE: Glow chữ cho Tiêu Đề (.group-label & .toggle-btn) */
+      body.dark .custom-nav .group-label,
+      body.dark .custom-nav .toggle-btn {
+        color: #60a5fa !important;
+        background-color: transparent !important;
+      }
+      
+      body.dark .custom-nav .toggle-btn:hover {
+        background-color: transparent !important; /* CẤM BÔI NỀN */
+        color: #93c5fd !important;
+        text-shadow: 0 0 10px rgba(147, 197, 253, 0.7) !important; /* HIỆU ỨNG GLOW */
+      }
 
         /* =================== MÀN CHE VIDEO SCI-FI =================== */
         .temp-video-overlay {
@@ -2016,86 +2073,97 @@
             el.classList.add('playing');
         }
 
-        // 3. SCROLL SPY
-        const cards = document.querySelectorAll('.chapter-card');
-        const links = document.querySelectorAll('.menu-link');
-        window.addEventListener('scroll', () => {
-            let current = '';
-            cards.forEach(card => {
-                if (scrollY >= card.offsetTop - 150) current = card.getAttribute('id');
-            });
-            links.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href').includes(current)) link.classList.add('active');
-            });
-        });
-
-
-
+        
     </script>
     <script>
-        // HÀM MA THUẬT: Gói tất cả vào một chỗ
-        function bootVectoriaMenu() {
-            console.log("Menu System: Booting...");
-            const topbar = document.getElementById('topbar');
-            const topbarHeight = topbar ? topbar.offsetHeight : 60;
+      // HÀM MA THUẬT: Gói tất cả vào một chỗ
+      function bootVectoriaMenu() {
+        console.log("Menu System: Booting Hang Ma Tran...");
+        const topbar = document.getElementById("topbar");
+        const topbarHeight = topbar ? topbar.offsetHeight : 60;
+        
+        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
 
-            const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
+        menuLinks.forEach((link) => {
+          link.onclick = function (e) {
+            const targetId = this.getAttribute("href");
+            if (!targetId || targetId === "#") return;
+            e.preventDefault();
 
-            // THAY TOÀN BỘ PHẦN XỬ LÝ CLICK TRONG bootVectoriaMenu BẰNG ĐOẠN NÀY:
-            menuLinks.forEach(link => {
-                link.onclick = function (e) {
-                    const targetId = this.getAttribute('href');
-                    if (!targetId || targetId === "#") return;
-                    e.preventDefault();
+            // --- KIỂM TRA PHÂN QUYỀN ---
+            const isToggleBtn = this.closest(".toggle-btn");
+            const isGroupLabel = this.classList.contains("group-label");
+            const parentLi = this.closest(".has-dropdown");
 
-                    // --- CHIÊU THỨC PHÂN QUYỀN ---
-                    // Chỉ những link nằm trong .toggle-btn mới được quyền Đóng/Mở (Toggle)
-                    const isParentToggle = this.closest('.toggle-btn');
-                    const parentLi = this.closest('.has-dropdown');
+            
+            // Xử lý đóng/mở menu xổ xuống (Chỉ dành cho dòng có mũi tên)
+            if (isToggleBtn && parentLi) {
+              parentLi.classList.toggle("open");
+              // BỎ ĐOẠN ĐỔI CLASS ICON Ở ĐÂY, ĐỂ CSS TỰ XOAY
+              return; 
+            }
 
-                    if (isParentToggle && parentLi) {
-                        parentLi.classList.toggle('open');
+            // NẾU LÀ CHỮ XANH -> BỎ QUA
+            if (isGroupLabel) return;
+
+            // --- HIGHLIGHT & CUỘN TRANG ---
+            menuLinks.forEach((el) => el.classList.remove("active"));
+            this.classList.add("active");
+
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+              const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
+              window.scrollTo({ top: y, behavior: "smooth" });
+            }
+          };
+        });
+
+        // ================= SCROLL SPY CÓ LƯỚI LỌC =================
+        window.onscroll = () => {
+          const sections = document.querySelectorAll(
+            ".chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id], #bai-tap, .video-box[id]"
+          );
+          let currentId = "";
+          
+          sections.forEach((section) => {
+            if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - 150) {
+              currentId = section.getAttribute("id");
+            }
+          });
+          
+          if (currentId) {
+            menuLinks.forEach((link) => {
+              link.classList.remove("active");
+              
+              if (link.getAttribute("href") === `#${currentId}`) {
+                
+                // LƯỚI LỌC: Bỏ qua Tiêu đề mũi tên và Chữ xanh
+                const inToggleBtn = link.closest(".toggle-btn");
+                const inGroupLabel = link.classList.contains("group-label");
+                
+                if (!inToggleBtn && !inGroupLabel) {
+                  link.classList.add("active");
+                  
+                  // Tự bung menu cha
+                  let currentElement = link;
+                  while (currentElement) {
+                    if (currentElement.classList && currentElement.classList.contains("has-dropdown")) {
+                      currentElement.classList.add("open");
+                      // BỎ ĐOẠN ĐỔI CLASS ICON Ở ĐÂY LUÔN, ĐỂ CSS TỰ XOAY
                     }
-                    // Nếu là tiểu mục (không có toggle-btn), ta KHÔNG toggle class 'open'
-                    // Điều này giúp bấm 3.1, 3.2 thì menu cha vẫn giữ nguyên trạng thái mở.
-
-                    // --- HIGHLIGHT & CUỘN TRANG ---
-                    menuLinks.forEach(el => el.classList.remove('active'));
-                    this.classList.add('active');
-
-                    const targetElement = document.querySelector(targetId);
-                    if (targetElement) {
-                        const topbarHeight = document.getElementById('topbar')?.offsetHeight || 60;
-                        const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
-                        window.scrollTo({ top: y, behavior: 'smooth' });
-                    }
-                };
-            });
-
-            // SCROLL SPY: Tự động sáng menu
-            window.onscroll = () => {
-                const sections = document.querySelectorAll('.chapter-card, .pdf-h2[id], .pdf-h3[id], #bai-tap');
-                let currentId = '';
-                sections.forEach(section => {
-                    if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - 150) {
-                        currentId = section.getAttribute('id');
-                    }
-                });
-                if (currentId) {
-                    menuLinks.forEach(link => {
-                        link.classList.toggle('active', link.getAttribute('href') === `#${currentId}`);
-                    });
+                    currentElement = currentElement.parentElement;
+                  }
                 }
-            };
-        }
+              }
+            });
+          }
+        };
+      }
 
-        // KÍCH HOẠT NGAY (Dành cho lật thẻ Ajax)
-        bootVectoriaMenu();
-        // Chạy lại sau 300ms để chắc chắn DOM đã nạp xong sau hiệu ứng lật
-        setTimeout(bootVectoriaMenu, 300);
-
-
+      // KÍCH HOẠT NGAY
+      bootVectoriaMenu();
+      setTimeout(bootVectoriaMenu, 100);
+      setTimeout(bootVectoriaMenu, 500);
     </script>
 </body>
 

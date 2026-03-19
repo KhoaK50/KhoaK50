@@ -375,6 +375,116 @@
       .cursor-pointer {
         cursor: pointer;
       }
+      /* =================== TỐI ƯU HEADER (PC CĂN GIỮA 1 DÒNG, MOBILE CĂN TRÁI 2 DÒNG) =================== */
+      .header-flex {
+        display: flex;
+        align-items: center;
+        justify-content: center; /* [PC] Ép Logo nằm chính giữa tâm màn hình */
+        min-height: 60px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0 20px; 
+        position: relative; /* Trụ cột để neo cái bánh răng */
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        z-index: 1;
+      }
+
+      .logo-link {
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        align-items: center; 
+        gap: 10px; 
+      }
+
+      .logo-icon {
+        font-size: 1.8rem; 
+      }
+
+      /* MẶC ĐỊNH MÁY TÍNH: Xếp ngang thành 1 dòng */
+      .logo-text-group {
+        display: flex;
+        flex-direction: row; 
+        align-items: center; 
+        gap: 6px; 
+      }
+
+      .logo-title, .logo-subtitle {
+        font-size: 1.8rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+      }
+
+      /* Nút Setting trên PC: Thả trôi bám vào lề phải */
+      .header-settings {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        z-index: 10;
+      }
+
+      /* ---------------- RESPONSIVE CHO ĐIỆN THOẠI & TABLET ---------------- */
+      
+      /* Màn hình Tablet */
+      @media (max-width: 768px) {
+        .logo-title, .logo-subtitle { font-size: 1.4rem; }
+        .logo-icon { font-size: 1.6rem; }
+      }
+
+      /* ĐIỆN THOẠI (MOBILE): ÉP THÀNH 2 DÒNG XẾP CHỒNG VÀ DẠT SANG TRÁI */
+      @media (max-width: 500px) {
+        .header-flex {
+          padding: 0 15px; 
+          min-height: 55px;
+          justify-content: space-between; /* [Mobile] Hủy căn giữa, dàn 2 đối tượng ra 2 mép Trái/Phải */
+        }
+
+        .header-settings {
+          position: static; /* [Mobile] Hủy thả trôi, trả bánh răng về làm một khối bình thường */
+          transform: none;
+          flex-shrink: 0;
+        }
+
+        .logo {
+          justify-content: flex-start; /* [Mobile] Ép logo sát lề trái */
+        }
+
+        .logo-link {
+          gap: 12px; 
+        }
+
+        .logo-text-group {
+          flex-direction: column; /* Chuyển hàng ngang thành hàng dọc */
+          align-items: flex-start; /* Canh lề trái cho 2 dòng chữ */
+          justify-content: center;
+          gap: 0px; 
+        }
+
+        .logo-icon { 
+          font-size: 2.2rem; 
+        }
+
+        .logo-title {
+          font-size: 1.4rem; 
+          line-height: 1.1;
+          text-transform: uppercase; 
+        }
+
+        .logo-subtitle {
+          font-size: 0.75rem; 
+          line-height: 1.1;
+          letter-spacing: 2px; 
+          text-transform: uppercase;
+          opacity: 0.8;
+        }
+      }
     </style>
   </head>
 
@@ -390,50 +500,23 @@
     </div>
 
     <header class="main-header safe-zone">
-      <div
-        class="container header-flex"
-        style="
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          position: relative;
-        "
-      >
-        <div
-          class="logo"
-          style="
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-          "
-        >
-          <a
-            href="index.html"
-            style="
-              text-decoration: none;
-              color: inherit;
-              display: flex;
-              align-items: center;
-              gap: 10px;
-              font-size: 1.8rem;
-              font-weight: 800;
-              letter-spacing: 0.5px;
-            "
-          >
-            <i class="fa-solid fa-shapes"></i>
-
-            Vectoria Knowledge
+      <div class="container header-flex">
+        
+        <div class="logo">
+          <a href="index.html" class="logo-link">
+            <i class="fa-solid fa-shapes logo-icon"></i>
+            <div class="logo-text-group">
+              <span class="logo-title">Vectoria</span>
+              <span class="logo-subtitle">Knowledge</span>
+            </div>
           </a>
         </div>
 
-        <div
-          class="settings-container safe-zone"
-          style="flex: 1; display: flex; justify-content: flex-end"
-        >
-          <button id="btnSettings" class="icon-btn" title="Cài đặt giao diện">
+        <div class="settings-container header-settings">
+           <button id="btnSettings" class="icon-btn" title="Cài đặt giao diện">
             <i class="fa-solid fa-gear"></i>
           </button>
+          
           <div class="settings-dropdown" id="settingsDropdown">
             <div class="setting-item">
               <span><i class="fa-solid fa-moon"></i> Chế độ tối</span>
@@ -443,49 +526,18 @@
               </label>
             </div>
 
-            <hr
-              style="
-                border: 0;
-                border-top: 1px solid var(--border);
-                margin: 0;
-                opacity: 0.5;
-                display: block !important;
-              "
-            />
+            
 
-            <a
-              href="hdsd.html"
-              class="setting-item"
-              style="
-                text-decoration: none;
-                color: var(--text-main) !important;
-                display: flex !important;
-              "
-            >
-              <span
-                ><i class="fa-solid fa-book-open-reader"></i> Hướng dẫn sử
-                dụng</span
-              >
-              <i
-                class="fa-solid fa-chevron-right"
-                style="font-size: 0.8em; color: var(--muted)"
-              ></i>
+            <a href="hdsd.html" class="setting-item" style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
+              <span><i class="fa-solid fa-book-open-reader"></i> Hướng dẫn sử dụng</span>
+              <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted)"></i>
             </a>
 
-            <a
-              href="contact.html"
-              class="setting-item"
-              style="
-                text-decoration: none;
-                color: var(--text-main) !important;
-                display: flex !important;
-              "
-            >
+            
+            
+            <a href="contact.html" class="setting-item link-item" style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
               <span><i class="fa-solid fa-envelope"></i> Liên hệ / Góp ý</span>
-              <i
-                class="fa-solid fa-chevron-right"
-                style="font-size: 0.8em; color: var(--muted)"
-              ></i>
+              <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted)"></i>
             </a>
           </div>
         </div>
