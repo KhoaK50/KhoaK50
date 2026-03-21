@@ -711,12 +711,19 @@
           transition: all 0.2s; 
           border-left: 3px solid transparent !important; 
       }
-      /* ACTIVE (HIỆN THANH DỌC XANH) */
+      /* ACTIVE RIÊNG CHO MỤC LỚN (HIỆN THANH DỌC XANH + NỀN XANH NHẠT) */
       .custom-nav .nav-link:not(.toggle-btn).active,
-      .custom-nav .sub-link.active,
-      .custom-nav .sub-sub-link.active {
+      .custom-nav .sub-link.active {
         color: var(--primary) !important;
         background: #eff6ff !important;
+        border-left: 3px solid var(--primary) !important;
+        font-weight: 600;
+      }
+
+      /* ACTIVE RIÊNG CHO MỤC 2.1, 2.2 (CHỈ THANH DỌC, XÓA NỀN TRẮNG/XANH) */
+      .custom-nav .sub-sub-link.active {
+        color: var(--primary) !important;
+        background: transparent !important; /* Tuyệt chiêu xóa nền */
         border-left: 3px solid var(--primary) !important;
         font-weight: 600;
       }
@@ -885,10 +892,16 @@
           padding-left: 45px !important;
         } /* Thụt lề cấp 2 rõ ràng */
 
-        /* Hiển thị THANH DỌC XANH + NỀN XANH NHẠT khi Active trên Mobile */
+        /* Mobile: Mục lớn có nền */
         .custom-nav a.nav-link.active,
         .custom-nav a.sub-link.active {
           background: #eff6ff !important;
+          color: var(--primary) !important;
+          border-left-color: var(--primary) !important;
+        }
+        /* Mobile: Mục con 2.1, 2.2 không có nền */
+        .custom-nav a.sub-sub-link.active {
+          background: transparent !important;
           color: var(--primary) !important;
           border-left-color: var(--primary) !important;
         }
@@ -1131,7 +1144,8 @@
                   <i class="fa-solid fa-chevron-right arrow-icon" style="padding: 5px; margin-right: -5px;"></i>
                 </div>
                 <ul class="sub-menu">
-                  <li><a href="#tinh-chat-co-ban" class="sub-sub-link">2.1 Các tính chất cơ bản</a></li>
+                  <li><a href="#dinh-nghia" class="sub-sub-link">2.1 Định nghĩa</a></li>
+                  <li><a href="#tinh-chat-co-ban" class="sub-sub-link">2.2 Các tính chất cơ bản</a></li>
                 </ul>
               </li>
             </ul>
@@ -1344,6 +1358,9 @@
           <div class="pdf-h3" id="doc-lap">
             2 &nbsp; Độc lập tuyến tính và Phụ thuộc tuyến tính
           </div>
+          <div class="pdf-h3" id="dinh-nghia" style="font-size: 1.15rem">
+            2.1 &nbsp; Định nghĩa
+          </div>
           <p>
             Cho \( V \) là không gian vector và \( S = \{v_1, v_2 \dots, v_n\}
             \) là một hệ vector của \( V \), ta nói:
@@ -1375,7 +1392,7 @@
           </p>
 
           <div class="pdf-h3" id="tinh-chat-co-ban" style="font-size: 1.15rem">
-            2.1 &nbsp; Các tính chất cơ bản
+            2.2 &nbsp; Các tính chất cơ bản
           </div>
           <ul
             class="pdf-list"

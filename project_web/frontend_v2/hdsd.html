@@ -2,7 +2,10 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>Hướng Dẫn Sử Dụng - Vectoria</title>
 
     <link
@@ -54,9 +57,12 @@
         --hd-info-border: #3b82f6;
       }
 
-      html {
-        height: 100%;
+      html,
+      body {
         scroll-behavior: smooth;
+        /* TUYỆT CHIÊU: Khóa cứng chiều ngang, chống Drag qua lại! */
+        max-width: 100vw;
+        overflow-x: clip;
       }
 
       body {
@@ -67,8 +73,7 @@
         padding-top: var(--topbar-h);
         width: 100%;
         min-height: 100vh;
-        overflow-x: hidden;
-        overflow-y: auto;
+        /* ĐÃ XÓA overflow-y: auto ĐỂ CỨU HIỆU ỨNG FREEZE/STICKY */
         transition:
           background-color 0.3s,
           color 0.3s;
@@ -79,135 +84,245 @@
         transition: none !important;
       }
 
-      /* =================== STYLE MENU MỤC LỤC ĐA CẤP (ĐÃ FIX CHO HDSD) =================== */
-      .custom-nav { padding: 15px 0 !important; }
-      .custom-nav .nav-title {
-        font-size: 1.1rem; font-weight: 700; color: var(--text-main);
-        padding: 0 20px 15px 20px; margin: 0; border-bottom: 1px solid var(--border);
-        display: none; /* Ẩn mặc định trên PC, chỉ hiện trên Mobile */
-      }
-      .custom-nav .nav-list { list-style: none; padding: 10px 0 0 0; margin: 0; }
-      .custom-nav .nav-item { margin-bottom: 2px; }
-      
-      /* Reset định dạng thẻ a mặc định thành link menu xịn */
-      .custom-nav a {
-        display: flex; justify-content: space-between; align-items: center;
-        color: var(--text-sub); text-decoration: none !important; 
-        transition: all 0.2s; border-left: 3px solid transparent; 
-        font-weight: 500;
-      }
-      
-      /* TÔ ĐẬM RIÊNG CÁC ĐỀ MỤC LỚN (TỔNG QUAN, TRANG CHỦ...) */
-      .custom-nav > .nav-list > .nav-item > a.nav-link,
-      .custom-nav > .nav-list > .nav-item > div > a {
-          font-weight: 700; /* Ép in đậm chữ */
+      /* =================== STYLE MENU MỤC LỤC ĐA CẤP =================== */
+      /* 1. Xóa dấu chấm tròn và căn lề gốc */
+      .custom-nav ul,
+      .custom-nav li {
+        list-style: none !important;
+        margin: 0;
+        padding: 0;
       }
 
-      /* Thụt lề 3 cấp độ */
-      .custom-nav .nav-link { padding: 12px 20px; font-size: 0.95rem; }
-      .custom-nav .sub-link { padding: 10px 20px 10px 40px; font-size: 0.9rem; }
-      .custom-nav .sub-sub-link { padding: 8px 20px 8px 60px; font-size: 0.85rem; }
-      
-      /* Cấm thanh dọc ở dòng có mũi tên */
-      .custom-nav .toggle-btn { border-left: none !important; }
-      
-      /* Hover */
-      .custom-nav a:hover:not(.arrow-icon) {
-        color: var(--primary); background: var(--hover-bg);
+      /* 2. Định dạng thẻ Link chuẩn để ăn màu xanh và Hover */
+      .custom-nav .nav-link,
+      .custom-nav .sub-link {
+        display: flex !important;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 5px;
+        padding: 12px 20px;
+        color: var(--text-sub);
+        text-decoration: none;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: none !important;
       }
-      
-      /* Active (Tô xanh) */
-      .custom-nav a.active {
-        background-color: var(--hd-info-bg) !important;
+      .custom-nav .nav-link > a,
+      .custom-nav .sub-link > a {
+        flex-grow: 1;
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .custom-nav .nav-link:hover,
+      .custom-nav .sub-link:hover {
+        background: #f8fafc;
+        color: var(--primary);
+      }
+
+      /* 3. Phân cấp thụt lề cho 3 cấp độ */
+      .custom-nav .sub-menu .sub-link {
+        padding-left: 40px;
+      }
+      .custom-nav .sub-menu .sub-menu .sub-link {
+        padding-left: 60px !important;
+        font-size: 0.85rem;
+      }
+
+      /* 4. Hover, Active & Line Highlight via :has() (Sạch lề 100%) */
+      .custom-nav .nav-item,
+      .custom-nav .sub-menu li {
+        position: relative;
+        border-left: 3px solid transparent;
+        transition: all 0.2s;
+      }
+      .custom-nav .nav-item:has(> .active),
+      .custom-nav .sub-menu li:has(> .active) {
+        border-left: 3px solid var(--primary);
+        background-color: var(--hover-bg);
+      }
+      .custom-nav .active {
+        border-left: none !important;
+        background-color: transparent !important;
         color: var(--primary) !important;
-        font-weight: 700 !important;
-        border-left: 3px solid var(--primary) !important;
+        font-weight: 600;
       }
 
-      /* Xử lý mũi tên và Menu con */
-      .custom-nav .arrow-icon { 
-          font-size: 0.8rem; color: var(--muted); 
-          transition: transform 0.3s ease; 
-          transform: rotate(0deg); /* Mặc định: Chĩa xuống (Vì thẻ HTML của ông xài fa-chevron-down) */
+      /* 5. Mũi tên & Dropdown */
+      .custom-nav .sub-menu {
+        display: none;
       }
-      
-      .custom-nav .sub-menu { list-style: none; padding: 0; margin: 0; display: none; }
-      
-      .custom-nav .has-dropdown.open > .sub-menu { display: block; animation: slideDown 0.3s ease-out; }
-      
-      /* KHI MỞ MENU: Xoay chĩa sang trái (Lên 90 độ) */
-      .custom-nav .has-dropdown.open > .toggle-btn .arrow-icon { 
-          transform: rotate(90deg) !important; 
+      .custom-nav .has-dropdown.open > .sub-menu {
+        display: block !important;
+        animation: slideDown 0.3s ease-out;
       }
 
-      /* Dark Mode cho Menu */
-      body.dark .custom-nav a { color: #cbd5e1; }
-      body.dark .custom-nav a:hover:not(.arrow-icon) { color: #60a5fa; background: #1e293b; }
-      body.dark .custom-nav a.active { 
-          background-color: #1e293b !important; color: #60a5fa !important; border-left-color: #60a5fa !important; 
+      /* Mũi tên mặc định (Chevron Down) -> Xoay 0 độ = CHĨA XUỐNG */
+      .custom-nav .arrow-icon {
+        margin-left: auto;
+        transition: transform 0.3s ease;
+        transform: rotate(0deg);
+        font-size: 0.7rem;
       }
 
-      /* =================== GIAO DIỆN MOBILE =================== */
-      @media (max-width: 960px) {
+      /* Mở dropdown -> Xoay 90 độ (Chevron Down xoay 90 độ = CHĨA TRÁI) */
+      .custom-nav .has-dropdown.open > .nav-link .arrow-icon,
+      .custom-nav .has-dropdown.open > .toggle-btn .arrow-icon {
+        transform: rotate(90deg) !important;
+      }
+
+      /* 6. Mobile & Dark Mode */
+      body.dark .custom-nav .nav-link,
+      body.dark .custom-nav .sub-link {
+        color: #94a3b8;
+      }
+      body.dark .custom-nav .nav-item:has(> .active),
+      body.dark .custom-nav .sub-menu li:has(> .active) {
+        background-color: #1e293b;
+        border-left-color: #60a5fa;
+      }
+      body.dark .custom-nav .active {
+        color: #60a5fa !important;
+      }
+      body.dark .custom-nav .nav-link:hover,
+      body.dark .custom-nav .sub-link:hover {
+        background: #1e293b;
+        color: #60a5fa;
+      }
+
+      .sidebar {
+        width: var(--sidebar-width);
+        flex-shrink: 0;
+        height: fit-content;
+        position: sticky;
+        top: 100px;
+        max-height: calc(100vh - 140px);
+        overflow-y: auto;
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 20px 0;
+        transition:
+          background 0.3s,
+          border 0.3s;
+      }
+      .sidebar::-webkit-scrollbar {
+        width: 5px;
+      }
+      .sidebar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .sidebar::-webkit-scrollbar-thumb {
+        background-color: var(--border);
+        border-radius: 10px;
+      }
+      body.dark .sidebar::-webkit-scrollbar-thumb {
+        background-color: #475569;
+      }
+      .sidebar h3,
+      .custom-nav .nav-title {
+        margin: 0;
+        padding: 0 20px 15px 20px;
+        font-size: 1.1rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-main);
+      }
+
+      /* GIAO DIỆN MOBILE CHUẨN */
+      @media screen and (max-width: 960px) {
         .sidebar {
-          width: 100%; height: auto; z-index: 990; position: sticky; top: 60px;
-          border-radius: 0; border: none; padding: 10px 15px; margin: 0;
-          background-color: var(--bg-body); border-bottom: 1px solid var(--border);
+          width: 100% !important;
+          height: auto !important;
+          max-height: none !important;
+          z-index: 990 !important;
+          position: sticky !important;
+          top: var(--topbar-h) !important;
+          border-radius: 0 !important;
+          border: none !important;
+          border-bottom: 1px solid var(--border) !important;
+          background-color: var(--bg-body) !important;
+          padding: 10px 15px !important;
+          margin: 0 !important;
+          overflow-y: visible !important;
         }
-
-        /* Nút "Mục lục" có mũi tên trên Mobile */
         .sidebar h3.nav-title {
-          display: flex !important; justify-content: space-between; align-items: center;
-          background: var(--bg-card); padding: 15px 20px; margin: 0;
-          border-radius: 12px; border: 1px solid var(--border);
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); cursor: pointer;
-          color: var(--primary); transition: all 0.3s ease;
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          background: var(--bg-card) !important;
+          padding: 15px 20px !important;
+          margin: 0 !important;
+          border-radius: 12px !important;
+          border: 1px solid var(--border) !important;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
+          cursor: pointer !important;
+          color: var(--primary) !important;
+          transition: all 0.3s ease !important;
         }
-        
-        .sidebar h3.nav-title i:not(.fa-list-ul) { display: none; }
+        .sidebar h3.nav-title i:not(.fa-list-ul) {
+          display: none !important;
+        }
         .sidebar h3.nav-title::after {
-          content: "\f054"; font-family: "Font Awesome 6 Free"; font-weight: 900;
+          content: "\f054";
+          font-family: "Font Awesome 6 Free";
+          font-weight: 900;
           transition: transform 0.3s ease;
         }
-        .sidebar.mobile-open h3.nav-title::after { transform: rotate(90deg); }
-
-        /* Giấu danh sách mặc định đi, biến nó thành 1 cục xổ xuống */
+        .sidebar.mobile-open h3.nav-title::after {
+          transform: rotate(90deg) !important;
+        }
         .custom-nav .nav-list {
-          display: none; flex-direction: column; background: var(--bg-card);
-          padding: 10px 0 15px 0; margin: -5px 0 0 0;
-          border-radius: 0 0 12px 12px; border: 1px solid var(--border); border-top: none;
-          box-shadow: 0 10px 15px rgba(0,0,0,0.1); max-height: 50vh; overflow-y: auto; overflow-x: hidden;
+          display: none !important;
+          flex-direction: column !important;
+          background: var(--bg-card) !important;
+          padding: 10px 0 15px 0 !important;
+          margin: -5px 0 0 0 !important;
+          border-radius: 0 0 12px 12px !important;
+          border: 1px solid var(--border) !important;
+          border-top: none !important;
+          box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1) !important;
+          max-height: 50vh !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
         }
-        
-        .custom-nav .nav-list::-webkit-scrollbar { width: 4px; }
-        .custom-nav .nav-list::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 10px; }
-
-        /* Hiển thị danh sách khi bấm Mục lục */
-        .sidebar.mobile-open .nav-list { display: flex; }
-        .sidebar.mobile-open h3.nav-title { border-radius: 12px 12px 0 0; border-bottom: 1px dashed var(--border); }
-
-        /* Khôi phục khoảng cách viền cho mobile */
-        .custom-nav a.nav-link, .custom-nav a.sub-link, .custom-nav a.sub-sub-link {
-          background: transparent !important; border: none !important; border-left: 3px solid transparent !important;
-          border-radius: 0 !important; margin-bottom: 0 !important;
-          padding-top: 12px !important; padding-bottom: 12px !important; padding-right: 15px !important;
+        .sidebar.mobile-open h3.nav-title {
+          border-radius: 12px 12px 0 0 !important;
+          border-bottom: 1px dashed var(--border) !important;
         }
-        .custom-nav a.nav-link { padding-left: 20px !important; } 
-        .custom-nav a.sub-link { padding-left: 40px !important; } 
-        .custom-nav a.sub-sub-link { padding-left: 60px !important; } 
-        
-        .custom-nav a.nav-link.active, .custom-nav a.sub-link.active, .custom-nav a.sub-sub-link.active {
-          background: #eff6ff !important; color: var(--primary) !important; border-left-color: var(--primary) !important;
+        .sidebar.mobile-open .nav-list {
+          display: flex !important;
         }
-
-        body.dark .sidebar h3.nav-title, body.dark .custom-nav .nav-list { 
-            background: #1e293b; border-color: #334155; 
+        .custom-nav a.nav-link,
+        .custom-nav a.sub-link {
+          background: transparent !important;
+          border: none !important;
+          border-left: 3px solid transparent !important;
+          border-radius: 0 !important;
+          margin-bottom: 0 !important;
+          padding-top: 12px !important;
+          padding-bottom: 12px !important;
+          padding-right: 15px !important;
         }
-        body.dark .custom-nav a.nav-link.active, body.dark .custom-nav a.sub-link.active, body.dark .custom-nav a.sub-sub-link.active {
-          background: #1e293b !important; color: #60a5fa !important; border-left-color: #60a5fa !important;
+        .custom-nav a.nav-link {
+          padding-left: 20px !important;
         }
-        body.dark .sidebar.mobile-open h3.nav-title { border-bottom-color: #334155; }
+        .custom-nav a.sub-link {
+          padding-left: 40px !important;
+        }
+        .custom-nav .sub-menu .sub-menu .sub-link {
+          padding-left: 60px !important;
+        }
+        body.dark .sidebar h3.nav-title,
+        body.dark .custom-nav .nav-list {
+          background: #1e293b !important;
+          border-color: #334155 !important;
+        }
+        body.dark .sidebar.mobile-open h3.nav-title {
+          border-bottom-color: #334155 !important;
+        }
       }
+
       /* =================== 2. GIAO DIỆN CHUNG =================== */
       #topbar {
         position: fixed;
@@ -238,7 +353,7 @@
         align-items: center;
         gap: 15px;
         flex: 1;
-        margin-right: 20px;
+        
       }
 
       #topbar .brand {
@@ -247,6 +362,7 @@
         font-size: 18px;
         color: var(--accent);
         white-space: nowrap;
+        margin-left: 30px;
       }
 
       .topbar-icon,
@@ -668,17 +784,13 @@
           padding: 15px;
         }
 
-        .sidebar {
-          width: 100%;
-          height: auto;
-          z-index: 990;
-          position: sticky;
-          top: 60px;
-          border-radius: 0;
-          border: none;
-          border-bottom: 1px solid var(--border);
-          padding: 10px 0;
-          margin: 0;
+        .sidebar { 
+          width: 100% !important; height: auto !important; max-height: none !important; 
+          z-index: 990 !important; position: sticky !important; top: var(--topbar-h) !important; 
+          border-radius: 0 !important; border: none !important; border-bottom: 1px solid var(--border) !important; 
+          background-color: var(--bg-body) !important; 
+          padding: 10px 15px 10px 5px !important; /* XÓA KHOẢNG TRỐNG ĐỈNH ĐỂ DÍNH SÁT TOPBAR */
+          margin: 0 !important; overflow-y: visible !important; 
         }
 
         .sidebar h3 {
@@ -698,21 +810,25 @@
       }
 
       .guide-img {
-        max-width: 100%;
-        height: auto;
+        /* Tuyệt chiêu co giãn: 
+           Độ rộng tối đa là 100% độ rộng của khung chứa nó.
+           Nó sẽ tự teo nhỏ lại nếu khung chứa nó bị bóp nhỏ, 
+           nhưng sẽ không bao giờ phình to hơn kích thước thật của ảnh. */
+        max-width: 100%; 
+        height: auto; /* Giữ nguyên tỷ lệ ảnh, không bị méo */
+        
+        display: block; /* Ép về khối để margin-auto hoạt động */
+        margin-left: auto; /* Căn giữa */
+        margin-right: auto; /* Căn giữa */
+        
+        /* Mấy cái lề viền bóng đổ cũ của ông giữ nguyên */
         border-radius: 8px;
         border: 1px solid var(--border);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        margin: 20px 0;
-        display: block;
-
-        /* Thêm hiệu ứng transition mượt mà khi đổi màu */
-        transition:
-          filter 0.3s ease,
-          background-color 0.3s ease,
-          border-color 0.3s;
+        margin-top: 20px;
+        margin-bottom: 20px;
         background-color: #fff;
-        /* Ép nền trắng ở Light Mode để ảnh luôn nổi bật */
+        transition: filter 0.3s ease, background-color 0.3s ease, border-color 0.3s;
       }
 
       /* MA THUẬT DARK MODE CHO ẢNH (BÊ TỪ DINH_THUC.HTML SANG) */
@@ -766,9 +882,7 @@
         ></a>
       </div>
 
-      <div class="brand">
-        <i class="fa-solid fa-book-open-reader"></i> Hướng Dẫn Sử Dụng
-      </div>
+      <div class="brand">Hướng Dẫn Sử Dụng</div>
 
       <div class="topbar-right">
         <div class="settings-container">
@@ -811,53 +925,104 @@
     <div class="container">
       <aside class="sidebar custom-nav">
         <h3 class="nav-title"><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
-
         <ul class="nav-list">
           <li class="nav-item">
-            <a href="#hd-tong-quan" class="nav-link topic-title">TỔNG QUAN</a>
+            <a href="#hd-tong-quan" class="nav-link" style="font-weight: 700"
+              >TỔNG QUAN</a
+            >
           </li>
 
           <li class="nav-item">
-            <a href="#hd-trang-chu" class="nav-link topic-title">TRANG CHỦ</a>
+            <a href="#hd-trang-chu" class="nav-link" style="font-weight: 700"
+              >TRANG CHỦ</a
+            >
           </li>
 
           <li class="nav-item has-dropdown open">
             <div class="nav-link toggle-btn">
-              <a href="#hd-trang-tinh-toan" class="topic-title" style="flex-grow: 1;">TRANG TÍNH TOÁN</a>
-              <i class="fa-solid fa-chevron-right arrow-icon"></i>
+              <a href="#hd-trang-tinh-toan" style="font-weight: 700"
+                >TRANG TÍNH TOÁN</a
+              >
+              <i class="fa-solid fa-chevron-down arrow-icon"></i>
             </div>
             <ul class="sub-menu">
-              <li><a href="#hd-giao-dien-chinh" class="sub-link">1. Giao diện chính</a></li>
-              <li><a href="#hd-giao-dien-chung" class="sub-link">2. Giao diện chung công cụ tính toán</a></li>
-              <li><a href="#hd-chuc-nang-khoi-tao" class="sub-link">3. Chức năng khởi tạo vector</a></li>
+              <li class="nav-item">
+                <a href="#hd-giao-dien-chinh" class="sub-link active"
+                  >1. Giao diện chính</a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="#hd-giao-dien-chung" class="sub-link"
+                  >2. Giao diện chung công cụ tính toán</a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="#hd-chuc-nang-khoi-tao" class="sub-link"
+                  >3. Chức năng khởi tạo vector</a
+                >
+              </li>
 
               <li class="nav-item has-dropdown">
                 <div class="sub-link toggle-btn">
-                  <a href="#hd-cac-cong-cu" style="flex-grow: 1;">4. Các công cụ liên quan đến chủ đề Không gian vector</a>
-                  <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                  <a href="#hd-cac-cong-cu">4. Các công cụ liên quan đến chủ đề Không gian vector</a>
+                  <i class="fa-solid fa-chevron-down arrow-icon"></i>
                 </div>
                 <ul class="sub-menu">
-                  <li><a href="#hd-4-1" class="sub-sub-link">4.1. Bài toán về Độc lập tuyến tính</a></li>
-                  <li><a href="#hd-4-2" class="sub-sub-link">4.2. Bài toán về Hạng của hệ vector</a></li>
-                  <li><a href="#hd-4-3" class="sub-sub-link">4.3. Bài toán về Cơ sở và số chiều</a></li>
-                  <li><a href="#hd-4-4" class="sub-sub-link">4.4. Bài toán về Tọa độ vector trong cơ sở/a></li>
+                  <li class="nav-item">
+                    <a href="#hd-4-1" class="sub-link"
+                      >4.1. Bài toán về Độc lập tuyến tính</a
+                    >
+                  </li>
+                  <li class="nav-item">
+                    <a href="#hd-4-2" class="sub-link">4.2. Bài toán về Hạng của hệ vector</a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#hd-4-3" class="sub-link"
+                      >4.3. Bài toán về Cơ sở và số chiều</a
+                    >
+                  </li>
+                  <li class="nav-item">
+                    <a href="#hd-4-4" class="sub-link"
+                      >4.4. Bài toán về Tọa độ vector trong cơ sở</a
+                    >
+                  </li>
                 </ul>
               </li>
 
               <li class="nav-item has-dropdown">
                 <div class="sub-link toggle-btn">
-                  <a href="#hd-cac-phep-tinh" style="flex-grow: 1;">5. Các phép tính trên vector</a>
-                  <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                  <a href="#hd-cac-phep-tinh">5. Các phép tính trên vector</a>
+                  <i class="fa-solid fa-chevron-down arrow-icon"></i>
                 </div>
                 <ul class="sub-menu">
-                  <li><a href="#hd-5-1" class="sub-sub-link">5.1. Phép cộng 2 vector</a></li>
-                  <li><a href="#hd-5-2" class="sub-sub-link">5.2. Phép kéo dãn vector</a></li>
-                  <li><a href="#hd-5-3" class="sub-sub-link">5.3. Phép tìm hình chiếu vector</a></li>
-                  <li><a href="#hd-5-4" class="sub-sub-link">5.4. Phép chuẩn hóa vector</a></li>
-                  <li><a href="#hd-5-5" class="sub-sub-link">5.5. Phép tìm tích vô hướng của 2 vector</a></li>
-                  <li><a href="#hd-5-6" class="sub-sub-link">5.6. Phép tìm tích có hướng của 2 vector</a></li>
-                  <li><a href="#hd-5-7" class="sub-sub-link">5.7. Phép tính tìm độ dài của vector</a></li>
-                  <li><a href="#hd-5-8" class="sub-sub-link">5.8. Phép tìm góc giữa 2 vector</a></li>
+                  <li class="nav-item">
+                    <a href="#hd-5-1" class="sub-link">5.1. Phép cộng 2 vector</a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#hd-5-2" class="sub-link">5.2. Phép kéo dãn vector</a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#hd-5-3" class="sub-link"
+                      >5.3. Phép tìm hình chiếu vector</a
+                    >
+                  </li>
+                  <li class="nav-item">
+                    <a href="#hd-5-4" class="sub-link"
+                      >5.4. Phép chuẩn hóa vector</a
+                    >
+                  </li>
+                  <li class="nav-item">
+                    <a href="#hd-5-5" class="sub-link">5.5. Phép tìm tích vô hướng của 2 vector</a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#hd-5-6" class="sub-link">5.6. Phép tìm tích có hướng của 2 vector</a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#hd-5-7" class="sub-link">5.7. Phép tính tìm độ dài của vector</a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#hd-5-8" class="sub-link">5.8. Phép tìm góc giữa 2 vector</a>
+                  </li>
                 </ul>
               </li>
             </ul>
@@ -865,13 +1030,25 @@
 
           <li class="nav-item has-dropdown">
             <div class="nav-link toggle-btn">
-              <a href="#hd-trang-kien-thuc" class="topic-title" style="flex-grow: 1;">TRANG KIẾN THỨC</a>
-              <i class="fa-solid fa-chevron-right arrow-icon"></i>
+              <a href="#hd-trang-kien-thuc" style="font-weight: 700"
+                >TRANG TÌM HIỂU KIẾN THỨC</a
+              >
+              <i class="fa-solid fa-chevron-down arrow-icon"></i>
             </div>
             <ul class="sub-menu">
-              <li><a href="#hd-kt-1" class="sub-link">1. Giao diện trang tổng quan</a></li>
-              <li><a href="#hd-kt-2" class="sub-link">2. Giao diện thẻ Kiến thức chuẩn bị</a></li>
-              <li><a href="#hd-kt-3" class="sub-link">3. Giao diện chung của các trang kiến thức</a></li>
+              <li class="nav-item">
+                <a href="#hd-kt-1" class="sub-link"
+                  >1. Giao diện trang tổng quan</a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="#hd-kt-2" class="sub-link"
+                  >2. Giao diện Thẻ Kiến thức chuẩn bị</a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="#hd-kt-3" class="sub-link">3. Giao diện chung của các trang kiến thức</a>
+              </li>
             </ul>
           </li>
         </ul>
@@ -1344,7 +1521,7 @@
               src="assets/images/hdsd/hdsd-14.png"
               alt="Lưu ý khi chọn hệ cơ sở"
               class="guide-img"
-              style="max-width: 500px"
+              
             />
           </div>
 
@@ -1616,7 +1793,7 @@
           </p>
 
           <h1 class="hd-h1" id="hd-trang-kien-thuc" style="margin-top: 60px">
-            TRANG TÌM HIỂU KIẾN THỨC:
+            TRANG TÌM HIỂU KIẾN THỨC
           </h1>
 
           <h2 class="hd-h2" id="hd-kt-1">1. Giao diện trang tổng quan</h2>
@@ -1803,16 +1980,13 @@
     </footer>
 
     <script>
-      // Xóa chặn hiệu ứng lúc tải trang
-      window.addEventListener("load", () => {
-        document.body.classList.remove("preload");
-      });
-
-      // 1. THEME HANDLING & ANIMATION (ĐÃ FIX LỖI AJAX)
+      // ==========================================
+      // 1. KHÔI PHỤC NÚT SETTINGS & CHẾ ĐỘ TỐI
+      // ==========================================
       function initThemeSettings() {
         const settingsBtn = document.getElementById("btnSettings");
-        if (!settingsBtn || settingsBtn.dataset.booted === 'true') return;
-        settingsBtn.dataset.booted = 'true';
+        if (!settingsBtn || settingsBtn.dataset.booted === "true") return;
+        settingsBtn.dataset.booted = "true";
 
         const settingsDropdown = document.getElementById("settingsDropdown");
         const themeToggle = document.getElementById("themeToggle");
@@ -1820,40 +1994,42 @@
         const moonIcon = document.getElementById("moonIcon");
         const transitionIcons = document.querySelector(".theme-transition-icons");
 
-        if (themeToggle) themeToggle.checked = document.body.classList.contains("dark");
+        if (themeToggle) {
+          themeToggle.checked = document.body.classList.contains("dark");
+        }
 
         if (settingsBtn && settingsDropdown) {
-            settingsBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              settingsDropdown.classList.toggle("show");
-            });
+          settingsBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            settingsDropdown.classList.toggle("show");
+          });
 
-            document.addEventListener("click", (e) => {
-              if (!settingsDropdown.contains(e.target) && !settingsBtn.contains(e.target)) {
-                settingsDropdown.classList.remove("show");
-              }
-            });
+          document.addEventListener("click", (e) => {
+            if (!settingsDropdown.contains(e.target) && !settingsBtn.contains(e.target)) {
+              settingsDropdown.classList.remove("show");
+            }
+          });
         }
 
         if (themeToggle) {
-            themeToggle.addEventListener("change", () => {
-              const isDark = ThemeManager.toggle();
-              themeToggle.checked = isDark;
-              ThemeManager.applyTheme(isDark);
+          themeToggle.addEventListener("change", () => {
+            const isDark = ThemeManager.toggle();
+            themeToggle.checked = isDark;
+            ThemeManager.applyTheme(isDark);
 
-              if (transitionIcons) {
-                transitionIcons.classList.remove("animate-rise-fade");
-                void transitionIcons.offsetWidth; 
-                if (isDark) {
-                  if (sunIcon) sunIcon.style.display = "none";
-                  if (moonIcon) moonIcon.style.display = "block";
-                } else {
-                  if (sunIcon) sunIcon.style.display = "block";
-                  if (moonIcon) moonIcon.style.display = "none";
-                }
-                transitionIcons.classList.add("animate-rise-fade");
+            if (transitionIcons) {
+              transitionIcons.classList.remove("animate-rise-fade");
+              void transitionIcons.offsetWidth;
+              if (isDark) {
+                if (sunIcon) sunIcon.style.display = "none";
+                if (moonIcon) moonIcon.style.display = "block";
+              } else {
+                if (sunIcon) sunIcon.style.display = "block";
+                if (moonIcon) moonIcon.style.display = "none";
               }
-            });
+              transitionIcons.classList.add("animate-rise-fade");
+            }
+          });
         }
 
         window.addEventListener("storage", (e) => {
@@ -1865,133 +2041,158 @@
         });
       }
 
-      // 2. SCROLL SPY CHUẨN ENTERPRISE (CAMERA AN NINH)
+      // ==========================================
+      // 2. MỤC LỤC & CAMERA AN NINH BẮT SCROLL
+      // ==========================================
       window.menuInitialized = false;
 
       function bootVectoriaMenu() {
-        const sidebar = document.querySelector('.sidebar');
-        if (!sidebar || sidebar.dataset.booted === 'true') return;
-        sidebar.dataset.booted = 'true';
-        
+        const sidebar = document.querySelector(".sidebar");
+        if (!sidebar || sidebar.dataset.booted === "true") return;
+        sidebar.dataset.booted = "true";
+
         if (window.vectoriaObserver) window.vectoriaObserver.disconnect();
 
         const topbarHeight = document.getElementById("topbar")?.offsetHeight || 60;
         let isClicking = false;
         let clickTimeout;
 
-        // NÚT "MỤC LỤC" MOBILE
-        const navTitle = document.querySelector('.sidebar h3.nav-title');
-        if (navTitle) {
-            const newNavTitle = navTitle.cloneNode(true);
-            navTitle.replaceWith(newNavTitle);
-            newNavTitle.addEventListener('click', () => {
-                sidebar.classList.toggle('mobile-open');
-            });
-        }
-
-        // CLICK MENU ĐÓNG/MỞ & SCROLL
-        document.querySelectorAll('.custom-nav a').forEach(link => {
-            link.addEventListener('click', function(e) {
-                const targetId = this.getAttribute('href');
-                const isToggle = this.closest('.toggle-btn');
-                
-                // NẾU LÀ NÚT MŨI TÊN: Chỉ đóng mở menu, KHÔNG scroll
-                if (isToggle) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const parentLi = this.closest('.has-dropdown');
-                    if (parentLi) {
-                        parentLi.classList.toggle('open');
-                    }
-                    return; 
-                }
-
-                // NẾU LÀ NÚT CUỘN TRANG
-                if (targetId && targetId !== '#') {
-                    e.preventDefault();
-                    isClicking = true; 
-                    clearTimeout(clickTimeout);
-
-                    document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
-                    this.classList.add("active");
-
-                    // Tự động mở mục cha nếu đang click bài con
-                    const parentDropdown = this.closest('.has-dropdown');
-                    if (parentDropdown) parentDropdown.classList.add('open');
-
-                    if (window.innerWidth <= 960 && sidebar) {
-                        sidebar.classList.remove('mobile-open');
-                    }
-
-                    const targetElement = document.querySelector(targetId);
-                    if (targetElement) {
-                        const offset = window.innerWidth <= 960 ? 140 : topbarHeight + 20;
-                        const y = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
-                        window.scrollTo({ top: y, behavior: 'smooth' });
-                    }
-
-                    clickTimeout = setTimeout(() => { isClicking = false; }, 800);
-                }
-            });
+        // ĐỒNG BỘ MŨI TÊN HTML THÀNH CHỈA PHẢI
+        document.querySelectorAll('.custom-nav .arrow-icon').forEach(icon => {
+            icon.classList.remove('fa-chevron-down', 'fa-chevron-left', 'fa-chevron-up');
+            icon.classList.add('fa-chevron-right');
         });
 
-        // THUẬT TOÁN CAMERA CHO TRANG HDSD
+        // NÚT MỤC LỤC MOBILE
+        const navTitle = document.querySelector(".sidebar h3.nav-title");
+        if (navTitle) {
+          const newNavTitle = navTitle.cloneNode(true);
+          navTitle.replaceWith(newNavTitle);
+          newNavTitle.addEventListener("click", () => {
+            sidebar.classList.toggle("mobile-open");
+          });
+        }
+
+        // CLICK MENU & SCROLL
+        document.querySelectorAll(".custom-nav a").forEach((link) => {
+          link.addEventListener("click", function (e) {
+            const targetId = this.getAttribute("href");
+            const isToggle = this.closest(".toggle-btn");
+
+            // NẾU LÀ MỤC CÓ MŨI TÊN -> CHỈ XỔ MENU, CẤM SCROLL
+            if (isToggle) {
+              e.preventDefault(); 
+              e.stopPropagation(); 
+              const parentLi = this.closest(".has-dropdown");
+              if (parentLi) {
+                parentLi.classList.toggle("open");
+              }
+              return; // Cắt đuôi tại đây!
+            }
+
+            // NẾU LÀ LINK BÌNH THƯỜNG -> THỰC HIỆN SCROLL
+            if (targetId && targetId !== "#") {
+              e.preventDefault();
+              isClicking = true;
+              clearTimeout(clickTimeout);
+
+              document.querySelectorAll(".custom-nav .active").forEach((el) => el.classList.remove("active"));
+              this.classList.add("active");
+
+              let parentDropdown = this.closest(".has-dropdown");
+              while (parentDropdown) {
+                parentDropdown.classList.add("open");
+                parentDropdown = parentDropdown.parentElement?.closest(".has-dropdown");
+              }
+
+              if (window.innerWidth <= 960 && sidebar) {
+                sidebar.classList.remove("mobile-open");
+              }
+
+              const targetElement = document.querySelector(targetId);
+              if (targetElement) {
+                const offset = window.innerWidth <= 960 ? 140 : topbarHeight + 20;
+                const y = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+                window.scrollTo({ top: y, behavior: "smooth" });
+              }
+
+              clickTimeout = setTimeout(() => {
+                isClicking = false;
+              }, 800);
+            }
+          });
+        });
+
+        // CAMERA AN NINH BẮT TỌA ĐỘ KHI CUỘN CHUỘT
         const sections = document.querySelectorAll(".hd-h1[id], .hd-h2[id], .hd-h3[id]");
         const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
 
         const observerOptions = {
-            root: null,
-            rootMargin: `-${topbarHeight + 20}px 0px -50% 0px`, 
-            threshold: 0
+          root: null,
+          rootMargin: `-${topbarHeight + 20}px 0px -50% 0px`,
+          threshold: 0,
         };
 
         window.vectoriaObserver = new IntersectionObserver((entries) => {
-            if (isClicking) return; 
+          if (isClicking) return;
 
-            let activeId = null;
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    activeId = entry.target.getAttribute('id');
-                }
-            });
-
-            if (activeId) {
-                menuLinks.forEach(link => {
-                    if (link.getAttribute("href") === `#${activeId}`) {
-                        const isToggleBtn = link.closest('.toggle-btn');
-                        
-                        if (!isToggleBtn) {
-                            document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
-                            link.classList.add("active");
-
-                            if (window.innerWidth > 960) {
-                                let parentDropdown = link.closest('.has-dropdown');
-                                while (parentDropdown) {
-                                    parentDropdown.classList.add('open');
-                                    parentDropdown = parentDropdown.parentElement?.closest('.has-dropdown');
-                                }
-                            }
-                        }
-                    }
-                });
+          let activeId = null;
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              activeId = entry.target.getAttribute("id");
             }
+          });
+
+          if (activeId) {
+            menuLinks.forEach((link) => {
+              if (link.getAttribute("href") === `#${activeId}`) {
+                const isToggleBtn = link.closest(".toggle-btn");
+
+                document.querySelectorAll(".custom-nav .active").forEach((el) => el.classList.remove("active"));
+                link.classList.add("active");
+
+                if (window.innerWidth > 960) {
+                  let parentDropdown = link.closest(".has-dropdown");
+                  while (parentDropdown) {
+                    parentDropdown.classList.add("open");
+                    parentDropdown = parentDropdown.parentElement?.closest(".has-dropdown");
+                  }
+                }
+              }
+            });
+          }
         }, observerOptions);
 
-        sections.forEach(sec => window.vectoriaObserver.observe(sec));
+        sections.forEach((sec) => window.vectoriaObserver.observe(sec));
       }
 
-      // KÍCH HOẠT
-      if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', () => {
-              initThemeSettings();
+      // ==========================================
+      // 3. KHỞI ĐỘNG TOÀN BỘ HỆ THỐNG
+      // ==========================================
+      function initVectoria() {
+        initThemeSettings(); // GỌI HÀM SETTINGS ĐỂ PHỤC HỒI NÚT BÁNH RĂNG
+
+        if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
+          MathJax.startup.promise
+            .then(() => {
               bootVectoriaMenu();
-          });
-      } else {
-          initThemeSettings();
-          bootVectoriaMenu();
+              setTimeout(() => window.dispatchEvent(new Event("scroll")), 300);
+            })
+            .catch(() => bootVectoriaMenu());
+        } else {
+          setTimeout(() => {
+            bootVectoriaMenu();
+            window.dispatchEvent(new Event("scroll"));
+          }, 500);
+        }
       }
-      setTimeout(bootVectoriaMenu, 1500);
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initVectoria);
+      } else {
+        initVectoria();
+      }
+      setTimeout(initVectoria, 1500);
     </script>
-    
   </body>
 </html>
