@@ -1227,7 +1227,7 @@
 
                     <hr style="border: 0; border-top: 1px solid var(--border); margin: 0; opacity: 0.5;">
 
-                    <a href="../../hdsd.html" class="setting-item"
+                    <a href="../hdsd.html" class="setting-item"
                         style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
                         <span><i class="fa-solid fa-book-open-reader"></i> Hướng dẫn sử dụng</span>
                         <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted);"></i>
@@ -1804,7 +1804,77 @@
     </div>
 </footer>
     
+<script>
+      // 1. THEME HANDLING & ANIMATION (ĐÃ FIX LỖI AJAX)
+      function initThemeSettings() {
+        const settingsBtn = document.getElementById("btnSettings");
+        // Bắt cờ chống chạy nhiều lần nếu người dùng bấm F5
+        if (!settingsBtn || settingsBtn.dataset.booted === 'true') return;
+        settingsBtn.dataset.booted = 'true';
 
+        const settingsDropdown = document.getElementById("settingsDropdown");
+        const themeToggle = document.getElementById("themeToggle");
+        const sunIcon = document.getElementById("sunIcon");
+        const moonIcon = document.getElementById("moonIcon");
+        const transitionIcons = document.querySelector(".theme-transition-icons");
+
+        // Set initial checkbox state from ThemeManager
+        if (themeToggle) themeToggle.checked = ThemeManager.isDarkMode();
+
+        if (settingsBtn && settingsDropdown) {
+            settingsBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              settingsDropdown.classList.toggle("show");
+            });
+
+            document.addEventListener("click", (e) => {
+              if (!settingsDropdown.contains(e.target) && !settingsBtn.contains(e.target)) {
+                settingsDropdown.classList.remove("show");
+              }
+            });
+        }
+
+        if (themeToggle) {
+            themeToggle.addEventListener("change", () => {
+              const isDark = ThemeManager.toggle();
+              themeToggle.checked = isDark;
+              ThemeManager.applyTheme(isDark);
+
+              // Animation Logic
+              if (transitionIcons) {
+                transitionIcons.classList.remove("animate-rise-fade");
+                void transitionIcons.offsetWidth; // Trigger reflow
+
+                if (isDark) {
+                  if (sunIcon) sunIcon.style.display = "none";
+                  if (moonIcon) moonIcon.style.display = "block";
+                } else {
+                  if (sunIcon) sunIcon.style.display = "block";
+                  if (moonIcon) moonIcon.style.display = "none";
+                }
+                transitionIcons.classList.add("animate-rise-fade");
+              }
+            });
+        }
+
+        // Listen for theme changes from other tabs
+        window.addEventListener("storage", (e) => {
+          if (e.key === ThemeManager.STORAGE_KEY) {
+            const isDark = ThemeManager.isDarkMode();
+            if (themeToggle) themeToggle.checked = isDark;
+            ThemeManager.applyTheme(isDark);
+          }
+        });
+      }
+
+      // KÍCH HOẠT VƯỢT RÀO:
+      // Nếu lật trang AJAX (DOM đã tải xong) -> chạy ngay. Nếu F5 (đang loading) -> chờ DOM.
+      if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initThemeSettings);
+      } else {
+          initThemeSettings();
+      }
+    </script>
     <script src="../js/utils/auto-update_timeline.js"></script>
     <script>
       function bootVectoriaMenu() {

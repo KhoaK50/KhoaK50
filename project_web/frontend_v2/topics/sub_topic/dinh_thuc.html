@@ -2,8 +2,8 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Định thức - Vectoria Knowledge</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Vector ở phổ thông - Vectoria Knowledge</title>
 
     <link rel="stylesheet" href="../../css/footer.css" />
     <link
@@ -366,6 +366,28 @@
         color: var(--text-main);
       }
 
+      .menu-link {
+        display: block;
+        padding: 10px 12px;
+        color: var(--text-sub);
+        text-decoration: none;
+        border-radius: 6px;
+        transition: 0.2s;
+        border-left: 3px solid transparent;
+      }
+
+      .menu-link:hover,
+      .menu-link.active {
+        background: #eff6ff;
+        color: var(--primary);
+        font-weight: 600;
+      }
+
+      body.dark .menu-link:hover,
+      body.dark .menu-link.active {
+        background: #2d3748;
+      }
+
       .main-content {
         flex-grow: 1;
         min-width: 0;
@@ -454,6 +476,7 @@
 
       .chapter-item {
         display: flex;
+        align-items: center;
         gap: 12px;
         padding: 15px 20px;
         border-bottom: 1px solid #334155;
@@ -619,71 +642,153 @@
         stroke: #e2e8f0 !important;
       }
 
-      /* =================== 5. MOBILE RESPONSIVE (DƯỚI 960PX) =================== */
-      @media (max-width: 960px) {
+      /* =================== 5. BỘ ĐIỀU KHIỂN GIAO DIỆN MOBILE =================== */
+      @media screen and (max-width: 960px) {
         .container {
-          flex-direction: column;
-          padding: 0;
-          gap: 0;
+          flex-direction: column !important;
+          padding: 0 !important;
+          gap: 0 !important;
+          display: block !important;
         }
 
         .main-content {
-          padding: 15px;
+          padding: 15px !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+          overflow-x: hidden !important;
         }
 
+        /* 1. Biến Sidebar thành thanh ngang dính sát Topbar */
         .sidebar {
-          width: 100%;
-          height: auto;
-          z-index: 990;
-          position: sticky;
-          top: 60px;
-          /* Dính ngay dưới header */
-          border-radius: 0;
-          border: none;
-          border-bottom: 1px solid var(--border);
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-          background-color: var(--bg-body);
-          padding: 10px 0;
-          margin: 0;
+          width: 100% !important;
+          height: auto !important;
+          max-height: none !important;
+          z-index: 990 !important;
+          position: sticky !important;
+          top: var(--topbar-h) !important;
+          border-radius: 0 !important;
+          border: none !important;
+          border-bottom: 1px solid var(--border) !important;
+          background-color: var(--bg-body) !important;
+          padding: 10px 15px !important; 
+          margin: 0 !important;
+          overflow-y: visible !important;
         }
 
-        .sidebar h3 {
-          display: none;
+        /* 2. Cục "Mục lục" hiện ra như một nút bấm */
+        .sidebar h3.nav-title {
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          background: var(--bg-card) !important;
+          padding: 15px 20px !important;
+          margin: 0 !important;
+          border-radius: 12px !important;
+          border: 1px solid var(--border) !important;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+          cursor: pointer !important;
+          color: var(--primary) !important;
+          transition: all 0.3s ease !important;
+        }
+        
+        .sidebar h3.nav-title i:not(.fa-list-ul) { display: none !important; }
+        .sidebar h3.nav-title::after { 
+            content: '\f054'; 
+            font-family: "Font Awesome 6 Free"; 
+            font-weight: 900; 
+            transition: transform 0.3s ease; 
+        }
+        .sidebar.mobile-open h3.nav-title::after { transform: rotate(90deg) !important; }
+
+        /* 3. BẢNG DANH SÁCH MỤC LỤC XỔ XUỐNG */
+        .custom-nav .nav-list {
+          display: none !important; 
+          flex-direction: column !important;
+          background: var(--bg-card) !important;
+          padding: 10px 0 15px 0 !important; 
+          margin: -5px 0 0 0 !important; 
+          border-radius: 0 0 12px 12px !important;
+          border: 1px solid var(--border) !important;
+          border-top: none !important;
+          box-shadow: 0 10px 15px rgba(0,0,0,0.1) !important;
+          max-height: 50vh !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+        }
+        
+        .custom-nav .nav-list::-webkit-scrollbar { width: 4px; }
+        .custom-nav .nav-list::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 10px; }
+
+        .sidebar.mobile-open h3.nav-title {
+          border-radius: 12px 12px 0 0 !important;
+          border-bottom: 1px dashed var(--border) !important; 
+        }
+        .sidebar.mobile-open .nav-list { display: flex !important; }
+
+        .custom-nav .sub-menu { display: none !important; flex-direction: column !important; }
+        .custom-nav .has-dropdown.open > .sub-menu { display: flex !important; }
+        .custom-nav .sub-heading, .custom-nav div.toggle-btn, .custom-nav .arrow-icon { display: flex !important; }
+
+        .custom-nav a.nav-link, .custom-nav a.sub-link, .custom-nav a.sub-sub-link {
+          background: transparent !important;
+          border: none !important;
+          border-left: 3px solid transparent !important;
+          border-radius: 0 !important;
+          margin-bottom: 0 !important;
+          padding-top: 12px !important;
+          padding-bottom: 12px !important;
+          padding-right: 15px !important;
         }
 
-        .chapter-card {
-          scroll-margin-top: 130px;
-          padding: 20px;
+        .custom-nav a.nav-link { padding-left: 20px !important; } 
+        .custom-nav a.sub-link { padding-left: 40px !important; } 
+        .custom-nav a.sub-sub-link { padding-left: 60px !important; } 
+
+        .custom-nav a.nav-link.active, .custom-nav a.sub-link.active, .custom-nav a.sub-sub-link.active {
+          background: #eff6ff !important;
+          color: var(--primary) !important;
+          border-left-color: var(--primary) !important;
         }
 
-        .cinema-container {
-          flex-direction: column;
+        .custom-nav a.sub-heading, .custom-nav li.sub-heading, .custom-nav a.group-label {
+          padding-top: 15px !important;
+          padding-bottom: 5px !important;
+          padding-left: 20px !important;
+          pointer-events: none !important;
+          border: none !important;
+          background: transparent !important;
         }
 
-        .video-box {
-          aspect-ratio: 16/9;
-          width: 100%;
+        body.dark .sidebar { background-color: var(--bg-body) !important; }
+        body.dark .sidebar h3.nav-title { background: #1e293b !important; border-color: #334155 !important; }
+        body.dark .custom-nav .nav-list { background: #1e293b !important; border-color: #334155 !important; }
+        body.dark .custom-nav .nav-list::-webkit-scrollbar-thumb { background-color: #475569 !important; }
+        body.dark .custom-nav a.nav-link.active, body.dark .custom-nav a.sub-link.active, body.dark .custom-nav a.sub-sub-link.active {
+          background: #1e293b !important;
+          color: #60a5fa !important;
+          border-left-color: #60a5fa !important;
         }
+        body.dark .sidebar.mobile-open h3.nav-title { border-bottom-color: #334155 !important; }
 
-        .playlist-box {
-          height: 300px;
-          border-left: none;
-          border-top: 1px solid #334155;
+        /* 7. XÓA SẠCH VẠCH KẺ MẢNH - CHỈNH LẠI SCROLL LÝ THUYẾT */
+        .chapter-card { scroll-margin-top: 130px !important; padding: 20px !important; }
+        .cinema-container { flex-direction: column !important; }
+        .video-box { aspect-ratio: 16/9 !important; width: 100% !important; }
+        .playlist-box { height: 300px !important; border-left: none !important; border-top: 1px solid #334155 !important; }
+        
+        /* BÍ QUYẾT XÓA VẠCH LÀ ĐÂY: Không ép `#ly-thuyet` scroll nữa, để nó tự nhiên! */
+        #ly-thuyet { 
+            overflow-x: hidden !important; /* TRỊ BỆNH LẰN KẺ */
+            overflow-y: hidden !important; 
+            max-width: 100%; 
+            display: block !important;
         }
-
-        /* ===== SCROLL NGANG RIÊNG CHO MỤC LÝ THUYẾT (#ly-thuyet) ===== */
-        #ly-thuyet {
-          overflow-x: auto;
-          overflow-y: visible;
-
-          -webkit-overflow-scrolling: touch;
-          overscroll-behavior-x: contain;
-
-          max-width: 100%;
-        }
-
-        #ly-thuyet > * {
-          min-width: max-content;
+        
+        /* Chỉ cho phép cuộn ngang ở NHỮNG VÙNG THẬT SỰ CẦN THIẾT (ví dụ đoạn công thức) */
+        .math-center, mjx-container[display="true"], .math-scroll {
+            overflow-x: auto !important;
+            max-width: 100vw !important;
+            padding-bottom: 8px !important;
         }
       }
 
@@ -865,6 +970,286 @@
         /* Hiệu ứng phát sáng (Glow) */
       }
 
+      /* 1. Xóa dấu chấm tròn và căn lề gốc */
+      .custom-nav ul,
+      .custom-nav li {
+        list-style: none !important;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* 2. Định dạng thẻ Link chuẩn để ăn màu xanh và Hover */
+      .custom-nav .nav-link,
+      .custom-nav .sub-link {
+        display: flex !important;
+        justify-content: flex-start;
+        /* FIX: Ép các phần tử dính lại bên trái */
+        align-items: center;
+        gap: 5px;
+        /* Tạo khoảng cách nhỏ 5px giữa chữ và công thức cho đẹp */
+        padding: 12px 20px;
+        color: var(--text-sub);
+        text-decoration: none;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: none !important;
+      }
+
+      .custom-nav .nav-link:hover,
+      .custom-nav .sub-link:hover {
+        background: #f8fafc;
+        color: var(--primary);
+      }
+
+      /* 3. Phân cấp thụt lề cho 3 cấp độ */
+      .custom-nav .sub-menu .sub-link {
+        padding-left: 40px;
+      }
+
+      /* Cấp 2 */
+      .custom-nav .sub-menu .sub-menu .sub-link {
+        padding-left: 60px !important;
+        font-size: 0.85rem;
+      }
+
+      /* Cấp 3 */
+
+      /* 4. Trạng thái Active màu xanh */
+      .custom-nav .active {
+        background-color: #eff6ff !important;
+        color: var(--primary) !important;
+        font-weight: 600;
+        border-left: 3px solid var(--primary) !important;
+      }
+
+      body.dark .custom-nav .active {
+        background-color: #1e293b !important;
+      }
+
+      /* Mặc định ẩn tất cả sub-menu */
+      .custom-nav .sub-menu {
+        display: none;
+        list-style: none !important;
+        padding: 0;
+        margin: 0;
+      }
+
+      /* Chỉ hiển thị sub-menu khi thẻ li cha có class .open */
+      .custom-nav .has-dropdown.open > .sub-menu {
+        display: block !important;
+        animation: slideDown 0.3s ease-out;
+      }
+
+      /* Hiệu ứng xoay mũi tên chuẩn */
+      .custom-nav .has-dropdown.open > .toggle-btn .arrow-icon {
+        transform: rotate(180deg);
+        /* Hoặc 90deg tùy ông muốn xoay hướng nào */
+      }
+
+      /* Xóa dấu chấm tròn cho tất cả li */
+      .custom-nav li {
+        list-style: none !important;
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-5px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* 1. Mặc định ẩn các menu con */
+      .custom-nav .sub-menu {
+        display: none;
+        list-style: none !important;
+      }
+
+      /* Trạng thái mặc định: Mũi tên trỏ sang phải > */
+      .custom-nav .arrow-icon {
+        margin-left: auto;
+        /* MAGIC: Tự động đẩy mũi tên ra tít mép phải */
+        transition: transform 0.3s ease;
+        transform: rotate(0deg);
+        font-size: 0.7rem;
+      }
+
+      /* Khi mục cha có class .open: Tự xoay 90 độ thành trỏ xuống v */
+      .custom-nav .has-dropdown.open > .nav-link .arrow-icon,
+      .custom-nav .has-dropdown.open > .toggle-btn .arrow-icon {
+        transform: rotate(90deg) !important;
+      }
+
+      /* 4. Thụt lề phân cấp 3 lớp chuẩn đét */
+      .custom-nav .sub-menu .sub-link {
+        padding-left: 35px;
+      }
+
+      .custom-nav .sub-menu .sub-menu .sub-link {
+        padding-left: 55px !important;
+        font-size: 0.85rem;
+      }
+
+      /* 1. Đưa border-left từ thẻ a sang thẻ li để nó nằm ngoài rìa */
+      .custom-nav .nav-item,
+      .custom-nav .sub-menu li {
+        position: relative;
+        border-left: 3px solid transparent;
+        /* Thanh dọc mặc định ẩn */
+        transition: all 0.2s;
+      }
+
+      /* 2. Khi mục đó active, hiện thanh dọc ở sát mép trái Sidebar */
+      .custom-nav .nav-item:has(> .active),
+      .custom-nav .sub-menu li:has(> .active) {
+        border-left: 3px solid var(--primary);
+        background-color: var(--hover-bg);
+        /* Nền xanh nhạt cho cả dòng */
+      }
+
+      /* 3. Bỏ border-left cũ ở thẻ a để không bị trùng */
+      .custom-nav .active {
+        border-left: none !important;
+        background-color: transparent !important;
+        /* Reset lại để không bị đè nền */
+        color: var(--primary) !important;
+      }
+
+      /* 4. Chỉnh lại thụt lề chữ cho đẹp */
+      .custom-nav .sub-link {
+        padding-left: 40px !important;
+        /* Con cấp 1 */
+      }
+
+      .custom-nav .sub-menu .sub-menu .sub-link {
+        padding-left: 60px !important;
+        /* Con cấp 2 (3.1, 5.1) */
+      }
+
+      .sidebar {
+        width: var(--sidebar-width);
+        flex-shrink: 0;
+        height: fit-content;
+        position: sticky;
+        top: 100px;
+        max-height: calc(100vh - 140px); /* BẬT SCROLL CHO DESKTOP */
+        overflow-y: auto;                /* BẬT SCROLL CHO DESKTOP */
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 20px 0; /* Thu lề để thanh scroll mượt hơn */
+        transition: background 0.3s, border 0.3s;
+      }
+
+      .sidebar::-webkit-scrollbar { width: 5px; }
+      .sidebar::-webkit-scrollbar-track { background: transparent; }
+      .sidebar::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 10px; }
+      body.dark .sidebar::-webkit-scrollbar-thumb { background-color: #475569; }
+
+      .sidebar h3,
+      .custom-nav .nav-title {
+        margin: 0;
+        padding: 0 20px 15px 20px;
+        font-size: 1.1rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-main);
+      }
+
+      /* Style cho Tiêu đề phân nhóm (h1) trong Menu */
+      .custom-nav .group-label {
+        font-size: 0.8rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--primary);
+        padding-left: 20px !important;
+        /* Thụt vào ít hơn so với mục con */
+        margin-top: 10px;
+        /* Cách cụm trên ra một chút cho thoáng */
+        letter-spacing: 0.5px;
+      }
+      /* =========================================================================
+         XỬ LÝ HOVER & ACTIVE CHO MENU (FIX LỖI BÔI NỀN)
+         ========================================================================= */
+
+      /* 1. HOVER BÌNH THƯỜNG (Chỉ áp dụng cho các link có thể click) */
+      /* Sử dụng :not() để loại trừ hoàn toàn các thẻ chứa toggle-btn và group-label khỏi hiệu ứng hover nền */
+      .custom-nav .nav-link:not(.toggle-btn):hover,
+      .custom-nav .sub-link:not(.group-label):not(.toggle-btn):hover {
+        background: var(--hover-bg);
+        color: var(--primary);
+      }
+
+      /* 2. ACTIVE BÌNH THƯỜNG */
+      .custom-nav .nav-link.active,
+      .custom-nav .sub-link.active {
+        background-color: #eff6ff !important;
+        color: var(--primary) !important;
+        font-weight: 600;
+        border-left-color: var(--primary) !important;
+      }
+
+      /* 3. XỬ LÝ RIÊNG CHO TIÊU ĐỀ CHỮ XANH (.group-label) */
+      .custom-nav .group-label {
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        pointer-events: none; /* Khóa click */
+        border-left: none !important;
+        background-color: transparent !important;
+        color: var(--primary) !important;
+      }
+
+      /* 4. XỬ LÝ RIÊNG CHO DÒNG CÓ MŨI TÊN (.toggle-btn) */
+      .custom-nav .toggle-btn,
+      .custom-nav .toggle-btn.active {
+        border-left: none !important;
+        background-color: transparent !important; /* Luôn vô hiệu hóa nền */
+      }
+
+      /* Khi hover vào dòng có mũi tên (Light mode) */
+      .custom-nav .toggle-btn:hover {
+        background-color: transparent !important; /* Đảm bảo không bôi nền */
+        color: var(--primary) !important;
+      }
+
+      /* --- CHẾ ĐỘ DARK MODE --- */
+      body.dark .custom-nav .nav-link,
+      body.dark .custom-nav .sub-link { 
+          color: #94a3b8; 
+      }
+      
+      /* Hover cho link bình thường trong Dark Mode */
+      body.dark .custom-nav .nav-link:not(.toggle-btn):hover,
+      body.dark .custom-nav .sub-link:not(.group-label):not(.toggle-btn):hover {
+        background: #1e293b; 
+        color: #60a5fa;
+      }
+
+      /* Active cho link bình thường trong Dark Mode */
+      body.dark .custom-nav .active {
+        background-color: #1e293b !important;
+        color: #60a5fa !important;
+        border-left-color: #60a5fa !important;
+      }
+
+      /* Đặt lại màu cho tiêu đề tĩnh (.group-label) trong Dark Mode */
+      body.dark .custom-nav .group-label {
+        color: #60a5fa !important;
+        background-color: transparent !important;
+      }
+
+      /* Hover vào dòng mũi tên trong Dark Mode: Glow chữ, Không nền */
+      body.dark .custom-nav .toggle-btn:hover {
+        background-color: transparent !important; /* Bắt buộc không nền */
+        color: #93c5fd !important;
+        text-shadow: 0 0 10px rgba(147, 197, 253, 0.6); /* Hiệu ứng Glow chữ */
+      }
       /* =================== MÀN CHE VIDEO SCI-FI =================== */
       .temp-video-overlay {
         position: absolute;
@@ -977,42 +1362,27 @@
 
       /* Animations */
       @keyframes panGrid {
-        0% {
-          transform: translate(0, 0);
-        }
-
-        100% {
-          transform: translate(-40px, -40px);
-        }
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(-40px, -40px); }
       }
 
       @keyframes floatOrb {
-        0% {
-          transform: translate(-50px, -30px) scale(0.8);
-        }
-
-        100% {
-          transform: translate(50px, 30px) scale(1.2);
-        }
+        0% { transform: translate(-50px, -30px) scale(0.8); }
+        100% { transform: translate(50px, 30px) scale(1.2); }
       }
 
       @keyframes spinDash {
-        0% {
-          transform: rotate(0deg);
-        }
-
-        100% {
-          transform: rotate(360deg);
-        }
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
       }
+
       /* ÉP BUỘC XOAY MŨI TÊN CHUẨN XÁC 100% */
       .custom-nav .arrow-icon {
         transition: transform 0.3s ease !important;
-        transform: rotate(0deg) !important; /* Mặc định chĩa sang phải */
+        transform: rotate(0deg) !important;
         display: inline-block;
       }
 
-      /* Khi mở menu, ép mũi tên xoay 90 độ (chĩa xuống) */
       .custom-nav .has-dropdown.open > .toggle-btn .arrow-icon,
       .custom-nav .has-dropdown.open > .nav-link .arrow-icon {
         transform: rotate(90deg) !important;
@@ -2228,97 +2598,162 @@
           .forEach((i) => i.classList.remove("playing"));
         el.classList.add("playing");
       }
+
     </script>
+
+    <script src="../../js/utils/auto-update_timeline.js"></script>
     <script>
       function bootVectoriaMenu() {
-        console.log("Menu System: Booting Dinh Thuc...");
+        console.log("Enterprise Menu System: Booting...");
+        const sidebar = document.querySelector('.sidebar');
+        if (!sidebar) return;
+
+        // 1. DỌN RÁC AJAX CŨ: Tắt Camera cũ trước khi bật Camera mới
+        if (window.vectoriaObserver) {
+            window.vectoriaObserver.disconnect();
+        }
+
         const topbarHeight = document.getElementById("topbar")?.offsetHeight || 60;
-        
-        // 1. GẮN SỰ KIỆN RIÊNG CHO NÚT BẤM CÓ MŨI TÊN (ĐỂ ĐÓNG MỞ MENU)
-        const toggleBtns = document.querySelectorAll('.custom-nav .toggle-btn');
-        toggleBtns.forEach((btn) => {
-          btn.onclick = function (e) {
-            e.preventDefault(); 
-            const parentLi = this.closest(".has-dropdown");
-            if (parentLi) {
-              parentLi.classList.toggle("open"); // Chỉ đóng/mở menu, CSS sẽ lo vụ xoay mũi tên
+        let isClicking = false;
+        let clickTimeout;
+
+        // 2. AUTO-FIX MŨI TÊN
+        document.querySelectorAll('.custom-nav .arrow-icon').forEach(icon => {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-right');
+            const parentLi = icon.closest(".has-dropdown");
+            if (parentLi && parentLi.classList.contains('open')) {
+                icon.style.transform = 'rotate(90deg)';
+            } else {
+                icon.style.transform = 'rotate(0deg)';
             }
-          };
         });
 
-        // 2. GẮN SỰ KIỆN CHO CÁC LINK BÌNH THƯỜNG (ĐỂ CUỘN TRANG)
-        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
-        menuLinks.forEach((link) => {
-          link.onclick = function (e) {
-            const targetId = this.getAttribute("href");
-            if (!targetId || targetId === "#") return;
-            
-            // Nếu click trúng thẻ A nằm trong dòng chữ xanh -> Bỏ qua
-            if (this.classList.contains("group-label") || this.closest(".group-label")) {
-               e.preventDefault();
-               return; 
-            }
-            
-            // Nếu click trúng thẻ A nhưng nó thuộc dòng mũi tên -> Bỏ qua (vì đã xử lý đóng mở ở mục 1)
-            if (this.closest('.toggle-btn')) {
-                return;
-            }
-
-            e.preventDefault();
-            // Highlight màu xanh
-            menuLinks.forEach((el) => el.classList.remove("active"));
-            this.classList.add("active");
-
-            // Cuộn trang
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) {
-              const y = targetElement.getBoundingClientRect().top + window.pageYOffset - topbarHeight - 20;
-              window.scrollTo({ top: y, behavior: "smooth" });
-            }
-          };
-        });
-
-        // 3. SCROLL SPY CHỐNG BÁM NHẦM VÀO TIÊU ĐỀ
-        window.onscroll = () => {
-          const sections = document.querySelectorAll(".chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id], #bai-tap, .video-box[id]");
-          let currentId = "";
-          
-          sections.forEach((section) => {
-            if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - 150) {
-              currentId = section.getAttribute("id");
-            }
-          });
-          
-          if (currentId) {
-            menuLinks.forEach((link) => {
-              link.classList.remove("active");
-              if (link.getAttribute("href") === `#${currentId}`) {
-                
-                // LƯỚI LỌC: Không active nếu là mũi tên hoặc chữ xanh
-                const inToggleBtn = link.closest(".toggle-btn");
-                const inGroupLabel = link.closest(".group-label") || link.classList.contains("group-label");
-                
-                if (!inToggleBtn && !inGroupLabel) {
-                  link.classList.add("active");
-                  
-                  // Tự bung menu
-                  let parentDropdown = link.closest(".has-dropdown");
-                  while (parentDropdown) {
-                    if (!parentDropdown.classList.contains("open")) {
-                      parentDropdown.classList.add("open");
-                    }
-                    parentDropdown = parentDropdown.parentElement.closest(".has-dropdown");
-                  }
-                }
-              }
+        // 3. NÚT "MỤC LỤC" MOBILE
+        const navTitle = document.querySelector('.sidebar h3.nav-title');
+        if (navTitle) {
+            const newNavTitle = navTitle.cloneNode(true);
+            navTitle.replaceWith(newNavTitle);
+            newNavTitle.addEventListener('click', () => {
+                sidebar.classList.toggle('mobile-open');
             });
-          }
+        }
+
+        // 4. CLICK MENU ĐÓNG/MỞ & SCROLL
+        document.querySelectorAll('.custom-nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                const targetId = this.getAttribute('href');
+                const isToggle = this.closest('.toggle-btn');
+                const isGroup = this.classList.contains("sub-heading") || this.classList.contains("group-label") || (this.hasAttribute('style') && this.getAttribute('style').includes('uppercase'));
+                
+                // Mũi tên chỉ làm nhiệm vụ đóng/mở menu
+                if (isToggle) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const parentLi = this.closest('.has-dropdown');
+                    if (parentLi) {
+                        parentLi.classList.toggle('open');
+                        const icon = parentLi.querySelector('.toggle-btn .arrow-icon');
+                        if (icon) icon.style.transform = parentLi.classList.contains('open') ? 'rotate(90deg)' : 'rotate(0deg)';
+                    }
+                    return;
+                }
+
+                // Nếu là link chuyển mục, tính toán Scroll thời gian thực
+                if (targetId && targetId !== '#' && !isGroup) {
+                    e.preventDefault();
+                    isClicking = true; // Bịt mắt Camera an ninh tạm thời
+                    clearTimeout(clickTimeout);
+
+                    // Tô xanh menu ngay lập tức
+                    document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
+                    this.classList.add("active");
+                    const parentDiv = this.closest('.nav-link') || this.closest('.sub-link') || this.closest('.sub-sub-link');
+                    if (parentDiv) parentDiv.classList.add("active");
+
+                    if (window.innerWidth <= 960 && sidebar) {
+                        sidebar.classList.remove('mobile-open');
+                    }
+
+                    // Tính tọa độ ngay TẠI THỜI ĐIỂM CLICK (Bất chấp MathJax phình to)
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        const offset = window.innerWidth <= 960 ? 140 : topbarHeight + 20;
+                        const y = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                    }
+
+                    // Mở mắt Camera lại sau khi trượt xong (800ms)
+                    clickTimeout = setTimeout(() => { isClicking = false; }, 800);
+                }
+            });
+        });
+
+        // 5. THUẬT TOÁN CAMERA (INTERSECTION OBSERVER)
+        const sections = document.querySelectorAll(".chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id], #bai-tap, .video-box[id]");
+        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
+
+        // Định hình ống kính: cách topbar 80px (để không bị đè), cắt bớt nửa dưới màn hình
+        const observerOptions = {
+            root: null,
+            rootMargin: `-${topbarHeight + 20}px 0px -50% 0px`, 
+            threshold: 0
         };
+
+        window.vectoriaObserver = new IntersectionObserver((entries) => {
+            if (isClicking) return; // Đang bấm menu trượt thì không dò tìm
+
+            let activeId = null;
+            // Tìm đối tượng đang lọt vào ống kính
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    activeId = entry.target.getAttribute('id');
+                }
+            });
+
+            if (activeId) {
+                menuLinks.forEach(link => {
+                    if (link.getAttribute("href") === `#${activeId}`) {
+                        const isGroup = link.classList.contains("sub-heading") || link.classList.contains("group-label");
+                        
+                        // Tô xanh mục lục (bao gồm cả dòng mũi tên)
+                        if (!isGroup) {
+                            document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
+                            link.classList.add("active");
+                            
+                            const parentDiv = link.closest('.nav-link') || link.closest('.sub-link') || link.closest('.sub-sub-link');
+                            if (parentDiv) parentDiv.classList.add("active");
+
+                            // Tự động mở menu cha nếu đang đóng (chỉ PC)
+                            if (window.innerWidth > 960) {
+                                let parentDropdown = link.closest('.has-dropdown');
+                                while (parentDropdown) {
+                                    parentDropdown.classList.add('open');
+                                    const icon = parentDropdown.querySelector('.toggle-btn .arrow-icon');
+                                    if (icon) icon.style.transform = 'rotate(90deg)';
+                                    parentDropdown = parentDropdown.parentElement?.closest('.has-dropdown');
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }, observerOptions);
+
+        // Bật camera giám sát tất cả các đề mục
+        sections.forEach(sec => window.vectoriaObserver.observe(sec));
       }
 
+      // KÍCH HOẠT TRỰC TIẾP (KHÔNG CẦN CHỜ DOMContentLoaded)
+      // Khi lật trang AJAX xong, script này đọc tới đâu chạy thẳng tới đó, bỏ qua rào cản!
       bootVectoriaMenu();
-      setTimeout(bootVectoriaMenu, 100);
-      setTimeout(bootVectoriaMenu, 500);
+      
+      // Phòng hờ MathJax khởi động xong mà làm xô lệch layout nặng thì Reset lại Camera
+      if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
+          MathJax.startup.promise.then(() => {
+              bootVectoriaMenu();
+          }).catch(() => {});
+      }
     </script>
   </body>
 </html>

@@ -2352,28 +2352,39 @@
 
     <script src="../../js/utils/auto-update_timeline.js"></script>
     <script>
-      function bootVectoriaMenu() {
-        if (window.menuInitialized) return;
-        window.menuInitialized = true;
-        
-        console.log("Menu System: Booting...");
-        const topbarHeight = document.getElementById("topbar")?.offsetHeight || 60;
-        let isClicking = false; 
+      // 1. CHÌA KHÓA CHỐNG AJAX: Xóa cờ ảo của trang cũ
+      window.menuInitialized = false;
 
-        // 0. AUTO-FIX TẬN GỐC
+      function bootVectoriaMenu() {
+        // Gắn cờ vật lý lên HTML để chống chạy đè, nhưng lật trang mới là tự reset
+        const sidebar = document.querySelector('.sidebar');
+        if (!sidebar || sidebar.dataset.booted === 'true') return;
+        sidebar.dataset.booted = 'true';
+        
+        console.log("Enterprise Menu System: Booting...");
+
+        // 1. DỌN RÁC AJAX CŨ: Tắt Camera cũ trước khi bật Camera mới
+        if (window.vectoriaObserver) {
+            window.vectoriaObserver.disconnect();
+        }
+
+        const topbarHeight = document.getElementById("topbar")?.offsetHeight || 60;
+        let isClicking = false;
+        let clickTimeout;
+
+        // 2. AUTO-FIX MŨI TÊN
         document.querySelectorAll('.custom-nav .arrow-icon').forEach(icon => {
             icon.classList.remove('fa-chevron-down');
             icon.classList.add('fa-chevron-right');
             const parentLi = icon.closest(".has-dropdown");
             if (parentLi && parentLi.classList.contains('open')) {
-                setTimeout(() => { icon.style.transform = 'rotate(90deg)'; }, 0);
+                icon.style.transform = 'rotate(90deg)';
             } else {
                 icon.style.transform = 'rotate(0deg)';
             }
         });
 
-        // 1. NÚT "MỤC LỤC" THU GỌN TRÊN MOBILE
-        const sidebar = document.querySelector('.sidebar');
+        // 3. NÚT "MỤC LỤC" THU GỌN TRÊN MOBILE
         const navTitle = document.querySelector('.sidebar h3.nav-title');
         if (navTitle) {
             const newNavTitle = navTitle.cloneNode(true);
@@ -2383,146 +2394,139 @@
             });
         }
 
-        // 2. MŨI TÊN ĐÓNG/MỞ CÁC MỤC BÊN TRONG
-        document.querySelectorAll('.custom-nav .toggle-btn').forEach((btn) => {
-          btn.addEventListener("click", function (e) {
-            const link = this.querySelector('a');
-            if(link && link.getAttribute('href')) e.preventDefault();
-            e.stopPropagation(); 
-            
-            const parentLi = this.closest(".has-dropdown");
-            if (parentLi) {
-              isClicking = true;
-              parentLi.classList.toggle("open"); 
-              
-              const icon = this.querySelector(".arrow-icon");
-              if (icon) {
-                 icon.style.transform = parentLi.classList.contains('open') ? 'rotate(90deg)' : 'rotate(0deg)';
-              }
-
-               if(link && link.getAttribute('href') !== '#') {
-                    const targetId = link.getAttribute("href");
-                    const targetElement = document.querySelector(targetId);
-                     if (targetElement) {
-                        const offset = window.innerWidth <= 960 ? 140 : topbarHeight + 20;
-                        const executeScroll = () => {
-                          const y = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
-                          window.scrollTo({ top: y, behavior: "smooth" });
-                        };
-                        if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
-                           MathJax.startup.promise.then(() => requestAnimationFrame(executeScroll));
-                        } else { executeScroll(); }
-                     }
-               }
-              setTimeout(() => { isClicking = false; }, 800);
-            }
-          });
-        });
-
-        // 3. CUỘN TRANG THÔNG MINH
-        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
-        menuLinks.forEach((link) => {
-          link.addEventListener("click", function (e) {
-            const targetId = this.getAttribute("href");
-            if (!targetId || targetId === "#") return;
-            
-            // KIỂM TRA: Cấm cuộn trang nếu thẻ này chứa nút mũi tên (toggle-btn)
-            // HOẶC nếu nó là tiêu đề nhóm (sub-heading, group-label)
-            if (
-              this.closest('.toggle-btn') || 
-              this.classList.contains("sub-heading") || 
-              this.classList.contains("group-label") || 
-              (this.hasAttribute('style') && this.getAttribute('style').includes('uppercase'))
-            ) {
-                e.preventDefault(); // CHẶN HÀNH VI CUỘN TRANG
-                return; // Dừng luôn, không chạy các lệnh cuộn ở dưới nữa
-            }
-
-            e.preventDefault();
-            isClicking = true;
-
-            document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
-            
-            this.classList.add("active");
-            const parentDiv = this.closest('.nav-link') || this.closest('.sub-link') || this.closest('.sub-sub-link');
-            if (parentDiv) parentDiv.classList.add("active");
-
-            const parentDropdown = this.closest(".has-dropdown");
-            if (parentDropdown) {
-              parentDropdown.classList.add("open");
-              const icon = parentDropdown.querySelector('.arrow-icon');
-              if (icon) icon.style.transform = 'rotate(90deg)';
-            }
-
-            if (window.innerWidth <= 960 && sidebar) {
-                sidebar.classList.remove('mobile-open');
-            }
-
-            setTimeout(() => {
-                const targetElement = document.querySelector(targetId);
-                if (targetElement) {
-                  const offset = window.innerWidth <= 960 ? 140 : topbarHeight + 20;
-                  const executeScroll = () => {
-                    const y = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
-                    window.scrollTo({ top: y, behavior: "smooth" });
-                    setTimeout(() => { isClicking = false; }, 800); 
-                  };
-                  if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
-                     MathJax.startup.promise.then(() => requestAnimationFrame(executeScroll));
-                  } else { executeScroll(); }
-                }
-            }, window.innerWidth <= 960 ? 150 : 0);
-          });
-        });
-
-        // 4. SCROLL SPY
-        let isScrolling;
-        window.onscroll = () => {
-          window.clearTimeout(isScrolling);
-          isScrolling = setTimeout(() => {
-              if (isClicking) return; 
-
-              const sections = document.querySelectorAll(".chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id], #bai-tap, .video-box[id]");
-              let currentId = "";
-              const offsetSpy = window.innerWidth <= 960 ? topbarHeight + 80 : topbarHeight + 50;
-              
-              sections.forEach((section) => {
-                if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - offsetSpy - 50) {
-                  currentId = section.getAttribute("id");
-                }
-              });
-              
-              if (currentId) {
-                menuLinks.forEach((link) => {
-                  if (link.getAttribute("href") === `#${currentId}`) {
-                    const inGroupLabel = link.classList.contains("sub-heading") || link.classList.contains("group-label") || (link.hasAttribute('style') && link.getAttribute('style').includes('uppercase'));
-                    const isToggleBtn = link.closest('.toggle-btn');
-                    
-                    if (!inGroupLabel && !isToggleBtn) {
-                      document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
-                      link.classList.add("active");
-                      const parentDiv = link.closest('.nav-link') || link.closest('.sub-link') || link.closest('.sub-sub-link');
-                      if (parentDiv) parentDiv.classList.add("active");
-                      
-                      if (window.innerWidth > 960) {
-                          let parentDropdown = link.closest(".has-dropdown");
-                          while (parentDropdown) {
-                            parentDropdown.classList.add("open");
-                            const icon = parentDropdown.querySelector('.toggle-btn .arrow-icon');
-                            if(icon) icon.style.transform = 'rotate(90deg)';
-                            parentDropdown = parentDropdown.parentElement.closest(".has-dropdown");
-                          }
-                      }
+        // 4. CLICK MENU ĐÓNG/MỞ & SCROLL
+        document.querySelectorAll('.custom-nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                const targetId = this.getAttribute('href');
+                const isToggle = this.closest('.toggle-btn');
+                const isGroup = this.classList.contains("sub-heading") || this.classList.contains("group-label") || (this.hasAttribute('style') && this.getAttribute('style').includes('uppercase'));
+                
+                // Mũi tên chỉ làm nhiệm vụ đóng/mở menu
+                if (isToggle) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const parentLi = this.closest('.has-dropdown');
+                    if (parentLi) {
+                        parentLi.classList.toggle('open');
+                        const icon = this.querySelector('.arrow-icon');
+                        if (icon) icon.style.transform = parentLi.classList.contains('open') ? 'rotate(90deg)' : 'rotate(0deg)';
                     }
-                  }
-                });
-              }
-          }, 50);
+                    return; // NGĂN CHẶN MŨI TÊN CHẠY XUỐNG LỆNH SCROLL BÊN DƯỚI
+                }
+
+                // Nếu là link chuyển mục, tính toán Scroll thời gian thực
+                if (targetId && targetId !== '#' && !isGroup) {
+                    e.preventDefault();
+                    isClicking = true; // Bịt mắt Camera an ninh tạm thời
+                    clearTimeout(clickTimeout);
+
+                    // Tô xanh menu ngay lập tức
+                    document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
+                    this.classList.add("active");
+                    const parentDiv = this.closest('.nav-link') || this.closest('.sub-link') || this.closest('.sub-sub-link');
+                    if (parentDiv) parentDiv.classList.add("active");
+
+                    if (window.innerWidth <= 960 && sidebar) {
+                        sidebar.classList.remove('mobile-open');
+                    }
+
+                    // Tính tọa độ ngay TẠI THỜI ĐIỂM CLICK (Bất chấp MathJax phình to)
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        const offset = window.innerWidth <= 960 ? 140 : topbarHeight + 20;
+                        const y = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                    }
+
+                    // Mở mắt Camera lại sau khi trượt xong (800ms)
+                    clickTimeout = setTimeout(() => { isClicking = false; }, 800);
+                }
+            });
+        });
+
+        // 5. THUẬT TOÁN CAMERA (INTERSECTION OBSERVER)
+        const sections = document.querySelectorAll(".chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id], #bai-tap, .video-box[id]");
+        const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
+
+        // Định hình ống kính: cách topbar 80px (để không bị đè), cắt bớt nửa dưới màn hình
+        const observerOptions = {
+            root: null,
+            rootMargin: `-${topbarHeight + 20}px 0px -50% 0px`, 
+            threshold: 0
         };
+
+        window.vectoriaObserver = new IntersectionObserver((entries) => {
+            if (isClicking) return; // Đang bấm menu trượt thì không dò tìm
+
+            let activeId = null;
+            // Tìm đối tượng đang lọt vào ống kính
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    activeId = entry.target.getAttribute('id');
+                }
+            });
+
+            if (activeId) {
+                menuLinks.forEach(link => {
+                    if (link.getAttribute("href") === `#${activeId}`) {
+                        const isGroup = link.classList.contains("sub-heading") || link.classList.contains("group-label") || (link.hasAttribute('style') && link.getAttribute('style').includes('uppercase'));
+                        
+                        // Tô xanh mục lục (bao gồm cả dòng mũi tên)
+                        if (!isGroup) {
+                            document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
+                            link.classList.add("active");
+                            
+                            const parentDiv = link.closest('.nav-link') || link.closest('.sub-link') || link.closest('.sub-sub-link');
+                            if (parentDiv) parentDiv.classList.add("active");
+
+                            // Tự động mở menu cha nếu đang đóng (chỉ PC)
+                            if (window.innerWidth > 960) {
+                                let parentDropdown = link.closest('.has-dropdown');
+                                while (parentDropdown) {
+                                    parentDropdown.classList.add('open');
+                                    const icon = parentDropdown.querySelector('.toggle-btn .arrow-icon');
+                                    if (icon) icon.style.transform = 'rotate(90deg)';
+                                    parentDropdown = parentDropdown.parentElement?.closest('.has-dropdown');
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }, observerOptions);
+
+        // Bật camera giám sát tất cả các đề mục
+        sections.forEach(sec => window.vectoriaObserver.observe(sec));
       }
 
-      document.addEventListener("DOMContentLoaded", bootVectoriaMenu);
-      setTimeout(bootVectoriaMenu, 500);
+      // 6. BỘ KHỞI ĐỘNG VƯỢT RÀO AJAX
+      function initVectoria() {
+        if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
+            console.log("Loading: Đang chờ MathJax...");
+            MathJax.startup.promise.then(() => {
+                bootVectoriaMenu();
+                setTimeout(() => window.dispatchEvent(new Event('scroll')), 300);
+            }).catch(() => bootVectoriaMenu());
+        } else {
+            setTimeout(() => {
+                bootVectoriaMenu();
+                window.dispatchEvent(new Event('scroll'));
+            }, 500);
+        }
+      }
+
+      // Nếu lật trang vào mà DOM đã tải xong (readyState !== 'loading') thì kích hoạt thẳng!
+      // Nếu là lần đầu mở web (Hard Reload) thì chờ DOMContentLoaded
+      if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initVectoria);
+      } else {
+          initVectoria();
+      }
+      
+      // Phòng thủ lớp cuối cho mobile tải chậm
+      setTimeout(initVectoria, 1500);
     </script>
+  </body>
+</html>
   </body>
 </html>
