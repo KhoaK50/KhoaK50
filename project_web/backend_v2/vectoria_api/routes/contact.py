@@ -42,7 +42,7 @@ def send_email_via_lark(to_email, user_name, user_message):
         html_content = f"""
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
             <div style="background-color: #3a78ff; padding: 20px; text-align: center;">
-                <h2 style="color: #ffffff; margin: 0;">Vectoria Knowledge</h2>
+                <h2 style="color: #ffffff; margin: 0;">Vectoria Support</h2>
             </div>
             <div style="padding: 20px;">
                 <p>Xin chào <strong>{user_name}</strong>,</p>
@@ -123,7 +123,7 @@ def handle_contact():
             "email": user_email,
             "message": full_msg,
             "file": file_payload,
-            "send_email": True,  # Cờ báo hiệu cho Google Script biết là hãy gửi mail đi
+            "send_email": False,  # Cờ báo hiệu cho Google Script biết là hãy gửi mail đi
         }
 
         # D. Gửi sang Google (Chạy Sync để đảm bảo Vercel không kill process)
