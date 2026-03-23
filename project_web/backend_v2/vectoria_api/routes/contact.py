@@ -5,14 +5,19 @@ import threading
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 import base64
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 contact_bp = Blueprint("contact", __name__)
 
 # --- CẤU HÌNH ---
 # Link Google Script của bạn
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQtYiblsalJRXXo1P85Cio1L9Q3mO2OreWNiJdvxHtZJsNIqMlJHT1FVjNOoX3grNfSw/exec"
-
-# (Đã xóa hết phần cấu hình SMTP/Email ở đây cho nhẹ gánh)
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEDUGk1_-QxGbZXzEv-k5oVE6XIQWeCBWzZp83g7bfBbGIGwxOANLYrxm-8bSV9-6Bhg/exec"
+SMTP_SERVER = "smtp.larksuite.com"
+SMTP_PORT = 465  # Lark dùng cổng bảo mật SSL
+SMTP_EMAIL = "support@vectoria.io.vn"
+SMTP_PASSWORD = "3LouVlo4FhB1uq06"
 
 
 # --- 1. HÀM KHỞI TẠO DB ---
@@ -30,6 +35,44 @@ def init_feedback_db():
         print(">> [Database] Ready.")
     except Exception as e:
         print(f">> [Database Error] {e}")
+
+
+def send_email_via_lark(to_email, user_name, user_message):
+    try:
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #3a78ff; padding: 20px; text-align: center;">
+                <h2 style="color: #ffffff; margin: 0;">Vectoria Knowledge</h2>
+            </div>
+            <div style="padding: 20px;">
+                <p>Xin chào <strong>{user_name}</strong>,</p>
+                <p>Cảm ơn bạn đã liên hệ với chúng tôi. Hệ thống đã ghi nhận tin nhắn của bạn thành công.</p>
+                <p><strong>Nội dung bạn gửi:</strong></p>
+                <blockquote style="background: #f9f9f9; padding: 10px; border-left: 4px solid #3a78ff;">{user_message}</blockquote>
+                <p>Đội ngũ hỗ trợ sẽ xem xét và phản hồi trong thời gian sớm nhất.</p>
+                <br>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                <p style="font-size: 0.9em; color: #888;">
+                    Trân trọng,<br>
+                    <strong>Đội ngũ Vectoria</strong>
+                </p>
+            </div>
+        </div>
+        """
+
+        msg = MIMEMultipart()
+        msg["From"] = f"Vectoria Support <{SMTP_EMAIL}>"
+        msg["To"] = to_email
+        msg["Subject"] = "Cảm ơn bạn đã liên hệ với Vectoria!"
+        msg.attach(MIMEText(html_content, "html"))
+
+        server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
+        server.login(SMTP_EMAIL, SMTP_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        print(f">> [Mail] Đã gửi thành công tới {to_email}")
+    except Exception as e:
+        print(f">> [Mail Error] {e}")
 
 
 # --- 2. HÀM GỬI SANG GOOGLE (QUAN TRỌNG) ---
@@ -86,7 +129,11 @@ def handle_contact():
         # D. Gửi sang Google (Chạy Sync để đảm bảo Vercel không kill process)
         # Việc này mất khoảng 0.5s - 1s, rất an toàn cho Vercel
         send_to_google_direct(google_json)
-
+        # E. Gửi mail Auto-reply qua Lark (Chạy ẩn để không làm chậm Web)
+        if user_email and "@" in user_email:
+            threading.Thread(
+                target=send_email_via_lark, args=(user_email, user_name, message)
+            ).start()
         return jsonify({"status": "success", "message": "Đã gửi thành công"}), 200
 
     except Exception as e:
