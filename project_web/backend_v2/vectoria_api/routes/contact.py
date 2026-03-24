@@ -16,7 +16,7 @@ contact_bp = Blueprint("contact", __name__)
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEDUGk1_-QxGbZXzEv-k5oVE6XIQWeCBWzZp83g7bfBbGIGwxOANLYrxm-8bSV9-6Bhg/exec"
 SMTP_SERVER = "smtp.larksuite.com"
 SMTP_PORT = 587  # Đổi sang 587 để lách tường lửa Render
-SMTP_EMAIL = os.getenv("SMTP_EMAIL") 
+SMTP_EMAIL = os.getenv("SMTP_EMAIL")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 
@@ -39,6 +39,7 @@ def init_feedback_db():
 
 def send_email_via_lark(to_email, user_name, user_message):
     try:
+        print(f">> [Mail] Bắt đầu tiến trình gửi mail tới {to_email}...")
         html_content = f"""
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
             <div style="background-color: #3a78ff; padding: 20px; text-align: center;">
@@ -66,18 +67,21 @@ def send_email_via_lark(to_email, user_name, user_message):
         msg["Subject"] = "Cảm ơn bạn đã liên hệ với Vectoria!"
         msg.attach(MIMEText(html_content, "html"))
 
-        # --- ĐÂY LÀ PHẦN THAY ĐỔI CỐT LÕI ---
-        # Dùng smtplib.SMTP thay vì SMTP_SSL
+        print(f">> [Mail] Đang kết nối tới máy chủ Lark (Port {SMTP_PORT})...")
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-        server.ehlo()  # Lệnh chào máy chủ (Optional nhưng nên có)
-        server.starttls()  # BẬT MÃ HÓA TLS (Cực kỳ quan trọng để lách Render)
+        server.ehlo()
+        server.starttls()
+
+        print(f">> [Mail] Đang xác thực tài khoản {SMTP_EMAIL}...")
         server.login(SMTP_EMAIL, SMTP_PASSWORD)
 
         server.send_message(msg)
         server.quit()
-        print(f">> [Mail] Đã gửi thành công tới {to_email}")
+        print(f">> [Mail SUCCESS] Đã gửi thành công!")
+        return True
     except Exception as e:
-        print(f">> [Mail Error] {e}")
+        print(f">> [Mail FATAL ERROR] Lỗi gửi mail: {e}")
+        return False
 
 
 # --- 2. HÀM GỬI SANG GOOGLE (QUAN TRỌNG) ---
@@ -131,14 +135,17 @@ def handle_contact():
             "send_email": False,  # Cờ báo hiệu cho Google Script biết là hãy gửi mail đi
         }
 
-        # D. Gửi sang Google (Chạy Sync để đảm bảo Vercel không kill process)
-        # Việc này mất khoảng 0.5s - 1s, rất an toàn cho Vercel
+        # D. Gửi sang Google
         send_to_google_direct(google_json)
-        # E. Gửi mail Auto-reply qua Lark (Chạy ẩn để không làm chậm Web)
+
+        # E. Gửi mail Auto-reply qua Lark (CHẠY ĐỒNG BỘ ĐỂ TRÁNH RENDER KILL PROCESS)
         if user_email and "@" in user_email:
-            threading.Thread(
-                target=send_email_via_lark, args=(user_email, user_name, message)
-            ).start()
+            send_email_via_lark(user_email, user_name, message)
+        else:
+            print(
+                f">> [Mail Warning] Không gửi mail vì email trống hoặc không hợp lệ: '{user_email}'"
+            )
+
         return jsonify({"status": "success", "message": "Đã gửi thành công"}), 200
 
     except Exception as e:
