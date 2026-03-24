@@ -15,9 +15,9 @@ contact_bp = Blueprint("contact", __name__)
 # Link Google Script của bạn
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEDUGk1_-QxGbZXzEv-k5oVE6XIQWeCBWzZp83g7bfBbGIGwxOANLYrxm-8bSV9-6Bhg/exec"
 SMTP_SERVER = "smtp.larksuite.com"
-SMTP_PORT = 465  # Lark dùng cổng bảo mật SSL
-SMTP_EMAIL = "support@vectoria.io.vn"
-SMTP_PASSWORD = "3LouVlo4FhB1uq06"
+SMTP_PORT = 587  # Đổi sang 587 để lách tường lửa Render
+SMTP_EMAIL = os.getenv("SMTP_EMAIL") 
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 
 # --- 1. HÀM KHỞI TẠO DB ---
@@ -66,8 +66,13 @@ def send_email_via_lark(to_email, user_name, user_message):
         msg["Subject"] = "Cảm ơn bạn đã liên hệ với Vectoria!"
         msg.attach(MIMEText(html_content, "html"))
 
-        server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
+        # --- ĐÂY LÀ PHẦN THAY ĐỔI CỐT LÕI ---
+        # Dùng smtplib.SMTP thay vì SMTP_SSL
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.ehlo()  # Lệnh chào máy chủ (Optional nhưng nên có)
+        server.starttls()  # BẬT MÃ HÓA TLS (Cực kỳ quan trọng để lách Render)
         server.login(SMTP_EMAIL, SMTP_PASSWORD)
+
         server.send_message(msg)
         server.quit()
         print(f">> [Mail] Đã gửi thành công tới {to_email}")
