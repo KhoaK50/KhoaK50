@@ -470,7 +470,7 @@ def _eq_stepwise_pdf_latex(
         else:
             # Hiển thị nghiệm tìm được
             sol_strs = [f"{chr(97+i)} = {_fmt_k(sol[i], tol)}" for i in range(num_vars)]
-            sol_latex = "\\begin{cases} " + " \\\\ ".join(sol_strs) + " \end{cases}"
+            sol_latex = "\\begin{cases} " + " \\\\ ".join(sol_strs) + " \\end{cases}"
             lines.append(f"{sys_latex} \\Rightarrow {sol_latex}\\\\[4pt]")
 
             # 2. Thử lại vào các thành phần còn lại (từ dòng num_vars trở đi)
