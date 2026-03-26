@@ -422,6 +422,9 @@
       innerContent.includes(",,")
     ) {
       App.showToast("Tọa độ không hợp lệ (Dư hoặc thiếu dấu phẩy)");
+      inp.style.animation = "none";
+      inp.offsetHeight;
+      inp.style.animation = "shakeError 0.4s ease-in-out";
       return;
     }
 
@@ -440,6 +443,9 @@
       }
     } catch (err) {
       App.showToast("Lỗi nhập liệu: " + err.message);
+      inp.style.animation = "none";
+      inp.offsetHeight;
+      inp.style.animation = "shakeError 0.4s ease-in-out";
       return;
     }
 
