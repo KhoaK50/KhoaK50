@@ -1,6 +1,20 @@
 <!doctype html>
 <html lang="vi">
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-GRZR4Y6VFQ");
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Không gian vector - Vectoria Knowledge</title>
@@ -943,9 +957,10 @@
       }
 
       /* =================== 6. STYLE CHO PHẦN BÀI TẬP (MỚI) =================== */
-      
+
       /* Cấu trúc Hộp dùng chung: Phải có border-box để mép hộp cân bằng */
-      .box-black, .box-blue {
+      .box-black,
+      .box-blue {
         padding: 20px;
         border-radius: 8px;
         margin-bottom: 30px;
@@ -964,13 +979,36 @@
       }
 
       /* Chữ nhấn mạnh */
-      .text-red-bold { color: #dc2626; font-weight: bold; margin-right: 5px; }
-      .text-example-blue { color: var(--primary); font-weight: bold; font-style: italic; margin-right: 5px; }
-      .pdf-sol-title { color: var(--primary); font-weight: bold; text-align: center; display: block; margin: 15px 0; font-size: 1.1rem; }
+      .text-red-bold {
+        color: #dc2626;
+        font-weight: bold;
+        margin-right: 5px;
+      }
+      .text-example-blue {
+        color: var(--primary);
+        font-weight: bold;
+        font-style: italic;
+        margin-right: 5px;
+      }
+      .pdf-sol-title {
+        color: var(--primary);
+        font-weight: bold;
+        text-align: center;
+        display: block;
+        margin: 15px 0;
+        font-size: 1.1rem;
+      }
 
       /* Cấu hình Danh sách bài tập */
-      .exercise-list { list-style: none; padding-left: 5px; margin-top: 10px; }
-      .exercise-list li { margin-bottom: 12px; line-height: 1.6; }
+      .exercise-list {
+        list-style: none;
+        padding-left: 5px;
+        margin-top: 10px;
+      }
+      .exercise-list li {
+        margin-bottom: 12px;
+        line-height: 1.6;
+      }
 
       /* CẤU TRÚC CUỘN NGANG CHO MATHJAX BỊ TRÀN */
       .math-scroll {
@@ -985,36 +1023,84 @@
 
       /* 1. Tiêu đề mục lớn */
       .pdf-h1 {
-        font-size: 1.5rem; font-weight: 700; margin-top: 40px; margin-bottom: 20px; color: var(--text-main); display: inline-block;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-top: 40px;
+        margin-bottom: 20px;
+        color: var(--text-main);
+        display: inline-block;
       }
-      .pdf-remark { color: #9f1239; font-weight: bold; font-style: italic; margin-bottom: 15px; }
+      .pdf-remark {
+        color: #9f1239;
+        font-weight: bold;
+        font-style: italic;
+        margin-bottom: 15px;
+      }
 
       /* =================== 7. NÚT TẢI ĐÁP ÁN =================== */
       .download-container {
-        margin-top: 40px; text-align: center; padding-bottom: 20px;
-        border-top: 1px dashed var(--border); padding-top: 30px;
+        margin-top: 40px;
+        text-align: center;
+        padding-bottom: 20px;
+        border-top: 1px dashed var(--border);
+        padding-top: 30px;
       }
       .btn-download {
         background: linear-gradient(135deg, var(--primary), #2563eb);
-        color: #ffffff; border: none; padding: 12px 28px;
-        border-radius: 50px; font-size: 1rem; font-weight: 600;
-        cursor: pointer; display: inline-flex; align-items: center;
-        gap: 10px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 15px rgba(58, 120, 255, 0.3); text-decoration: none;
+        color: #ffffff;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(58, 120, 255, 0.3);
+        text-decoration: none;
       }
-      .btn-download:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(58, 120, 255, 0.5); }
-      .btn-download:active { transform: translateY(-1px); }
+      .btn-download:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(58, 120, 255, 0.5);
+      }
+      .btn-download:active {
+        transform: translateY(-1px);
+      }
 
       /* --- DARK MODE TỔNG HỢP CHO BOX VÀ BTN --- */
-      body.dark .box-black { background-color: var(--bg-card); border-color: var(--border); }
-      body.dark .box-blue { background-color: rgba(58, 120, 255, 0.05); border-color: #60a5fa; }
-      body.dark .text-red-bold { color: #fb7185; }
-      body.dark .pdf-remark { color: #fb7185; }
-      body.dark .text-example-blue, body.dark .pdf-sol-title, body.dark .pdf-h1 { color: #60a5fa; }
-      body.dark .download-container { border-top-color: #334155; }
-      body.dark .btn-download { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); color: #fff; }
-      body.dark .btn-download:hover { background: linear-gradient(135deg, #60a5fa, #2563eb); box-shadow: 0 0 20px rgba(96, 165, 250, 0.4); }
-    
+      body.dark .box-black {
+        background-color: var(--bg-card);
+        border-color: var(--border);
+      }
+      body.dark .box-blue {
+        background-color: rgba(58, 120, 255, 0.05);
+        border-color: #60a5fa;
+      }
+      body.dark .text-red-bold {
+        color: #fb7185;
+      }
+      body.dark .pdf-remark {
+        color: #fb7185;
+      }
+      body.dark .text-example-blue,
+      body.dark .pdf-sol-title,
+      body.dark .pdf-h1 {
+        color: #60a5fa;
+      }
+      body.dark .download-container {
+        border-top-color: #334155;
+      }
+      body.dark .btn-download {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        color: #fff;
+      }
+      body.dark .btn-download:hover {
+        background: linear-gradient(135deg, #60a5fa, #2563eb);
+        box-shadow: 0 0 20px rgba(96, 165, 250, 0.4);
+      }
     </style>
   </head>
 
@@ -1039,8 +1125,6 @@
         <a href="../tltk.html" class="topbar-icon" title="Tài liệu tham khảo">
           <i class="fa-solid fa-file-lines"></i>
         </a>
-        
-            
       </div>
 
       <div class="brand" style="flex-grow: 1; text-align: center">
@@ -1069,7 +1153,6 @@
                 opacity: 0.5;
               "
             />
-            
 
             <a
               href="../hdsd.html"
@@ -2097,9 +2180,7 @@
           <ul>
             <li>
               <i class="fa-solid fa-envelope"></i>
-              <a href="mailto:support@vectoria.io.vn"
-                >support@vectoria.io.vn</a
-              >
+              <a href="mailto:support@vectoria.io.vn">support@vectoria.io.vn</a>
             </li>
           </ul>
         </div>
@@ -2183,54 +2264,59 @@
       function bootVectoriaMenu() {
         if (window.menuInitialized) return;
         window.menuInitialized = true;
-        
+
         console.log("Menu System: Booting...");
-        const topbarHeight = document.getElementById("topbar")?.offsetHeight || 60;
-        let isClicking = false; 
+        const topbarHeight =
+          document.getElementById("topbar")?.offsetHeight || 60;
+        let isClicking = false;
 
         // AUTO-FIX TẬN GỐC: ÉP CHỈA PHẢI, SAU ĐÓ TỰ XOAY XUỐNG NẾU ĐANG OPEN
-        document.querySelectorAll('.custom-nav .arrow-icon').forEach(icon => {
-            icon.classList.remove('fa-chevron-down');
-            icon.classList.add('fa-chevron-right');
-            
-            const parentLi = icon.closest(".has-dropdown");
-            if (parentLi && parentLi.classList.contains('open')) {
-                setTimeout(() => {
-                    icon.style.transform = 'rotate(90deg)';
-                }, 0);
-            } else {
-                icon.style.transform = 'rotate(0deg)';
-            }
+        document.querySelectorAll(".custom-nav .arrow-icon").forEach((icon) => {
+          icon.classList.remove("fa-chevron-down");
+          icon.classList.add("fa-chevron-right");
+
+          const parentLi = icon.closest(".has-dropdown");
+          if (parentLi && parentLi.classList.contains("open")) {
+            setTimeout(() => {
+              icon.style.transform = "rotate(90deg)";
+            }, 0);
+          } else {
+            icon.style.transform = "rotate(0deg)";
+          }
         });
 
         // 1. NÚT "MỤC LỤC" THU GỌN TRÊN MOBILE
-        const sidebar = document.querySelector('.sidebar');
-        const navTitle = document.querySelector('.sidebar h3.nav-title');
+        const sidebar = document.querySelector(".sidebar");
+        const navTitle = document.querySelector(".sidebar h3.nav-title");
         if (navTitle) {
-            const newNavTitle = navTitle.cloneNode(true);
-            navTitle.replaceWith(newNavTitle);
-            newNavTitle.addEventListener('click', () => {
-                sidebar.classList.toggle('mobile-open');
-                // Tui đã xóa sạch đoạn code đẻ thêm mũi tên ở đây! CSS sẽ tự lo việc xoay.
-            });
+          const newNavTitle = navTitle.cloneNode(true);
+          navTitle.replaceWith(newNavTitle);
+          newNavTitle.addEventListener("click", () => {
+            sidebar.classList.toggle("mobile-open");
+            // Tui đã xóa sạch đoạn code đẻ thêm mũi tên ở đây! CSS sẽ tự lo việc xoay.
+          });
         }
 
         // 2. MŨI TÊN ĐÓNG/MỞ CÁC MỤC BÊN TRONG
-        document.querySelectorAll('.custom-nav .toggle-btn').forEach((btn) => {
+        document.querySelectorAll(".custom-nav .toggle-btn").forEach((btn) => {
           btn.addEventListener("click", function (e) {
-            e.preventDefault(); 
-            e.stopPropagation(); 
+            e.preventDefault();
+            e.stopPropagation();
             const parentLi = this.closest(".has-dropdown");
             if (parentLi) {
               isClicking = true;
-              parentLi.classList.toggle("open"); 
-              
+              parentLi.classList.toggle("open");
+
               const icon = this.querySelector(".arrow-icon");
               if (icon) {
-                 icon.style.transform = parentLi.classList.contains('open') ? 'rotate(90deg)' : 'rotate(0deg)';
+                icon.style.transform = parentLi.classList.contains("open")
+                  ? "rotate(90deg)"
+                  : "rotate(0deg)";
               }
 
-              setTimeout(() => { isClicking = false; }, 800);
+              setTimeout(() => {
+                isClicking = false;
+              }, 800);
             }
           });
         });
@@ -2241,55 +2327,81 @@
           link.addEventListener("click", function (e) {
             const targetId = this.getAttribute("href");
             if (!targetId || targetId === "#") return;
-            
+
             // Cấm cuộn nếu bấm vào chữ tĩnh
-            if (this.classList.contains("sub-heading") || this.closest('.toggle-btn') || (this.hasAttribute('style') && this.getAttribute('style').includes('uppercase'))) {
-                e.preventDefault(); return;
+            if (
+              this.classList.contains("sub-heading") ||
+              this.closest(".toggle-btn") ||
+              (this.hasAttribute("style") &&
+                this.getAttribute("style").includes("uppercase"))
+            ) {
+              e.preventDefault();
+              return;
             }
 
             e.preventDefault();
             isClicking = true;
 
             // Xóa sạch Active cũ
-            document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
-            
-            // Bôi xanh thẻ a và cả cái Div chứa thẻ a 
+            document
+              .querySelectorAll(".custom-nav .active")
+              .forEach((el) => el.classList.remove("active"));
+
+            // Bôi xanh thẻ a và cả cái Div chứa thẻ a
             this.classList.add("active");
-            const parentDiv = this.closest('.nav-link') || this.closest('.sub-link') || this.closest('.sub-sub-link');
+            const parentDiv =
+              this.closest(".nav-link") ||
+              this.closest(".sub-link") ||
+              this.closest(".sub-sub-link");
             if (parentDiv) parentDiv.classList.add("active");
 
             // Tự động mở menu nếu nó đang bị đóng
             const parentDropdown = this.closest(".has-dropdown");
-            if(parentDropdown) {
-                 parentDropdown.classList.add("open");
-                 const icon = parentDropdown.querySelector('.arrow-icon');
-                 if(icon) icon.style.transform = 'rotate(90deg)';
+            if (parentDropdown) {
+              parentDropdown.classList.add("open");
+              const icon = parentDropdown.querySelector(".arrow-icon");
+              if (icon) icon.style.transform = "rotate(90deg)";
             }
 
             // Tự động đóng Menu Mục lục trên Mobile khi bấm bài
             if (window.innerWidth <= 960 && sidebar) {
-                sidebar.classList.remove('mobile-open');
-                // Đoạn này cũng đã xóa việc reset mũi tên rác!
+              sidebar.classList.remove("mobile-open");
+              // Đoạn này cũng đã xóa việc reset mũi tên rác!
             }
 
             // Đợi 150ms cho Mobile menu rút lên xong rồi mới cuộn trang
-            setTimeout(() => {
+            setTimeout(
+              () => {
                 const targetElement = document.querySelector(targetId);
                 if (targetElement) {
-                  const offset = window.innerWidth <= 960 ? 140 : topbarHeight + 20;
+                  const offset =
+                    window.innerWidth <= 960 ? 140 : topbarHeight + 20;
                   const executeScroll = () => {
-                    const y = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+                    const y =
+                      targetElement.getBoundingClientRect().top +
+                      window.pageYOffset -
+                      offset;
                     window.scrollTo({ top: y, behavior: "smooth" });
-                    setTimeout(() => { isClicking = false; }, 800); 
+                    setTimeout(() => {
+                      isClicking = false;
+                    }, 800);
                   };
-                  
-                  if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
-                     MathJax.startup.promise.then(() => requestAnimationFrame(executeScroll));
+
+                  if (
+                    window.MathJax &&
+                    MathJax.startup &&
+                    MathJax.startup.promise
+                  ) {
+                    MathJax.startup.promise.then(() =>
+                      requestAnimationFrame(executeScroll),
+                    );
                   } else {
-                     executeScroll();
+                    executeScroll();
                   }
                 }
-            }, window.innerWidth <= 960 ? 150 : 0);
+              },
+              window.innerWidth <= 960 ? 150 : 0,
+            );
           });
         });
 
@@ -2298,44 +2410,65 @@
         window.onscroll = () => {
           window.clearTimeout(isScrolling);
           isScrolling = setTimeout(() => {
-              if (isClicking) return;
+            if (isClicking) return;
 
-              const sections = document.querySelectorAll(".chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id], #bai-tap, .video-box[id]");
-              let currentId = "";
-              const offsetSpy = window.innerWidth <= 960 ? topbarHeight + 80 : topbarHeight + 50;
-              
-              sections.forEach((section) => {
-                if (window.pageYOffset >= section.getBoundingClientRect().top + window.pageYOffset - offsetSpy - 50) {
-                  currentId = section.getAttribute("id");
-                }
-              });
-              
-              if (currentId) {
-                menuLinks.forEach((link) => {
-                  if (link.getAttribute("href") === `#${currentId}`) {
-                    const inGroupLabel = link.classList.contains("sub-heading") || link.closest('.toggle-btn') || (link.hasAttribute('style') && link.getAttribute('style').includes('uppercase'));
-                    
-                    if (!inGroupLabel) {
-                      // Đánh dấu Active
-                      document.querySelectorAll('.custom-nav .active').forEach(el => el.classList.remove("active"));
-                      link.classList.add("active");
-                      const parentDiv = link.closest('.nav-link') || link.closest('.sub-link') || link.closest('.sub-sub-link');
-                      if (parentDiv) parentDiv.classList.add("active");
-                      
-                      // Desktop thì auto mở menu cha nếu đang khép
-                      if (window.innerWidth > 960) {
-                          let parentDropdown = link.closest(".has-dropdown");
-                          while (parentDropdown) {
-                            parentDropdown.classList.add("open");
-                            const icon = parentDropdown.querySelector('.toggle-btn .arrow-icon');
-                            if(icon) icon.style.transform = 'rotate(90deg)';
-                            parentDropdown = parentDropdown.parentElement.closest(".has-dropdown");
-                          }
+            const sections = document.querySelectorAll(
+              ".chapter-card, .pdf-h1[id], .pdf-h2[id], .pdf-h3[id], #bai-tap, .video-box[id]",
+            );
+            let currentId = "";
+            const offsetSpy =
+              window.innerWidth <= 960 ? topbarHeight + 80 : topbarHeight + 50;
+
+            sections.forEach((section) => {
+              if (
+                window.pageYOffset >=
+                section.getBoundingClientRect().top +
+                  window.pageYOffset -
+                  offsetSpy -
+                  50
+              ) {
+                currentId = section.getAttribute("id");
+              }
+            });
+
+            if (currentId) {
+              menuLinks.forEach((link) => {
+                if (link.getAttribute("href") === `#${currentId}`) {
+                  const inGroupLabel =
+                    link.classList.contains("sub-heading") ||
+                    link.closest(".toggle-btn") ||
+                    (link.hasAttribute("style") &&
+                      link.getAttribute("style").includes("uppercase"));
+
+                  if (!inGroupLabel) {
+                    // Đánh dấu Active
+                    document
+                      .querySelectorAll(".custom-nav .active")
+                      .forEach((el) => el.classList.remove("active"));
+                    link.classList.add("active");
+                    const parentDiv =
+                      link.closest(".nav-link") ||
+                      link.closest(".sub-link") ||
+                      link.closest(".sub-sub-link");
+                    if (parentDiv) parentDiv.classList.add("active");
+
+                    // Desktop thì auto mở menu cha nếu đang khép
+                    if (window.innerWidth > 960) {
+                      let parentDropdown = link.closest(".has-dropdown");
+                      while (parentDropdown) {
+                        parentDropdown.classList.add("open");
+                        const icon = parentDropdown.querySelector(
+                          ".toggle-btn .arrow-icon",
+                        );
+                        if (icon) icon.style.transform = "rotate(90deg)";
+                        parentDropdown =
+                          parentDropdown.parentElement.closest(".has-dropdown");
                       }
                     }
                   }
-                });
-              }
+                }
+              });
+            }
           }, 50);
         };
       }

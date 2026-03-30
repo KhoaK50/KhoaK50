@@ -1,6 +1,20 @@
 <!doctype html>
 <html lang="vi">
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-GRZR4Y6VFQ");
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kho Tàng Kiến Thức - Vectoria Knowledge</title>
@@ -383,7 +397,7 @@
         min-height: 60px;
         width: 100%;
         box-sizing: border-box;
-        padding: 0 20px; 
+        padding: 0 20px;
         position: relative; /* Trụ cột để neo cái bánh răng */
       }
 
@@ -397,23 +411,24 @@
         text-decoration: none;
         color: inherit;
         display: flex;
-        align-items: center; 
-        gap: 10px; 
+        align-items: center;
+        gap: 10px;
       }
 
       .logo-icon {
-        font-size: 1.8rem; 
+        font-size: 1.8rem;
       }
 
       /* MẶC ĐỊNH MÁY TÍNH: Xếp ngang thành 1 dòng */
       .logo-text-group {
         display: flex;
-        flex-direction: row; 
-        align-items: center; 
-        gap: 6px; 
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
       }
 
-      .logo-title, .logo-subtitle {
+      .logo-title,
+      .logo-subtitle {
         font-size: 1.8rem;
         font-weight: 800;
         letter-spacing: 0.5px;
@@ -431,17 +446,22 @@
       }
 
       /* ---------------- RESPONSIVE CHO ĐIỆN THOẠI & TABLET ---------------- */
-      
+
       /* Màn hình Tablet */
       @media (max-width: 768px) {
-        .logo-title, .logo-subtitle { font-size: 1.4rem; }
-        .logo-icon { font-size: 1.6rem; }
+        .logo-title,
+        .logo-subtitle {
+          font-size: 1.4rem;
+        }
+        .logo-icon {
+          font-size: 1.6rem;
+        }
       }
 
       /* ĐIỆN THOẠI (MOBILE): ÉP THÀNH 2 DÒNG XẾP CHỒNG VÀ DẠT SANG TRÁI */
       @media (max-width: 500px) {
         .header-flex {
-          padding: 0 15px; 
+          padding: 0 15px;
           min-height: 55px;
           justify-content: space-between; /* [Mobile] Hủy căn giữa, dàn 2 đối tượng ra 2 mép Trái/Phải */
         }
@@ -457,30 +477,30 @@
         }
 
         .logo-link {
-          gap: 12px; 
+          gap: 12px;
         }
 
         .logo-text-group {
           flex-direction: column; /* Chuyển hàng ngang thành hàng dọc */
           align-items: flex-start; /* Canh lề trái cho 2 dòng chữ */
           justify-content: center;
-          gap: 0px; 
+          gap: 0px;
         }
 
-        .logo-icon { 
-          font-size: 2.2rem; 
+        .logo-icon {
+          font-size: 2.2rem;
         }
 
         .logo-title {
-          font-size: 1.4rem; 
+          font-size: 1.4rem;
           line-height: 1.1;
-          text-transform: uppercase; 
+          text-transform: uppercase;
         }
 
         .logo-subtitle {
-          font-size: 0.75rem; 
+          font-size: 0.75rem;
           line-height: 1.1;
-          letter-spacing: 2px; 
+          letter-spacing: 2px;
           text-transform: uppercase;
           opacity: 0.8;
         }
@@ -501,7 +521,6 @@
 
     <header class="main-header safe-zone">
       <div class="container header-flex">
-        
         <div class="logo">
           <a href="index.html" class="logo-link">
             <i class="fa-solid fa-shapes logo-icon"></i>
@@ -513,10 +532,10 @@
         </div>
 
         <div class="settings-container header-settings">
-           <button id="btnSettings" class="icon-btn" title="Cài đặt giao diện">
+          <button id="btnSettings" class="icon-btn" title="Cài đặt giao diện">
             <i class="fa-solid fa-gear"></i>
           </button>
-          
+
           <div class="settings-dropdown" id="settingsDropdown">
             <div class="setting-item">
               <span><i class="fa-solid fa-moon"></i> Chế độ tối</span>
@@ -526,18 +545,39 @@
               </label>
             </div>
 
-            
-
-            <a href="hdsd.html" class="setting-item" style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
-              <span><i class="fa-solid fa-book-open-reader"></i> Hướng dẫn sử dụng</span>
-              <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted)"></i>
+            <a
+              href="hdsd.html"
+              class="setting-item"
+              style="
+                text-decoration: none;
+                color: var(--text-main) !important;
+                display: flex !important;
+              "
+            >
+              <span
+                ><i class="fa-solid fa-book-open-reader"></i> Hướng dẫn sử
+                dụng</span
+              >
+              <i
+                class="fa-solid fa-chevron-right"
+                style="font-size: 0.8em; color: var(--muted)"
+              ></i>
             </a>
 
-            
-            
-            <a href="contact.html" class="setting-item link-item" style="text-decoration: none; color: var(--text-main) !important; display: flex !important;">
+            <a
+              href="contact.html"
+              class="setting-item link-item"
+              style="
+                text-decoration: none;
+                color: var(--text-main) !important;
+                display: flex !important;
+              "
+            >
               <span><i class="fa-solid fa-envelope"></i> Liên hệ / Góp ý</span>
-              <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted)"></i>
+              <i
+                class="fa-solid fa-chevron-right"
+                style="font-size: 0.8em; color: var(--muted)"
+              ></i>
             </a>
           </div>
         </div>
@@ -794,9 +834,7 @@
           <ul>
             <li>
               <i class="fa-solid fa-envelope"></i>
-              <a href="mailto:support@vectoria.io.vn"
-                >support@vectoria.io.vn</a
-              >
+              <a href="mailto:support@vectoria.io.vn">support@vectoria.io.vn</a>
             </li>
           </ul>
         </div>

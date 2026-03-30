@@ -1,6 +1,20 @@
 <!doctype html>
 <html lang="vi">
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-GRZR4Y6VFQ");
+    </script>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
@@ -353,7 +367,6 @@
         align-items: center;
         gap: 15px;
         flex: 1;
-        
       }
 
       #topbar .brand {
@@ -784,13 +797,20 @@
           padding: 15px;
         }
 
-        .sidebar { 
-          width: 100% !important; height: auto !important; max-height: none !important; 
-          z-index: 990 !important; position: sticky !important; top: var(--topbar-h) !important; 
-          border-radius: 0 !important; border: none !important; border-bottom: 1px solid var(--border) !important; 
-          background-color: var(--bg-body) !important; 
+        .sidebar {
+          width: 100% !important;
+          height: auto !important;
+          max-height: none !important;
+          z-index: 990 !important;
+          position: sticky !important;
+          top: var(--topbar-h) !important;
+          border-radius: 0 !important;
+          border: none !important;
+          border-bottom: 1px solid var(--border) !important;
+          background-color: var(--bg-body) !important;
           padding: 10px 15px 10px 5px !important; /* XÓA KHOẢNG TRỐNG ĐỈNH ĐỂ DÍNH SÁT TOPBAR */
-          margin: 0 !important; overflow-y: visible !important; 
+          margin: 0 !important;
+          overflow-y: visible !important;
         }
 
         .sidebar h3 {
@@ -814,13 +834,13 @@
            Độ rộng tối đa là 100% độ rộng của khung chứa nó.
            Nó sẽ tự teo nhỏ lại nếu khung chứa nó bị bóp nhỏ, 
            nhưng sẽ không bao giờ phình to hơn kích thước thật của ảnh. */
-        max-width: 100%; 
+        max-width: 100%;
         height: auto; /* Giữ nguyên tỷ lệ ảnh, không bị méo */
-        
+
         display: block; /* Ép về khối để margin-auto hoạt động */
         margin-left: auto; /* Căn giữa */
         margin-right: auto; /* Căn giữa */
-        
+
         /* Mấy cái lề viền bóng đổ cũ của ông giữ nguyên */
         border-radius: 8px;
         border: 1px solid var(--border);
@@ -828,7 +848,10 @@
         margin-top: 20px;
         margin-bottom: 20px;
         background-color: #fff;
-        transition: filter 0.3s ease, background-color 0.3s ease, border-color 0.3s;
+        transition:
+          filter 0.3s ease,
+          background-color 0.3s ease,
+          border-color 0.3s;
       }
 
       /* MA THUẬT DARK MODE CHO ẢNH (BÊ TỪ DINH_THUC.HTML SANG) */
@@ -964,7 +987,9 @@
 
               <li class="nav-item has-dropdown">
                 <div class="sub-link toggle-btn">
-                  <a href="#hd-cac-cong-cu">4. Các công cụ liên quan đến chủ đề Không gian vector</a>
+                  <a href="#hd-cac-cong-cu"
+                    >4. Các công cụ liên quan đến chủ đề Không gian vector</a
+                  >
                   <i class="fa-solid fa-chevron-down arrow-icon"></i>
                 </div>
                 <ul class="sub-menu">
@@ -974,7 +999,9 @@
                     >
                   </li>
                   <li class="nav-item">
-                    <a href="#hd-4-2" class="sub-link">4.2. Bài toán về Hạng của hệ vector</a>
+                    <a href="#hd-4-2" class="sub-link"
+                      >4.2. Bài toán về Hạng của hệ vector</a
+                    >
                   </li>
                   <li class="nav-item">
                     <a href="#hd-4-3" class="sub-link"
@@ -996,10 +1023,14 @@
                 </div>
                 <ul class="sub-menu">
                   <li class="nav-item">
-                    <a href="#hd-5-1" class="sub-link">5.1. Phép cộng 2 vector</a>
+                    <a href="#hd-5-1" class="sub-link"
+                      >5.1. Phép cộng 2 vector</a
+                    >
                   </li>
                   <li class="nav-item">
-                    <a href="#hd-5-2" class="sub-link">5.2. Phép kéo dãn vector</a>
+                    <a href="#hd-5-2" class="sub-link"
+                      >5.2. Phép kéo dãn vector</a
+                    >
                   </li>
                   <li class="nav-item">
                     <a href="#hd-5-3" class="sub-link"
@@ -1012,16 +1043,24 @@
                     >
                   </li>
                   <li class="nav-item">
-                    <a href="#hd-5-5" class="sub-link">5.5. Phép tìm tích vô hướng của 2 vector</a>
+                    <a href="#hd-5-5" class="sub-link"
+                      >5.5. Phép tìm tích vô hướng của 2 vector</a
+                    >
                   </li>
                   <li class="nav-item">
-                    <a href="#hd-5-6" class="sub-link">5.6. Phép tìm tích có hướng của 2 vector</a>
+                    <a href="#hd-5-6" class="sub-link"
+                      >5.6. Phép tìm tích có hướng của 2 vector</a
+                    >
                   </li>
                   <li class="nav-item">
-                    <a href="#hd-5-7" class="sub-link">5.7. Phép tính tìm độ dài của vector</a>
+                    <a href="#hd-5-7" class="sub-link"
+                      >5.7. Phép tính tìm độ dài của vector</a
+                    >
                   </li>
                   <li class="nav-item">
-                    <a href="#hd-5-8" class="sub-link">5.8. Phép tìm góc giữa 2 vector</a>
+                    <a href="#hd-5-8" class="sub-link"
+                      >5.8. Phép tìm góc giữa 2 vector</a
+                    >
                   </li>
                 </ul>
               </li>
@@ -1047,7 +1086,9 @@
                 >
               </li>
               <li class="nav-item">
-                <a href="#hd-kt-3" class="sub-link">3. Giao diện chung của các trang kiến thức</a>
+                <a href="#hd-kt-3" class="sub-link"
+                  >3. Giao diện chung của các trang kiến thức</a
+                >
               </li>
             </ul>
           </li>
@@ -1521,7 +1562,6 @@
               src="assets/images/hdsd/hdsd-14.png"
               alt="Lưu ý khi chọn hệ cơ sở"
               class="guide-img"
-              
             />
           </div>
 
@@ -1964,9 +2004,7 @@
           <ul>
             <li>
               <i class="fa-solid fa-envelope"></i>
-              <a href="mailto:support@vectoria.io.vn"
-                >support@vectoria.io.vn</a
-              >
+              <a href="mailto:support@vectoria.io.vn">support@vectoria.io.vn</a>
             </li>
           </ul>
         </div>
@@ -1992,7 +2030,9 @@
         const themeToggle = document.getElementById("themeToggle");
         const sunIcon = document.getElementById("sunIcon");
         const moonIcon = document.getElementById("moonIcon");
-        const transitionIcons = document.querySelector(".theme-transition-icons");
+        const transitionIcons = document.querySelector(
+          ".theme-transition-icons",
+        );
 
         if (themeToggle) {
           themeToggle.checked = document.body.classList.contains("dark");
@@ -2005,7 +2045,10 @@
           });
 
           document.addEventListener("click", (e) => {
-            if (!settingsDropdown.contains(e.target) && !settingsBtn.contains(e.target)) {
+            if (
+              !settingsDropdown.contains(e.target) &&
+              !settingsBtn.contains(e.target)
+            ) {
               settingsDropdown.classList.remove("show");
             }
           });
@@ -2053,14 +2096,19 @@
 
         if (window.vectoriaObserver) window.vectoriaObserver.disconnect();
 
-        const topbarHeight = document.getElementById("topbar")?.offsetHeight || 60;
+        const topbarHeight =
+          document.getElementById("topbar")?.offsetHeight || 60;
         let isClicking = false;
         let clickTimeout;
 
         // ĐỒNG BỘ MŨI TÊN HTML THÀNH CHỈA PHẢI
-        document.querySelectorAll('.custom-nav .arrow-icon').forEach(icon => {
-            icon.classList.remove('fa-chevron-down', 'fa-chevron-left', 'fa-chevron-up');
-            icon.classList.add('fa-chevron-right');
+        document.querySelectorAll(".custom-nav .arrow-icon").forEach((icon) => {
+          icon.classList.remove(
+            "fa-chevron-down",
+            "fa-chevron-left",
+            "fa-chevron-up",
+          );
+          icon.classList.add("fa-chevron-right");
         });
 
         // NÚT MỤC LỤC MOBILE
@@ -2081,8 +2129,8 @@
 
             // NẾU LÀ MỤC CÓ MŨI TÊN -> CHỈ XỔ MENU, CẤM SCROLL
             if (isToggle) {
-              e.preventDefault(); 
-              e.stopPropagation(); 
+              e.preventDefault();
+              e.stopPropagation();
               const parentLi = this.closest(".has-dropdown");
               if (parentLi) {
                 parentLi.classList.toggle("open");
@@ -2096,13 +2144,16 @@
               isClicking = true;
               clearTimeout(clickTimeout);
 
-              document.querySelectorAll(".custom-nav .active").forEach((el) => el.classList.remove("active"));
+              document
+                .querySelectorAll(".custom-nav .active")
+                .forEach((el) => el.classList.remove("active"));
               this.classList.add("active");
 
               let parentDropdown = this.closest(".has-dropdown");
               while (parentDropdown) {
                 parentDropdown.classList.add("open");
-                parentDropdown = parentDropdown.parentElement?.closest(".has-dropdown");
+                parentDropdown =
+                  parentDropdown.parentElement?.closest(".has-dropdown");
               }
 
               if (window.innerWidth <= 960 && sidebar) {
@@ -2111,8 +2162,12 @@
 
               const targetElement = document.querySelector(targetId);
               if (targetElement) {
-                const offset = window.innerWidth <= 960 ? 140 : topbarHeight + 20;
-                const y = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+                const offset =
+                  window.innerWidth <= 960 ? 140 : topbarHeight + 20;
+                const y =
+                  targetElement.getBoundingClientRect().top +
+                  window.pageYOffset -
+                  offset;
                 window.scrollTo({ top: y, behavior: "smooth" });
               }
 
@@ -2124,7 +2179,9 @@
         });
 
         // CAMERA AN NINH BẮT TỌA ĐỘ KHI CUỘN CHUỘT
-        const sections = document.querySelectorAll(".hd-h1[id], .hd-h2[id], .hd-h3[id]");
+        const sections = document.querySelectorAll(
+          ".hd-h1[id], .hd-h2[id], .hd-h3[id]",
+        );
         const menuLinks = document.querySelectorAll('.custom-nav a[href^="#"]');
 
         const observerOptions = {
@@ -2148,14 +2205,17 @@
               if (link.getAttribute("href") === `#${activeId}`) {
                 const isToggleBtn = link.closest(".toggle-btn");
 
-                document.querySelectorAll(".custom-nav .active").forEach((el) => el.classList.remove("active"));
+                document
+                  .querySelectorAll(".custom-nav .active")
+                  .forEach((el) => el.classList.remove("active"));
                 link.classList.add("active");
 
                 if (window.innerWidth > 960) {
                   let parentDropdown = link.closest(".has-dropdown");
                   while (parentDropdown) {
                     parentDropdown.classList.add("open");
-                    parentDropdown = parentDropdown.parentElement?.closest(".has-dropdown");
+                    parentDropdown =
+                      parentDropdown.parentElement?.closest(".has-dropdown");
                   }
                 }
               }
