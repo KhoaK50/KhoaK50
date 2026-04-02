@@ -32,10 +32,10 @@ def init_feedback_db():
         print(f">> [Database Error] {e}")
 
 
-def send_email_via_lark(to_email, user_name, user_message):
+# --- HÀM 1: GỬI MAIL AUTO-REPLY CHO KHÁCH ---
+def send_auto_reply(user_email, user_name, user_message):
     try:
         api_key = os.getenv("RESEND_API_KEY")
-
         html_content = f"""
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
             <div style="background-color: #3a78ff; padding: 20px; text-align: center;">
@@ -56,31 +56,59 @@ def send_email_via_lark(to_email, user_name, user_message):
             </div>
         </div>
         """
-
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
         }
-
-        # Cái tên hiển thị xịn sò Sếp muốn đây:
         payload = {
             "from": "Vectoria Support <support@vectoria.io.vn>",
-            "to": [to_email],
+            "to": [user_email],
             "subject": "Cảm ơn bạn đã liên hệ với Vectoria!",
             "html": html_content,
         }
-
-        # Gọi Resend API bắn mail đi
-        response = requests.post(
-            "https://api.resend.com/emails", headers=headers, json=payload
-        )
-        print(f">> [Mail API] Trạng thái: {response.status_code} - {response.text}")
+        response = requests.post("https://api.resend.com/emails", headers=headers, json=payload)
+        print(f">> [Mail API - User] Trạng thái: {response.status_code}")
 
     except Exception as e:
-        print(f">> [Mail API Error] {e}")
+        print(f">> [Mail API - User Error] {e}")
 
 
-# --- 2. HÀM GỬI SANG GOOGLE (QUAN TRỌNG) ---
+# --- HÀM 2: GỬI MAIL THÔNG BÁO VỀ CHO ADMIN (LARK MAIL) ---
+def send_notification_to_admin(user_email, user_name, user_message):
+    try:
+        api_key = os.getenv("RESEND_API_KEY")
+        # Gửi đến email Lark của Admin
+        admin_email = "support@vectoria.io.vn" 
+        
+        html_content = f"""
+        <h2>CÓ TIN NHẮN LIÊN HỆ MỚI!</h2>
+        <p><strong>Từ:</strong> {user_name} ({user_email})</p>
+        <p><strong>Nội dung:</strong></p>
+        <p>{user_message}</p>
+        """
+        
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            # Từ hệ thống gửi (Nên để chữ System để phân biệt)
+            "from": "Vectoria System <support@vectoria.io.vn>", 
+            "to": [admin_email],
+            # QUAN TRỌNG: Gán Reply-To là mail khách để lúc Sếp bấm trả lời nó tự nhận mail khách
+            "reply_to": user_email, 
+            "subject": f"[Hỗ trợ mới] Tin nhắn từ {user_name}",
+            "html": html_content,
+        }
+        
+        response = requests.post("https://api.resend.com/emails", headers=headers, json=payload)
+        print(f">> [Mail API - Admin] Trạng thái: {response.status_code}")
+
+    except Exception as e:
+        print(f">> [Mail API - Admin Error] {e}")
+
+
+# --- HÀM GỬI SANG GOOGLE (QUAN TRỌNG) ---
 def send_to_google_direct(payload):
     try:
         print(f">> [Google] Đang gửi dữ liệu...")
@@ -117,7 +145,6 @@ def handle_contact():
             except Exception as e:
                 print(f">> [File Error] {e}")
 
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         full_msg = str(message) + (f"\n[📎 {file_name_str}]" if file_name_str else "")
 
         # C. Chuẩn bị gói tin gửi Google
@@ -126,21 +153,26 @@ def handle_contact():
             "email": user_email,
             "message": full_msg,
             "file": file_payload,
-            "send_email": False,  # Cờ báo hiệu cho Google Script biết là hãy gửi mail đi
+            "send_email": False,  
         }
 
         # D. Gửi sang Google
         send_to_google_direct(google_json)
 
-        # E. Gửi mail Auto-reply qua Resend API (Chạy ẩn thả ga)
+        # E. XỬ LÝ GỬI 2 EMAIL ĐỒNG THỜI (BẰNG THREADING CHO NHANH)
         if user_email and "@" in user_email:
+            # Bắn mail cho Khách
             threading.Thread(
-                target=send_email_via_lark, args=(user_email, user_name, message)
+                target=send_auto_reply, args=(user_email, user_name, message)
+            ).start()
+            
+            # Bắn mail về cho Admin (Lark)
+            threading.Thread(
+                target=send_notification_to_admin, args=(user_email, user_name, full_msg)
             ).start()
 
         return jsonify({"status": "success", "message": "Đã gửi thành công"}), 200
 
-    # Chèn vào ngay dưới dòng: return jsonify({"status": "success"...
     except Exception as e:
         print(f">> [CRITICAL ERROR] {e}")
         return jsonify({"error": str(e)}), 500
