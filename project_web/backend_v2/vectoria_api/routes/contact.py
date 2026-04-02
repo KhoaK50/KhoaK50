@@ -73,18 +73,30 @@ def send_auto_reply(user_email, user_name, user_message):
         print(f">> [Mail API - User Error] {e}")
 
 
-# --- HÀM 2: GỬI MAIL THÔNG BÁO VỀ CHO ADMIN (LARK MAIL) ---
+# --- HÀM 2: GỬI MAIL THÔNG BÁO VỀ CHO ADMIN (LARK MAIL) ĐÃ LÀM ĐẸP ---
 def send_notification_to_admin(user_email, user_name, user_message):
     try:
         api_key = os.getenv("RESEND_API_KEY")
-        # Gửi đến email Lark của Admin
         admin_email = "support@vectoria.io.vn" 
         
+        # Đã bưng nguyên cái template xịn xò sang đây và sửa chữ lại cho hợp với Admin
         html_content = f"""
-        <h2>CÓ TIN NHẮN LIÊN HỆ MỚI!</h2>
-        <p><strong>Từ:</strong> {user_name} ({user_email})</p>
-        <p><strong>Nội dung:</strong></p>
-        <p>{user_message}</p>
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #3a78ff; padding: 20px; text-align: center;">
+                <h2 style="color: #ffffff; margin: 0;">TIN NHẮN LIÊN HỆ MỚI</h2>
+            </div>
+            <div style="padding: 20px;">
+                <p>Hệ thống vừa ghi nhận một tin nhắn mới từ khách hàng.</p>
+                <p><strong>Người gửi:</strong> {user_name} (<a href="mailto:{user_email}" style="color: #3a78ff;">{user_email}</a>)</p>
+                <p><strong>Nội dung:</strong></p>
+                <blockquote style="background: #f9f9f9; padding: 10px; border-left: 4px solid #3a78ff; margin: 15px 0;">{user_message}</blockquote>
+                <br>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                <p style="font-size: 0.9em; color: #888;">
+                    Vui lòng bấm <strong>Trả lời (Reply)</strong> email này để phản hồi trực tiếp cho khách hàng.
+                </p>
+            </div>
+        </div>
         """
         
         headers = {
@@ -92,7 +104,6 @@ def send_notification_to_admin(user_email, user_name, user_message):
             "Content-Type": "application/json",
         }
         payload = {
-            # Đã đổi chữ "support" thành chữ "system" ở trong dấu ngoặc < >
             "from": "Vectoria System <system@vectoria.io.vn>", 
             "to": [admin_email],
             "reply_to": user_email, 
