@@ -92,10 +92,9 @@ def send_notification_to_admin(user_email, user_name, user_message):
             "Content-Type": "application/json",
         }
         payload = {
-            # Từ hệ thống gửi (Nên để chữ System để phân biệt)
-            "from": "Vectoria System <support@vectoria.io.vn>", 
+            # Đã đổi chữ "support" thành chữ "system" ở trong dấu ngoặc < >
+            "from": "Vectoria System <system@vectoria.io.vn>", 
             "to": [admin_email],
-            # QUAN TRỌNG: Gán Reply-To là mail khách để lúc Sếp bấm trả lời nó tự nhận mail khách
             "reply_to": user_email, 
             "subject": f"[Hỗ trợ mới] Tin nhắn từ {user_name}",
             "html": html_content,
