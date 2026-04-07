@@ -109,21 +109,16 @@ def send_notification_to_admin(user_email, user_name, user_message):
         api_key = os.getenv("RESEND_API_KEY")
         admin_email = "support@vectoria.io.vn" 
         
-        # Đã bưng nguyên cái template xịn xò sang đây và sửa chữ lại cho hợp với Admin
+        # Lấy thời gian hiện tại
+        current_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+        # HTML tối giản, rành mạch, không màu mè
         html_content = f"""
-        <div style="font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #1e293b;">
-            <p style="font-size: 14px; color: #64748b; margin-bottom: 8px;">
-                Vào ngày {datetime.now().strftime('%d/%m/%Y')}, <strong>{user_name}</strong> đã gửi nội dung:
-            </p>
-            <blockquote style="margin: 0; padding: 12px 16px; border-left: 4px solid #3a78ff; background-color: #f8fafc; border-radius: 0 8px 8px 0; font-style: italic;">
-                {user_message}
-            </blockquote>
-            
-            <br>
-            <hr style="border: 0; border-top: 1px dashed #e2e8f0; margin: 15px 0;">
-            <p style="font-size: 12px; color: #94a3b8; margin: 0;">
-                Email liên hệ: {user_email}
-            </p>
+        <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.5;">
+            <p><strong>Người gửi:</strong> {user_name} &lt;{user_email}&gt;</p>
+            <p><strong>Thời gian:</strong> {current_time}</p>
+            <p><strong>Nội dung:</strong></p>
+            <div style="background-color: #f9f9f9; border-left: 3px solid #ccc; padding: 10px 15px; white-space: pre-wrap;">{user_message}</div>
         </div>
         """
         
