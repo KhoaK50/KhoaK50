@@ -2,7 +2,7 @@ import sqlite3
 import os
 import requests
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from flask import Blueprint, request, jsonify
 import base64
 
@@ -109,8 +109,9 @@ def send_notification_to_admin(user_email, user_name, user_message):
         api_key = os.getenv("RESEND_API_KEY")
         admin_email = "support@vectoria.io.vn" 
         
-        # Lấy thời gian hiện tại
-        current_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        # Lấy giờ máy chủ (UTC) cộng thêm 7 tiếng để ra giờ Việt Nam
+        vn_time = datetime.now(timezone.utc) + timedelta(hours=7)
+        current_time = vn_time.strftime("%d/%m/%Y %H:%M:%S")
 
         # HTML tối giản, rành mạch, không màu mè
         html_content = f"""
