@@ -37,22 +37,52 @@ def send_auto_reply(user_email, user_name, user_message):
     try:
         api_key = os.getenv("RESEND_API_KEY")
         html_content = f"""
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
-            <div style="background-color: #3a78ff; padding: 20px; text-align: center;">
-                <h2 style="color: #ffffff; margin: 0;">Vectoria Support</h2>
-            </div>
-            <div style="padding: 20px;">
-                <p>Xin chào <strong>{user_name}</strong>,</p>
-                <p>Cảm ơn bạn đã liên hệ với chúng tôi. Hệ thống đã ghi nhận tin nhắn của bạn thành công.</p>
-                <p><strong>Nội dung bạn gửi:</strong></p>
-                <blockquote style="background: #f9f9f9; padding: 10px; border-left: 4px solid #3a78ff;">{user_message}</blockquote>
-                <p>Đội ngũ hỗ trợ sẽ xem xét và phản hồi trong thời gian sớm nhất.</p>
-                <br>
-                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-                <p style="font-size: 0.9em; color: #888;">
-                    Trân trọng,<br>
-                    <strong>Đội ngũ Vectoria</strong>
-                </p>
+        <div style="background-color: #f8fafc; 
+                    background-image: linear-gradient(rgba(58, 120, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(58, 120, 255, 0.05) 1px, transparent 1px); 
+                    background-size: 20px 20px; 
+                    padding: 50px 20px; 
+                    font-family: 'Inter', Arial, sans-serif; 
+                    color: #1e293b;">
+            
+            <div style="max-width: 500px; 
+                        margin: 0 auto; 
+                        background-color: #ffffff; 
+                        border-radius: 16px; 
+                        overflow: hidden; 
+                        box-shadow: 0 10px 40px -10px rgba(58, 120, 255, 0.15); 
+                        border: 1px solid #e2e8f0;">
+                
+                <div style="height: 6px; background: linear-gradient(90deg, #3a78ff, #60a5fa);"></div>
+                
+                <div style="padding: 35px;">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <h2 style="color: #3a78ff; margin: 0; font-size: 22px; font-weight: 700;">Vectoria Support</h2>
+                    </div>
+
+                    <p style="font-size: 15px; margin-bottom: 10px;">Xin chào <strong>{user_name}</strong>,</p>
+                    <p style="font-size: 15px; line-height: 1.5;">Cảm ơn bạn đã liên hệ với chúng tôi. Hệ thống đã ghi nhận tin nhắn của bạn thành công.</p>
+                    
+                    <p style="font-size: 14px; font-weight: 600; margin-top: 25px; margin-bottom: 8px;">Nội dung bạn gửi:</p>
+                    
+                    <div style="background-color: #f8fafc; 
+                                border-left: 4px solid #3a78ff; 
+                                padding: 15px; 
+                                border-radius: 0 8px 8px 0; 
+                                font-size: 14px; 
+                                color: #64748b; 
+                                font-style: italic;">
+                        "{user_message}"
+                    </div>
+
+                    <p style="font-size: 15px; margin-top: 25px;">Đội ngũ hỗ trợ sẽ xem xét và phản hồi trong thời gian sớm nhất.</p>
+
+                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                    
+                    <p style="font-size: 13px; color: #64748b; margin: 0; line-height: 1.5;">
+                        Trân trọng,<br>
+                        <strong>Đội ngũ Vectoria</strong>
+                    </p>
+                </div>
             </div>
         </div>
         """
@@ -81,21 +111,19 @@ def send_notification_to_admin(user_email, user_name, user_message):
         
         # Đã bưng nguyên cái template xịn xò sang đây và sửa chữ lại cho hợp với Admin
         html_content = f"""
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
-            <div style="background-color: #3a78ff; padding: 20px; text-align: center;">
-                <h2 style="color: #ffffff; margin: 0;">TIN NHẮN LIÊN HỆ MỚI</h2>
-            </div>
-            <div style="padding: 20px;">
-                <p>Hệ thống vừa ghi nhận một tin nhắn mới từ khách hàng.</p>
-                <p><strong>Người gửi:</strong> {user_name} (<a href="mailto:{user_email}" style="color: #3a78ff;">{user_email}</a>)</p>
-                <p><strong>Nội dung:</strong></p>
-                <blockquote style="background: #f9f9f9; padding: 10px; border-left: 4px solid #3a78ff; margin: 15px 0;">{user_message}</blockquote>
-                <br>
-                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-                <p style="font-size: 0.9em; color: #888;">
-                    Vui lòng bấm <strong>Trả lời (Reply)</strong> email này để phản hồi trực tiếp cho khách hàng.
-                </p>
-            </div>
+        <div style="font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #1e293b;">
+            <p style="font-size: 14px; color: #64748b; margin-bottom: 8px;">
+                Vào ngày {datetime.now().strftime('%d/%m/%Y')}, <strong>{user_name}</strong> đã gửi nội dung:
+            </p>
+            <blockquote style="margin: 0; padding: 12px 16px; border-left: 4px solid #3a78ff; background-color: #f8fafc; border-radius: 0 8px 8px 0; font-style: italic;">
+                {user_message}
+            </blockquote>
+            
+            <br>
+            <hr style="border: 0; border-top: 1px dashed #e2e8f0; margin: 15px 0;">
+            <p style="font-size: 12px; color: #94a3b8; margin: 0;">
+                Email liên hệ: {user_email}
+            </p>
         </div>
         """
         
