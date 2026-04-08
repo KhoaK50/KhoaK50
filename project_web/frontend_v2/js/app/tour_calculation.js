@@ -220,42 +220,64 @@ document.addEventListener("DOMContentLoaded", () => {
       if (isTourRunning) window.dispatchEvent(new Event("resize"));
     });
   }
-  // Lắng nghe lúc bấm nút bật Tour
-  const btnTour = document.getElementById("btn-tour-khoitao");
-  if (btnTour) {
-    btnTour.addEventListener("click", () => (isTourRunning = true), {
-      capture: true,
-    });
-  }
+  // Lắng nghe lúc bấm nút bật Tour - Backup NGAY LẬP TỨC ở đây
+const btnTour = document.getElementById("btn-tour-khoitao");
+if (btnTour) {
+  btnTour.addEventListener("click", (e) => {
+    // Chỉ backup nếu tour chưa chạy
+    if (!isTourRunning) {
+      backupUserState(); 
+      isTourRunning = true;
+    }
+  }, { capture: true });
+}
 });
+
+/* =========================================================
+   HỆ THỐNG BACKUP & RESTORE CHUẨN - FIX LỖI LIST RỖNG
+   ========================================================= */
 
 function backupUserState() {
   const mf = document.getElementById("vectorInput");
+  // 1. Lưu cái chữ đang gõ dở
   userPreTourState.input = mf ? mf.value : "";
+  
+  // 2. [QUAN TRỌNG] Lưu danh sách vector từ mảng App.vectorList thật
   userPreTourState.vectors = [];
-  const list = document.getElementById("vectorList");
-  if (list) {
-    const items = list.querySelectorAll('math-field, input[type="text"]');
-    items.forEach((item) => {
-      if (item.id !== "vectorInput" && item.value)
-        userPreTourState.vectors.push(item.value);
-    });
+  if (window.App && App.vectorList) {
+    // Chỉ lấy mảng tọa độ [x, y...] của từng vector
+    userPreTourState.vectors = App.vectorList.map(item => [...item.vec]);
   }
+  console.log(">> Đã sao lưu trạng thái:", userPreTourState);
 }
 
 function restoreUserState() {
-  const btnClear = document.getElementById("btnClearAll");
-  if (btnClear) btnClear.click();
+  console.log(">> Đang phục hồi trạng thái cho sếp...");
+  
+  // 1. Xóa sạch đống rác mà Tour Guide bày ra
+  if (typeof App.clearAllVectors === 'function') {
+    App.clearAllVectors();
+  } else {
+    App.vectorList = [];
+    if (App.redrawAll) App.redrawAll({ frame: true });
+  }
+
   const mf = document.getElementById("vectorInput");
   const btnDraw = document.getElementById("btnDraw");
+  
   if (mf && btnDraw) {
-    userPreTourState.vectors.forEach((vec) => {
-      mf.value = vec;
-      mf.dispatchEvent(new Event("input", { bubbles: true }));
-      btnDraw.click();
-    });
-    mf.value = userPreTourState.input;
-    mf.dispatchEvent(new Event("input", { bubbles: true }));
+    // 2. Vẽ lại những gì sếp đã có từ mảng backup
+    if (userPreTourState.vectors && userPreTourState.vectors.length > 0) {
+      userPreTourState.vectors.forEach((vArray) => {
+        // Biến mảng [1, 2] thành chuỗi "[1, 2]" để nhập vào ô
+        const vecStr = "[" + vArray.join(", ") + "]";
+        quickSyncMathLive(mf, vecStr);
+        btnDraw.click(); // Kích hoạt hàm thêm vector của sếp
+      });
+    }
+
+    // 3. Trả lại cái chữ sếp đang gõ dở
+    quickSyncMathLive(mf, userPreTourState.input || "");
   }
 }
 
@@ -372,10 +394,10 @@ const khoiTaoVectorSteps = [
       side: "bottom",
     },
     onHighlighted: () => {
-      if (!isTourRunning) {
-        backupUserState();
-        isTourRunning = true;
-      }
+      
+        
+      isTourRunning = true;
+      
       syncStepState("step-nhap-1");
       clearTourTimeouts();
       lockTour("Đang nhập liệu...");
