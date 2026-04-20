@@ -323,7 +323,7 @@
     ctx2d.fillRect(0, 0, w, h);
 
     const targetPx = 70;
-    const rawStep = targetPx / Math.max(1e-9, px);
+    const rawStep = targetPx / Math.max(1e-30, px);
     const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
     const res = rawStep / mag;
     let stepUnit =
@@ -382,21 +382,31 @@
     ctx2d.font = "12px sans-serif";
     ctx2d.textAlign = "center";
     ctx2d.textBaseline = "top";
+    const formatLabel2D = (v) => {
+      const abs = Math.abs(v);
+      if (abs >= 1e6 || (abs > 0 && abs < 1e-4)) {
+        return Number(v).toExponential(2).replace(/\.00e/, "e").replace(/\+/, "");
+      }
+      return parseFloat(v.toFixed(12)).toString();
+    };
     for (let k = startKx; k <= endKx; k++) {
       const unitVal = k * stepUnit;
-      if (Math.abs(unitVal) < 1e-9) continue;
+      // [FIX] Đổi 1e-9 thành 1e-30 để không bị bỏ qua khi zoom sâu
+      if (Math.abs(unitVal) < 1e-30) continue; 
       const x = cx + k * tickPx;
       if (Math.abs(x - cx) > 15)
-        ctx2d.fillText(parseFloat(unitVal.toPrecision(6)), x, cy + 6);
+        ctx2d.fillText(formatLabel2D(unitVal), x, cy + 6); // [FIX] Gọi hàm format mới
     }
+
     ctx2d.textAlign = "right";
     ctx2d.textBaseline = "middle";
     for (let k = startKy; k <= endKy; k++) {
       const unitVal = k * stepUnit;
-      if (Math.abs(unitVal) < 1e-9) continue;
+      // [FIX] Đổi 1e-9 thành 1e-30
+      if (Math.abs(unitVal) < 1e-30) continue; 
       const y = cy - k * tickPx;
       if (Math.abs(y - cy) > 15)
-        ctx2d.fillText(parseFloat(unitVal.toPrecision(6)), cx - 8, y);
+        ctx2d.fillText(formatLabel2D(unitVal), cx - 8, y); // [FIX] Gọi hàm format mới
     }
     ctx2d.textAlign = "right";
     ctx2d.textBaseline = "top";

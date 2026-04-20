@@ -462,7 +462,7 @@
           Vec3D._ZOOM_MAX,
           Math.max(Vec3D._ZOOM_MIN, Vec3D.S3D.zoomTarget),
         );
-        Vec3D.S3D.unitsPerWorld += (target - Vec3D.S3D.unitsPerWorld) * 0.15;
+        Vec3D.S3D.unitsPerWorld = target;
         const diff = Math.abs(Vec3D.S3D.unitsPerWorld - target);
         const eps = Math.max(1e-9, Math.abs(target) * 1e-9);
         if (diff <= eps) {
@@ -561,7 +561,9 @@
     const p = Math.pow(10, Math.floor(Math.log10(raw)));
     const s = raw / p;
     const m = s <= 1 ? 1 : s <= 2 ? 2 : s <= 5 ? 5 : 10;
-    return Math.max(1, m * p);
+    
+    // [FIX] Bỏ Math.max(1, ...) để cho phép vạch chia là số thập phân (vd: 0.1, 0.01...)
+    return m * p; 
   }
 
   function formatTick(v, step) {
@@ -618,13 +620,13 @@
         const u0 = g.userData.angleMeta.createdU || 1;
         const s = u / u0;
         g.scale.set(s, s, s);
-        g.userData.angleMeta.createdU = u;
+        
       }
       Vec3D._lastUForVectors = u;
     }
 
     const targetPx = 80;
-    const step = niceStep(targetPx / Math.max(1e-9, pxPerMath));
+    const step = niceStep(targetPx / Math.max(1e-30, pxPerMath));
 
     const off = Vec3D.S3D.offset;
     const key = `${Lw}|${step}|${u}|${App.theme}|${Math.round(dist * 1000)}|${off.x.toFixed(4)},${off.y.toFixed(4)},${off.z.toFixed(4)}`;
@@ -766,8 +768,7 @@
       const s = g.scale?.x || 1;
       const padPx = (gapPx || 0) + (labelPx || 0) * 0.5;
       const insetW = padPx / pxPerWorld;
-      const minInside = r * (Vec3D.ANGLE_LABEL_MIN_RATIO || 0.38);
-      const distLocal = Math.max(minInside, r - insetW / s);
+      const distLocal = r + outsetW / s;
       lbl.position.copy(midDir.clone().multiplyScalar(distLocal));
     })();
   };
@@ -1075,12 +1076,22 @@
   Vec3D.refreshAngleTheme = function () {
     const g = App.currentAngleVisual3D;
     if (!g) return;
-    const color = new THREE.Color(
-      App.getCSS?.("--angle-fill") || "rgba(255,200,0,0.3)",
-    );
+
+    // 1. Phục hồi màu sắc cho mặt quét và đường viền cung tròn
     const mesh = g.children.find((c) => c.isMesh);
     if (mesh && mesh.material) {
-      mesh.material.color = color;
+      mesh.material.color = new THREE.Color(0xffaa00);
+      mesh.material.opacity = 0.3;
+    }
+    const line = g.children.find((c) => c.isLine);
+    if (line && line.material) {
+      line.material.color = new THREE.Color(0xffaa00);
+    }
+
+    // 2. Chuyển màu chữ Trắng/Đen theo Theme
+    const lbl = g.children.find((c) => c.isCSS2DObject);
+    if (lbl && lbl.element) {
+      lbl.element.style.color = (window.App && App.theme === "dark") ? "#ffffff" : "#000000";
     }
   };
 
@@ -1093,16 +1104,19 @@
     Vec3D.clearAngle(); // Xóa cái cũ trước
 
     const u = Vec3D.S3D.unitsPerWorld || 1;
-    const A = new THREE.Vector3(...toVec3(v1)).normalize();
-    const B = new THREE.Vector3(...toVec3(v2)).normalize();
+    const rawA = new THREE.Vector3(...toVec3(v1));
+    const rawB = new THREE.Vector3(...toVec3(v2));
+    const A = rawA.clone().normalize();
+    const B = rawB.clone().normalize();
 
     // Nếu 2 vector song song hoặc trùng nhau -> không vẽ
     if (A.lengthSq() < 1e-9 || B.lengthSq() < 1e-9) return;
     const angleVal = A.angleTo(B);
     if (Math.abs(angleVal) < 1e-5) return;
 
-    // Tính bán kính hiển thị (tùy chỉnh)
-    const displayRadius = 4 * u;
+    // [FIX] Bán kính: Lấy 60% chiều dài của vector ngắn nhất để không bị lố
+    const minLen = Math.min(rawA.length(), rawB.length());
+    const displayRadius = Math.max(0.5, minLen * 0.6) * u;
 
     // Tạo geometry cung tròn
     const curve = new THREE.EllipseCurve(
@@ -1168,31 +1182,30 @@
     group.rotateOnAxis(new THREE.Vector3(0, 0, 1), sign * angleOffset);
 
     // Label hiển thị số độ
-    const degTxt =
-      (deg !== undefined ? deg : (angleVal * 180) / Math.PI).toFixed(1) + "°";
+    const degTxt = (deg !== undefined ? deg : (angleVal * 180) / Math.PI).toFixed(1) + "°";
     const div = document.createElement("div");
     div.className = "angle-label";
     div.textContent = degTxt;
-    div.style.color = "#ffaa00";
+    
+    // [FIX] Đổi màu chữ Trắng/Đen theo Theme
+    div.style.color = (window.App && App.theme === "dark") ? "#ffffff" : "#000000";
+    div.style.fontWeight = "bold"; // In đậm cho dễ nhìn
+    
     const labelObj = new THREE.CSS2DObject(div);
 
-    // Vị trí label: Nằm giữa cung
+    // [FIX] Dùng tọa độ Local, KHÔNG applyQuaternion để chữ không bị văng ra vũ trụ
     const midAngle = angleVal / 2;
-    const midDir = new THREE.Vector3(
-      Math.cos(midAngle),
-      Math.sin(midAngle),
-      0,
-    ).applyQuaternion(group.quaternion);
-    labelObj.position.copy(midDir.multiplyScalar(displayRadius * 1.1));
-
+    const midDirLocal = new THREE.Vector3(Math.cos(midAngle), Math.sin(midAngle), 0);
+    
+    labelObj.position.copy(midDirLocal.clone().multiplyScalar(displayRadius + 0.6 * u));
     group.add(labelObj);
 
-    // Metadata để scale theo zoom
+    // Metadata để scale theo zoom (Truyền đúng midDirLocal vào)
     group.userData.angleMeta = {
       src: { a: toVec3(v1), b: toVec3(v2) },
       createdU: u,
       r: displayRadius,
-      midDir: midDir.clone().normalize(),
+      midDir: midDirLocal.clone().normalize(),
     };
 
     Vec3D._angleLayer.add(group);

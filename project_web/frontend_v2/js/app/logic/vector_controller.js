@@ -558,7 +558,7 @@
   // --- MAIN FUNCTION: CHẠY TÍNH TOÁN ---
   App.runCalc = async function (addToList) {
     if (App.handleEmptyListAction()) return;
-
+    
     const op = document.getElementById("opSelect").value;
     const id1 = Number(document.getElementById("v1Select").value);
     const id2 = Number(document.getElementById("v2Select").value);
@@ -975,7 +975,7 @@
         const v2 = document.getElementById("v2Select");
         if (v1) v1.value = "";
         if (v2) v2.value = "";
-
+        if (typeof App.clearAngleOverlay === "function") App.clearAngleOverlay();
         if (App.vectorList) {
           App.vectorList.forEach((v) => (v.visible = false));
         }
