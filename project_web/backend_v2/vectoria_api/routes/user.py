@@ -261,14 +261,65 @@ def login():
             ip_address = request.remote_addr
             device_info = request.headers.get('User-Agent', 'Unknown Device')
 
-            # Gửi link đổi mật khẩu
-            # Đã cập nhật đường link trỏ thẳng vào Backend để trông chuyên nghiệp hơn và không lộ đường dẫn Frontend
-            API_BASE = os.getenv("API_BASE", "http://127.0.0.1:5000")
-            reset_link = f"{API_BASE}/api/reset?token={reset_token}"
-            email_content = f"Chào {display_name},\nBạn đã yêu cầu đặt lại mật khẩu. Vui lòng nhấn vào đường dẫn sau để tạo mật khẩu mới (Hiệu lực 1 tiếng): {reset_link}"
-            send_auth_email(email, "Đặt lại mật khẩu Vectoria", email_content)
+            # Ghi lịch sử đăng nhập
+            c.execute(
+                "INSERT INTO loginhistory (user_id, ip_address, device_info) VALUES (%s, %s, %s)",
+                (user_id, ip_address, device_info)
+            )
+            conn.commit()
 
-            return jsonify({"status": "success", "message": "Hệ thống đã gửi liên kết đặt lại mật khẩu vào email của bạn."}), 200
+            # Trả về token đăng nhập
+            fake_token = f"vec_token_{user_id}"
+            return jsonify({
+                "status": "success",
+                "token": fake_token,
+                "display_name": user[1],
+                "email": user[2]
+            }), 200
+        else:
+            return jsonify({"status": "error", "message": "Email hoặc mật khẩu không đúng!"}), 401
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
+    finally:
+        if 'conn' in locals(): conn.close()
+
+# --- API QUÊN MẬT KHẨU ---
+@user_bp.route("/api/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"status": "error", "message": "Vui lòng nhập Email!"}), 400
+
+    try:
+        conn = psycopg2.connect(DB_URL)
+        c = conn.cursor()
+
+        c.execute("SELECT id, display_name FROM users WHERE email = %s", (email,))
+        user = c.fetchone()
+
+        if not user:
+            return jsonify({"status": "error", "message": "Email không tồn tại trong hệ thống!"}), 404
+
+        user_id, display_name = user
+        reset_token = secrets.token_hex(20)
+        
+        # Lưu token vào database
+        c.execute(
+            "INSERT INTO passwordresets (user_id, token, expires_at) VALUES (%s, %s, CURRENT_TIMESTAMP + INTERVAL '1 hour')",
+            (user_id, reset_token)
+        )
+        conn.commit()
+
+        # Gửi link đổi mật khẩu
+        # Đã cập nhật đường link trỏ thẳng vào Backend để trông chuyên nghiệp hơn và không lộ đường dẫn Frontend
+        API_BASE = os.getenv("API_BASE", "http://127.0.0.1:5000")
+        reset_link = f"{API_BASE}/api/reset?token={reset_token}"
+        email_content = f"Chào {display_name},\nBạn đã yêu cầu đặt lại mật khẩu. Vui lòng nhấn vào đường dẫn sau để tạo mật khẩu mới (Hiệu lực 1 tiếng): {reset_link}"
+        send_auth_email(email, "Đặt lại mật khẩu Vectoria", email_content)
+
+        return jsonify({"status": "success", "message": "Hệ thống đã gửi liên kết đặt lại mật khẩu vào email của bạn."}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
     finally:
