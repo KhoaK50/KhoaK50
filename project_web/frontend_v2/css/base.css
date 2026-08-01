@@ -60,7 +60,7 @@ body {
 /* =================== RESPONSIVE =================== */
 @media (max-width: 420px) {
   :root {
-    --topbar-h: 52px;
+    --topbar-h: 60px;
   }
 }
 

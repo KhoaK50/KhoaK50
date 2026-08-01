@@ -126,7 +126,7 @@
   }
 
   // --- CÁCH 1: LẬP HỆ PHƯƠNG TRÌNH ---
-  App.TasksGen.Coord.buildMethod1 = function (basisVecs, targetVec) {
+  App.TasksGen.Coord.buildMethod1 = function (basisVecs, targetVec, basisLatex, targetLatex) {
     const n = basisVecs[0].length;
     const m = basisVecs.length;
 
@@ -135,10 +135,10 @@
     // 1. Đề bài
     html += `<div class="sol-text">Trong không gian $\\mathbb{R}^{${n}}$, cho cơ sở $B = \\{u_1, ..., u_${m}\\}$ với:</div>`;
     const defs = basisVecs
-      .map((v, i) => `u_{${i + 1}} = ${vecToColLatex(v)}`)
+      .map((v, i) => `u_{${i + 1}} = ${vecToColLatex(basisLatex ? basisLatex[i] : v)}`)
       .join(",\\; ");
     html += `<div class="sol-math-block">\\[ ${defs} \\]</div>`;
-    html += `<div class="sol-text">Tìm tọa độ của vector $\\mathbf{x} = ${vecToColLatex(targetVec)}$ đối với cơ sở $B$.</div>`;
+    html += `<div class="sol-text">Tìm tọa độ của vector $\\mathbf{x} = ${vecToColLatex(targetLatex || targetVec)}$ đối với cơ sở $B$.</div>`;
 
     // 2. Phương trình vector
     html += `<div class="sol-bold">Bước 1: Lập phương trình vector</div>`;
@@ -201,7 +201,7 @@
   };
 
   // --- CÁCH 2: MA TRẬN CHUYỂN CƠ SỞ ---
-  App.TasksGen.Coord.buildMethod2 = function (basisVecs, targetVec) {
+  App.TasksGen.Coord.buildMethod2 = function (basisVecs, targetVec, basisLatex, targetLatex) {
     const n = basisVecs[0].length;
     const m = basisVecs.length;
     let html = `<div class="sol-step-container">`;
@@ -212,7 +212,7 @@
 
     let matP = [];
     for (let i = 0; i < n; i++) {
-      let row = basisVecs.map((v) => v[i]);
+      let row = (basisLatex || basisVecs).map((v) => v[i]);
       matP.push(row);
     }
     html += `<div class="sol-math-block">\\[ P = ${matToLatex(matP)} \\]</div>`;

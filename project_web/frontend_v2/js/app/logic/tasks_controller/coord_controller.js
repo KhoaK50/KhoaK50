@@ -66,6 +66,16 @@
           // Không return, vẫn cho tính tiếp để người dùng thấy kết quả (vô nghiệm/vô số nghiệm) nếu muốn
         }
 
+        function getLatex(obj) {
+            if (obj.latex) {
+                let s = obj.latex.replace(/^\\left\[|^\[|\\right\]|\]$/g, "");
+                return s.split(",").map(x => x.trim());
+            }
+            return obj.vec;
+        }
+        const basisLatex = basisObjs.map(getLatex);
+        const targetLatex = getLatex(targetObj);
+
         // C. SINH LỜI GIẢI (GỌI GENERATOR)
         const basisVecs = basisObjs.map((v) => v.vec);
         const targetVec = targetObj.vec;
@@ -78,8 +88,8 @@
         }
 
         // Sinh HTML cho 2 cách
-        const content1 = App.TasksGen.Coord.buildMethod1(basisVecs, targetVec);
-        const content2 = App.TasksGen.Coord.buildMethod2(basisVecs, targetVec);
+        const content1 = App.TasksGen.Coord.buildMethod1(basisVecs, targetVec, basisLatex, targetLatex);
+        const content2 = App.TasksGen.Coord.buildMethod2(basisVecs, targetVec, basisLatex, targetLatex);
 
         cachedConfig = {
           title: "Tọa độ vector theo cơ sở",

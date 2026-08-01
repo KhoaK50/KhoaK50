@@ -87,9 +87,7 @@
   const PULSE_SPEED_3D = 0.005;
   const PULSE_SCALE_ADD = 0.3;
 
-  // =========================================================
-  // INITIALIZATION
-  // =========================================================
+  // [TÌM VÀ DÁN ĐÈ VÀO viewer3D.js - THAY THẾ TOÀN BỘ HÀM Vec3D.init3D]
   Vec3D.init3D = function () {
     if (Vec3D._scene) return;
 
@@ -101,14 +99,9 @@
     const rect = threeLayer.getBoundingClientRect();
 
     // 1. WebGL Renderer
-    Vec3D._renderer = new THREE.WebGLRenderer({
-      antialias: !isMobile,
-      alpha: true,
-    });
+    Vec3D._renderer = new THREE.WebGLRenderer({ antialias: !isMobile, alpha: true });
     Vec3D._renderer.setSize(rect.width || 760, rect.height || 760);
-    Vec3D._renderer.setPixelRatio(
-      Math.min(window.devicePixelRatio || 1, GEOM_QUALITY.maxPixel),
-    );
+    Vec3D._renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, GEOM_QUALITY.maxPixel));
     threeLayer.appendChild(Vec3D._renderer.domElement);
 
     Vec3D._renderer.domElement.style.position = "absolute";
@@ -120,31 +113,23 @@
     Vec3D._labelRenderer.setSize(rect.width || 760, rect.height || 760);
     Vec3D._labelRenderer.domElement.style.position = "absolute";
     Vec3D._labelRenderer.domElement.style.inset = "0";
-    Vec3D._labelRenderer.domElement.style.pointerEvents = "none";
+    
+    // [FIX QUAN TRỌNG 1]: Trả lại "none" để DOM chữ không cản trở Radar và Chuột của WebGL
+    Vec3D._labelRenderer.domElement.style.pointerEvents = "none"; 
     Vec3D._labelRenderer.domElement.style.overflow = "visible";
     Vec3D._labelRenderer.domElement.style.zIndex = "1";
     threeLayer.appendChild(Vec3D._labelRenderer.domElement);
 
     // 3. Scene & Camera
     Vec3D._scene = new THREE.Scene();
-    Vec3D._scene.background = new THREE.Color(
-      App.getCSS?.("--bg") || "#ffffff",
-    );
+    Vec3D._scene.background = new THREE.Color(App.getCSS?.("--bg") || "#ffffff");
 
-    Vec3D._camera = new THREE.PerspectiveCamera(
-      Vec3D.DEFAULT_FOV,
-      Math.max(1e-6, (rect.width || 760) / (rect.height || 760)),
-      0.1,
-      1e12,
-    );
+    Vec3D._camera = new THREE.PerspectiveCamera(Vec3D.DEFAULT_FOV, Math.max(1e-6, (rect.width || 760) / (rect.height || 760)), 0.1, 1e12);
     Vec3D._camera.position.set(10, 10, 10);
     Vec3D._camera.up.set(0, 0, 1);
 
     // 4. Controls
-    Vec3D._controls = new THREE.OrbitControls(
-      Vec3D._camera,
-      Vec3D._renderer.domElement,
-    );
+    Vec3D._controls = new THREE.OrbitControls(Vec3D._camera, Vec3D._renderer.domElement);
     Vec3D.S3D.unitsPerWorld = 1;
     Vec3D.S3D.zoomTarget = 1;
     Vec3D.S3D.offset.set(0, 0, 0);
@@ -153,59 +138,302 @@
     Vec3D._controls.enableDamping = true;
     Vec3D._controls.dampingFactor = 0.07;
     Vec3D._controls.rotateSpeed = 0.6;
+    
+    // [FIX QUAN TRỌNG 2]: Trả lại quyền Kéo (Pan) Đồ thị cho Chuột Phải
+    Vec3D._controls.enablePan = true; 
+    Vec3D._controls.enableZoom = false; // Vẫn tắt Zoom mặc định để xài Math Zoom của hệ thống
 
-    // [CẤM KÉO & CẤM ZOOM CAMERA]
-    Vec3D._controls.enablePan = false;
-    Vec3D._controls.enableZoom = false;
-
-    // Cấu hình chuột: Chỉ cho phép xoay
     Vec3D._controls.mouseButtons = {
       LEFT: THREE.MOUSE.ROTATE,
-      MIDDLE: THREE.MOUSE.ROTATE,
-      RIGHT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.PAN, // Kéo rê đồ thị bằng chuột phải
     };
 
-    // Cấu hình cảm ứng: Cấm kéo 2 ngón (TWO), chỉ cho 1 ngón xoay
     Vec3D._controls.touches = {
       ONE: THREE.TOUCH.ROTATE,
-      TWO: THREE.TOUCH.ROTATE,
+      TWO: THREE.TOUCH.PAN, // Kéo đồ thị bằng 2 ngón
     };
 
     // ==========================================
-    // CƠ CHẾ MATH ZOOM (LĂN CHUỘT + CHỤM 2 NGÓN)
+    // CƠ CHẾ MATH ZOOM VÀ TƯƠNG TÁC VECTOR (RAYCASTER)
     // ==========================================
+    const renderDom = Vec3D._renderer.domElement;
 
-    // 1. Hàm tính toán Math Zoom chung
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let dragPlane = new THREE.Plane();
+    let dragOffset = new THREE.Vector3();
+    let constraintStart = new THREE.Vector3(); // Lưu vị trí bắt đầu kéo
+    
+    // Biến lưu trạng thái khóa trục hiện tại ('x', 'y', 'z' hoặc null)
+    Vec3D.S3D.axisConstraint = null; 
+
+    // Gắn sự kiện cho 3 nút UI Khóa trục
+    const axisPanel = document.getElementById("axisControls");
+    if (axisPanel) {
+        const btns = axisPanel.querySelectorAll(".axis-btn");
+        btns.forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                btns.forEach(b => b.classList.remove("active"));
+                if (Vec3D.S3D.axisConstraint === btn.dataset.axis) {
+                    Vec3D.S3D.axisConstraint = null; // Bấm lại thì tắt
+                } else {
+                    btn.classList.add("active");
+                    Vec3D.S3D.axisConstraint = btn.dataset.axis; // Bật khóa
+                }
+            });
+        });
+    }
+
     const applyMathZoom = (dir, factor) => {
-      if (
-        (Vec3D.S3D.zoomTarget >= Vec3D._ZOOM_MAX && dir > 0) ||
-        (Vec3D.S3D.zoomTarget <= Vec3D._ZOOM_MIN && dir < 0)
-      ) {
-        Vec3D.S3D.hasPivot = false;
-        return;
+      if ((Vec3D.S3D.zoomTarget >= Vec3D._ZOOM_MAX && dir > 0) || (Vec3D.S3D.zoomTarget <= Vec3D._ZOOM_MIN && dir < 0)) {
+        Vec3D.S3D.hasPivot = false; return;
       }
       Vec3D.S3D.pivotMath.set(0, 0, 0);
       Vec3D.S3D.pivotWorld.copy(Vec3D.S3D.offset);
       Vec3D.S3D.hasPivot = true;
       const next = Vec3D.S3D.zoomTarget * factor;
-      Vec3D.S3D.zoomTarget = Math.min(
-        Vec3D._ZOOM_MAX,
-        Math.max(Vec3D._ZOOM_MIN, next),
-      );
+      Vec3D.S3D.zoomTarget = Math.min(Vec3D._ZOOM_MAX, Math.max(Vec3D._ZOOM_MIN, next));
     };
 
-    // 2. Xử lý Lăn Chuột (PC)
     const wheelHandler = (e) => {
-      e.preventDefault();
-      e.stopImmediatePropagation();
+      e.preventDefault(); e.stopImmediatePropagation();
       const dir = e.deltaY < 0 ? +1 : -1;
       const factor = dir > 0 ? 1.12 : 1 / 1.12;
       applyMathZoom(dir, factor);
+
+      if (Vec3D.S3D.draggedVectorId && !Vec3D.S3D.axisConstraint) {
+          const group = Vec3D.threeVecMap.get(Vec3D.S3D.draggedVectorId);
+          if (group) {
+              const tipWorld = group.userData.tipLocal.clone().multiplyScalar(factor).add(Vec3D.S3D.offset);
+              const camDir = new THREE.Vector3();
+              Vec3D._camera.getWorldDirection(camDir);
+              dragPlane.setFromNormalAndCoplanarPoint(camDir.multiplyScalar(-1), tipWorld);
+              pointerMoveHandler(e); 
+          }
+      }
+    };
+    renderDom.addEventListener("wheel", wheelHandler, { passive: false });
+
+    // POINTER DOWN: Tóm Vector
+    const pointerDownHandler = (e) => {
+      
+      if (!e.touches && e.button !== 0) return; 
+      
+      const rect = renderDom.getBoundingClientRect();
+      const cx = e.touches ? e.touches[0].clientX : e.clientX;
+      const cy = e.touches ? e.touches[0].clientY : e.clientY;
+      mouse.x = ((cx - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((cy - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, Vec3D._camera);
+
+      if (Vec3D._vectorsGroup) {
+          const heads = [];
+          Vec3D._vectorsGroup.traverse(child => {
+              if (child.isMesh && child.geometry && child.geometry.type === "ConeGeometry" && child.visible) {
+                  heads.push(child);
+              }
+          });
+
+          raycaster.params.Line.threshold = 0.5;
+          const intersects = raycaster.intersectObjects(heads, false);
+          
+          if (intersects.length > 0) {
+              let group = intersects[0].object.parent;
+              let hitId = null;
+              for (let [id, grp] of Vec3D.threeVecMap.entries()) {
+                  if (grp === group) { hitId = id; break; }
+              }
+
+              if (hitId && !(window.App && App.isAnimating)) {
+                  Vec3D.S3D.draggedVectorId = hitId;
+                  Vec3D._controls.enabled = false; 
+
+                  const tipWorld = group.userData.tipLocal.clone().add(Vec3D.S3D.offset);
+                  constraintStart.copy(tipWorld); // Lưu gốc để trượt
+
+                  const camDir = new THREE.Vector3();
+                  Vec3D._camera.getWorldDirection(camDir);
+
+                  // NẾU ĐANG KHÓA TRỤC: Tạo mặt phẳng chứa trục đó và hướng về Camera
+                  if (Vec3D.S3D.axisConstraint) {
+                      const constraintLine = new THREE.Vector3();
+                      if (Vec3D.S3D.axisConstraint === 'x') constraintLine.x = 1;
+                      if (Vec3D.S3D.axisConstraint === 'y') constraintLine.y = 1;
+                      if (Vec3D.S3D.axisConstraint === 'z') constraintLine.z = 1;
+
+                      // Tính pháp tuyến mặt phẳng: Normal = (Axis) Cross (Camera Cross Axis)
+                      const planeNormal = new THREE.Vector3().crossVectors(
+                          constraintLine, 
+                          new THREE.Vector3().crossVectors(camDir, constraintLine)
+                      ).normalize();
+                      
+                      // Fix lỗi nếu nhìn thẳng góc trục
+                      if (planeNormal.lengthSq() < 0.001) planeNormal.copy(camDir).multiplyScalar(-1);
+                      dragPlane.setFromNormalAndCoplanarPoint(planeNormal, tipWorld);
+                  } else {
+                      // KÉO TỰ DO: Dùng mặt phẳng song song Camera như cũ
+                      dragPlane.setFromNormalAndCoplanarPoint(camDir.multiplyScalar(-1), tipWorld);
+                  }
+
+                  const planeIntersect = new THREE.Vector3();
+                  raycaster.ray.intersectPlane(dragPlane, planeIntersect);
+                  if (planeIntersect) dragOffset.copy(planeIntersect).sub(tipWorld);
+
+                  e.preventDefault(); e.stopImmediatePropagation();
+                  renderDom.setPointerCapture(e.pointerId || (e.touches ? e.touches[0].identifier : 0));
+                  renderDom.style.cursor = Vec3D.S3D.axisConstraint ? "ns-resize" : "crosshair";
+              }
+          }
+      }
+    };
+    
+    // POINTER MOVE: Trượt Vector
+    const pointerMoveHandler = (e) => {
+      if (!Vec3D.S3D.draggedVectorId) return; 
+      
+      e.preventDefault(); e.stopImmediatePropagation();
+      const vItem = App.vectorList.find(v => v.id === Vec3D.S3D.draggedVectorId);
+      if (!vItem) return;
+
+      const rect = renderDom.getBoundingClientRect();
+      const cx = e.touches ? e.touches[0].clientX : e.clientX;
+      const cy = e.touches ? e.touches[0].clientY : e.clientY;
+      mouse.x = ((cx - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((cy - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, Vec3D._camera);
+      const u = Math.max(1e-12, Vec3D.S3D.unitsPerWorld);
+      
+      // [FIX NAM CHÂM]: Chỉ dùng Ctrl, lấy thông số vạch lưới hiện tại để hít
+      const isSnap = e.ctrlKey; 
+      const step = Vec3D.S3D.stepUnit || 1; 
+
+      const intersect = new THREE.Vector3();
+      raycaster.ray.intersectPlane(dragPlane, intersect);
+      
+      if (intersect) {
+          let newPosWorld;
+          
+          if (Vec3D.S3D.axisConstraint) {
+              const constraintLine = new THREE.Vector3();
+              if (Vec3D.S3D.axisConstraint === 'x') constraintLine.x = 1;
+              if (Vec3D.S3D.axisConstraint === 'y') constraintLine.y = 1;
+              if (Vec3D.S3D.axisConstraint === 'z') constraintLine.z = 1;
+
+              const diff = new THREE.Vector3().subVectors(intersect, constraintStart);
+              const projLen = diff.dot(constraintLine); 
+              newPosWorld = constraintStart.clone().add(constraintLine.multiplyScalar(projLen));
+          } else {
+              newPosWorld = intersect.clone().sub(dragOffset);
+          }
+
+          newPosWorld.sub(Vec3D.S3D.offset); 
+          
+          let nx = newPosWorld.x / u;
+          let ny = newPosWorld.y / u;
+          let nz = newPosWorld.z / u;
+
+          // LÀM TRÒN THEO CHUẨN VẠCH LƯỚI (VD: Lưới 0.5 thì 1.1 -> 1.0, 1.4 -> 1.5)
+          if (isSnap) { 
+              nx = Math.round(nx / step) * step; 
+              ny = Math.round(ny / step) * step; 
+              nz = Math.round(nz / step) * step; 
+          }
+          
+          if (Vec3D.S3D.axisConstraint === 'x') vItem.vec[0] = nx;
+          else if (Vec3D.S3D.axisConstraint === 'y') vItem.vec[1] = ny;
+          else if (Vec3D.S3D.axisConstraint === 'z') vItem.vec[2] = nz;
+          else { vItem.vec[0] = nx; vItem.vec[1] = ny; vItem.vec[2] = nz; }
+      }
+      // [LIVE SYNC] ÉP ĐỒNG BỘ PHÉP CHIẾU BÊN 3D (ZERO LAG)
+      if (App.currentProjVisual) {
+          const v1 = App.vectorList.find(v => v.id === App.currentProjVisual.v1Id);
+          const res = App.vectorList.find(v => v.id === App.currentProjVisual.resId);
+          const v2 = App.vectorList.find(v => v.id === App.currentProjVisual.v2Id);
+          
+          if (v1 && res && v2 && (vItem.id === v1.id || vItem.id === v2.id)) {
+              let dot = 0, magSq = 0;
+              const dim = Math.max(v1.vec.length, v2.vec.length);
+              for (let i = 0; i < dim; i++) {
+                  const a = v1.vec[i] || 0;
+                  const b = v2.vec[i] || 0;
+                  dot += a * b;
+                  magSq += b * b;
+              }
+              if (magSq > 1e-9) {
+                  const scalar = dot / magSq;
+                  res.vec = v2.vec.map(b => b * scalar);
+              } else {
+                  res.vec = v2.vec.map(() => 0);
+              }
+              // Lưu ý: Không cần gọi hàm phụ, vì file 3D đã có sync3D loop quét liên tục!
+          }
+      }
+      const placeholder = "[" + vItem.vec.map((val, i) => {
+          if (!Vec3D.S3D.axisConstraint && i < 3) return "...";
+          if (Vec3D.S3D.axisConstraint) {
+              if (Vec3D.S3D.axisConstraint === 'x' && i === 0) return "...";
+              if (Vec3D.S3D.axisConstraint === 'y' && i === 1) return "...";
+              if (Vec3D.S3D.axisConstraint === 'z' && i === 2) return "...";
+          }
+          return Number(val).toFixed(2).replace(/\.?0+$/, "");
+      }).join(", ") + "]";
+      App.coordOut?.(placeholder);
+
+      const group = Vec3D.threeVecMap.get(Vec3D.S3D.draggedVectorId);
+      if (group) {
+          const lbl = group.children.find(ch => ch.isCSS2DObject);
+          if (lbl) lbl.visible = false;
+      }
+      Vec3D.draw3DAllVectors(); 
     };
 
-    // 3. Xử lý Chụm 2 ngón tay (Mobile)
+    // POINTER UP: Thả chuột chốt số
+    const pointerUpHandler = (e) => {
+      if (Vec3D.S3D.draggedVectorId) {
+          // 1. Chốt số Vector vật thể
+          const draggedVec = App.vectorList.find(v => v.id === Vec3D.S3D.draggedVectorId);
+          if (draggedVec) {
+              draggedVec.vec = draggedVec.vec.map(val => Number(Number(val).toFixed(2)));
+              draggedVec.latex = `[${draggedVec.vec.join(", ")}]`;
+          }
+
+          Vec3D.S3D.draggedVectorId = null;
+          Vec3D._controls.enabled = true; // Mở lại OrbitControls
+          renderDom.style.cursor = "default";
+          if (renderDom.releasePointerCapture && e.pointerId) renderDom.releasePointerCapture(e.pointerId);
+
+          // 2. Chốt số Vector bóng (Hình chiếu)
+          if (App.currentProjVisual) {
+              const res = App.vectorList.find(v => v.id === App.currentProjVisual.resId);
+              const mf = document.querySelector("#calcSteps math-field");
+              if (res) {
+                  res.vec = res.vec.map(val => Number(Number(val).toFixed(2))); 
+                  res.latex = `[${res.vec.join(", ")}]`;
+                  if (mf) {
+                      mf.value = `\\left( ${res.vec.join(",\\; ")} \\right)`;
+                  }
+              }
+          }
+
+          if (App.renderVectorList) App.renderVectorList();
+          if (App.refreshCalcVectorOptions) App.refreshCalcVectorOptions();
+          
+          Vec3D.draw3DAllVectors();
+      }
+    };
+
+    renderDom.addEventListener("pointerdown", pointerDownHandler);
+    renderDom.addEventListener("pointermove", pointerMoveHandler);
+    renderDom.addEventListener("pointerup", pointerUpHandler);
+    renderDom.addEventListener("pointercancel", pointerUpHandler);
+
+    // Kéo 2 ngón Mobile (Zoom & Pan)
     let lastTouchDistance = null;
-    const touchStartHandler = (e) => {
+    renderDom.addEventListener("touchstart", (e) => {
       if (e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -213,58 +441,37 @@
       } else {
         lastTouchDistance = null;
       }
-    };
+    }, { passive: false });
 
-    const touchMoveHandler = (e) => {
+    renderDom.addEventListener("touchmove", (e) => {
       if (e.touches.length === 2 && lastTouchDistance !== null) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-
+        e.preventDefault(); e.stopImmediatePropagation();
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         const currentDist = Math.hypot(dx, dy);
         const distDiff = currentDist - lastTouchDistance;
 
-        // Ngưỡng nhiễu: Phải di chuyển > 1px mới bắt đầu tính Zoom
         if (Math.abs(distDiff) > 1) {
-          const dir = distDiff > 0 ? 1 : -1;
-          // Độ nhạy Zoom trên Mobile: 1.05 (nhẹ hơn chuột để mượt hơn)
-          const factor = dir > 0 ? 1.05 : 1 / 1.05;
-          applyMathZoom(dir, factor);
+          const factor = distDiff > 0 ? 1.05 : 1 / 1.05;
+          applyMathZoom(distDiff > 0 ? 1 : -1, factor);
           lastTouchDistance = currentDist;
+          if (Vec3D.S3D.draggedVectorId) {
+             const group = Vec3D.threeVecMap.get(Vec3D.S3D.draggedVectorId);
+             if (group && !isDepthDrag) {
+                 const tipWorld = group.userData.tipLocal.clone().multiplyScalar(factor).add(Vec3D.S3D.offset);
+                 const camDir = new THREE.Vector3();
+                 Vec3D._camera.getWorldDirection(camDir);
+                 dragPlane.setFromNormalAndCoplanarPoint(camDir.multiplyScalar(-1), tipWorld);
+                 pointerMoveHandler(e);
+             }
+          }
         }
       }
-    };
+    }, { passive: false });
 
-    // 4. Gắn Sự Kiện (Events)
-    const renderDom = Vec3D._renderer.domElement;
-    const labelDom = Vec3D._labelRenderer.domElement;
+    renderDom.addEventListener("touchend", () => { lastTouchDistance = null; });
 
-    // Gắn cho lăn chuột
-    renderDom.addEventListener("wheel", wheelHandler, { passive: false });
-    labelDom.addEventListener("wheel", wheelHandler, { passive: false });
-
-    // Gắn cho cảm ứng
-    renderDom.addEventListener("touchstart", touchStartHandler, {
-      passive: false,
-    });
-    renderDom.addEventListener("touchmove", touchMoveHandler, {
-      passive: false,
-    });
-    labelDom.addEventListener("touchstart", touchStartHandler, {
-      passive: false,
-    });
-    labelDom.addEventListener("touchmove", touchMoveHandler, {
-      passive: false,
-    });
-
-    // Reset khoảng cách khi nhấc tay
-    const touchEndHandler = () => {
-      lastTouchDistance = null;
-    };
-    renderDom.addEventListener("touchend", touchEndHandler);
-    labelDom.addEventListener("touchend", touchEndHandler);
-    // --- Event Listeners ---
+    // --- CÁC SỰ KIỆN KHÁC (Change, Resize, Keydown) ---
     Vec3D._controls.addEventListener("change", () => {
       if (App.mode !== "3D") return;
       Vec3D.addAxisLabelsDynamic();
@@ -272,121 +479,129 @@
       Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
     });
 
-    window.addEventListener("resize", () => {
+    const onResize = () => {
       const r = threeLayer.getBoundingClientRect();
-      Vec3D._camera.aspect = Math.max(
-        1e-6,
-        (r.width || 760) / (r.height || 760),
-      );
+      Vec3D._camera.aspect = Math.max(1e-6, (r.width || 760) / (r.height || 760));
       Vec3D._camera.updateProjectionMatrix();
       Vec3D._renderer.setSize(r.width || 760, r.height || 760);
       Vec3D._labelRenderer.setSize(r.width || 760, r.height || 760);
       if (App.mode === "3D") Vec3D.hardRefresh3D(false);
-    });
-
-    const ro = new ResizeObserver(() => {
-      const r = threeLayer.getBoundingClientRect();
-      Vec3D._camera.aspect = Math.max(
-        1e-6,
-        (r.width || 760) / (r.height || 760),
-      );
-      Vec3D._camera.updateProjectionMatrix();
-      Vec3D._renderer.setSize(r.width || 760, r.height || 760);
-      Vec3D._labelRenderer.setSize(r.width || 760, r.height || 760);
-      if (App.mode === "3D") Vec3D.hardRefresh3D(false);
-    });
+    };
+    window.addEventListener("resize", onResize);
+    const ro = new ResizeObserver(onResize);
     ro.observe(threeLayer);
 
-    // Keyboard Controls
-    Vec3D._renderer.domElement.addEventListener("mouseenter", () => {
-      Vec3D._hover3D = true;
-      threeLayer.focus();
-    });
-    Vec3D._renderer.domElement.addEventListener("mouseleave", () => {
-      Vec3D._hover3D = false;
-    });
+    renderDom.addEventListener("mouseenter", () => { Vec3D._hover3D = true; threeLayer.focus(); });
+    renderDom.addEventListener("mouseleave", () => { Vec3D._hover3D = false; });
 
-    document.addEventListener(
-      "keydown",
-      (e) => {
-        const controlsPane = document.getElementById("controls");
-        const typing =
-          ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) ||
-          (controlsPane && controlsPane.contains(e.target));
-        if (App.mode !== "3D" || !Vec3D._hover3D || typing) return;
-        const key = e.key.toLowerCase();
-        Vec3D._pressed.add(key);
-        if (
-          [
-            "w",
-            "a",
-            "s",
-            "d",
-            "q",
-            "e",
-            "arrowup",
-            "arrowdown",
-            "arrowleft",
-            "arrowright",
-            "shift",
-          ].includes(key)
-        ) {
-          e.preventDefault();
-          e.stopPropagation();
+    document.addEventListener("keydown", (e) => {
+      const controlsPane = document.getElementById("controls");
+      const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) || (controlsPane && controlsPane.contains(e.target));
+      if (App.mode !== "3D" || !Vec3D._hover3D || typing) return;
+      const key = e.key.toLowerCase();
+      Vec3D._pressed.add(key);
+      if (["w", "a", "s", "d", "q", "e", "arrowup", "arrowdown", "arrowleft", "arrowright", "shift"].includes(key)) {
+        e.preventDefault(); e.stopPropagation();
+      }
+    }, { capture: true });
+
+    document.addEventListener("keyup", (e) => {
+      const controlsPane = document.getElementById("controls");
+      const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) || (controlsPane && controlsPane.contains(e.target));
+      if (typing) return;
+      const key = e.key.toLowerCase();
+      if (Vec3D._pressed.has(key)) {
+        Vec3D._pressed.delete(key);
+        e.preventDefault(); e.stopPropagation();
+
+        // Vừa nhả hết phím WASD xong -> Chốt sổ
+        if (["w", "a", "s", "d", "q", "e"].includes(key) && Vec3D._pressed.size === 0) {
+            const activeVec = App.vectorList.find(v => v.id === Vec3D.S3D.activeVectorId || v.focus);
+            if (activeVec) {
+                if (App.renderVectorList) App.renderVectorList();
+                if (App.refreshCalcVectorOptions) App.refreshCalcVectorOptions();
+                
+                // [FIX LỖI ANIMATION CHẠY LẠI]: Bỏ btn.click(), ép chữ hiển thị tức thì
+                if (App.currentProjVisual) {
+                    const res = App.vectorList.find(v => v.id === App.currentProjVisual.resId);
+                    const mf = document.querySelector("#calcSteps math-field");
+                    if (res && mf) {
+                        const fmtVal = (n) => {
+                            let x = Number(n);
+                            if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x));
+                            return String(parseFloat(x.toFixed(4)));
+                        };
+                        mf.value = `\\left( ${res.vec.map(fmtVal).join(",\\; ")} \\right)`;
+                    }
+                }
+                Vec3D.draw3DAllVectors();
+            }
         }
-      },
-      {
-        capture: true,
-      },
-    );
+      }
+    }, { capture: true });
 
-    document.addEventListener(
-      "keyup",
-      (e) => {
-        const controlsPane = document.getElementById("controls");
-        const typing =
-          ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) ||
-          (controlsPane && controlsPane.contains(e.target));
-        if (typing) return;
-        const key = e.key.toLowerCase();
-        if (Vec3D._pressed.has(key)) {
-          Vec3D._pressed.delete(key);
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      },
-      {
-        capture: true,
-      },
-    );
-
-    // --- Keyboard Move Loop ---
     const stepLoop = () => {
-      if (
-        App.mode === "3D" &&
-        Vec3D._pressed.size &&
-        Vec3D._camera &&
-        Vec3D._controls
-      ) {
-        const base = Vec3D._camera.position.distanceTo(Vec3D._controls.target);
-        const speed = (Vec3D._pressed.has("shift") ? 0.01 : 0.005) * base;
+      if (App.mode === "3D" && Vec3D._pressed.size && Vec3D._camera && Vec3D._controls) {
+        
+        // 1. Tính toán hướng mũi Camera hiện tại
         const forward = new THREE.Vector3();
         Vec3D._camera.getWorldDirection(forward);
         forward.normalize();
+        
         const worldUp = new THREE.Vector3(0, 0, 1);
-        const right = new THREE.Vector3()
-          .crossVectors(forward, worldUp)
-          .normalize();
+        const right = new THREE.Vector3().crossVectors(forward, worldUp).normalize();
+        
         const move = new THREE.Vector3();
         if (Vec3D._pressed.has("w")) move.add(forward);
         if (Vec3D._pressed.has("s")) move.sub(forward);
         if (Vec3D._pressed.has("a")) move.sub(right);
         if (Vec3D._pressed.has("d")) move.add(right);
+        
+        // [BONUS CỦA TUI]: Nhấn Q để đẩy thẳng lên trời, E để dìm thẳng xuống đất (trục Z)
+        if (Vec3D._pressed.has("q")) move.add(worldUp);
+        if (Vec3D._pressed.has("e")) move.sub(worldUp);
+
         if (move.lengthSq() > 0) {
-          move.normalize().multiplyScalar(speed);
-          Vec3D._camera.position.add(move);
-          Vec3D._controls.target.add(move);
-          Vec3D._controls.update();
+          move.normalize();
+
+          // 2. TÌM VẬT THỂ CẦN ĐIỀU KHIỂN: Ưu tiên Vector đang click hoặc Vector đang chọn ở Sidebar
+          const activeVec = App.vectorList.find(v => v.id === Vec3D.S3D.activeVectorId || v.focus);
+          
+          if (activeVec) {
+              // --- CHẾ ĐỘ LÁI VECTOR ---
+              const u = Math.max(1e-12, Vec3D.S3D.unitsPerWorld);
+              // Shift để tăng tốc độ lái (bay nhanh hơn)
+              const speed = (Vec3D._pressed.has("shift") ? 0.05 : 0.01) * (Vec3D._axisMaxWorld / u);
+              move.multiplyScalar(speed);
+
+              // Cập nhật thẳng tọa độ Toán học
+              activeVec.vec[0] = (activeVec.vec[0] || 0) + move.x / u;
+              activeVec.vec[1] = (activeVec.vec[1] || 0) + move.y / u;
+              activeVec.vec[2] = (activeVec.vec[2] || 0) + move.z / u;
+
+              // Giao diện tĩnh lặng [..., ..., ..., N]
+              const placeholder = "[" + activeVec.vec.map((val, i) => i < 3 ? "..." : val).join(", ") + "]";
+              App.coordOut?.(placeholder);
+
+              // Ẩn Label để tránh vướng víu
+              const group = Vec3D.threeVecMap.get(activeVec.id);
+              if (group) {
+                  const lbl = group.children.find(ch => ch.isCSS2DObject);
+                  if (lbl) lbl.visible = false;
+              }
+              
+              // Gọi Card màn hình vẽ lại ngay lập tức
+              Vec3D.draw3DAllVectors();
+              
+          } else {
+              // --- CHẾ ĐỘ LÁI CAMERA VỀ GỐC (Nếu không có vector nào được chọn) ---
+              const base = Vec3D._camera.position.distanceTo(Vec3D._controls.target);
+              const speed = (Vec3D._pressed.has("shift") ? 0.01 : 0.005) * base;
+              move.multiplyScalar(speed);
+              Vec3D._camera.position.add(move);
+              Vec3D._controls.target.add(move);
+              Vec3D._controls.update();
+          }
         }
       }
       Vec3D._kbAnimId = requestAnimationFrame(stepLoop);
@@ -627,7 +842,7 @@
 
     const targetPx = 80;
     const step = niceStep(targetPx / Math.max(1e-30, pxPerMath));
-
+    Vec3D.S3D.stepUnit = step;
     const off = Vec3D.S3D.offset;
     const key = `${Lw}|${step}|${u}|${App.theme}|${Math.round(dist * 1000)}|${off.x.toFixed(4)},${off.y.toFixed(4)},${off.z.toFixed(4)}`;
 
@@ -739,17 +954,18 @@
 
     (function updateTipLabels() {
       if (!Vec3D._vectorsGroup) return;
-      const desiredPx = 16;
+      // Dịch nhãn ra xa một chút (đơn vị pixel) để không đè vào mũi tên
+      const desiredPx = 25; 
       const offsetW = desiredPx / (Vec3D._pxPerWorld || 1);
+      
       for (const g of Vec3D._vectorsGroup.children) {
         const tip = g.userData?.tipLocal;
-        const dir = g.userData?.dirLocal;
-        if (!tip || !dir) continue;
-        const lbl = g.children.find(
-          (ch) => ch.isCSS2DObject && ch.name === "tipLabel",
-        );
+        if (!tip) continue;
+        const lbl = g.children.find(ch => ch.isCSS2DObject && ch.name === "tipLabel");
         if (!lbl) continue;
-        lbl.position.copy(tip.clone().add(dir.clone().multiplyScalar(offsetW)));
+        
+        // Đẩy nhãn lệch ra một khoảng cố định (tip + offset)
+        lbl.position.copy(tip.clone().add(new THREE.Vector3(offsetW, offsetW, offsetW)));
       }
     })();
 
@@ -882,15 +1098,29 @@
       // Dim others
       if (hasFocus && !it.focus) aItem *= 0.15;
 
-      // [FIX] Xóa dòng này để dù alpha=0 vẫn tạo object 3D
-      // if (aItem <= 0.001) continue;
-
       const tipM = clipToCubeMath(v[0], v[1], v[2], Lm);
       const tipLocal = tipM.clone().multiplyScalar(u);
       const len = Math.max(tipLocal.length(), 1e-9);
-      const dirLocal =
-        len > 1e-9 ? tipLocal.clone().normalize() : new THREE.Vector3(1, 0, 0);
-      const shaftLen = Math.max(len - VEC_HEAD_H, 1e-6);
+      const dirLocal = len > 1e-9 ? tipLocal.clone().normalize() : new THREE.Vector3(1, 0, 0);
+
+      // --- CHÌA KHÓA LUẬT XA GẦN BÊN 3D (CHỐNG BÉO PHÌ ỐNG CỐNG) ---
+      // Lấy khoảng cách từ Camera đến vật thể để làm hệ quy chiếu tuyệt đối
+      const camDist = Vec3D._camera ? Vec3D._camera.position.distanceTo(tipLocal) : 20;
+      
+      // 1. Thân vector (Shaft): 
+      // Dùng camDist để giữ độ dày không đổi trên màn hình (như 2D). 
+      // Giới hạn max là 0.08 (không bao giờ mập như ống cống) và min là 0.015.
+      const mathLen = Math.hypot(v[0], v[1], v[2]);
+      const lengthFactor = Math.max(1, Math.min(mathLen * 0.2, 2.0)); // Vector dài thì thân mập ra tí
+      const DYN_SHAFT_R = Math.max(0.015, Math.min(0.08, 0.003 * camDist * lengthFactor));
+
+      // 2. Mũi tên (Head): 
+      // Cao mặc định gấp 10 lần thân. 
+      // Bị kẹp bởi 2 điều kiện: Không bự quá 30% chiều dài vector, và không được dài hơn 1.5 đơn vị ảo.
+      const DYN_HEAD_H = Math.min(Math.min(DYN_SHAFT_R * 10, 1.5), len * 0.3);
+      const DYN_HEAD_R = DYN_HEAD_H * 0.35; // Tỷ lệ đầu nhọn đẹp chuẩn
+
+      const shaftLen = Math.max(len - DYN_HEAD_H, 1e-6);
       const color = new THREE.Color(it.colorHex || it.colorCss || "#ffffff");
 
       const group = new THREE.Group();
@@ -909,43 +1139,28 @@
 
         const pulseShaft = new THREE.Mesh(
           new THREE.CylinderGeometry(
-            VEC_SHAFT_R + (PULSE_SCALE_ADD / u) * 0.1,
-            VEC_SHAFT_R + (PULSE_SCALE_ADD / u) * 0.1,
+            DYN_SHAFT_R + 0.05 * u, // Kẹp thêm *u để viền Glow cũng xa gần chuẩn
+            DYN_SHAFT_R + 0.05 * u,
             shaftLen,
-            12,
-            1,
-            true,
+            12, 1, true
           ),
           pulseMat,
         );
-        pulseShaft.quaternion.setFromUnitVectors(
-          new THREE.Vector3(0, 1, 0),
-          dirLocal,
-        );
+        pulseShaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
         pulseShaft.position.copy(dirLocal.clone().multiplyScalar(shaftLen / 2));
         pulseShaft.userData.isFocusPulse = true;
         group.add(pulseShaft);
 
         const pulseHead = new THREE.Mesh(
           new THREE.ConeGeometry(
-            VEC_HEAD_R + (PULSE_SCALE_ADD / u) * 0.2,
-            VEC_HEAD_H + (PULSE_SCALE_ADD / u) * 0.2,
-            12,
+            DYN_HEAD_R + 0.08 * u,
+            DYN_HEAD_H + 0.1 * u,
+            12
           ),
           pulseMat,
         );
-        pulseHead.quaternion.setFromUnitVectors(
-          new THREE.Vector3(0, 1, 0),
-          dirLocal,
-        );
-        pulseHead.position.copy(
-          tipLocal
-            .clone()
-            .addScaledVector(
-              dirLocal,
-              -(VEC_HEAD_H + (PULSE_SCALE_ADD / u) * 0.2) / 2,
-            ),
-        );
+        pulseHead.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
+        pulseHead.position.copy(tipLocal.clone().addScaledVector(dirLocal, -(DYN_HEAD_H + 0.1 * u) / 2));
         pulseHead.userData.isFocusPulse = true;
         group.add(pulseHead);
       }
@@ -957,14 +1172,13 @@
         opacity: aItem,
         depthWrite: !isTransparent,
       });
+
       const shaft = new THREE.Mesh(
         new THREE.CylinderGeometry(
-          VEC_SHAFT_R,
-          VEC_SHAFT_R,
+          DYN_SHAFT_R,
+          DYN_SHAFT_R,
           shaftLen,
-          GEOM_QUALITY.shaftSeg,
-          1,
-          true,
+          GEOM_QUALITY.shaftSeg, 1, true
         ),
         vecMat,
       );
@@ -972,30 +1186,26 @@
       shaft.position.copy(dirLocal.clone().multiplyScalar(shaftLen / 2));
 
       const head = new THREE.Mesh(
-        new THREE.ConeGeometry(VEC_HEAD_R, VEC_HEAD_H, GEOM_QUALITY.headSeg),
+        new THREE.ConeGeometry(DYN_HEAD_R, DYN_HEAD_H, GEOM_QUALITY.headSeg),
         vecMat,
       );
       head.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
-      head.position.copy(
-        tipLocal.clone().addScaledVector(dirLocal, -VEC_HEAD_H / 2),
-      );
+      head.position.copy(tipLocal.clone().addScaledVector(dirLocal, -DYN_HEAD_H / 2));
 
       const proj = Vec3D.buildProjectionGroupZUp(
         [tipLocal.x, tipLocal.y, tipLocal.z],
         App.getCSS?.("--axis") || "#888",
         aItem * 0.9,
       );
+      
       const el = document.createElement("div");
       el.className = "tip-label";
-      el.textContent = App.formatTip
-        ? App.formatTip(it.vec)
-        : `[${it.vec.join(", ")}]`;
+      el.textContent = App.formatTip ? App.formatTip(it.vec) : `[${it.vec.join(", ")}]`;
       el.style.opacity = String(aItem);
       const labelEl = new THREE.CSS2DObject(el);
       labelEl.name = "tipLabel";
       labelEl.position.copy(tipLocal);
 
-      // [FIX] Ẩn hoàn toàn nếu alpha = 0 để tránh hiện bóng mờ
       if (aItem <= 0.001) {
         group.visible = false;
       }

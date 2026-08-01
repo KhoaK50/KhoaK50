@@ -57,6 +57,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const themeToggleBtn = document.getElementById("themeToggleBtn");
+  if (themeToggleBtn) {
+    console.debug("[theme-transition] themeToggleBtn found");
+    themeToggleBtn.addEventListener("click", () => {
+      console.debug("[theme-transition] toggleBtn click");
+      const isDark =
+        typeof ThemeManager !== "undefined" ? ThemeManager.toggle() : false;
+      try {
+        ThemeManager.applyTheme(isDark);
+        if (window.App) {
+          App.theme = isDark ? "dark" : "light";
+          if (typeof App.applyTheme === "function") App.applyTheme();
+        }
+      } catch (e) {
+        console.error("[theme-transition] applyTheme error", e);
+      }
+      playTransition(isDark);
+    });
+  }
+
   // Listen to storage events (other tabs)
   window.addEventListener("storage", (e) => {
     if (
@@ -69,6 +89,12 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         ThemeManager.applyTheme(isDark);
       } catch (err) {}
+      try {
+        if (window.App) {
+          App.theme = isDark ? "dark" : "light";
+          if (typeof App.applyTheme === "function") App.applyTheme();
+        }
+      } catch (e) {}
       playTransition(isDark);
     }
   });

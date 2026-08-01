@@ -1,10 +1,12 @@
 from __future__ import annotations
 from typing import Dict, List, Tuple
 import numpy as np
+import sympy as sp
+from vectoria_api.core.validate import parse_latex_to_sympy
 import math
 
 from vectoria_api.explainers.models import Step
-from vectoria_api.core.linalg import gaussian_elimination_rows_with_ops
+from vectoria_api.core.linalg import sympy_gaussian_elimination_rows_with_ops
 from vectoria_api.core.format import vector_pretty_score, format_number_pretty
 
 
@@ -20,8 +22,9 @@ def _dependent_expressions_rows(
       coeff_map: dict dep_index -> coeffs theo basis (length = rank)
             v_dep ≈ sum_k coeffs[k] * v_basis_k
     """
-    A = np.array(A_rows, dtype=float)
-    m, dim = A.shape
+    A = [ [parse_latex_to_sympy(x) for x in row] for row in A_rows ]
+    m = len(A)
+    dim = len(A[0]) if m > 0 else 0
 
     piv = list(pivot_indices)
     dep = [i for i in range(m) if i not in piv]
@@ -29,89 +32,30 @@ def _dependent_expressions_rows(
     if (not dep) or (not piv):
         return dep, {}
 
-    B = A[piv, :]  # r x dim
-    BT = B.T  # dim x r
-
-    coeff_map: Dict[int, List[float]] = {}
+    # Basis matrix transposed
+    BT = sp.Matrix([A[i] for i in piv]).T
+    
+    coeff_map: Dict[int, List[str]] = {}
     for i in dep:
-        v = A[i, :]
-        # Giải hệ B^T * c = v^T (tìm tọa độ c) để biểu diễn v theo basis B
-        c, _, _, _ = np.linalg.lstsq(BT, v, rcond=None)
-        coeff_map[i] = c.tolist()
+        v = sp.Matrix(A[i])
+        try:
+            c = BT.solve_least_squares(v)
+            coeff_map[i] = [sp.latex(sp.simplify(x)) for x in c]
+        except Exception:
+            coeff_map[i] = ["0"]*len(piv)
 
     return dep, coeff_map
 
 
-def _fmt_k(val: float, tol: float = 1e-9) -> str:
-    """
-    Format số an toàn:
-    1. Số nguyên (Chuẩn)
-    2. Căn bậc 2 (Chuẩn, VD: 2sqrt(2))
-    3. Phân số (CỰC KỲ NGHIÊM NGẶT - Sai số < 1e-9 mới nhận)
-    4. Còn lại -> Số thập phân (Tránh ép loga/pi thành phân số)
-    """
-    # 1. Số 0
-    if abs(val) < tol:
-        return "0"
-
-    # 2. Số nguyên
-    if abs(val - round(val)) < tol:
-        return str(int(round(val)))
-
-    sign = "-" if val < 0 else ""
-    abs_val = abs(val)
-
-    # 3. Check Căn thức (Ưu tiên số 1)
-    sq = abs_val * abs_val
-    sq_round = round(sq)
-    # Chỉ đoán căn nếu bình phương lên ra số nguyên đẹp < 1000
-    if abs(sq - sq_round) < 1e-5 and sq_round < 1000:
-        coef = 1
-        n = sq_round
-        for i in range(int(math.isqrt(n)), 1, -1):
-            if n % (i * i) == 0:
-                coef = i
-                n //= i * i
-                break
-
-        latex = f"\\sqrt{{{n}}}" if n > 1 else ""
-        if latex == "":
-            latex = "1"
-
-        res = latex if coef == 1 else f"{coef}{latex}"
-        if coef == 1 and n == 1:
-            res = "1"
-        return sign + res
-
-    # 4. Check Phân số (SIẾT CHẶT)
-    # Chỉ nhận phân số nếu nó CHÍNH XÁC TUYỆT ĐỐI (sai số < 1e-9)
-    # Ví dụ: 0.3333333333 -> 1/3 (OK)
-    # Ví dụ: 1.6094 (ln5) -> 993/617 (Sai số ~ 1e-5 -> LOẠI NGAY)
-    max_denom = 100
-    h1, h2, k1, k2 = 1, 0, 0, 1
-    b = abs_val
-    while True:
-        a = math.floor(b)
-        aux = h1
-        h1 = a * h1 + h2
-        h2 = aux
-        aux = k1
-        k1 = a * k1 + k2
-        k2 = aux
-
-        if k1 > max_denom:
-            break
-
-        # [QUAN TRỌNG] Kiểm tra sai số cực gắt (1e-9)
-        if abs(abs_val - h1 / k1) < 1e-9:
-            return f"{sign}\\frac{{{h1}}}{{{k1}}}"
-
-        if abs(b - a) < 1e-9:
-            break
-        b = 1 / (b - a)
-
-    # 5. Fallback: Số thập phân (cho ln, pi, e...)
-    return f"{val:.4f}".rstrip("0").rstrip(".")
+def _fmt_k(val, tol: float = 1e-9) -> str:
+    if isinstance(val, sp.Expr):
+        return sp.latex(sp.simplify(val))
+    # Fallback if float is passed
+    try:
+        expr = sp.sympify(val)
+        return sp.latex(sp.simplify(expr))
+    except:
+        return str(val)
 
 
 def _fmt_row_op_latex(op: dict, tol: float = 1e-10) -> str:
@@ -131,33 +75,52 @@ def _fmt_row_op_latex(op: dict, tol: float = 1e-10) -> str:
     if kind == "elim":
         dst = int(op["i"]) + 1
         src = int(op["j"]) + 1
-        k = float(op.get("factor", 0.0))
+        k_val = op.get("factor", 0.0)
 
-        # row_dst <- row_dst - k*row_src
-        if abs(k) < tol:
-            return f"d_{dst} \\\\to d_{dst}"
+        try:
+            k = float(k_val)
+            # row_dst <- row_dst - k*row_src
+            if abs(k) < tol:
+                return f"d_{dst} \\to d_{dst}"
 
-        if abs(k - round(k)) < tol:
-            k = int(round(k))
+            if abs(k - round(k)) < tol:
+                k = int(round(k))
 
-        sign = "-" if k > 0 else "+"
-        mag = abs(k)
+            sign = "-" if k > 0 else "+"
+            mag = abs(k)
 
-        if abs(mag - 1) < tol:
-            return f"d_{dst} \\\\to d_{dst} {sign} d_{src}"
+            if abs(mag - 1) < tol:
+                return f"d_{dst} \\to d_{dst} {sign} d_{src}"
 
-        return f"d_{dst} \\\\to d_{dst} {sign} {_fmt_k(mag, tol)}d_{src}"
+            return f"d_{dst} \\to d_{dst} {sign} {_fmt_k(mag, tol)}d_{src}"
+        except ValueError:
+            k_str = str(k_val).strip()
+            if k_str.startswith("-"):
+                sign = "+"
+                mag_str = k_str[1:].strip()
+            else:
+                sign = "-"
+                mag_str = k_str
+            
+            if mag_str == "1":
+                return f"d_{dst} \\to d_{dst} {sign} d_{src}"
+            return f"d_{dst} \\to d_{dst} {sign} {mag_str} d_{src}"
 
     if kind == "scale":
         i = int(op["i"]) + 1
-        k = float(op.get("factor", 1.0))
-        k_str = _fmt_k(k, tol)
+        k_val = op.get("factor", 1.0)
+        
+        try:
+            k = float(k_val)
+            k_str = _fmt_k(k, tol)
+        except ValueError:
+            k_str = str(k_val).strip()
 
         # Nếu là chuỗi phức tạp (phân số, căn, số âm) thì đóng ngoặc
         if "\\" in k_str or k_str.startswith("-"):
-            return f"d_{{{i}}} \\\\to ({k_str})\\,d_{{{i}}}"
+            return f"d_{{{i}}} \\to ({k_str})\\,d_{{{i}}}"
         else:
-            return f"d_{{{i}}} \\\\to {k_str}\\,d_{{{i}}}"
+            return f"d_{{{i}}} \\to {k_str}\\,d_{{{i}}}"
 
     return ""
 
@@ -171,7 +134,7 @@ def _solve_homogeneous_rank(
     """
     if not vectors:
         return 0, 0
-    A = np.array(vectors, dtype=float)  # m x n (rows)
+    A = np.array([[to_float(x) for x in r] for r in vectors], dtype=float)  # m x n (rows)
     M = A.T  # n x m (cols)
     r = int(np.linalg.matrix_rank(M, tol=tol))
     m = M.shape[1]
@@ -181,12 +144,12 @@ def _solve_homogeneous_rank(
 # =========================
 # PDF-style LaTeX helpers
 # =========================
-def _latex_vec(v: List[float], tol: float = 1e-10) -> str:
-    items = [_fmt_k(float(x), tol=tol) for x in v]
+def _latex_vec(v, tol: float = 1e-10) -> str:
+    items = [_fmt_k(x, tol=tol) for x in v]
     return "\\left(" + ",\\;".join(items) + "\\right)"
 
 
-def _latex_vec_list(vectors: List[List[float]], tol: float = 1e-10) -> str:
+def _latex_vec_list(vectors, tol: float = 1e-10) -> str:
     parts = []
     for i, v in enumerate(vectors):
         parts.append(f"v_{{{i+1}}} = {_latex_vec(v, tol=tol)}")
@@ -209,7 +172,7 @@ def _build_homogeneous_system_latex(
     for j in range(n):
         terms = []
         for i in range(m):
-            a = float(vectors[i][j])
+            a = vectors[i][j]
             ak = _fmt_k(a, tol=tol)
             if ak == "0":
                 continue
@@ -263,7 +226,7 @@ def _eq_general_pdf_latex(
 
         concl = (
             "\\textbf{Bước 3: Kết luận. }"
-            "Vì hệ phương trình chỉ có nghiệm tầm thường nên hệ vectơ độc lập tuyến tính.\\\\[4pt]\n"
+            "\\text{Vì hệ phương trình chỉ có nghiệm tầm thường nên hệ vectơ độc lập tuyến tính.}\\\\[4pt]\n"
             f"{dim_line}\\\\[5pt]\n"  # Tăng khoảng cách dòng
             f"{basis_line}"
         )
@@ -273,7 +236,7 @@ def _eq_general_pdf_latex(
 
         concl = (
             "\\textbf{Bước 3: Kết luận. }"
-            "Hệ phương trình có nghiệm không tầm thường nên hệ vectơ phụ thuộc tuyến tính.\\\\[4pt]\n"
+            "\\text{Hệ phương trình có nghiệm không tầm thường nên hệ vectơ phụ thuộc tuyến tính.}\\\\[4pt]\n"
             f"{dim_line}\\\\[5pt]\n"  # Tăng khoảng cách dòng
             f"{basis_line}"
         )
@@ -294,11 +257,24 @@ def _eq_general_pdf_latex(
     return latex
 
 
-def _is_multiple(
-    v2: np.ndarray, v1: np.ndarray, tol: float = 1e-10
-) -> Tuple[bool, float]:
-    if np.linalg.norm(v1) < tol:
-        return False, 0.0
+def _is_multiple(v1, v2, tol: float = 1e-10):
+    M1 = sp.Matrix(v1)
+    M2 = sp.Matrix(v2)
+    if M2.is_zero_matrix:
+        return False, sp.Integer(0)
+    # v1 = k * v2 => k = v1[i]/v2[i] for non-zero v2[i]
+    k = None
+    for i in range(len(v2)):
+        if M2[i] != 0:
+            k_cand = sp.simplify(M1[i] / M2[i])
+            if k is None:
+                k = k_cand
+            elif sp.simplify(k - k_cand) != 0:
+                return False, sp.Integer(0)
+        else:
+            if M1[i] != 0:
+                return False, sp.Integer(0)
+    return (True, k) if k is not None else (False, sp.Integer(0))
     idx = None
     for i in range(v1.shape[0]):
         if abs(v1[i]) >= tol:
@@ -312,15 +288,23 @@ def _is_multiple(
     return False, float(t)
 
 
-def _solve_in_span(
-    B_rows: List[List[float]], v: List[float], tol: float = 1e-10
-) -> Tuple[bool, List[float]]:
-    """
-    Solve v = sum c_i * b_i where b_i are rows in B_rows.
-    Return (in_span, coeffs).
-    """
-    if not B_rows:
+def _solve_in_span(basis_vectors, target_vector, tol: float = 1e-10):
+    if not basis_vectors:
         return False, []
+    B = sp.Matrix(basis_vectors).T
+    v = sp.Matrix(target_vector)
+    try:
+        c = B.solve(v)
+        return True, list(c)
+    except Exception:
+        try:
+            # check least squares residual
+            c = B.solve_least_squares(v)
+            if sp.simplify((B*c - v).norm()) == 0:
+                return True, list(c)
+            return False, []
+        except Exception:
+            return False, []
 
     B = np.array(B_rows, dtype=float)  # r x n (rows)
     BT = B.T  # n x r
@@ -331,6 +315,16 @@ def _solve_in_span(
     ok = np.linalg.norm(recon - vv) < tol
     return ok, c.tolist()
 
+
+
+def to_float(val, tol=1e-10):
+    try:
+        return float(val.evalf()) if hasattr(val, 'evalf') else float(val)
+    except:
+        return 0.0
+
+def to_float_array(arr):
+    return np.array([to_float(x) for x in arr], dtype=float)
 
 def _eq_stepwise_pdf_latex(
     vectors: List[List[float]], tol: float = 1e-10
@@ -350,8 +344,8 @@ def _eq_stepwise_pdf_latex(
     ]
 
     # --- Bước 1: Xét v1 ---
-    v1 = np.array(vectors[0], dtype=float)
-    if np.linalg.norm(v1) < tol:
+    v1 = vectors[0]
+    if np.linalg.norm(to_float_array(v1)) < tol:
         lines.append(
             "\\textbf{Bước 1: }\\text{Vì }v_1=\\vec{0}\\text{ nên bỏ }v_1.\\\\[6pt]"
         )
@@ -364,10 +358,10 @@ def _eq_stepwise_pdf_latex(
 
     # --- Bước 2: Xét v2 ---
     if m >= 2:
-        v2 = np.array(vectors[1], dtype=float)
+        v2 = vectors[1]
         if basis_rows:
             # Check tỉ lệ: v2 = k*v1
-            mul, t = _is_multiple(v2, np.array(basis_rows[0], dtype=float), tol=tol)
+            mul, t = _is_multiple(v2, basis_rows[0], tol=tol)
             if not mul:
                 basis_idx.append(1)
                 basis_rows.append(vectors[1])
@@ -387,7 +381,7 @@ def _eq_stepwise_pdf_latex(
                     f"\\textbf{{Bước 2: }}\\text{{Ta có }}v_2 = {k_str}v_1\\text{{ nên phụ thuộc. Bỏ }}v_2.\\\\[6pt]"
                 )
         else:
-            if np.linalg.norm(v2) > tol:
+            if np.linalg.norm(to_float_array(v2)) > tol:
                 basis_idx.append(1)
                 basis_rows.append(vectors[1])
                 lines.append(
@@ -399,8 +393,8 @@ def _eq_stepwise_pdf_latex(
     # --- Bước 3 trở đi: Logic Giải hệ con & Thử lại ---
     step_no = 3
     for k in range(2, m):
-        vk = np.array(vectors[k], dtype=float)
-        if np.linalg.norm(vk) < tol:
+        vk = vectors[k]
+        if np.linalg.norm(to_float_array(vk)) < tol:
             lines.append(
                 f"\\textbf{{Bước {step_no}: }}\\text{{Bỏ }}v_{{{k+1}}}=\\vec{{0}}.\\\\[6pt]"
             )
@@ -420,9 +414,9 @@ def _eq_stepwise_pdf_latex(
         )
 
         # 1. Giải hệ phương trình con (chỉ lấy num_vars dòng đầu tiên)
-        # A_sub * x = b_sub
-        A_sub = np.array([r[:num_vars] for r in basis_rows]).T
-        b_sub = vk[:num_vars]
+        import sympy as sp
+        A_sub = sp.Matrix([[r[i] for r in basis_rows] for i in range(num_vars)])
+        b_sub = sp.Matrix([vk[i] for i in range(num_vars)])
 
         # Tạo hệ phương trình LaTeX để hiển thị
         sys_lines = []
@@ -453,11 +447,12 @@ def _eq_stepwise_pdf_latex(
 
         # Giải nghiệm
         try:
-            sol = np.linalg.solve(A_sub, b_sub)
+            sol = A_sub.LUsolve(b_sub)
+            sol = list(sol)
             has_sol = True
-        except np.linalg.LinAlgError:
+        except Exception:
             has_sol = False
-            sol = np.zeros(num_vars)  # Fallback
+            sol = [sp.Integer(0)] * num_vars
 
         if not has_sol:
             # Trường hợp hiếm: ngay 2 dòng đầu đã vô nghiệm
@@ -482,10 +477,10 @@ def _eq_stepwise_pdf_latex(
             explanation_parts = []
             for check_idx in range(num_vars, n):
                 # Tính vế phải: a*v1[i] + b*v2[i]
-                rhs_check = sum(
+                rhs_check = sp.simplify(sum(
                     sol[i] * basis_rows[i][check_idx] for i in range(num_vars)
-                )
-                lhs_check = vk[check_idx]
+                ))
+                lhs_check = sp.simplify(vk[check_idx])
 
                 # Format chuỗi tính toán: 1(2) + (-2)(3)...
                 calc_terms = []
@@ -495,9 +490,9 @@ def _eq_stepwise_pdf_latex(
                     if v_s == "0":
                         continue
                     # Đóng ngoặc số âm/phân số
-                    if "-" in v_s or "/" in v_s:
+                    if "-" in v_s or "/" in v_s or "\\" in v_s:
                         v_s = f"({v_s})"
-                    if "-" in c_s or "/" in c_s:
+                    if "-" in c_s or "/" in c_s or "\\" in c_s:
                         c_s = f"({c_s})"
                     calc_terms.append(f"{c_s}\\cdot{v_s}")
 
@@ -507,7 +502,7 @@ def _eq_stepwise_pdf_latex(
                 res_str = _fmt_k(rhs_check, tol)
                 target_str = _fmt_k(lhs_check, tol)
 
-                if abs(rhs_check - lhs_check) < tol:
+                if sp.simplify(rhs_check - lhs_check) == 0:
                     explanation_parts.append(
                         f"\\bullet\\; \\text{{Dòng {check_idx+1}: }} {calc_str} = {res_str} = {target_str} \\;(\\text{{Đúng}})"
                     )
@@ -592,26 +587,26 @@ def compute_basis_payload(
     if not vectors:
         raise ValueError("Danh sách vector rỗng.")
 
-    mat = np.array(vectors, dtype=float)
-    if mat.ndim != 2:
-        raise ValueError("Dữ liệu vector không hợp lệ (phải là list 2D).")
-
-    m, dim = mat.shape
-    A = mat.tolist()
+    A = []
+    for row in vectors:
+        A.append([parse_latex_to_sympy(x) for x in row])
+        
+    m = len(A)
+    dim = len(A[0]) if m > 0 else 0
 
     # 1. Chạy Khử Gauss (Cho Cách 1 - Ma trận)
-    rank, pivot_indices_gauss, E, ops, row_ids = gaussian_elimination_rows_with_ops(
-        A, tol=tol, pivot_strategy=pivot_strategy, snapshot_every_step=True
+    rank, pivot_indices_gauss, E, ops, row_ids = sympy_gaussian_elimination_rows_with_ops(
+        A, snapshot_every_step=True
     )
 
     # 2. Chạy Logic "Xét từng vector" (Cho Cách 2 - Phương trình & KẾT QUẢ CUỐI CÙNG)
-    eq_step_latex, step_basis_idx, step_dim = _eq_stepwise_pdf_latex(vectors, tol=tol)
+    eq_step_latex, step_basis_idx, step_dim = _eq_stepwise_pdf_latex(A, tol=tol)
 
     # [QUAN TRỌNG]: GHI ĐÈ KẾT QUẢ CHÍNH BẰNG KẾT QUẢ CỦA CÁCH 2
     final_pivot_indices = step_basis_idx
     final_pivot_indices.sort()
 
-    basis_vectors = [vectors[i] for i in final_pivot_indices]
+    basis_vectors = [[_fmt_k(x, tol) for x in A[i]] for i in final_pivot_indices]
 
     # Tính lại phụ thuộc (dependents) và hệ số (coeff_map) dựa trên cơ sở CHUẨN này
     dependents, coeff_map = _dependent_expressions_rows(A, final_pivot_indices, tol=tol)
@@ -715,10 +710,10 @@ def compute_basis_payload(
     # =========================
     # Generate LaTeX Explanations
     # =========================
-    rank_eq, m_unknowns = _solve_homogeneous_rank(vectors, tol=tol)
+    rank_eq, m_unknowns = _solve_homogeneous_rank(A, tol=tol)
 
     eq_general_latex = _eq_general_pdf_latex(
-        vectors=vectors, basis_indices=final_pivot_indices, rank=rank_eq, tol=tol
+        vectors=A, basis_indices=final_pivot_indices, rank=rank_eq, tol=tol
     )
     # ... (code cũ) ...
 

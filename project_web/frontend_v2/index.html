@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="vi">
   <head>
-    <!-- Google tag (gtag.js) -->
     <script
       async
       src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"
@@ -12,14 +11,14 @@
         dataLayer.push(arguments);
       }
       gtag("js", new Date());
-
       gtag("config", "G-GRZR4Y6VFQ");
     </script>
+
     <meta charset="UTF-8" />
-    <title>Vectoria - Trang Chủ</title>
+    <title>Vectoria - Khám phá Không gian Vector</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="canonical" href="https://vectoria.io.vn/" />
-    <!-- Favicon -->
+
     <link
       rel="icon"
       type="image/png"
@@ -33,132 +32,1323 @@
       href="assets/images/logo.png"
     />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=STIX+Two+Text:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+      rel="stylesheet"
+    />
 
     <script src="js/utils/theme-manager.js"></script>
-
+    <script src="js/utils/i18n.js"></script>
+    <link rel="stylesheet" href="css/radix_colors.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/index.css" />
     <style>
-      :root {
-        --bg: #f8f9fc;
-        --fg: #121314;
-        --primary: #3a78ff; /* Xanh dương chủ đạo của Vectoria */
-        --primary-hover: #2563eb; /* Xanh đậm hơn lúc rê chuột vào */
-        --border: #e0e0e5;
-      }
-      body {
+      
+
+      * {
+        box-sizing: border-box;
         margin: 0;
+        padding: 0;
+      }
+
+      body {
         font-family:
+          "Inter",
           system-ui,
           -apple-system,
           Segoe UI,
-          Roboto,
-          Helvetica,
-          Arial,
           sans-serif;
-        background: var(--bg);
-        color: var(--fg);
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
+
+        background: var(--bg-base);
+        color: var(--text-main);
+
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        
       }
-      header {
+
+      /* Dùng font Toán học cho Tiêu đề chính để tạo cảm giác giáo trình */
+      h1,
+      h2,
+      .math-font {
+        font-family: "STIX Two Text", "Times New Roman", serif;
+      }
+
+      /* Fix topbar position for index.html because body overflow-x hidden breaks sticky */
+      #globalTopbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+      }
+
+
+      .brand-group {
         display: flex;
         align-items: center;
-        padding: 12px 20px;
-        font-size: 20px;
-        font-weight: bold;
-        border-bottom: 1px solid var(--border);
-        background: white;
+        text-decoration: none;
       }
-      header img {
-        height: 60px; /* chỉnh kích thước logo */
-        margin-right: 10px; /* cách chữ một khoảng */
+      .brand-group img {
+        height: 40px;
+        object-fit: contain;
+
+        transition:
+            filter .3s ease,
+            transform .25s ease;
       }
-      main {
-        flex: 1;
+      body.dark-theme .brand-group img {
+        opacity: 1;
+
+        filter: invert(1) hue-rotate(180deg) brightness(1.2);
+      }
+
+      /* --- HERO SECTION --- */
+      .hero-section {
+        position: relative;
+        height: 100vh;
+        min-height: 700px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 40px 20px;
+        padding: 0 5%;
+        background-image: radial-gradient(
+          rgba(0, 0, 0, 0.04) 1px,
+          transparent 1px
+        );
+        background-size: 24px 24px;
+        overflow: hidden;
+        
       }
+      body.dark-theme .hero-section {
+        background-color: #090b12;
+      }
+
+      #hero-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        pointer-events: auto;
+      }
+
+      .bg-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 1) 0%,
+          rgba(255, 255, 255, 0.85) 45%,
+          rgba(255, 255, 255, 0) 100%
+        );
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      body.dark-theme .bg-overlay {
+        background: linear-gradient(
+          90deg,
+          rgba(9, 11, 18, 1) 0%,
+          rgba(9, 11, 18, 1) 40%,
+          rgba(9, 11, 18, 0.6) 45%,
+          rgba(9, 11, 18, 0) 50%
+        );
+
+        
+      }
+
+      .hero-section::before {
+        content: "";
+        position: absolute;
+
+        left: 72%;
+        top: -220px;
+
+        width: 700px;
+        height: 900px;
+
+        transform: translateX(-50%);
+
+        pointer-events: none;
+        z-index: 2;
+
+        background: radial-gradient(
+          ellipse at top,
+          rgba(255, 255, 255, 0.4) 0%,
+          rgba(255, 255, 255, 0.16) 20%,
+          rgba(255, 255, 255, 0.05) 45%,
+          transparent 72%
+        );
+
+        filter: blur(12px);
+
+        opacity: 0;
+
+        transition:
+          opacity 0.8s ease,
+          filter 0.8s ease;
+      }
+
       .content {
-        max-width: 720px;
+        position: relative;
+        z-index: 10;
+        max-width: 600px;
+        text-align: left;
+        opacity: 0;
+
+        transform: translateY(30px);
+
+        animation: heroAppear 1s ease forwards;
+
+        animation-delay: 0.2s;
       }
+      @keyframes heroAppear {
+        to {
+          opacity: 1;
+
+          transform: none;
+        }
+      }
+
       .content h1 {
-        font-size: 36px;
-        margin-bottom: 16px;
+        font-size: 52px;
+        line-height: 1.15;
+        letter-spacing: -1px;
+        margin-bottom: 24px;
+        color: #0f172a;
+        font-weight: 700;
+        transition: color 0.5s;
       }
+
+      body.dark-theme .content h1 {
+        color: #f8fafc;
+      }
+
       .content p {
-        font-size: 18px;
+        font-size: 17px;
         line-height: 1.6;
-        margin-bottom: 32px;
+        color: var(--text-muted);
+        margin-bottom: 36px;
+        font-weight: 400;
+        transition: color 0.5s;
       }
+
+      body.dark-theme .content p {
+        color: #b5c0d0;
+      }
+
       .buttons {
         display: flex;
-        gap: 16px;
-        justify-content: center;
+        gap: 12px;
         flex-wrap: wrap;
       }
+
       .btn {
-        padding: 12px 24px;
-        font-size: 16px;
-        border-radius: 8px;
+        padding: 14px 24px;
+        font-size: 15px;
+        font-weight: 600;
+        border-radius: 10px;
         border: none;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: all 0.2s ease;
         text-decoration: none;
-        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
       }
+
       .btn-primary {
-        background: var(--primary);
+        background: var(--primary-base);
+        color: white;
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
       }
       .btn-primary:hover {
         background: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
       }
+
       .btn-outline {
+        background: white;
+        border: 1px solid var(--border-strong);
+        color: #334155;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+      }
+      body.dark-theme .btn-outline {
         background: transparent;
-        border: 2px solid var(--primary);
-        color: var(--primary);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        color: white;
+        box-shadow: none;
       }
       .btn-outline:hover {
-        background: #eff6ff; /* Nền xanh biển siêu nhạt */
-        color: var(--primary);
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: var(--primary-base);
+        transform: translateY(-2px);
       }
+      body.dark-theme .btn-outline:hover {
+        background: rgba(255, 255, 255, 0.04);
+
+        border-color: #3a78ff;
+
+        color: #3a78ff;
+      }
+
+      /* --- DASHBOARD INTRO SECTION --- */
+      .dashboard-intro {
+        padding: 100px 5%;
+        background: #f8fafc;
+        display: flex;
+        justify-content: center;
+        border-top: 1px solid var(--border-strong);
+      }
+
+      .dashboard-card {
+        display: flex;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--border-strong);
+        overflow: hidden;
+        max-width: 1000px;
+        width: 100%;
+      }
+
+      .dash-mockup {
+        flex: 1;
+        background: #e2e8f0;
+        min-height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid var(--border-strong);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .dash-mockup::before {
+        content: "";
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
+      .dash-mockup::after {
+        content: "Dashboard Interface";
+        position: absolute;
+        font-weight: 600;
+        color: #94a3b8;
+      }
+
+      .dash-info {
+        flex: 1;
+        padding: 50px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+      }
+
+      .dash-info h2 {
+        font-size: 32px;
+        color: #0f172a;
+        margin-bottom: 16px;
+        font-weight: 700;
+      }
+
+      body.dark-theme .dashboard-intro {
+        background: #090b12;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      body.dark-theme .dashboard-card {
+        background: #111521;
+
+        border: 1px solid rgba(255, 255, 255, 0.08);
+
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      }
+
+      body.dark-theme .dash-mockup {
+        background: #1a2232;
+
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      body.dark-theme .dash-mockup::before {
+        background: #0f1625;
+      }
+
+      body.dark-theme .dash-mockup::after {
+        color: #7c8ba4;
+      }
+
+      body.dark-theme .dash-info h2 {
+        color: #f8fafc;
+      }
+
+      body.dark-theme .dash-info p {
+        color: #b5c0d0;
+      }
+
+      body.dark-theme .btn-dashboard {
+        background: transparent;
+
+        color: #3a78ff;
+
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      body.dark-theme .btn-dashboard:hover {
+        background: rgba(255, 255, 255, 0.05);
+
+        border-color: #3a78ff;
+      }
+      .dash-info p {
+        font-size: 16px;
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 24px;
+      }
+
+      .btn-dashboard {
+        background: white;
+        color: var(--primary-base);
+        border: 1px solid var(--border-strong);
+        padding: 12px 24px;
+        font-weight: 600;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+        transition: all 0.2s ease;
+      }
+      .btn-dashboard:hover {
+        background: #f1f5f9;
+        border-color: var(--primary-base);
+        transform: translateY(-2px);
+      }
+
+      /* --- FOOTER --- */
       footer {
         text-align: center;
-        padding: 16px;
+        padding: 24px;
         font-size: 14px;
-        color: #666;
-        border-top: 1px solid var(--border);
+        color: var(--text-muted);
+        font-weight: 400;
         background: white;
+        border-top: 1px solid var(--border-strong);
+      }
+
+      body.dark-theme footer {
+        background: #090b12;
+
+        color: #9aa7bc;
+
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      @media (max-width: 768px) {
+        /* 1. Dời toàn bộ khối chữ xuống sát đáy màn hình */
+        .hero-section {
+          align-items: flex-end;
+          padding-top: 0;
+          padding-bottom: 10px; /* Cách mép dưới 40px */
+        }
+
+        /* 2. Lớp mờ Light Mode: Chỉ che phần chữ ở đáy, trên 50% là trong suốt hoàn toàn */
+        .bg-overlay {
+          background: linear-gradient(
+            to top,
+            rgba(255, 255, 255, 1) 0%,
+            rgba(255, 255, 255, 0.95) 35%,
+            rgba(255, 255, 255, 0) 50%
+          );
+        }
+
+        /* 3. Lớp mờ Dark Mode: Chỉ che phần chữ ở đáy, trên 50% là trong suốt hoàn toàn */
+        body.dark-theme .bg-overlay {
+          background: linear-gradient(
+            to top,
+            rgba(9, 11, 18, 1) 0%,
+            rgba(9, 11, 18, 0.95) 35%,
+            rgba(9, 11, 18, 0) 50%
+          );
+        }
+
+        .content {
+          text-align: center;
+          max-width: 100%;
+        }
+        .buttons {
+          justify-content: center;
+        }
+        .dashboard-card {
+          flex-direction: column;
+        }
+        .dash-mockup {
+          min-height: 200px;
+          border-right: none;
+          border-bottom: 1px solid var(--border-strong);
+        }
+        .dash-info {
+          padding: 30px 20px;
+          align-items: center;
+          text-align: center;
+        }
+      }
+      .lang-dropdown {
+        position: relative;
+      }
+      .header-actions {
+        display: flex;
+
+        align-items: center;
+
+        gap: 12px;
+      }
+
+      .theme-btn {
+        width: 42px;
+
+        height: 42px;
+
+        border-radius: 12px;
+
+        border: 1px solid var(--border-strong);
+
+        background: white;
+
+        color: var(--text-main);
+
+        cursor: pointer;
+
+        transition: 0.25s;
+
+        display: flex;
+
+        justify-content: center;
+
+        align-items: center;
+      }
+
+      .theme-btn:hover {
+        border-color: var(--primary-base);
+
+        transform: translateY(-2px);
+      }
+
+      body.dark-theme .theme-btn {
+        background: rgba(255, 255, 255, 0.06);
+
+        border: 1px solid rgba(255, 255, 255, 0.08);
+
+        color: white;
+      }
+
+      .dropdown-trigger {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: white;
+        border: 1px solid var(--border-strong);
+        padding: 8px 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-main);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .dropdown-trigger:hover {
+        border-color: var(--primary-base);
+      }
+
+      .chevron {
+        font-size: 10px;
+        margin-left: 4px;
+        transition: transform 0.3s;
+      }
+      .dropdown-trigger.active .chevron {
+        transform: rotate(180deg);
+      }
+
+      .dropdown-menu {
+        position: absolute;
+        top: 110%;
+        right: 0;
+        background: white;
+        border: 1px solid var(--border-strong);
+        border-radius: 12px;
+        padding: 6px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateY(10px);
+        min-width: 120px;
+      }
+      .dropdown-menu.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      .lang-option {
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background 0.2s;
+      }
+      .lang-option:hover {
+        background: #f1f5f9;
+      }
+      body.dark-theme .dropdown-trigger {
+        background: rgba(255, 255, 255, 0.06);
+
+        border: 1px solid rgba(255, 255, 255, 0.08);
+
+        color: #f8fafc;
+
+        backdrop-filter: blur(14px);
+      }
+
+      body.dark-theme .dropdown-trigger:hover {
+        border-color: #3a78ff;
+
+        background: rgba(58, 120, 255, 0.08);
+      }
+
+      body.dark-theme .dropdown-menu {
+        background: #111521;
+
+        border: 1px solid rgba(255, 255, 255, 0.08);
+
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+      }
+
+      body.dark-theme .lang-option {
+        color: #e7edf8;
+      }
+
+      body.dark-theme .lang-option:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .hero-light {
+        position: absolute;
+
+        right: -150px;
+        top: -250px;
+
+        width: 900px;
+        height: 900px;
+
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.25),
+          transparent 70%
+        );
+
+        filter: blur(80px);
+
+        pointer-events: none;
+
+        opacity: 0;
+        z-index: 3;
+        transition:
+          opacity 0.8s ease,
+          filter 0.8s ease;
+      }
+      body.dark-theme .hero-light {
+        opacity: 1;
       }
     </style>
+    <link rel="stylesheet" href="css/index.css">
   </head>
-  <body>
-    <header>
-      <img src="assets/images/logo+name.png" alt="Vectoria Logo" />
-      <span></span>
-    </header>
+  <body class="light-theme">
+    <!-- ==================== UNIFIED TOPBAR ==================== -->
+<style>
+  
+  
+  
+  
+  .vec-sidebar-toggle {
+    display: none; /* Shows on mobile */
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    color: var(--text-main);
+    cursor: pointer;
+    font-size: 16px;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+  }
+  .vec-sidebar-toggle:hover {
+    background: var(--primary-base);
+    color: white;
+    border-color: var(--primary-base);
+  }
+  </style>
 
-    <main>
+<header class="vec-topbar" id="globalTopbar">
+  <div class="vec-topbar-left">
+    <button class="vec-sidebar-toggle" id="mobileSidebarToggle" title="Menu sidebar">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <a href="index.html" class="vec-brand-group">
+      <img src="assets/images/logo+name.png" alt="Vectoria" onerror="this.src='assets/images/logo.png'">
+    </a>
+    
+    <nav class="vec-nav-links">
+          <a href="index.html" class="vec-nav-link" id="navHome"><i class="fa-solid fa-house"></i> <span data-i18n="nav.home">Trang chủ</span></a>
+          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="fa-solid fa-layer-group"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
+          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="fa-solid fa-calculator"></i> <span data-i18n="nav.calc">Tính toán</span></a>
+          
+          <div class="vec-dropdown-container">
+            <span class="vec-nav-link" data-i18n="nav.explore"><i class="fa-solid fa-compass"></i> Khám phá <i class="fa-solid fa-chevron-down" style="font-size: 0.7em;"></i></span>
+            <div class="vec-dropdown-menu">
+              <a href="knowledge_info.html" class="vec-dropdown-item" data-i18n="nav.knowledge"><i class="fa-solid fa-graduation-cap"></i> Thư viện kiến thức</a>
+              <a href="hdsd.html" class="vec-dropdown-item" data-i18n="nav.manual"><i class="fa-solid fa-circle-question"></i> Hướng dẫn sử dụng</a>
+              <a href="tltk.html" class="vec-dropdown-item" data-i18n="nav.docs"><i class="fa-solid fa-file-pdf"></i> Tài liệu tham khảo</a>
+              <div class="dropdown-divider" style="height: 1px; background: var(--border-strong, #cbd5e1); margin: 5px 0;"></div>
+              <a href="about_us.html" class="vec-dropdown-item" data-i18n="nav.about"><i class="fa-solid fa-users"></i> Về chúng tôi</a>
+              <a href="contact.html" class="vec-dropdown-item" data-i18n="nav.contact"><i class="fa-solid fa-envelope"></i> Liên hệ</a>
+            </div>
+          </div>
+        </nav>
+  </div>
+  
+    <div class="vec-topbar-right">
+        <button class="vec-icon-btn" id="themeToggleBtn" title="Chuyển giao diện" data-i18n-title="topbar.theme">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+
+        <div class="vec-dropdown-container right-align">
+          <button class="vec-icon-btn" title="Ngôn ngữ" data-i18n-title="topbar.lang">
+            <i class="fa-solid fa-globe"></i>
+          </button>
+          <div class="vec-dropdown-menu" style="min-width: 150px;">
+            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('vi')">Tiếng Việt</a>
+            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('en')">English</a>
+          </div>
+        </div>
+        
+        <button class="vec-icon-btn" title="Thông báo" data-i18n-title="topbar.notif">
+          <i class="fa-regular fa-bell"></i>
+        </button>
+        
+        <div class="vec-dropdown-container right-align">
+          <div class="top-avatar-btn" id="btnTopAvatar" style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary-base); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; background-size: cover; background-position: center;">
+            <i class="fa-solid fa-user"></i>
+          </div>
+          <div class="top-dropdown vec-dropdown-menu" id="menuTopAvatar" style="width: 260px; min-width: 260px;">
+          </div>
+        </div>
+  </div>
+</header>
+<script>
+  // Script to handle mobile nav when there's no sidebar
+  document.addEventListener("DOMContentLoaded", () => {
+    const toggleBtn = document.getElementById("mobileSidebarToggle");
+    const navLinks = document.querySelector(".vec-nav-links");
+    const oldHamburger = document.getElementById("hamburger");
+    
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", (e) => {
+        // If there's an old hamburger (like in calculation.html), trigger it
+        if (oldHamburger && oldHamburger.style.display !== "none" && typeof oldHamburger.click === "function") {
+          // It's handled by inline onclick in calculation.html usually
+          // But wait, the inline onclick is only in calculation.html.
+          // Let's not override if calculation.html uses it.
+        }
+        
+        // Toggle mobile menu for global links
+        if (navLinks) {
+          navLinks.classList.toggle("show-mobile");
+        }
+      });
+    }
+
+    // Handle dropdown clicks on mobile
+    const dropdownContainers = document.querySelectorAll(".vec-nav-links .vec-dropdown-container");
+    dropdownContainers.forEach(container => {
+      container.addEventListener("click", (e) => {
+        if (window.innerWidth <= 768) {
+          e.stopPropagation();
+          container.classList.toggle("open");
+        }
+      });
+    });
+  });
+</script>
+<!-- ==================== END UNIFIED TOPBAR ==================== -->
+
+
+
+    <section class="hero-section">
+      <canvas id="hero-canvas"></canvas>
+      <div class="bg-overlay"></div>
+      <div class="hero-light"></div>
+
       <div class="content">
-        <h1>Khám phá Không gian Vector với Vectoria</h1>
-        <p>
-          Vectoria là công cụ trực quan hóa vector 2D & 3D, giúp bạn dễ dàng
-          thực hiện các phép tính vector, quan sát hình học, và học kiến thức về
-          Không gian vector thông qua video và mô hình tương tác động.
+        <h1 data-i18n="index.hero_title">Hệ thống cá nhân hóa học tập Đại số tuyến tính</h1>
+        <p data-i18n="index.hero_desc">
+          Vectoria được sinh ra để đồng hành cùng người học trong suốt quá trình khám phá Đại số tuyến tính. Một nơi hội tụ các lý thuyết, bài tập và trao cho người học quyền năng khám phá "thế giới ấy" qua các công cụ trực quan sinh động.
         </p>
-        <div class="buttons">
-          <a href="calculation.html" class="btn btn-primary"
-            >Bắt đầu tính toán</a
-          >
-          <a href="knowledge_info.html" class="btn btn-outline"
-            >Tìm hiểu kiến thức</a
-          >
+        <div class="buttons" style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <a href="user-dashboard.html" class="btn btn-primary" data-i18n="index.btn_dashboard">
+            Đi tới Dashboard <i class="fa-solid fa-arrow-right"></i>
+          </a>
+          <a href="calculation.html" class="btn btn-outline" data-i18n="index.btn_calc_outline">
+            <i class="fa-solid fa-calculator"></i> Tính toán
+          </a>
+          <a href="knowledge_info.html" class="btn btn-outline" data-i18n="index.btn_knowledge_outline">
+            <i class="fa-solid fa-book-open"></i> Lý thuyết
+          </a>
         </div>
       </div>
-    </main>
+    </section>
+    <!-- PREMIUM FEATURES SECTION -->
+    <section class="features-showcase" id="features">
+      <div class="section-divider">
+        <span data-i18n="index.divider">Tính năng Nổi bật</span>
+      </div>
+      <div class="feature-rows">
+        
+        <!-- Feature 1: Dashboard (Image Left, Text Right) -->
+        <div class="feature-row reverse" data-gsap="fade-up">
+          <div class="f-text">
+            <h2 data-i18n="index.feat1_title">Lưu trữ dữ liệu và theo dõi tiến trình học của bản thân</h2>
+            <p data-i18n="index.feat1_desc">Không gian lưu trữ các bài tập đã thực hành và các bài học đã lưu cùng với việc ghi nhận lịch sử tương tác để giúp người học theo dõi tiến độ thông qua các thống kê trực quan.</p>
+            <div class="buttons">
+              <a href="user-dashboard.html" class="btn btn-primary" data-i18n="index.btn_feat1">Đi tới Dashboard <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+          </div>
+          <div class="f-visual">
+            <img src="assets/images/dashboard.png" alt="Dashboard Illustration" class="feature-img" />
+          </div>
+        </div>
 
-    <footer>© 2026 Vectoria. Học và trực quan hóa Không gian vector.</footer>
-  </body>
+        <!-- Feature 2: Calculator (Text Left, Image Right) -->
+        <div class="feature-row" data-gsap="fade-up">
+          <div class="f-text">
+            <h2 data-i18n="index.feat2_title">Không gian tính toán và trực quan hóa</h2>
+            <p data-i18n="index.feat2_desc">Hỗ trợ tính toán các bài toán và trực quan hóa các phép tính giữa các đối tượng toán học nhằm mô phỏng bản chất của chúng.</p>
+            <div class="buttons">
+              <a href="calculation.html" class="btn btn-primary" data-i18n="index.btn_feat2">Bắt đầu Tính toán <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+          </div>
+          <div class="f-visual">
+            <img src="assets/images/tinhtoan.png" alt="Calculator Illustration" class="feature-img" />
+          </div>
+        </div>
+
+        <!-- Feature 3: Knowledge (Image Left, Text Right) -->
+        <div class="feature-row reverse" data-gsap="fade-up">
+          <div class="f-text">
+            <h2 data-i18n="index.feat3_title">Thư viện kiến thức</h2>
+            <p data-i18n="index.feat3_desc">Nơi tổng hợp các lý thuyết bài học về Đại số tuyến tính và tài liệu tham khảo, hỗ trợ đề xuất lộ trình học tối ưu và cho phép người học tự tạo bộ đề ôn tập theo ý muốn.</p>
+            <div class="buttons">
+              <a href="knowledge_info.html" class="btn btn-primary" data-i18n="index.btn_feat3">Vào Thư viện <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+          </div>
+          <div class="f-visual">
+            <img src="assets/images/thuvienkienthuc.png" alt="Knowledge Illustration" class="feature-img" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container text-center">
+        <p data-i18n="footer.text">© 2026 Vectoria. Học và trực quan hóa Không gian vector.</p>
+      </div>
+    </footer>
+
+    <script>
+      const canvas = document.getElementById("hero-canvas");
+      const ctx = canvas.getContext("2d", { alpha: false });
+      let width, height, originX, originY;
+      let UNIT = 35;
+
+      let rotX = 0.45;
+      let rotY = -0.6;
+      let vX = 0;
+      let vY = 0.003;
+
+      let isDragging = false;
+      let previousX = 0;
+      let previousY = 0;
+
+      // Biến kiểm soát vòng lặp để ngừng render khi khuất tầm nhìn
+      let isVisible = true;
+      let animationFrameId;
+
+      canvas.style.cursor = "grab";
+
+      function startDrag(x, y) {
+        isDragging = true;
+        previousX = x;
+        previousY = y;
+        canvas.style.cursor = "grabbing";
+      }
+
+      function moveDrag(x, y) {
+        if (!isDragging || !isVisible) return;
+        const deltaX = x - previousX;
+        const deltaY = y - previousY;
+        previousX = x;
+        previousY = y;
+
+        const sensitivity = 0.005;
+        rotY += deltaX * sensitivity;
+        rotX += deltaY * sensitivity;
+
+        vY = deltaX * sensitivity;
+        vX = deltaY * sensitivity;
+      }
+
+      function endDrag() {
+        isDragging = false;
+        canvas.style.cursor = "grab";
+      }
+
+      canvas.addEventListener("mousedown", (e) =>
+        startDrag(e.clientX, e.clientY),
+      );
+      window.addEventListener("mousemove", (e) =>
+        moveDrag(e.clientX, e.clientY),
+      );
+      window.addEventListener("mouseup", endDrag);
+      window.addEventListener("mouseleave", endDrag);
+
+      canvas.addEventListener(
+        "touchstart",
+        (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY),
+        { passive: false },
+      );
+      window.addEventListener(
+        "touchmove",
+        (e) => {
+          if (isDragging && window.scrollY < window.innerHeight) {
+            e.preventDefault();
+            moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        },
+        { passive: false },
+      );
+      window.addEventListener("touchend", endDrag);
+
+      function resize() {
+        width = window.innerWidth;
+        height = canvas.parentElement.clientHeight;
+        canvas.width = width * window.devicePixelRatio;
+        canvas.height = height * window.devicePixelRatio;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        originX = width < 768 ? width * 0.5 : width * 0.72;
+        originY = width < 768 ? height * 0.35 : height * 0.5;
+        UNIT = width < 768 ? 22 : 35;
+      }
+      window.addEventListener("resize", resize);
+      resize();
+
+      const MAX_UNITS = 5;
+
+      const vectors = [
+        { x: 3, y: 4, z: 2, color: "#ef4444" },
+        { x: -4, y: 2, z: -3, color: "#3b82f6" },
+        { x: 2, y: -4, z: 3, color: "#10b981" },
+        { x: -3, y: -2, z: -4, color: "#f59e0b" },
+        { x: 1, y: 3, z: -4, color: "#8b5cf6" },
+        { x: -2, y: -3, z: 4, color: "#06b6d4" },
+        { x: 4, y: -1, z: 2, color: "#ec4899" },
+        { x: -1, y: 5, z: 4, color: "#14b8a6" },
+        { x: 3, y: 3, z: -3, color: "#eab308" },
+        { x: -5, y: 1, z: 1, color: "#6366f1" },
+      ];
+
+      let renderObjects = [];
+
+      function init3DObjects() {
+        renderObjects = [];
+        const gridColor = document.body.classList.contains("dark-theme")
+          ? "rgba(255,255,255,.16)"
+          : "rgba(148,163,184,.65)";
+
+        for (let i = -MAX_UNITS; i <= MAX_UNITS; i++) {
+          renderObjects.push({
+            type: "line",
+            p1: { x: i, y: -MAX_UNITS, z: -MAX_UNITS },
+            p2: { x: i, y: -MAX_UNITS, z: MAX_UNITS },
+            color: gridColor,
+          });
+          renderObjects.push({
+            type: "line",
+            p1: { x: -MAX_UNITS, y: -MAX_UNITS, z: i },
+            p2: { x: MAX_UNITS, y: -MAX_UNITS, z: i },
+            color: gridColor,
+          });
+          renderObjects.push({
+            type: "line",
+            p1: { x: i, y: -MAX_UNITS, z: -MAX_UNITS },
+            p2: { x: i, y: MAX_UNITS, z: -MAX_UNITS },
+            color: gridColor,
+          });
+          renderObjects.push({
+            type: "line",
+            p1: { x: -MAX_UNITS, y: i, z: -MAX_UNITS },
+            p2: { x: MAX_UNITS, y: i, z: -MAX_UNITS },
+            color: gridColor,
+          });
+          renderObjects.push({
+            type: "line",
+            p1: { x: -MAX_UNITS, y: -MAX_UNITS, z: i },
+            p2: { x: -MAX_UNITS, y: MAX_UNITS, z: i },
+            color: gridColor,
+          });
+          renderObjects.push({
+            type: "line",
+            p1: { x: -MAX_UNITS, y: i, z: -MAX_UNITS },
+            p2: { x: -MAX_UNITS, y: i, z: MAX_UNITS },
+            color: gridColor,
+          });
+        }
+
+        const axisColor = document.body.classList.contains("dark-theme")
+          ? "#d8dee9"
+          : "#475569";
+        renderObjects.push({
+          type: "axis",
+          p1: { x: -MAX_UNITS, y: 0, z: 0 },
+          p2: { x: MAX_UNITS + 1.5, y: 0, z: 0 },
+          color: axisColor,
+          label: "x",
+        });
+        renderObjects.push({
+          type: "axis",
+          p1: { x: 0, y: -MAX_UNITS, z: 0 },
+          p2: { x: 0, y: MAX_UNITS + 1.5, z: 0 },
+          color: axisColor,
+          label: "y",
+        });
+        renderObjects.push({
+          type: "axis",
+          p1: { x: 0, y: 0, z: -MAX_UNITS },
+          p2: { x: 0, y: 0, z: MAX_UNITS + 1.5 },
+          color: axisColor,
+          label: "z",
+        });
+
+        for (let i = -MAX_UNITS; i <= MAX_UNITS; i++) {
+          if (i === 0) continue;
+          renderObjects.push({
+            type: "number",
+            p: { x: i, y: 0, z: 0 },
+            text: i.toString(),
+          });
+          renderObjects.push({
+            type: "number",
+            p: { x: 0, y: i, z: 0 },
+            text: i.toString(),
+          });
+          renderObjects.push({
+            type: "number",
+            p: { x: 0, y: 0, z: i },
+            text: i.toString(),
+          });
+        }
+
+        vectors.forEach((v) => {
+          renderObjects.push({
+            type: "vector",
+            p1: { x: 0, y: 0, z: 0 },
+            p2: { x: v.x, y: v.y, z: v.z },
+            color: v.color,
+          });
+        });
+      }
+
+      init3DObjects();
+
+      function animate() {
+        if (!isVisible) return; // KHÓA VAN: Nếu khuất tầm nhìn, ngưng tính toán hoàn toàn
+
+        ctx.fillStyle = document.body.classList.contains("dark-theme")
+          ? "#090B12"
+          : "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+
+        if (!isDragging) {
+          rotX += vX;
+          rotY += vY;
+          vX *= 0.98;
+          vY *= 0.98;
+          if (Math.abs(vX) < 0.001 && Math.abs(vY) < 0.004) {
+            vX += (0 - vX) * 0.02;
+            vY += (0.003 - vY) * 0.02;
+          }
+        }
+
+        const sinX = Math.sin(rotX);
+        const cosX = Math.cos(rotX);
+        const sinY = Math.sin(rotY);
+        const cosY = Math.cos(rotY);
+        const fov = 1500;
+
+        renderObjects.forEach((item) => {
+          if (item.type === "number") {
+            let px = item.p.x * UNIT;
+            let py = -item.p.y * UNIT;
+            let pz = item.p.z * UNIT;
+            let x1 = px * cosY - pz * sinY;
+            let z1 = px * sinY + pz * cosY;
+            let y2 = py * cosX - z1 * sinX;
+            let z2 = py * sinX + z1 * cosX;
+
+            item.scale = fov / (fov + z2);
+            item.px = originX + x1 * item.scale;
+            item.py = originY + y2 * item.scale;
+            item.zDepth = z2;
+          } else {
+            let px1 = item.p1.x * UNIT;
+            let py1 = -item.p1.y * UNIT;
+            let pz1 = item.p1.z * UNIT;
+            let x1_1 = px1 * cosY - pz1 * sinY;
+            let z1_1 = px1 * sinY + pz1 * cosY;
+            let y2_1 = py1 * cosX - z1_1 * sinX;
+            let z2_1 = py1 * sinX + z1_1 * cosX;
+
+            item.p1scale = fov / (fov + z2_1);
+            item.p1px = originX + x1_1 * item.p1scale;
+            item.p1py = originY + y2_1 * item.p1scale;
+
+            let px2 = item.p2.x * UNIT;
+            let py2 = -item.p2.y * UNIT;
+            let pz2 = item.p2.z * UNIT;
+            let x1_2 = px2 * cosY - pz2 * sinY;
+            let z1_2 = px2 * sinY + pz2 * cosY;
+            let y2_2 = py2 * cosX - z1_2 * sinX;
+            let z2_2 = py2 * sinX + z1_2 * cosX;
+
+            item.p2scale = fov / (fov + z2_2);
+            item.p2px = originX + x1_2 * item.p2scale;
+            item.p2py = originY + y2_2 * item.p2scale;
+
+            item.zDepth = (z2_1 + z2_2) / 2;
+          }
+        });
+
+        renderObjects.sort((a, b) => b.zDepth - a.zDepth);
+
+        renderObjects.forEach((item) => {
+          if (item.type === "line") {
+            ctx.beginPath();
+            ctx.moveTo(item.p1px, item.p1py);
+            ctx.lineTo(item.p2px, item.p2py);
+            ctx.strokeStyle = item.color;
+            ctx.lineWidth = 1 * item.p2scale;
+            ctx.stroke();
+          } else if (item.type === "axis" || item.type === "vector") {
+            let isAxis = item.type === "axis";
+
+            ctx.beginPath();
+            ctx.moveTo(item.p1px, item.p1py);
+            ctx.lineTo(item.p2px, item.p2py);
+            ctx.strokeStyle = item.color;
+            ctx.lineWidth = (isAxis ? 1.5 : 3.5) * item.p1scale;
+            ctx.lineCap = "round";
+            ctx.stroke();
+
+            let angle = Math.atan2(
+              item.p2py - item.p1py,
+              item.p2px - item.p1px,
+            );
+            let headLen = (isAxis ? 10 : 14) * item.p2scale;
+            ctx.beginPath();
+            ctx.moveTo(item.p2px, item.p2py);
+            ctx.lineTo(
+              item.p2px - headLen * Math.cos(angle - Math.PI / 8),
+              item.p2py - headLen * Math.sin(angle - Math.PI / 8),
+            );
+            ctx.lineTo(
+              item.p2px - headLen * Math.cos(angle + Math.PI / 8),
+              item.p2py - headLen * Math.sin(angle + Math.PI / 8),
+            );
+            ctx.fillStyle = ctx.strokeStyle;
+            ctx.fill();
+
+            if (item.label) {
+              ctx.fillStyle = document.body.classList.contains("dark-theme")
+                ? "#ffffff"
+                : "#1e293b";
+              ctx.font = `italic ${18 * item.p2scale}px "STIX Two Text", "Times New Roman", serif`;
+              ctx.fillText(item.label, item.p2px + 12, item.p2py - 12);
+            }
+          } else if (item.type === "number") {
+            ctx.fillStyle = document.body.classList.contains("dark-theme")
+              ? "#b9c4d6"
+              : "#64748b";
+            ctx.font = `${13 * item.scale}px "STIX Two Text", "Times New Roman", serif`;
+            ctx.fillText(item.text, item.px + 6, item.py + 14);
+          }
+        });
+
+        ctx.beginPath();
+        ctx.shadowColor = "white";
+
+        ctx.shadowBlur = 30;
+
+        ctx.fillStyle = "white";
+
+        ctx.beginPath();
+
+        ctx.arc(originX, originY, 5, 0, Math.PI * 2);
+
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = document.body.classList.contains("dark-theme")
+          ? "#ffffff"
+          : "#0f172a";
+        ctx.fill();
+
+        animationFrameId = requestAnimationFrame(animate);
+      }
+
+      // THUẬT TOÁN ĐIỀU PHỐI (INTERSECTION OBSERVER)
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              // Đồ thị lọt vào tầm nhìn -> Bật điện
+              isVisible = true;
+              animate();
+            } else {
+              // Đồ thị bị cuộn qua -> Cúp cầu dao
+              isVisible = false;
+              cancelAnimationFrame(animationFrameId);
+            }
+          });
+        },
+        { threshold: 0.1 },
+      ); // Kích hoạt khi thấy 10% đồ thị
+
+      // Bắt đầu giám sát cái Hero Section
+      observer.observe(document.querySelector(".hero-section"));
+
+      // Hệ thống quản lý đa ngôn ngữ của Vectoria
+      const i18n = {
+        currentLang: localStorage.getItem("vectoria_lang") || "vi",
+        cache: {},
+
+        async init() {
+          // Cập nhật text ban đầu cho dropdown dựa trên ngôn ngữ đã lưu
+          const langMap = { vi: "Tiếng Việt", en: "English" };
+          document.getElementById("current-lang").textContent =
+            langMap[this.currentLang];
+
+          await this.loadLanguage(this.currentLang);
+        },
+
+        async loadLanguage(lang) {
+          if (!this.cache[lang]) {
+            try {
+              const response = await fetch(`locales/${lang}.json`);
+              this.cache[lang] = await response.json();
+            } catch (error) {
+              console.error("Lỗi tải file ngôn ngữ:", error);
+              return;
+            }
+          }
+
+          const translations = this.cache[lang];
+          document.querySelectorAll("[data-i18n]").forEach((element) => {
+            const key = element.getAttribute("data-i18n");
+            const text = key
+              .split(".")
+              .reduce((obj, i) => (obj ? obj[i] : null), translations);
+
+            if (text) {
+              const icon = element.querySelector("i");
+              if (icon) {
+                element.textContent = "";
+                if (key.includes("btn_calc")) {
+                  element.textContent = text + " ";
+                  element.appendChild(icon);
+                } else {
+                  element.appendChild(icon);
+                  element.append(" " + text);
+                }
+              } else {
+                element.textContent = text;
+              }
+            }
+          });
+        },
+      };
+
+      // Khởi chạy hệ thống dịch
+      document.addEventListener("DOMContentLoaded", () => i18n.init());
+
+      // Logic Dropdown
+      const langBtn = document.getElementById("lang-btn");
+      const langMenu = document.getElementById("lang-menu");
+      const currentLang = document.getElementById("current-lang");
+
+      langBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        langMenu.classList.toggle("show");
+        langBtn.classList.toggle("active");
+      });
+
+      document.querySelectorAll(".lang-option").forEach((option) => {
+        option.addEventListener("click", async (e) => {
+          const val = e.target.getAttribute("data-value");
+          currentLang.textContent = e.target.textContent;
+          langMenu.classList.remove("show");
+          langBtn.classList.remove("active");
+
+          // SỬA: Gọi đúng tên hàm là loadLanguage
+          await i18n.loadLanguage(val);
+          localStorage.setItem("vectoria_lang", val);
+        });
+      });
+
+      window.addEventListener("click", () => {
+        langMenu.classList.remove("show");
+        langBtn.classList.remove("active");
+      });
+
+      
+    </script>
+  <script src="js/app/auth.js"></script>
+  <script src="js/app/ui/topbar_avatar.js"></script>
+  <!-- GSAP & ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <!-- Scrollytelling Script -->
+  <script src="js/app/scrollytelling.js"></script>
+</body>
 </html>

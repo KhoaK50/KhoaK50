@@ -38,8 +38,7 @@
 
     // Nút tính toán & xem trước
     const btnCompute = document.getElementById("btnCompute");
-    if (btnCompute)
-      btnCompute.addEventListener("click", () => App.runCalc(true));
+    // [FIX] Removed duplicate listener, now only in sidebar.js
 
     // Select phép tính phụ
     const opExtraSelect = document.getElementById("opExtraSelect");
@@ -58,24 +57,31 @@
     bindClick("btnRank", App.rankVecUI);
     bindClick("btnDot", App.dotProductUI);
     bindClick("btnProj", App.projectionUI);
-
-    // --- (ĐÃ XÓA HOÀN TOÀN ĐOẠN MINI KEYPAD CŨ GÂY LỖI) ---
+    // --- (ĐÃ XÓA HOÀN TOÀN ĐOẠN MINI KEYPAD CŨ GÂY LỖI) ---
 
     // Init 2D/3D layers
     if (window.Vec2D && Vec2D.init2D) Vec2D.init2D();
     if (window.Vec3D && Vec3D.init3D) Vec3D.init3D();
 
-    // prevent wheel scroll in viewer wrap
+    // prevent wheel scroll in viewer wrap, except for paper mode
     const viewerWrap = document.getElementById("viewerWrap");
     if (viewerWrap)
-      viewerWrap.addEventListener("wheel", (e) => e.preventDefault(), {
+      viewerWrap.addEventListener("wheel", (e) => {
+        if (e.target.closest('#paperWrap')) return;
+        e.preventDefault();
+      }, {
         passive: false,
       });
 
     // First show 2D by default
     if (App.applyTheme) App.applyTheme();
     if (window.Vec2D && Vec2D.show2D) Vec2D.show2D();
+    
+    // Khôi phục phiên làm việc trước khi vẽ lại tất cả
+    if (App.SessionManager) App.SessionManager.init();
+    
     if (App.redrawAll) App.redrawAll();
+
 
     if (App.log) App.log("Ready Z-up.");
 
@@ -119,8 +125,15 @@
 
     function syncOverlay() {
       if (!overlay || !controls) return;
-      if (controls.classList.contains("open")) overlay.classList.add("show");
-      else overlay.classList.remove("show");
+      if (controls.classList.contains("open")) {
+          overlay.classList.add("show");
+          const fh = document.getElementById("floatingHamburger");
+          if (fh) fh.classList.add("open");
+        } else {
+          overlay.classList.remove("show");
+          const fh = document.getElementById("floatingHamburger");
+          if (fh) fh.classList.remove("open");
+        }
     }
 
     if (burger && controls) {
@@ -184,3 +197,6 @@
     App.init();
   }
 })();
+
+
+

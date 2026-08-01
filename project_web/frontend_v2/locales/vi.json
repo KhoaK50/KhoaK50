@@ -1,0 +1,46 @@
+{
+  "nav": {
+    "home": "Trang chủ",
+    "dashboard": "Dashboard",
+    "calc": "Tính toán",
+    "explore": "<i class=\"fa-solid fa-compass\"></i> Khám phá <i class=\"fa-solid fa-chevron-down\" style=\"font-size: 0.7em;\"></i>",
+    "knowledge": "<i class=\"fa-solid fa-graduation-cap\"></i> Thư viện kiến thức",
+    "manual": "<i class=\"fa-solid fa-circle-question\"></i> Hướng dẫn sử dụng",
+    "docs": "<i class=\"fa-solid fa-file-pdf\"></i> Tài liệu tham khảo",
+    "about": "<i class=\"fa-solid fa-users\"></i> Về chúng tôi",
+    "contact": "<i class=\"fa-solid fa-envelope\"></i> Liên hệ"
+  },
+  "topbar": {
+    "theme": "Chuyển giao diện",
+    "lang": "Ngôn ngữ",
+    "notif": "Thông báo"
+  },
+  "avatar": {
+    "name_changes": "Còn 2 lượt đổi tên trong tháng",
+    "switch_account": "Chuyển tài khoản",
+    "logout": "Đăng xuất",
+    "guest": "Khách truy cập",
+    "guest_desc": "Đăng nhập để lưu trữ kết quả và đồng bộ đám mây.",
+    "login": "Đăng nhập ngay"
+  },
+  "footer": {
+    "text": "© 2026 Vectoria. Học và trực quan hóa Không gian vector."
+  },
+  "index": {
+    "hero_title": "Hệ thống cá nhân hóa học tập Đại số tuyến tính",
+    "hero_desc": "Vectoria được sinh ra để đồng hành cùng người học trong suốt quá trình khám phá Đại số tuyến tính. Một nơi hội tụ các lý thuyết, bài tập và trao cho người học quyền năng khám phá \"thế giới ấy\" qua các công cụ trực quan sinh động.",
+    "btn_dashboard": "Đi tới Dashboard <i class=\"fa-solid fa-arrow-right\"></i>",
+    "btn_calc_outline": "<i class=\"fa-solid fa-calculator\"></i> Tính toán",
+    "btn_knowledge_outline": "<i class=\"fa-solid fa-book-open\"></i> Lý thuyết",
+    "divider": "Tính năng Nổi bật",
+    "feat1_title": "Lưu trữ dữ liệu và theo dõi tiến trình học của bản thân",
+    "feat1_desc": "Không gian lưu trữ các bài tập đã thực hành và các bài học đã lưu cùng với việc ghi nhận lịch sử tương tác để giúp người học theo dõi tiến độ thông qua các thống kê trực quan.",
+    "btn_feat1": "Trải nghiệm không gian học <i class=\"fa-solid fa-arrow-right\"></i>",
+    "feat2_title": "Không gian tính toán và trực quan hóa",
+    "feat2_desc": "Hỗ trợ tính toán các bài toán và trực quan hóa các phép tính giữa các đối tượng toán học nhằm mô phỏng bản chất của chúng.",
+    "btn_feat2": "Bắt tay vào thực hành <i class=\"fa-solid fa-arrow-right\"></i>",
+    "feat3_title": "Thư viện kiến thức",
+    "feat3_desc": "Nơi tổng hợp các lý thuyết bài học về Đại số tuyến tính và tài liệu tham khảo, hỗ trợ đề xuất lộ trình học tối ưu và cho phép người học tự tạo bộ đề ôn tập theo ý muốn.",
+    "btn_feat3": "Lặn vào kho tri thức <i class=\"fa-solid fa-arrow-right\"></i>"
+  }
+}

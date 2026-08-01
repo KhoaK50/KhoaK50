@@ -31,6 +31,18 @@
       "]"
     );
   };
+
+  // Hàm làm đẹp Nhãn Tọa độ (Ép tối đa 2 chữ số thập phân, tự cắt số 0 thừa)
+  App.formatTip = function (vec) {
+    if (!Array.isArray(vec)) return "[]";
+    return "[" + vec.map(v => {
+      let num = Number(v);
+      if (isNaN(num)) return "0";
+      // ToFixed(2) đảm bảo tối đa 2 số. Regex dọn dẹp số 0 vô dụng ở đuôi.
+      return num.toFixed(2).replace(/\.?0+$/, "");
+    }).join(", ") + "]";
+  };
+
   // Biến đếm ID toàn cục (Reset được)
   let nextVectorId = 1;
   function smartFormat(num) {
@@ -105,7 +117,7 @@
        PHẦN 1: TIỆN ÍCH & GIAO DIỆN
        ======================================================================= */
 
-  // Hiển thị thông báo Toast (Đồng bộ cây đỏ + Hiệu ứng trượt ngang)
+  // Hiển thị thông báo Toast (Đồng bộ cây đỏ/vàng/xanh + Hiệu ứng trượt ngang)
   App.showToast = function (message, type = "error") {
     let container = document.getElementById("toast-container");
     if (!container) {
@@ -114,14 +126,11 @@
       document.body.appendChild(container);
     }
 
-    // --- HÀM XỬ LÝ ẢO THUẬT V3: Bay sang phải rồi mới xẹp ---
     const removeToastSmoothly = (t) => {
       if (t.isRemoving) return;
       t.isRemoving = true;
-
       t.style.opacity = "0";
       t.style.transform = "translateX(120%)";
-
       setTimeout(() => {
         t.style.marginTop = "0";
         t.style.marginBottom = "0";
@@ -129,13 +138,11 @@
         t.style.paddingBottom = "0";
         t.style.height = "0";
       }, 150);
-
       setTimeout(() => {
         if (t.parentNode) t.remove();
       }, 400);
     };
 
-    // --- FIX SPAM: Ép thẻ cũ nhất bay màu nếu quá 3 cái ---
     let activeToasts = Array.from(container.children).filter(
       (t) => !t.isRemoving,
     );
@@ -147,32 +154,42 @@
     const toast = document.createElement("div");
     toast.className = "toast-item";
 
-    toast.style.opacity = "0";
-    toast.style.transform = "translateY(20px)";
-    toast.style.transition = "all 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55)";
-    toast.style.overflow = "hidden";
+    // Ghi đè CSS cứng để đảm bảo không bị dính màu đỏ mặc định của class
+    toast.style.cssText = `
+        opacity: 0; transform: translateY(20px); overflow: hidden;
+        transition: all 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        cursor: pointer; display: flex; align-items: center;
+    `;
 
-    let iconSVG = "";
+    let iconSVG = "",
+      colorHex = "";
     if (type === "error") {
+      colorHex = "#f44336"; // Đỏ
       iconSVG =
         '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>';
+    } else if (type === "warning") {
+      colorHex = "#ff9800"; // Vàng cam chuẩn
+      iconSVG =
+        '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>';
     } else {
+      colorHex = "#4caf50"; // Xanh
       iconSVG =
         '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
     }
 
+    toast.style.borderLeft = `4px solid ${colorHex}`;
+
     toast.innerHTML = `
-            <div class="toast-content" style="cursor: pointer;">
-                <span class="toast-icon">${iconSVG}</span>
-                <span>${message}</span>
+            <div class="toast-content" style="display: flex; align-items: center; gap: 10px;">
+                <span class="toast-icon" style="color: ${colorHex}; display: flex;">${iconSVG}</span>
+                <span style="color: var(--text); font-weight: 500;">${message}</span>
             </div>
-            <div class="toast-progress"></div>
+            <div class="toast-progress" style="background: ${colorHex};"></div>
         `;
 
     toast.onclick = function () {
       removeToastSmoothly(toast);
     };
-
     container.appendChild(toast);
 
     requestAnimationFrame(() => {
@@ -183,6 +200,38 @@
     setTimeout(function () {
       removeToastSmoothly(toast);
     }, 5000);
+  };
+
+  // =======================================================================
+  // CHUẨN HIỂN THỊ KẾT QUẢ THỐNG NHẤT (UNIFIED RESULT UI)
+  // =======================================================================
+  App.renderUnifiedResult = function (label, contentHtml) {
+    if (!document.getElementById("unified-result-style")) {
+      const style = document.createElement("style");
+      style.id = "unified-result-style";
+      style.innerHTML = `
+            .unified-result-box {
+                background: rgba(33, 150, 243, 0.08); border-left: 4px solid #2196F3;
+                border-radius: 6px; padding: 12px 16px; margin-top: 15px;
+                font-family: system-ui, sans-serif;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
+                display: flex; flex-direction: column; gap: 8px;
+            }
+            body.dark .unified-result-box { background: rgba(79, 133, 255, 0.1); border-left-color: #4f85ff; }
+            .unified-result-label { font-size: 11px; text-transform: uppercase; font-weight: 800; color: #555; letter-spacing: 0.5px; }
+            body.dark .unified-result-label { color: #aaa; }
+            .unified-result-content { font-size: 16px; font-weight: 600; color: #1565C0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            body.dark .unified-result-content { color: #90caf9; }
+            .unified-result-content math-field { background: transparent; border: none; outline: none; font-size: 16px; color: inherit; width: max-content; }
+        `;
+      document.head.appendChild(style);
+    }
+    return `
+        <div class="unified-result-box">
+            <div class="unified-result-label">${label}</div>
+            <div class="unified-result-content">${contentHtml}</div>
+        </div>
+    `;
   };
 
   // Xử lý khi danh sách vector trống (FIX LỖI KẸT VIỀN ĐỎ)
@@ -326,9 +375,12 @@
     const to3D = App.mode === "2D";
     App.mode = to3D ? "3D" : "2D";
 
-    const modeBadge = document.getElementById("modeBadge");
-    if (modeBadge) modeBadge.textContent = `Mode: ${App.mode}`;
+    const modeBadge = document.getElementById("modeBadgeText");
+    if (modeBadge) modeBadge.textContent = `${App.mode}`;
 
+    const axisPanel = document.getElementById("axisControls");
+    if (axisPanel) axisPanel.style.display = to3D ? "flex" : "none";
+    
     if (to3D) {
       if (window.Vec3D) {
         if (!Vec3D._scene) Vec3D.init3D();
@@ -342,6 +394,9 @@
         Vec2D.resetView();
         App._portAngleOverlay("2D");
       }
+    }
+    if (typeof App.refreshProjectionOverlay === "function") {
+      App.refreshProjectionOverlay();
     }
   };
 
@@ -361,13 +416,25 @@
     if (App.mode === "2D") {
       if (window.Vec2D) {
         Vec2D.show2D();
+        // Vẽ các vector thường
         Vec2D.draw2DAllVectors();
+
+        // [CẤU HÌNH ĐẶC BIỆT]: Nếu là phép chiếu 3D đang xem ở 2D,
+        // ta phải tính lại hình chiếu 2D của vector 3D đó dựa trên tọa độ thực.
+        if (App.currentProjVisual) {
+          // Tự tính lại vector hình chiếu dựa trên công thức toán học
+          // để hình ảnh hiển thị không bị "lừa mắt"
+          App._drawCorrectedProjection2D();
+        }
       }
     } else {
       if (window.Vec3D) {
         Vec3D.show3D();
         Vec3D.draw3DAllVectors({ frame: opts.frame });
       }
+    }
+    if (typeof App.refreshProjectionOverlay === "function") {
+      App.refreshProjectionOverlay();
     }
   };
 
@@ -428,12 +495,14 @@
       return;
     }
 
-    // 3. Tiến hành parse vector như bình thường
     let v;
     try {
       v = App.parseVectorExpr(raw);
       if (!Array.isArray(v) || v.length < 2)
         throw new Error("Vector phải có ít nhất 2 toạ độ");
+      
+      if (v.length > 5)
+        throw new Error("Vector tối đa 5 chiều để đảm bảo hiệu suất tính toán SymPy.");
 
       // --- CHỐT CHẶN 3: BẮT LỖI TỌA ĐỘ VÔ LÝ ---
       if (
@@ -455,28 +524,39 @@
     const item = App._attachVectorItem(v, hue);
 
     // --- KIỂM TRA HÀM TOÁN HỌC & FORMAT LATEX ---
-    const needsCalc = /(sin|cos|tan|cot|log|ln|pi|e\^|e\s|e$)/i.test(raw);
-
-    if (needsCalc) {
-      const latexArr = v.map((val) => smartFormat(val));
-      item.latex = `[${latexArr.join(", ")}]`;
-    } else {
-      // Lắp ráp lại mảng sạch sẽ, loại bỏ khoảng trắng/số dư thừa
-      const cleanArray = v.map((val) => Number(val).toString());
-      item.latex = `[${cleanArray.join(", ")}]`;
-    }
+    // Luôn luôn lưu lại chuỗi gốc mà người dùng đã gõ để không bị mất định dạng (VD: phân số, căn)
+    item.latex = raw;
 
     App.vectorList.push(item);
 
-    if (App.renderVectorList) App.renderVectorList();
+    // Nếu user đang gõ tìm kiếm thì phải vẽ lại toàn bộ để lọc. 
+    // Nếu không, chỉ gắn nối tiếp vector mới vào cuối để chống lag.
+    const searchInp = document.getElementById("mainVecSearch");
+    const isSearching = searchInp && searchInp.value.trim() !== "";
+    
+    if (App.renderVectorList) App.renderVectorList(!isSearching);
     if (App.refreshCalcVectorOptions) App.refreshCalcVectorOptions();
     if (App.renderExtraCalcOptions) App.renderExtraCalcOptions();
 
     if (App.autoMode) {
       App.mode = v.length >= 3 ? "3D" : "2D";
-      const mb = document.getElementById("modeBadge");
-      if (mb) mb.textContent = `Mode: ${App.mode}`;
+      const mb = document.getElementById("modeBadgeText");
+      if (mb) mb.textContent = `${App.mode}`;
+      
+      const axisPanel = document.getElementById("axisControls");
+      if (axisPanel) axisPanel.style.display = App.mode === "3D" ? "flex" : "none";
     }
+    // Bật chế độ sinh tồn: Quá 50 vector thì ẩn nhãn 3D để cứu CPU
+   if (App.vectorList.length === 51) {
+       // CHỈ BÁO ĐÚNG 1 LẦN khi vừa vượt mốc 50
+       App.showToast("Đã vượt 50 vector! Tự động ẩn nhãn 3D để chống giật lag.", "warning");
+   }
+
+   if (App.vectorList.length > 50) {
+       document.body.classList.add("overload-3d");
+   } else {
+       document.body.classList.remove("overload-3d");
+   }
     if (App.redrawAll) App.redrawAll({ frame: false });
     if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
   };
@@ -516,7 +596,13 @@
     const item = App.vectorList.find(function (v) {
       return v.id === id;
     });
-    return item ? item.vec : null;
+    if (!item) return null;
+    
+    if (item.latex) {
+        let s = item.latex.replace(/^\\left\[|^\[|\\right\]|\]$/g, "");
+        return s.split(",").map((x) => x.trim());
+    }
+    return item.vec;
   }
 
   App.refreshCalcUI = function () {
@@ -558,7 +644,7 @@
   // --- MAIN FUNCTION: CHẠY TÍNH TOÁN ---
   App.runCalc = async function (addToList) {
     if (App.handleEmptyListAction()) return;
-    
+
     const op = document.getElementById("opSelect").value;
     const id1 = Number(document.getElementById("v1Select").value);
     const id2 = Number(document.getElementById("v2Select").value);
@@ -576,8 +662,8 @@
 
       if (op === "add") payload = { v1, v2 };
       else if (op === "scale") {
-        const k = parseFloat(scalarInp.value);
-        if (!isFinite(k)) throw "Hệ số k không hợp lệ.";
+        const k = scalarInp.value.trim();
+        if (!k) throw "Hệ số k không được để trống.";
         payload = { v: v1, scalar: k };
       } else if (op === "cross") payload = { v1, v2 };
       else if (op === "normalize") payload = { v: v1 };
@@ -598,6 +684,7 @@
       projection: "projection",
       dot: "dot_product",
       vector_norm: "vector_norm",
+
       angle_between: "angle_between",
     };
 
@@ -614,9 +701,69 @@
           if (App.mode === "2D" && window.Vec2D)
             Vec2D.drawAngleArc2D(v1, v2, deg);
           else if (window.Vec3D) Vec3D.drawAngleArc3D(v1, v2, val, deg);
-          calcSteps.innerHTML = `<div>${deg.toFixed(2)}°</div>`;
+          calcSteps.innerHTML = App.renderUnifiedResult(
+            "GÓC GIỮA 2 VECTOR",
+            `${deg.toFixed(2)}°`,
+          );
+          if (window.App.PaperLogger) {
+            const v1Vec = App.vectorList.find(v => v.id === id1);
+            const v2Vec = App.vectorList.find(v => v.id === id2);
+            let detailsHtml = "";
+            if (v1Vec && v2Vec) {
+              detailsHtml = `<b>Đầu vào:</b><br/>\\( \\vec{v}_{${id1}} = [${v1Vec.vec.join(", ")}] \\)<br/>\\( \\vec{v}_{${id2}} = [${v2Vec.vec.join(", ")}] \\)<br/><br/><b>Công thức:</b><br/>\\( \\cos(\\theta) = \\frac{\\vec{v}_{${id1}} \\cdot \\vec{v}_{${id2}}}{\\|\\vec{v}_{${id1}}\\| \\|\\vec{v}_{${id2}}\\|} \\)<br/><br/><b>Kết quả:</b><br/>\\( \\theta = ${deg.toFixed(2)}^\\circ \\)`;
+            }
+            const ltx = `\\angle(\\vec{v}_{${id1}}, \\vec{v}_{${id2}}) = ${deg.toFixed(2)}^\\circ`;
+            App.PaperLogger.log("Góc giữa 2 vector", ltx, detailsHtml, null, { type: 'angle_between', vectors: [id1, id2] });
+          }
+          if (App.useAnimation && typeof App.animateOperation === "function") {
+              App.animateOperation("angle_between", [id1, id2], val);
+          }
         } else {
-          calcSteps.innerHTML = `<div>${App.formatScalar ? App.formatScalar(val) : val}</div>`;
+          calcSteps.innerHTML = App.renderUnifiedResult(
+            "KẾT QUẢ VÔ HƯỚNG",
+            App.formatScalar ? App.formatScalar(val) : val,
+          );
+          if (window.App.PaperLogger) {
+          let ltx = "";
+          let title = "Phép tính vô hướng";
+          let detailsHtml = "";
+          const v1Vec = App.vectorList.find(v => v.id === id1);
+          const v2Vec = App.vectorList.find(v => v.id === id2);
+          if (op === "dot") { 
+             title = "Tích vô hướng"; 
+             ltx = `\\vec{v}_{${id1}} \\cdot \\vec{v}_{${id2}} = ${val}`; 
+             if (v1Vec && v2Vec) {
+               detailsHtml = `<b>Đầu vào:</b><br/>\\( \\vec{v}_{${id1}} = [${v1Vec.vec.join(", ")}] \\)<br/>\\( \\vec{v}_{${id2}} = [${v2Vec.vec.join(", ")}] \\)<br/><br/><b>Quá trình:</b><br/>\\( \\vec{v}_{${id1}} \\cdot \\vec{v}_{${id2}} = ` + v1Vec.vec.map((x,i) => `(${x}) \\cdot (${v2Vec.vec[i]})`).join(' + ') + ` = ${val} \\)`;
+             }
+          }
+          else if (op === "vector_norm") { 
+             title = "Độ dài vector"; 
+             ltx = `\\|\\vec{v}_{${id1}}\\| = ${val}`; 
+             if (v1Vec) {
+               detailsHtml = `<b>Đầu vào:</b><br/>\\( \\vec{v}_{${id1}} = [${v1Vec.vec.join(", ")}] \\)<br/><br/><b>Quá trình:</b><br/>\\( \\|\\vec{v}_{${id1}}\\| = \\sqrt{` + v1Vec.vec.map(x => `(${x})^2`).join(' + ') + `} = ${val} \\)`;
+             }
+          }
+          if (op === "dot") {
+             App.PaperLogger.log(title, ltx, detailsHtml, null, { type: 'dot', vectors: [id1, id2] });
+          } else {
+             App.PaperLogger.log(title, ltx, detailsHtml);
+          }
+        }
+        }
+
+        if (
+          op === "dot" &&
+          App.useAnimation &&
+          typeof App.animateOperation === "function"
+        ) {
+          App.animateOperation("dot", [id1, id2], val);
+        }
+        if (
+          op === "vector_norm" &&
+          App.useAnimation &&
+          typeof App.animateOperation === "function"
+        ) {
+          App.animateOperation("vector_norm", [id1], val);
         }
         return;
       }
@@ -634,10 +781,21 @@
 
       // Tạo chuỗi Latex: Vector (x, y) hoặc số
       let latex = "";
-      if (Array.isArray(rawRes)) {
-        latex = `\\left( ${rawRes.map(fmtVal).join(",\\; ")} \\right)`;
+      if (data.result_latex !== undefined) {
+        // Nếu backend gửi kết quả LaTeX chuẩn (từ SymPy)
+        const rawLatex = data.result_latex;
+        if (Array.isArray(rawLatex)) {
+            latex = `\\left( ${rawLatex.join(",\\; ")} \\right)`;
+        } else {
+            latex = String(rawLatex);
+        }
       } else {
-        latex = fmtVal(rawRes);
+        // Fallback cũ nếu API chưa hỗ trợ SymPy trả về LaTeX
+        if (Array.isArray(rawRes)) {
+            latex = `\\left( ${rawRes.map(fmtVal).join(",\\; ")} \\right)`;
+        } else {
+            latex = fmtVal(rawRes);
+        }
       }
 
       // [FIX QUAN TRỌNG] Reset sạch style thẻ cha để không bị 2 viền chồng nhau
@@ -646,18 +804,58 @@
       calcSteps.style.border = "none";
       calcSteps.style.background = "transparent";
 
-      // Gán HTML khung xanh mới
-      calcSteps.innerHTML = `
-                <div class="calc-result-box">
-                    <div class="calc-result-label">
-                        Kết quả:
-                    </div>
-                    
-                    <math-field read-only class="calc-result-math">
-                        ${latex}
-                    </math-field>
-                </div>
-            `;
+      // Bọc kết quả vào khung Thống nhất
+      calcSteps.innerHTML = App.renderUnifiedResult(
+        "VECTOR KẾT QUẢ",
+        `<math-field read-only>${latex}</math-field>`,
+      );
+      if (window.App.PaperLogger) {
+        let ltx = "";
+        let title = "Phép tính vector";
+        let detailsHtml = "";
+        const v1Vec = App.vectorList.find(v => v.id === id1);
+        const v2Vec = App.vectorList.find(v => v.id === id2);
+        
+        if (op === "add") { 
+           title = "Cộng 2 vector"; 
+           ltx = `\\vec{v}_{${id1}} + \\vec{v}_{${id2}} = ${latex}`; 
+           if (v1Vec && v2Vec) detailsHtml = `<b>Đầu vào:</b><br/>\\( \\vec{v}_{${id1}} = [${v1Vec.vec.join(", ")}] \\)<br/>\\( \\vec{v}_{${id2}} = [${v2Vec.vec.join(", ")}] \\)<br/><br/><b>Quá trình:</b><br/>\\( \\vec{v}_{${id1}} + \\vec{v}_{${id2}} = [` + v1Vec.vec.map((x,i) => `${x} + ${v2Vec.vec[i]}`).join(', ') + `] \\)<br/><br/><b>Kết quả:</b><br/>\\( ${latex} \\)`;
+        }
+        else if (op === "scale") { 
+           title = "Kéo giãn vector"; 
+           ltx = `${scalarInp.value.trim()} \\cdot \\vec{v}_{${id1}} = ${latex}`; 
+           if (v1Vec) detailsHtml = `<b>Đầu vào:</b><br/>\\( \\vec{v}_{${id1}} = [${v1Vec.vec.join(", ")}] \\)<br/>\\( k = ${scalarInp.value.trim()} \\)<br/><br/><b>Quá trình:</b><br/>\\( ${scalarInp.value.trim()} \\cdot \\vec{v}_{${id1}} = [` + v1Vec.vec.map(x => `${scalarInp.value.trim()} \\cdot ${x}`).join(', ') + `] \\)<br/><br/><b>Kết quả:</b><br/>\\( ${latex} \\)`;
+        }
+        else if (op === "cross") { 
+           title = "Tích có hướng"; 
+           ltx = `[\\vec{v}_{${id1}}, \\vec{v}_{${id2}}] = ${latex}`; 
+           if (v1Vec && v2Vec && v1Vec.vec.length === 3 && v2Vec.vec.length === 3) {
+             detailsHtml = `<b>Đầu vào:</b><br/>\\( \\vec{v}_{${id1}} = [${v1Vec.vec.join(", ")}] \\)<br/>\\( \\vec{v}_{${id2}} = [${v2Vec.vec.join(", ")}] \\)<br/><br/><b>Quá trình:</b><br/>\\( [\\vec{v}_{${id1}}, \\vec{v}_{${id2}}] = \\begin{vmatrix} \\mathbf{i} & \\mathbf{j} & \\mathbf{k} \\\\ ${v1Vec.vec.join(' & ')} \\\\ ${v2Vec.vec.join(' & ')} \\end{vmatrix} \\)<br/><br/><b>Kết quả:</b><br/>\\( ${latex} \\)`;
+           }
+        }
+        else if (op === "normalize") { 
+           title = "Chuẩn hoá vector"; 
+           ltx = `\\frac{\\vec{v}_{${id1}}}{\\|\\vec{v}_{${id1}}\\|} = ${latex}`; 
+           if (v1Vec) detailsHtml = `<b>Đầu vào:</b><br/>\\( \\vec{v}_{${id1}} = [${v1Vec.vec.join(", ")}] \\)<br/><br/><b>Kết quả:</b><br/>\\( ${latex} \\)`;
+        }
+        else if (op === "projection") { 
+           title = "Hình chiếu"; 
+           ltx = `\\text{proj}_{\\vec{v}_{${id2}}} \\vec{v}_{${id1}} = ${latex}`; 
+           if (v1Vec && v2Vec) detailsHtml = `<b>Đầu vào:</b><br/>\\( \\vec{v}_{${id1}} = [${v1Vec.vec.join(", ")}] \\)<br/>\\( \\vec{v}_{${id2}} = [${v2Vec.vec.join(", ")}] \\)<br/><br/><b>Kết quả:</b><br/>\\( ${latex} \\)`;
+        }
+        
+        if (op === "cross" && id1 !== undefined && id2 !== undefined) {
+           App.PaperLogger.log(title, ltx, detailsHtml, null, { type: 'cross', vectors: [id1, id2], result: nextVectorId });
+        } else if (op === "add" && id1 !== undefined && id2 !== undefined) {
+           App.PaperLogger.log(title, ltx, detailsHtml, null, { type: 'add', vectors: [id1, id2], result: nextVectorId });
+        } else if (op === "subtract" && id1 !== undefined && id2 !== undefined) {
+           App.PaperLogger.log(title, ltx, detailsHtml, null, { type: 'subtract', vectors: [id1, id2], result: nextVectorId });
+        } else if (op === "projection" && id1 !== undefined && id2 !== undefined) {
+           App.PaperLogger.log(title, ltx, detailsHtml, null, { type: 'project', vectors: [id1, id2], result: nextVectorId });
+        } else {
+           App.PaperLogger.log(title, ltx, detailsHtml);
+        }
+      }
       if (addToList) {
         // [FIX LỖI] Định nghĩa vecRes lấy từ kết quả rawRes ở trên
         const vecRes = Array.isArray(rawRes) ? rawRes : [rawRes];
@@ -666,12 +864,24 @@
 
         // Giờ vecRes đã có giá trị, không bị lỗi nữa
         const newItem = App._attachVectorItem(vecRes, hue);
+        
+        // Lưu lại latex chuẩn để tính toán tiếp
+        if (data.result_latex !== undefined && Array.isArray(data.result_latex)) {
+            newItem.latex = `[${data.result_latex.join(", ")}]`;
+        }
 
         // [FIX] Đưa vào danh sách NGAY LẬP TỨC để đồng bộ ID
         App.vectorList.push(newItem);
         App.renderVectorList();
         App.refreshCalcVectorOptions();
         if (App.renderExtraCalcOptions) App.renderExtraCalcOptions();
+        if (
+          op === "cross" &&
+          App.useAnimation &&
+          typeof App.animateOperation === "function"
+        ) {
+          App.animateOperation("cross", [id1, id2], newItem.id);
+        }
         if (!App.useAnimation) {
           newItem.alpha = 1; // Hiện ngay
           newItem.vec = vecRes; // Gán giá trị cuối
@@ -679,69 +889,209 @@
           App.redrawAll({ frame: false });
           return; // Dừng hàm, không chạy xuống phần animation dưới nữa
         }
-        // --- 3. XỬ LÝ ANIMATION CO DÃN (LÒ XO) ---
-        if (op === "normalize" || op === "scale") {
-          const startVec = [...v1];
-          const targetVec = [...vecRes];
-          const stretchGhost = {
-            isNormalize: op === "normalize",
-            vec: [...startVec],
-            colorCss: newItem.colorCss,
-            alpha: 1,
-            unitCircleAlpha: 0,
-            headGlow: 0,
-          };
+        // --- 3. XỬ LÝ ANIMATION CO DÃN & CHUẨN HÓA ---
+        // --- 1. KỊCH BẢN "PHÉP VỊ TỰ" CHO PHÉP NHÂN VÔ HƯỚNG ---
+        if (op === "scale") {
+          const startVec = [...v1]; // Tọa độ vector ban đầu
+          const targetVec = [...vecRes]; // Tọa độ sau khi nhân k
 
-          App.tempGhosts = [stretchGhost];
+          const originalItem = App.vectorList.find((v) => v.id === id1);
+          if (originalItem) originalItem.alpha = 0.2; // Lưu lại cái bóng mờ để làm hệ quy chiếu
 
-          // [SỬA 1] Đừng ẩn nữa, để 1 cho 3D nó thấy đường mà vẽ
           newItem.alpha = 1;
+          App.tempGhosts = [];
 
-          const dur = 1200;
+          const dur = 1000; // Cho chạy 1s để thấy rõ quá trình đi xuyên qua gốc O
           const t0 = performance.now();
 
-          function animSpring(now) {
-            const p = Math.min((now - t0) / dur, 1);
+          // Hàm Easing (Nhanh ở giữa, chậm hai đầu) để mô phỏng lực kéo/đẩy
+          const easeInOutQuad = (t) =>
+            t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
-            // [CÔNG THỨC OVERSHOOT THỦ CÔNG - NHÉT TRỰC TIẾP VÀO ĐÂY]
-            // 1. Math.sin(...) tạo dao động
-            // 2. Math.pow(2, -6 * p) làm dao động yếu dần
-            // 3. Số 1.2 là biên độ (độ văng), chỉnh lên 1.5 nếu muốn văng xa hơn
-            let elastic = 1;
-            if (p < 1) {
-              elastic =
-                1 +
-                1.2 * Math.pow(2, -6 * p) * Math.sin((p * 5 - 0.5) * Math.PI);
-            }
+          function animScale(now) {
+            const timeRatio = Math.min((now - t0) / dur, 1);
+            const p = easeInOutQuad(timeRatio);
 
-            // Tính toán độ dài vector (sẽ có lúc dài hơn đích)
+            // CỐT LÕI TOÁN HỌC: Bắt đầu từ ngọn vector cũ, kéo/đẩy đến ngọn vector mới
             const currentVec = startVec.map(
-              (s, i) => s + (targetVec[i] - s) * elastic,
+              (val, i) => val + (targetVec[i] - val) * p,
             );
 
-            stretchGhost.vec = currentVec;
-            newItem.vec = currentVec; // Ép 3D vẽ lại
+            newItem.vec = currentVec; // Cập nhật tọa độ real-time
+            App.redrawAll({ frame: false });
 
-            // Hiệu ứng vòng tròn khi chuẩn hóa
-            if (op === "normalize") {
-              stretchGhost.unitCircleAlpha = Math.min(p * 3, 1) * 0.5;
-              if (p > 0.8) stretchGhost.headGlow = (p - 0.8) * 5;
+            if (timeRatio < 1) {
+              requestAnimationFrame(animScale);
+            } else {
+              // Chốt sổ
+              if (originalItem) originalItem.alpha = 1;
+              newItem.vec = targetVec;
+              App.redrawAll({ frame: false });
             }
+          }
+          requestAnimationFrame(animScale);
+        } else if (op === "normalize") {
+          // =========================================================
+          // KỊCH BẢN CHUẨN HÓA: HOLOGRAM NĂNG LƯỢNG (ĐÃ DIỆT LỖI LƯỚI TÀNG HÌNH)
+          // =========================================================
+          const startVec = [...v1];
+          const targetVec = [...vecRes];
+          const originalItem = App.vectorList.find((v) => v.id === id1);
+
+          // Màu Hologram Sci-fi siêu ngầu
+          const isDark = document.body.classList.contains("dark");
+          const refColorHex = isDark ? 0x00d4ff : 0x0055ff;
+          const refColorCss = isDark ? "#00d4ff" : "#0088cc";
+
+          // 1. CHUẨN BỊ GHOST VECTOR
+          const stretchGhost = {
+            // [CHÌA KHÓA DIỆT MẠNG NHỆN]:
+            // Chỉ báo cho hệ thống vẽ "Đây là Chuẩn hóa" khi ở 2D.
+            // Ở 3D, ta ngắt cờ này để file viewer3D.js KHÔNG tự động đẻ ra mặt cầu lưới mặc định nữa!
+            isNormalize: App.mode === "2D",
+            isGhost: true,
+            vec: [...startVec],
+            colorCss: refColorCss,
+            alpha: 1,
+            unitCircleAlpha: 0,
+          };
+          App.tempGhosts = [stretchGhost];
+          newItem.alpha = 1;
+
+          // 2. TẠO MẶT CẦU HOLOGRAM BẰNG SHADER (TỰ PHÁT SÁNG, XUYÊN THẤU 100%)
+          let sphereMesh = null;
+          if (App.mode === "3D" && window.Vec3D && Vec3D._mathGroup) {
+            const u = Vec3D.S3D.unitsPerWorld || 1;
+            const sphereGeo = new THREE.SphereGeometry(1, 64, 64); // Phân giải cao cho mịn
+
+            // Tự viết thuật toán Ánh sáng Fresnel (Viền sáng, tâm trong suốt)
+            const vertexShader = `
+                  varying vec3 vNormal;
+                  void main() {
+                      vNormal = normalize(normalMatrix * normal);
+                      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                  }
+              `;
+            const fragmentShader = `
+                  uniform vec3 glowColor;
+                  uniform float opacityAnim;
+                  varying vec3 vNormal;
+                  void main() {
+                      // Tính độ chói ở viền (Hiệu ứng bong bóng/hologram)
+                      float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.0);
+                      gl_FragColor = vec4(glowColor, fresnel * opacityAnim);
+                  }
+              `;
+
+            const sphereMat = new THREE.ShaderMaterial({
+              uniforms: {
+                glowColor: { value: new THREE.Color(refColorHex) },
+                opacityAnim: { value: 0.0 },
+              },
+
+              vertexShader: `
+        varying vec3 vNormal;
+
+        void main() {
+            vNormal = normalize(normalMatrix * normal);
+
+            gl_Position =
+                projectionMatrix *
+                modelViewMatrix *
+                vec4(position, 1.0);
+        }
+    `,
+
+              fragmentShader: `
+        uniform vec3 glowColor;
+        uniform float opacityAnim;
+
+        varying vec3 vNormal;
+
+        void main() {
+
+            float fresnel =
+                pow(
+                    1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))),
+                    3.0
+                );
+
+            float alpha =
+                fresnel *
+                opacityAnim *
+                0.5;
+
+            gl_FragColor =
+                vec4(glowColor, alpha);
+        }
+    `,
+
+              transparent: true,
+
+              depthWrite: false,
+
+              side: THREE.FrontSide,
+
+              blending: isDark ? THREE.AdditiveBlending : THREE.NormalBlending,
+            });
+
+            sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+            sphereMesh.onBeforeRender = () => {
+              const dynamicU = Vec3D.S3D.unitsPerWorld || 1;
+              sphereMesh.scale.setScalar(dynamicU);
+            };
+            Vec3D._mathGroup.add(sphereMesh);
+          }
+
+          if (originalItem) {
+            originalItem.alpha = 0.2;
+          }
+
+          const durFade = 300;
+          const durScale = 800;
+          const t0 = performance.now();
+
+          function animNormalize(now) {
+            const t = now - t0;
+
+            // NHỊP 1: Tỏa sáng Hologram
+            let p1 = Math.min(t / durFade, 1);
+            stretchGhost.unitCircleAlpha = p1 * 0.5;
+            if (sphereMesh) {
+              sphereMesh.material.uniforms.opacityAnim.value = p1 * 2.0; // Đẩy sáng lên
+            }
+
+            // NHỊP 2: Co giãn mũi tên
+            let p2 = 0;
+            if (t > durFade) {
+              p2 = Math.min((t - durFade) / durScale, 1);
+            }
+            const easeInOutCubic =
+              p2 < 0.5 ? 4 * p2 * p2 * p2 : 1 - Math.pow(-2 * p2 + 2, 3) / 2;
+
+            const currentVec = startVec.map(
+              (s, i) => s + (targetVec[i] - s) * easeInOutCubic,
+            );
+            stretchGhost.vec = currentVec;
+            newItem.vec = currentVec;
 
             App.redrawAll({ frame: false });
 
-            if (p < 1) {
-              requestAnimationFrame(animSpring);
+            if (t < durFade + durScale) {
+              requestAnimationFrame(animNormalize);
             } else {
               setTimeout(() => {
                 newItem.alpha = 1;
-                newItem.vec = targetVec; // Chốt hạ giá trị chuẩn
+                newItem.vec = targetVec;
                 App.tempGhosts = [];
+                if (originalItem) originalItem.alpha = 1;
+                if (sphereMesh && sphereMesh.parent)
+                  sphereMesh.parent.remove(sphereMesh);
                 App.redrawAll({ frame: false });
-              }, 200);
+              }, 800);
             }
           }
-          requestAnimationFrame(animSpring);
+          requestAnimationFrame(animNormalize);
         }
         // PHÉP CỘNG & CHIẾU
         else {
@@ -817,7 +1167,14 @@
         const it = App.vectorList.find(function (v) {
           return v.id === id;
         });
-        if (it) arr.push(it.vec.slice());
+        if (it) {
+          if (it.latex) {
+            let s = it.latex.replace(/^\\left\[|^\[|\\right\]|\]$/g, "");
+            arr.push(s.split(",").map((x) => x.trim()));
+          } else {
+            arr.push(it.vec.slice());
+          }
+        }
       });
     return arr;
   };
@@ -828,7 +1185,13 @@
     const item = App.vectorList.find(function (v) {
       return v.id === id;
     });
-    return item ? item.vec : null;
+    if (!item) return null;
+    
+    if (item.latex) {
+        let s = item.latex.replace(/^\\left\[|^\[|\\right\]|\]$/g, "");
+        return s.split(",").map((x) => x.trim());
+    }
+    return item.vec;
   };
 
   App.rankVectorsUI = async function () {
@@ -891,16 +1254,21 @@
       const res = await App.callAPI("coordinates", { vector: v, basis: basis });
 
       // [FIX QUAN TRỌNG]: Ưu tiên lấy chuỗi đẹp từ Backend (pretty_coordinates)
-      // Nếu backend chưa gửi pretty thì mới dùng bản thô (coordinates)
       const displayCoords = res.pretty_coordinates || res.coordinates;
-
       if (!displayCoords) throw new Error("Không tìm thấy tọa độ.");
 
-      // Vì displayCoords đã là chuỗi đẹp ("4/3", "1") nên chỉ cần join lại
-      const text = `[${displayCoords.join(", ")}]`;
-
-      document.getElementById("result_coord").innerText =
-        `${App.formatVectorShort ? App.formatVectorShort(v) : v} = ${text} (theo cơ sở)`;
+      const latex = `\\left( ${displayCoords.join(",\\; ")} \\right)`;
+      
+      const resEl = document.getElementById("result_coord");
+      resEl.className = "";
+      resEl.style.padding = "0";
+      resEl.style.border = "none";
+      resEl.style.background = "transparent";
+      
+      resEl.innerHTML = App.renderUnifiedResult(
+        "TỌA ĐỘ",
+        `<math-field read-only>${latex}</math-field>`
+      );
     } catch (err) {
       document.getElementById("result_coord").innerText = "Lỗi: " + err.message;
       App.showToast(err.message);
@@ -975,7 +1343,11 @@
         const v2 = document.getElementById("v2Select");
         if (v1) v1.value = "";
         if (v2) v2.value = "";
-        if (typeof App.clearAngleOverlay === "function") App.clearAngleOverlay();
+        if (typeof App.clearAngleOverlay === "function")
+          App.clearAngleOverlay();
+        if (typeof App.updateVisibilityByCalc === "function")
+          App.updateVisibilityByCalc();
+
         if (App.vectorList) {
           App.vectorList.forEach((v) => (v.visible = false));
         }
@@ -1088,6 +1460,28 @@
     }
   }
 
+  App.lockInteraction = function() {
+    // 1. Nếu user đang mở hộp Gizmo kéo thả -> Ép tắt ngang (thu hồi Gizmo)
+    if (interactMode) toggleInteraction(); 
+    
+    // 2. Làm mù nút Tương tác
+    const btn = document.getElementById("btnInteract");
+    if (btn) {
+        btn.style.opacity = "0.4";
+        btn.style.pointerEvents = "none";
+    }
+    App.isAnimating = true; // Cắm cờ báo hiệu hệ thống đang bận
+  };
+
+  App.unlockInteraction = function() {
+    // Nhả khóa nút Tương tác
+    const btn = document.getElementById("btnInteract");
+    if (btn) {
+        btn.style.opacity = "1";
+        btn.style.pointerEvents = "auto";
+    }
+    App.isAnimating = false;
+  };
   // 3. Vẽ hình hộp
   function updateParallelepipedMesh() {
     if (parallelepipedMesh) Vec3D._scene.remove(parallelepipedMesh);
@@ -1244,36 +1638,7 @@
     setTimeout(initInteraction, 1500);
   });
 
-  // --- [CHÈN VÀO CUỐI FILE] Hàm chỉ hiện vector đang được chọn ---
-  App.updateVisibilityByCalc = function () {
-    // 1. Lấy ID đang chọn trong ô v1, v2
-    const v1Select = document.getElementById("v1Select");
-    const v2Select = document.getElementById("v2Select");
-
-    const id1 = v1Select ? Number(v1Select.value) : -1;
-    const id2 = v2Select ? Number(v2Select.value) : -1;
-
-    // 2. Kiểm tra xem có đang chọn gì không (ID > 0 là có chọn)
-    let hasSelection = id1 > 0 || id2 > 0;
-
-    // 3. Duyệt danh sách vector để Bật/Tắt
-    App.vectorList.forEach((item) => {
-      if (hasSelection) {
-        // Nếu đang tính toán: Chỉ hiện thằng được chọn, thằng khác ẩn
-        const isSelected = item.id === id1 || item.id === id2;
-        item.visible = isSelected;
-      } else {
-        // Nếu chưa chọn gì (mới vào hoặc reset): Hiện tất cả
-        item.visible = true;
-      }
-    });
-
-    // 4. Cập nhật giao diện
-    if (typeof App.renderVectorList === "function") App.renderVectorList();
-    if (typeof App.redrawAll === "function") App.redrawAll({ frame: false });
-  };
-
-  // --- [MỚI] HÀM QUẢN LÝ ẨN/HIỆN KHI TÍNH TOÁN ---
+  // --- HÀM QUẢN LÝ ẨN/HIỆN & DỌN RÁC (ĐÃ GỘP CHUẨN) ---
   App.updateVisibilityByCalc = function () {
     const v1Sel = document.getElementById("v1Select");
     const v2Sel = document.getElementById("v2Select");
@@ -1281,21 +1646,253 @@
     const id1 = v1Sel ? Number(v1Sel.value) : 0;
     const id2 = v2Sel ? Number(v2Sel.value) : 0;
 
-    // Có đang chọn vector nào không?
-    const hasSelection = id1 > 0 || id2 > 0;
+    App.currentProjVisual = null;
+    // 1. DỌN SẠCH RÁC HÌNH CHIẾU
+    App.tempGhosts = []; // Xóa vết 2D
+    if (App._currentProjLine3D && App._currentProjLine3D.parent) {
+      App._currentProjLine3D.parent.remove(App._currentProjLine3D); // Xóa vết 3D
+      App._currentProjLine3D = null;
+    }
+    // [BỔ SUNG CHÍ MẠNG] TIÊU DIỆT TOÀN BỘ LABEL LƠ LỬNG
+    if (App._activeAnimLabels && App._activeAnimLabels.length > 0) {
+        App._activeAnimLabels.forEach(lbl => { if(lbl && lbl.parentNode) lbl.remove(); });
+        App._activeAnimLabels = [];
+    }
 
+    // 2. ẨN/HIỆN VECTOR
+    const hasSelection = id1 > 0 || id2 > 0;
     App.vectorList.forEach((v) => {
       if (!hasSelection) {
-        // Nếu chưa chọn gì cả (hoặc mới reset) -> Hiện tất cả cho dễ nhìn
         v.visible = true;
       } else {
-        // Nếu đã chọn -> Chỉ hiện những thằng được chọn
         v.visible = v.id === id1 || v.id === id2;
       }
     });
 
-    // Vẽ lại giao diện
-    if (App.renderVectorList) App.renderVectorList();
-    if (App.redrawAll) App.redrawAll({ frame: false });
+    if (typeof App.renderVectorList === "function") App.renderVectorList();
+    if (typeof App.redrawAll === "function") App.redrawAll({ frame: false });
   };
+
+  // =========================================================
+  // HÀM DUY TRÌ HIỆN TRƯỜNG TĨNH CHO 2D (ĐÃ THÊM GIÁ & MÀU THẬT)
+  // =========================================================
+  App.refreshProjectionOverlay = function () {
+    if (App.mode === "2D") {
+      if (App.tempGhosts)
+        App.tempGhosts = App.tempGhosts.filter(
+          (g) => !g.isRightAngleOverlay && !g.isActionLineOverlay,
+        );
+      if (!App.currentProjVisual) return;
+      const v1 = App.vectorList.find(
+        (v) => v.id === App.currentProjVisual.v1Id,
+      );
+      const res = App.vectorList.find(
+        (v) => v.id === App.currentProjVisual.resId,
+      );
+      const v2 = App.vectorList.find(
+        (v) => v.id === App.currentProjVisual.v2Id,
+      );
+
+      if (v1 && res) {
+        if (!App.tempGhosts) App.tempGhosts = [];
+
+        const isDark = document.body.classList.contains("dark");
+        const actionColor = isDark ? "#888888" : "#aaaaaa";
+
+        // 1. Vẽ Giá vector (Action Line - Màu xám nhạt)
+        const endPx = res.vec[0],
+          endPy = res.vec[1];
+        let actionTarget = [endPx * 1.15, endPy * 1.15];
+        if (actionTarget[0] === 0 && actionTarget[1] === 0 && v2)
+          actionTarget = [v2.vec[0] * 1.15, v2.vec[1] * 1.15];
+
+        App.tempGhosts.push({
+          isActionLineOverlay: true,
+          vec: actionTarget,
+          offset: [0, 0],
+          colorCss: actionColor,
+          alpha: 0.5,
+          isGhost: true,
+          isDashed: false,
+          noArrow: true,
+          isRightAngle: false,
+        });
+
+        // 2. Vẽ Đường gióng nét đứt (MÀU THẬT CỦA VECTOR V1)
+        App.tempGhosts.push({
+          isRightAngleOverlay: true,
+          vec: [res.vec[0] - v1.vec[0], res.vec[1] - v1.vec[1]],
+          offset: [...v1.vec],
+          colorCss: v1.colorCss, // LẤY MÀU THẬT CỦA V1
+          alpha: 0.6,
+          isGhost: true,
+          isDashed: true,
+          noArrow: true,
+          isRightAngle: true,
+        });
+      }
+    }
+  };
+
+  // [TRÁI TIM TOÁN HỌC 3D V2]: Khóa dính tọa độ, Chống xóa Theme, Texture nét đứt
+  if (!App._projSyncLoopRunning) {
+    App._projSyncLoopRunning = true;
+
+    App._initProjMeshes3D = function (hue = 200) {
+      if (App._projGroup3D)
+        App._projGroup3D.clear(); // Xóa sạch rác cũ
+      else App._projGroup3D = new THREE.Group();
+
+      const color = new THREE.Color(`hsl(${hue}, 85%, 60%)`);
+
+      // ==========================================================
+      // [FIX LỖI CỤC TRẮNG]: Đã phẫu thuật cắt bỏ "Mặt cầu Hologram" rác ở đây!
+      // CHỈ GIỮ LẠI CÁC THÀNH PHẦN GIÓNG (Ống nét đứt và Góc vuông)
+      // ==========================================================
+      const geo = new THREE.CylinderGeometry(1, 1, 1, 8);
+      geo.rotateX(Math.PI / 2);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = 16;
+      canvas.height = 128;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, 16, 64);
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapT = THREE.RepeatWrapping;
+
+      App._projMeshes = {
+        tube: new THREE.Mesh(
+          geo,
+          new THREE.MeshBasicMaterial({ color: color, alphaMap: tex, transparent: true })
+        ),
+        edge1: new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: color })),
+        edge2: new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: color })),
+        sqGroup: new THREE.Group() // Tui tạo nhóm riêng để góc vuông 3D hiển thị chuẩn
+      };
+
+      App._projMeshes.sqGroup.add(App._projMeshes.edge1);
+      App._projMeshes.sqGroup.add(App._projMeshes.edge2);
+
+      App._projGroup3D.add(App._projMeshes.tube);
+      App._projGroup3D.add(App._projMeshes.sqGroup);
+
+      Vec3D._mathGroup.add(App._projGroup3D);
+    };
+
+    const sync3D = () => {
+      requestAnimationFrame(sync3D);
+
+      if (typeof Vec3D === 'undefined' || !Vec3D._mathGroup) return;
+
+      if (!App._projGroup3D) App._initProjMeshes3D();
+
+      if (
+        App.mode !== "3D" ||
+        !App.currentProjVisual ||
+        !window.Vec3D ||
+        !Vec3D._mathGroup
+      ) {
+        if (App._projGroup3D) App._projGroup3D.visible = false;
+        return;
+      }
+
+      // [FIX LỖI MẤT KHI ĐỔI THEME]: Tự động Hồi sinh nếu bị hàm refreshTheme xóa mất
+      if (!App._projGroup3D.parent) {
+        Vec3D._mathGroup.add(App._projGroup3D);
+      }
+
+      const v1 = App.vectorList.find(
+        (v) => v.id === App.currentProjVisual.v1Id,
+      );
+      const res = App.vectorList.find(
+        (v) => v.id === App.currentProjVisual.resId,
+      );
+      const v2 = App.vectorList.find(
+        (v) => v.id === App.currentProjVisual.v2Id,
+      );
+
+      if (!v1 || !res || !v1.visible || !res.visible) {
+        App._projGroup3D.visible = false;
+        return;
+      }
+
+      App._projGroup3D.visible = true;
+
+      // [FIX DARK THEME 3D]: Tự động đổi màu tương phản
+      const isDark = document.body.classList.contains("dark");
+      const projColor = isDark ? 0xdddddd : 0x555555;
+      App._projMeshes.tube.material.color.setHex(projColor);
+      App._projMeshes.edge1.material.color.setHex(projColor);
+      App._projMeshes.edge2.material.color.setHex(projColor);
+
+      const u = Vec3D.S3D.unitsPerWorld || 1;
+
+      const getTip = (id, vec) => {
+        const g = Vec3D.threeVecMap ? Vec3D.threeVecMap.get(id) : null;
+        if (g && g.userData && g.userData.tipLocal)
+          return g.userData.tipLocal.clone();
+        return new THREE.Vector3(vec[0] * u, vec[1] * u, (vec[2] || 0) * u);
+      };
+
+      const startP = getTip(v1.id, v1.vec);
+      const endP = getTip(res.id, res.vec);
+      const dist = startP.distanceTo(endP);
+
+      // Độ dày tinh tế
+      const camDist = Vec3D._camera
+        ? Vec3D._camera.position.distanceTo(startP)
+        : 10;
+      const thick = Math.max(0.002 * camDist, 0.015 * u);
+
+      // 1. Ép ống trụ đường gióng
+      const tube = App._projMeshes.tube;
+      tube.position.copy(startP).lerp(endP, 0.5);
+      if (dist > 0.001) tube.lookAt(endP);
+      tube.scale.set(thick, thick, dist);
+
+      // Cập nhật số lần lặp nét đứt theo độ dài thực tế để nét đứt luôn đều nhau
+      tube.material.alphaMap.repeat.set(1, dist / (0.15 * u));
+
+      // 2. Ép Góc vuông (Sửa lỗi to bất chấp bối cảnh)
+      const dir1 = new THREE.Vector3().subVectors(startP, endP).normalize();
+      let dir2 = endP.clone().multiplyScalar(-1).normalize();
+      if (dir2.lengthSq() < 0.001 && v2)
+        dir2 = new THREE.Vector3(
+          v2.vec[0] * u,
+          v2.vec[1] * u,
+          (v2.vec[2] || 0) * u,
+        ).normalize();
+
+      if (dir1.lengthSq() > 0.1 && dir2.lengthSq() > 0.1) {
+        App._projMeshes.sqGroup.visible = true;
+
+        // [FIX GÓC VUÔNG TO]: Chốt cứng kích thước bằng 0.15 lần lưới (như 2D)
+        const sqSize = 0.15 * u;
+
+        const pA = endP.clone().add(dir1.clone().multiplyScalar(sqSize));
+        const pB = endP.clone().add(dir2.clone().multiplyScalar(sqSize));
+        const corner = endP
+          .clone()
+          .add(dir1.clone().multiplyScalar(sqSize))
+          .add(dir2.clone().multiplyScalar(sqSize));
+
+        const e1 = App._projMeshes.edge1;
+        e1.position.copy(pA).lerp(corner, 0.5);
+        e1.lookAt(corner);
+        e1.scale.set(thick * 0.6, thick * 0.6, pA.distanceTo(corner));
+
+        const e2 = App._projMeshes.edge2;
+        e2.position.copy(pB).lerp(corner, 0.5);
+        e2.lookAt(corner);
+        e2.scale.set(thick * 0.6, thick * 0.6, pB.distanceTo(corner));
+      } else {
+        App._projMeshes.sqGroup.visible = false;
+      }
+    };
+    sync3D();
+  }
 })();
+
+
+

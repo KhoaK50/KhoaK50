@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vectoria - Đồ thị tri thức (Demo)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; }
+        #mynetwork { width: 100%; height: 100%; border: 1px solid #334155; border-radius: 0.5rem; background-color: #1e293b; }
+        .vis-network:focus { outline: none; }
+    </style>
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body class="h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Bảng điều khiển (Left Panel) -->
+    <div class="w-full md:w-1/3 bg-slate-900 p-6 flex flex-col h-full border-r border-slate-700 overflow-y-auto">
+        <h1 class="text-2xl font-bold text-blue-400 mb-2">Đồ Thị Tri Thức</h1>
+        <p class="text-sm text-slate-400 mb-6">Demo thuật toán tìm lộ trình học tập ngắn nhất.</p>
+
+        <!-- Block 1: Thêm ràng buộc (Tạo Mũi tên) -->
+        <div class="bg-slate-800 p-4 rounded-lg mb-6 border border-slate-700">
+            <h2 class="text-lg font-semibold text-white mb-3">1. Nối Chủ Đề (Tạo Ràng buộc)</h2>
+            <div class="flex space-x-2 items-center mb-3">
+                <div class="flex-1">
+                    <label class="block text-xs text-slate-400 mb-1">Học xong bài:</label>
+                    <select id="edgeFrom" class="w-full bg-slate-700 text-white p-2 rounded border border-slate-600 focus:outline-none focus:border-blue-500"></select>
+                </div>
+                <div class="text-slate-400 mt-5">➔</div>
+                <div class="flex-1">
+                    <label class="block text-xs text-slate-400 mb-1">Mới được học:</label>
+                    <select id="edgeTo" class="w-full bg-slate-700 text-white p-2 rounded border border-slate-600 focus:outline-none focus:border-blue-500"></select>
+                </div>
+            </div>
+            <button onclick="addEdge()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-4 rounded transition">
+                + Thêm Ràng Buộc
+            </button>
+            <p id="edgeMsg" class="text-xs text-green-400 mt-2 hidden">Đã thêm ràng buộc thành công!</p>
+        </div>
+
+        <!-- Block 2: Tìm lộ trình -->
+        <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <h2 class="text-lg font-semibold text-white mb-3">2. Tìm Lộ Trình Ngắn Nhất</h2>
+            <div class="flex space-x-2 items-center mb-3">
+                <div class="flex-1">
+                    <label class="block text-xs text-slate-400 mb-1">Điểm bắt đầu (x):</label>
+                    <select id="pathStart" class="w-full bg-slate-700 text-white p-2 rounded border border-slate-600 focus:outline-none focus:border-emerald-500"></select>
+                </div>
+                <div class="text-slate-400 mt-5">➔</div>
+                <div class="flex-1">
+                    <label class="block text-xs text-slate-400 mb-1">Đích đến (y):</label>
+                    <select id="pathEnd" class="w-full bg-slate-700 text-white p-2 rounded border border-slate-600 focus:outline-none focus:border-emerald-500"></select>
+                </div>
+            </div>
+            <button onclick="findPath()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 px-4 rounded transition mb-4">
+                🔍 Tìm Lộ Trình
+            </button>
+            
+            <!-- Khu vực hiển thị kết quả -->
+            <div id="resultBox" class="bg-slate-900 p-3 rounded border border-slate-600 hidden">
+                <h3 class="text-sm text-slate-400 mb-1">Kết quả:</h3>
+                <div id="pathResult" class="text-white font-mono text-sm leading-relaxed whitespace-pre-wrap"></div>
+            </div>
+        </div>
+
+        <div class="mt-auto pt-6 text-center">
+            <button onclick="resetGraph()" class="text-sm text-slate-500 hover:text-red-400 underline transition">Khôi phục đồ thị trống</button>
+        </div>
+    </div>
+
+    <!-- Vùng đồ thị (Right Panel) -->
+    <div class="w-full md:w-2/3 h-full p-4">
+        <div id="mynetwork"></div>
+    </div>
+
+    <script>
+        // 1. BIẾN TOÀN CỤC
+        let nodes = new vis.DataSet([]);
+        let edges = new vis.DataSet([]);
+        let graph = {}; 
+        let originalNodesData = []; // Lưu lại dữ liệu gốc để reset
+
+        // 2. KHỞI TẠO ĐỒ THỊ VIS.JS
+        const container = document.getElementById('mynetwork');
+        const data = { nodes: nodes, edges: edges };
+        const options = {
+            edges: { arrows: 'to', color: { color: '#64748b', highlight: '#10b981' }, smooth: { type: 'continuous' } },
+            physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -50, centralGravity: 0.01, springLength: 100 } }
+        };
+        let network = new vis.Network(container, data, options);
+
+        // 3. GỌI API LẤY DỮ LIỆU TỪ NEO4J (BẰNG FLASK)
+        async function loadGraphData() {
+            try {
+                // Đảm bảo Sếp đang chạy Flask ở port 5000 nhé
+                const response = await fetch('http://127.0.0.1:5000/api/graph-data');
+                const realData = await response.json();
+
+                if(realData.error) {
+                    alert("Lỗi từ Backend: " + realData.error); return;
+                }
+
+                // Lưu trữ và hiển thị Nodes
+                originalNodesData = realData.nodes;
+                const formattedNodes = realData.nodes.map(n => ({
+                    id: n.id,
+                    label: n.id + ":\n" + n.label, // Thêm \n cho dễ nhìn
+                    color: { background: '#3b82f6', border: '#2563eb' },
+                    font: { color: 'white', size: 12 }
+                }));
+                nodes.clear(); nodes.add(formattedNodes);
+                
+                // Khởi tạo mảng kề và hiển thị Edges
+                edges.clear();
+                realData.nodes.forEach(n => graph[n.id] = []); 
+                realData.edges.forEach(e => {
+                    edges.add({ id: `${e.from}-${e.to}`, from: e.from, to: e.to });
+                    if(graph[e.from]) graph[e.from].push(e.to);
+                });
+
+                // Đổ dữ liệu vào 4 thẻ <select>
+                const selects = ['edgeFrom', 'edgeTo', 'pathStart', 'pathEnd'];
+                selects.forEach(selectId => {
+                    const select = document.getElementById(selectId);
+                    select.innerHTML = ''; 
+                    realData.nodes.forEach(n => {
+                        let option = document.createElement('option');
+                        option.value = n.id;
+                        option.text = n.id + " - " + n.label;
+                        select.appendChild(option);
+                    });
+                });
+
+            } catch (error) {
+                console.error(error);
+                alert("Không thể kết nối đến Backend Flask. Sếp nhớ chạy 'python app.py' nhé!");
+            }
+        }
+
+        // Gọi API ngay lúc mở file
+        loadGraphData();
+
+        // 4. HÀM THÊM RÀNG BUỘC (EDGE) MỚI (Làm màu Frontend thôi)
+        function addEdge() {
+            const from = document.getElementById('edgeFrom').value;
+            const to = document.getElementById('edgeTo').value;
+            if (from === to) { alert("Không thể tự nối vào chính mình!"); return; }
+            if (graph[from].includes(to)) { alert("Ràng buộc này đã tồn tại!"); return; }
+
+            graph[from].push(to);
+            edges.add({ id: `${from}-${to}`, from: from, to: to });
+            
+            const msg = document.getElementById('edgeMsg');
+            msg.classList.remove('hidden');
+            setTimeout(() => msg.classList.add('hidden'), 2000);
+            resetHighlight();
+        }
+
+        // 5. THUẬT TOÁN TÌM LỘ TRÌNH (BREADTH-FIRST SEARCH)
+        function findPath() {
+            const start = document.getElementById('pathStart').value;
+            const end = document.getElementById('pathEnd').value;
+            const resultBox = document.getElementById('resultBox');
+            const pathResult = document.getElementById('pathResult');
+            
+            resultBox.classList.remove('hidden');
+            resetHighlight();
+
+            if (start === end) {
+                pathResult.innerHTML = `<span class="text-yellow-400">Bạn đang ở ngay Chủ đề ${start} rồi!</span>`; return;
+            }
+
+            let queue = [[start]];
+            let visited = new Set();
+            visited.add(start);
+            let shortestPath = null;
+
+            while (queue.length > 0) {
+                let currentPath = queue.shift();
+                let currentNode = currentPath[currentPath.length - 1];
+
+                if (currentNode === end) { shortestPath = currentPath; break; }
+
+                let neighbors = graph[currentNode] || [];
+                for (let nextNode of neighbors) {
+                    if (!visited.has(nextNode)) {
+                        visited.add(nextNode);
+                        queue.push([...currentPath, nextNode]);
+                    }
+                }
+            }
+
+            if (shortestPath) {
+                pathResult.innerHTML = `<span class="text-emerald-400">Lộ trình học (${shortestPath.length - 1} bước):</span>\n\n` + shortestPath.join(' ➔ ');
+                highlightPathOnGraph(shortestPath);
+            } else {
+                pathResult.innerHTML = `<span class="text-red-400">Không có đường đi nào từ ${start} đến ${end}.</span>`;
+            }
+        }
+
+        // 6. CÁC HÀM TIỆN ÍCH
+        function highlightPathOnGraph(path) {
+            let nodesToUpdate = path.map(node => ({ id: node, color: { background: '#10b981', border: '#047857' } }));
+            nodes.update(nodesToUpdate);
+
+            let edgesToUpdate = [];
+            for (let i = 0; i < path.length - 1; i++) {
+                edgesToUpdate.push({ id: `${path[i]}-${path[i+1]}`, color: { color: '#34d399', opacity: 1 }, width: 3 });
+            }
+            edges.update(edgesToUpdate);
+        }
+
+        function resetHighlight() {
+            let resetNodes = originalNodesData.map(n => ({ id: n.id, color: { background: '#3b82f6', border: '#2563eb' } }));
+            nodes.update(resetNodes);
+            let resetEdges = edges.get().map(e => ({ id: e.id, color: { color: '#64748b', opacity: 1 }, width: 1 }));
+            edges.update(resetEdges);
+        }
+
+        function resetGraph() {
+            // Tải lại toàn bộ dữ liệu từ API để reset
+            loadGraphData();
+            document.getElementById('resultBox').classList.add('hidden');
+        }
+    </script>
+<script src="js/app/auth.js"></script>
+  <script src="js/app/ui/topbar_avatar.js"></script>
+</body>
+</html>

@@ -5,6 +5,7 @@ import threading
 from datetime import datetime, timedelta, timezone
 from flask import Blueprint, request, jsonify
 import base64
+import psycopg2
 
 
 contact_bp = Blueprint("contact", __name__)
@@ -15,22 +16,47 @@ GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEDUGk1_-QxGbZXzEv
 
 
 
-# --- 1. HÀM KHỞI TẠO DB ---
-def init_feedback_db():
+
+
+from vectoria_api.config import DB_URL
+
+# 2. HÀM KHỞI TẠO BẢNG (Chạy 1 lần để tạo cấu trúc)
+def init_postgres_db():
     try:
-        conn = sqlite3.connect("feedback.db")
+        conn = psycopg2.connect(DB_URL)
         c = conn.cursor()
-        c.execute(
-            """CREATE TABLE IF NOT EXISTS feedbacks 
-                      (id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                       name TEXT, email TEXT, message TEXT, created_at TEXT)"""
-        )
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS feedbacks (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255),
+                email VARCHAR(255),
+                message TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         conn.commit()
         conn.close()
-        print(">> [Database] Ready.")
+        print(">> [Database] Bảng PostgreSQL đã sẵn sàng.")
     except Exception as e:
         print(f">> [Database Error] {e}")
 
+# 3. HÀM LƯU TIN NHẮN VÀO DB
+def save_to_postgres(name, email, message):
+    try:
+        conn = psycopg2.connect(DB_URL)
+        c = conn.cursor()
+        # Dùng %s để chống SQL Injection (Hacker chèn mã độc)
+        c.execute(
+            "INSERT INTO feedbacks (name, email, message) VALUES (%s, %s, %s)",
+            (name, email, message)
+        )
+        conn.commit()
+        conn.close()
+        print(">> [PostgreSQL] Đã lưu Data thành công!")
+    except Exception as e:
+        print(f">> [PostgreSQL Error] Lỗi lưu Data: {e}")
+
+init_postgres_db()
 
 # --- HÀM 1: GỬI MAIL AUTO-REPLY CHO KHÁCH ---
 def send_auto_reply(user_email, user_name, user_message):
@@ -204,6 +230,9 @@ def handle_contact():
             threading.Thread(
                 target=send_notification_to_admin, args=(user_email, user_name, full_msg)
             ).start()
+
+            # LƯU VÀO DATABASE POSTGRESQL (LUỒNG MỚI)
+            threading.Thread(target=save_to_postgres, args=(user_name, user_email, full_msg)).start()
 
         return jsonify({"status": "success", "message": "Đã gửi thành công"}), 200
 

@@ -221,10 +221,7 @@ mjx-container[display="true"] {
 
 /* Danh sách kết quả */
 .sol-bullet {
-  margin-left: 20px;
-  margin-bottom: 6px;
-  list-style-type: disc;
-  display: list-item;
+    list-style-type: none !important;
 }
 
 /* Tinh chỉnh MathJax bên trong */
@@ -236,16 +233,37 @@ mjx-assistive-mml {
   display: none !important;
 }
 
-/* Trạng thái trống */
 .sol-empty {
-  padding: 30px;
-  text-align: center;
-  color: #666;
-  font-style: italic;
-  background: #f9fafb;
-  border-radius: 8px;
-  border: 1px dashed #ccc;
-  margin-top: 20px;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 40px 20px !important;
+    margin: 20px 10px !important;
+    text-align: center !important;
+    background: rgba(0, 0, 0, 0.02) !important;
+    border: 2px dashed var(--border, #ccc) !important;
+    border-radius: 12px !important;
+    color: var(--muted, #888) !important;
+    font-size: 1.05em !important;
+    line-height: 1.5 !important;
+    box-shadow: none !important;
+}
+
+/* Ép màu Dark Mode để không bị chói mắt */
+body.dark .sol-empty {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-color: #444 !important;
+    color: #aaa !important;
+}
+
+/* Nhấn nhá cho chữ in đậm trong khung trống */
+.sol-empty b {
+    color: #2196F3 !important;
+    font-weight: 700 !important;
+}
+body.dark .sol-empty b {
+    color: #4f85ff !important;
 }
 
 @media (max-width: 640px) {

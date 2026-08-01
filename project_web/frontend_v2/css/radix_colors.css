@@ -1,0 +1,90 @@
+/* ==========================================================================
+   VECTORIA CORE THEME - RADIX COLORS
+   ========================================================================== */
+
+:root {
+  /* TẦNG 1: RADIX CORE COLORS (LIGHT MODE) */
+  /* Dải Slate (Trung tính) */
+  --slate-1: #fcfcfd;
+  --slate-2: #f9f9fb;
+  --slate-3: #f0f0f3;
+  --slate-6: #e6e8eb;
+  --slate-7: #d7dfe3;
+  --slate-8: #c1c8cd;
+  --slate-11: #687076;
+  --slate-12: #11181c;
+
+  /* Dải Blue (Thương hiệu) */
+  --blue-9: #0090ff;
+  --blue-10: #0588f0;
+
+  /* Dải Trạng thái (Thành công, Cảnh báo, Lỗi) */
+  --green-9: #30a46c;
+  --amber-9: #ffb224;
+  --red-9: #e5484d;
+
+  /* TẦNG 2: SEMANTIC MAPPING (Ánh xạ vào UI thực tế) */
+  --bg-base: var(--slate-1);        /* Nền web chính */
+  --bg-card: var(--slate-2);        /* Nền thẻ, Box nổi */
+  --bg-hover: var(--slate-3);       /* Nền khi hover */
+  
+  --text-main: var(--slate-12);     /* Chữ chính */
+  --text-muted: var(--slate-11);    /* Chữ phụ, icon */
+
+  --border-subtle: var(--slate-6);  /* Viền mờ phân cách */
+  --border-strong: var(--slate-7);  /* Viền thẻ, viền input */
+
+  --primary-base: var(--blue-9);    /* Màu chủ đạo, Nút bấm */
+  --primary-hover: var(--blue-10);  /* Hover nút bấm */
+
+  --success-base: var(--green-9);
+  --warning-base: var(--amber-9);
+  --danger-base: var(--red-9);
+
+  /* Riêng cho Canvas Đồ thị */
+  --canvas-grid: var(--slate-8);
+  --canvas-axis: var(--slate-11);
+}
+
+/* ==========================================================================
+   DARK MODE OVERRIDES
+   ========================================================================== */
+:root.dark, :root.dark-theme, body.dark-theme, body.dark {
+  /* TẦNG 1: RADIX CORE COLORS (DARK MODE) */
+  --slate-1: #111113;
+  --slate-2: #18191b;
+  --slate-3: #212225;
+  --slate-6: #3b3e44;
+  --slate-7: #43484e;
+  --slate-8: #51585f;
+  --slate-11: #b0b4ba;
+  --slate-12: #edeef0;
+
+  --blue-9: #0090ff;
+  --blue-10: #3b9eff;
+
+  --green-9: #30a46c;
+  --amber-9: #ffb224;
+  --red-9: #e5484d;
+
+  /* TẦNG 2: SEMANTIC MAPPING (DARK MODE) */
+  --bg-base: #111113;
+  --bg-card: #18191b;
+  --bg-hover: #212225;
+
+  --text-main: #edeef0;
+  --text-muted: #b0b4ba;
+
+  --border-subtle: #3b3e44;
+  --border-strong: #43484e;
+
+  --primary-base: #0090ff;
+  --primary-hover: #3b9eff;
+
+  --success-base: #30a46c;
+  --warning-base: #ffb224;
+  --danger-base: #e5484d;
+
+  --canvas-grid: #51585f;
+  --canvas-axis: #b0b4ba;
+}

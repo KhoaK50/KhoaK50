@@ -16,22 +16,98 @@
 
     // 2. XỬ LÝ TOÁN HỌC (QUAN TRỌNG)
 
-    // [FIX] Phân số: Chấp nhận \frac{a}{b}, frac{a}{b}, \frac a b
-    s = s.replace(/\\?frac\s*\{?(.+?)\}?\s*\{?(.+?)\}?/gi, "($1)/($2)");
+    // Hàm parser chuyên dụng cho LaTeX (Xử lý ngoặc lồng nhau)
+    function replaceMathCommands(inputStr) {
+      let res = inputStr;
+      
+      function replaceCmd(cmdName, replacer) {
+          let regex = new RegExp('\\\\\\\\?' + cmdName + '(?![a-zA-Z])');
+          while (true) {
+            let match = regex.exec(res);
+            if (!match) break;
+            
+            let startIdx = match.index;
+            let args = [];
+            let currIdx = startIdx + match[0].length;
+            
+            while (currIdx < res.length) {
+                while (currIdx < res.length && res[currIdx] === ' ') currIdx++;
+                if (currIdx >= res.length) break;
+                
+                let openChar = res[currIdx];
+                let closeChar = '';
+                
+                if (openChar === '{') closeChar = '}';
+                else if (openChar === '[') closeChar = ']';
+                else {
+                    // Xử lý các đối số không có ngoặc, ví dụ: \sqrt2, \frac12
+                    if (/[0-9a-zA-Z]/.test(openChar)) {
+                        args.push({ val: openChar, type: 'none' });
+                        currIdx++;
+                        if (args.length >= 2) break; // Tối ưu: frac, sqrt chỉ cần tối đa 2 arg
+                        continue;
+                    }
+                    break;
+                }
+                
+                let openBraces = 0;
+                let argStart = currIdx;
+                let found = false;
+                
+                for (let j = currIdx; j < res.length; j++) {
+                    if (res[j] === openChar) openBraces++;
+                    else if (res[j] === closeChar) openBraces--;
+                    
+                    if (openBraces === 0) {
+                        args.push({ val: res.substring(argStart + 1, j), type: openChar });
+                        currIdx = j + 1;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) break; 
+                
+                if (args.length >= 2) break; 
+            }
+            
+            let replacement = replacer(args);
+            if (replacement === null) {
+                res = res.substring(0, startIdx) + 'ERR_' + cmdName + res.substring(currIdx);
+            } else {
+                res = res.substring(0, startIdx) + replacement + res.substring(currIdx);
+            }
+          }
+      }
+      
+      replaceCmd('frac', args => {
+          if (args.length >= 2) return '(' + args[0].val + ')/(' + args[1].val + ')';
+          return null;
+      });
+      
+      replaceCmd('sqrt', (args) => {
+          if (args.length >= 1) {
+              if (args.length === 2 && args[0].type === '[' && args[1].type === '{') {
+                  return '((' + args[1].val + ')**(1/(' + args[0].val + ')))';
+              }
+              return 'sqrt(' + args[0].val + ')';
+          }
+          return null;
+      });
+
+      return res;
+    }
+
+    s = replaceMathCommands(s);
 
     // [FIX] Logarit cơ số n: \log_2(8) -> log(8)/log(2)
     s = s.replace(/\\?log_\{?(\d+|e)\}?\(?(.+?)\)?/g, "(log($2)/log($1))");
 
     // [FIX LỖI CỦA ÔNG] Logarit tự nhiên (ln) và log thường
-    // Chấp nhận cả: \ln, ln, \log, log
-    // Thay thế hết thành "log" (để tí nữa hàm evaluate chuyển thành Math.log)
     s = s.replace(/\\?ln\b/g, "log");
     s = s.replace(/\\?log\b/g, "log");
 
-    // [FIX] Căn thức: \sqrt[3]{8} -> 8^(1/3)
-    s = s.replace(/\\?sqrt\s*\[(.+?)\]\s*\{(.+?)\}/g, "(($2)**(1/($1)))");
-    // Căn bậc 2: \sqrt{4}, sqrt(4), sqrt4
-    s = s.replace(/\\?sqrt\s*\{?(.+?)\}?/g, "sqrt($1)");
+    // Xử lý sqrt không ngoặc (nếu có): \sqrt4 -> sqrt(4)
+    s = s.replace(/\\?sqrt\s*(\d+)/g, "sqrt($1)");
 
     // Lượng giác & Mũ
     s = s.replace(/cot\((.+?)\)/g, "(1/tan($1))");

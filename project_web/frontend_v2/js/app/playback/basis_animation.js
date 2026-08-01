@@ -171,12 +171,15 @@
     if (typeof App.renderVectorList === "function") App.renderVectorList();
     redraw();
 
-    // Nhấp nháy tôn vinh vector cơ sở
+    // Nhịp nháy tôn vinh vector cơ sở
     const basisFilter = (it) => !!it && it._basisIsBasis;
+
     await pulse(basisFilter, 1, 1.3, phaseMs * 0.5);
     if (App._basisAnimTokenCanceled) return;
     await pulse(basisFilter, 1.3, 1, phaseMs * 0.5);
 
     redraw();
+
+    // Kh�ng t? d?ng d?n d?p, d?i ngu?i d�ng b?m K?t th�c Kh?o s�t
   };
 })();

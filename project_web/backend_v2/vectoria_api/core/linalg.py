@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple, Optional
 import numpy as np
+import sympy as sp
 
 from vectoria_api.core.format import vector_pretty_score
 
@@ -13,7 +14,7 @@ class RowOp:
     # positions in CURRENT matrix (0-based)
     i: int
     j: Optional[int] = None
-    factor: Optional[float] = None  # for elim: Ri <- Ri - factor*Rr
+    factor: Any = None  # for elim: Ri <- Ri - factor*Rr
     pivot_row: Optional[int] = None  # r position used as pivot
     pivot_col: Optional[int] = None  # c
     # original vector indices currently at rows i/j (for explain)
@@ -28,7 +29,13 @@ class RowOp:
         if self.j is not None:
             d["j"] = self.j
         if self.factor is not None:
-            d["factor"] = float(self.factor)
+            # Lưu lại dưới dạng latex thay vì ép về float
+            if isinstance(self.factor, sp.Expr):
+                d["factor"] = sp.latex(self.factor)
+            elif isinstance(self.factor, (int, float)):
+                d["factor"] = float(self.factor)
+            else:
+                d["factor"] = str(self.factor)
         if self.pivot_row is not None:
             d["pivot_row"] = int(self.pivot_row)
         if self.pivot_col is not None:
@@ -141,6 +148,90 @@ def gaussian_elimination_rows_with_ops(
             d = op.to_dict()
             if snapshot_every_step:
                 d["matrix_after"] = A.tolist()
+            ops.append(d)
+
+        r += 1
+
+    rank = len(pivot_indices)
+    return rank, pivot_indices, A, ops, row_ids
+
+
+def sympy_gaussian_elimination_rows_with_ops(
+    M: List[List[sp.Expr]],
+    snapshot_every_step: bool = True,
+) -> Tuple[int, List[int], List[List[sp.Expr]], List[Dict[str, Any]], List[int]]:
+    """
+    Khử Gauss bằng SymPy (giữ nguyên phân số, căn thức).
+    """
+    m = len(M)
+    if m == 0:
+        return 0, [], [], [], []
+    n = len(M[0])
+    
+    A = [[sp.simplify(x) for x in row] for row in M]
+    row_ids = list(range(m))
+    ops: List[Dict[str, Any]] = []
+    pivot_indices: List[int] = []
+    r = 0
+    
+    def snapshot(matrix):
+        return [[sp.latex(x) for x in row] for row in matrix]
+
+    for c in range(n):
+        if r >= m:
+            break
+
+        candidates = [i for i in range(r, m) if A[i][c] != 0]
+        if not candidates:
+            continue
+            
+        # Tìm ứng viên: ưu tiên các phần tử có giá trị đẹp (ít phức tạp)
+        pivot_pos = candidates[0] # Lấy thằng đầu tiên khác 0 cho đơn giản (SymPy thì ko lo sai số)
+        
+        # swap
+        if pivot_pos != r:
+            op = RowOp(
+                op="swap",
+                i=r,
+                j=pivot_pos,
+                orig_i=row_ids[r],
+                orig_j=row_ids[pivot_pos],
+                pivot_row=r,
+                pivot_col=c,
+            )
+            A[r], A[pivot_pos] = A[pivot_pos], A[r]
+            row_ids[r], row_ids[pivot_pos] = row_ids[pivot_pos], row_ids[r]
+
+            d = op.to_dict()
+            if snapshot_every_step:
+                d["matrix_after"] = snapshot(A)
+            ops.append(d)
+
+        pivot_indices.append(row_ids[r])
+        pivot_val = A[r][c]
+
+        for i in range(r + 1, m):
+            if A[i][c] == 0:
+                continue
+            
+            factor = sp.simplify(A[i][c] / pivot_val)
+            # Ri <- Ri - factor*Rr
+            for j in range(n):
+                A[i][j] = sp.simplify(A[i][j] - factor * A[r][j])
+
+            op = RowOp(
+                op="elim",
+                i=i,
+                j=r,
+                factor=factor, # Lưu dưới dạng sp.Expr
+                pivot_row=r,
+                pivot_col=c,
+                orig_i=row_ids[i],
+                orig_j=row_ids[r],
+            )
+            d = op.to_dict()
+            if snapshot_every_step:
+                d["matrix_after"] = snapshot(A)
             ops.append(d)
 
         r += 1

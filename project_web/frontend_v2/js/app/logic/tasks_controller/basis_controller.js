@@ -254,8 +254,14 @@
       } catch (_) {}
     }
 
-    // Lấy dữ liệu vector thô để gửi đi
-    const vecs = selectedItems.map((it) => (it.vec || []).slice());
+    // Lấy dữ liệu vector thô để gửi đi (gửi string nếu có thể để backend dùng SymPy)
+    const vecs = selectedItems.map((it) => {
+      if (it.latex) {
+        let s = it.latex.replace(/^\\left\[|^\[|\\right\]|\]$/g, "");
+        return s.split(",").map((x) => x.trim());
+      }
+      return (it.vec || []).slice();
+    });
 
     try {
       // [FIX] Thêm tham số pivot_strategy='basic' để báo cho backend biết:
@@ -273,15 +279,8 @@
           ? gen.buildBasisByMatrix(selectedItems, data)
           : null;
 
-      const packEqGeneral =
-        gen && gen.buildBasisByEquationsGeneral
-          ? gen.buildBasisByEquationsGeneral(selectedItems, data)
-          : null;
-
-      const packEqStep =
-        gen && gen.buildBasisByEquationsStepwise
-          ? gen.buildBasisByEquationsStepwise(selectedItems, data)
-          : null;
+      let packEqGeneral = gen && gen.buildBasisByEquationsGeneral ? gen.buildBasisByEquationsGeneral(selectedItems, data) : null;
+      let packEqStep = gen && gen.buildBasisByEquationsStepwise ? gen.buildBasisByEquationsStepwise(selectedItems, data) : null;
 
       const basis = Array.isArray(packMat?.basisVectors)
         ? packMat.basisVectors
@@ -460,7 +459,6 @@
         out.innerHTML = resultHTML;
       }
 
-      // [ĐÚNG] Phải gọi là .htmlContent (cho khớp với file basis_generator.js)
       cachedConfig = {
         title: "Cơ sở & số chiều",
         math: `\\( \\mathbb{R}^${selectedItems[0].vec.length} \\)`,
@@ -468,8 +466,13 @@
         tab2Label: "Cách 2: Hệ phương trình",
         showSubTabs: true,
 
-        // Sửa .html thành .htmlContent (hoặc fallback object gốc nếu lỡ tay)
-        content1: packMat?.htmlContent || packMat?.html || "",
+        // --- CÁCH 1 (Đã độ động cơ Virtual List) ---
+        content1: packMat?.htmlContent || "", 
+        htmlHeader: packMat?.htmlHeader || "",    // [MỚI] Truyền Phần đầu
+        htmlSteps: packMat?.htmlSteps || null,    // [MỚI] Truyền Mảng băm nhỏ
+        htmlFooter: packMat?.htmlFooter || "",    // [MỚI] Truyền Phần đuôi
+
+        // --- CÁCH 2 (Giữ nguyên) ---
         content2: packEqGeneral?.htmlContent || packEqGeneral?.html || "",
         content2Sub: packEqStep?.htmlContent || packEqStep?.html || "",
 
@@ -482,6 +485,19 @@
 
         const btnSol = $("btnOpenSolution");
         if (btnSol) btnSol.style.display = "inline-block";
+        
+        // --- TÍCH HỢP SỔ TAY GHI CHÉP ---
+        if (window.App.PaperLogger) {
+          const ltx = `\\text{Dim} = ${dim}`;
+          const animData = { 
+              type: 'basis', 
+              selectedIds: checkedIds,
+              dependentIds: dependentIds,
+              basisVectors: basis,
+              phaseMs: App.basisAnimPhaseMs
+          };
+          App.PaperLogger.log("Tìm Cơ sở & Số chiều", ltx, "", cachedConfig, animData);
+        }
       }
 
       if (

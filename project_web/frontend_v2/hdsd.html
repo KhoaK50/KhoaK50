@@ -21,7 +21,7 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Hướng Dẫn Sử Dụng - Vectoria</title>
-    <link rel="canonical" href="https://vectoria.io.vn/hdsd.html" />
+
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -31,45 +31,12 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-
+    <link rel="stylesheet" href="css/radix_colors.css" />
+  <link rel="stylesheet" href="css/components.css" />
     <script src="js/utils/theme-manager.js"></script>
 
     <style>
-      /* =================== 1. CẤU HÌNH CƠ BẢN =================== */
-      :root {
-        --primary: #3a78ff;
-        --accent: #3a78ff;
-        --bg-body: #f1f5f9;
-        --bg-card: #ffffff;
-        --text-main: #1e293b;
-        --text-sub: #64748b;
-        --border: #e2e8f0;
-        --sidebar-width: 250px;
-        --topbar-h: 60px;
-        --shadow-lg: 0 10px 30px rgba(16, 24, 40, 0.1);
-        --hover-bg: rgba(0, 0, 0, 0.05);
-        /* Màu riêng cho trang Hướng dẫn */
-        --hd-warning-bg: #fffbeb;
-        --hd-warning-border: #f59e0b;
-        --hd-warning-text: #b45309;
-        --hd-info-bg: #eff6ff;
-        --hd-info-border: #3b82f6;
-      }
-
-      body.dark {
-        --bg-body: #0f172a;
-        --bg-card: #1e293b;
-        --text-main: #f1f5f9;
-        --text-sub: #94a3b8;
-        --border: #334155;
-        --shadow-lg: 0 16px 44px rgba(0, 0, 0, 0.45);
-        --hover-bg: rgba(255, 255, 255, 0.1);
-        --hd-warning-bg: rgba(245, 158, 11, 0.1);
-        --hd-warning-border: #d97706;
-        --hd-warning-text: #fcd34d;
-        --hd-info-bg: rgba(59, 130, 246, 0.1);
-        --hd-info-border: #3b82f6;
-      }
+      
 
       html,
       body {
@@ -81,7 +48,7 @@
 
       body {
         font-family: "Inter", sans-serif;
-        background-color: var(--bg-body);
+        background-color: var(--bg-base);
         color: var(--text-main);
         margin: 0;
         padding-top: var(--topbar-h);
@@ -115,7 +82,7 @@
         align-items: center;
         gap: 5px;
         padding: 12px 20px;
-        color: var(--text-sub);
+        color: var(--text-muted);
         text-decoration: none;
         font-size: 0.95rem;
         cursor: pointer;
@@ -132,7 +99,7 @@
       .custom-nav .nav-link:hover,
       .custom-nav .sub-link:hover {
         background: #f8fafc;
-        color: var(--primary);
+        color: var(--primary-base);
       }
 
       /* 3. Phân cấp thụt lề cho 3 cấp độ */
@@ -153,13 +120,13 @@
       }
       .custom-nav .nav-item:has(> .active),
       .custom-nav .sub-menu li:has(> .active) {
-        border-left: 3px solid var(--primary);
-        background-color: var(--hover-bg);
+        border-left: 3px solid var(--primary-base);
+        background-color: var(--bg-hover);
       }
       .custom-nav .active {
         border-left: none !important;
         background-color: transparent !important;
-        color: var(--primary) !important;
+        color: var(--primary-base) !important;
         font-weight: 600;
       }
 
@@ -193,16 +160,16 @@
       }
       body.dark .custom-nav .nav-item:has(> .active),
       body.dark .custom-nav .sub-menu li:has(> .active) {
-        background-color: #1e293b;
-        border-left-color: #60a5fa;
+        background-color: var(--bg-card);
+        border-left-color: var(--primary-hover);
       }
       body.dark .custom-nav .active {
-        color: #60a5fa !important;
+        color: var(--primary-hover) !important;
       }
       body.dark .custom-nav .nav-link:hover,
       body.dark .custom-nav .sub-link:hover {
-        background: #1e293b;
-        color: #60a5fa;
+        background: var(--bg-hover);
+        color: var(--primary-hover);
       }
 
       .sidebar {
@@ -255,7 +222,7 @@
           border-radius: 0 !important;
           border: none !important;
           border-bottom: 1px solid var(--border) !important;
-          background-color: var(--bg-body) !important;
+          background-color: var(--bg-base) !important;
           padding: 10px 15px !important;
           margin: 0 !important;
           overflow-y: visible !important;
@@ -271,7 +238,7 @@
           border: 1px solid var(--border) !important;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
           cursor: pointer !important;
-          color: var(--primary) !important;
+          color: var(--primary-base) !important;
           transition: all 0.3s ease !important;
         }
         .sidebar h3.nav-title i:not(.fa-list-ul) {
@@ -329,7 +296,7 @@
         }
         body.dark .sidebar h3.nav-title,
         body.dark .custom-nav .nav-list {
-          background: #1e293b !important;
+          background: var(--bg-card) !important;
           border-color: #334155 !important;
         }
         body.dark .sidebar.mobile-open h3.nav-title {
@@ -385,7 +352,7 @@
         border-radius: 10px;
         border: 1px solid var(--border);
         background: var(--bg-card);
-        color: var(--text-sub);
+        color: var(--text-muted);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -454,7 +421,7 @@
       }
 
       .setting-item:hover {
-        background: var(--hover-bg);
+        background: var(--bg-hover);
       }
 
       .switch {
@@ -477,7 +444,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: var(--text-sub);
+        background-color: var(--text-muted);
         opacity: 0.5;
         transition: 0.3s;
         border-radius: 34px;
@@ -582,7 +549,7 @@
       .sidebar h3 {
         margin: 0 0 15px 0;
         font-size: 1.1rem;
-        border-bottom: 2px solid var(--primary);
+        border-bottom: 2px solid var(--primary-base);
         padding-bottom: 10px;
         color: var(--text-main);
       }
@@ -624,7 +591,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        color: var(--text-sub);
+        color: var(--text-muted);
         text-decoration: none;
         cursor: pointer;
         transition: all 0.2s;
@@ -634,8 +601,8 @@
 
       .custom-nav .nav-link:hover,
       .custom-nav .sub-link:hover {
-        color: var(--primary);
-        background: var(--hover-bg);
+        color: var(--primary-base);
+        background: var(--bg-hover);
       }
 
       .custom-nav .arrow-icon {
@@ -657,10 +624,10 @@
       }
 
       .custom-nav .active {
-        background-color: var(--hd-info-bg);
-        color: var(--primary) !important;
+        background-color: rgba(0, 144, 255, 0.1);
+        color: var(--primary-base) !important;
         font-weight: 600;
-        border-left: 3px solid var(--primary);
+        border-left: 3px solid var(--primary-base);
       }
 
       /* Main Content */
@@ -684,7 +651,7 @@
       .lesson-title {
         font-size: 2rem;
         margin: 0 0 10px;
-        color: var(--primary);
+        color: var(--primary-base);
       }
 
       .section-title {
@@ -707,8 +674,8 @@
         font-weight: 700;
         margin-top: 40px;
         margin-bottom: 20px;
-        color: var(--primary);
-        border-bottom: 2px solid var(--primary);
+        color: var(--primary-base);
+        border-bottom: 2px solid var(--primary-base);
         display: inline-block;
         padding-bottom: 5px;
       }
@@ -743,15 +710,15 @@
       .hd-img-caption {
         font-style: italic;
         font-size: 0.95rem;
-        color: var(--text-sub);
+        color: var(--text-muted);
         margin-top: 10px;
         display: block;
       }
 
       /* Boxes Cảnh báo & Lưu ý */
       .hd-box-info {
-        background-color: var(--hd-info-bg);
-        border-left: 4px solid var(--hd-info-border);
+        background-color: rgba(0, 144, 255, 0.1);
+        border-left: 4px solid var(--primary-base);
         padding: 15px 20px;
         margin: 20px 0;
         border-radius: 0 8px 8px 0;
@@ -776,7 +743,7 @@
 
       /* Nút Highlight trong Text */
       .hd-btn-text {
-        background-color: var(--primary);
+        background-color: var(--primary-base);
         color: #fff;
         padding: 2px 8px;
         border-radius: 4px;
@@ -807,7 +774,7 @@
           border-radius: 0 !important;
           border: none !important;
           border-bottom: 1px solid var(--border) !important;
-          background-color: var(--bg-body) !important;
+          background-color: var(--bg-base) !important;
           padding: 10px 15px 10px 5px !important; /* XÓA KHOẢNG TRỐNG ĐỈNH ĐỂ DÍNH SÁT TOPBAR */
           margin: 0 !important;
           overflow-y: visible !important;
@@ -869,7 +836,7 @@
       .hd-img-caption {
         font-style: italic;
         font-size: 0.95rem;
-        color: var(--text-sub);
+        color: var(--text-muted);
         margin-top: 10px;
         display: block;
       }
@@ -887,213 +854,133 @@
       }
     </script>
 
-    <div class="theme-transition-icons">
-      <i class="fa-solid fa-sun" id="sunIcon"></i>
-      <i class="fa-solid fa-moon" id="moonIcon"></i>
-    </div>
+    
 
-    <div id="topbar">
-      <div class="topbar-left">
-        <a href="javascript:history.back()" class="topbar-icon" title="Quay lại"
-          ><i class="fa-solid fa-arrow-left"></i
-        ></a>
-        <a href="index.html" class="topbar-icon" title="Về trang chủ"
-          ><i class="fa-solid fa-house"></i
-        ></a>
-        <a href="tltk.html" class="topbar-icon" title="Tài liệu tham khảo"
-          ><i class="fa-solid fa-file-lines"></i
-        ></a>
-      </div>
+    <!-- ==================== UNIFIED TOPBAR ==================== -->
+<style>
+  
+  
+  
+  
+  .vec-sidebar-toggle {
+    display: none; /* Shows on mobile */
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    color: var(--text-main);
+    cursor: pointer;
+    font-size: 16px;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+  }
+  .vec-sidebar-toggle:hover {
+    background: var(--primary-base);
+    color: white;
+    border-color: var(--primary-base);
+  }
+  </style>
 
-      <div class="brand">Hướng Dẫn Sử Dụng</div>
-
-      <div class="topbar-right">
-        <div class="settings-container">
-          <button id="btnSettings" class="icon-btn" title="Cài đặt">
-            <i class="fa-solid fa-gear"></i>
-          </button>
-          <div class="settings-dropdown" id="settingsDropdown">
-            <div class="setting-item">
-              <span><i class="fa-solid fa-moon"></i> Chế độ tối</span>
-              <label class="switch"
-                ><input type="checkbox" id="themeToggle" /><span
-                  class="slider round"
-                ></span
-              ></label>
+<header class="vec-topbar" id="globalTopbar">
+  <div class="vec-topbar-left">
+    <button class="vec-sidebar-toggle" id="mobileSidebarToggle" title="Menu sidebar">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <a href="index.html" class="vec-brand-group">
+      <img src="assets/images/logo+name.png" alt="Vectoria" onerror="this.src='assets/images/logo.png'">
+    </a>
+    
+    <nav class="vec-nav-links">
+          <a href="index.html" class="vec-nav-link" id="navHome"><i class="fa-solid fa-house"></i> Trang chủ</a>
+          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="fa-solid fa-layer-group"></i> Dashboard</a>
+          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="fa-solid fa-calculator"></i> Tính toán</a>
+          
+          <div class="vec-dropdown-container">
+            <span class="vec-nav-link"><i class="fa-solid fa-compass"></i> Khám phá <i class="fa-solid fa-chevron-down" style="font-size: 0.7em;"></i></span>
+            <div class="vec-dropdown-menu">
+              <a href="knowledge_info.html" class="vec-dropdown-item"><i class="fa-solid fa-graduation-cap"></i> Thư viện kiến thức</a>
+              <a href="hdsd.html" class="vec-dropdown-item"><i class="fa-solid fa-circle-question"></i> Hướng dẫn sử dụng</a>
+              <a href="tltk.html" class="vec-dropdown-item"><i class="fa-solid fa-file-pdf"></i> Tài liệu tham khảo</a>
+              <div class="dropdown-divider" style="height: 1px; background: var(--border-strong, #cbd5e1); margin: 5px 0;"></div>
+              <a href="about_us.html" class="vec-dropdown-item"><i class="fa-solid fa-users"></i> Về chúng tôi</a>
+              <a href="contact.html" class="vec-dropdown-item"><i class="fa-solid fa-envelope"></i> Liên hệ</a>
             </div>
-            <hr
-              style="
-                border: 0;
-                border-top: 1px solid var(--border);
-                margin: 0;
-                opacity: 0.5;
-              "
-            />
-            <a
-              href="contact.html"
-              class="setting-item"
-              style="text-decoration: none; color: inherit"
-            >
-              <span><i class="fa-solid fa-envelope"></i> Liên hệ / Góp ý</span>
-              <i
-                class="fa-solid fa-chevron-right"
-                style="font-size: 0.8em; color: var(--muted)"
-              ></i>
-            </a>
+          </div>
+        </nav>
+  </div>
+  
+  <div class="vec-topbar-right">
+    <button class="vec-icon-btn" id="themeToggleBtn" title="Chuyển giao diện">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+
+        <div class="vec-dropdown-container right-align">
+          <button class="vec-icon-btn" title="Ngôn ngữ">
+            <i class="fa-solid fa-globe"></i>
+          </button>
+          <div class="vec-dropdown-menu" style="min-width: 150px;">
+            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('vi')">Tiếng Việt</a>
+            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('en')">English</a>
           </div>
         </div>
-      </div>
-    </div>
+        
+        <button class="vec-icon-btn" title="Thông báo">
+          <i class="fa-regular fa-bell"></i>
+        </button>
+        
+        <div class="vec-dropdown-container right-align">
+          <div class="top-avatar-btn" id="btnTopAvatar" style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary-base); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; background-size: cover; background-position: center;">
+            <i class="fa-solid fa-user"></i>
+          </div>
+          <div class="top-dropdown vec-dropdown-menu" id="menuTopAvatar" style="width: 260px; min-width: 260px;">
+          </div>
+        </div>
+  </div>
+</header>
+<script>
+  // Script to handle mobile nav when there's no sidebar
+  document.addEventListener("DOMContentLoaded", () => {
+    const toggleBtn = document.getElementById("mobileSidebarToggle");
+    const navLinks = document.querySelector(".vec-nav-links");
+    const oldHamburger = document.getElementById("hamburger");
+    
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", (e) => {
+        // If there's an old hamburger (like in calculation.html), trigger it
+        if (oldHamburger && oldHamburger.style.display !== "none" && typeof oldHamburger.click === "function") {
+          // It's handled by inline onclick in calculation.html usually
+          // But wait, the inline onclick is only in calculation.html.
+          // Let's not override if calculation.html uses it.
+        }
+        
+        // Toggle mobile menu for global links
+        if (navLinks) {
+          navLinks.classList.toggle("show-mobile");
+        }
+      });
+    }
 
-    <div class="container">
-      <aside class="sidebar custom-nav">
-        <h3 class="nav-title"><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
-        <ul class="nav-list">
-          <li class="nav-item">
-            <a href="#hd-tong-quan" class="nav-link" style="font-weight: 700"
-              >TỔNG QUAN</a
-            >
-          </li>
+    // Handle dropdown clicks on mobile
+    const dropdownContainers = document.querySelectorAll(".vec-nav-links .vec-dropdown-container");
+    dropdownContainers.forEach(container => {
+      container.addEventListener("click", (e) => {
+        if (window.innerWidth <= 768) {
+          e.stopPropagation();
+          container.classList.toggle("open");
+        }
+      });
+    });
+  });
+</script>
+<!-- ==================== END UNIFIED TOPBAR ==================== -->
 
-          <li class="nav-item">
-            <a href="#hd-trang-chu" class="nav-link" style="font-weight: 700"
-              >TRANG CHỦ</a
-            >
-          </li>
 
-          <li class="nav-item has-dropdown open">
-            <div class="nav-link toggle-btn">
-              <a href="#hd-trang-tinh-toan" style="font-weight: 700"
-                >TRANG TÍNH TOÁN</a
-              >
-              <i class="fa-solid fa-chevron-down arrow-icon"></i>
-            </div>
-            <ul class="sub-menu">
-              <li class="nav-item">
-                <a href="#hd-giao-dien-chinh" class="sub-link active"
-                  >1. Giao diện chính</a
-                >
-              </li>
-              <li class="nav-item">
-                <a href="#hd-giao-dien-chung" class="sub-link"
-                  >2. Giao diện chung công cụ tính toán</a
-                >
-              </li>
-              <li class="nav-item">
-                <a href="#hd-chuc-nang-khoi-tao" class="sub-link"
-                  >3. Chức năng khởi tạo vector</a
-                >
-              </li>
+<button id="btnSettings" style="display:none;"></button>
+<div id="settingsDropdown" style="display:none;"></div>
 
-              <li class="nav-item has-dropdown">
-                <div class="sub-link toggle-btn">
-                  <a href="#hd-cac-cong-cu"
-                    >4. Các công cụ liên quan đến chủ đề Không gian vector</a
-                  >
-                  <i class="fa-solid fa-chevron-down arrow-icon"></i>
-                </div>
-                <ul class="sub-menu">
-                  <li class="nav-item">
-                    <a href="#hd-4-1" class="sub-link"
-                      >4.1. Bài toán về Độc lập tuyến tính</a
-                    >
-                  </li>
-                  <li class="nav-item">
-                    <a href="#hd-4-2" class="sub-link"
-                      >4.2. Bài toán về Hạng của hệ vector</a
-                    >
-                  </li>
-                  <li class="nav-item">
-                    <a href="#hd-4-3" class="sub-link"
-                      >4.3. Bài toán về Cơ sở và số chiều</a
-                    >
-                  </li>
-                  <li class="nav-item">
-                    <a href="#hd-4-4" class="sub-link"
-                      >4.4. Bài toán về Tọa độ vector trong cơ sở</a
-                    >
-                  </li>
-                </ul>
-              </li>
-
-              <li class="nav-item has-dropdown">
-                <div class="sub-link toggle-btn">
-                  <a href="#hd-cac-phep-tinh">5. Các phép tính trên vector</a>
-                  <i class="fa-solid fa-chevron-down arrow-icon"></i>
-                </div>
-                <ul class="sub-menu">
-                  <li class="nav-item">
-                    <a href="#hd-5-1" class="sub-link"
-                      >5.1. Phép cộng 2 vector</a
-                    >
-                  </li>
-                  <li class="nav-item">
-                    <a href="#hd-5-2" class="sub-link"
-                      >5.2. Phép kéo dãn vector</a
-                    >
-                  </li>
-                  <li class="nav-item">
-                    <a href="#hd-5-3" class="sub-link"
-                      >5.3. Phép tìm hình chiếu vector</a
-                    >
-                  </li>
-                  <li class="nav-item">
-                    <a href="#hd-5-4" class="sub-link"
-                      >5.4. Phép chuẩn hóa vector</a
-                    >
-                  </li>
-                  <li class="nav-item">
-                    <a href="#hd-5-5" class="sub-link"
-                      >5.5. Phép tìm tích vô hướng của 2 vector</a
-                    >
-                  </li>
-                  <li class="nav-item">
-                    <a href="#hd-5-6" class="sub-link"
-                      >5.6. Phép tìm tích có hướng của 2 vector</a
-                    >
-                  </li>
-                  <li class="nav-item">
-                    <a href="#hd-5-7" class="sub-link"
-                      >5.7. Phép tính tìm độ dài của vector</a
-                    >
-                  </li>
-                  <li class="nav-item">
-                    <a href="#hd-5-8" class="sub-link"
-                      >5.8. Phép tìm góc giữa 2 vector</a
-                    >
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </li>
-
-          <li class="nav-item has-dropdown">
-            <div class="nav-link toggle-btn">
-              <a href="#hd-trang-kien-thuc" style="font-weight: 700"
-                >TRANG TÌM HIỂU KIẾN THỨC</a
-              >
-              <i class="fa-solid fa-chevron-down arrow-icon"></i>
-            </div>
-            <ul class="sub-menu">
-              <li class="nav-item">
-                <a href="#hd-kt-1" class="sub-link"
-                  >1. Giao diện trang tổng quan</a
-                >
-              </li>
-              <li class="nav-item">
-                <a href="#hd-kt-2" class="sub-link"
-                  >2. Giao diện Thẻ Kiến thức chuẩn bị</a
-                >
-              </li>
-              <li class="nav-item">
-                <a href="#hd-kt-3" class="sub-link"
-                  >3. Giao diện chung của các trang kiến thức</a
-                >
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </aside>
+<div id="hamburger" style="display:none;"></div>
 
       <main class="main-content">
         <div class="chapter-card">
@@ -1145,7 +1032,7 @@
             <a
               href="https://vectoria.io.vn"
               target="_blank"
-              style="color: var(--primary)"
+              style="color: var(--primary-base)"
               >https://vectoria.io.vn</a
             >
           </p>
@@ -2254,5 +2141,9 @@
       }
       setTimeout(initVectoria, 1500);
     </script>
-  </body>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="js/utils/live-collab.js"></script>
+  <script src="js/app/auth.js"></script>
+  <script src="js/app/ui/topbar_avatar.js"></script>
+</body>
 </html>

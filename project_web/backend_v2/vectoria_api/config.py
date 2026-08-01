@@ -20,3 +20,6 @@ else:
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     }
+
+DB_URL = "postgresql://postgres.hebswwabrjbmbwqvymal:NtDk2108$$$@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5501/frontend_v2")

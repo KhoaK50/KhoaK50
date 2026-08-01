@@ -249,65 +249,89 @@
   }
 
   /* =======================================================================
-      PHẦN 2: CÁCH 1 - MA TRẬN (HTML Version - Text gốc)
+      PHẦN 2: CÁCH 1 - MA TRẬN (TỐI ƯU CẢNH GIỚI TỐI CAO - CHUNKING)
       ======================================================================= */
   App.TasksGen.Basis.buildBasisByMatrix = function (selectedItems, apiData) {
     const vecs = (selectedItems || []).map((it) => (it.vec || []).slice());
     const n = vecs[0]?.length ?? 0;
-    const dim =
-      typeof apiData?.dimension === "number" ? apiData.dimension : null;
+    const dim = typeof apiData?.dimension === "number" ? apiData.dimension : null;
     const A = vecs;
 
     const steps = Array.isArray(apiData?.steps) ? apiData.steps : [];
 
-    // [GỌI HÀM ĐÃ SỬA]
-    const { chain, lastMatrix } = buildChainFromSteps(steps);
-
-    const chainLatex = chain ? chain : `${matrixToLatex(A)}`;
-
-    const rankFromE = Array.isArray(lastMatrix)
-      ? nonZeroRowCount(lastMatrix)
-      : null;
-    const rank = dim !== null ? dim : (rankFromE ?? null);
-
-    const vecListLatex = (selectedItems || [])
-      .map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`)
-      .join(",\\; ");
-
-    // CƠ SỞ LẤY TỪ CÁC DÒNG KHÁC 0 CỦA MA TRẬN CUỐI
-    let basisFromMatrix = [];
-    if (Array.isArray(lastMatrix)) {
-      for (const row of lastMatrix) {
-        if (!isZeroRow(row)) {
-          basisFromMatrix.push(row);
-        }
+    // 1. Lọc và chuẩn bị ma trận
+    const mats = [];
+    for (const st of steps) {
+      if (st && st.kind === "matrix" && Array.isArray(st.matrix)) {
+        let label = st.row_op ? rowOpDictToLatex(st.row_op) : cleanLabelFromText(st.text);
+        mats.push({ M: st.matrix, label: label });
       }
     }
 
-    const basisRowsLatex = basisFromMatrix.length
-      ? `\\left\\{${basisFromMatrix.map(vecToLatex).join(",\\; ")}\\right\\}`
-      : "\\left\\{\\;\\right\\}";
+    // [BÍ KÍP 1]: Băm nhỏ từng bước thành MẢNG (Array), không nối chuỗi!
+    const stepChunks = [];
+    let lastMatrix = A;
 
-    // --- CHUYỂN TEXT CŨ SANG HTML ---
-    let html = `<div class="sol-step-container">`;
-    html += `<div class="sol-text">Cho $${vecListLatex}$.</div>`;
-    html += `<div class="sol-text">Lập ma trận $A$ (các vectơ là các dòng) và biến đổi về dạng bậc thang:</div>`;
+    if (mats.length === 0) {
+      stepChunks.push(`<div class="sol-math-block">\\[ ${matrixToLatex(A)} \\]</div>`);
+    } else {
+      let prevM = mats[0].M;
+      if (!matrixEqual(A, prevM)) {
+        stepChunks.push(`<div class="sol-math-block" style="overflow-x: auto; padding-bottom: 10px;">\\[ ${matrixToLatex(A)} \\]</div>`);
+      }
 
-    // Math block có scroll ngang
-    html += `<div class="sol-math-block" style="overflow-x: auto; white-space: nowrap;">\\[ ${chainLatex} \\]</div>`;
+      let stepCounter = 1;
+      for (let i = 1; i < mats.length; i++) {
+        const currentM = mats[i].M;
+        const label = mats[i].label || "";
+        if (!label && matrixEqual(prevM, currentM)) continue;
 
-    html += `<div class="sol-bold">Kết luận.</div>`;
-    html += `<div class="sol-bullet">Số chiều: $\\dim(V) = ${rank !== null ? rank : "?"}$.</div>`;
-    // [FIX LAYOUT] Tách text và công thức ra 2 dòng riêng biệt
-    html += `<div class="sol-bullet" style="margin-bottom: 5px;">Một cơ sở của $V$ là:</div>`;
-    // Dùng div riêng với overflow-x để có thanh cuộn nếu quá dài
-    html += `<div class="sol-math-block" style="overflow-x: auto; padding-bottom: 5px;">\\[ B = ${basisRowsLatex} \\]</div>`;
-    html += `</div>`;
+        // Bỏ vào rổ từng khối một
+        stepChunks.push(`
+        <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--border);">
+            <div class="sol-bold" style="font-size: 0.95em; color: var(--text-main, #333); margin-top: 0; margin-bottom: 8px;">
+                <i class="fa-solid fa-arrow-right-long" style="color: #64b5f6;"></i> Phép biến đổi ${stepCounter++}: $${label ? label : "\\text{Rút gọn}"}$
+            </div>
+            <div class="sol-math-block" style="overflow-x: auto; padding: 5px;">
+                \\[ ${matrixToLatex(prevM)} \\;\\to\\; ${matrixToLatex(currentM)} \\]
+            </div>
+        </div>`);
+        prevM = currentM;
+        lastMatrix = currentM;
+      }
+    }
 
+    // 2. Tính toán Phần Đầu và Phần Đuôi
+    const rankFromE = Array.isArray(lastMatrix) ? nonZeroRowCount(lastMatrix) : null;
+    const rank = dim !== null ? dim : (rankFromE ?? null);
+    const vecListLatex = (selectedItems || []).map((it, i) => `v_{${i + 1}} = ${vecToLatex(it.vec)}`).join(",\\; ");
+    let basisFromMatrix = [];
+    if (Array.isArray(lastMatrix)) {
+      for (const row of lastMatrix) {
+        if (!isZeroRow(row)) basisFromMatrix.push(row);
+      }
+    }
+    const basisRowsLatex = basisFromMatrix.length ? `\\left\\{${basisFromMatrix.map(vecToLatex).join(",\\; ")}\\right\\}` : "\\left\\{\\;\\right\\}";
+
+    let htmlHeader = `<div class="sol-step-container">`;
+    htmlHeader += `<div class="sol-text">Cho hệ vector:</div>`;
+    htmlHeader += `<div style="overflow-x: auto; padding-bottom: 8px; margin-bottom: 15px;">$${vecListLatex}$</div>`;
+    htmlHeader += `<div class="sol-bold">Bước 1: Lập và biến đổi ma trận</div>`;
+    htmlHeader += `<div class="sol-text">Lập ma trận $A$ (các vectơ là các dòng) và biến đổi về dạng bậc thang:</div>`;
+
+    let htmlFooter = `<div class="sol-bold" style="margin-top: 20px;">Bước 2: Kết luận</div>`;
+    htmlFooter += `<div class="sol-bullet">Số chiều: $\\dim(V) = ${rank !== null ? rank : "?"}$.</div>`;
+    htmlFooter += `<div class="sol-bullet" style="margin-bottom: 5px;">Một cơ sở của $V$ là:</div>`;
+    htmlFooter += `<div class="sol-math-block" style="overflow-x: auto; padding-bottom: 5px;">\\[ B = ${basisRowsLatex} \\]</div></div>`;
+
+    // Trả về Array thay vì String
     return {
       titleText: "Cơ sở và số chiều trong",
       titleMath: `\\(\\mathbb{R}^{${n}}\\)`,
-      htmlContent: html,
+      htmlHeader: htmlHeader,   // Phần ĐẦU
+      htmlSteps: stepChunks,    // [MẢNG] CÁC BƯỚC GIẢI
+      htmlFooter: htmlFooter,   // Phần ĐUÔI
+      htmlContent: "",          // Ép rỗng để báo hiệu xài Cỗ máy Virtual
       basisVectors: basisFromMatrix,
     };
   };

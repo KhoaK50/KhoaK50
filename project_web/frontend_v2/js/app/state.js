@@ -18,6 +18,10 @@
   App.nextId = 1;
   App.usedHues = new Set();
 
+  // matrixList items: { id, name, rows, cols, values: [[]], colorHex, colorCss }
+  App.matrixList = [];
+  App.nextMatrixId = 1;
+
   App._previewTemp = null;
 })();
 

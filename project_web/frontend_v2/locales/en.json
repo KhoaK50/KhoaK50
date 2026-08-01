@@ -1,0 +1,46 @@
+{
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "calc": "Computation",
+    "explore": "<i class=\"fa-solid fa-compass\"></i> Explore <i class=\"fa-solid fa-chevron-down\" style=\"font-size: 0.7em;\"></i>",
+    "knowledge": "<i class=\"fa-solid fa-graduation-cap\"></i> Knowledge Repository",
+    "manual": "<i class=\"fa-solid fa-circle-question\"></i> User Manual",
+    "docs": "<i class=\"fa-solid fa-file-pdf\"></i> References",
+    "about": "<i class=\"fa-solid fa-users\"></i> About Us",
+    "contact": "<i class=\"fa-solid fa-envelope\"></i> Contact"
+  },
+  "topbar": {
+    "theme": "Toggle Theme",
+    "lang": "Language",
+    "notif": "Notifications"
+  },
+  "avatar": {
+    "name_changes": "2 name changes left this month",
+    "switch_account": "Switch Account",
+    "logout": "Logout",
+    "guest": "Guest User",
+    "guest_desc": "Log in to save results and sync to the cloud.",
+    "login": "Log In Now"
+  },
+  "footer": {
+    "text": "© 2026 Vectoria. Learn and visualize Vector Spaces."
+  },
+  "index": {
+    "hero_title": "Personalized Learning System for Linear Algebra",
+    "hero_desc": "Vectoria is designed to accompany learners throughout their exploration of Linear Algebra. It serves as a unified hub for theories and exercises, empowering learners to explore this mathematical domain through dynamic visualization tools.",
+    "btn_dashboard": "Go to Dashboard <i class=\"fa-solid fa-arrow-right\"></i>",
+    "btn_calc_outline": "<i class=\"fa-solid fa-calculator\"></i> Computation",
+    "btn_knowledge_outline": "<i class=\"fa-solid fa-book-open\"></i> Theory",
+    "divider": "Core Features",
+    "feat1_title": "Data Repository and Personal Progress Tracking",
+    "feat1_desc": "A dedicated workspace for storing completed exercises and saved lessons, integrated with interaction history logging to help learners monitor their progress via intuitive visual statistics.",
+    "btn_feat1": "Set up your workspace <i class=\"fa-solid fa-arrow-right\"></i>",
+    "feat2_title": "Computational and Visualization Workspace",
+    "feat2_desc": "Supports algebraic computations and visualizes operations between mathematical objects to simulate their intrinsic properties.",
+    "btn_feat2": "Let's crunch some numbers <i class=\"fa-solid fa-arrow-right\"></i>",
+    "feat3_title": "Knowledge Repository",
+    "feat3_desc": "A comprehensive collection of Linear Algebra theories and reference materials, suggesting optimal learning pathways and enabling learners to create custom review sets at their discretion.",
+    "btn_feat3": "Dive into the library <i class=\"fa-solid fa-arrow-right\"></i>"
+  }
+}

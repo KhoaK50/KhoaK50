@@ -1,4 +1,4 @@
-/* =================== TOPBAR =================== */
+﻿/* =================== TOPBAR =================== */
 #topbar {
   position: fixed;
   inset: 0 0 auto 0;
@@ -149,10 +149,39 @@
   user-select: none;
 }
 
+:root {
+  --sidebar-width: 380px;
+}
+
 /* =================== RESPONSIVE =================== */
+@media (min-width: 768px) {
+  #controls {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width) !important;
+    min-width: var(--sidebar-width) !important;
+    transform: none !important;
+    margin-left: calc( (var(--sidebar-width) + 40px) * -1 );
+    transition: margin-left var(--t-slow) cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none; /* Desktop doesn't need overlay shadow */
+    overflow-x: hidden !important;
+  }
+  
+  #controls.open {
+    margin-left: 0;
+  }
+  
+  /* On desktop, hide overlay mask since we squeeze instead of overlay */
+  #overlay {
+    display: none !important;
+  }
+}
+
 @media (min-width: 1100px) {
   #controls {
-    width: 380px;
+    width: var(--sidebar-width) !important;
+    min-width: var(--sidebar-width) !important;
   }
 }
 
@@ -199,4 +228,186 @@
   height: 40px;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* =================== RESIZER (SPLIT PANE) =================== */
+.split-resizer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-strong);
+  border-top: 1px solid var(--border-strong);
+  cursor: row-resize;
+  position: relative;
+  z-index: 100;
+  touch-action: none;
+}
+.split-resizer .resizer-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--border-strong);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.split-resizer:hover .resizer-handle, .split-resizer:active .resizer-handle {
+  background: var(--primary-base);
+}
+@media (min-width: 768px) {
+  .split-resizer {
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    border-top: none;
+    border-bottom: none;
+    border-right: 1px solid var(--border-strong);
+  }
+  .split-resizer .resizer-handle {
+    width: 4px;
+    height: 40px;
+  }
+}
+
+/* Disable transitions during resize for zero-lag */
+body.is-resizing,
+body.is-resizing *,
+body.is-resizing #app,
+body.is-resizing #controls {
+    transition: none !important;
+}
+
+/* Hide resizer when closed on Desktop */
+@media (min-width: 768px) {
+  #controls:not(.open) + #resizer {
+    display: none !important;
+  }
+  
+  /* Prevent squishing, enforce clipping */
+  #controls {
+    max-width: var(--sidebar-width) !important;
+    overflow-x: hidden !important;
+  }
+  #controls > * {
+    min-width: 320px !important;
+  }
+  
+  #controls.open {
+    margin-left: 0;
+  }
+  
+  /* On desktop, hide overlay mask since we squeeze instead of overlay */
+  #overlay {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1100px) {
+  #controls {
+    width: var(--sidebar-width) !important;
+    min-width: var(--sidebar-width) !important;
+  }
+}
+
+/* ================= TOPBAR ICON BUTTONS ================= */
+
+/* ================= TOPBAR ICONS (SVG) ================= */
+
+.topbar-left,
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--fg); /* QUAN TRỌNG: icon trắng/đen */
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background var(--t-fast),
+    box-shadow var(--t-fast),
+    transform var(--t-fast);
+}
+
+.topbar-icon:hover {
+  background: color-mix(in oklab, var(--accent) 10%, var(--card));
+  box-shadow: var(--shadow-sm);
+}
+
+.topbar-icon:active {
+  transform: translateY(0.5px);
+}
+
+/* SVG size */
+.topbar-icon .icon {
+  width: 40px;
+  height: 40px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* =================== RESIZER (SPLIT PANE) =================== */
+.split-resizer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-strong);
+  border-top: 1px solid var(--border-strong);
+  cursor: row-resize;
+  position: relative;
+  z-index: 100;
+  touch-action: none;
+}
+.split-resizer .resizer-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--border-strong);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.split-resizer:hover .resizer-handle, .split-resizer:active .resizer-handle {
+  background: var(--primary-base);
+}
+@media (min-width: 768px) {
+  .split-resizer {
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    border-top: none;
+    border-bottom: none;
+    border-right: 1px solid var(--border-strong);
+  }
+  .split-resizer .resizer-handle {
+    width: 4px;
+    height: 40px;
+  }
+}
+
+/* Disable transitions during resize for zero-lag */
+body.is-resizing,
+body.is-resizing *,
+body.is-resizing #app,
+body.is-resizing #controls {
+    transition: none !important;
+}
+
+/* Hide resizer when closed on Desktop */
+@media (min-width: 768px) {
+  #controls:not(.open) + #resizer {
+    display: none !important;
+  }
+  
+  /* Prevent squishing, enforce clipping */
+  #controls .tab-content {
+    min-width: 310px !important;
+    overflow-x: hidden !important;
+  }
 }

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô Hình Định Tuyến Học Tập Thích Ứng</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary: #3a78ff;
+            --primary-light: #eff6ff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+            --text-main: #334155;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            color: var(--text-main); line-height: 1.6;
+        }
+
+        .paper-container {
+            max-width: 1100px; margin: 40px auto; background: #ffffff;
+            padding: 50px 60px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        /* ACADEMIC TEXT */
+        .academic-text h1 { font-family: 'Merriweather', serif; font-size: 2.2rem; color: var(--dark); text-align: center; margin-bottom: 30px; line-height: 1.3; }
+        .academic-text h2 { font-family: 'Merriweather', serif; font-size: 1.5rem; color: var(--dark); margin: 40px 0 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+        .academic-text h3 { font-size: 1.25rem; color: var(--primary); margin: 30px 0 15px; display: flex; align-items: center; gap: 8px;}
+        .academic-text p { margin-bottom: 15px; font-size: 1.05rem; text-align: justify; }
+
+        .math-block {
+            background: var(--light); padding: 30px; text-align: center;
+            border-radius: 8px; border: 1px solid var(--border); margin: 25px 0;
+            color: var(--dark); overflow-x: auto;
+        }
+
+        .var-grid {
+            display: grid; grid-template-columns: 150px 1fr; gap: 10px;
+            margin-bottom: 20px; background: white; border: 1px solid var(--border);
+            border-radius: 8px; overflow: hidden;
+        }
+        .var-row { display: contents; }
+        .var-label {
+            background: var(--light); padding: 12px 15px; font-weight: 600;
+            border-bottom: 1px solid var(--border); border-right: 1px solid var(--border);
+            font-size: 0.95rem; color: var(--dark);
+        }
+        .var-content {
+            padding: 12px 15px; border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+        }
+        .var-row:last-child .var-label, .var-row:last-child .var-content { border-bottom: none; }
+
+        .references { font-size: 0.9rem; color: var(--gray); margin-top: 50px; border-top: 1px solid var(--border); padding-top: 20px; }
+        .references li { margin-bottom: 12px; }
+        .references a { color: var(--primary); text-decoration: none; font-weight: 600; }
+        .references a:hover { text-decoration: underline; }
+
+        /* WIDGET */
+        .widget-container {
+            margin-top: 50px; background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border); display: grid; grid-template-columns: 350px 1fr;
+        }
+        .panel-controls { background: var(--light); padding: 30px; border-right: 1px solid var(--border); }
+        .panel-controls h4 { font-size: 0.9rem; text-transform: uppercase; color: var(--gray); margin: 25px 0 15px; }
+        .panel-controls h4:first-child { margin-top: 0; }
+        .slider-wrapper { margin-bottom: 18px; }
+        .slider-header { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; }
+        .val-badge { background: white; color: var(--primary); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-family: monospace; }
+        input[type="range"] { width: 100%; accent-color: var(--primary); cursor: pointer; }
+        select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.9rem; }
+
+        .panel-view { padding: 40px; display: flex; flex-direction: column; gap: 30px; background: white; }
+        .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .stat-card { background: var(--light); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
+        .stat-value { font-size: 2rem; font-weight: 700; margin: 5px 0; font-family: monospace; }
+        .stat-label { font-size: 0.85rem; color: var(--gray); font-weight: 600; }
+
+        .graph-area {
+            flex: 1; min-height: 200px; background: var(--light); border-radius: 12px;
+            border: 1px solid var(--border); position: relative; display: flex; align-items: center; justify-content: center;
+        }
+        .node-a, .node-b {
+            width: 120px; height: 60px; background: white; border: 2px solid var(--primary);
+            border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.9rem; position: absolute; z-index: 2;
+        }
+        .node-a { left: 10%; } .node-b { right: 10%; }
+        .edge {
+            position: absolute; left: calc(10% + 120px); right: calc(10% + 120px);
+            height: 4px; background: var(--gray); z-index: 1; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .edge-label {
+            background: white; padding: 4px 15px; border-radius: 20px; font-weight: 700;
+            font-family: monospace; border: 2px solid var(--gray); transform: translateY(-20px);
+            transition: all 0.3s; font-size: 1rem;
+        }
+
+        @media (max-width: 900px) {
+            .widget-container { grid-template-columns: 1fr; }
+            .panel-controls { border-right: none; border-bottom: 1px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="paper-container">
+    <div class="academic-text">
+        <h1>Cơ Sở Lý Thuyết Và Mô Hình Toán Học Đồ Thị Tri Thức</h1>
+        
+        <h2>1. Phương trình Trọng số Đề xuất (Proposed Model)</h2>
+        <p>Thuật toán Dijkstra/A* khi duyệt qua đồ thị tri thức sẽ tìm kiếm đường đi có <strong>Chi phí Nhận thức (Cognitive Cost)</strong> thấp nhất. Chi phí này đối với một người học $u$ được tính bằng công thức tổng hợp sau:</p>
+
+        <div class="math-block">
+            $$ W_u = \frac{C \times T}{\beta_u} \times (1 + P_u) $$
+        </div>
+        <p>Và hệ số phạt đứt gãy tiên quyết $P_u$ được tính toán gián tiếp thông qua điểm thành thạo của bài học nền tảng $S_{mastery}$ bằng Mô hình Niềm tin Bayes:</p>
+        <div class="math-block">
+            $$ P_u = 1 - S_{mastery} = 1 - \big( \alpha \cdot S_{web} + (1 - \alpha) \cdot S_{self} \big) $$
+        </div>
+
+        <h2>2. Động lực hình thành Công thức (Rationale)</h2>
+        <p>Các hệ thống giáo dục truyền thống mắc phải sai lầm <strong>"Cào bằng mọi người học" (One-size-fits-all)</strong>. Một bài học có độ khó tĩnh cố định sẽ gây nhàm chán cho học sinh giỏi và làm học sinh yếu bỏ cuộc. Công thức trên được hình thành nhằm khắc phục triệt để điều này bằng cách tạo ra một "Bản đồ có trọng số đàn hồi". Cùng một con đường, nhưng trong mắt học sinh giỏi, trọng số bị thu nhỏ lại (nhờ $\beta_u$), còn học sinh yếu nếu chưa học bài nền sẽ thấy trọng số bị thổi phồng lên (nhờ $P_u$). Đồng thời, triệt tiêu bài toán Cold-start bằng cách tin tưởng vào tự đánh giá của người học trước khi có dữ liệu thực chứng.</p>
+
+        <h2>3. Giải phẫu từng Biến số</h2>
+
+        <!-- BIẾN C -->
+        <h3><i data-lucide="book-open"></i> Biến $C$ (Cognitive Complexity - Tải trọng nhận thức)</h3>
+        <div class="var-grid">
+            <div class="var-row"><div class="var-label">Cơ sở lý thuyết</div><div class="var-content">Thuyết Tải trọng nhận thức (Cognitive Load Theory) - Sweller (1988).</div></div>
+            <div class="var-row"><div class="var-label">Tác dụng</div><div class="var-content">Đo lường sự hao tổn của "Bộ nhớ làm việc" (Working memory) để hiểu nội dung mới.</div></div>
+            <div class="var-row"><div class="var-label">Động/Tĩnh</div><div class="var-content"><strong>Tĩnh</strong> (Chỉ phụ thuộc vào bài học, không đổi theo thời gian).</div></div>
+            <div class="var-row"><div class="var-label">Mặc định & Ràng buộc</div><div class="var-content">Mặc định: Phụ thuộc văn bản. Ràng buộc: $C \ge 1.0$.</div></div>
+            <div class="var-row"><div class="var-label">Cách lấy giá trị</div><div class="var-content">Không gán thủ công bằng tay. Sử dụng thuật toán NLP (Natural Language Processing) để chấm điểm <em>Chỉ số khả năng đọc hiểu Flesch-Kincaid (Readability Index)</em> từ văn bản bài giảng.</div></div>
+            <div class="var-row"><div class="var-label">Ví dụ</div><div class="var-content">Một bài học chứa nhiều thuật ngữ học thuật phức tạp, câu văn dài sẽ bị NLP chấm điểm $C = 8.5$.</div></div>
+        </div>
+
+        <!-- BIẾN T -->
+        <h3><i data-lucide="clock"></i> Biến $T$ (Time - Yêu cầu thời gian vật lý)</h3>
+        <div class="var-grid">
+            <div class="var-row"><div class="var-label">Cơ sở lý thuyết</div><div class="var-content">Tốc độ xử lý thông tin trung bình của não bộ (Carver, 1990).</div></div>
+            <div class="var-row"><div class="var-label">Tác dụng</div><div class="var-content">Định lượng mức độ tiêu tốn thời gian cơ học thuần túy.</div></div>
+            <div class="var-row"><div class="var-label">Động/Tĩnh</div><div class="var-content"><strong>Tĩnh</strong>.</div></div>
+            <div class="var-row"><div class="var-label">Mặc định & Ràng buộc</div><div class="var-content">Ràng buộc: $T > 0$ (Đơn vị: Phút).</div></div>
+            <div class="var-row"><div class="var-label">Cách lấy giá trị</div><div class="var-content">Tính bằng công thức: <code>Tổng số từ / Tốc độ đọc trung bình (200 wpm) + Độ dài Video (phút)</code>.</div></div>
+            <div class="var-row"><div class="var-label">Ví dụ</div><div class="var-content">Bài học có 1000 từ, không có video $\Rightarrow T = 1000/200 = 5$ phút.</div></div>
+        </div>
+
+        <!-- BIẾN BETA -->
+        <h3><i data-lucide="brain"></i> Biến $\beta_u$ (Latent Ability - Năng lực cá nhân ẩn)</h3>
+        <div class="var-grid">
+            <div class="var-row"><div class="var-label">Cơ sở lý thuyết</div><div class="var-content">Mô hình Rasch (1960) của Lý thuyết Khảo thí (Item Response Theory).</div></div>
+            <div class="var-row"><div class="var-label">Tác dụng</div><div class="var-content">Là mẫu số thu nhỏ hoặc phóng to Chi phí nhận thức. Phá vỡ chuẩn "trung bình cộng", tạo lộ trình tối ưu cho học sinh xuất chúng hoặc yếu kém.</div></div>
+            <div class="var-row"><div class="var-label">Động/Tĩnh</div><div class="var-content"><strong>Động</strong> (Biến thiên liên tục theo hành vi người học).</div></div>
+            <div class="var-row"><div class="var-label">Mặc định & Ràng buộc</div><div class="var-content">Mặc định ban đầu: $\beta = 1.0$. Ràng buộc: $\beta > 0$.</div></div>
+            <div class="var-row"><div class="var-label">Cách lấy giá trị</div><div class="var-content">Thuật toán máy học tự cập nhật dựa trên lịch sử giải Quiz. Làm nhanh, làm đúng $\Rightarrow \beta$ tăng dần.</div></div>
+            <div class="var-row"><div class="var-label">Ví dụ</div><div class="var-content">Người học giải toán rất nhanh, hệ thống gán $\beta = 2.0$. Khối lượng $C \times T$ của bài bị chia đôi, đường đi trở nên "rẻ" bất ngờ.</div></div>
+        </div>
+
+        <!-- BIẾN P -->
+        <h3><i data-lucide="alert-triangle"></i> Biến $P_u$ (Prerequisite Penalty - Khung phạt đứt gãy kiến thức)</h3>
+        <div class="var-grid">
+            <div class="var-row"><div class="var-label">Cơ sở lý thuyết</div><div class="var-content">Lý thuyết Không gian tri thức (Knowledge Space Theory) - Doignon & Falmagne (1985). Trạng thái tri thức bị sụp đổ nếu thiếu kiến thức nền.</div></div>
+            <div class="var-row"><div class="var-label">Tác dụng</div><div class="var-content">Phạt nặng hệ số nhân để ngăn thuật toán chọn các đường đi nhảy cóc qua mảng kiến thức người học bị hổng.</div></div>
+            <div class="var-row"><div class="var-label">Động/Tĩnh</div><div class="var-content"><strong>Động</strong> (Giảm dần khi người học ôn lại bài cũ).</div></div>
+            <div class="var-row"><div class="var-label">Mặc định & Ràng buộc</div><div class="var-content">Ràng buộc: $0 \le P \le 1$.</div></div>
+            <div class="var-row"><div class="var-label">Cách lấy giá trị</div><div class="var-content">Tính gián tiếp thông qua độ thành thạo của bài tiên quyết. $P_u = 1 - S_{mastery}$.</div></div>
+            <div class="var-row"><div class="var-label">Ví dụ</div><div class="var-content">Nếu bài A (Tiên quyết của bài B) hoàn toàn bị rỗng ($S=0$), thì $P=1$, trọng số bài B sẽ bị nhân đôi.</div></div>
+        </div>
+
+        <!-- NHÓM BIẾN NIỀM TIN BAYES -->
+        <h3><i data-lucide="scale"></i> Nhóm biến Niềm tin Bayes ($S_{self}, S_{web}, \alpha$)</h3>
+        <div class="var-grid">
+            <div class="var-row"><div class="var-label">Cơ sở lý thuyết</div><div class="var-content">Lý thuyết học tập người lớn (Andragogy - Knowles) và Bayesian Knowledge Tracing (Corbett & Anderson, 1994).</div></div>
+            <div class="var-row"><div class="var-label">Tác dụng</div><div class="var-content">Tái tạo biến $P_u$ một cách khách quan nhất, triệt tiêu bài toán khởi động lạnh (Cold-start).</div></div>
+            <div class="var-row"><div class="var-label">Động/Tĩnh</div><div class="var-content">$\alpha$ và $S_{web}$ là biến <strong>Động</strong>. $S_{self}$ là biến khảo sát tĩnh (chỉ đổi khi người dùng làm lại khảo sát).</div></div>
+            <div class="var-row"><div class="var-label">Cách lấy giá trị</div><div class="var-content">
+                - $S_{self}$: Chọn lọc từ form khảo sát Likert đầu vào (0, 0.5, 1.0).<br>
+                - $S_{web}$: Điểm số thực tế từ DB của web.<br>
+                - $\alpha$: Trọng số niềm tin, tăng dần từ 0 lên 1 dựa trên số log hoạt động của user trên web.
+            </div></div>
+            <div class="var-row"><div class="var-label">Ví dụ</div><div class="var-content">User mới tạo tài khoản, $\alpha=0$. Hệ thống tin 100% vào tự đánh giá $S_{self}$ ngoài đời thật của họ, tuyệt đối không tính họ là chưa học để tránh phạt $P$ vô lý. Khi User cày cuốc, $\alpha \to 1$, dữ liệu Web sẽ đè lấp đi bản khảo sát cũ.</div></div>
+        </div>
+    </div>
+
+    <!-- WIDGET TRỰC QUAN -->
+    <div class="academic-text">
+        <h2>4. Mô Phỏng Tương Tác Trực Quan (Interactive Simulator)</h2>
+        <p>Sử dụng Widget dưới đây để kiểm chứng công thức. Kéo thanh trượt để thay đổi thuộc tính tĩnh của Bài Đích, năng lực của User, và dữ liệu của Bài Tiên quyết (Bài A). Quan sát hình dạng cạnh nối trên Đồ thị.</p>
+    </div>
+
+    <div class="widget-container">
+        <div class="panel-controls">
+            <h4>1. Bản chất Bài Đích</h4>
+            <div class="slider-wrapper">
+                <div class="slider-header"><span>Độ phức tạp (C)</span><span class="val-badge" id="val-c">5.0</span></div>
+                <input type="range" id="input-c" min="1" max="10" step="0.5" value="5">
+            </div>
+            <div class="slider-wrapper">
+                <div class="slider-header"><span>Thời gian tĩnh (T phút)</span><span class="val-badge" id="val-t">20</span></div>
+                <input type="range" id="input-t" min="5" max="60" step="5" value="20">
+            </div>
+
+            <h4>2. Năng lực User</h4>
+            <div class="slider-wrapper">
+                <div class="slider-header"><span>Khả năng tiếp thu (β)</span><span class="val-badge" id="val-beta">1.0</span></div>
+                <input type="range" id="input-beta" min="0.5" max="2.0" step="0.1" value="1.0">
+            </div>
+
+            <h4>3. Dữ liệu Tiên quyết (Bài A)</h4>
+            <div class="slider-wrapper">
+                <div class="slider-header"><span>Tự Khảo sát (S_self)</span></div>
+                <select id="input-sself">
+                    <option value="0">Chưa học ở ngoài đời (0.0)</option>
+                    <option value="0.5">Biết khái niệm sơ qua (0.5)</option>
+                    <option value="1" selected>Đã vững ngoài đời (1.0)</option>
+                </select>
+            </div>
+            <div class="slider-wrapper">
+                <div class="slider-header"><span>Điểm thực trên Web (S_web)</span><span class="val-badge" id="val-sweb">0.8</span></div>
+                <input type="range" id="input-sweb" min="0" max="1" step="0.1" value="0.8">
+            </div>
+            <div class="slider-wrapper">
+                <div class="slider-header"><span>Độ tin cậy Web (α)</span><span class="val-badge" id="val-alpha">0.0</span></div>
+                <input type="range" id="input-alpha" min="0" max="1" step="0.1" value="0.0">
+            </div>
+        </div>
+
+        <div class="panel-view">
+            <div class="card-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Độ thành thạo Bài A (S)</div>
+                    <div class="stat-value" style="color: var(--primary)" id="out-smastery">1.00</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Hệ số Phạt (P)</div>
+                    <div class="stat-value" style="color: var(--danger)" id="out-p">0.00</div>
+                </div>
+                <div class="stat-card" style="border-color: var(--primary); background: var(--primary-light);">
+                    <div class="stat-label">Trọng Số Lộ Trình (W)</div>
+                    <div class="stat-value" style="color: var(--primary);" id="out-w">100</div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="node-a">Bài Tiên Quyết<br><span style="font-size:0.7rem; font-weight:400; color:var(--gray)">Node A</span></div>
+                <div class="edge" id="graph-edge">
+                    <div class="edge-label" id="graph-label">W = 100</div>
+                </div>
+                <div class="node-b">Bài Mục Tiêu<br><span style="font-size:0.7rem; font-weight:400; color:var(--gray)">Node B</span></div>
+            </div>
+            
+            <p id="insight-text" style="font-size: 0.95rem; margin-top: 10px; text-align: center; font-weight: 600;"></p>
+        </div>
+    </div>
+
+    <!-- TÀI LIỆU THAM KHẢO -->
+    <div class="academic-text references">
+        <h2>Tài Liệu Tham Khảo (References)</h2>
+        <ul style="list-style-type: none; padding-left: 0;">
+            <li>
+                [1] <strong>Corbett, A. T., & Anderson, J. R. (1994).</strong> 
+                Knowledge tracing: Modeling the acquisition of procedural knowledge. <em>User modeling and user-adapted interaction</em>, 4(4), 253-278. 
+                <a href="https://doi.org/10.1007/BF01099821" target="_blank">[DOI: 10.1007/BF01099821]</a>
+            </li>
+            <li>
+                [2] <strong>Doignon, J. P., & Falmagne, J. C. (1985).</strong> 
+                Spaces for the assessment of knowledge. <em>International Journal of Man-Machine Studies</em>, 23(2), 175-196. 
+                <a href="https://doi.org/10.1016/S0020-7373(85)80031-6" target="_blank">[DOI: 10.1016/S0020-7373(85)80031-6]</a>
+            </li>
+            <li>
+                [3] <strong>Knowles, M. S. (1984).</strong> 
+                <em>Andragogy in action: Applying modern principles of adult learning.</em> Jossey-Bass.
+            </li>
+            <li>
+                [4] <strong>Rasch, G. (1960).</strong> 
+                Probabilistic models for some intelligence and attainment tests. <em>Danish Institute for Educational Research</em>.
+                <a href="https://scholar.google.com/scholar?q=Probabilistic+models+for+some+intelligence+and+attainment+tests" target="_blank">[Google Scholar]</a>
+            </li>
+            <li>
+                [5] <strong>Sweller, J. (1988).</strong> 
+                Cognitive load during problem solving: Effects on learning. <em>Cognitive Science</em>, 12(2), 257-285. 
+                <a href="https://doi.org/10.1207/s15516709cog1202_4" target="_blank">[DOI: 10.1207/s15516709cog1202_4]</a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+    const el_C = document.getElementById('input-c');
+    const el_T = document.getElementById('input-t');
+    const el_Beta = document.getElementById('input-beta');
+    const el_Sself = document.getElementById('input-sself');
+    const el_Sweb = document.getElementById('input-sweb');
+    const el_Alpha = document.getElementById('input-alpha');
+
+    const val_C = document.getElementById('val-c');
+    const val_T = document.getElementById('val-t');
+    const val_Beta = document.getElementById('val-beta');
+    const val_Sweb = document.getElementById('val-sweb');
+    const val_Alpha = document.getElementById('val-alpha');
+
+    const out_Smastery = document.getElementById('out-smastery');
+    const out_P = document.getElementById('out-p');
+    const out_W = document.getElementById('out-w');
+    const edge = document.getElementById('graph-edge');
+    const edge_label = document.getElementById('graph-label');
+    const insight_text = document.getElementById('insight-text');
+
+    function calculate() {
+        let c = parseFloat(el_C.value);
+        let t = parseFloat(el_T.value);
+        let beta = parseFloat(el_Beta.value);
+        let s_self = parseFloat(el_Sself.value);
+        let s_web = parseFloat(el_Sweb.value);
+        let alpha = parseFloat(el_Alpha.value);
+
+        val_C.textContent = c.toFixed(1); val_T.textContent = t; val_Beta.textContent = beta.toFixed(1);
+        val_Sweb.textContent = s_web.toFixed(1); val_Alpha.textContent = alpha.toFixed(1);
+
+        let s_mastery = (alpha * s_web) + ((1 - alpha) * s_self);
+        let p = 1 - s_mastery;
+        let w = ((c * t) / beta) * (1 + p);
+        
+        out_Smastery.textContent = s_mastery.toFixed(2);
+        out_P.textContent = p.toFixed(2);
+        out_W.textContent = w.toFixed(0);
+        edge_label.textContent = `W = ${w.toFixed(0)}`;
+
+        let thickness = Math.min(2 + (w / 30), 16);
+        let color = "var(--gray)";
+
+        if (w > 300 || p > 0.6) {
+            color = "var(--danger)";
+            edge_label.style.borderColor = "var(--danger)";
+            edge_label.style.color = "var(--danger)";
+            insight_text.style.color = "var(--danger)";
+            insight_text.innerHTML = `⚠️ Trọng số khổng lồ (Đường đi bị tắc nghẽn, thuật toán sẽ bỏ qua)`;
+        } else if (w > 150) {
+            color = "var(--warning)";
+            edge_label.style.borderColor = "var(--warning)";
+            edge_label.style.color = "var(--warning)";
+            insight_text.style.color = "var(--warning)";
+            insight_text.innerHTML = `⚡ Tải trọng nhận thức cao (Người học có thể bị quá tải)`;
+        } else {
+            color = "var(--success)";
+            edge_label.style.borderColor = "var(--success)";
+            edge_label.style.color = "var(--success)";
+            insight_text.style.color = "var(--success)";
+            insight_text.innerHTML = `✅ Trọng số mượt mà (Lộ trình tối ưu)`;
+        }
+
+        edge.style.height = `${thickness}px`;
+        edge.style.background = color;
+    }
+
+    [el_C, el_T, el_Beta, el_Sself, el_Sweb, el_Alpha].forEach(el => {
+        el.addEventListener('input', calculate);
+    });
+    el_Sself.addEventListener('change', calculate);
+    calculate();
+</script>
+</body>
+</html>

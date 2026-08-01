@@ -121,44 +121,122 @@
       eqBtnStep.classList.toggle("is-active", state.eqVariant === "step");
   }
 
-  // Render Nội dung chính (Thay innerHTML bằng HTML string)
+  // Biến toàn cục để quản lý việc "Băm nhỏ" dữ liệu
+  let stepChildren = [];
+  let currentRenderIndex = 0;
+  const CHUNK_SIZE = 5; // Render 5 thẻ DOM (5 bước giải) mỗi lần cuộn
+
+  let virtualObserver = null;
+
   function renderBody() {
     if (!body) return;
+    if (virtualObserver) { virtualObserver.disconnect(); virtualObserver = null; }
 
-    let content = "";
-
-    // Logic mới: Dùng biến state.htmlTab... thay vì tên cũ
-    if (state.active === "mat") {
-      content = state.htmlTab1; // <--- SỬA: Dùng htmlTab1
-    } else {
-      // Tab 2: Chọn Main (Tổng quát) hay Sub (Từng bước)
-      content =
-        state.eqVariant === "step" ? state.htmlTab2Sub : state.htmlTab2Main;
-
-      // Fallback: Nếu subtab chưa có, hiện cái kia
+    // Xử lý Tab 2 như bình thường
+    if (state.active === "eq") {
+      let content = state.eqVariant === "step" ? state.htmlTab2Sub : state.htmlTab2Main;
       if (!content && state.eqVariant === "step") content = state.htmlTab2Main;
-      if (!content && state.eqVariant === "general")
-        content = state.htmlTab2Sub;
+      if (!content && state.eqVariant === "general") content = state.htmlTab2Sub;
+      
+      body.innerHTML = content || `<div class="sol-empty">Chưa có lời giải.</div>`;
+      renderEqSubtabs();
+      typesetMath();
+      return;
     }
 
-    // Hiển thị
-    if (!content) {
-      body.innerHTML = `
-        <div class="sol-empty">
-          Chưa có lời giải. Hãy bấm <b>"Tính toán"</b> để tạo lời giải mới.
-        </div>
-      `;
-    } else {
-      body.innerHTML = content;
+    // --- XỬ LÝ TAB 1: CỖ MÁY ẢO HÓA ---
+    if (!state.htmlSteps1 || state.htmlSteps1.length === 0) {
+      body.innerHTML = state.htmlTab1 || `<div class="sol-empty">Chưa có lời giải.</div>`;
+      typesetMath();
+      return;
     }
 
-    renderEqSubtabs();
-    typesetMath();
+    body.innerHTML = ""; // Xóa sạch rác
+
+    // 1. Ráp Header
+    const headerDiv = document.createElement('div');
+    headerDiv.innerHTML = state.htmlHeader1;
+    body.appendChild(headerDiv);
+
+    // 2. Chuẩn bị kho dữ liệu đệm (RAM)
+    const rawChunks = state.htmlSteps1;
+    const cachedHTML = new Array(rawChunks.length).fill(null); // Lưu HTML đã vẽ chín
+    const cachedHeight = new Array(rawChunks.length).fill(150); // Chiều cao dự kiến
+
+    const listContainer = document.createElement('div');
+    body.appendChild(listContainer);
+
+    // 3. Tạo 300 Vỏ rỗng
+    const domNodes = [];
+    rawChunks.forEach((_, idx) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'virtual-recycler-node';
+      wrap.style.minHeight = cachedHeight[idx] + 'px';
+      wrap.dataset.idx = idx;
+      listContainer.appendChild(wrap);
+      domNodes.push(wrap);
+    });
+
+    // 4. Ráp Footer
+    const footerDiv = document.createElement('div');
+    footerDiv.innerHTML = state.htmlFooter1;
+    body.appendChild(footerDiv);
+
+    // Dịch toán học cho Header và Footer trước
+    if (window.MathJax) MathJax.typesetPromise([headerDiv, footerDiv]);
+
+    // 5. RADAR TÁI CHẾ (Intersection Observer)
+    virtualObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const el = entry.target;
+        const idx = parseInt(el.dataset.idx);
+
+        if (entry.isIntersecting) {
+          // KHI CUỘN TỚI: Nạp dữ liệu
+          if (!el.dataset.rendered) {
+            el.dataset.rendered = "true";
+            
+            if (cachedHTML[idx]) {
+               // BÍ KÍP 1: Bốc HTML đã vẽ chín đắp vào, KHÔNG GỌI MATHJAX NỮA!
+               el.innerHTML = cachedHTML[idx];
+            } else {
+               // Lần đầu tiên nhìn thấy: Nạp HTML thô và gọi MathJax
+               el.innerHTML = rawChunks[idx];
+               if (window.MathJax) {
+                 MathJax.typesetPromise([el]).then(() => {
+                    // BÍ KÍP 2: Lưu lại HTML chín và Chiều cao thật
+                    cachedHTML[idx] = el.innerHTML;
+                    cachedHeight[idx] = el.offsetHeight;
+                    el.style.minHeight = cachedHeight[idx] + 'px';
+                 }).catch(e => console.warn(e));
+               }
+            }
+          }
+        } else {
+          // KHI CUỘN ĐI NƠI KHÁC: Tái chế DOM (Culling)
+          // Xóa ruột HTML để giải phóng RAM lập tức, nhưng giữ lại cái khung vỏ chiều cao!
+          if (el.dataset.rendered === "true" && cachedHTML[idx]) {
+             el.style.minHeight = cachedHeight[idx] + 'px';
+             el.innerHTML = ""; 
+             el.dataset.rendered = "";
+          }
+        }
+      });
+    }, { root: body, rootMargin: '800px' }); // Quét trước 800px (tầm 1 màn hình) để tải ngầm
+
+    // Kích hoạt Radar cho toàn bộ vỏ rỗng
+    domNodes.forEach(node => virtualObserver.observe(node));
   }
 
   function renderTitle() {
     if (titleTextEl) titleTextEl.textContent = state.titleText;
-    if (titleMathEl) titleMathEl.innerHTML = state.titleMath;
+    if (titleMathEl) {
+      titleMathEl.innerHTML = state.titleMath;
+      // Ép MathJax dịch riêng cái tiêu đề (Fix lỗi hiển thị raw code)
+      if (window.MathJax && typeof window.MathJax.typesetPromise === "function") {
+        window.MathJax.typesetPromise([titleMathEl]).catch((e) => console.warn(e));
+      }
+    }
   }
 
   function renderAll() {
@@ -178,6 +256,9 @@
     state.htmlTab1 = config.content1 || "";
     state.htmlTab2Main = config.content2 || "";
     state.htmlTab2Sub = config.content2Sub || "";
+    state.htmlHeader1 = config.htmlHeader || "";
+    state.htmlSteps1 = config.htmlSteps || null;
+    state.htmlFooter1 = config.htmlFooter || "";
 
     // 2. Nạp Config giao diện (Tên tab, Ẩn/Hiện subtab)
     state.tab1Label = config.tab1Label || "Cách 1";
