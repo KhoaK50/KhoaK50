@@ -13,3 +13,4 @@ requests
 psycopg2-binary==2.9.9
 sympy==1.13.3
 antlr4-python3-runtime==4.11.1
+Flask-SocketIO==5.6.1
