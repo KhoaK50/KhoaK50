@@ -188,7 +188,7 @@ def verify_account():
         return redirect(f"{FRONTEND_URL}/login.html?error=invalid_token")
         
     try:
-        conn = get_db_connection()
+        conn = psycopg2.connect(DB_URL)
         c = conn.cursor()
         
         c.execute(
