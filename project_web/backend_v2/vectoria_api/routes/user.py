@@ -119,8 +119,15 @@ def register():
     email = data.get("email")
     password = data.get("password")
 
+    import re
     if not display_name or not email or not password:
         return jsonify({"status": "error", "message": "Vui lòng điền đủ thông tin!"}), 400
+        
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return jsonify({"status": "error", "message": "Email không hợp lệ!"}), 400
+        
+    if len(password) < 8 or not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
+        return jsonify({"status": "error", "message": "Mật khẩu quá yếu! Phải có ít nhất 8 ký tự, 1 chữ cái và 1 chữ số."}), 400
 
     # Mã hóa mật khẩu bảo mật trước khi lưu
     password_hash = generate_password_hash(password)
@@ -261,12 +268,19 @@ def login():
             ip_address = request.remote_addr
             device_info = request.headers.get('User-Agent', 'Unknown Device')
 
-            # Ghi lịch sử đăng nhập
+            # Ghi lịch sử đăng nhập & Kiểm tra thiết bị lạ
+            c.execute("SELECT 1 FROM loginhistory WHERE user_id = %s AND device_info = %s", (user_id, device_info))
+            is_new_device = not c.fetchone()
+
             c.execute(
                 "INSERT INTO loginhistory (user_id, ip_address, device_info) VALUES (%s, %s, %s)",
                 (user_id, ip_address, device_info)
             )
             conn.commit()
+
+            if is_new_device:
+                email_content = f"Chào {user[1]},\n\nChúng tôi phát hiện một lượt đăng nhập mới vào tài khoản Vectoria của bạn.\n- Địa chỉ IP: {ip_address}\n- Thiết bị: {device_info}\n\nNếu đây không phải là bạn, vui lòng đăng nhập và đổi mật khẩu ngay lập tức."
+                send_auth_email(email, "Cảnh báo Bảo mật: Đăng nhập từ thiết bị mới", email_content)
 
             # Trả về token đăng nhập
             fake_token = f"vec_token_{user_id}"
@@ -429,14 +443,22 @@ def google_login():
             )
             user_id = c.fetchone()[0]
 
-        # Ghi lịch sử đăng nhập (Log)
+        # Ghi lịch sử đăng nhập & Kiểm tra thiết bị lạ
         ip_address = request.remote_addr
         device_info = request.headers.get('User-Agent', 'Unknown Device')
+        
+        c.execute("SELECT 1 FROM loginhistory WHERE user_id = %s AND device_info = %s", (user_id, device_info))
+        is_new_device = not c.fetchone()
+
         c.execute(
             "INSERT INTO loginhistory (user_id, ip_address, device_info) VALUES (%s, %s, %s)",
             (user_id, ip_address, device_info)
         )
         conn.commit()
+        
+        if is_new_device:
+            email_content = f"Chào {display_name},\n\nChúng tôi phát hiện một lượt đăng nhập mới vào tài khoản Vectoria của bạn qua Google.\n- Địa chỉ IP: {ip_address}\n- Thiết bị: {device_info}\n\nNếu đây không phải là bạn, vui lòng kiểm tra lại quyền truy cập tài khoản."
+            send_auth_email(email, "Cảnh báo Bảo mật: Đăng nhập từ thiết bị mới", email_content)
 
         # Trả về token đăng nhập
         fake_token = f"vec_token_{user_id}"
