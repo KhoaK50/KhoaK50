@@ -279,7 +279,7 @@ def login():
             conn.commit()
 
             if is_new_device:
-                email_content = f"Chào {user[1]},\n\nChúng tôi phát hiện một lượt đăng nhập mới vào tài khoản Vectoria của bạn.\n- Địa chỉ IP: {ip_address}\n- Thiết bị: {device_info}\n\nNếu đây không phải là bạn, vui lòng đăng nhập và đổi mật khẩu ngay lập tức."
+                email_content = f"Chào {user[1]},\n\nChúng tôi phát hiện một lượt đăng nhập mới vào tài khoản Vectoria của bạn.\n- Địa chỉ IP: {ip_address}\n- Thiết bị: {device_info}\n\nNếu đây không phải là bạn, vui lòng truy cập {FRONTEND_URL}/login.html, chọn mục 'Quên mật khẩu' để đổi mật khẩu bảo vệ tài khoản ngay lập tức."
                 send_auth_email(email, "Cảnh báo Bảo mật: Đăng nhập từ thiết bị mới", email_content)
 
             # Trả về token đăng nhập
@@ -457,7 +457,7 @@ def google_login():
         conn.commit()
         
         if is_new_device:
-            email_content = f"Chào {display_name},\n\nChúng tôi phát hiện một lượt đăng nhập mới vào tài khoản Vectoria của bạn qua Google.\n- Địa chỉ IP: {ip_address}\n- Thiết bị: {device_info}\n\nNếu đây không phải là bạn, vui lòng kiểm tra lại quyền truy cập tài khoản."
+            email_content = f"Chào {display_name},\n\nChúng tôi phát hiện một lượt đăng nhập mới vào tài khoản Vectoria của bạn qua Google.\n- Địa chỉ IP: {ip_address}\n- Thiết bị: {device_info}\n\nNếu đây không phải là bạn, tài khoản Google của bạn có thể đã bị thỏa hiệp. Vui lòng đổi mật khẩu Google ngay lập tức."
             send_auth_email(email, "Cảnh báo Bảo mật: Đăng nhập từ thiết bị mới", email_content)
 
         # Trả về token đăng nhập
