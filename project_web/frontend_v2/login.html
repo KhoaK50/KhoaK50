@@ -1313,16 +1313,30 @@
         }
         if (resetToken) {
           // Ẩn hết các râu ria, chỉ hiện Form Đổi mật khẩu
-          document.querySelector('.auth-tabs').style.display = 'none';
-          document.querySelector('.divider').style.display = 'none';
-          document.querySelector('.btn-social').style.display = 'none';
-          document.getElementById('loginForm').style.display = 'none';
-          document.getElementById('registerForm').style.display = 'none';
-          document.getElementById('forgotForm').style.display = 'none';
+          document.querySelector('.auth-tabs')?.style.setProperty('display', 'none');
+          document.querySelector('.divider')?.style.setProperty('display', 'none');
+          document.querySelector('.btn-social')?.style.setProperty('display', 'none');
           
-          document.getElementById('authSubtitle').innerText = "Thiết lập mật khẩu mới";
-          document.getElementById('resetPwdForm').style.display = 'block';
-          document.getElementById('hiddenResetToken').value = resetToken;
+          const loginForm = document.getElementById('loginForm');
+          if (loginForm) loginForm.style.display = 'none';
+          
+          const registerForm = document.getElementById('registerForm');
+          if (registerForm) registerForm.style.display = 'none';
+          
+          const forgotForm = document.getElementById('forgotForm');
+          if (forgotForm) forgotForm.style.display = 'none';
+          
+          const subtitle = document.getElementById('authSubtitle');
+          if (subtitle) subtitle.innerText = "Thiết lập mật khẩu mới";
+          
+          const subtitleLogin = document.getElementById('authSubtitleLogin');
+          if (subtitleLogin) subtitleLogin.innerText = "Thiết lập mật khẩu mới";
+          
+          const resetPwdForm = document.getElementById('resetPwdForm');
+          if (resetPwdForm) resetPwdForm.style.display = 'block';
+          
+          const hiddenResetToken = document.getElementById('hiddenResetToken');
+          if (hiddenResetToken) hiddenResetToken.value = resetToken;
         }
 
         // KHỞI TẠO GOOGLE OAUTH
