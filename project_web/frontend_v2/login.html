@@ -1065,10 +1065,12 @@
             const email = document.getElementById("regEmail").value;
             const password = document.getElementById("regPass").value;
 
+            const lang = localStorage.getItem("vectoria_lang") || "vi";
+
             const res = await fetch(`${API_BASE}/api/register`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ display_name: name, email, password }),
+              body: JSON.stringify({ display_name: name, email, password, language: lang }),
             });
             const data = await res.json();
 
@@ -1091,10 +1093,11 @@
             }
           } else if (type === "forgot") {
             const email = document.getElementById("forgotEmail").value;
+            const lang = localStorage.getItem("vectoria_lang") || "vi";
             const res = await fetch(`${API_BASE}/api/forgot-password`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email }),
+              body: JSON.stringify({ email, language: lang }),
             });
             const data = await res.json();
 
@@ -1144,10 +1147,12 @@
             const email = document.getElementById("loginEmail").value;
             const password = document.getElementById("loginPass").value;
 
+            const lang = localStorage.getItem("vectoria_lang") || "vi";
+
             const res = await fetch(`${API_BASE}/api/login`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, password }),
+              body: JSON.stringify({ email, password, language: lang }),
             });
             const data = await res.json();
 
