@@ -13,6 +13,16 @@ import secrets
 from datetime import datetime, timedelta, timezone
 import requests
 from email.mime.text import MIMEText
+import re
+
+def is_strong_password(password):
+    if len(password) < 8:
+        return False
+    if not re.search(r"[a-zA-Z]", password):
+        return False
+    if not re.search(r"[0-9]", password):
+        return False
+    return True
 
 user_bp = Blueprint("user", __name__)
 
@@ -125,6 +135,9 @@ def register():
     if not display_name or not email or not password:
         return jsonify({"status": "error", "message": "Vui lòng điền đầy đủ thông tin!"}), 400
 
+    if not is_strong_password(password):
+        return jsonify({"status": "error", "message": "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ và số!"}), 400
+
     hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
 
     try:
@@ -154,26 +167,26 @@ def register():
         if language == 'en':
             email_content = f"""
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-                <h2 style="color: #3a78ff;">Activate your Vectoria Account</h2>
-                <p>Hello <b>{display_name}</b>,</p>
-                <p>Thank you for registering. Please click the button below to activate your account:</p>
+                <h2 style="color: #3a78ff;">Activate Your Vectoria Account</h2>
+                <p>Dear <b>{display_name}</b>,</p>
+                <p>Thank you for registering with Vectoria. Please verify your email address to complete your registration:</p>
                 <div style="text-align: center; margin: 30px 0;">
                     <a href="{activation_link}" style="background-color: #3a78ff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Activate Account</a>
                 </div>
-                <p style="font-size: 12px; color: #888;">If the button doesn't work, copy and paste this link: <br>{activation_link}</p>
+                <p style="font-size: 12px; color: #888;">If the button does not work, please copy and paste the following link into your browser: <br>{activation_link}</p>
             </div>
             """
-            send_auth_email(email, "Activate your Vectoria Account", email_content)
+            send_auth_email(email, "Activate Your Vectoria Account", email_content)
         else:
             email_content = f"""
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
                 <h2 style="color: #3a78ff;">Kích hoạt tài khoản Vectoria</h2>
-                <p>Chào <b>{display_name}</b>,</p>
-                <p>Cảm ơn bạn đã đăng ký tài khoản. Vui lòng bấm vào nút bên dưới để kích hoạt tài khoản của bạn:</p>
+                <p>Kính gửi <b>{display_name}</b>,</p>
+                <p>Cảm ơn bạn đã đăng ký tài khoản tại Vectoria. Vui lòng xác thực địa chỉ email để hoàn tất quá trình đăng ký:</p>
                 <div style="text-align: center; margin: 30px 0;">
                     <a href="{activation_link}" style="background-color: #3a78ff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Kích hoạt tài khoản</a>
                 </div>
-                <p style="font-size: 12px; color: #888;">Nếu nút không hoạt động, bạn có thể copy đường dẫn sau: <br>{activation_link}</p>
+                <p style="font-size: 12px; color: #888;">Nếu nút bấm không hoạt động, vui lòng sao chép và dán liên kết sau vào trình duyệt: <br>{activation_link}</p>
             </div>
             """
             send_auth_email(email, "Kích hoạt tài khoản Vectoria", email_content)
@@ -295,41 +308,39 @@ def login():
                 if language == 'en':
                     email_content = f"""
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; border: 1px solid #eee; border-radius: 10px; padding: 20px;">
-                        <h2 style="color: #e74c3c; border-bottom: 2px solid #e74c3c; padding-bottom: 10px;">Security Alert: New Device Login</h2>
-                        <p>Hello <b>{display_name}</b>,</p>
-                        <p>We noticed a new login to your Vectoria account from an unrecognized device.</p>
+                        <h2 style="color: #e74c3c; border-bottom: 2px solid #e74c3c; padding-bottom: 10px;">Security Alert: New Login Detected</h2>
+                        <p>Dear <b>{display_name}</b>,</p>
+                        <p>We detected a new login to your Vectoria account from an unrecognized device.</p>
                         <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
                             <p style="margin: 5px 0;"><strong>IP Address:</strong> {ip_address}</p>
                             <p style="margin: 5px 0;"><strong>Device:</strong> {friendly_device}</p>
                             <p style="margin: 5px 0;"><strong>Time:</strong> {datetime.now().strftime('%H:%M - %d/%m/%Y')}</p>
                         </div>
-                        <p style="color: #e74c3c; font-weight: bold;">If you didn't do this, your account might be compromised!</p>
-                        <p>Please change your password immediately by clicking the button below:</p>
+                        <p style="color: #e74c3c; font-weight: bold;">If you did not authorize this login, please secure your account immediately.</p>
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="{FRONTEND_URL}/login.html" style="background-color: #e74c3c; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Recover Account</a>
+                            <a href="{FRONTEND_URL}/login.html" style="background-color: #e74c3c; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Secure Account</a>
                         </div>
                     </div>
                     """
-                    send_auth_email(email, "⚠️ Security Alert: Login from a new device", email_content)
+                    send_auth_email(email, "Security Alert: Login from a new device", email_content)
                 else:
                     email_content = f"""
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; border: 1px solid #eee; border-radius: 10px; padding: 20px;">
-                        <h2 style="color: #e74c3c; border-bottom: 2px solid #e74c3c; padding-bottom: 10px;">Cảnh báo đăng nhập lạ</h2>
-                        <p>Chào <b>{display_name}</b>,</p>
-                        <p>Chúng tôi vừa phát hiện một lượt đăng nhập mới vào tài khoản Vectoria của bạn từ một thiết bị chưa từng được sử dụng trước đây.</p>
+                        <h2 style="color: #e74c3c; border-bottom: 2px solid #e74c3c; padding-bottom: 10px;">Cảnh báo bảo mật: Đăng nhập từ thiết bị mới</h2>
+                        <p>Kính gửi <b>{display_name}</b>,</p>
+                        <p>Hệ thống ghi nhận một lượt đăng nhập mới vào tài khoản Vectoria của bạn từ một thiết bị chưa được xác thực.</p>
                         <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
                             <p style="margin: 5px 0;"><strong>Địa chỉ IP:</strong> {ip_address}</p>
                             <p style="margin: 5px 0;"><strong>Thiết bị:</strong> {friendly_device}</p>
                             <p style="margin: 5px 0;"><strong>Thời gian:</strong> {datetime.now().strftime('%H:%M - %d/%m/%Y')}</p>
                         </div>
-                        <p style="color: #e74c3c; font-weight: bold;">Nếu bạn không thực hiện việc đăng nhập này, tài khoản của bạn có thể đang bị đe dọa!</p>
-                        <p>Vui lòng đổi mật khẩu ngay lập tức bằng cách bấm vào nút bên dưới:</p>
+                        <p style="color: #e74c3c; font-weight: bold;">Nếu bạn không thực hiện đăng nhập này, vui lòng thay đổi mật khẩu ngay lập tức để bảo vệ tài khoản.</p>
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="{FRONTEND_URL}/login.html" style="background-color: #e74c3c; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Khôi phục Mật khẩu</a>
+                            <a href="{FRONTEND_URL}/login.html" style="background-color: #e74c3c; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Bảo vệ tài khoản</a>
                         </div>
                     </div>
                     """
-                    send_auth_email(email, "⚠️ Cảnh báo: Đăng nhập từ thiết bị lạ", email_content)
+                    send_auth_email(email, "Cảnh báo bảo mật: Đăng nhập từ thiết bị mới", email_content)
 
             # Trả về token JWT thực sự
             SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
@@ -392,31 +403,31 @@ def forgot_password():
         if language == 'en':
             email_content = f"""
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-                <h2 style="color: #3a78ff;">Reset your password</h2>
-                <p>Hello <b>{display_name}</b>,</p>
-                <p>You (or someone else) requested a password reset for your Vectoria account. Click the button below to create a new password:</p>
+                <h2 style="color: #3a78ff;">Password Reset Request</h2>
+                <p>Dear <b>{display_name}</b>,</p>
+                <p>We received a request to reset the password for your Vectoria account. Click the button below to proceed:</p>
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="{reset_link}" style="background-color: #3a78ff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Create New Password</a>
+                    <a href="{reset_link}" style="background-color: #3a78ff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Reset Password</a>
                 </div>
-                <p style="color: #e74c3c; font-size: 13px;"><i>* This link will expire in 1 hour for security reasons.</i></p>
-                <p style="font-size: 12px; color: #888; margin-top: 20px;">If you didn't request this, you can safely ignore this email.</p>
+                <p style="color: #e74c3c; font-size: 13px;"><i>* This link is valid for 1 hour.</i></p>
+                <p style="font-size: 12px; color: #888; margin-top: 20px;">If you did not request a password reset, please ignore this email.</p>
             </div>
             """
             send_auth_email(email, "Reset your Vectoria Password", email_content)
         else:
             email_content = f"""
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-                <h2 style="color: #3a78ff;">Khôi phục mật khẩu</h2>
-                <p>Chào <b>{display_name}</b>,</p>
-                <p>Bạn (hoặc ai đó) vừa yêu cầu khôi phục mật khẩu cho tài khoản Vectoria của bạn. Vui lòng bấm vào nút bên dưới để tạo mật khẩu mới:</p>
+                <h2 style="color: #3a78ff;">Yêu cầu Đặt lại mật khẩu</h2>
+                <p>Kính gửi <b>{display_name}</b>,</p>
+                <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản Vectoria của bạn. Vui lòng sử dụng liên kết dưới đây để thiết lập mật khẩu mới:</p>
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="{reset_link}" style="background-color: #3a78ff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Tạo Mật khẩu Mới</a>
+                    <a href="{reset_link}" style="background-color: #3a78ff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Đặt lại mật khẩu</a>
                 </div>
-                <p style="color: #e74c3c; font-size: 13px;"><i>* Liên kết này sẽ tự động hết hạn sau 1 giờ để đảm bảo an toàn.</i></p>
-                <p style="font-size: 12px; color: #888; margin-top: 20px;">Nếu bạn không yêu cầu, hãy bỏ qua email này. Tài khoản của bạn vẫn an toàn.</p>
+                <p style="color: #e74c3c; font-size: 13px;"><i>* Liên kết này có hiệu lực trong vòng 1 giờ.</i></p>
+                <p style="font-size: 12px; color: #888; margin-top: 20px;">Nếu bạn không yêu cầu thay đổi mật khẩu, vui lòng bỏ qua thông báo này.</p>
             </div>
             """
-            send_auth_email(email, "Khôi phục mật khẩu Vectoria", email_content)
+            send_auth_email(email, "Yêu cầu Đặt lại mật khẩu Vectoria", email_content)
 
         return jsonify({"status": "success", "message": "Nếu email tồn tại, thư khôi phục đã được gửi."}), 200
     except Exception as e:
@@ -434,6 +445,9 @@ def reset_password():
 
     if not token or not new_password:
         return jsonify({"status": "error", "message": "Thiếu thông tin yêu cầu!"}), 400
+
+    if not is_strong_password(new_password):
+        return jsonify({"status": "error", "message": "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ và số!"}), 400
 
     try:
         conn = psycopg2.connect(DB_URL)
@@ -549,35 +563,33 @@ def google_login():
             if language == 'en':
                 email_content = f"""
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; border: 1px solid #eee; border-radius: 10px; padding: 20px;">
-                    <h2 style="color: #e74c3c; border-bottom: 2px solid #e74c3c; padding-bottom: 10px;">Security Alert: New Google Login</h2>
-                    <p>Hello <b>{display_name}</b>,</p>
-                    <p>We noticed a new login to your Vectoria account using <b>Google</b> from an unrecognized device.</p>
+                    <h2 style="color: #e74c3c; border-bottom: 2px solid #e74c3c; padding-bottom: 10px;">Security Alert: New Google Login Detected</h2>
+                    <p>Dear <b>{display_name}</b>,</p>
+                    <p>We detected a new login to your Vectoria account using <b>Google</b> from an unrecognized device.</p>
                     <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
                         <p style="margin: 5px 0;"><strong>IP Address:</strong> {ip_address}</p>
                         <p style="margin: 5px 0;"><strong>Device:</strong> {friendly_device}</p>
                         <p style="margin: 5px 0;"><strong>Time:</strong> {datetime.now().strftime('%H:%M - %d/%m/%Y')}</p>
                     </div>
-                    <p style="color: #e74c3c; font-weight: bold;">If you didn't do this, your Google account might be compromised!</p>
-                    <p>Vectoria does not manage your Google password. Please visit your Google Account settings to change your password immediately.</p>
+                    <p style="color: #e74c3c; font-weight: bold;">If you did not authorize this login, please secure your Google account immediately.</p>
                 </div>
                 """
-                send_auth_email(email, "⚠️ Security Alert: Google login from a new device", email_content)
+                send_auth_email(email, "Security Alert: Google login from a new device", email_content)
             else:
                 email_content = f"""
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; border: 1px solid #eee; border-radius: 10px; padding: 20px;">
-                    <h2 style="color: #e74c3c; border-bottom: 2px solid #e74c3c; padding-bottom: 10px;">Cảnh báo đăng nhập Google</h2>
-                    <p>Chào <b>{display_name}</b>,</p>
-                    <p>Chúng tôi vừa phát hiện một lượt đăng nhập mới vào tài khoản Vectoria của bạn bằng <b>Google</b> từ một thiết bị lạ.</p>
+                    <h2 style="color: #e74c3c; border-bottom: 2px solid #e74c3c; padding-bottom: 10px;">Cảnh báo bảo mật: Đăng nhập Google từ thiết bị mới</h2>
+                    <p>Kính gửi <b>{display_name}</b>,</p>
+                    <p>Hệ thống ghi nhận một lượt đăng nhập mới vào tài khoản Vectoria của bạn bằng <b>Google</b> từ một thiết bị chưa được xác thực.</p>
                     <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
                         <p style="margin: 5px 0;"><strong>Địa chỉ IP:</strong> {ip_address}</p>
                         <p style="margin: 5px 0;"><strong>Thiết bị:</strong> {friendly_device}</p>
                         <p style="margin: 5px 0;"><strong>Thời gian:</strong> {datetime.now().strftime('%H:%M - %d/%m/%Y')}</p>
                     </div>
-                    <p style="color: #e74c3c; font-weight: bold;">Nếu bạn không thực hiện việc đăng nhập này, tài khoản Google của bạn có thể đã bị đánh cắp!</p>
-                    <p>Vectoria không quản lý mật khẩu Google của bạn. Xin vui lòng truy cập trang quản lý tài khoản Google để đổi mật khẩu ngay lập tức.</p>
+                    <p style="color: #e74c3c; font-weight: bold;">Nếu bạn không thực hiện đăng nhập này, vui lòng kiểm tra và bảo mật tài khoản Google của bạn ngay lập tức.</p>
                 </div>
                 """
-                send_auth_email(email, "⚠️ Cảnh báo: Đăng nhập Google từ thiết bị lạ", email_content)
+                send_auth_email(email, "Cảnh báo bảo mật: Đăng nhập Google từ thiết bị mới", email_content)
 
         SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
         real_token = jwt.encode(
