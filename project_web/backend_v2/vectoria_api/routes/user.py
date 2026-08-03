@@ -8,6 +8,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 # Import DB_URL tập trung từ file config
 from vectoria_api.config import DB_URL, FRONTEND_URL
+import jwt
+import os
 import secrets
 from datetime import datetime, timedelta, timezone
 import requests
@@ -35,6 +37,10 @@ def init_user_db():
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Cập nhật thêm các cột mới cho tính năng Bảo mật JWT và Đa ngôn ngữ (nếu chưa có)
+        c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INT DEFAULT 1;")
+        c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS language_pref VARCHAR(10) DEFAULT 'vi';")
 
         # 2. Bảng Lịch sử đăng nhập 
         c.execute("""
