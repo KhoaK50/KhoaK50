@@ -447,6 +447,16 @@ def google_login():
         ip_address = request.remote_addr
         device_info = request.headers.get('User-Agent', 'Unknown Device')
         
+        # Parse tên thiết bị thân thiện
+        friendly_device = device_info
+        try:
+            from user_agents import parse
+            ua = parse(device_info)
+            device_str = f"{ua.device.family} - " if ua.device.family and ua.device.family != 'Other' else ""
+            friendly_device = f"{device_str}{ua.os.family} ({ua.browser.family})"
+        except:
+            pass
+            
         c.execute("SELECT 1 FROM loginhistory WHERE user_id = %s AND device_info = %s", (user_id, device_info))
         is_new_device = not c.fetchone()
 
@@ -457,7 +467,7 @@ def google_login():
         conn.commit()
         
         if is_new_device:
-            email_content = f"Chào {display_name},\n\nChúng tôi phát hiện một lượt đăng nhập mới vào tài khoản Vectoria của bạn qua Google.\n- Địa chỉ IP: {ip_address}\n- Thiết bị: {device_info}\n\nNếu đây không phải là bạn, tài khoản Google của bạn có thể đã bị thỏa hiệp. Vui lòng đổi mật khẩu Google ngay lập tức."
+            email_content = f"Chào {display_name},\n\nChúng tôi phát hiện một lượt đăng nhập mới vào tài khoản Vectoria của bạn qua Google.\n- Địa chỉ IP: {ip_address}\n- Thiết bị: {friendly_device}\n\nNếu đây không phải là bạn, tài khoản Google của bạn có thể đã bị thỏa hiệp. Vui lòng đổi mật khẩu Google ngay lập tức."
             send_auth_email(email, "Cảnh báo Bảo mật: Đăng nhập từ thiết bị mới", email_content)
 
         # Trả về token đăng nhập
