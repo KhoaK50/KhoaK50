@@ -19,7 +19,7 @@ export default function Courses() {
 
   const fetchLessons = () => {
     setIsLoading(true);
-    fetch('http://localhost:5000/api/admin/lessons', {
+    fetch('https://visualization-rr5v.onrender.com/api/admin/lessons', {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAuth')}` }
     })
     .then(res => res.json())
@@ -48,7 +48,7 @@ export default function Courses() {
   const handleSaveEdit = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/lesson/${currentLesson.topic_id}/${currentLesson.order_index}`, {
+      const res = await fetch(`https://visualization-rr5v.onrender.com/api/admin/lesson/${currentLesson.topic_id}/${currentLesson.order_index}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAuth')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_html: markdown })
@@ -65,7 +65,7 @@ export default function Courses() {
     if (!newTopicId || !newTitle || !newSectionId) return alert("Vui lòng nhập đủ thông tin!");
     setIsSaving(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/lesson`, {
+      const res = await fetch(`https://visualization-rr5v.onrender.com/api/admin/lesson`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAuth')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

@@ -10,7 +10,7 @@ export default function Login({ onLogin }) {
     if (!key) return;
     
     try {
-      const res = await fetch('http://localhost:5000/api/admin/verify', {
+      const res = await fetch('https://visualization-rr5v.onrender.com/api/admin/verify', {
         headers: {
           'Authorization': `Bearer ${key}`
         }
