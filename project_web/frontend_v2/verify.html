@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -6,8 +6,6 @@
     <title>Xác Thực Tài Khoản - Vectoria</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/radix_colors.css" />
-    <link rel="stylesheet" href="css/components.css" />
     <style>
         body {
             display: flex; justify-content: center; align-items: center; min-height: 100vh;
@@ -51,14 +49,14 @@
             title.textContent = 'Lỗi xác thực'; msg.textContent = 'Mã xác thực không hợp lệ hoặc không tồn tại.';
             btn.style.display = 'inline-block';
         } else {
-            fetch(https://visualization-rr5v.onrender.com/api/verify?token=\)
+            fetch(`https://visualization-rr5v.onrender.com/api/verify?token=${token}`)
                 .then(res => res.json())
                 .then(data => {
-                    if (data.message) {
+                    if (data.status === "success" || data.message) {
                         icon.className = 'icon success'; icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
-                        title.textContent = 'Thành công!'; msg.textContent = 'Tài khoản của bạn đã được xác thực thành công. Bạn có thể đăng nhập ngay bây giờ.';
+                        title.textContent = 'Thành công!'; msg.textContent = data.message || 'Tài khoản của bạn đã được xác thực thành công. Bạn có thể đăng nhập ngay bây giờ.';
                     } else {
-                        throw new Error(data.error || 'Xác thực thất bại');
+                        throw new Error(data.message || data.error || 'Xác thực thất bại');
                     }
                 })
                 .catch(err => {
