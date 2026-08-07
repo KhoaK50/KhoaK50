@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác Thực Tài Khoản - Vectoria</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/radix_colors.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <style>
+        body {
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            margin: 0; font-family: 'Inter', sans-serif; background: #f9fafb; color: #111827;
+        }
+        .container {
+            background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            text-align: center; max-width: 400px; width: 100%;
+        }
+        .icon { font-size: 48px; margin-bottom: 20px; }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .loading { color: #3b82f6; }
+        h1 { font-size: 24px; margin-bottom: 10px; font-weight: 600; }
+        p { color: #4b5563; margin-bottom: 20px; line-height: 1.5; }
+        .btn {
+            display: inline-block; background: #3a78ff; color: white; padding: 10px 20px;
+            border-radius: 6px; text-decoration: none; font-weight: 500; transition: background 0.2s;
+        }
+        .btn:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="status-icon" class="icon loading"><i class="fa-solid fa-spinner fa-spin"></i></div>
+        <h1 id="status-title">Đang xác thực...</h1>
+        <p id="status-message">Vui lòng đợi trong giây lát, chúng tôi đang kiểm tra mã xác thực của bạn.</p>
+        <a href="login.html" class="btn" style="display: none;" id="login-btn">Đến trang đăng nhập</a>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const icon = document.getElementById('status-icon');
+        const title = document.getElementById('status-title');
+        const msg = document.getElementById('status-message');
+        const btn = document.getElementById('login-btn');
+
+        if (!token) {
+            icon.className = 'icon error'; icon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+            title.textContent = 'Lỗi xác thực'; msg.textContent = 'Mã xác thực không hợp lệ hoặc không tồn tại.';
+            btn.style.display = 'inline-block';
+        } else {
+            fetch(https://visualization-rr5v.onrender.com/api/verify?token=\)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.message) {
+                        icon.className = 'icon success'; icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                        title.textContent = 'Thành công!'; msg.textContent = 'Tài khoản của bạn đã được xác thực thành công. Bạn có thể đăng nhập ngay bây giờ.';
+                    } else {
+                        throw new Error(data.error || 'Xác thực thất bại');
+                    }
+                })
+                .catch(err => {
+                    icon.className = 'icon error'; icon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+                    title.textContent = 'Lỗi xác thực'; msg.textContent = err.message || 'Mã xác thực không hợp lệ hoặc đã hết hạn.';
+                })
+                .finally(() => {
+                    btn.style.display = 'inline-block';
+                });
+        }
+    </script>
+</body>
+</html>
