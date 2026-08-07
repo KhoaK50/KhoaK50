@@ -8,7 +8,7 @@ URI = "neo4j+s://4dd80172.databases.neo4j.io"
 PASSWORD = "V7LbjDyESk03bsWOMOZx6in4plhZuIuuHH4Of1o2aLA".strip()
 AUTH = ("4dd80172", PASSWORD)
 
-print("⏳ Đang khởi tạo kết nối đến máy chủ Neo4j...")
+print("Dang khoi tao ket noi den may chu Neo4j...")
 
 try:
     # Khởi tạo Driver kết nối

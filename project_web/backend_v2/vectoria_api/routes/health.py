@@ -1,7 +1,8 @@
-# backend_v2/vectoria_api/routes/health.py
 from flask import Blueprint, jsonify
+import psycopg2
 
 from test_neo4j import driver 
+from vectoria_api.config import DB_URL
 
 bp = Blueprint("health", __name__)
 
@@ -12,14 +13,18 @@ def home():
 @bp.get("/api/health")
 def health():
     try:
-        # Đánh thức Neo4j bằng 1 câu truy vấn rác
-        with driver.session() as session:
+        # 1. Đánh thức Neo4j
+        with driver.session(database="neo4j") as session:
             session.run("RETURN 1")
             
-        # Nếu chạy qua được dòng trên, chứng tỏ Neo4j đang thức
-        return jsonify({"ok": True, "neo4j": "awake"})
+        # 2. Đánh thức PostgreSQL (Supabase)
+        conn = psycopg2.connect(DB_URL)
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        conn.close()
+            
+        return jsonify({"ok": True, "neo4j": "awake", "postgres": "awake"})
         
     except Exception as e:
-        # Nếu Neo4j đang ngủ (Paused) hoặc rớt mạng, nó văng vô đây
-        print(f">> [NEO4J SLEEPING / ERROR]: {str(e)}")
+        print(f">> [DB SLEEPING / ERROR]: {str(e)}")
         return jsonify({"ok": False, "error": str(e)}), 500

@@ -1,3 +1,7 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 from flask import Flask, request
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
@@ -39,6 +43,15 @@ def create_app():
     # [BƯỚC 2 QUAN TRỌNG NHẤT] GẮN API USER VÀO APP
     # Phải có dòng này thì Flask mới nhận diện được đường dẫn /api/get_history
     app.register_blueprint(user_bp)
+
+    # Register Course Blueprint
+    from vectoria_api.routes.course import course_bp
+    app.register_blueprint(course_bp)
+
+    # Register Admin Blueprint
+    from vectoria_api.routes.admin import admin_bp
+    app.register_blueprint(admin_bp)
+
     socketio.init_app(app, cors_allowed_origins="*")
     return app
 
@@ -149,7 +162,7 @@ def get_graph_data():
     
     try:
         # Nhớ dùng session của Neo4j driver
-        with driver.session() as session:
+        with driver.session(database="neo4j") as session:
             result = session.run(query)
             for record in result:
                 node_id = record["id"]
@@ -167,7 +180,7 @@ def get_graph_data():
 def keep_awake():
     try:
         # Gọi 1 câu lệnh để đánh thức Neo4j
-        with driver.session() as session:
+        with driver.session(database="neo4j") as session:
             session.run("RETURN 1 AS ping")
         
         return jsonify({

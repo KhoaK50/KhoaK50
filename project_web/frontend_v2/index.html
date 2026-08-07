@@ -467,36 +467,31 @@
       }
 
       @media (max-width: 768px) {
-        /* 1. Dời toàn bộ khối chữ xuống sát đáy màn hình */
-        .hero-section {
-          align-items: flex-end;
-          padding-top: 0;
-          padding-bottom: 10px; /* Cách mép dưới 40px */
-        }
-
-        /* 2. Lớp mờ Light Mode: Chỉ che phần chữ ở đáy, trên 50% là trong suốt hoàn toàn */
-        .bg-overlay {
-          background: linear-gradient(
-            to top,
-            rgba(255, 255, 255, 1) 0%,
-            rgba(255, 255, 255, 0.95) 35%,
-            rgba(255, 255, 255, 0) 50%
-          );
-        }
-
-        /* 3. Lớp mờ Dark Mode: Chỉ che phần chữ ở đáy, trên 50% là trong suốt hoàn toàn */
-        body.dark-theme .bg-overlay {
-          background: linear-gradient(
-            to top,
-            rgba(9, 11, 18, 1) 0%,
-            rgba(9, 11, 18, 0.95) 35%,
-            rgba(9, 11, 18, 0) 50%
-          );
-        }
-
-        .content {
-          text-align: center;
-          max-width: 100%;
+          .bg-overlay { display: none !important; }
+          body.dark-theme .bg-overlay { display: none !important; }
+          .hero-section::before { display: none !important; }
+  
+          .hero-section {
+            align-items: center;
+            padding-top: 100px;
+            padding-bottom: 20px;
+            flex-direction: column;
+            justify-content: flex-start;
+            height: auto;
+          }
+          .content {
+            order: 1;
+            margin-bottom: 20px;
+            z-index: 10;
+            text-align: center;
+            max-width: 100%;
+          }
+          #hero-canvas {
+            position: relative !important;
+            order: 2;
+            height: 450px !important;
+            width: 100% !important;
+          }
         }
         .buttons {
           justify-content: center;
@@ -514,7 +509,7 @@
           align-items: center;
           text-align: center;
         }
-      }
+      
       .lang-dropdown {
         position: relative;
       }
@@ -750,8 +745,8 @@
             <i class="fa-solid fa-globe"></i>
           </button>
           <div class="vec-dropdown-menu" style="min-width: 150px;">
-            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('vi')">Tiếng Việt</a>
-            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('en')">English</a>
+            <a href="javascript:void(0)" class="vec-dropdown-item" onclick="if(window.setLang) setLang('vi')">Tiếng Việt</a>
+            <a href="javascript:void(0)" class="vec-dropdown-item" onclick="if(window.setLang) setLang('en')">English</a>
           </div>
         </div>
         
@@ -792,7 +787,7 @@
     }
 
     // Handle dropdown clicks on mobile
-    const dropdownContainers = document.querySelectorAll(".vec-nav-links .vec-dropdown-container");
+    const dropdownContainers = document.querySelectorAll(".vec-dropdown-container");
     dropdownContainers.forEach(container => {
       container.addEventListener("click", (e) => {
         if (window.innerWidth <= 768) {
@@ -963,7 +958,7 @@
 
       function resize() {
         width = window.innerWidth;
-        height = canvas.parentElement.clientHeight;
+        height = canvas.clientHeight || canvas.parentElement.clientHeight;
         canvas.width = width * window.devicePixelRatio;
         canvas.height = height * window.devicePixelRatio;
         ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
@@ -1266,8 +1261,8 @@
         async init() {
           // Cập nhật text ban đầu cho dropdown dựa trên ngôn ngữ đã lưu
           const langMap = { vi: "Tiếng Việt", en: "English" };
-          document.getElementById("current-lang").textContent =
-            langMap[this.currentLang];
+          const curLangEl = document.getElementById("current-lang");
+          if (curLangEl) curLangEl.textContent = langMap[this.currentLang];
 
           await this.loadLanguage(this.currentLang);
         },
@@ -1290,21 +1285,9 @@
               .split(".")
               .reduce((obj, i) => (obj ? obj[i] : null), translations);
 
-            if (text) {
-              const icon = element.querySelector("i");
-              if (icon) {
-                element.textContent = "";
-                if (key.includes("btn_calc")) {
-                  element.textContent = text + " ";
-                  element.appendChild(icon);
-                } else {
-                  element.appendChild(icon);
-                  element.append(" " + text);
-                }
-              } else {
-                element.textContent = text;
+                          if (text) {
+                element.innerHTML = text;
               }
-            }
           });
         },
       };
@@ -1313,33 +1296,7 @@
       document.addEventListener("DOMContentLoaded", () => i18n.init());
 
       // Logic Dropdown
-      const langBtn = document.getElementById("lang-btn");
-      const langMenu = document.getElementById("lang-menu");
-      const currentLang = document.getElementById("current-lang");
-
-      langBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        langMenu.classList.toggle("show");
-        langBtn.classList.toggle("active");
-      });
-
-      document.querySelectorAll(".lang-option").forEach((option) => {
-        option.addEventListener("click", async (e) => {
-          const val = e.target.getAttribute("data-value");
-          currentLang.textContent = e.target.textContent;
-          langMenu.classList.remove("show");
-          langBtn.classList.remove("active");
-
-          // SỬA: Gọi đúng tên hàm là loadLanguage
-          await i18n.loadLanguage(val);
-          localStorage.setItem("vectoria_lang", val);
-        });
-      });
-
-      window.addEventListener("click", () => {
-        langMenu.classList.remove("show");
-        langBtn.classList.remove("active");
-      });
+      // Old lang logic removed
 
       
     </script>

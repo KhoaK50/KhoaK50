@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+:root {
+  /* Ép BlockNote sử dụng font chuẩn học thuật (Serif) cho văn bản bình thường */
+  --bn-font-family: 'Merriweather', 'Cambria', 'Times New Roman', serif !important;
+}
+
+body {
+  margin: 0;
+  background-color: #f3f4f6; /* Tailwind gray-100 */
+}
