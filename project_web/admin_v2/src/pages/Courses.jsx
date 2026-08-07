@@ -238,13 +238,16 @@ export default function Courses() {
         <table className='w-full text-left border-collapse'>
           <thead>
             <tr className='bg-gray-50 border-b border-gray-200'>
-              <th className='p-4 font-medium text-gray-600'>ID</th><th className='p-4 font-medium text-gray-600'>Thứ tự</th><th className='p-4 font-medium text-gray-600'>Tiêu đề</th><th className='p-4 font-medium text-gray-600'>Hành động</th>
+              <th className='p-4 font-medium text-gray-600'>ID</th><th className='p-4 font-medium text-gray-600'>Chủ đề</th><th className='p-4 font-medium text-gray-600'>Mục</th><th className='p-4 font-medium text-gray-600'>Thứ tự</th><th className='p-4 font-medium text-gray-600'>Tiêu đề</th><th className='p-4 font-medium text-gray-600'>Hành động</th>
             </tr>
           </thead>
           <tbody className='divide-y divide-gray-200'>
             {isLoading ? <tr><td colSpan="4" className="p-4 text-center">Đang tải...</td></tr> : lessons.map((lesson) => (
               <tr key={`${lesson.topic_id}-${lesson.order_index}`} className='hover:bg-gray-50'>
-                <td className='p-4 text-sm'>{lesson.topic_id}</td><td className='p-4'>{lesson.order_index}</td><td className='p-4'>{lesson.title}</td>
+                <td className='p-4 text-sm'>{lesson.topic_id}</td>
+                <td className='p-4 text-sm text-gray-500 max-w-[150px] truncate' title={lesson.topic_title}>{lesson.topic_title || '-'}</td>
+                <td className='p-4 text-sm text-gray-500 max-w-[150px] truncate' title={lesson.section_title}>{lesson.section_title || '-'}</td>
+                <td className='p-4'>{lesson.order_index}</td><td className='p-4'>{lesson.title}</td>
                 <td className='p-4'><button onClick={() => handleEdit(lesson)} className='text-blue-600'>Sửa</button></td>
               </tr>
             ))}

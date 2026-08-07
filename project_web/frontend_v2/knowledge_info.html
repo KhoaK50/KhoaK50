@@ -912,7 +912,7 @@ function renderLesson(c, lesson) {
 
 
 
-  fetch(`http://localhost:5000/api/course/lesson/${lesson.id}`)
+  fetch(`https://visualization-rr5v.onrender.com/api/course/lesson/${lesson.id}`)
     .then(res => {
       if (!res.ok) throw new Error('Not found');
       return res.json();

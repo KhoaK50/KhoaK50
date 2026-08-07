@@ -63,7 +63,14 @@ def get_lessons():
     try:
         conn = get_db_connection()
         c = conn.cursor()
-        c.execute("SELECT topic_id, order_index, title, content_html, total_views, created_at FROM lessons ORDER BY order_index ASC;")
+        c.execute("""
+            SELECT l.topic_id, l.order_index, l.title, l.content_html, l.total_views, l.created_at,
+                   l.section_id, t.title as topic_title, s.title as section_title
+            FROM lessons l
+            LEFT JOIN topics t ON l.topic_id = t.id
+            LEFT JOIN sections s ON l.section_id = s.id
+            ORDER BY l.topic_id ASC, l.order_index ASC, l.created_at ASC;
+        """)
         rows = c.fetchall()
         cols = [desc[0] for desc in c.description]
         data = [dict(zip(cols, row)) for row in rows]
@@ -123,13 +130,15 @@ def create_lesson():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@admin_bp.route("/api/course/lesson/<topic_id>", methods=["GET"])
-def get_public_lesson(topic_id):
-    # Public API for frontend user to fetch lesson by topic_id
+@admin_bp.route("/api/course/lesson/<lesson_id>", methods=["GET"])
+def get_public_lesson(lesson_id):
+    # Public API for frontend user to fetch lesson by lesson_id (e.g. 'l1' -> order_index=1)
     try:
+        # Extract number from string like 'l1', 'l2'
+        order_idx = int(lesson_id.replace('l', ''))
         conn = get_db_connection()
         c = conn.cursor()
-        c.execute("SELECT content_html FROM lessons WHERE topic_id = %s LIMIT 1;", (topic_id,))
+        c.execute("SELECT content_html FROM lessons WHERE order_index = %s LIMIT 1;", (order_idx,))
         row = c.fetchone()
         conn.close()
         if row:
