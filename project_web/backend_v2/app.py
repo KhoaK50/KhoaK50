@@ -162,7 +162,7 @@ def get_graph_data():
     
     try:
         # Nhớ dùng session của Neo4j driver
-        with driver.session(database="neo4j") as session:
+        with driver.session() as session:
             result = session.run(query)
             for record in result:
                 node_id = record["id"]
@@ -180,7 +180,7 @@ def get_graph_data():
 def keep_awake():
     try:
         # Gọi 1 câu lệnh để đánh thức Neo4j
-        with driver.session(database="neo4j") as session:
+        with driver.session() as session:
             session.run("RETURN 1 AS ping")
         
         return jsonify({

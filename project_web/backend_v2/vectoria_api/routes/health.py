@@ -14,7 +14,7 @@ def home():
 def health():
     try:
         # 1. Đánh thức Neo4j
-        with driver.session(database="neo4j") as session:
+        with driver.session() as session:
             session.run("RETURN 1")
             
         # 2. Đánh thức PostgreSQL (Supabase)
@@ -27,4 +27,5 @@ def health():
         
     except Exception as e:
         print(f">> [DB SLEEPING / ERROR]: {str(e)}")
-        return jsonify({"ok": False, "error": str(e)}), 500
+        # Tr v 200 d Render khAng kill deployment
+        return jsonify({"ok": False, "error": str(e), "status": "waking_up"}), 200
