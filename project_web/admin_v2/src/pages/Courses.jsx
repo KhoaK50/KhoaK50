@@ -19,7 +19,7 @@ export default function Courses() {
 
   const fetchLessons = () => {
     setIsLoading(true);
-    fetch('https://visualization-rr5v.onrender.com/api/admin/lessons', {
+    fetch('http://localhost:5000/api/admin/lessons', {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAuth')}` }
     })
     .then(res => res.json())
@@ -48,7 +48,7 @@ export default function Courses() {
   const handleSaveEdit = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch(`https://visualization-rr5v.onrender.com/api/admin/lesson/${currentLesson.topic_id}/${currentLesson.order_index}`, {
+      const res = await fetch(`http://localhost:5000/api/admin/lesson/${currentLesson.topic_id}/${currentLesson.order_index}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAuth')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_html: markdown })
@@ -65,7 +65,7 @@ export default function Courses() {
     if (!newTopicId || !newTitle || !newSectionId) return alert("Vui lòng nhập đủ thông tin!");
     setIsSaving(true);
     try {
-      const res = await fetch(`https://visualization-rr5v.onrender.com/api/admin/lesson`, {
+      const res = await fetch(`http://localhost:5000/api/admin/lesson`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAuth')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -173,8 +173,8 @@ export default function Courses() {
     <div className='flex flex-col h-[calc(100vh-8rem)]'>
       <div className='flex justify-between items-center mb-6'>
         <div className='flex items-center gap-4'>
-          <button onClick={() => setViewMode('list')} className='text-gray-500 hover:bg-gray-200 p-2 rounded-full'><ArrowLeft size={20} /></button>
-          <h1 className='text-2xl font-bold'>{titleElement}</h1>
+          <button onClick={() => setViewMode('list')} className='text-slate-400 hover:bg-slate-800 p-2 rounded-full transition-colors'><ArrowLeft size={20} /></button>
+          <h1 className='text-2xl font-bold text-slate-100'>{titleElement}</h1>
         </div>
         <div className='flex items-center gap-4'>
           <input 
@@ -186,22 +186,22 @@ export default function Courses() {
           />
           <button 
              onClick={() => fileInputRef.current?.click()} 
-             className="flex items-center gap-2 px-4 py-2 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium border border-indigo-200"
+             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-500/20 text-indigo-400 font-medium border border-indigo-500/30 hover:bg-indigo-500/30 transition-colors"
           >
             <Upload size={18} /> Tải lên (.tex hoặc .zip)
           </button>
-          <button onClick={onSave} disabled={saveDisabled} className={`flex items-center gap-2 text-white px-4 py-2 rounded font-medium ${saveDisabled ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}>
+          <button onClick={onSave} disabled={saveDisabled} className={`flex items-center gap-2 text-white px-4 py-2 rounded-lg font-medium transition-colors ${saveDisabled ? 'bg-slate-600 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
             <Save size={18} /> {saveDisabled ? 'Đang lưu...' : 'Lưu bài học'}
           </button>
         </div>
       </div>
       
       {viewMode === 'create' && (
-        <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 grid grid-cols-4 gap-4'>
-          <div><label className='block text-sm text-gray-600 mb-1'>Topic ID</label><input type='text' value={newTopicId} onChange={e => setNewTopicId(e.target.value)} className='w-full border rounded p-2 text-sm' /></div>
-          <div><label className='block text-sm text-gray-600 mb-1'>Section ID</label><input type='text' value={newSectionId} onChange={e => setNewSectionId(e.target.value)} className='w-full border rounded p-2 text-sm' /></div>
-          <div><label className='block text-sm text-gray-600 mb-1'>Thứ tự (Order Index)</label><input type='number' value={newOrder} onChange={e => setNewOrder(parseInt(e.target.value))} className='w-full border rounded p-2 text-sm' /></div>
-          <div><label className='block text-sm text-gray-600 mb-1'>Tiêu đề (Title)</label><input type='text' value={newTitle} onChange={e => setNewTitle(e.target.value)} className='w-full border rounded p-2 text-sm' /></div>
+        <div className='bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-700 mb-6 grid grid-cols-4 gap-4'>
+          <div><label className='block text-sm text-slate-400 mb-1'>Topic ID</label><input type='text' value={newTopicId} onChange={e => setNewTopicId(e.target.value)} className='w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg p-2 text-sm focus:outline-none focus:border-indigo-500' /></div>
+          <div><label className='block text-sm text-slate-400 mb-1'>Section ID</label><input type='text' value={newSectionId} onChange={e => setNewSectionId(e.target.value)} className='w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg p-2 text-sm focus:outline-none focus:border-indigo-500' /></div>
+          <div><label className='block text-sm text-slate-400 mb-1'>Thứ tự (Order Index)</label><input type='number' value={newOrder} onChange={e => setNewOrder(parseInt(e.target.value))} className='w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg p-2 text-sm focus:outline-none focus:border-indigo-500' /></div>
+          <div><label className='block text-sm text-slate-400 mb-1'>Tiêu đề (Title)</label><input type='text' value={newTitle} onChange={e => setNewTitle(e.target.value)} className='w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg p-2 text-sm focus:outline-none focus:border-indigo-500' /></div>
         </div>
       )}
 
@@ -231,24 +231,24 @@ export default function Courses() {
   return (
     <div>
       <div className='flex justify-between items-center mb-6'>
-        <h1 className='text-2xl font-bold flex items-center gap-2'><BookOpen className='text-purple-600' /> Quản lý Bài học</h1>
-        <button onClick={handleCreateNew} className='bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700'>+ Thêm Bài học</button>
+        <h1 className='text-2xl font-bold flex items-center gap-2 text-slate-100'><BookOpen className='text-indigo-400' /> Quản lý Bài học</h1>
+        <button onClick={handleCreateNew} className='bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors'>+ Thêm Bài học</button>
       </div>
-      <div className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden'>
+      <div className='bg-slate-800 rounded-lg shadow-sm border border-slate-700 overflow-hidden'>
         <table className='w-full text-left border-collapse'>
           <thead>
-            <tr className='bg-gray-50 border-b border-gray-200'>
-              <th className='p-4 font-medium text-gray-600'>ID</th><th className='p-4 font-medium text-gray-600'>Chủ đề</th><th className='p-4 font-medium text-gray-600'>Mục</th><th className='p-4 font-medium text-gray-600'>Thứ tự</th><th className='p-4 font-medium text-gray-600'>Tiêu đề</th><th className='p-4 font-medium text-gray-600'>Hành động</th>
+            <tr className='bg-slate-900 border-b border-slate-700'>
+              <th className='p-4 font-medium text-slate-400'>ID</th><th className='p-4 font-medium text-slate-400'>Chủ đề</th><th className='p-4 font-medium text-slate-400'>Mục</th><th className='p-4 font-medium text-slate-400'>Thứ tự</th><th className='p-4 font-medium text-slate-400'>Tiêu đề</th><th className='p-4 font-medium text-slate-400'>Hành động</th>
             </tr>
           </thead>
-          <tbody className='divide-y divide-gray-200'>
-            {isLoading ? <tr><td colSpan="4" className="p-4 text-center">Đang tải...</td></tr> : lessons.map((lesson) => (
-              <tr key={`${lesson.topic_id}-${lesson.order_index}`} className='hover:bg-gray-50'>
-                <td className='p-4 text-sm'>{lesson.topic_id}</td>
-                <td className='p-4 text-sm text-gray-500 max-w-[150px] truncate' title={lesson.topic_title}>{lesson.topic_title || '-'}</td>
-                <td className='p-4 text-sm text-gray-500 max-w-[150px] truncate' title={lesson.section_title}>{lesson.section_title || '-'}</td>
-                <td className='p-4'>{lesson.order_index}</td><td className='p-4'>{lesson.title}</td>
-                <td className='p-4'><button onClick={() => handleEdit(lesson)} className='text-blue-600'>Sửa</button></td>
+          <tbody className='divide-y divide-slate-700/50'>
+            {isLoading ? <tr><td colSpan="6" className="p-4 text-center text-slate-400">Đang tải...</td></tr> : lessons.map((lesson) => (
+              <tr key={`${lesson.topic_id}-${lesson.order_index}`} className='hover:bg-slate-700/30 transition-colors'>
+                <td className='p-4 text-sm text-slate-300'>{lesson.topic_id}</td>
+                <td className='p-4 text-sm text-slate-400 max-w-[150px] truncate' title={lesson.topic_title}>{lesson.topic_title || '-'}</td>
+                <td className='p-4 text-sm text-slate-400 max-w-[150px] truncate' title={lesson.section_title}>{lesson.section_title || '-'}</td>
+                <td className='p-4 text-slate-300'>{lesson.order_index}</td><td className='p-4 text-slate-300'>{lesson.title}</td>
+                <td className='p-4'><button onClick={() => handleEdit(lesson)} className='text-indigo-400 hover:text-indigo-300 font-medium'>Sửa</button></td>
               </tr>
             ))}
           </tbody>

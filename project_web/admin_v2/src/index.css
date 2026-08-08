@@ -1,11 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  /* Ép BlockNote sử dụng font chuẩn học thuật (Serif) cho văn bản bình thường */
   --bn-font-family: 'Merriweather', 'Cambria', 'Times New Roman', serif !important;
+}
+
+* {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
 }
 
 body {
   margin: 0;
-  background-color: #f3f4f6; /* Tailwind gray-100 */
+  background-color: #0f172a;
+  color: #e2e8f0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Webkit scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::selection {
+  background: rgba(99, 102, 241, 0.3);
+  color: #e2e8f0;
 }

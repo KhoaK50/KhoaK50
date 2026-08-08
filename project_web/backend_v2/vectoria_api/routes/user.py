@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, redirect
 import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -49,6 +49,9 @@ def init_user_db():
         # Cập nhật thêm các cột mới cho tính năng Bảo mật JWT và Đa ngôn ngữ (nếu chưa có)
         c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INT DEFAULT 1;")
         c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS language_pref VARCHAR(10) DEFAULT 'vi';")
+        
+        # Thêm cột is_trusted cho thiết bị
+        c.execute("ALTER TABLE loginhistory ADD COLUMN IF NOT EXISTS is_trusted BOOLEAN DEFAULT TRUE;")
 
         # 2. Bảng Lịch sử đăng nhập 
         c.execute('''
@@ -295,16 +298,40 @@ def login():
             except:
                 pass
 
-            c.execute("SELECT 1 FROM loginhistory WHERE user_id = %s AND device_info = %s", (user_id, device_info))
+            # Check total trusted logins to see if this is the first login ever
+            c.execute("SELECT COUNT(*) FROM loginhistory WHERE user_id = %s AND is_trusted = TRUE", (user_id,))
+            total_trusted_logins = c.fetchone()[0]
+
+            # Check if this specific device is already trusted
+            c.execute("SELECT 1 FROM loginhistory WHERE user_id = %s AND device_info = %s AND is_trusted = TRUE", (user_id, device_info))
             is_new_device = not c.fetchone()
 
-            c.execute(
-                "INSERT INTO loginhistory (user_id, ip_address, device_info) VALUES (%s, %s, %s)",
-                (user_id, ip_address, device_info)
-            )
-            conn.commit()
+            is_trusted_now = True if total_trusted_logins == 0 else (not is_new_device)
 
-            if is_new_device:
+            c.execute(
+                "INSERT INTO loginhistory (user_id, ip_address, device_info, is_trusted) VALUES (%s, %s, %s, %s)",
+                (user_id, ip_address, device_info, is_trusted_now)
+            )
+
+            if is_new_device and total_trusted_logins > 0:
+                # Generate a secure token to lock the account and reset password
+                secure_token = secrets.token_hex(20)
+                c.execute(
+                    "INSERT INTO passwordresets (user_id, token, expires_at) VALUES (%s, %s, CURRENT_TIMESTAMP + INTERVAL '1 hour')",
+                    (user_id, secure_token)
+                )
+                
+                SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
+                confirm_token = jwt.encode(
+                    {"user_id": user_id, "device_info": device_info, "action": "confirm_device", "exp": datetime.now(timezone.utc) + timedelta(days=7)},
+                    SECRET_KEY, 
+                    algorithm="HS256"
+                )
+
+                API_BASE = os.getenv("API_BASE", "https://visualization-rr5v.onrender.com")
+                secure_link = f"{API_BASE}/api/secure-account?token={secure_token}"
+                confirm_link = f"{API_BASE}/api/confirm-device?token={confirm_token}"
+
                 if language == 'en':
                     email_content = f"""
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; border: 1px solid #eee; border-radius: 10px; padding: 20px;">
@@ -316,9 +343,14 @@ def login():
                             <p style="margin: 5px 0;"><strong>Device:</strong> {friendly_device}</p>
                             <p style="margin: 5px 0;"><strong>Time:</strong> {datetime.now().strftime('%H:%M - %d/%m/%Y')}</p>
                         </div>
-                        <p style="color: #e74c3c; font-weight: bold;">If you did not authorize this login, please secure your account immediately.</p>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="{FRONTEND_URL}/login.html" style="background-color: #e74c3c; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Secure Account</a>
+                        <p style="margin: 20px 0; font-size: 16px;">Is this you?</p>
+                        <p style="color: #666; font-size: 14px;">If you recognize this activity, please confirm your device to prevent future alerts.</p>
+                        <div style="text-align: center; margin: 20px 0;">
+                            <a href="{confirm_link}" style="background-color: #2ecc71; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin-right: 10px;">Yes, it was me</a>
+                        </div>
+                        <p style="color: #e74c3c; font-weight: bold; margin-top: 25px;">If you did not authorize this login, please secure your account immediately.</p>
+                        <div style="text-align: center; margin: 20px 0;">
+                            <a href="{secure_link}" style="background-color: #e74c3c; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Secure Account</a>
                         </div>
                     </div>
                     """
@@ -334,13 +366,20 @@ def login():
                             <p style="margin: 5px 0;"><strong>Thiết bị:</strong> {friendly_device}</p>
                             <p style="margin: 5px 0;"><strong>Thời gian:</strong> {datetime.now().strftime('%H:%M - %d/%m/%Y')}</p>
                         </div>
-                        <p style="color: #e74c3c; font-weight: bold;">Nếu bạn không thực hiện đăng nhập này, vui lòng thay đổi mật khẩu ngay lập tức để bảo vệ tài khoản.</p>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="{FRONTEND_URL}/login.html" style="background-color: #e74c3c; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Bảo vệ tài khoản</a>
+                        <p style="margin: 20px 0; font-size: 16px;">Có phải là bạn không?</p>
+                        <p style="color: #666; font-size: 14px;">Nếu là bạn, vui lòng xác nhận thiết bị để không bị nhận cảnh báo vào lần sau.</p>
+                        <div style="text-align: center; margin: 20px 0;">
+                            <a href="{confirm_link}" style="background-color: #2ecc71; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin-right: 10px;">Xác nhận đây là tôi</a>
+                        </div>
+                        <p style="color: #e74c3c; font-weight: bold; margin-top: 25px;">Nếu bạn không thực hiện đăng nhập này, vui lòng bảo vệ tài khoản ngay lập tức.</p>
+                        <div style="text-align: center; margin: 20px 0;">
+                            <a href="{secure_link}" style="background-color: #e74c3c; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Bảo vệ tài khoản</a>
                         </div>
                     </div>
                     """
                     send_auth_email(email, "Cảnh báo bảo mật: Đăng nhập từ thiết bị mới", email_content)
+            
+            conn.commit()
 
             # Trả về token JWT thực sự
             SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
@@ -465,18 +504,91 @@ def reset_password():
         user_id = result[0]
         hashed_password = generate_password_hash(new_password)
 
-        c.execute("UPDATE users SET password_hash = %s WHERE id = %s", (hashed_password, user_id))
+        # Cập nhật mật khẩu mới, đồng thời MỞ KHÓA tài khoản (nếu đang bị khóa) và vô hiệu hóa token cũ
+        c.execute("UPDATE users SET password_hash = %s, status = 'active', token_version = token_version + 1 WHERE id = %s", (hashed_password, user_id))
+        
+        # Đánh dấu mã này đã dùng xong
         c.execute("UPDATE passwordresets SET is_used = TRUE WHERE user_id = %s AND token = %s", (user_id, token))
-        # Vô hiệu hóa toàn bộ token cũ (Force Logout)
-        c.execute("UPDATE users SET token_version = token_version + 1 WHERE id = %s", (user_id,))
         
         conn.commit()
-        return jsonify({"status": "success", "message": "Thay đổi mật khẩu thành công!"}), 200
+        return jsonify({"status": "success", "message": "Thay đổi mật khẩu thành công! Tài khoản đã được bảo vệ."}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
     finally:
         if 'conn' in locals(): conn.close()
 
+
+
+
+# --- API XÁC NHẬN THIẾT BỊ AN TOÀN ---
+@user_bp.route("/api/confirm-device", methods=["GET"])
+def confirm_device():
+    token = request.args.get("token")
+    if not token:
+        return "Thiếu mã xác nhận (Missing token)", 400
+
+    try:
+        SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        
+        if payload.get("action") != "confirm_device":
+            return "Mã xác nhận không hợp lệ", 400
+            
+        user_id = payload.get("user_id")
+        device_info = payload.get("device_info")
+
+        conn = psycopg2.connect(DB_URL)
+        c = conn.cursor()
+
+        # Cập nhật thiết bị thành is_trusted
+        c.execute("UPDATE loginhistory SET is_trusted = TRUE WHERE user_id = %s AND device_info = %s", (user_id, device_info))
+        conn.commit()
+        
+        return "Xác nhận thiết bị thành công! Từ nay bạn sẽ không nhận được cảnh báo bảo mật khi đăng nhập trên thiết bị này nữa."
+    except jwt.ExpiredSignatureError:
+        return "Mã xác nhận đã hết hạn (Token expired)", 400
+    except jwt.InvalidTokenError:
+        return "Mã xác nhận không hợp lệ (Invalid token)", 400
+    except Exception as e:
+        return f"Lỗi hệ thống: {str(e)}", 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+# --- API BẢO VỆ TÀI KHOẢN KHI BỊ XÂM NHẬP ---
+@user_bp.route("/api/secure-account", methods=["GET"])
+def secure_account():
+    token = request.args.get("token")
+    if not token:
+        return "Thiếu mã bảo vệ (Missing token)", 400
+
+    try:
+        conn = psycopg2.connect(DB_URL)
+        c = conn.cursor()
+
+        # Kiểm tra token hợp lệ
+        c.execute("""
+            SELECT user_id FROM passwordresets 
+            WHERE token = %s AND is_used = FALSE AND expires_at > CURRENT_TIMESTAMP
+        """, (token,))
+        result = c.fetchone()
+
+        if not result:
+            return "Đường dẫn bảo vệ tài khoản không hợp lệ hoặc đã hết hạn (Link invalid or expired)", 400
+
+        user_id = result[0]
+
+        # Khóa tài khoản và vô hiệu hóa JWT token cũ ngay lập tức (Force Logout)
+        c.execute("UPDATE users SET status = 'locked', token_version = token_version + 1 WHERE id = %s", (user_id,))
+        conn.commit()
+        
+        # Chuyển hướng người dùng đến giao diện đặt lại mật khẩu của frontend
+        return redirect(f"{FRONTEND_URL}/login.html?reset_token={token}")
+    except Exception as e:
+        return f"Lỗi hệ thống: {str(e)}", 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
 
 # --- API ĐĂNG NHẬP BẰNG GOOGLE ---
 @user_bp.route("/api/google-login", methods=["POST"])
@@ -550,16 +662,40 @@ def google_login():
         except:
             pass
             
-        c.execute("SELECT 1 FROM loginhistory WHERE user_id = %s AND device_info = %s", (user_id, device_info))
+        # Check total trusted logins to see if this is the first login ever
+        c.execute("SELECT COUNT(*) FROM loginhistory WHERE user_id = %s AND is_trusted = TRUE", (user_id,))
+        total_trusted_logins = c.fetchone()[0]
+
+        # Check if this specific device is already trusted
+        c.execute("SELECT 1 FROM loginhistory WHERE user_id = %s AND device_info = %s AND is_trusted = TRUE", (user_id, device_info))
         is_new_device = not c.fetchone()
 
+        is_trusted_now = True if total_trusted_logins == 0 else (not is_new_device)
+
         c.execute(
-            "INSERT INTO loginhistory (user_id, ip_address, device_info) VALUES (%s, %s, %s)",
-            (user_id, ip_address, device_info)
+            "INSERT INTO loginhistory (user_id, ip_address, device_info, is_trusted) VALUES (%s, %s, %s, %s)",
+            (user_id, ip_address, device_info, is_trusted_now)
         )
-        conn.commit()
         
-        if is_new_device:
+        if is_new_device and total_trusted_logins > 0:
+            # Generate a secure token to lock the account and reset password
+            secure_token = secrets.token_hex(20)
+            c.execute(
+                "INSERT INTO passwordresets (user_id, token, expires_at) VALUES (%s, %s, CURRENT_TIMESTAMP + INTERVAL '1 hour')",
+                (user_id, secure_token)
+            )
+            
+            SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
+            confirm_token = jwt.encode(
+                {"user_id": user_id, "device_info": device_info, "action": "confirm_device", "exp": datetime.now(timezone.utc) + timedelta(days=7)},
+                SECRET_KEY, 
+                algorithm="HS256"
+            )
+
+            API_BASE = os.getenv("API_BASE", "https://visualization-rr5v.onrender.com")
+            secure_link = f"{API_BASE}/api/secure-account?token={secure_token}"
+            confirm_link = f"{API_BASE}/api/confirm-device?token={confirm_token}"
+
             if language == 'en':
                 email_content = f"""
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; border: 1px solid #eee; border-radius: 10px; padding: 20px;">

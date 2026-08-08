@@ -7,19 +7,24 @@ import Users from './pages/Users';
 import Login from './pages/Login';
 import Database from './pages/Database';
 import Quizzes from './pages/Quizzes';
+import Feedbacks from './pages/Feedbacks';
+import AuditLogs from './pages/AuditLogs';
+import SettingsPage from './pages/Settings';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
     !!localStorage.getItem('adminAuth')
   );
 
-  const handleLogin = (key) => {
-    localStorage.setItem('adminAuth', key);
+  const handleLogin = (token, username) => {
+    localStorage.setItem('adminAuth', token);
+    localStorage.setItem('adminUsername', username);
     setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('adminAuth');
+    localStorage.removeItem('adminUsername');
     setIsAuthenticated(false);
   };
 
@@ -36,6 +41,9 @@ export default function App() {
           <Route path='courses' element={<Courses />} />
           <Route path='quizzes' element={<Quizzes />} />
           <Route path='users' element={<Users />} />
+          <Route path='feedbacks' element={<Feedbacks />} />
+          <Route path='logs' element={<AuditLogs />} />
+          <Route path='settings' element={<SettingsPage />} />
           <Route path='*' element={<Navigate to='/' />} />
         </Route>
       </Routes>
