@@ -40,3 +40,4 @@ gunicorn==23.0.0
 user-agents==2.2.0
 PyJWT==2.8.0
 cloudinary
+google-genai
