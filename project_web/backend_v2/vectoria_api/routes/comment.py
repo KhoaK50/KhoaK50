@@ -24,11 +24,11 @@ def check_profanity_and_mask(text):
     
     # If local filter caught something, return immediately to save API call time
     if text != original:
-        return text
+        return text, True, "Từ ngữ phản cảm (Bộ lọc cục bộ)", 1.0
 
     # 2. Deep check using Gemini for all other languages and complex cases
     if not GEMINI_API_KEY:
-        return text
+        return text, False, "", 0.0
     try:
         client = genai.Client(api_key=GEMINI_API_KEY)
         prompt = f"Bạn là một hệ thống kiểm duyệt nội dung. Hãy giữ nguyên đoạn văn bản sau, nhưng thay thế TẤT CẢ các từ ngữ chửi bậy, thô tục, phản cảm (tiếng Việt hoặc tiếng Anh) bằng chuỗi '[BỊ ẨN]'. Nếu không có từ nào vi phạm, hãy trả về nguyên bản. KHÔNG thêm bất kỳ lời giải thích hay ngoặc kép nào.\n\nVăn bản: {text}"
@@ -36,10 +36,13 @@ def check_profanity_and_mask(text):
             model='gemini-3.6-flash',
             contents=prompt
         )
-        return response.text.strip()
+        masked_text = response.text.strip()
+        if '[BỊ ẨN]' in masked_text and text != masked_text:
+            return masked_text, True, "Từ ngữ phản cảm (AI phát hiện)", 0.8
+        return masked_text, False, "", 0.0
     except Exception as e:
         print(f"Gemini API error: {e}")
-        return text
+        return text, False, "", 0.0
 
 @comment_bp.route('/api/comment/topic/<topic_id>/lesson/<order_index>', methods=['GET'])
 def get_comments(topic_id, order_index):
@@ -125,12 +128,18 @@ def create_comment(user_id):
     if not topic_id or not order_index or not content:
         return jsonify({"success": False, "message": "Missing required fields"}), 400
         
-    # Profanity Masking
-    masked_content = check_profanity_and_mask(content)
-        
     try:
         conn = psycopg2.connect(DB_URL)
         cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Check user status
+        cursor.execute("SELECT status FROM users WHERE id = %s", (user_id,))
+        user_record = cursor.fetchone()
+        if user_record and user_record['status'] in ['locked', 'banned']:
+            return jsonify({"success": False, "message": "Tài khoản của bạn đã bị khóa, không thể bình luận"}), 403
+            
+        # Profanity Masking
+        masked_content, is_flagged, reason, severity = check_profanity_and_mask(content)
         
         query = """
             INSERT INTO lesson_comments (user_id, topic_id, order_index, content, parent_comment_id, upvote_count)
@@ -139,6 +148,19 @@ def create_comment(user_id):
         """
         cursor.execute(query, (user_id, topic_id, order_index, masked_content, parent_id))
         result = cursor.fetchone()
+        
+        # If flagged, insert into flagged_comments
+        if is_flagged:
+            ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+            if ip_address:
+                ip_address = ip_address.split(',')[0].strip()
+            
+            flag_query = """
+                INSERT INTO flagged_comments (comment_id, original_content, ai_severity_score, ai_reason, ip_address)
+                VALUES (%s, %s, %s, %s, %s);
+            """
+            cursor.execute(flag_query, (result['id'], content, severity, reason, ip_address))
+            
         conn.commit()
         
         return jsonify({
@@ -148,6 +170,7 @@ def create_comment(user_id):
             "created_at": result['created_at'].isoformat()
         }), 201
     except Exception as e:
+        if 'conn' in locals(): conn.rollback()
         print(f"Error creating comment: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
     finally:

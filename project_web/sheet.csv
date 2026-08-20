@@ -1,0 +1,193 @@
+,STT,THUỘC TÍNH,,KIỂU DỮ LIỆU,RÀNG BUỘC,GHI CHÚ,MÔ TẢ SỰ KIỆN
+,,LOẠI,TÊN,,,,
+"TOPIC
+[thực thể mạnh]
+(chủ đề học tập)",1,Khóa chính,id,VARCHAR(10),NOT NULL,Mã id này sẽ khớp với mã node trên đồ thị tri thức tạo bởi Neo4j,
+,2,Đơn trị,title,VARCHAR(150),"UNIQUE, NOT NULL",Tiêu đề của chủ đề ngắn gọn và xúc tích là được,
+,3,Đơn trị,summary,VARCHAR(500),,"Đoạn mô tả khái quát nội dung, có thể hiển thị nhanh ở các card ",
+,4,Đơn trị,"case_study_html
+(đề xuất, không bắt buộc)",TEXT,,Nội dung mẩu chuyện hoặc vấn đề dẫn dắt trước khi vào lý thuyết chính,
+,5,Đơn trị ,mindmap_url,VARCHAR(255),,Link ảnh sơ đồ tư duy của chủ đề,
+,6,Đơn trị,meta_keywords,VARCHAR(255),,Từ khóa hỗ trợ công cụ tìm kiếm SEO,
+,7,Đơn trị,created_at,TIMESTAMP,"- NOT NULL
+- Mặc định: CURRENT_TIMESTAMP
+",Thời điểm khởi tạo chủ đề,
+,8,Đơn trị,updated_at,TIMESTAMP,"- NOT NULL
+- Mặc định: CURRENT_TIMESTAMP",Thời điểm cập nhật chủ đề,
+"SECTION
+[thực thể mạnh quan hệ
+N--1 TOPIC]
+(đề mục)",9,Khóa chính,id,VARCHAR(10),NOT NULL,Mã định danh đề mục," + Để tổ chức nội dung học tập, hệ thống quản lý các chủ đề kiến thức, trong đó mỗi chủ đề đại diện cho một nội dung lớn trong lộ trình học.
+ Mỗi chủ đề được định danh bằng một mã duy nhất để đồng bộ với node tương ứng trên đồ thị tri thức Neo4j, giúp việc truy vấn và trực quan hóa mối quan hệ giữa các chủ đề được thực hiện chính xác.
+ Ngoài tên gọi và phần mô tả khái quát, mỗi chủ đề có thể chứa mẩu chuyện hoặc bài toán dẫn dắt nhằm tạo ngữ cảnh trước khi đi vào lý thuyết chính, đồng thời liên kết với sơ đồ tư duy để người học có cái nhìn tổng quan về kiến thức.
+ Hệ thống cũng lưu các từ khóa phục vụ tối ưu công cụ tìm kiếm, cùng thời điểm tạo và cập nhật chủ đề để thuận tiện cho việc quản lý nội dung. 
+Một chủ đề có thể bao gồm nhiều bài học, trong khi mỗi bài học chỉ thuộc về một chủ đề duy nhất.
+
+
+
+
+
+
+
+
+
+ + Mỗi chủ đề được chia thành nhiều bài học nhằm trình bày kiến thức theo trình tự từ cơ bản đến nâng cao. 
+Mỗi bài học luôn thuộc về đúng một chủ đề và không thể tồn tại nếu chủ đề tương ứng bị xóa. 
+Trong cùng một chủ đề, các bài học được sắp xếp theo một thứ tự xác định để đảm bảo người học tiếp cận nội dung theo đúng lộ trình. 
+Mỗi bài học lưu tiêu đề, toàn bộ nội dung lý thuyết, định nghĩa, công thức và các biểu thức toán học được trình bày dưới dạng HTML kết hợp LaTeX. 
+Bên cạnh đó, hệ thống còn lưu thời điểm tạo, thời điểm cập nhật và tổng số lượt xem của bài học nhằm phục vụ việc thống kê mức độ quan tâm của người học. 
+Một bài học có thể được nhiều người dùng xem, bình luận hoặc lưu lại để học sau.
+
+
+
+
+
+
+
+
+ + Trong quá trình học tập, hệ thống ghi nhận lịch sử xem của từng người dùng đối với từng bài học nhằm hỗ trợ tiếp tục học từ vị trí đã dừng và xây dựng danh sách các bài học đã xem gần đây. 
+Đối với mỗi lần truy cập, hệ thống lưu tỷ lệ nội dung mà người học đã đọc và thời điểm gần nhất mở bài học. 
+Khi người dùng quay lại, hệ thống có thể tự động đưa nội dung đến đúng vị trí đã đọc trước đó, đồng thời cập nhật thời gian truy cập để sắp xếp danh sách ""Xem gần đây"". 
+Mỗi bản ghi lịch sử chỉ gắn với một người dùng và một bài học cụ thể, trong khi một người dùng có thể xem nhiều bài học và một bài học cũng có thể được nhiều người dùng xem. 
+Thực thể này đóng vai trò là thực thể kết hợp để giải quyết mối quan hệ nhiều – nhiều giữa người dùng và bài học.
+
+ 
+
+
+
+
+ + Để tạo môi trường trao đổi kiến thức, mỗi bài học cho phép người dùng đăng câu hỏi hoặc chia sẻ ý kiến thông qua hệ thống bình luận. 
+Mỗi bình luận được gắn với đúng một người dùng và một bài học cụ thể. 
+Hệ thống hỗ trợ trả lời trực tiếp một bình luận khác, nhờ đó hình thành các chuỗi thảo luận theo dạng phân cấp. 
+Khi một bình luận gốc bị xóa, toàn bộ các phản hồi trực thuộc cũng sẽ được xóa theo nhằm đảm bảo tính nhất quán của dữ liệu. 
+Ngoài nội dung bình luận, hệ thống còn lưu số lượt bình chọn để ưu tiên hiển thị những bình luận hữu ích, đồng thời ghi nhận thời điểm đăng nhằm hiển thị thông tin về thời gian tương đối như ""2 giờ trước"" hoặc ""Hôm qua"". 
+Một bài học có thể có nhiều bình luận, trong khi mỗi bình luận chỉ thuộc về một bài học duy nhất.
+
+ 
+
+
+
+ 
+
+
+
+ 
+ 
+ + Trong quá trình học, người dùng có thể đánh dấu các bài học quan trọng để thuận tiện cho việc ôn tập sau này. 
+Mỗi bản ghi lưu trữ tương ứng với một bài học mà người dùng đã lưu, đồng thời có thể kèm theo ghi chú cá nhân về lý do lưu hoặc những nội dung cần chú ý. 
+Hệ thống cũng ghi nhận thời điểm lưu để hỗ trợ sắp xếp theo thời gian và cho phép người dùng ghim những bài học quan trọng lên đầu danh sách, không phụ thuộc vào thời điểm lưu. 
+Mỗi người dùng có thể lưu nhiều bài học và một bài học cũng có thể được nhiều người dùng lưu, do đó thực thể này đóng vai trò là thực thể kết hợp giữa người dùng và bài học. 
+Khi tài khoản người dùng bị xóa, toàn bộ danh sách bài học đã lưu tương ứng cũng sẽ được xóa theo để đảm bảo tính toàn vẹn của cơ sở dữ liệu."
+,10,Khóa ngoại,topic_id,VARCHAR(10),"- NOT NULL
+- FOREIGN KEY REFERENCES TOPIC(id) ON DELETE CASCADE",,
+,11,Đơn trị,title,VARCHAR(150),"UNIQUE, NOT NULL",Tiêu đề đề mục,
+,12,Đơn trị,summary,VARCHAR(500),,Đoạn mô tả khái quát nội dung đề mục. Giúp AI tóm tắt cho User.,
+,13,Đơn trị,learning_objective,TEXT,,Mục tiêu đầu ra của đề mục. Dùng để mapping với chuẩn đầu ra khi cá nhân hóa lộ trình.,
+,14,Đơn trị,order_index,INT,NOT NULL,Thứ tự hiển thị của đề mục trong Topic.,
+,15,Đơn trị,created_at,TIMESTAMP,"- NOT NULL
+- Mặc định: CURRENT_TIMESTAMP
+",Thời điểm khởi tạo chủ đề,
+,16,Đơn trị,updated_at,TIMESTAMP,"- NOT NULL
+- Mặc định: CURRENT_TIMESTAMP",Thời điểm cập nhật chủ đề,
+"LESSON
+[thực thể yếu
+N--1
+TOPIC]
+(bài học từ chủ đề)",17,"Khóa ngoại
+(Thành phần 1 của khóa chính phức hợp)",topic_id,VARCHAR(10),"- NOT NULL
+- FOREIGN KEY REFERENCES TOPIC(id) ON DELETE CASCADE",Bài học trong 1 chủ đề vốn đã bị xóa thì nó không được phép tồn tại,
+,18,"Đơn trị, Khóa bộ phận
+(Thành phần 2 của khóa chính phức hợp)",order_index,INT,"- NOT NULL
+- Thứ tự lớn hơn 0",Số thứ tự của bài học trong 1 chủ đề,
+,19,Khóa ngoại,section_id,VARCHAR(10),"- NOT NULL
+- FOREIGN KEY REFERENCES SECTION(id) ON DELETE CASCADE",,
+,20,Đơn trị,title,VARCHAR(150),NOT NULL,"Tiêu đề bài học, không UNIQUE vì bài học ở chủ đề này với chủ đề khác có thể trùng tên ",
+,21,Đơn trị,content_html,TEXT,NOT NULL,"Toàn bộ văn bản lí thuyết, định nghĩa, công thức LaTeX",
+,22,Đơn trị,complexity,INT,Mặc định: 5,Độ phức tạp của bài học (Đại diện cho biến C trong công thức trọng số động),
+,23,Đơn trị,time,INT,Mặc định: 45,Thời gian lý thuyết cần để hoàn thành bài học (Đại diện cho biến T trong công thức trọng số động),
+,24,Đơn trị,value,INT,Mặc định: 5,Giá trị điểm thưởng/kinh nghiệm khi học xong,
+,25,Đơn trị,created_at,TIMESTAMP,"- NOT NULL
+- Mặc định: CURRENT_TIMESTAMP",Thời điểm khởi tạo bài học,
+,26,Đơn trị,updated_at,TIMESTAMP,"- NOT NULL
+- Mặc định: CURRENT_TIMESTAMP",Thời điểm cập nhật bài học,
+,27,Đơn trị,total_views,INT,"- NOT NULL
+- Mặc định: 0","Tổng lượt xem của bài học, tổng lượt xem tăng khi có user vào xem trong 1 khoảng thời gian x nào đó, lượt cập nhật sẽ do backend tự delay để tránh sập",
+"USER_LESSON_HISTORY
+[thực thể kết hợp giữa
+LESSON và USER]
+(lịch sử xem bài học)",28,"Khóa ngoại (trỏ về khóa chính của USER)
+(Thành phần 1 của khóa chính phức hợp)",user_id,INT,"- NOT NULL
+- FOREIGN KEY REFERENCES USER(id) ON DELETE CASCADE",Tài khoản của user biến mất thì lịch sử xem bài cũng vậy,
+,29,"Thành phần 1 của khóa ngoại phức hợp (topic_id, order_index)
+(Thành phần 2 của khóa chính phức hợp)",topic_id,VARCHAR(10),NOT NULL,,
+,30,"Thành phần 2 của khóa ngoại phức hợp (topic_id, order_index)
+(Thành phần 3 của khóa chính phức hợp)",order_index,INT,NOT NULL,,
+,31,Đơn trị,last_read_percent,"NUMERIC(5,2)","- NOT NULL
+- Mặc định: 0.00
+- Ràng buộc miền giá trị: 0.00 <= x <= 100.00","Tỉ lệ cuộn trang mà user thực hiện khi xem bài, mai mốt vào xem tiếp thì hệ thống tự giác cuộn đến nơi được lưu trước đó, áp dụng cho mọi thiết bị",
+,32,Đơn trị,visited_at,TIMESTAMP,,"Mốc thời gian cuối cùng user mở bài ra xem, mỗi lần vào thì cột cập nhật thời gian (có thể đẩy bài lên danh sách ""Xem gần đây"")",
+"LESSON_COMMENT
+[thực thể mạnh quan hệ
+N--1 LESSON, 
+N--1 USER và
+1--N LESSON_COMMENT]
+(bình luận/hỏi đáp về bài học)",33,Khóa chính,id,INT/SERIAL,NOT NULL,Mã định danh tự động tăng cho từng dòng comment,
+,34,Khóa ngoại (trỏ về khóa chính của USER),user_id,INT,"- NOT NULL
+- FOREIGN KEY REFERENCES USER(id) ON DELETE CASCADE",Tài khoản của user biến mất thì comment thuộc tài khoản đó cũng vậy,
+,35,"Thành phần 1 của khóa ngoại phức hợp (topic_id, order_index)
+",topic_id,VARCHAR(10),NOT NULL,,
+,36,"Thành phần 2 của khóa ngoại phức hợp (topic_id, order_index)
+",order_index,INT,NOT NULL,,
+,37,"Khóa ngoại tự tham chiếu về khóa chính ""id"" 
+(đệ quy)",parent_comment_id,INT,FOREIGN KEY REFERENCES LESSON_COMMENT(id) ON DELETE CASCADE,"Nếu bằng NULL, đây là comment gốc, còn không, đó là reply, nếu comment cha xóa thì comment con cũng xóa (quy tắc đệ quy)
+",
+,38,Đơn trị,content,TEXT,NOT NULL,"- Nội dung thảo luận của user
+- Thêm logic Backend: lọc từ ngữ/kí tự phản cảm",
+,39,Đơn trị,upvote_count,INT,"- NOT NULL
+- Mặc định: 0",Số lượt bình chọn cho comment đc coi là hữu ích để ưu tiên sắp xếp lên đầu,
+,40,Đơn trị,created_at,TIMESTAMP,"- NOT NULL
+- Mặc định: CURRENT_TIMESTAMP","Thời điểm gửi bình luận (để có thể hiển thị kiểu như ""2 giờ trước"")",
+"SAVED_LESSON
+[thực thể kết hợp giữa
+LESSON và USER]
+(bài học đã lưu)",41,"Khóa ngoại (trỏ về khóa chính của USER)
+(Thành phần 1 của khóa chính phức hợp)",user_id,INT,"- NOT NULL
+- FOREIGN KEY REFERENCES USER(id) ON DELETE CASCADE",Tài khoản của user biến mất thì bài học đã lưu thuộc tài khoản đó cũng vậy,
+,42,"Thành phần 1 của khóa ngoại phức hợp (topic_id, order_index)
+(Thành phần 2 của khóa chính phức hợp)",topic_id,VARCHAR(10),NOT NULL,,
+,43,"Thành phần 2 của khóa ngoại phức hợp (topic_id, order_index)
+(Thành phần 3 của khóa chính phức hợp)",order_index,INT,NOT NULL,,
+,44,Đơn trị,note,VARCHAR(255),,Dòng ghi chú lí do sao mình lưu lại hoặc cái gì đó ấn tượng,
+,45,Đơn trị,saved_at,TIMESTAMP,"- NOT NULL
+- Mặc định: CURRENT_TIMESTAMP",Thời điểm bấm lưu bài học,
+,46,Đơn trị,is_pinned,BOOLEAN,"- NOT NULL
+- Mặc định: FALSE",Bài nào đã lưu mà được ghim sẽ lên đầu tiên danh sách bài học,
+"COMMENT_UPVOTES
+[thực thể kết hợp giữa
+LESSON_COMMENT và USER]
+(bình luận bổ ích)",47,"Khóa ngoại (trỏ về khóa chính của USER)
+(Thành phần 1 của khóa chính phức hợp)",user_id,INT,"- NOT NULL
+- FOREIGN KEY REFERENCES USER(id) ON DELETE CASCADE","ID của người dùng đã bấm Upvote. Nếu tài khoản người dùng bị xóa, upvote của họ tự động biến mất.",
+,48,"Khóa ngoại (trỏ về khóa chính của LESSON_COMMENT)
+(Thành phần 2 của khóa chính phức hợp)",comment_id,INT,"- NOT NULL
+- FOREIGN KEY REFERENCES LESSON_COMMENT(id) ON DELETE CASCADE","ID của bình luận được Upvote. Nếu bình luận bị xóa, toàn bộ upvote liên quan tự động xóa theo.",
+,49,Đơn trị,created_at,TIMESTAMP,- Mặc định: CURRENT_TIMESTAMP,Ghi nhận mốc thời gian chính xác lúc người dùng bấm Upvote.,
+"FLAGGED_COMMENT
+[thực thể yếu quan hệ
+N--1 LESSON_COMMENT]
+(bình luận phản cảm bị cắm cờ )",33,Khóa chính,id,INT/SERIAL,NOT NULL,Mã định danh tự động tăng cho từng dòng comment,
+,34,Khóa ngoại (trỏ về khóa chính của USER),user_id,INT,"- NOT NULL
+- FOREIGN KEY REFERENCES USER(id) ON DELETE CASCADE",Tài khoản của user biến mất thì comment thuộc tài khoản đó cũng vậy,
+,35,"Thành phần 1 của khóa ngoại phức hợp (topic_id, order_index)
+",topic_id,VARCHAR(10),NOT NULL,,
+,36,"Thành phần 2 của khóa ngoại phức hợp (topic_id, order_index)
+",order_index,INT,NOT NULL,,
+,37,"Khóa ngoại tự tham chiếu về khóa chính ""id"" 
+(đệ quy)",parent_comment_id,INT,FOREIGN KEY REFERENCES LESSON_COMMENT(id) ON DELETE CASCADE,"Nếu bằng NULL, đây là comment gốc, còn không, đó là reply, nếu comment cha xóa thì comment con cũng xóa (quy tắc đệ quy)
+",
+,38,Đơn trị,content,TEXT,NOT NULL,"- Nội dung thảo luận của user
+- Thêm logic Backend: lọc từ ngữ/kí tự phản cảm",
+,39,Đơn trị,upvote_count,INT,"- NOT NULL
+- Mặc định: 0",Số lượt bình chọn cho comment đc coi là hữu ích để ưu tiên sắp xếp lên đầu,
+,40,Đơn trị,created_at,TIMESTAMP,"- NOT NULL
+- Mặc định: CURRENT_TIMESTAMP","Thời điểm gửi bình luận (để có thể hiển thị kiểu như ""2 giờ trước"")",

@@ -14,6 +14,7 @@ export default function AdminLayout({ onLogout }) {
     { name: 'Bài tập', path: '/quizzes', icon: <FileQuestion size={18} /> },
     { name: 'Người dùng', path: '/users', icon: <Users size={18} /> },
     { name: 'Hỗ trợ', path: '/feedbacks', icon: <MessageSquare size={18} /> },
+    { name: 'Kiểm duyệt', path: '/moderation', icon: <ShieldAlert size={18} /> },
     { name: 'Nhật ký (Logs)', path: '/logs', icon: <ShieldAlert size={18} /> },
     { name: 'Stress Test', path: '/stress-test', icon: <Zap size={18} /> },
     { name: 'Cài đặt', path: '/settings', icon: <Settings size={18} /> },

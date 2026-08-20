@@ -11,6 +11,7 @@ import Feedbacks from './pages/Feedbacks';
 import AuditLogs from './pages/AuditLogs';
 import SettingsPage from './pages/Settings';
 import StressTest from './pages/StressTest';
+import Moderation from './pages/Moderation';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -44,6 +45,7 @@ export default function App() {
           <Route path='users' element={<Users />} />
           <Route path='feedbacks' element={<Feedbacks />} />
           <Route path='logs' element={<AuditLogs />} />
+          <Route path='moderation' element={<Moderation />} />
           <Route path='stress-test' element={<StressTest />} />
           <Route path='settings' element={<SettingsPage />} />
           <Route path='*' element={<Navigate to='/' />} />

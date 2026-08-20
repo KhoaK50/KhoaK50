@@ -56,6 +56,14 @@ def create_app():
     from vectoria_api.routes.comment import comment_bp
     app.register_blueprint(comment_bp)
 
+    # Register Admin Moderation Blueprint
+    from vectoria_api.routes.admin_moderation import admin_moderation_bp
+    app.register_blueprint(admin_moderation_bp)
+    
+    # Register Notification Blueprint
+    from vectoria_api.routes.notification import notification_bp
+    app.register_blueprint(notification_bp)
+
     socketio.init_app(app, cors_allowed_origins="*")
     return app
 
