@@ -1,21 +1,27 @@
-const i18nConfig = {
+﻿const i18nConfig = {
   defaultLocale: 'vi',
   currentLocale: localStorage.getItem('locale') || 'vi',
   translations: {}
 };
 
+let _loadPromise = null;
 async function loadTranslations(lang) {
+  if (_loadPromise) return _loadPromise;
+  _loadPromise = (async () => {
   try {
-    const response = await fetch(`locales/${lang}.json`);
+    const response = await fetch(`locales/${lang}.json?v=` + new Date().getTime());
     if (!response.ok) throw new Error(`Could not load ${lang}.json`);
     i18nConfig.translations[lang] = await response.json();
   } catch (error) {
     console.error('Error loading translations:', error);
   }
+  _loadPromise = null;
+  })();
+  return _loadPromise;
 }
 
 function updateDOM() {
-  const elements = document.querySelectorAll('[data-i18n], [data-i18n-title]');
+  const elements = document.querySelectorAll('[data-i18n], [data-i18n-title], [data-i18n-placeholder]');
   const t = i18nConfig.translations[i18nConfig.currentLocale];
   if (!t) return;
 
@@ -37,6 +43,10 @@ function updateDOM() {
     if (el.hasAttribute('data-i18n-title')) {
       const val = getValue(el.getAttribute('data-i18n-title'));
       if (val) el.setAttribute('title', val);
+    }
+    if (el.hasAttribute('data-i18n-placeholder')) {
+      const val = getValue(el.getAttribute('data-i18n-placeholder'));
+      if (val) el.setAttribute('placeholder', val);
     }
   });
   
@@ -61,7 +71,17 @@ window.setLang = async function(lang) {
 };
 
 // Initialize
-document.addEventListener('DOMContentLoaded', async () => {
+async function initI18n() {
   await loadTranslations(i18nConfig.currentLocale);
   updateDOM();
-});
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initI18n);
+} else {
+  initI18n();
+}
+
+
+
+
+

@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="vi">
   <head>
     <!-- Google tag (gtag.js) -->
@@ -703,6 +703,12 @@
     <link rel="stylesheet" href="css/components.css" />
 </head>
   <body class="dark no-transition">
+    <script>
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.remove('light-theme');
+        document.body.classList.add('dark-theme', 'dark');
+      }
+    </script>
     
 
     <!-- ==================== UNIFIED TOPBAR ==================== -->
@@ -711,50 +717,32 @@
   
   
   
-  .vec-sidebar-toggle {
-    display: none; /* Shows on mobile */
-    background: transparent;
-    border: 1px solid var(--border-strong);
-    border-radius: 6px;
-    width: 36px;
-    height: 36px;
-    color: var(--text-main);
-    cursor: pointer;
-    font-size: 16px;
-    align-items: center;
-    justify-content: center;
-    transition: 0.2s;
-  }
-  .vec-sidebar-toggle:hover {
-    background: var(--primary-base);
-    color: white;
-    border-color: var(--primary-base);
-  }
+  
+  
   </style>
 
 <header class="vec-topbar" id="globalTopbar">
   <div class="vec-topbar-left">
-    <button class="vec-sidebar-toggle" id="mobileSidebarToggle" title="Menu sidebar">
-      <i class="fa-solid fa-bars"></i>
-    </button>
-    <a href="index.html" class="vec-brand-group">
+        <button class="vec-sidebar-toggle" id="globalMobileToggleBtn" title="Menu sidebar">
+          <i class="fa-solid fa-compass"></i>
+        </button><a href="index.html" class="vec-brand-group">
       <img src="assets/images/logo+name.png" alt="Vectoria" onerror="this.src='assets/images/logo.png'">
     </a>
     
     <nav class="vec-nav-links">
-          <a href="index.html" class="vec-nav-link" id="navHome"><i class="fa-solid fa-house"></i> Trang chủ</a>
-          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="fa-solid fa-layer-group"></i> Dashboard</a>
-          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="fa-solid fa-calculator"></i> Tính toán</a>
+          <a href="index.html" class="vec-nav-link" id="navHome"><i class="fa-solid fa-house"></i> <span data-i18n="nav.home">Trang chủ</span></a>
+          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="fa-solid fa-layer-group"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
+          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="fa-solid fa-calculator"></i> <span data-i18n="nav.calc">Tính toán</span></a>
           
           <div class="vec-dropdown-container">
             <span class="vec-nav-link"><i class="fa-solid fa-compass"></i> Khám phá <i class="fa-solid fa-chevron-down" style="font-size: 0.7em;"></i></span>
             <div class="vec-dropdown-menu">
-              <a href="knowledge_info.html" class="vec-dropdown-item"><i class="fa-solid fa-graduation-cap"></i> Thư viện kiến thức</a>
-              <a href="hdsd.html" class="vec-dropdown-item"><i class="fa-solid fa-circle-question"></i> Hướng dẫn sử dụng</a>
-              <a href="tltk.html" class="vec-dropdown-item"><i class="fa-solid fa-file-pdf"></i> Tài liệu tham khảo</a>
+              <a href="knowledge_info.html" class="vec-dropdown-item" data-i18n="nav.knowledge"><i class="fa-solid fa-graduation-cap"></i> Thư viện kiến thức</a>
+              <a href="hdsd.html" class="vec-dropdown-item" data-i18n="nav.manual"><i class="fa-solid fa-circle-question"></i> Hướng dẫn sử dụng</a>
+              <a href="tltk.html" class="vec-dropdown-item" data-i18n="nav.docs"><i class="fa-solid fa-file-pdf"></i> Tài liệu tham khảo</a>
               <div class="dropdown-divider" style="height: 1px; background: var(--border-strong, #cbd5e1); margin: 5px 0;"></div>
-              <a href="about_us.html" class="vec-dropdown-item"><i class="fa-solid fa-users"></i> Về chúng tôi</a>
-              <a href="contact.html" class="vec-dropdown-item"><i class="fa-solid fa-envelope"></i> Liên hệ</a>
+              <a href="about_us.html" class="vec-dropdown-item" data-i18n="nav.about"><i class="fa-solid fa-users"></i> Về chúng tôi</a>
+              <a href="contact.html" class="vec-dropdown-item" data-i18n="nav.contact"><i class="fa-solid fa-envelope"></i> Liên hệ</a>
             </div>
           </div>
         </nav>
@@ -762,7 +750,7 @@
   
   <div class="vec-topbar-right">
     <button class="vec-icon-btn" id="themeToggleBtn" title="Chuyển giao diện">
-          <i class="fa-solid fa-moon"></i>
+          <i class="fa-solid fa-moon icon-light-mode"></i><i class="fa-solid fa-sun icon-dark-mode"></i>
         </button>
 
         <div class="vec-dropdown-container right-align">
@@ -815,7 +803,7 @@
     const dropdownContainers = document.querySelectorAll(".vec-nav-links .vec-dropdown-container");
     dropdownContainers.forEach(container => {
       container.addEventListener("click", (e) => {
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth <= 1024) {
           e.stopPropagation();
           container.classList.toggle("open");
         }
@@ -1266,5 +1254,17 @@
     </script>
   <script src="js/app/auth.js"></script>
   <script src="js/app/ui/topbar_avatar.js"></script>
+
+
+
 </body>
+
+
+
 </html>
+
+
+
+
+
+

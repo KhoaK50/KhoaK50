@@ -1,4 +1,4 @@
-html {
+﻿html {
   overflow-y: scroll;
   overflow-x: hidden;
 }
@@ -551,7 +551,12 @@ body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb {
 }
 
 @media (min-width: 769px) {
-  .vec-dropdown-container:hover .vec-dropdown-menu {
+  @media (hover: hover) {
+    .vec-dropdown-container:hover .vec-dropdown-menu {
+      display: flex;
+    }
+  }
+  .vec-dropdown-container.open .vec-dropdown-menu {
     display: flex;
   }
 }
@@ -564,21 +569,20 @@ body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb {
   .vec-sidebar-toggle {
     display: none; /* Shows on mobile */
     background: transparent;
-    border: 1px solid var(--border-strong);
-    border-radius: 6px;
-    width: 36px;
-    height: 36px;
-    color: var(--text-main);
+    border: 1px solid transparent; /* Match vec-icon-btn */
+    border-radius: 50%; /* Circular */
+    width: 38px;
+    height: 38px;
+    color: var(--text-muted); /* Correct tone color */
     cursor: pointer;
-    font-size: 16px;
+    font-size: 18px; /* Match vec-icon-btn size */
     align-items: center;
     justify-content: center;
     transition: 0.2s;
   }
   .vec-sidebar-toggle:hover {
-    background: var(--primary-base);
-    color: white;
-    border-color: var(--primary-base);
+    background: rgba(150,150,150,0.1); /* Match vec-icon-btn hover */
+    color: var(--primary-base);
   }
   .vec-brand-group {
     display: flex;
@@ -606,6 +610,7 @@ body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb {
     font-weight: 500;
     font-size: 15px;
     display: flex;
+    white-space: nowrap;
     align-items: center;
     gap: 8px;
     transition: color 0.2s;
@@ -641,7 +646,14 @@ body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb {
     padding: 8px 0;
     z-index: 10001;
   }
-  .vec-dropdown-container:hover .vec-dropdown-menu {
+  @media (hover: hover) {
+    .vec-dropdown-container:hover .vec-dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+  }
+  .vec-dropdown-container.open .vec-dropdown-menu {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
@@ -703,40 +715,142 @@ body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb {
   
   @media (max-width: 768px) {
     .vec-nav-links { 
-      display: none; 
+      display: flex; /* Change from none to flex to allow animation */
+      pointer-events: none; /* Prevent clicks when hidden */
       position: absolute;
-      top: 60px;
+      top: 100%; /* Drop right below topbar */
       left: 0;
       width: 100%;
-      background: var(--bg-card);
+      height: auto !important; /* Fix background clipping */
+      background: var(--bg-card, #ffffff);
       flex-direction: column;
-      border-bottom: 1px solid var(--border-strong);
-      padding: 10px 0;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      border-bottom: 1px solid var(--border-strong, #e2e8f0);
+      padding: 8px 0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      z-index: 999;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .vec-nav-links.show-mobile {
-      display: flex;
+      pointer-events: auto; /* Re-enable clicks */
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
     }
+    
     .vec-nav-link {
-      padding: 12px 24px;
+      padding: 14px 24px;
       width: 100%;
+      height: auto !important; /* Fix active underline */
       box-sizing: border-box;
+      justify-content: flex-start;
+      font-size: 15px;
+      color: var(--text-main);
+      transition: background 0.2s ease, padding 0.2s ease;
     }
-    .vec-dropdown-menu {
+    .vec-nav-link i {
+      margin-right: 12px;
+      width: 20px;
+      text-align: center;
+    }
+
+    /* Disable all sticky hover states on mobile to prevent "blue on tap" */
+    .vec-sidebar-toggle {
+      -webkit-tap-highlight-color: transparent;
+    }
+    .vec-sidebar-toggle:hover, .vec-sidebar-toggle:active, .vec-sidebar-toggle:focus {
+      background: transparent !important;
+      color: var(--text-main) !important;
+      border-color: var(--border-strong) !important;
+      outline: none !important;
+      box-shadow: none !important;
+    }
+    .vec-nav-link:hover:not(.active) {
+      color: var(--text-main) !important;
+    }
+    .vec-nav-links .vec-dropdown-item:hover {
+      color: var(--text-muted) !important;
+      background: transparent !important;
+    }
+    
+    /* Standard Active State on Mobile (No bar) */
+    .vec-nav-link.active::after {
+      display: none; /* Hide horizontal blue line */
+    }
+    .vec-nav-link.active {
+      color: var(--primary-base) !important;
+      font-weight: 600;
+      background: transparent;
+      border: none;
+      padding-left: 24px; /* Reset to normal padding */
+    }
+    
+    /* Rotate Chevron on Dropdown Open */
+    .vec-nav-link .fa-chevron-down {
+      transition: transform 0.3s ease;
+    }
+    .vec-dropdown-container.open .vec-nav-link .fa-chevron-down {
+      transform: rotate(180deg);
+    }
+    
+    /* Dropdown inside the mobile menu */
+    .vec-nav-links .vec-dropdown-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .vec-nav-links .vec-dropdown-menu {
       position: static;
       box-shadow: none;
       border: none;
+      background: rgba(0, 0, 0, 0.02); /* Slight tint to differentiate */
       opacity: 1;
       visibility: visible;
       transform: none;
-      padding-left: 24px;
+      padding: 0;
       display: none;
+      align-items: flex-start;
+      justify-content: flex-start;
+      width: 100%;
+      flex-direction: column;
     }
-    .vec-dropdown-container.open .vec-dropdown-menu {
+    body.dark-theme .vec-nav-links .vec-dropdown-menu {
+      background: rgba(255, 255, 255, 0.03); /* Subtle light tint for dark mode */
+      border: none;
+    }
+    body.dark-theme .vec-nav-links {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .vec-nav-links .vec-dropdown-container.open .vec-dropdown-menu {
       display: flex;
+      animation: slideDown 0.2s ease forwards;
     }
-    .vec-sidebar-toggle { display: flex; }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     
+    .vec-nav-links .vec-dropdown-item {
+      font-size: 14px;
+      padding: 12px 24px 12px 46px; /* Indent child items */
+      color: var(--text-muted);
+      width: 100%;
+      box-sizing: border-box;
+      transition: color 0.2s;
+    }
+    .vec-nav-links .vec-dropdown-item:hover {
+      color: var(--primary-base);
+    }
+
+    /* Ensure the hamburger icon is visible */
+    .vec-sidebar-toggle { 
+      display: flex !important;
+    }
   }
 
 
@@ -744,3 +858,28 @@ body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb {
 body.dark-theme .vec-topbar {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
+
+/* CSS Theme Icon Toggle (No JS Flash) */
+.icon-dark-mode { display: none !important; }
+body.dark-theme .icon-dark-mode { display: inline-block !important; }
+body.dark-theme .icon-light-mode { display: none !important; }
+
+
+
+/* =================== SCROLLBAR =================== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--s4, #d7dfe3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--s6, #8b939a);
+}
+::-webkit-scrollbar-track {
+  background: var(--s2, #f9f9fb);
+}
+
+

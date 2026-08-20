@@ -1,0 +1,38 @@
+[
+  {
+    "topic_id": "t1",
+    "tags": ["l1", "vector"],
+    "difficulty_level": "EASY",
+    "content_html": "<b>Vector</b> được định nghĩa là gì trong không gian?",
+    "option_a": "Là một đoạn thẳng có hướng",
+    "option_b": "Là một đường thẳng vô hạn",
+    "option_c": "Là một điểm trong không gian",
+    "option_d": "Là một số vô hướng",
+    "correct_answer": "A",
+    "explanation_html": "<p>Theo định nghĩa sách giáo khoa Hình học 10, Vector là một đoạn thẳng có hướng, nghĩa là đã chỉ rõ điểm đầu và điểm cuối.</p>"
+  },
+  {
+    "topic_id": "t1",
+    "tags": ["l2", "matrix"],
+    "difficulty_level": "MEDIUM",
+    "content_html": "Cho ma trận vuông A cấp $n$. Khẳng định nào sau đây là <b>đúng</b>?",
+    "option_a": "$|A + B| = |A| + |B|$",
+    "option_b": "$|k \\cdot A| = k \\cdot |A|$",
+    "option_c": "$|A \\cdot B| = |A| \\cdot |B|$",
+    "option_d": "$|A^T| = -|A|$",
+    "correct_answer": "C",
+    "explanation_html": "<p>Tính chất cơ bản của định thức: Định thức của một tích bằng tích các định thức.</p>"
+  },
+  {
+    "topic_id": "t1",
+    "tags": ["l2", "matrix"],
+    "difficulty_level": "HARD",
+    "content_html": "Điều kiện cần và đủ để hệ phương trình tuyến tính $AX = B$ có nghiệm là gì?",
+    "option_a": "$\\det(A) \\neq 0$",
+    "option_b": "$r(A) = r(\\overline{A})$",
+    "option_c": "$r(A) = n$ (với $n$ là số ẩn)",
+    "option_d": "Ma trận $A$ không suy biến",
+    "correct_answer": "B",
+    "explanation_html": "<p>Định lý Kronecker-Capelli khẳng định: Hệ phương trình tuyến tính $AX=B$ có nghiệm khi và chỉ khi hạng của ma trận hệ số bằng hạng của ma trận mở rộng, tức là $r(A) = r(\\overline{A})$.</p>"
+  }
+]

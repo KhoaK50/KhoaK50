@@ -19,9 +19,11 @@ function setupGuidedTour(buttonId, tourSteps, onEndCallback) {
     if (typeof driverFn !== "function") {
       console.warn("Tour Guide: Đang đợi thư viện tải...");
       btnTour.onclick = () =>
-        alert(
+        (window.App && window.App.showToast ? window.App.showToast(
           "⚠️ Thư viện hướng dẫn chưa tải xong, vui lòng chờ 1s hoặc nhấn Ctrl+F5!",
-        );
+          'warning') : alert(
+          "⚠️ Thư viện hướng dẫn chưa tải xong, vui lòng chờ 1s hoặc nhấn Ctrl+F5!"
+        ));
       return;
     }
 

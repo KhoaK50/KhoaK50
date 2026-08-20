@@ -1,5 +1,6 @@
 import os
 import psycopg2
+from psycopg2.extras import RealDictCursor
 from flask import Blueprint, request, jsonify
 from vectoria_api.config import DB_URL
 
@@ -124,6 +125,18 @@ def init_course_db():
             )
         """)
 
+        # 9. USER_LEARNING_PATHS
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS user_learning_paths (
+                user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                current_path JSONB NOT NULL DEFAULT '[]',
+                proposed_path JSONB,
+                reasoning_notes JSONB,
+                is_pending_decision BOOLEAN NOT NULL DEFAULT FALSE,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         conn.commit()
         conn.close()
         print(">> Init Course DB Successfully")
@@ -133,6 +146,43 @@ def init_course_db():
 init_course_db()
 
 from vectoria_api.middleware.auth import token_required
+
+@course_bp.route('/api/course/topic/<topic_id>/lesson/<order_index>', methods=['GET'])
+def get_lesson(topic_id, order_index):
+    try:
+        conn = psycopg2.connect(DB_URL)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT * FROM lessons WHERE topic_id = %s AND order_index = %s", (topic_id, order_index))
+        lesson = cursor.fetchone()
+        
+        if lesson:
+            if 'created_at' in lesson and lesson['created_at']:
+                lesson['created_at'] = lesson['created_at'].isoformat()
+            if 'updated_at' in lesson and lesson['updated_at']:
+                lesson['updated_at'] = lesson['updated_at'].isoformat()
+            return jsonify({"success": True, "lesson": lesson}), 200
+        return jsonify({"success": False, "message": "Lesson not found"}), 404
+    except Exception as e:
+        print(f"Error fetching lesson: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@course_bp.route('/api/course/topic/<topic_id>/lesson/<order_index>/view', methods=['POST'])
+def increment_lesson_view(topic_id, order_index):
+    try:
+        conn = psycopg2.connect(DB_URL)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE lessons SET total_views = total_views + 1 WHERE topic_id = %s AND order_index = %s", (topic_id, order_index))
+        conn.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        print(f"Error incrementing lesson view: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
 
 @course_bp.route('/api/course/graph', methods=['GET'])
 def get_course_graph():
@@ -342,3 +392,179 @@ def track_reading(user_id):
     finally:
         if 'conn' in locals():
             conn.close()
+
+@course_bp.route('/api/quiz/available-count', methods=['POST'])
+@token_required
+def get_available_question_count(user_id):
+    data = request.get_json()
+    selected_topics = data.get("selected_topics", [])
+    selected_lessons = data.get("selected_lessons", [])
+    difficulty_config = data.get("difficulty_config", "MIXED")
+
+    try:
+        conn = psycopg2.connect(DB_URL)
+        cursor = conn.cursor()
+        
+        if selected_lessons:
+            filter_col = "lesson_id"
+            filter_val = selected_lessons
+        elif selected_topics:
+            filter_col = "topic_id"
+            filter_val = selected_topics
+        else:
+            return jsonify({"success": True, "count": 0}), 200
+            
+        if difficulty_config == "MIXED":
+            query = f"SELECT COUNT(*) FROM questions WHERE {filter_col} = ANY(%s) AND is_active = TRUE"
+            cursor.execute(query, (filter_val,))
+        else:
+            query = f"SELECT COUNT(*) FROM questions WHERE {filter_col} = ANY(%s) AND is_active = TRUE AND difficulty_level = %s"
+            cursor.execute(query, (filter_val, difficulty_config))
+            
+        count = cursor.fetchone()[0]
+        return jsonify({"success": True, "count": count}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+@course_bp.route('/api/quiz/generate', methods=['POST'])
+@token_required
+def generate_quiz(user_id):
+    data = request.get_json()
+    selected_topics = data.get("selected_topics", [])
+    selected_lessons = data.get("selected_lessons", [])
+    difficulty_config = data.get("difficulty_config", "MIXED")
+    question_count = data.get("question_count", 10)
+    mode = data.get("mode", "PRACTICE")
+    time_limit = data.get("time_limit", 30)
+
+    try:
+        conn = psycopg2.connect(DB_URL)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("""
+            INSERT INTO quizzes (user_id, title, selected_topics, selected_lessons, question_count, status, difficulty_config, mode, time_limit, started_at)
+            VALUES (%s, 'Bài kiểm tra', %s, %s, %s, 'IN_PROGRESS', %s, %s, %s, CURRENT_TIMESTAMP)
+            RETURNING id
+        """, (user_id, selected_topics, selected_lessons, question_count, difficulty_config, mode, time_limit))
+        quiz_id = cursor.fetchone()['id']
+        
+        # Determine filtering condition
+        if selected_lessons:
+            filter_col = "lesson_id"
+            filter_val = selected_lessons
+        else:
+            filter_col = "topic_id"
+            filter_val = selected_topics
+            
+        if difficulty_config == "MIXED":
+            query = f"""
+                SELECT id, content_html, image_url, option_a, option_b, option_c, option_d, difficulty_level
+                FROM questions
+                WHERE {filter_col} = ANY(%s) AND is_active = TRUE
+                ORDER BY RANDOM()
+                LIMIT %s
+            """
+            cursor.execute(query, (filter_val, question_count))
+        else:
+            query = f"""
+                SELECT id, content_html, image_url, option_a, option_b, option_c, option_d, difficulty_level
+                FROM questions
+                WHERE {filter_col} = ANY(%s) AND is_active = TRUE AND difficulty_level = %s
+                ORDER BY RANDOM()
+                LIMIT %s
+            """
+            cursor.execute(query, (filter_val, difficulty_config, question_count))
+            
+        questions = cursor.fetchall()
+        
+        for i, q in enumerate(questions):
+            cursor.execute("""
+                INSERT INTO quizz_questions (quiz_id, question_id, order_index, status)
+                VALUES (%s, %s, %s, 'UNSEEN')
+            """, (quiz_id, q['id'], i + 1))
+            q['order_index'] = i + 1
+            
+        conn.commit()
+        return jsonify({"success": True, "quiz_id": quiz_id, "questions": questions}), 200
+        
+    except Exception as e:
+        if 'conn' in locals():
+            conn.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@course_bp.route('/api/quiz/<int:quiz_id>/submit', methods=['POST'])
+@token_required
+def submit_quiz(user_id, quiz_id):
+    data = request.get_json()
+    answers = data.get("answers", [])
+    
+    try:
+        conn = psycopg2.connect(DB_URL)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("SELECT id FROM quizzes WHERE id = %s AND user_id = %s", (quiz_id, user_id))
+        quiz = cursor.fetchone()
+        if not quiz:
+            return jsonify({"success": False, "message": "Quiz not found or unauthorized"}), 404
+            
+        correct_count = 0
+        total_questions = len(answers)
+        results = []
+        
+        for ans in answers:
+            q_id = ans.get("question_id")
+            selected_answer = ans.get("selected_answer")
+            
+            cursor.execute("SELECT correct_answer, explanation_html FROM questions WHERE id = %s", (q_id,))
+            q_data = cursor.fetchone()
+            
+            if q_data:
+                correct_ans = q_data['correct_answer']
+                is_correct = (selected_answer == correct_ans)
+                if is_correct:
+                    correct_count += 1
+                
+                cursor.execute("""
+                    UPDATE quizz_questions
+                    SET selected_answer = %s, is_correct = %s, status = 'ANSWERED', answered_at = CURRENT_TIMESTAMP
+                    WHERE quiz_id = %s AND question_id = %s
+                """, (selected_answer, is_correct, quiz_id, q_id))
+                
+                results.append({
+                    "question_id": q_id,
+                    "selected_answer": selected_answer,
+                    "correct_answer": correct_ans,
+                    "is_correct": is_correct,
+                    "explanation_html": q_data['explanation_html']
+                })
+                
+        total_score = round((correct_count / total_questions) * 10, 2) if total_questions > 0 else 0
+        
+        cursor.execute("""
+            UPDATE quizzes
+            SET total_score = %s, status = 'COMPLETED', completed_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (total_score, quiz_id))
+        
+        conn.commit()
+        return jsonify({
+            "success": True, 
+            "total_score": total_score, 
+            "correct_count": correct_count, 
+            "total_questions": total_questions, 
+            "results": results
+        }), 200
+        
+    except Exception as e:
+        if 'conn' in locals():
+            conn.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()

@@ -165,7 +165,13 @@ def register():
         conn.commit()
         
         # 4. Gửi email kích hoạt
-        activation_link = f"{FRONTEND_URL}/verify?token={activation_token}"
+        referer = request.headers.get("Referer", "")
+        if referer and "login.html" in referer:
+            base_url = referer.split("login.html")[0].rstrip("/")
+        else:
+            base_url = request.headers.get("Origin", FRONTEND_URL) + "/frontend_v2" if "127.0.0.1" in request.headers.get("Origin", "") or "localhost" in request.headers.get("Origin", "") else request.headers.get("Origin", FRONTEND_URL)
+        
+        activation_link = f"{base_url}/verify.html?token={activation_token}"
         
         if language == 'en':
             email_content = f"""
@@ -265,7 +271,7 @@ def login():
         c.execute("UPDATE users SET language_pref = %s WHERE email = %s", (language, email))
 
         # Tìm kiếm tài khoản bằng email
-        c.execute("SELECT id, display_name, email, password_hash, status, token_version FROM users WHERE email = %s", (email,))
+        c.execute("SELECT id, display_name, email, password_hash, status, token_version, avatar_url FROM users WHERE email = %s", (email,))
         user = c.fetchone()
 
         if user and check_password_hash(user[3], password):
@@ -273,6 +279,7 @@ def login():
             display_name = user[1]
             user_status = user[4]
             token_version = user[5]
+            avatar_url = user[6]
             
             if user_status == 'pending':
                 return jsonify({
@@ -393,7 +400,8 @@ def login():
                 "status": "success",
                 "token": real_token,
                 "display_name": display_name,
-                "email": user[2]
+                "email": user[2],
+                "avatar_url": avatar_url
             }), 200
         else:
             return jsonify({"status": "error", "message": "Email hoặc mật khẩu không đúng!"}), 401
@@ -437,7 +445,13 @@ def forgot_password():
         )
         conn.commit()
 
-        reset_link = f"{FRONTEND_URL}/login.html?reset_token={reset_token}"
+        referer = request.headers.get("Referer", "")
+        if referer and "login.html" in referer:
+            base_url = referer.split("login.html")[0].rstrip("/")
+        else:
+            base_url = request.headers.get("Origin", FRONTEND_URL) + "/frontend_v2" if "127.0.0.1" in request.headers.get("Origin", "") or "localhost" in request.headers.get("Origin", "") else request.headers.get("Origin", FRONTEND_URL)
+            
+        reset_link = f"{base_url}/login.html?reset_token={reset_token}"
         
         if language == 'en':
             email_content = f"""
@@ -615,7 +629,7 @@ def google_login():
         conn = psycopg2.connect(DB_URL)
         c = conn.cursor()
 
-        c.execute("SELECT id, status, auth_provider, token_version FROM users WHERE email = %s", (email,))
+        c.execute("SELECT id, status, auth_provider, token_version, avatar_url FROM users WHERE email = %s", (email,))
         user = c.fetchone()
         
         c.execute("UPDATE users SET language_pref = %s WHERE email = %s", (language, email))
@@ -625,6 +639,7 @@ def google_login():
             user_status = user[1]
             user_provider = user[2]
             token_version = user[3]
+            avatar_url = user[4]
             
             if user_provider == 'local':
                 return jsonify({
@@ -642,10 +657,16 @@ def google_login():
                     "UPDATE users SET google_id = %s WHERE id = %s AND google_id IS NULL", 
                     (google_id, user_id)
                 )
+
+            # Update avatar from Google if user has none
+            if not avatar_url and user_info.get("picture"):
+                avatar_url = user_info.get("picture")
+                c.execute("UPDATE users SET avatar_url = %s WHERE id = %s", (avatar_url, user_id))
         else:
+            avatar_url = user_info.get("picture")
             c.execute(
-                "INSERT INTO users (display_name, email, auth_provider, google_id, status, language_pref) VALUES (%s, %s, 'google', %s, 'active', %s) RETURNING id",
-                (display_name, email, google_id, language)
+                "INSERT INTO users (display_name, email, auth_provider, google_id, status, language_pref, avatar_url) VALUES (%s, %s, 'google', %s, 'active', %s, %s) RETURNING id",
+                (display_name, email, google_id, language, avatar_url)
             )
             user_id = c.fetchone()[0]
             token_version = 1
@@ -738,7 +759,8 @@ def google_login():
             "status": "success",
             "token": real_token,
             "display_name": display_name,
-            "email": email
+            "email": email,
+            "avatar_url": avatar_url
         }), 200
 
     except Exception as e:
@@ -746,3 +768,299 @@ def google_login():
     finally:
         if 'conn' in locals():
             conn.close()
+
+# --- API LẤY DANH SÁCH BÀI ĐÃ LƯU (BOOKMARKS) ---
+@user_bp.route("/api/user/<int:user_id>/bookmarks", methods=["GET", "POST"])
+def manage_user_bookmarks(user_id):
+    try:
+        from psycopg2.extras import RealDictCursor
+        conn = psycopg2.connect(DB_URL)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        if request.method == "POST":
+            data = request.json
+            topic_id = data.get("topic_id")
+            order_index = data.get("order_index")
+            note = data.get("note", "")
+            action = data.get("action") # "save" or "remove"
+            
+            if not topic_id or order_index is None:
+                return jsonify({"success": False, "message": "Missing topic_id or order_index"}), 400
+                
+            if action == "save":
+                query = """
+                    INSERT INTO saved_lessons (user_id, topic_id, order_index, note, saved_at, is_pinned)
+                    VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, FALSE)
+                    ON CONFLICT (user_id, topic_id, order_index) 
+                    DO UPDATE SET note = EXCLUDED.note, saved_at = CURRENT_TIMESTAMP;
+                """
+                cursor.execute(query, (user_id, topic_id, order_index, note))
+            elif action == "remove":
+                query = """
+                    DELETE FROM saved_lessons
+                    WHERE user_id = %s AND topic_id = %s AND order_index = %s;
+                """
+                cursor.execute(query, (user_id, topic_id, order_index))
+            else:
+                return jsonify({"success": False, "message": "Invalid action"}), 400
+                
+            conn.commit()
+            return jsonify({"success": True, "message": f"Bookmark {action}d successfully."}), 200
+
+        # GET method
+        query = """
+            SELECT sl.topic_id, sl.order_index, sl.note, sl.saved_at, sl.is_pinned, l.title, l.complexity, l.time
+            FROM saved_lessons sl
+            LEFT JOIN lessons l ON sl.topic_id = l.topic_id AND sl.order_index = l.order_index
+            WHERE sl.user_id = %s
+            ORDER BY sl.is_pinned DESC, sl.saved_at DESC;
+        """
+        cursor.execute(query, (user_id,))
+        bookmarks = cursor.fetchall()
+        
+        for b in bookmarks:
+            b['saved_at'] = b['saved_at'].isoformat() if b['saved_at'] else None
+            
+        return jsonify({"success": True, "bookmarks": bookmarks}), 200
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+
+# --- API BOOKMARK VỚI JWT AUTH (Frontend dùng endpoint này) ---
+from vectoria_api.middleware.auth import token_required as bookmark_token_required
+
+@user_bp.route("/api/bookmarks", methods=["GET", "POST"])
+@bookmark_token_required
+def manage_bookmarks_jwt(user_id):
+    try:
+        from psycopg2.extras import RealDictCursor
+        conn = psycopg2.connect(DB_URL)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        if request.method == "POST":
+            data = request.json
+            lesson_id = data.get("lesson_id")
+            action = data.get("action")
+            note = data.get("note", "")
+            
+            if not lesson_id:
+                return jsonify({"success": False, "message": "Missing lesson_id"}), 400
+            
+            parts = lesson_id.rsplit('-', 1)
+            if len(parts) == 2 and parts[1].isdigit():
+                topic_id = parts[0]
+                order_index = int(parts[1])
+            else:
+                topic_id = lesson_id
+                order_index = 1
+                
+            # Temporary mapping for frontend mock data: if topic_id is 'l1', map to 't1'
+            if topic_id == 'l1':
+                topic_id = 't1'
+                
+            if action == "save":
+                query = """
+                    INSERT INTO saved_lessons (user_id, topic_id, order_index, note, saved_at, is_pinned)
+                    VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, FALSE)
+                    ON CONFLICT (user_id, topic_id, order_index) 
+                    DO UPDATE SET note = EXCLUDED.note, saved_at = CURRENT_TIMESTAMP;
+                """
+                try:
+                    cursor.execute(query, (user_id, topic_id, order_index, note))
+                except psycopg2.errors.ForeignKeyViolation:
+                    conn.rollback()
+                    return jsonify({"success": False, "message": f"Bài học không tồn tại trong hệ thống (topic={topic_id}, index={order_index})"}), 400
+            elif action == "remove":
+                query = """
+                    DELETE FROM saved_lessons
+                    WHERE user_id = %s AND topic_id = %s AND order_index = %s;
+                """
+                cursor.execute(query, (user_id, topic_id, order_index))
+            else:
+                return jsonify({"success": False, "message": "Invalid action"}), 400
+                
+            conn.commit()
+            return jsonify({"success": True, "message": f"Bookmark {action}d successfully."}), 200
+
+        # GET
+        query = """
+            SELECT sl.topic_id, sl.order_index, sl.note, sl.saved_at, sl.is_pinned, l.title, l.complexity, l.time
+            FROM saved_lessons sl
+            LEFT JOIN lessons l ON sl.topic_id = l.topic_id AND sl.order_index = l.order_index
+            WHERE sl.user_id = %s
+            ORDER BY sl.is_pinned DESC, sl.saved_at DESC;
+        """
+        cursor.execute(query, (user_id,))
+        bookmarks = cursor.fetchall()
+        
+        for b in bookmarks:
+            b['saved_at'] = b['saved_at'].isoformat() if b['saved_at'] else None
+            if b['topic_id'] == 't1' and b['order_index'] == 1:
+                b['lesson_id'] = 'l1-1'
+            else:
+                b['lesson_id'] = f"{b['topic_id']}-{b['order_index']}"
+            
+        return jsonify({"success": True, "bookmarks": bookmarks}), 200
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+
+# --- API LẤY LỊCH SỬ HỌC TẬP (HISTORY) ---
+@user_bp.route("/api/user/<int:user_id>/history", methods=["GET"])
+def get_user_history(user_id):
+    try:
+        from psycopg2.extras import RealDictCursor
+        conn = psycopg2.connect(DB_URL)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        query = """
+            SELECT topic_id, order_index, last_read_percent, visited_at
+            FROM user_lesson_history
+            WHERE user_id = %s
+            ORDER BY visited_at DESC
+            LIMIT 50;
+        """
+        cursor.execute(query, (user_id,))
+        history = cursor.fetchall()
+        
+        for h in history:
+            h['visited_at'] = h['visited_at'].isoformat()
+            
+        return jsonify({"success": True, "history": history}), 200
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+# --- API ĐÁNH GIÁ & TỐI ƯU LỘ TRÌNH (GRAPH ROUTING) ---
+from vectoria_api.routes.routing_logic import calculate_optimal_path
+import json
+
+@user_bp.route("/api/user/<int:user_id>/routing/optimize", methods=["POST"])
+def optimize_routing(user_id):
+    try:
+        is_new, proposed, notes = calculate_optimal_path(user_id)
+        return jsonify({
+            "success": True, 
+            "is_new_proposal": is_new, 
+            "proposed_path": proposed, 
+            "reasoning_notes": notes
+        }), 200
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@user_bp.route("/api/user/<int:user_id>/routing/accept", methods=["POST"])
+def accept_routing(user_id):
+    try:
+        conn = psycopg2.connect(DB_URL)
+        c = conn.cursor()
+        
+        # Get proposed path
+        c.execute("SELECT current_path, proposed_path FROM user_learning_paths WHERE user_id = %s", (user_id,))
+        row = c.fetchone()
+        if not row or not row[1]:
+            return jsonify({"success": False, "message": "No proposed path found"}), 400
+            
+        current_path = row[0]
+        proposed_path = row[1]
+        
+        # Backup to history_path (if exists) or just overwrite current_path
+        # We can store the old current_path in proposed_path as a backup for rollback
+        c.execute("""
+            UPDATE user_learning_paths 
+            SET current_path = %s, proposed_path = %s, is_pending_decision = FALSE, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s
+        """, (json.dumps(proposed_path) if isinstance(proposed_path, list) else proposed_path, 
+              json.dumps(current_path) if isinstance(current_path, list) else current_path, 
+              user_id))
+        conn.commit()
+        
+        return jsonify({"success": True, "message": "Routing accepted"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if 'c' in locals(): c.close()
+        if 'conn' in locals(): conn.close()
+
+@user_bp.route("/api/user/<int:user_id>/routing/rollback", methods=["POST"])
+def rollback_routing(user_id):
+    try:
+        conn = psycopg2.connect(DB_URL)
+        c = conn.cursor()
+        
+        # We stored the old path in proposed_path during accept
+        c.execute("SELECT current_path, proposed_path FROM user_learning_paths WHERE user_id = %s", (user_id,))
+        row = c.fetchone()
+        if not row or not row[1]:
+            return jsonify({"success": False, "message": "No rollback path found"}), 400
+            
+        current_path = row[0]
+        backup_path = row[1]
+        
+        c.execute("""
+            UPDATE user_learning_paths 
+            SET current_path = %s, proposed_path = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s
+        """, (json.dumps(backup_path) if isinstance(backup_path, list) else backup_path, 
+              json.dumps(current_path) if isinstance(current_path, list) else current_path, 
+              user_id))
+        conn.commit()
+        
+        return jsonify({"success": True, "message": "Routing rolled back"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if 'c' in locals(): c.close()
+        if 'conn' in locals(): conn.close()
+
+from vectoria_api.core.cloudinary_service import upload_avatar_to_cloudinary
+
+@user_bp.route("/api/user/avatar", methods=["POST"])
+def upload_avatar():
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"success": False, "message": "Missing or invalid token"}), 401
+    
+    token = auth_header.split(" ")[1]
+    try:
+        import os
+        SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload.get("user_id")
+    except Exception as e:
+        return jsonify({"success": False, "message": "Invalid token"}), 401
+
+    if "file" not in request.files:
+        return jsonify({"success": False, "message": "No file uploaded"}), 400
+        
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"success": False, "message": "Empty file name"}), 400
+        
+    secure_url = upload_avatar_to_cloudinary(file, user_id)
+    if not secure_url:
+        return jsonify({"success": False, "message": "Failed to upload to Cloudinary"}), 500
+        
+    # Update DB
+    try:
+        from psycopg2 import connect
+        from vectoria_api.config import DB_URL
+        conn = connect(DB_URL)
+        c = conn.cursor()
+        c.execute("UPDATE users SET avatar_url = %s WHERE id = %s", (secure_url, user_id))
+        conn.commit()
+    except Exception as e:
+        print(f"Error updating avatar in DB: {e}")
+        return jsonify({"success": False, "message": "Failed to save avatar URL to database"}), 500
+    finally:
+        if 'c' in locals(): c.close()
+        if 'conn' in locals(): conn.close()
+        
+    return jsonify({"success": True, "avatar_url": secure_url})

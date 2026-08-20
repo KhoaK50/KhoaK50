@@ -25,8 +25,8 @@ export default function Login({ onLogin }) {
       setSuccessMsg('');
       
       const endpoint = isRegistering 
-        ? 'http://localhost:5000/api/admin/register'
-        : 'http://localhost:5000/api/admin/login';
+        ? 'http://127.0.0.1:5000/api/admin/register'
+        : 'http://127.0.0.1:5000/api/admin/login';
 
       const res = await fetch(endpoint, {
         method: 'POST',

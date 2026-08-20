@@ -1503,7 +1503,7 @@
       );
     } else {
       // Fallback if toast system isn't ready
-      alert("Danh sách trống! Hãy tạo vector trước.");
+      (window.App && window.App.showToast ? window.App.showToast("Danh sách trống! Hãy tạo vector trước.", 'warning') : alert("Danh sách trống! Hãy tạo vector trước."));
     }
 
     // 2. Switch to "Create" Tab

@@ -1,4 +1,4 @@
-window.TopbarAvatar = {
+﻿window.TopbarAvatar = {
     init: function() {
         const topAvatarBtn = document.getElementById("btnTopAvatar");
         const menuAva = document.getElementById("menuTopAvatar");
@@ -25,7 +25,7 @@ window.TopbarAvatar = {
         // Sync icon on load
         const syncIcon = () => {
             const isDark = typeof ThemeManager !== "undefined" ? ThemeManager.isDarkMode() : document.body.classList.contains("dark-theme");
-            themeBtn.innerHTML = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+            
         };
         syncIcon();
         
@@ -67,21 +67,20 @@ window.TopbarAvatar = {
 
         if (isLoggedIn) {
             const userName = localStorage.getItem("user_name") || "Người dùng";
-            const initial = userName.charAt(0).toUpperCase();
-
+            
             if (savedAvatar) {
                 topAvatarBtn.innerHTML = "";
                 topAvatarBtn.style.backgroundImage = `url(${savedAvatar})`;
                 topAvatarBtn.style.backgroundSize = "cover";
                 topAvatarBtn.style.backgroundPosition = "center";
             } else {
-                topAvatarBtn.innerHTML = initial;
+                topAvatarBtn.innerHTML = '<i class="fa-solid fa-user"></i>';
                 topAvatarBtn.style.backgroundImage = "none";
             }
 
             menuAva.innerHTML = `
               <div class="avatar-edit-wrapper" style="text-align: center; margin-bottom: 10px; position: relative; width: 64px; height: 64px; margin: 0 auto 10px;">
-                  <div class="user-avatar-lg" style="width: 64px; height: 64px; border-radius: 50%; background: var(--primary-base); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; ${savedAvatar ? `background-image: url(${savedAvatar}); background-size: cover; background-position: center; font-size:0;` : ''}">${savedAvatar ? '' : initial}</div>
+                  <div id="dropdownUserAvatar" class="user-avatar-lg" style="width: 64px; height: 64px; border-radius: 50%; background: var(--bg-hover, #f1f5f9); color: var(--slate-11, #475569); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; border: 1px solid var(--border-strong, #cbd5e1); ${savedAvatar ? `background-image: url(${savedAvatar}); background-size: cover; background-position: center; border: none; font-size:0;` : ''}">${savedAvatar ? '' : '<i class="fa-solid fa-user"></i>'}</div>
                   <label for="topbarAvatarUpload" style="position: absolute; bottom: 0; right: -5px; background: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); color: var(--slate-11);">
                       <i class="fa-solid fa-camera" style="font-size: 10px;"></i>
                   </label>
@@ -103,7 +102,7 @@ window.TopbarAvatar = {
               </div>
             `;
         } else {
-            topAvatarBtn.innerHTML = '<i class="fa-solid fa-user-secret"></i>';
+            topAvatarBtn.innerHTML = '<i class="fa-solid fa-user"></i>';
             topAvatarBtn.style.background = "var(--bg-card, #ffffff)";
             topAvatarBtn.style.color = "var(--slate-11, #475569)";
             topAvatarBtn.style.border = "1px solid var(--border-strong, #cbd5e1)";
@@ -112,7 +111,7 @@ window.TopbarAvatar = {
             menuAva.innerHTML = `
               <div style="padding: 20px; text-align: center;">
                   <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--bg-hover, #f1f5f9); border: 1px solid var(--border-strong, #cbd5e1); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--slate-11, #475569); margin: 0 auto 10px;">
-                      <i class="fa-solid fa-user-secret"></i>
+                      <i class="fa-solid fa-user"></i>
                   </div>
                   <h3 style="margin: 0 0 5px; font-size: 16px; color: var(--text-main);" data-i18n="avatar.guest">Khách truy cập</h3>
                   <p style="margin: 0 0 15px; font-size: 13px; color: var(--slate-11);" data-i18n="avatar.guest_desc">Đăng nhập để lưu trữ kết quả và đồng bộ đám mây.</p>
@@ -127,22 +126,59 @@ window.TopbarAvatar = {
         }
     },
 
-    handleUpload: function(event) {
+    handleUpload: async function(event) {
         const file = event.target.files[0];
         if (!file) return;
         if (file.size > 2 * 1024 * 1024) {
             if (window.Modal) window.Modal.show({ title: 'Lỗi tải ảnh', message: 'Vui lòng chọn ảnh < 2MB.', hideCancel: true });
-            else alert('Vui lòng chọn ảnh < 2MB.');
+            else (window.App && window.App.showToast ? window.App.showToast('Vui lòng chọn ảnh < 2MB.', 'warning') : alert('Vui lòng chọn ảnh < 2MB.'));
             return;
         }
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            localStorage.setItem("user_avatar", e.target.result);
-            this.updateUI();
-            // Try to sync with Dashboard's updateAuthUI if it exists
-            if (typeof updateAuthUI === 'function') updateAuthUI();
-        };
-        reader.readAsDataURL(file);
+
+        const token = localStorage.getItem("user_token");
+        if (!token) return;
+
+        const avatarEl = document.getElementById("dropdownUserAvatar");
+        if (avatarEl) {
+            avatarEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size: 24px;"></i>';
+            avatarEl.style.backgroundImage = 'none';
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const _l = atob("aHR0cDovLzEyNy4wLjAuMTo1MDAw");
+        const _p = atob("aHR0cHM6Ly92aXN1YWxpemF0aW9uLXJyNXYub25yZW5kZXIuY29t");
+        const API_BASE = (location.hostname === "127.0.0.1" || location.hostname === "localhost") ? _l : _p;
+
+        try {
+            const res = await fetch(`${API_BASE}/api/user/avatar`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                },
+                body: formData
+            });
+            const data = await res.json();
+            
+            if (data.success && data.avatar_url) {
+                // Thêm timestamp để bypass cache
+                const newAvatar = data.avatar_url + "?v=" + Date.now();
+                localStorage.setItem("user_avatar", newAvatar);
+                this.updateUI();
+                if (typeof updateAuthUI === 'function') updateAuthUI();
+                if (typeof App !== 'undefined' && App.showToast) {
+                    App.showToast("Cập nhật ảnh đại diện thành công!", "success");
+                }
+            } else {
+                throw new Error(data.message || "Lỗi tải ảnh lên");
+            }
+        } catch (err) {
+            console.error(err);
+            if (window.Modal) window.Modal.show({ title: 'Lỗi tải ảnh', message: err.message, hideCancel: true });
+            else (window.App && window.App.showToast ? window.App.showToast(err.message, 'warning') : alert(err.message));
+            this.updateUI(); // Khôi phục UI cũ
+        }
     },
 
     changeName: function() {
@@ -181,7 +217,7 @@ window.TopbarAvatar = {
         if (window.Modal) {
             window.Modal.show({title: 'Chuyển tài khoản', message: 'Tính năng chuyển đổi nhanh nhiều tài khoản sắp ra mắt!', hideCancel: true});
         } else {
-            alert('Tính năng chuyển đổi nhanh nhiều tài khoản sắp ra mắt!');
+            (window.App && window.App.showToast ? window.App.showToast('Tính năng chuyển đổi nhanh nhiều tài khoản sắp ra mắt!', 'warning') : alert('Tính năng chuyển đổi nhanh nhiều tài khoản sắp ra mắt!'));
         }
     },
 
@@ -212,3 +248,4 @@ window.TopbarAvatar = {
 document.addEventListener("DOMContentLoaded", () => {
     window.TopbarAvatar.init();
 });
+

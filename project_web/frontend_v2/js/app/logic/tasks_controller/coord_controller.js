@@ -42,11 +42,11 @@
 
         // B. KIỂM TRA LỖI (VALIDATION)
         if (!targetObj) {
-          alert("Vui lòng chọn vector đích (x)!");
+          (window.App && window.App.showToast ? window.App.showToast("Vui lòng chọn vector đích (x)!", 'warning') : alert("Vui lòng chọn vector đích (x)!"));
           return;
         }
         if (basisObjs.length === 0) {
-          alert("Vui lòng chọn các vector cho hệ cơ sở (B)!");
+          (window.App && window.App.showToast ? window.App.showToast("Vui lòng chọn các vector cho hệ cơ sở (B)!", 'warning') : alert("Vui lòng chọn các vector cho hệ cơ sở (B)!"));
           return;
         }
 
@@ -54,14 +54,15 @@
 
         // Kiểm tra số chiều có khớp nhau không
         if (basisObjs.some((b) => b.vec.length !== n)) {
-          alert(`Lỗi: Tất cả vector phải cùng số chiều ${n}!`);
+          (window.App && window.App.showToast ? window.App.showToast(`Lỗi: Tất cả vector phải cùng số chiều ${n}!`, 'warning') : alert(`Lỗi: Tất cả vector phải cùng số chiều ${n}!`));
           return;
         }
 
         // Kiểm tra số lượng vector cơ sở (Cơ sở của R^n phải có n vector)
         if (basisObjs.length !== n) {
-          alert(
-            `Lưu ý: Để tìm tọa độ trong R^${n}, hệ cơ sở cần có đúng ${n} vector.\n(Bạn đang chọn ${basisObjs.length} vector)`,
+          (window.App && window.App.showToast ? window.App.showToast(
+            `Lưu ý: Để tìm tọa độ trong R^${n}, hệ cơ sở cần có đúng ${n} vector.\n(Bạn đang chọn ${basisObjs.length} vector, 'warning') : alert(
+            `Lưu ý: Để tìm tọa độ trong R^${n}, hệ cơ sở cần có đúng ${n} vector.\n(Bạn đang chọn ${basisObjs.length} vector))`,
           );
           // Không return, vẫn cho tính tiếp để người dùng thấy kết quả (vô nghiệm/vô số nghiệm) nếu muốn
         }
@@ -83,7 +84,7 @@
         // Kiểm tra xem Generator đã nạp chưa
         if (!App.TasksGen || !App.TasksGen.Coord) {
           console.error("Thiếu module App.TasksGen.Coord (coord_generator.js)");
-          alert("Lỗi hệ thống: Chưa nạp module sinh lời giải.");
+          (window.App && window.App.showToast ? window.App.showToast("Lỗi hệ thống: Chưa nạp module sinh lời giải.", 'warning') : alert("Lỗi hệ thống: Chưa nạp module sinh lời giải."));
           return;
         }
 

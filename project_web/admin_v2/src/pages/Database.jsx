@@ -28,7 +28,7 @@ export default function Database() {
 
   const fetchTables = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/admin/db/tables', {
+      const res = await fetch('http://127.0.0.1:5000/api/admin/db/tables', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminAuth')}`
         }
@@ -48,7 +48,7 @@ export default function Database() {
   const fetchTableData = async (tableName) => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/db/table/${tableName}`, {
+      const res = await fetch(`http://127.0.0.1:5000/api/admin/db/table/${tableName}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminAuth')}`
         }
@@ -67,7 +67,7 @@ export default function Database() {
   const handleRunQuery = async () => {
     setQueryLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/admin/db/query', {
+      const res = await fetch('http://127.0.0.1:5000/api/admin/db/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ export default function Database() {
         
       const updateQuery = `UPDATE ${selectedTable} SET "${col}" = '${String(newValue).replace(/'/g, "''")}' WHERE ${whereClauses}`;
       
-      const res = await fetch('http://localhost:5000/api/admin/db/query', {
+      const res = await fetch('http://127.0.0.1:5000/api/admin/db/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -232,7 +232,7 @@
     if (!selectedItems.length) {
       if (typeof App.showToast === "function")
         App.showToast("⚠️ Hãy tick chọn ít nhất 1 vector!");
-      else alert("Tick ít nhất 1 vector.");
+      else (window.App && window.App.showToast ? window.App.showToast("Tick ít nhất 1 vector.", 'warning') : alert("Tick ít nhất 1 vector."));
       return;
     }
 

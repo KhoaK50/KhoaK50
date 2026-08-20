@@ -52,6 +52,10 @@ def create_app():
     from vectoria_api.routes.admin import admin_bp
     app.register_blueprint(admin_bp)
 
+    # Register Comment Blueprint
+    from vectoria_api.routes.comment import comment_bp
+    app.register_blueprint(comment_bp)
+
     socketio.init_app(app, cors_allowed_origins="*")
     return app
 

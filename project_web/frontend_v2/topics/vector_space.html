@@ -2149,7 +2149,47 @@
             </a>
           </div>
         </div>
-      </main>
+      
+            <div class="chapter-card" id="thao-luan">
+                <h2 class="section-title"><i class="fa-solid fa-comments"></i> Thảo luận & Hỏi đáp</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg-card);">
+                        <div style="background: rgba(0,0,0,0.03); border-bottom: 1px solid var(--border); padding: 8px 12px; display: flex; gap: 10px; align-items: center;">
+                            <button type="button" title="In đậm" onclick="insertMarkdown('**', '**')" style="border:none; background:transparent; cursor:pointer; color:var(--text-sub); font-size: 14px;"><i class="fa-solid fa-bold"></i></button>
+                            <button type="button" title="In nghiêng" onclick="insertMarkdown('*', '*')" style="border:none; background:transparent; cursor:pointer; color:var(--text-sub); font-size: 14px;"><i class="fa-solid fa-italic"></i></button>
+                            <button type="button" title="Code" onclick="insertMarkdown('`', '`')" style="border:none; background:transparent; cursor:pointer; color:var(--text-sub); font-size: 14px;"><i class="fa-solid fa-code"></i></button>
+                            <div style="width: 1px; height: 16px; background: var(--border); margin: 0 4px;"></div>
+                            <button type="button" title="Công thức Toán" onclick="insertMarkdown('\\(', '\\)')" style="border:none; background:transparent; cursor:pointer; color:var(--text-sub); font-size: 14px;"><i class="fa-solid fa-square-root-variable"></i></button>
+                        </div>
+                        <textarea id="commentInput" rows="4" style="width: 100%; padding: 12px; border: none; background: transparent; color: var(--text-main); font-family: inherit; resize: vertical; outline: none; box-sizing: border-box;" placeholder="Nhập câu hỏi hoặc bình luận của bạn..."></textarea>
+                    </div>
+                    <div style="text-align: right; margin-top: 10px;">
+                        <button class="btn btn-primary" onclick="postComment()" style="padding: 8px 20px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Gửi bình luận</button>
+                    </div>
+                </div>
+                <script>
+                    function insertMarkdown(prefix, suffix) {
+                        const textarea = document.getElementById('commentInput');
+                        const start = textarea.selectionStart;
+                        const end = textarea.selectionEnd;
+                        const text = textarea.value;
+                        const before = text.substring(0, start);
+                        const selection = text.substring(start, end);
+                        const after = text.substring(end, text.length);
+                        textarea.value = before + prefix + selection + suffix + after;
+                        textarea.focus();
+                        textarea.selectionStart = start + prefix.length;
+                        textarea.selectionEnd = start + prefix.length + selection.length;
+                    }
+                </script>
+
+                <div id="commentsContainer" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="text-align: center; color: var(--text-muted); padding: 20px;">Đang tải bình luận...</div>
+                </div>
+            </div>
+
+        </main>
     </div>
     <footer class="vectoria-footer distraction-element">
       <div class="footer-container">
@@ -2478,5 +2518,68 @@
     </script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="../js/utils/live-collab.js"></script>
-  </body>
+  <script>
+        // COMMENTS LOGIC
+        const lessonId = window.location.pathname.split('/').pop().replace('.html', '');
+        
+        async function loadComments() {
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/comment/lesson/${lessonId}`);
+                const data = await res.json();
+                const container = document.getElementById('commentsContainer');
+                
+                if (data.success) {
+                    if (data.comments.length === 0) {
+                        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">Chưa có bình luận nào. Hãy là người đầu tiên thảo luận!</div>';
+                        return;
+                    }
+                    
+                    let html = '';
+                    data.comments.forEach(c => {
+                        html += `
+                        <div style="display: flex; gap: 15px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">${c.avatar_letter}</div>
+                            <div style="flex-grow: 1;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span style="font-weight: 600;">${c.author_name}</span>
+                                    <span style="font-size: 12px; color: var(--text-muted);">${new Date(c.created_at).toLocaleString()}</span>
+                                </div>
+                                <div style="line-height: 1.5;">${c.content}</div>
+                            </div>
+                        </div>`;
+                    });
+                    container.innerHTML = html;
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        async function postComment() {
+            const userStr = localStorage.getItem("user_info");
+            if (!userStr) {
+                (window.App && window.App.showToast ? window.App.showToast("Vui lòng đăng nhập để bình luận", 'warning') : alert("Vui lòng đăng nhập để bình luận"));
+                return;
+            }
+            const user = JSON.parse(userStr);
+            const content = document.getElementById("commentInput").value.trim();
+            if (!content) return;
+
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/comment`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: user.id, lesson_id: lessonId, content: content })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById("commentInput").value = '';
+                    loadComments();
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadComments();
+        });
+</script>
+</body>
 </html>

@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
@@ -721,6 +721,12 @@
 
 </head>
   <body>
+    <script>
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.remove('light-theme');
+        document.body.classList.add('dark-theme', 'dark');
+      }
+    </script>
     <button class="back-arrow" onclick="history.back()" title="Quay lại">
       <i class="fa-solid fa-arrow-left"></i>
     </button>
@@ -1065,7 +1071,7 @@
             const email = document.getElementById("regEmail").value;
             const password = document.getElementById("regPass").value;
 
-            const lang = localStorage.getItem("vectoria_lang") || "vi";
+            const lang = localStorage.getItem('locale') || "vi";
 
             const res = await fetch(`${API_BASE}/api/register`, {
               method: "POST",
@@ -1093,7 +1099,7 @@
             }
           } else if (type === "forgot") {
             const email = document.getElementById("forgotEmail").value;
-            const lang = localStorage.getItem("vectoria_lang") || "vi";
+            const lang = localStorage.getItem('locale') || "vi";
             const res = await fetch(`${API_BASE}/api/forgot-password`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1147,7 +1153,7 @@
             const email = document.getElementById("loginEmail").value;
             const password = document.getElementById("loginPass").value;
 
-            const lang = localStorage.getItem("vectoria_lang") || "vi";
+            const lang = localStorage.getItem('locale') || "vi";
 
             const res = await fetch(`${API_BASE}/api/login`, {
               method: "POST",
@@ -1160,6 +1166,11 @@
               localStorage.setItem("user_token", data.token);
               localStorage.setItem("user_name", data.display_name);
               localStorage.setItem("user_email", data.email);
+              if (data.avatar_url) {
+                localStorage.setItem("user_avatar", data.avatar_url);
+              } else {
+                localStorage.removeItem("user_avatar");
+              }
               const isRemember = document.getElementById("rememberMe").checked;
               if (isRemember) {
                 localStorage.setItem("remembered_email", email);
@@ -1545,5 +1556,14 @@
     </script>
   <script src="js/app/auth.js"></script>
   <script src="js/app/ui/topbar_avatar.js"></script>
+
+
+
 </body>
+
+
+
 </html>
+
+
+

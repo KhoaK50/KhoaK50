@@ -23,3 +23,4 @@ else:
 
 DB_URL = "postgresql://postgres.hebswwabrjbmbwqvymal:NtDk2108$$$@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5501/frontend_v2")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")

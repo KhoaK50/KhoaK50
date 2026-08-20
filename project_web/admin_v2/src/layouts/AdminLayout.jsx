@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Database, BookOpen, FileQuestion, Users, Settings, LogOut, MessageSquare, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Database, BookOpen, FileQuestion, Users, Settings, LogOut, MessageSquare, ShieldAlert, Zap } from 'lucide-react';
 import logo from '../assets/logo.png';
 
 export default function AdminLayout({ onLogout }) {
@@ -15,6 +15,7 @@ export default function AdminLayout({ onLogout }) {
     { name: 'Người dùng', path: '/users', icon: <Users size={18} /> },
     { name: 'Hỗ trợ', path: '/feedbacks', icon: <MessageSquare size={18} /> },
     { name: 'Nhật ký (Logs)', path: '/logs', icon: <ShieldAlert size={18} /> },
+    { name: 'Stress Test', path: '/stress-test', icon: <Zap size={18} /> },
     { name: 'Cài đặt', path: '/settings', icon: <Settings size={18} /> },
   ];
 

@@ -1,11 +1,18 @@
 import os
+import threading
+import time
 import requests
 import psycopg2
 import jwt
+import zipfile
+import re
+import uuid
+import shutil
+import tempfile
 from datetime import datetime, timedelta, timezone
-from flask import Blueprint, request, jsonify
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 from vectoria_api.config import DB_URL
+from flask import Blueprint, request, jsonify
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -14,6 +21,52 @@ def get_admin_secret():
 
 def get_db_connection():
     return psycopg2.connect(DB_URL)
+
+def parse_latex_to_html(text):
+    if not text: return text
+    import re
+    # 1. Collapsible Proofs (Hỗ trợ proof, chungminh, giai, huongdan)
+    text = re.sub(
+        r'\\begin\{(proof|chungminh|solution|giai|huongdan|explain)\}\s*(.*?)\s*\\end\{\1\}', 
+        r'<details><summary>Chi tiết (Xem/Ẩn)</summary><div class="proof-content">\2</div></details>', 
+        text, 
+        flags=re.DOTALL | re.IGNORECASE
+    )
+    
+    # 2. Anchors and Cross-referencing
+    text = re.sub(r'\\label\{([^}]+)\}', r'<a id="\1"></a>', text)
+    text = re.sub(r'\\ref\{([^}]+)\}', r'<a href="#\1">[Xem mục \1]</a>', text)
+    text = re.sub(r'\\hyperref\[([^\]]+)\]\{([^}]+)\}', r'<a href="#\1">\2</a>', text)
+    
+    # 3. URLs
+    text = re.sub(r'\\url\{([^}]+)\}', r'<a href="\1" target="_blank">\1</a>', text)
+    text = re.sub(r'\\href\{([^}]+)\}\{([^}]+)\}', r'<a href="\1" target="_blank">\2</a>', text)
+    
+    return text
+
+# --- STRESS TEST ENGINE (In-memory state) ---
+stress_state = {
+    'is_running': False,
+    'started_by': None,
+    'started_at': None,
+    'config': {},
+    'results': [],
+    'summary': {
+        'total_requests': 0,
+        'success_count': 0,
+        'error_count': 0,
+        'avg_latency_ms': 0,
+        'min_latency_ms': 0,
+        'max_latency_ms': 0,
+        'requests_per_second': 0,
+        'p95_latency_ms': 0,
+        'p99_latency_ms': 0,
+    },
+    'per_target': {},
+    'timeline': [],
+    'stop_flag': False
+}
+stress_lock = threading.Lock()
 
 # --- 1. INITIALIZE DB ---
 def init_admin_db():
@@ -484,3 +537,722 @@ def execute_db_query():
             
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# ========================================================
+# ADMIN QUIZ MANAGEMENT
+# ========================================================
+
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '..', 'static', 'uploads', 'questions')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@admin_bp.route('/api/admin/questions', methods=['GET'])
+def admin_get_questions():
+    is_valid, username = check_auth()
+    if not is_valid: return jsonify({'error': 'Unauthorized'}), 401
+    
+    topic_id = request.args.get('topic_id')
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        query = 'SELECT * FROM questions'
+        params = []
+        if topic_id:
+            query += ' WHERE topic_id = %s'
+            params.append(topic_id)
+            
+        query += ' ORDER BY id DESC LIMIT 500'
+        
+        c.execute(query, tuple(params))
+        cols = [desc[0] for desc in c.description]
+        rows = c.fetchall()
+        
+        questions = []
+        for row in rows:
+            q_dict = dict(zip(cols, row))
+            for k, v in q_dict.items():
+                if isinstance(v, datetime):
+                    q_dict[k] = v.isoformat()
+                elif hasattr(v, 'quantize'):
+                    q_dict[k] = float(v)
+            questions.append(q_dict)
+            
+        conn.close()
+        return jsonify({'success': True, 'questions': questions}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/admin/questions', methods=['POST'])
+def admin_create_question():
+    is_valid, username = check_auth()
+    if not is_valid: return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.json
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        tags_raw = data.get('tags', [])
+        if isinstance(tags_raw, str):
+            tags_list = [t.strip() for t in tags_raw.split(',') if t.strip()]
+        else:
+            tags_list = tags_raw if isinstance(tags_raw, list) else []
+
+        c.execute('''
+            INSERT INTO questions 
+            (lesson_id, topic_id, tags, difficulty_level, difficulty_index, discrimination_index,
+             content_html, image_url, source_reference, option_a, option_b, option_c, option_d,
+             correct_answer, explanation_html, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        ''', (
+            data.get('lesson_id', 'l1'),
+            data.get('topic_id', 't1'),
+            tags_list,
+            data.get('difficulty_level', 'MEDIUM'),
+            data.get('difficulty_index'),
+            data.get('discrimination_index'),
+            data.get('content_html', ''),
+            data.get('image_url'),
+            data.get('source_reference'),
+            data.get('option_a', ''),
+            data.get('option_b', ''),
+            data.get('option_c', ''),
+            data.get('option_d', ''),
+            data.get('correct_answer', 'A'),
+            data.get('explanation_html', ''),
+            False
+        ))
+        
+        new_id = c.fetchone()[0]
+        conn.commit()
+        conn.close()
+        
+        log_admin_action(username, 'CREATE_QUESTION', f'Created question #{new_id}')
+        return jsonify({'success': True, 'question': {'id': new_id}}), 201
+    except Exception as e:
+        if 'conn' in locals(): conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/admin/questions/<int:question_id>', methods=['PUT'])
+def admin_update_question(question_id):
+    is_valid, username = check_auth()
+    if not is_valid: return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.json
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        c.execute('''
+            UPDATE questions SET
+                lesson_id = %s, topic_id = %s, tags = %s, difficulty_level = %s,
+                difficulty_index = %s, discrimination_index = %s, content_html = %s,
+                image_url = %s, source_reference = %s, option_a = %s, option_b = %s,
+                option_c = %s, option_d = %s, correct_answer = %s, explanation_html = %s,
+                is_active = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        ''', (
+            data.get('lesson_id', 'l1'),
+            data.get('topic_id', 't1'),
+            data.get('tags', []),
+            data.get('difficulty_level', 'MEDIUM'),
+            data.get('difficulty_index'),
+            data.get('discrimination_index'),
+            data.get('content_html', ''),
+            data.get('image_url'),
+            data.get('source_reference'),
+            data.get('option_a', ''),
+            data.get('option_b', ''),
+            data.get('option_c', ''),
+            data.get('option_d', ''),
+            data.get('correct_answer', 'A'),
+            data.get('explanation_html', ''),
+            data.get('is_active', True),
+            question_id
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        log_admin_action(username, 'UPDATE_QUESTION', f'Updated question #{question_id}')
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        if 'conn' in locals(): conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/admin/questions/<int:question_id>/toggle', methods=['PATCH'])
+def admin_toggle_question(question_id):
+    is_valid, username = check_auth()
+    if not is_valid: return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        c.execute('UPDATE questions SET is_active = NOT is_active, updated_at = CURRENT_TIMESTAMP WHERE id = %s RETURNING is_active', (question_id,))
+        row = c.fetchone()
+        if not row:
+            conn.close()
+            return jsonify({'success': False, 'error': 'Not found'}), 404
+        
+        conn.commit()
+        conn.close()
+        
+        new_status = row[0]
+        log_admin_action(username, 'TOGGLE_QUESTION', f'Question #{question_id} is_active={new_status}')
+        return jsonify({'success': True, 'is_active': new_status}), 200
+    except Exception as e:
+        if 'conn' in locals(): conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/admin/questions/<int:question_id>/upload-image', methods=['POST'])
+def admin_upload_question_image(question_id):
+    is_valid, username = check_auth()
+    if not is_valid: return jsonify({'error': 'Unauthorized'}), 401
+    
+    if 'image' not in request.files:
+        return jsonify({'success': False, 'error': 'No image file provided'}), 400
+    
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'Empty filename'}), 400
+    
+    if not allowed_file(file.filename):
+        return jsonify({'success': False, 'error': 'File type not allowed'}), 400
+    
+    try:
+        import uuid
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"q{question_id}_{uuid.uuid4().hex[:8]}.{ext}"
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(filepath)
+        
+        image_url = f"/static/uploads/questions/{filename}"
+        
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute('UPDATE questions SET image_url = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s', (image_url, question_id))
+        conn.commit()
+        conn.close()
+        
+        log_admin_action(username, 'UPLOAD_IMAGE', f'Question #{question_id}: {filename}')
+        return jsonify({'success': True, 'image_url': image_url}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/admin/questions/import', methods=['POST'])
+def admin_import_questions():
+    is_valid, username = check_auth()
+    if not is_valid: return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.json
+        questions = data.get('questions', [])
+        if not questions or not isinstance(questions, list):
+            return jsonify({'success': False, 'error': 'Invalid data format.'}), 400
+            
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        inserted = 0
+        for q in questions:
+            tags_raw = q.get('tags', [])
+            if isinstance(tags_raw, str):
+                tags_list = [t.strip() for t in tags_raw.split(',') if t.strip()]
+            else:
+                tags_list = tags_raw if isinstance(tags_raw, list) else []
+
+            c.execute('''
+                INSERT INTO questions 
+                (lesson_id, topic_id, tags, difficulty_level, difficulty_index, discrimination_index,
+                 content_html, image_url, source_reference, option_a, option_b, option_c, option_d,
+                 correct_answer, explanation_html, is_active)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ''', (
+                q.get('lesson_id', 'l1'),
+                q.get('topic_id', 't1'),
+                tags_list,
+                q.get('difficulty_level', 'MEDIUM'),
+                q.get('difficulty_index', None),
+                q.get('discrimination_index', None),
+                q.get('content_html', ''),
+                q.get('image_url', None),
+                'AI_GENERATED',
+                q.get('option_a', ''),
+                q.get('option_b', ''),
+                q.get('option_c', ''),
+                q.get('option_d', ''),
+                q.get('correct_answer', 'A'),
+                q.get('explanation_html', ''),
+                False
+            ))
+            inserted += 1
+            
+        conn.commit()
+        conn.close()
+        log_admin_action(username, 'IMPORT_QUESTIONS', f'Imported {inserted} questions.')
+        return jsonify({'success': True, 'message': f'Imported {inserted} questions.', 'count': inserted}), 200
+    except Exception as e:
+        if 'conn' in locals(): conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/admin/questions/import-zip', methods=['POST'])
+def admin_import_questions_zip():
+    is_valid, username = check_auth()
+    if not is_valid: return jsonify({'error': 'Unauthorized'}), 401
+    
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file provided'}), 400
+        
+    file = request.files['file']
+    if not file.filename.endswith('.zip'):
+        return jsonify({'success': False, 'error': 'Must be a ZIP file'}), 400
+
+    try:
+        temp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(temp_dir, file.filename)
+        file.save(zip_path)
+        
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(temp_dir)
+            
+        inserted = 0
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        # Traverse and find all .tex files
+        for root, dirs, files in os.walk(temp_dir):
+            for f in files:
+                if f.endswith('.tex'):
+                    tex_path = os.path.join(root, f)
+                    with open(tex_path, 'r', encoding='utf-8') as tf:
+                        content = tf.read()
+                        
+                    # Extract \begin{question}...\end{question}
+                    questions_raw = re.findall(r'\\begin\{question\}(.*?)\\end\{question\}', content, re.DOTALL)
+                    
+                    for raw in questions_raw:
+                        # Extract fields
+                        lesson_match = re.search(r'\\lesson\{(.*?)\}', raw)
+                        topic_match = re.search(r'\\topic\{(.*?)\}', raw)
+                        diff_match = re.search(r'\\difficulty\{(.*?)\}', raw)
+                        content_match = re.search(r'\\content\{(.*?)\}', raw, re.DOTALL)
+                        a_match = re.search(r'\\choiceA\{(.*?)\}', raw, re.DOTALL)
+                        b_match = re.search(r'\\choiceB\{(.*?)\}', raw, re.DOTALL)
+                        c_match = re.search(r'\\choiceC\{(.*?)\}', raw, re.DOTALL)
+                        d_match = re.search(r'\\choiceD\{(.*?)\}', raw, re.DOTALL)
+                        correct_match = re.search(r'\\correct\{(.*?)\}', raw)
+                        exp_match = re.search(r'\\explanation\{(.*?)\}', raw, re.DOTALL)
+                        
+                        lesson_id = lesson_match.group(1).strip() if lesson_match else 'l1'
+                        topic_id = topic_match.group(1).strip() if topic_match else 't1'
+                        diff = diff_match.group(1).strip().upper() if diff_match else 'MEDIUM'
+                        q_content = parse_latex_to_html(content_match.group(1).strip() if content_match else '')
+                        opt_a = parse_latex_to_html(a_match.group(1).strip() if a_match else '')
+                        opt_b = parse_latex_to_html(b_match.group(1).strip() if b_match else '')
+                        opt_c = parse_latex_to_html(c_match.group(1).strip() if c_match else '')
+                        opt_d = parse_latex_to_html(d_match.group(1).strip() if d_match else '')
+                        correct = correct_match.group(1).strip().upper() if correct_match else 'A'
+                        expl = parse_latex_to_html(exp_match.group(1).strip() if exp_match else '')
+                        
+                        # Handle images \includegraphics{img.png}
+                        image_url = None
+                        img_match = re.search(r'\\includegraphics.*?\{(.*?)\}', q_content)
+                        if img_match:
+                            img_filename = img_match.group(1)
+                            # Find image in extracted dir
+                            for r2, d2, f2 in os.walk(temp_dir):
+                                if img_filename in f2:
+                                    src_img = os.path.join(r2, img_filename)
+                                    ext = img_filename.rsplit('.', 1)[-1].lower() if '.' in img_filename else 'png'
+                                    new_name = f"zip_{uuid.uuid4().hex[:8]}.{ext}"
+                                    dst_img = os.path.join(UPLOAD_FOLDER, new_name)
+                                    shutil.copy2(src_img, dst_img)
+                                    image_url = f"/static/uploads/questions/{new_name}"
+                                    # Remove \includegraphics from content
+                                    q_content = re.sub(r'\\includegraphics.*?\{.*?\}', '', q_content).strip()
+                                    break
+                                    
+                        c.execute('''
+                            INSERT INTO questions 
+                            (lesson_id, topic_id, difficulty_level, content_html, image_url, 
+                             source_reference, option_a, option_b, option_c, option_d, correct_answer, explanation_html, is_active)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ''', (lesson_id, topic_id, diff, q_content, image_url, 'OVERLEAF_ZIP', opt_a, opt_b, opt_c, opt_d, correct, expl, False))
+                        inserted += 1
+                        
+        conn.commit()
+        conn.close()
+        shutil.rmtree(temp_dir)
+        log_admin_action(username, 'IMPORT_ZIP', f'Imported {inserted} questions from ZIP.')
+        return jsonify({'success': True, 'message': f'Imported {inserted} questions.', 'count': inserted}), 200
+        
+    except Exception as e:
+        if 'conn' in locals(): conn.rollback()
+        if 'temp_dir' in locals() and os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============================================
+#   CODEBASE METRICS API
+# ============================================
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
+@admin_bp.route('/api/admin/stress/reset', methods=['POST'])
+def admin_stress_reset():
+    global stress_state
+    is_valid, _ = check_auth()
+    if not is_valid: return jsonify({'error': 'Unauthorized'}), 401
+    
+    with stress_lock:
+        if stress_state['is_running']:
+            return jsonify({'error': 'Cannot reset while running'}), 400
+            
+        stress_state = {
+            'is_running': False,
+            'stop_flag': False,
+            'started_by': None,
+            'started_at': None,
+            'config': {},
+            'results': [],
+            'summary': {},
+            'per_target': {},
+            'timeline': []
+        }
+    return jsonify({"success": True, "message": "State reset successfully"})
+
+@admin_bp.route('/api/admin/metrics/codebase', methods=['GET'])
+def admin_codebase_metrics():
+    is_valid, username = check_auth()
+    if not is_valid: return jsonify({'error': 'Unauthorized'}), 401
+    
+    scan_dirs = ['frontend_v2', 'backend_v2', 'admin_v2']
+    extensions = ['.py', '.jsx', '.js', '.css', '.html', '.json', '.sql']
+    skip_dirs = {'node_modules', '__pycache__', 'venv', '.venv', '.git', 'dist', 'build', '.next', '.vite'}
+    skip_files = {'package-lock.json', 'yarn.lock'}
+    
+    stats = {}
+    for ext in extensions:
+        stats[ext] = {'files': 0, 'lines': 0, 'bytes': 0}
+    stats['other'] = {'files': 0, 'lines': 0, 'bytes': 0}
+    
+    total_files = 0
+    total_lines = 0
+    total_bytes = 0
+    largest_files = []
+    
+    for scan_dir in scan_dirs:
+        dir_path = os.path.join(PROJECT_ROOT, scan_dir)
+        if not os.path.exists(dir_path):
+            continue
+        for root, dirs, files in os.walk(dir_path):
+            dirs[:] = [d for d in dirs if d not in skip_dirs]
+            for f in files:
+                if f in skip_files:
+                    continue
+                fpath = os.path.join(root, f)
+                ext = os.path.splitext(f)[1].lower()
+                try:
+                    fsize = os.path.getsize(fpath)
+                    flines = 0
+                    if ext in extensions:
+                        try:
+                            with open(fpath, 'r', encoding='utf-8', errors='ignore') as fp:
+                                flines = sum(1 for _ in fp)
+                        except:
+                            pass
+                        stats[ext]['files'] += 1
+                        stats[ext]['lines'] += flines
+                        stats[ext]['bytes'] += fsize
+                    else:
+                        stats['other']['files'] += 1
+                        stats['other']['bytes'] += fsize
+                    
+                    total_files += 1
+                    total_lines += flines
+                    total_bytes += fsize
+                    
+                    rel_path = os.path.relpath(fpath, PROJECT_ROOT).replace('\\', '/')
+                    largest_files.append({'path': rel_path, 'lines': flines, 'bytes': fsize, 'ext': ext})
+                except:
+                    pass
+    
+    largest_files.sort(key=lambda x: x['lines'], reverse=True)
+    largest_files = largest_files[:15]
+    
+    breakdown = []
+    for ext, data in stats.items():
+        if data['files'] > 0:
+            breakdown.append({
+                'extension': ext,
+                'files': data['files'],
+                'lines': data['lines'],
+                'bytes': data['bytes']
+            })
+    breakdown.sort(key=lambda x: x['lines'], reverse=True)
+    
+    return jsonify({
+        'success': True,
+        'total_files': total_files,
+        'total_lines': total_lines,
+        'total_bytes': total_bytes,
+        'breakdown': breakdown,
+        'largest_files': largest_files,
+        'scan_dirs': scan_dirs
+    }), 200
+
+# ============================================
+#   STRESS TEST API
+# ============================================
+
+def _run_stress_worker(config):
+    """Background thread that fires HTTP requests or DB queries to simulate load."""
+    global stress_state
+    import urllib.request
+    import urllib.error
+    import statistics
+    import random
+    import concurrent.futures
+    import psycopg2
+    from vectoria_api.config import DB_URL
+    
+    targets = config.get('targets', [])
+    num_users = config.get('num_users', 10)
+    base_url = config.get('base_url', 'http://127.0.0.1:5000')
+    mode = config.get('mode', 'real')
+    
+    all_latencies = []
+    per_target_data = {}
+    for t in targets:
+        per_target_data[t] = {'requests': 0, 'success': 0, 'errors': 0, 'latencies': []}
+    
+    start_time = time.time()
+    timeline_interval = 2  # seconds
+    last_timeline_ts = start_time
+    
+    def fire_one(target_id, mode, current_num_users):
+        t_start = time.time()
+        
+        if mode.startswith('sim_'):
+            # Mô phỏng Render Plans
+            caps = {
+                'sim_free': 15,
+                'sim_starter': 75,
+                'sim_standard': 150,
+                'sim_pro': 300,
+                'sim_pro_plus': 600,
+                'sim_pro_ultra': 1200
+            }
+            capacity = caps.get(mode, 15)
+            queue_size = max(0, current_num_users - capacity)
+            
+            latency_ms = random.uniform(30, 80) + (queue_size * random.uniform(5, 20))
+            if '__db_benchmark__' in target_id:
+                latency_ms *= 1.5
+            
+            # Nếu queue lớn gấp 4 lần sức chứa, bắt đầu văng lỗi 502
+            if queue_size > (capacity * 4) and random.random() < 0.3:
+                status = 502
+            else:
+                status = 200
+                
+            # Sleep 1 chút để vòng lặp không chạy quá nhanh
+            time.sleep(0.05)
+            t_end = time.time()
+            return target_id, status, round(latency_ms, 2)
+            
+        else: # mode == 'real'
+            if target_id == '__db_benchmark__':
+                try:
+                    conn = psycopg2.connect(DB_URL)
+                    cur = conn.cursor()
+                    # Query giả lập tải nặng
+                    cur.execute("SELECT * FROM lessons ORDER BY RANDOM() LIMIT 5;")
+                    cur.fetchall()
+                    cur.close()
+                    conn.close()
+                    status = 200
+                except Exception:
+                    status = 500
+            else:
+                try:
+                    full_url = base_url.rstrip('/') + '/' + target_id.lstrip('/')
+                    req = urllib.request.Request(full_url, method='GET')
+                    with urllib.request.urlopen(req, timeout=10) as resp:
+                        resp.read()
+                        status = resp.status
+                except urllib.error.HTTPError as e:
+                    status = e.code
+                except Exception:
+                    status = 0
+                    
+            t_end = time.time()
+            latency_ms = round((t_end - t_start) * 1000, 2)
+            return target_id, status, latency_ms
+    
+    # Chạy liên tục cho đến khi người dùng bấm Stop
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(num_users, 100)) as executor:
+            while not stress_state['stop_flag']:
+                batch_size = min(num_users, 100)
+                futures = []
+                for _ in range(batch_size):
+                    target_id = random.choice(targets) if config.get('random', False) else targets[0]
+                    futures.append(executor.submit(fire_one, target_id, mode, num_users))
+                
+                for future in concurrent.futures.as_completed(futures):
+                    try:
+                        target_id, status, latency_ms = future.result()
+                        # Cập nhật số liệu
+                        if target_id in per_target_data:
+                            per_target_data[target_id]['requests'] += 1
+                            per_target_data[target_id]['latencies'].append(latency_ms)
+                            if 200 <= status < 400:
+                                per_target_data[target_id]['success'] += 1
+                            else:
+                                per_target_data[target_id]['errors'] += 1
+                        
+                        all_latencies.append(latency_ms)
+                        
+                        with stress_lock:
+                            stress_state['summary']['total_requests'] = len(all_latencies)
+                            stress_state['summary']['success_count'] = sum(d['success'] for d in per_target_data.values())
+                            stress_state['summary']['error_count'] = sum(d['errors'] for d in per_target_data.values())
+                            if all_latencies:
+                                stress_state['summary']['avg_latency_ms'] = round(statistics.mean(all_latencies), 2)
+                                stress_state['summary']['min_latency_ms'] = round(min(all_latencies), 2)
+                                stress_state['summary']['max_latency_ms'] = round(max(all_latencies), 2)
+                                sorted_lat = sorted(all_latencies)
+                                p95_idx = int(len(sorted_lat) * 0.95)
+                                p99_idx = int(len(sorted_lat) * 0.99)
+                                stress_state['summary']['p95_latency_ms'] = round(sorted_lat[min(p95_idx, len(sorted_lat)-1)], 2)
+                                stress_state['summary']['p99_latency_ms'] = round(sorted_lat[min(p99_idx, len(sorted_lat)-1)], 2)
+                            
+                            elapsed = stress_state.get('accumulated_time', 0) + (time.time() - stress_state.get('start_time', time.time()))
+                            if elapsed > 0:
+                                stress_state['summary']['requests_per_second'] = round(len(all_latencies) / elapsed, 2)
+                            
+                            # Update per-target stats
+                            for t, d in per_target_data.items():
+                                stress_state['per_target'][t] = {
+                                    'requests': d['requests'],
+                                    'success': d['success'],
+                                    'errors': d['errors'],
+                                    'avg_latency_ms': round(statistics.mean(d['latencies']), 2) if d['latencies'] else 0,
+                                    'error_rate': round(d['errors'] / max(d['requests'], 1) * 100, 1)
+                                }
+                            
+                            if time.time() - last_log_time >= 2.0:
+                                last_log_time = time.time()
+                                stress_state['timeline'].append({
+                                    'elapsed_s': round(stress_state.get('accumulated_time', 0) + (time.time() - stress_state.get('start_time', time.time())), 1),
+                                    'total_requests': len(all_latencies),
+                                    'rps': stress_state['summary']['requests_per_second'],
+                                    'avg_latency': stress_state['summary']['avg_latency_ms'],
+                                    'error_rate': round(stress_state['summary']['error_count'] / max(len(all_latencies), 1) * 100, 1)
+                                })
+                    except Exception:
+                        pass
+    finally:
+        with stress_lock:
+            stress_state['is_running'] = False
+            stress_state['accumulated_time'] = stress_state.get('accumulated_time', 0) + (time.time() - stress_state.get('start_time', time.time()))
+            stress_state['stop_flag'] = False
+
+
+@admin_bp.route('/api/admin/stress/start', methods=['POST'])
+def admin_stress_start():
+    global stress_state
+    is_valid, username = check_auth()
+    if not is_valid: return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.json or {}
+    mode = data.get('mode', 'real')
+    max_limit = 10000000000 if mode.startswith('sim_') else 5000
+    
+    config = {
+        'targets': data.get('targets', ['index.html', 'knowledge_info.html']),
+        'num_users': min(int(data.get('num_users', 10)), max_limit),
+        'base_url': data.get('base_url', 'http://127.0.0.1:5000'),
+        'random': data.get('random', True),
+        'mode': mode
+    }
+    
+    with stress_lock:
+        if stress_state.get('results') and len(stress_state['results']) > 0:
+            if stress_state.get('is_running'):
+                return jsonify({
+                    'success': False, 
+                    'error': f"Hệ thống đang được Test Stress bởi {stress_state['started_by']}",
+                    'started_by': stress_state['started_by']
+                }), 409
+            stress_state['is_running'] = True
+            stress_state['stop_flag'] = False
+            stress_state['started_by'] = username
+            stress_state['started_at'] = datetime.now(timezone.utc).isoformat()
+            stress_state['config'] = config
+            stress_state['start_time'] = time.time()
+        else:
+            stress_state = {
+                'is_running': True,
+                'stop_flag': False,
+                'started_by': username,
+                'started_at': datetime.now(timezone.utc).isoformat(),
+                'config': config,
+                'results': [],
+                'summary': {
+                    'total_requests': 0, 'success_count': 0, 'error_count': 0,
+                    'avg_latency_ms': 0, 'min_latency_ms': 0, 'max_latency_ms': 0,
+                    'requests_per_second': 0, 'p95_latency_ms': 0, 'p99_latency_ms': 0,
+                },
+                'per_target': {},
+                'timeline': [],
+                'start_time': time.time(),
+                'accumulated_time': 0
+            }
+    
+    thread = threading.Thread(target=_run_stress_worker, args=(config,), daemon=True)
+    thread.start()
+    
+    log_admin_action(username, 'STRESS_TEST_START', f"Started stress test with {config['num_users']} virtual users on targets: {config['targets']}")
+    return jsonify({'success': True, 'message': 'Stress test started.', 'config': config}), 200
+
+
+@admin_bp.route('/api/admin/stress/status', methods=['GET'])
+def admin_stress_status():
+    is_valid, username = check_auth()
+    if not is_valid: return jsonify({'error': 'Unauthorized'}), 401
+    
+    with stress_lock:
+        return jsonify({
+            'success': True,
+            'is_running': stress_state['is_running'],
+            'started_by': stress_state['started_by'],
+            'started_at': stress_state['started_at'],
+            'config': stress_state['config'],
+            'summary': stress_state['summary'],
+            'per_target': stress_state['per_target'],
+            'timeline': stress_state['timeline'][-50:],  # Last 50 data points
+        }), 200
+
+
+@admin_bp.route('/api/admin/stress/stop', methods=['POST'])
+def admin_stress_stop():
+    global stress_state
+    is_valid, username = check_auth()
+    if not is_valid: return jsonify({'error': 'Unauthorized'}), 401
+    
+    with stress_lock:
+        if not stress_state['is_running']:
+            return jsonify({'success': False, 'error': 'Không có phiên test nào đang chạy.'}), 400
+        stress_state['stop_flag'] = True
+    
+    log_admin_action(username, 'STRESS_TEST_STOP', f"Stopped stress test by {username}")
+    return jsonify({'success': True, 'message': 'Đang dừng stress test...'}), 200

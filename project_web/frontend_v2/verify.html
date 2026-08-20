@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -27,8 +27,15 @@
         }
         .btn:hover { background: #2563eb; }
     </style>
+<script src="js/app/api/endpoints.js"></script>
 </head>
 <body>
+    <script>
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.remove('light-theme');
+        document.body.classList.add('dark-theme', 'dark');
+      }
+    </script>
     <div class="container">
         <div id="status-icon" class="icon loading"><i class="fa-solid fa-spinner fa-spin"></i></div>
         <h1 id="status-title">Đang xác thực...</h1>
@@ -49,7 +56,7 @@
             title.textContent = 'Lỗi xác thực'; msg.textContent = 'Mã xác thực không hợp lệ hoặc không tồn tại.';
             btn.style.display = 'inline-block';
         } else {
-            fetch(`https://visualization-rr5v.onrender.com/api/verify?token=${token}`)
+            fetch(`${App.API_BASE}/api/verify?token=${token}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === "success" || data.message) {
@@ -68,5 +75,12 @@
                 });
         }
     </script>
+
+
+
 </body>
+
+
+
 </html>
+

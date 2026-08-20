@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
@@ -47,6 +47,7 @@ body.dark-theme {
   --s11: #b0b4ba; /* step 11 */
   --s12: #edeef0; /* step 12 */
 }
+input, button, textarea, select { font-family: var(--font) !important; }
 body{font-family:var(--font)!important;margin:0;overflow:hidden;background:var(--s1);color:var(--s12);display:flex;flex-direction:column;height:100vh}
 *,*::before,*::after{box-sizing:border-box}
 
@@ -85,7 +86,7 @@ body.dark-theme .lib-side{background:var(--s2)}
 .lib-main{flex:1;display:flex;flex-direction:column;overflow-y:auto;background:var(--s1)}
 
 /* Breadcrumbs */
-.bc{display:flex;align-items:center;gap:8px;font:500 .84rem/1 var(--font);color:var(--s9);margin-bottom:22px}
+.bc{display:flex;align-items:center;gap:8px;font:500 .84rem/1.4 var(--font);color:var(--s9);margin-bottom:22px; flex-wrap:wrap;}
 .bc a{color:var(--s11);text-decoration:none;cursor:pointer}.bc a:hover{color:var(--s12);text-decoration:underline}
 .bc i{font-size:.6rem;color:var(--s6)}.bc .bc-cur{color:var(--s12);font-weight:600}
 
@@ -108,6 +109,7 @@ body.dark-theme .lib-side{background:var(--s2)}
 .cb-drop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--s1);border:1px solid var(--s3);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:200;display:none;max-height:260px;overflow:hidden;flex-direction:column}
 .cb.open .cb-drop{display:flex}
 .cb-search{border:none;border-bottom:1px solid var(--s3);padding:10px 12px;font:400 .84rem/1 var(--font);background:transparent;color:var(--s12);outline:none}
+.cb-search::placeholder { color: var(--s8) !important; opacity: 0.8 !important; }
 .cb-opts{overflow-y:auto;flex:1}
 .cb-opt{padding:8px 12px;cursor:pointer;font:500 .84rem/1.3 var(--font);color:var(--s11);transition:.1s}
 .cb-opt:hover{background:var(--s3);color:var(--s12)}
@@ -138,10 +140,11 @@ body.dark-theme .lib-side{background:var(--s2)}
 .diagram-legend-bar .u2::before { background:#f97316; }
 .diagram-legend-bar .u3::before { background:#22c55e; }
 
+.btn-close-sheet { display: none; }
 .diagram-split{display:flex;flex-direction:row;gap:16px;height:600px}
 .diagram-canvas{flex:1;background:var(--s1);border:1px solid var(--s4);border-radius:var(--radius);position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.03);-webkit-user-select:none;user-select:none;height:100%}
 .diagram-canvas svg{cursor:grab;display:block;width:100%;height:100%}
-.diagram-canvas svg:active{cursor:grabbàing}
+.diagram-canvas svg:active{cursor:grabbing}
 
 .floating-legend { position: absolute; top: 0; right: 0; width: 320px; height: 100%; background: var(--s1); border-left: 1px solid var(--s4); border-radius: 0 12px 12px 0; box-shadow: -4px 0 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; z-index: 100; transition: width 0.3s; }
 
@@ -231,85 +234,172 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
 @media(max-width:900px){
   .lib-side{position:fixed;left:-300px;top:60px;height:calc(100vh - 60px);width:280px;box-shadow:4px 0 16px rgba(0,0,0,.08);transition:left .3s}
   .lib-side.open{left:0}
-  .lib-main{padding:24px 16px}
-  .diagram-split{flex-direction:column;height:auto}.diagram-canvas{height:400px}.legend-panel{width:100%;height:300px}
-  .pathfind-bar{flex-direction:column;align-items:stretch}
-  .cb{min-width:0}
-}
+  .lib-main{padding: 10px 10px;}
+  
+  /* Map View Fullscreen */
+  .diagram-split { flex-direction: column; height: calc(100vh - 180px); }
+  .diagram-canvas { flex: 1; height: 100% !important; min-height: unset !important; border-radius: 12px !important; }
+  
+  /* FABs */
+  .mobile-fabs { display: flex !important; }
 
-/* --- CUSTOM SCROLLBAR --- */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--s2);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--s4);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--s6);
-}
-
-    .vec-sidebar-toggle { display: none; }
-    @media (max-width: 900px) {
-      .vec-sidebar-toggle { display: flex !important; }
+  /* Bottom Sheets */
+  .pathfind-bar, .legend-panel-old, .floating-legend {
+    position: fixed; left: 0; right: 0; bottom: 0; width: 100% !important;
+    background: var(--bg-card, var(--s1)); z-index: 1000;
+    padding: 20px 20px 30px; border-radius: 24px 24px 0 0 !important;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.2); border: none !important;
+    transform: translateY(110%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 85vh; overflow-y: auto;
+    flex-direction: column; align-items: stretch; gap: 8px; display: flex;
+  }
+  .pathfind-bar.open, .legend-panel-old.open, .floating-legend.open {
+    transform: translateY(0);
+  }
+  
+  /* Show headers in bottom sheets */
+  .sheet-header { display: flex !important; }
+  .legend-head { border-radius: 0 !important; border-bottom: 1px solid var(--border-strong) !important; padding-bottom: 12px; margin-bottom: 12px; }
+  
+  .btn-close-sheet {
+    display: block;
+    background: transparent; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 50%;
+  }
+  .btn-close-sheet:hover { background: rgba(150,150,150,0.1); color: var(--text-main); }
+  
+  /* Utilities */
+  .cb { min-width: 0; width: 100%; }
+  .pf-group { width: 100%; }
+  
+  .vec-topbar-center {display: none;}
+  #drill-down-root { padding: 10px 10px !important; }
+  #dd-graph-view { padding: 10px 10px !important; }
+  .view-title { font-size: 1.5rem !important; }
+  
+  .diagram-legend-bar {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    padding-top: 4px;
+    padding-bottom: 14px;
+    -webkit-overflow-scrolling: touch;
+    gap: 16px !important;
+  }
+  .diagram-legend-bar > span {
+    white-space: nowrap !important;
+    flex-shrink: 0;
+    line-height: 1.2;
     }
+  }
+  svg text { font-family: var(--font, 'Merriweather', 'Times New Roman', serif) !important; }
+
+@media (max-width: 900px) {
+  #dd-graph-view { padding: 16px !important; }
+  .diagram-split { flex-direction: column !important; height: 85vh !important; margin: 0 !important; }
+  .diagram-split > div:nth-child(2) {
+    position: fixed !important;
+    bottom: -100% !important;
+    left: 0 !important; width: 100% !important;
+    height: 85vh !important; margin: 0 !important;
+    z-index: 1000 !important;
+    border-radius: 24px 24px 0 0 !important;
+    transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.2) !important;
+    display: flex !important;
+  }
+  .diagram-split > div:nth-child(2).mob-open { bottom: 0 !important; }
+  
+  .pf-container {
+    position: fixed !important;
+    bottom: -100% !important;
+    top: auto !important;
+    left: 0 !important; width: 100% !important;
+    height: 85vh !important; margin: 0 !important; /* Fixed comfortable height like Legend */
+    z-index: 1000 !important;
+    border-radius: 24px 24px 0 0 !important;
+    transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.2) !important;
+    padding: 24px 20px 40px 20px !important;
+    background: var(--s1) !important;
+    opacity: 1 !important;
+    overflow-y: auto !important;
+  }
+  .pf-container.open { bottom: 0 !important; height: 85vh !important; margin: 0 !important; }
+  .pathfinding-panel {
+    flex-direction: column !important;
+    background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; gap: 16px !important;
+  }
+  .pathfinding-panel > div {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+  .cb-trigger { box-sizing: border-box !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    white-space: normal !important; 
+  }
+  .cb-trigger > div {
+    max-width: 100% !important;
+  }
+  .pf-header-btn { display: none !important; }
+  .mobile-tools-bar { display: flex !important; }
+  #mob-overlay { display: block !important; }
+}
+
+.mobile-tools-bar {
+  display: none; justify-content: center; gap: 12px; padding: 16px 12px 24px 12px;
+}
+.mobile-tools-bar .btn {
+  flex: 1; background: var(--s2) !important; color: var(--s12) !important; border: 1px solid var(--s4) !important; justify-content: center; padding: 12px; font-weight: 700; font-size: 0.9rem;
+}
+#mob-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 900; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+#mob-overlay.show { opacity: 1; pointer-events: auto; }
+
+</style>
+</head>
+<body class="light-theme">
+<!-- ==================== UNIFIED TOPBAR ==================== -->
+<style>
+  
+    svg text { font-family: var(--font, 'Merriweather', 'Times New Roman', serif) !important; }
 </style>
 
-  <!-- WYSIWYG Editor & Math -->
-  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
-</head>
-<body>
-    <!-- TOPBAR -->
-  <header class="vec-topbar" id="globalTopbar">
-      <div class="vec-topbar-left">
-        <a href="index.html" class="vec-brand-group">
-          <img src="assets/images/logo+name.png" alt="Vectoria" onerror="this.src='assets/images/logo.png'">
-        </a>
-        
-        <nav class="vec-nav-links">
-          <a href="index.html" class="vec-nav-link" id="navHome"><i class="fa-solid fa-house"></i> Trang chủ</a>
-          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="fa-solid fa-layer-group"></i> Dashboard</a>
-          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="fa-solid fa-calculator"></i> Tính toán</a>
+<header class="vec-topbar" id="globalTopbar">
+  <div class="vec-topbar-left">
+        <button class="vec-sidebar-toggle" id="globalMobileToggleBtn" title="Menu sidebar">
+          <i class="fa-solid fa-compass"></i>
+        </button><a href="index.html" class="vec-brand-group">
+      <img src="assets/images/logo+name.png" alt="Vectoria" onerror="this.src='assets/images/logo.png'">
+    </a>
+    
+    <nav class="vec-nav-links">
+          <a href="index.html" class="vec-nav-link" id="navHome"><i class="fa-solid fa-house"></i> <span data-i18n="nav.home">Trang chủ</span></a>
+          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="fa-solid fa-layer-group"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
+          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="fa-solid fa-calculator"></i> <span data-i18n="nav.calc">Tính toán</span></a>
           
           <div class="vec-dropdown-container">
-            <span class="vec-nav-link active"><i class="fa-solid fa-compass"></i> Khám phá <i class="fa-solid fa-chevron-down" style="font-size: 0.7em;"></i></span>
+<span class="vec-nav-link" data-i18n="nav.explore"><i class="fa-solid fa-compass"></i> Khám phá <i class="fa-solid fa-chevron-down" style="font-size: 0.7em;"></i></span>
             <div class="vec-dropdown-menu">
-              <a href="knowledge_info.html" class="vec-dropdown-item"><i class="fa-solid fa-graduation-cap"></i> Thư viện kiến thức</a>
-              <a href="hdsd.html" class="vec-dropdown-item"><i class="fa-solid fa-circle-question"></i> Hướng dẫn sử dụng</a>
-              <a href="tltk.html" class="vec-dropdown-item"><i class="fa-solid fa-file-pdf"></i> Tài liệu tham khảo</a>
+              <a href="knowledge_info.html" class="vec-dropdown-item" data-i18n="nav.knowledge"><i class="fa-solid fa-graduation-cap"></i> Thư viện kiến thức</a>
+              <a href="hdsd.html" class="vec-dropdown-item" data-i18n="nav.manual"><i class="fa-solid fa-circle-question"></i> Hướng dẫn sử dụng</a>
+              <a href="tltk.html" class="vec-dropdown-item" data-i18n="nav.docs"><i class="fa-solid fa-file-pdf"></i> Tài liệu tham khảo</a>
               <div class="dropdown-divider" style="height: 1px; background: var(--border-strong, #cbd5e1); margin: 5px 0;"></div>
-              <a href="about_us.html" class="vec-dropdown-item"><i class="fa-solid fa-users"></i> Về chúng tôi</a>
-              <a href="contact.html" class="vec-dropdown-item"><i class="fa-solid fa-envelope"></i> Liên hệ</a>
+              <a href="about_us.html" class="vec-dropdown-item" data-i18n="nav.about"><i class="fa-solid fa-users"></i> Về chúng tôi</a>
+              <a href="contact.html" class="vec-dropdown-item" data-i18n="nav.contact"><i class="fa-solid fa-envelope"></i> Liên hệ</a>
             </div>
           </div>
         </nav>
-      </div>
-
+  </div>
+  
       <div class="vec-topbar-center" style="flex: 1; max-width: 450px; margin: 0 32px; position: relative;">
-        <input type="text" placeholder="Tìm kiếm toàn cục..." style="width: 100%; padding: 10px 16px 10px 42px; border: 1px solid var(--s3); border-radius: 8px; background: var(--s2); color: var(--s12); font: 500 .9rem/1 var(--font); transition: all 0.2s ease; outline: none;" onfocus="this.style.borderColor='var(--b9)'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.12)'" onblur="this.style.borderColor='var(--s3)'; this.style.boxShadow='none'">
+        <input type="text" placeholder="Tìm kiếm toàn cục..." data-i18n-placeholder="nav.search_global" style="width: 100%; padding: 10px 16px 10px 42px; border: 1px solid var(--s3); border-radius: 8px; background: var(--s2); color: var(--s12); font: 500 .9rem/1 var(--font); transition: all 0.2s ease; outline: none;" onfocus="this.style.borderColor='var(--b9)'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.12)'" onblur="this.style.borderColor='var(--s3)'; this.style.boxShadow='none'">
         <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--s6); font-size: .9rem;"></i>
       </div>
-      
-      <div class="vec-topbar-right">
-        <!-- FILE MENU FOR SESSION MANAGEMENT (Moved to Settings) -->
-        <input type="file" id="importVecFileInput" accept=".vectoria,.json" style="display: none;" onchange="
-          if (this.files && this.files[0]) {
-            const reader = new FileReader();
-            reader.onload = e => window.App.importSession(e.target.result);
-            reader.readAsText(this.files[0]);
-            this.value = ''; // reset to allow importing same file again
-          }
-        ">
-
-        <button class="vec-icon-btn" id="themeToggleBtn" title="Chuyển giao diện">
-          <i class="fa-solid fa-moon"></i>
+  <div class="vec-topbar-right">
+    <button class="vec-icon-btn" id="themeToggleBtn" title="Chuyển giao diện">
+          <i class="fa-solid fa-moon icon-light-mode"></i><i class="fa-solid fa-sun icon-dark-mode"></i>
         </button>
 
         <div class="vec-dropdown-container right-align">
@@ -327,99 +417,242 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
         </button>
         
         <div class="vec-dropdown-container right-align">
-          <button class="vec-icon-btn" title="Cài đặt">
-            <i class="fa-solid fa-gear"></i>
-          </button>
-              <div class="vec-dropdown-menu" style="min-width: 260px; padding: 12px 0; border-radius: 12px; border: 1px solid var(--border-subtle); box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-              <div style="padding: 0 20px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Giao diện</div>
-              <div style="display:flex; align-items:center; justify-content:space-between; width: 100%; padding: 8px 20px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'" onclick="document.getElementById('animToggle').click()">
-                <span style="font-size:14px; font-weight:500; color:var(--text-main);">Hiệu ứng 3D</span>
-                <label class="switch" style="margin:0; width:34px; height:20px; pointer-events: none;">
-                  <input type="checkbox" id="animToggle" checked>
-                  <span class="slider round" style="border-radius:20px;"></span>
-                </label>
-              </div>
-              <div style="height: 1px; background: var(--border-subtle); margin: 12px 0;"></div>
-              <div style="padding: 0 20px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Dữ liệu</div>
-              <a href="#" class="vec-dropdown-item" style="padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; font-size: 14px;" onclick="if(window.App.SessionManager) window.App.exportSession()">
-                <span style="font-weight: 500;">Xuất file (.vectoria)</span>
-                <i class="fa-solid fa-cloud-arrow-down" style="color: var(--text-muted); font-size: 16px;"></i>
-              </a>
-              <a href="#" class="vec-dropdown-item" style="padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; font-size: 14px;" onclick="document.getElementById('importVecFileInput').click()">
-                <span style="font-weight: 500;">Nhập file (.vectoria)</span>
-                <i class="fa-solid fa-cloud-arrow-up" style="color: var(--text-muted); font-size: 16px;"></i>
-              </a>
-            </div>
-        </div>
-        
-        <div class="vec-dropdown-container right-align">
           <div class="top-avatar-btn" id="btnTopAvatar" style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary-base); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; background-size: cover; background-position: center;">
             <i class="fa-solid fa-user"></i>
           </div>
           <div class="top-dropdown vec-dropdown-menu" id="menuTopAvatar" style="width: 260px; min-width: 260px;">
           </div>
         </div>
-      </div>
-    </header>
+  </div>
+</header>
 
-  <!-- LIBRARY LAYOUT -->
-  <main class="lib-layout">
-    <div class="lib-main" id="dd-scroll-container">
-      <div id="drill-down-root" style="padding: 30px 40px; max-width: 1240px; margin: 0 auto; width: 100%;">
-        <div id="dd-breadcrumb" class="bc"></div>
-        <div id="dd-content"></div>
-      </div>
-
-      <!-- GRAPH VIEW (full panels restored) -->
-      <div id="dd-graph-view" style="display:none; flex-direction:column; flex:1; min-height:0; padding:24px 36px; overflow-y:auto;">
-        <!-- Header -->
-        <div class="diagram-header">
-          <div>
-            <div class="bc" id="graph-bc" style="margin-bottom:12px;"></div>
-            <h1 class="view-title" style="margin-bottom:6px;">Không gian Tri thức</h1>
-          </div>
-          <div class="pathfind-bar">
-            <div class="pf-group">
-              <div class="pf-label">Bắt đầu</div>
-              <div class="cb" id="cb-start"></div>
-            </div>
-            <div class="pf-group">
-              <div class="pf-label">Kết thúc</div>
-              <div class="cb" id="cb-end"></div>
-            </div>
-            <div class="pf-group">
-              <div class="pf-label">Phải qua</div>
-              <div class="cb" id="cb-include"></div>
-            </div>
-            <div class="pf-group">
-              <div class="pf-label">Tránh qua</div>
-              <div class="cb" id="cb-avoid"></div>
-            </div>
-            <button class="btn btn-primary" onclick="runPath()"><i class="fa-solid fa-route"></i> Tìm lộ trình</button>
-            <button class="btn btn-danger" id="btn-reset" onclick="clearPath()" style="display:none;"><i class="fa-solid fa-xmark"></i> Đặt lại</button>
-          </div>
-        </div>
-        <div id="pf-cost" style="display:none; align-items:center; gap:6px; font-weight:600; color:var(--amber); margin-bottom:12px; font-size:0.9rem;"></div>
-
-        <!-- Color legend bar -->
-        <div class="diagram-legend-bar" id="top-legend-bar" style="flex-wrap: wrap;"></div>
-
-        <!-- Diagram + Legend split -->
-        <div class="diagram-split">
-          <div class="diagram-canvas" id="d-canvas"></div>
-          <div class="legend-panel-old">
-            <div class="legend-head">Bảng đối chiếu</div>
-            <div class="legend-body f-legend-body" id="legend"></div>
-          </div>
-        </div>
-      </div>
+<!-- ==================== SIDEBAR & MAIN ==================== -->
+<div style="display:flex; flex:1; overflow:hidden;">
+  <div class="lib-side" id="lib-side">
+    <div class="lib-side-search">
+      <input type="text" placeholder="Tìm kiếm nội dung..." data-i18n-placeholder="knowledge.search_content" />
+      <i class="fa-solid fa-search"></i>
     </div>
+    <div id="side-topics-list"></div>
+  </div>
+  <div class="lib-main" id="lib-main" style="flex:1; overflow-y:auto; position:relative;">
+    <div id="drill-down-root" style="padding: 30px 40px; max-width: 1240px; margin: 0 auto; width: 100%;">
+      <div id="dd-breadcrumb" class="bc" style="padding-top: 8px;"></div>
+      <div id="dd-content"></div>
+    </div>
+        <div id="dd-graph-view" style="display:none; width:100%; height:100%; flex-direction:column; padding: 24px 32px; max-width: 1400px; margin: 0 auto;">
+      <style>
+        .lg-item { transition: all 0.2s; }
+        .lg-item.hl { background: rgba(59,130,246,0.1) !important; border-color: #3b82f6 !important; }
+        .lg-item.path-active { background: rgba(245,158,11,0.1) !important; border-color: #f59e0b !important; }
+        .pf-container { 
+          max-height: 0; 
+          overflow: hidden; 
+          transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s; 
+          opacity: 0;
+        }
+        .pf-container.open { 
+          max-height: 500px; 
+          opacity: 1;
+          overflow: visible; /* Prevent clipping dropdowns */
+        }
+        svg text { font-family: var(--font, 'Merriweather', 'Times New Roman', serif) !important; }
+</style>
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; border-bottom: 1px solid var(--s3); padding-bottom: 16px;">
+        <div>
+          <div id="graph-bc" class="bc" style="margin-bottom: 8px;"></div>
+          <h1 class="view-title" style="font-size:1.8rem; font-weight:800; color:var(--s12); margin:0; font-family:'Merriweather',serif;" data-i18n="knowledge.title">Không gian Tri thức</h1>
+        </div>
+        <button onclick="var el = document.getElementById('pf-container'); el.classList.toggle('open');" class="btn pf-header-btn" style="padding: 10px 16px; border-radius: 8px; border: 1px solid var(--s4); background: var(--s2); font-weight: 600; cursor: pointer; color: var(--s11); transition: 0.2s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'" data-i18n="knowledge.tool_pathfinding"><i class="fa-solid fa-route"></i> Công cụ Tìm lộ trình</button>
+      </div>
+
+      <div id="pf-container" class="pf-container" style="margin-bottom: 24px; position: relative; z-index: 50;">
+        <div class="pathfinding-panel" style="display:flex; gap: 16px; background: var(--s2); padding: 20px; border-radius: 12px; border: 1px solid var(--s3); flex-wrap: wrap; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+          <div style="flex:1; min-width: 180px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: var(--s9); display:block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="knowledge.start">Bắt đầu</label>
+            <div id="cb-start"></div>
+          </div>
+          <div style="flex:1; min-width: 180px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: var(--s9); display:block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="knowledge.end">Kết thúc</label>
+            <div id="cb-end"></div>
+          </div>
+          <div style="flex:1; min-width: 180px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: var(--s9); display:block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="knowledge.must_include">Bắt buộc đi qua</label>
+            <div id="cb-include"></div>
+          </div>
+          <div style="flex:1; min-width: 180px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: var(--s9); display:block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="knowledge.must_avoid">Cần tránh</label>
+            <div id="cb-avoid"></div>
+          </div>
+          <div style="display:flex; align-items: flex-end; gap: 8px;">
+            <button id="btn-find-path" style="padding: 10px 20px; height: 42px; border-radius: 8px; background: var(--primary-base); color: white; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary-hover, #2563eb)'" onmouseout="this.style.background='var(--primary-base)'" onclick="if(typeof runPath==='function')runPath()" data-i18n="knowledge.find_path_btn_only"><i class="fa-solid fa-route"></i> Tìm lộ trình</button>
+            <button id="btn-reset" style="padding: 10px 16px; height: 42px; border-radius: 8px; background: var(--s3); color: var(--s11); border: none; font-weight: 600; cursor: pointer; display: none; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'" onclick="if(typeof clearPath==='function')clearPath()"><i class="fa-solid fa-rotate-left"></i> Xóa lộ trình</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="top-legend-bar" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom: 24px;"></div>
+
+      <div class="diagram-split" style="display: flex; gap: 20px; align-items: stretch; height: 65vh; min-height: 600px;">
+        <div style="flex: 1; min-width: 0; background: var(--s1); border-radius: 12px; border: 1px solid var(--s3); position: relative; overflow: hidden; display: flex; flex-direction: column;">
+          <div id="pf-cost" style="position: absolute; top: 16px; left: 16px; z-index: 20; display:none; padding: 6px 12px; background: var(--amber-fill, #fffbeb); color: var(--amber-text, #b45309); border: 1px solid var(--amber, #f59e0b); border-radius: 6px; font-weight: 700; font-size: 0.9rem; align-items: center;"></div>
+          <div class="diagram-canvas" style="flex: 1; width:100%; position: relative;">
+            <div id="d-canvas" style="width:100%; height:100%;"></div>
+          </div>
+          <div class="mobile-tools-bar">
+            <button class="btn" onclick="document.getElementById('pf-container').classList.add('open'); document.getElementById('mob-overlay').classList.add('show');" data-i18n="knowledge.find_path_btn"><i class="fa-solid fa-route"></i> Lộ trình</button>
+            <button class="btn" onclick="document.querySelector('.diagram-split > div:nth-child(2)').classList.add('mob-open'); document.getElementById('mob-overlay').classList.add('show');"><i class="fa-solid fa-list-ol"></i> <span data-i18n="knowledge.reference_table">Bảng đối chiếu</span></button>
+          </div>
+        </div>
+        <div style="width: 320px; flex-shrink: 0; background: var(--s1); border-radius: 12px; border: 1px solid var(--s3); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+          <div style="padding: 16px; border-bottom: 1px solid var(--s3); background: var(--s2); font-weight: 700; color: var(--s12); display: flex; justify-content: center; align-items: center;">
+            <span data-i18n="knowledge.reference_table">Bảng đối chiếu</span>
+          </div>
+          <div id="dynamic-legend-bar" style="flex: 1; overflow-y: auto; padding: 12px 8px;"></div>
+        </div>
+      </div>
+      <div id="mob-overlay" onclick="document.getElementById('pf-container').classList.remove('open'); document.querySelector('.diagram-split > div:nth-child(2)').classList.remove('mob-open'); this.classList.remove('show');"></div>
+    </div>
+    <div id="dd-lesson-view" style="display:none; padding: 24px;">
+      <div id="dd-lesson-container"></div>
+    </div>
+  </div>
+</div>
 
 <script>
-// =============================================
-//  DRILL-DOWN SPA v2 (Clean / No AI slop)
-// =============================================
-var AppState = { path: [{ type:'root', id:'root', title:'Thư viện' }] };
+(function() {
+  var s = document.createElement('style');
+  s.textContent = '.lib-side { display:none !important; } #floatingHamburger { display:none !important; } #mob-toggle { display:none !important; } @media(max-width:768px){ #drill-down-root { padding:16px !important; } }';
+  document.head.appendChild(s);
+})();
+function tr(key, def) {
+window.App = window.App || {};
+window.App.API_BASE = "http://127.0.0.1:5000";
+  var keys = key.split('.');
+  var val = (typeof i18nConfig !== 'undefined' && i18nConfig.translations) ? i18nConfig.translations[i18nConfig.currentLocale] : null;
+  for (var i=0; i<keys.length; i++) {
+    if (!val) break;
+    val = val[keys[i]];
+  }
+  if (!val) return def || key;
+  return val;
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+    // Await translations to load so that initial graph render uses the correct language
+    if (typeof loadTranslations === "function" && typeof i18nConfig !== "undefined") {
+      await loadTranslations(i18nConfig.currentLocale);
+    }
+    
+    // Force redraw initial graph with proper translations
+    const gInit = document.getElementById("zg");
+    if (typeof refreshComboboxes === 'function') refreshComboboxes();
+      if (typeof loadComments === 'function') loadComments();
+      const pTitle = document.getElementById('prompt-title');
+      if (pTitle) {
+        pTitle.textContent = tr('knowledge.prompt_note', 'Nhập ghi chú cho {item} này (không bắt buộc):').replace('{item}', tr('knowledge.lessons_count', 'Số bài học'));
+        document.getElementById('prompt-input').placeholder = tr('knowledge.note_placeholder', 'Ghi chú...');
+        document.getElementById('prompt-btn-cancel').textContent = tr('knowledge.cancel', 'Hủy');
+        document.getElementById('prompt-btn-save').textContent = tr('knowledge.save', 'Lưu');
+      }
+      if (gInit) {
+      document.getElementById("d-canvas").innerHTML = renderDiagram();
+      initZP();
+      refreshLegend();
+      updateVisualState();
+      const topBar = document.getElementById("top-legend-bar");
+      if (topBar && typeof MOCK_LIBRARY_DATA !== "undefined") {
+        topBar.innerHTML = "";
+        refreshLegend();
+      }
+    }
+    
+        // Handle deep links on load
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('type') === 'graph') {
+      window._deepLinkHandled = true;
+      navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'));
+    } else if (urlParams.get('type') === 'lesson') {
+      window._deepLinkHandled = true;
+      navigateTo('lesson', urlParams.get('id'), 'Bài học');
+    }
+    if (typeof renderCurrentView === "function" && !window._deepLinkHandled) renderCurrentView();
+  const _origSetLang = window.setLang;
+  if (_origSetLang) {
+    window.setLang = async function(lang) {
+      await _origSetLang(lang);
+      
+      // Handle deep links ONLY ONCE on initial load
+      if (!window._deepLinkHandled) {
+        window._deepLinkHandled = true;
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('type') === 'graph') {
+          navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'));
+          return; // navigateTo triggers renderCurrentView
+        } else if (urlParams.get('type') === 'lesson') {
+          navigateTo('lesson', urlParams.get('id'), tr('knowledge.lesson', 'Bài học'));
+          return;
+        }
+      }
+      
+      // If we are already loaded, just re-render the current view immediately!
+      if (typeof renderCurrentView === "function") {
+          renderCurrentView();
+      }
+
+      if (typeof runPath !== "undefined" && typeof activePath !== "undefined" && activePath) runPath();
+      if (typeof refreshComboboxes === 'function') refreshComboboxes();
+      if (typeof loadComments === 'function') loadComments();
+      const pTitle = document.getElementById('prompt-title');
+      if (pTitle) {
+        pTitle.textContent = tr('knowledge.prompt_note', 'Nhập ghi chú cho {item} này (không bắt buộc):').replace('{item}', tr('knowledge.lessons_count', 'Số bài học'));
+        document.getElementById('prompt-input').placeholder = tr('knowledge.note_placeholder', 'Ghi chú...');
+        document.getElementById('prompt-btn-cancel').textContent = tr('knowledge.cancel', 'Hủy');
+        document.getElementById('prompt-btn-save').textContent = tr('knowledge.save', 'Lưu');
+      }
+      
+      const g = document.getElementById("zg");
+      if (g) {
+        document.getElementById("d-canvas").innerHTML = renderDiagram();
+        initZP();
+        refreshLegend();
+        updateVisualState();
+        // Force update Top Legend Bar manually
+        const topBar = document.getElementById("top-legend-bar");
+        if (topBar && typeof MOCK_LIBRARY_DATA !== "undefined") {
+          topBar.innerHTML = "";
+          refreshLegend();
+        }
+      }
+    };
+  }
+});
+
+function refreshComboboxes() {
+  if (typeof cbStart === "undefined" || !cbStart || !document.getElementById("cb-start")) return;
+  const opts = D.graph.nodes.map(n => ({ id: n.id, label: n.num + '. ' + tr('library_terms.' + n.id, n.label) }));
+  
+  const valS = cbStart.value, valE = cbEnd.value, valI = cbInclude.value, valA = cbAvoid.value;
+  
+  document.getElementById("cb-start").innerHTML = "";
+  cbStart = new CustomCombobox("cb-start", opts, false);
+  cbStart.value = valS; cbStart.updateTriggerText();
+  
+  document.getElementById("cb-end").innerHTML = "";
+  cbEnd = new CustomCombobox("cb-end", opts, false);
+  cbEnd.value = valE; cbEnd.updateTriggerText();
+  
+  document.getElementById("cb-include").innerHTML = "";
+  cbInclude = new CustomCombobox("cb-include", opts, true, tr("knowledge.none_placeholder", "Không có"));
+  cbInclude.value = valI; cbInclude.updateTriggerText();
+  
+  document.getElementById("cb-avoid").innerHTML = "";
+  cbAvoid = new CustomCombobox("cb-avoid", opts, true, tr("knowledge.none_placeholder", "Không có"));
+  cbAvoid.value = valA; cbAvoid.updateTriggerText();
+}
+
+var AppState = { path: [{ type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') }] };
 
 function renderBreadcrumb() {
   var bc = document.getElementById('dd-breadcrumb');
@@ -429,7 +662,12 @@ function renderBreadcrumb() {
     var node = AppState.path[i];
     var isLast = (i === AppState.path.length - 1);
     var span = document.createElement('span');
-    span.textContent = node.title;
+    if (node.id === 'root') {
+        span.setAttribute('data-i18n', 'knowledge.breadcrumb');
+        span.textContent = tr('knowledge.breadcrumb', node.title);
+      } else {
+        span.textContent = tr('library_terms.' + node.id, node.title);
+      }
     if (isLast) {
       span.className = 'bc-cur';
     } else {
@@ -452,13 +690,29 @@ function renderBreadcrumb() {
   }
 }
 
+function updateUrl(node) {
+  if (node.type === 'root') {
+     window.history.replaceState(null, '', window.location.pathname);
+  } else if (node.type === 'lesson') {
+     window.history.replaceState(null, '', '?id=' + node.id);
+  } else {
+     window.history.replaceState(null, '', '?type=' + node.type + '&id=' + node.id);
+  }
+}
+
 function navigateBackTo(idx) {
+  if (window._quizActive) {
+    if (!confirm('Bạn đang làm ' + tr('knowledge.lesson_prefix', 'Bài') + ' dang dở. Có chắc chắn muốn thoát? Kết quả sẽ không được lưu!')) return;
+    window._quizActive = false;
+  }
   AppState.path = AppState.path.slice(0, idx + 1);
   renderCurrentView();
+  updateUrl(AppState.path[AppState.path.length - 1]);
 }
 
 function navigateTo(type, id, title, data) {
   AppState.path.push({ type:type, id:id, title:title, data:data });
+  try { updateUrl(AppState.path[AppState.path.length - 1]); } catch(e) {}
   renderCurrentView();
 }
 
@@ -482,6 +736,8 @@ function renderCurrentView() {
   else if (cur.type === 'topic') renderTopic(cnt, cur.data);
   else if (cur.type === 'section') renderSection(cnt, cur.data);
   else if (cur.type === 'lesson') renderLesson(cnt, cur.data);
+  else if (cur.type === 'quiz') renderQuizSetup(cnt);
+  else if (cur.type === 'quiz-room') renderQuizRoom(cnt, cur.data);
 }
 
 // ---------- LEVEL 0: ROOT ----------
@@ -493,7 +749,7 @@ function renderRoot(c) {
   
   var h = document.createElement('h1');
   h.className = 'view-title';
-  h.textContent = 'Khám phá Thư viện';
+  h.textContent = tr('knowledge.explore_library', 'Khám phá Thư viện');
   h.style.margin = '0';
   header.appendChild(h);
 
@@ -502,7 +758,7 @@ function renderRoot(c) {
   // --- Tools Section ---
   var toolsLabel = document.createElement('div');
   toolsLabel.className = 'side-label';
-  toolsLabel.textContent = 'TỔNG QUAN';
+  toolsLabel.textContent = tr('knowledge.overview', 'Tổng quan');
   toolsLabel.style.padding = '0';
   toolsLabel.style.marginBottom = '16px';
   toolsLabel.style.fontSize = '0.75rem';
@@ -514,9 +770,9 @@ function renderRoot(c) {
   c.appendChild(toolsGrid);
 
   var tools = [
-    { title: 'Không gian Tri thức', desc: 'Bản đồ đồ thị các bài học và công cụ tối ưu lộ trình.', icon: 'fa-solid fa-diagram-project', action: function() { navigateTo('graph','graph','Không gian Tri thức',null); } },
-    { title: 'Tài liệu tham khảo', desc: 'Giáo trình, sách và các tài liệu bổ trợ.', icon: 'fa-solid fa-book-bookmark', action: function() { alert('Chức năng đang được phát triển.'); } },
-    { title: 'Kho bài tập', desc: 'Hệ thống thực hành phân loại theo chủ đề.', icon: 'fa-solid fa-code-branch', action: function() { alert('Chức năng đang được phát triển.'); } }
+    { title: tr('knowledge.title', 'Không gian Tri thức'), desc: tr('knowledge.tool_graph_desc', 'Bản đồ đồ thị các ' + tr('knowledge.lessons_count', 'Số bài học') + ' và công cụ tối ưu lộ trình.'), icon: 'fa-solid fa-diagram-project', action: function() { navigateTo('graph','graph',tr('knowledge.title', 'Không gian Tri thức'),null); } },
+    { title: tr('knowledge.tool_doc_title', 'Tài liệu tham khảo'), desc: tr('knowledge.tool_doc_desc', 'Giáo trình, sách và các tài liệu bổ trợ.'), icon: 'fa-solid fa-book-bookmark', action: function() { (window.App && window.App.showToast ? window.App.showToast('Chức năng đang được phát triển.', 'warning') : alert('Chức năng đang được phát triển.')); } },
+    { title: tr('knowledge.tool_quiz_title', 'Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập'), desc: tr('knowledge.tool_quiz_desc', 'Hệ thống thực hành phân loại theo chủ đề.'), icon: 'fa-solid fa-code-branch', action: function() { navigateTo('quiz','quiz',tr('knowledge.tool_quiz_title', 'Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập'),null); } }
   ];
 
   for (var t = 0; t < tools.length; t++) {
@@ -549,7 +805,7 @@ function renderRoot(c) {
   // --- Topics Section ---
   var topicsLabel = document.createElement('div');
   topicsLabel.className = 'side-label';
-  topicsLabel.textContent = 'CHƯƠNG TRÌNH HỌC';
+  topicsLabel.textContent = tr('knowledge.curriculum', 'Chương trình');
   topicsLabel.style.padding = '0';
   topicsLabel.style.marginBottom = '16px';
   topicsLabel.style.fontSize = '0.75rem';
@@ -576,7 +832,7 @@ function renderRoot(c) {
 
       var ttl = document.createElement('div');
       ttl.style.cssText = 'font-weight:700; font-size:1.05rem; color:var(--s12); margin-bottom:12px; max-width:85%; line-height:1.4;';
-      ttl.textContent = topic.title;
+      ttl.textContent = tr('library_terms.' + topic.id, topic.title).replace(/^\d+\.\s*/, '');
       tc.appendChild(ttl);
 
       var meta = document.createElement('div');
@@ -588,8 +844,8 @@ function renderRoot(c) {
         topic.sections.forEach(function(s) { numL += (s.lessons ? s.lessons.length : 0); });
       }
       
-      meta.innerHTML = '<span><i class="fa-solid fa-list-ul" style="margin-right:4px;"></i>' + numS + ' chương</span>' +
-                       '<span><i class="fa-regular fa-file-lines" style="margin-right:4px;"></i>' + numL + ' bài học</span>';
+      meta.innerHTML = '<span><i class="fa-solid fa-list-ul" style="margin-right:4px;"\></i>' + numS + ' ' + tr('knowledge.sections_count', 'Số học phần') + '</span>' +
+                       '<span><i class="fa-regular fa-file-lines" style="margin-right:4px;"\></i>' + numL + ' ' + tr('knowledge.lessons_count', 'Số bài học') + '</span>';
       
       tc.appendChild(meta);
       topicsGrid.appendChild(tc);
@@ -601,7 +857,7 @@ function renderTopic(c, topic) {
 
   var h = document.createElement('h1');
   h.className = 'view-title';
-  h.textContent = topic.title;
+  h.textContent = tr('library_terms.' + topic.id, topic.title);
   c.appendChild(h);
 
   if (topic.summary) {
@@ -622,7 +878,7 @@ function renderTopic(c, topic) {
       row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:var(--s2); border:1px solid var(--s3); border-radius:var(--radius); margin-bottom:10px; cursor:pointer; transition:all 0.2s ease; box-shadow: 0 1px 4px rgba(0,0,0,0.03);';
       row.onmouseover = function() { this.style.borderColor = 'var(--b9)'; this.style.background = 'var(--s3)'; this.style.transform = 'translateX(2px)'; };
       row.onmouseout = function() { this.style.borderColor = 'var(--s3)'; this.style.background = 'var(--s2)'; this.style.transform = 'translateX(0)'; };
-      (function(s) { row.onclick = function() { navigateTo('section', s.id, s.title, s); }; })(sec);
+      (function(s) { row.onclick = function() { window._deepLinkHandled = true; navigateTo('section', s.id, s.title, s); }; })(sec);
 
       var left = document.createElement('div');
       left.style.cssText = 'display:flex; align-items:center; gap:14px;';
@@ -634,7 +890,7 @@ function renderTopic(c, topic) {
 
       var ttl = document.createElement('div');
       ttl.style.cssText = 'font-weight:600; font-size:0.95rem; color:var(--s12);';
-      ttl.textContent = sec.title;
+      ttl.textContent = tr('library_terms.' + sec.id, sec.title).replace(/^\d+\.\s*/, '');
       left.appendChild(ttl);
 
       row.appendChild(left);
@@ -642,7 +898,7 @@ function renderTopic(c, topic) {
       var right = document.createElement('div');
       right.style.cssText = 'font-size:0.85rem; color:var(--s9); display:flex; align-items:center; gap:8px;';
       var numL = sec.lessons ? sec.lessons.length : 0;
-      right.innerHTML = '<span>' + numL + ' bài học</span><i class="fa-solid fa-chevron-right" style="font-size:0.7em; color:var(--s6);"></i>';
+      right.innerHTML = '<span>' + numL + ' ' + tr('knowledge.lessons_count', 'Số bài học') + '</span><i class="fa-solid fa-chevron-right" style="font-size:0.7em; color:var(--s6);"></i>';
       row.appendChild(right);
 
       c.appendChild(row);
@@ -656,7 +912,7 @@ function renderSection(c, section) {
 
   var h = document.createElement('h1');
   h.className = 'view-title';
-  h.textContent = section.title;
+  h.textContent = tr('library_terms.' + section.id, section.title);
   c.appendChild(h);
 
   if (section.learning_objective) {
@@ -681,29 +937,29 @@ function renderSection(c, section) {
       card.style.cssText = 'background:var(--s2); border:1px solid var(--s3); border-radius:var(--radius); padding:20px; cursor:pointer; transition:all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display:flex; flex-direction:column;';
       card.onmouseover = function() { this.style.borderColor = 'var(--b9)'; this.style.boxShadow = '0 6px 16px rgba(0,0,0,0.08)'; this.style.transform = 'translateY(-1px)'; };
       card.onmouseout = function() { this.style.borderColor = 'var(--s3)'; this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; this.style.transform = 'translateY(0)'; };
-      (function(l) { card.onclick = function() { navigateTo('lesson', l.id, l.title, l); }; })(lesson);
+      (function(l) { card.onclick = function() { window._deepLinkHandled = true; navigateTo('lesson', l.id, l.title, l); }; })(lesson);
 
       var badge = document.createElement('div');
       badge.style.cssText = 'font-size:0.75rem; font-weight:600; color:var(--s9); margin-bottom:10px;';
-      badge.textContent = 'Bài ' + lesson.num;
+      badge.textContent = tr('knowledge.lesson_prefix', 'Bài') + ' ' + lesson.num;
       card.appendChild(badge);
 
       var ttl = document.createElement('div');
       ttl.style.cssText = 'font-weight:600; font-size:1rem; color:var(--s12); margin-bottom:10px; line-height:1.4; flex:1;';
-      ttl.textContent = lesson.title;
+      ttl.textContent = tr('library_terms.' + lesson.id, lesson.title).replace(/^\d+\.\s*/, '');
       card.appendChild(ttl);
 
       if (lesson.abstract) {
         var ab = document.createElement('div');
         ab.style.cssText = 'font-size:0.85rem; color:var(--s9); line-height:1.4; margin-bottom:12px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;';
-        ab.textContent = lesson.abstract;
+        ab.textContent = tr("knowledge.abstract_prefix", "Mô tả chi tiết về") + " " + tr("library_terms." + lesson.id, lesson.title);
         card.appendChild(ab);
       }
 
       var foot = document.createElement('div');
       foot.style.cssText = 'font-size:0.8rem; color:var(--s6); border-top:1px solid var(--s3); padding-top:10px; display:flex; gap:12px;';
-      var views = Math.floor(Math.random() * 50 + 5);
-      foot.innerHTML = '<span><i class="fa-solid fa-eye"></i> ' + views + 'K</span>';
+      var views = lesson.total_views || 0;
+      foot.innerHTML = '<span><i class="fa-solid fa-eye"\></i> <span id="grid-view-count-' + lesson.num + '"\>' + views + '</span> ' + tr('knowledge.views', 'lượt xem') + '</span>';
       card.appendChild(foot);
 
       grid.appendChild(card);
@@ -726,29 +982,112 @@ function renderLesson(c, lesson) {
 
   var title = document.createElement('h1');
   title.style.cssText = "font-size:1.8rem; font-weight:800; color:var(--s12); margin-bottom:12px; font-family:'Merriweather',serif; line-height:1.3;";
-  title.textContent = lesson.title;
+  title.textContent = tr('library_terms.' + lesson.id, lesson.title);
   left.appendChild(title);
 
   var meta = document.createElement('div');
   meta.style.cssText = 'display:flex; gap:18px; font-size:0.85rem; color:var(--s9);';
-  var totalViews = Math.floor(Math.random() * 50 + 5);
-  meta.innerHTML = '<span><i class="fa-solid fa-eye"></i> ' + totalViews + 'K lượt xem</span><span><i class="fa-regular fa-clock"></i> Cập nhật gần đây</span>';
+  var timeStr = tr('knowledge.recently', 'Gần đây');
+  if (lesson.updated_at) {
+    var iso = lesson.updated_at;
+    if (!iso.endsWith('Z') && !iso.match(/[+\-]\d{2}:\d{2}$/)) iso += 'Z';
+    var d = new Date(iso);
+    timeStr = tr('knowledge.updated', 'Cập nhật') + ' ' + d.getDate().toString().padStart(2, '0') + '/' + (d.getMonth() + 1).toString().padStart(2, '0') + '/' + d.getFullYear();
+  }
+  meta.innerHTML = '<span><i class="fa-solid fa-eye"></i> <span id="lesson-view-count">...</span> ' + tr('knowledge.views', 'lượt xem') + '</span><span><i class="fa-regular fa-calendar-days"></i> <span id="lesson-updated-time">' + timeStr + '</span></span>';
   left.appendChild(meta);
 
   hdr.appendChild(left);
 
   var saveBtn = document.createElement('button');
   saveBtn.className = 'btn btn-outline';
-  saveBtn.style.cssText = 'display:flex; gap:6px; align-items:center;';
-  saveBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i> Lưu bài';
+  saveBtn.style.cssText = 'display:flex; gap:6px; align-items:center; white-space:nowrap; flex-shrink:0;';
+  saveBtn.innerHTML = '<i class="fa-regular fa-bookmark"\></i> ' + tr('knowledge.save_lesson', 'Lưu bài học');
+  
+  // Check if already bookmarked
+  var _bmToken = localStorage.getItem('user_token');
+  if (_bmToken) {
+    fetch(App.API_BASE + '/api/bookmarks', { headers: { 'Authorization': 'Bearer ' + _bmToken } })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d.success && d.bookmarks) {
+          var found = d.bookmarks.some(function(b){ 
+            return b.topic_id === currentTopicId && parseInt(b.order_index) === parseInt(lesson.num);
+          });
+          if (found) {
+            saveBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i> ' + tr('knowledge.saved', 'Đã lưu');
+            saveBtn.style.cssText = 'display:flex; gap:6px; align-items:center; background:#3b82f6; color:#fff; border-color:#3b82f6;';
+            saveBtn.dataset.saved = '1';
+          }
+        }
+      }).catch(function(){});
+  }
+  
   saveBtn.onclick = function() {
-    if (this.innerHTML.includes('Đã lưu')) {
-      this.innerHTML = '<i class="fa-regular fa-bookmark"></i> Lưu bài';
-      this.className = 'btn btn-outline';
-    } else {
-      this.innerHTML = '<i class="fa-solid fa-bookmark"></i> Đã lưu';
-      this.className = 'btn btn-primary';
+    var token = localStorage.getItem('user_token');
+    if (!token) { (window.App && window.App.showToast ? window.App.showToast(tr('knowledge.login_required', 'Vui lòng đăng nhập để ') + tr('knowledge.save_lesson', 'Lưu bài học') + '.', 'warning') : alert(tr('knowledge.login_required', 'Vui lòng đăng nhập để ') + tr('knowledge.save_lesson', 'Lưu bài học') + '.')); return; }
+    
+    var isSaved = this.dataset.saved === '1';
+    var action = isSaved ? 'remove' : 'save';
+    
+    var note = "";
+    var self = this;
+    
+    if (action === 'save') {
+        window.showCustomPrompt(tr('knowledge.prompt_note', 'Nhập ghi chú cho {item} này (không bắt buộc):').replace('{item}', tr('knowledge.lessons_count', 'Số bài học')), function(inputNote) {
+            if (inputNote === null) return; // User cancelled
+            executeBookmarkAction(inputNote);
+        });
+        return; // wait for modal callback
     }
+    executeBookmarkAction("");
+
+  function executeBookmarkAction(note) {
+    var originalHTML = self.innerHTML;
+    var originalCssText = self.style.cssText;
+    var originalClass = self.className;
+    var originalDataset = self.dataset.saved;
+    
+    // Optimistic UI Update
+    self.style.pointerEvents = 'none';
+    if (action === 'save') {
+      self.innerHTML = '<i class="fa-solid fa-bookmark"></i> ' + tr('knowledge.saved', 'Đã lưu');
+      self.style.cssText = 'display:flex; gap:6px; align-items:center; background:#3b82f6; color:#fff; border-color:#3b82f6; transition:all 0.3s;';
+      self.dataset.saved = '1';
+    } else {
+      self.innerHTML = '<i class="fa-regular fa-bookmark"\></i> ' + tr('knowledge.save_lesson', 'Lưu bài học');
+      self.style.cssText = 'display:flex; gap:6px; align-items:center; transition:all 0.3s;';
+      self.className = 'btn btn-outline';
+      self.dataset.saved = '0';
+    }
+
+    fetch(App.API_BASE + '/api/bookmarks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ lesson_id: currentTopicId + '-' + lesson.num, action: action, note: note })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      self.style.pointerEvents = 'auto';
+      if (!d.success) {
+        if(window.App && window.App.showToast) window.App.showToast(tr('knowledge.error', tr('knowledge.error', 'Lỗi: ')) + (d.message || "' + tr('knowledge.save_lesson', 'Lưu bài học') + ' failed."), 'warning'); else alert(tr('knowledge.error', tr('knowledge.error', 'Lỗi: ')) + (d.message || "' + tr('knowledge.save_lesson', 'Lưu bài học') + ' failed."));
+        // Revert UI
+        self.innerHTML = originalHTML;
+        self.style.cssText = originalCssText;
+        self.className = originalClass;
+        self.dataset.saved = originalDataset;
+      }
+    }).catch(function(e){ 
+      console.error(e); 
+      (window.App && window.App.showToast ? window.App.showToast(tr('knowledge.error_server', 'Lỗi kết nối máy chủ. Xin thử lại.'), 'warning') : alert(tr('knowledge.error_server', 'Lỗi kết nối máy chủ. Xin thử lại.')));
+      self.style.pointerEvents = 'auto';
+      // Revert UI
+      self.innerHTML = originalHTML;
+      self.style.cssText = originalCssText;
+      self.className = originalClass;
+      self.dataset.saved = originalDataset;
+    });
+  } // end executeBookmarkAction
   };
   hdr.appendChild(saveBtn);
 
@@ -760,13 +1099,15 @@ function renderLesson(c, lesson) {
   body.style.cssText = "font-family:var(--font); font-size:1.1rem; line-height:1.8; color:var(--s12); margin-bottom:50px; min-height:40vh; text-align:left; max-width:1100px; margin-left:auto; margin-right:auto; padding: 0 16px;";
 
   var content = lesson.contentHTML || '';
+  content = content.replace(/<h2>.*?<\/h2>/, '<h2>' + tr('library_terms.' + lesson.id, lesson.title) + '</h2>');
+  content = content.replace('Nội dung chi tiết sẽ được bổ sung từ Backend.', tr('knowledge.backend_placeholder', 'Đang tải dữ liệu từ server...'));
   // Hàm parse LaTeX thô thành HTML + KaTeX
   function parseLatexToHTML(texString) {
     if (!texString || typeof texString !== 'string') return '';
     
     // Fallback: nếu dữ liệu cũ là JSON của BlockNote
     if (texString.trim().startsWith('[') || texString.trim().startsWith('{')) {
-      return '<div style="padding: 20px; background: var(--s2); border: 1px solid var(--s3); border-radius: 8px; color: var(--orange);">Vui lòng cập nhật lại bài học này bằng mã LaTeX.</div>';
+      return '<div style="padding: 20px; background: var(--s2); border: 1px solid var(--s3); border-radius: 8px; color: var(--orange);">Vui lòng ' + tr('knowledge.updated', 'Cập nhật') + ' lại ' + tr('knowledge.lessons_count', 'Số bài học') + ' này bằng mã LaTeX.</div>';
     }
 
     let html = texString;
@@ -902,83 +1243,586 @@ function renderLesson(c, lesson) {
         @media (max-width: 768px) {
           .latex-multicols { column-count: 1 !important; }
         }
-      </style>
+        svg text { font-family: var(--font, 'Merriweather', 'Times New Roman', serif) !important; }
+</style>
     `;
     return responsiveStyle + html;
   }
   // THỰC CHIẾN: Fetch dữ liệu thật từ Database
-  body.innerHTML = '<div style="text-align:center; padding:40px; color:var(--s9);"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top:10px;">Đang tải nội dung từ Database...</p></div>';
+  const skeletonHtml = `
+    <style>
+      @keyframes sk-shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+      }
+      .skeleton-box {
+        background: var(--s2);
+        background-image: linear-gradient(to right, var(--s2) 4%, var(--s3) 25%, var(--s2) 36%);
+        background-size: 1000px 100%;
+        animation: sk-shimmer 2s infinite linear;
+        border-radius: 6px;
+        margin-bottom: 16px;
+      }
+      .sk-title { height: 32px; width: 60%; margin-bottom: 30px; border-radius: 8px; }
+      .sk-text { height: 18px; width: 100%; }
+      .sk-text-short { height: 18px; width: 85%; }
+      .sk-text-shorter { height: 18px; width: 40%; margin-bottom: 30px; }
+      .sk-block { height: 160px; width: 100%; border-radius: 12px; margin-bottom: 30px; }
+      svg text { font-family: var(--font, 'Merriweather', 'Times New Roman', serif) !important; }
+</style>
+    <div style="padding: 10px 0; opacity: 0.8; margin-top: 10px;">
+      <div class="skeleton-box sk-title"></div>
+      <div class="skeleton-box sk-text"></div>
+      <div class="skeleton-box sk-text"></div>
+      <div class="skeleton-box sk-text"></div>
+      <div class="skeleton-box sk-text-short"></div>
+      <div class="skeleton-box sk-text-shorter"></div>
+      <div class="skeleton-box sk-block"></div>
+      <div class="skeleton-box sk-text"></div>
+      <div class="skeleton-box sk-text-short"></div>
+    </div>
+  `;
+  body.innerHTML = skeletonHtml;
   c.appendChild(body);
 
 
 
-  fetch(`https://visualization-rr5v.onrender.com/api/course/lesson/${lesson.id}`)
+  var currentTopicId = 't1';
+  var tNode = AppState.path.find(n => n.type === 'topic');
+  if (tNode) currentTopicId = tNode.id;
+
+  fetch(App.API_BASE + '/api/course/topic/' + currentTopicId + '/lesson/' + lesson.num)
     .then(res => {
       if (!res.ok) throw new Error('Not found');
       return res.json();
     })
     .then(data => {
-      if (data && data.content_html) {
-        body.innerHTML = parseLatexToHTML(data.content_html);
+      if (data && data.lesson) {
+        if (data.lesson.content_html) {
+          body.innerHTML = parseLatexToHTML(data.lesson.content_html);
+        } else {
+          var fallback = lesson.contentHTML || lesson.abstract || '';
+      body.innerHTML = fallback.length < 200 ? '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>' : fallback;
+        }
+
+        var viewCountEl = document.getElementById('lesson-view-count');
+        var realViews = data.lesson.total_views || 0;
+        if (viewCountEl) viewCountEl.textContent = realViews;
+        
+        // ' + tr('knowledge.updated', 'Cập nhật') + ' ngay lập tức vào bộ nhớ (AppState reference) để khi quay lại Lưới (Grid) nó khớp số với API
+        lesson.total_views = realViews;
+
+        if (data.lesson.updated_at) {
+          lesson.updated_at = data.lesson.updated_at;
+          var iso = lesson.updated_at;
+          if (!iso.endsWith('Z') && !iso.match(/[+\-]\d{2}:\d{2}$/)) iso += 'Z';
+          var d = new Date(iso);
+          var updatedStr = tr('knowledge.updated', 'Cập nhật') + ' ' + d.getDate().toString().padStart(2, '0') + '/' + (d.getMonth() + 1).toString().padStart(2, '0') + '/' + d.getFullYear();
+          var timeEl = document.getElementById('lesson-updated-time');
+          if (timeEl) timeEl.textContent = updatedStr;
+        }
+
+        if (window._currentViewTimeout) clearTimeout(window._currentViewTimeout);
+        window._currentViewTimeout = setTimeout(function() {
+          var cooldownKey = 'viewed_' + currentTopicId + '_' + lesson.num;
+          var lastViewed = sessionStorage.getItem(cooldownKey);
+          var now = Date.now();
+          if (!lastViewed || (now - parseInt(lastViewed)) > 60000) {
+            var currentViews = parseInt(document.getElementById('lesson-view-count').textContent) || 0;
+            var nextViews = currentViews + 1;
+            document.getElementById('lesson-view-count').textContent = nextViews;
+            lesson.total_views = nextViews; // ' + tr('knowledge.updated', 'Cập nhật') + ' lần nữa sau khi nảy số
+            
+            sessionStorage.setItem(cooldownKey, now.toString());
+            fetch(App.API_BASE + '/api/course/topic/' + currentTopicId + '/lesson/' + lesson.num + '/view', {
+              method: 'POST'
+            }).catch(function(e) { console.error('View tracking err', e); });
+          }
+        }, 30000);
+
       } else {
-        body.innerHTML = content.length < 200 ? '<p>Bài học này chưa có nội dung chi tiết.</p>' : content;
+        var fallback = lesson.contentHTML || lesson.abstract || '';
+      body.innerHTML = fallback.length < 200 ? '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>' : fallback;
       }
     })
     .catch(err => {
       console.error("Lỗi fetch DB, dùng content mặc định:", err);
-      body.innerHTML = content.length < 200 ? '<p>Lỗi kết nối CSDL hoặc bài học trống.</p>' : content;
+      var fallback = lesson.contentHTML || lesson.abstract || '';
+      body.innerHTML = fallback.length < 200 ? '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>' : fallback;
     });
 
   // Comments
   var commentSection = document.createElement('div');
   commentSection.style.cssText = 'border-top:1px solid var(--s3); padding-top:30px; max-width:780px;';
 
+  var commentTitleContainer = document.createElement('div');
+  commentTitleContainer.style.cssText = 'display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:20px;';
+  
   var commentTitle = document.createElement('h3');
-  commentTitle.style.cssText = 'margin-bottom:20px; font-size:1.1rem; font-weight:700; color:var(--s12);';
-  commentTitle.textContent = 'Thảo luận (2)';
-  commentSection.appendChild(commentTitle);
+  commentTitle.style.cssText = 'font-size:1.1rem; font-weight:700; color:var(--s12); margin:0; white-space:nowrap;';
+  commentTitle.id = 'comment-title';
+  commentTitle.textContent = '' + tr('knowledge.discussion', 'Thảo luận') + ' (0)';
+  commentTitleContainer.appendChild(commentTitle);
+
+  var sortSelect = document.createElement('input');
+  sortSelect.type = 'hidden';
+  sortSelect.id = 'comment-sort-select';
+  sortSelect.value = 'relevant';
+  commentTitleContainer.appendChild(sortSelect);
+
+  var sortDropdownContainer = document.createElement('div');
+  sortDropdownContainer.style.cssText = 'position: relative; font-size: 0.85rem; user-select: none; z-index: 10;';
+
+  var sortTrigger = document.createElement('div');
+  sortTrigger.id = 'comment-sort-trigger';
+  sortTrigger.style.cssText = 'padding: 6px 12px; border-radius: 6px; border: 1px solid var(--s3); background: var(--s1); color: var(--s12); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;';
+  sortTrigger.innerHTML = '<span>' + tr('knowledge.top_comments', 'Nổi bật nhất') + '</span> <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; color: var(--s9);"></i>';
+  
+  var sortMenu = document.createElement('div');
+  sortMenu.style.cssText = 'position: absolute; top: 100%; right: 0; margin-top: 4px; width: 160px; background: var(--s1); border: 1px solid var(--s3); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 4px; display: none; flex-direction: column; gap: 2px;';
+  
+  var sortOptions = [
+    { value: 'relevant', label: tr('knowledge.top_comments', 'Nổi bật nhất') },
+    { value: 'latest', label: tr('knowledge.newest', 'Mới nhất') }
+  ];
+
+  function renderSortMenu() {
+    sortMenu.innerHTML = '';
+    sortOptions.forEach(function(opt) {
+      var item = document.createElement('div');
+      var isSelected = sortSelect.value === opt.value;
+      item.style.cssText = 'padding: 8px 12px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s; font-weight: ' + (isSelected ? '600' : '400') + '; color: ' + (isSelected ? 'var(--b9)' : 'var(--s11)') + '; background: ' + (isSelected ? 'rgba(59, 130, 246, 0.05)' : 'transparent') + ';';
+      item.innerHTML = '<span>' + opt.label + '</span>' + (isSelected ? '<i class="fa-solid fa-check" style="font-size:0.8rem;"></i>' : '');
+      
+      item.onmouseover = function() { if(!isSelected) item.style.background = 'var(--s3)'; item.style.color = 'var(--s12)'; };
+      item.onmouseout = function() { if(!isSelected) item.style.background = 'transparent'; item.style.color = isSelected ? 'var(--b9)' : 'var(--s11)'; };
+      
+      item.onclick = function() {
+        sortSelect.value = opt.value;
+        sortTrigger.querySelector('span').textContent = opt.label;
+        sortMenu.style.display = 'none';
+        renderSortMenu(); 
+        loadComments();
+      };
+      sortMenu.appendChild(item);
+    });
+  }
+
+  sortTrigger.onclick = function(e) {
+    e.stopPropagation();
+    sortMenu.style.display = sortMenu.style.display === 'none' ? 'flex' : 'none';
+  };
+
+  document.addEventListener('click', function(e) {
+    if (!sortDropdownContainer.contains(e.target)) {
+      sortMenu.style.display = 'none';
+    }
+  });
+
+  renderSortMenu();
+  sortDropdownContainer.appendChild(sortTrigger);
+  sortDropdownContainer.appendChild(sortMenu);
+  
+  commentTitleContainer.appendChild(sortDropdownContainer);
+
+  commentSection.appendChild(commentTitleContainer);
+
+  // Reply state
+  var _replyParentId = window._savedReplyParentId || null;
 
   // Editor
   var editor = document.createElement('div');
   editor.style.cssText = 'margin-bottom:30px; border:1px solid var(--s3); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column;';
 
+  // Reply indicator
+  var replyIndicator = document.createElement('div');
+  replyIndicator.id = 'reply-indicator';
+  replyIndicator.style.cssText = 'display:none; padding:8px 14px; background:rgba(59,130,246,0.08); color:var(--b9); font-size:0.85rem; border-bottom:1px solid var(--s3); justify-content:space-between; align-items:center;';
+  editor.appendChild(replyIndicator);
+
+  if (_replyParentId && window._savedReplyAuthorName) {
+    replyIndicator.style.display = 'flex';
+    replyIndicator.innerHTML = '<span><i class="fa-solid fa-reply"></i> ' + tr('knowledge.replying_to', 'Đang phản hồi <b>{name}</b>').replace('{name}', window._savedReplyAuthorName) + '</span>' +
+      '<span style="cursor:pointer; font-size:18px;" onclick="window._cancelReply()">&times;</span>';
+  }
+
+  // Toolbar
   var toolbar = document.createElement('div');
-  toolbar.style.cssText = 'display:flex; gap:16px; padding:8px 14px; border-bottom:1px solid var(--s3); background:var(--s2); color:var(--s10); font-size:15px;';
-  var tools = ['fa-bold', 'fa-italic', 'fa-link', 'fa-list-ul', 'fa-list-ol', 'fa-code'];
-  tools.forEach(function(icon) {
-    var btn = document.createElement('i');
-    btn.className = 'fa-solid ' + icon;
-    btn.style.cssText = 'cursor:pointer; transition:color 0.2s;';
-    btn.onmouseover = function() { this.style.color = 'var(--s12)'; };
-    btn.onmouseout = function() { this.style.color = 'var(--s10)'; };
-    toolbar.appendChild(btn);
+  toolbar.style.cssText = 'background: var(--s2); border-bottom: 1px solid var(--s3); padding: 6px 12px; display: flex; gap: 2px; align-items: center;';
+  var tbBtns = [
+    { icon: 'fa-bold', title: 'In đậm (Ctrl+B)', cmd: 'bold' },
+    { icon: 'fa-italic', title: 'In nghiêng (Ctrl+I)', cmd: 'italic' },
+    null,
+    { icon: 'fa-square-root-variable', title: 'Công thức Toán (LaTeX)', cmd: 'math' }
+  ];
+  tbBtns.forEach(function(btn) {
+    if (!btn) {
+      var sep = document.createElement('div');
+      sep.style.cssText = 'width:1px; height:16px; background:var(--s3); margin:0 6px;';
+      toolbar.appendChild(sep);
+      return;
+    }
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.title = btn.title;
+    b.style.cssText = 'border:none; background:transparent; cursor:pointer; color:var(--s11); font-size:14px; padding:5px 8px; border-radius:4px; transition:background 0.15s;';
+    b.innerHTML = '<i class="fa-solid ' + btn.icon + '"></i>';
+    b.onmouseenter = function(){ this.style.background = 'var(--s3)'; };
+    b.onmouseleave = function(){ this.style.background = 'transparent'; };
+    b.onclick = function(e) {
+      e.preventDefault();
+      var ta = document.getElementById('comment-textarea');
+      if (!ta) return;
+      ta.focus();
+      if (btn.cmd === 'math') {
+        document.execCommand('insertText', false, '\\(  \\)');
+      } else {
+        document.execCommand(btn.cmd, false, null);
+      }
+    };
+    toolbar.appendChild(b);
   });
   editor.appendChild(toolbar);
 
-  var textarea = document.createElement('textarea');
-  textarea.placeholder = 'Viết bình luận...';
-  textarea.style.cssText = 'width:100%; height:100px; padding:14px; border:none; outline:none; resize:vertical; font-family:var(--font); font-size:0.95rem; color:var(--s12); background:var(--s1); line-height:1.5;';
+  var ceStyle = document.createElement('style');
+  ceStyle.innerHTML = '[contenteditable="true"]:empty:before { content: attr(data-placeholder); color: var(--s9); pointer-events: none; display: block; }';
+  document.head.appendChild(ceStyle);
+
+  var textarea = document.createElement('div');
+  textarea.id = 'comment-textarea';
+  textarea.contentEditable = true;
+  textarea.setAttribute('data-placeholder', _replyParentId ? (tr('knowledge.reply_to', 'Phản hồi ') + window._savedReplyAuthorName + '...') : tr('knowledge.write_comment', 'Viết bình luận hoặc đặt câu hỏi...'));
+  textarea.style.cssText = 'width:100%; min-height:100px; max-height:300px; overflow-y:auto; padding:14px; border:none; outline:none; font-family:var(--font); font-size:0.95rem; color:var(--s12); background:var(--s1); line-height:1.5; box-sizing:border-box;';
+  if (window._savedCommentText) textarea.innerHTML = window._savedCommentText;
+  textarea.oninput = function() { window._savedCommentText = this.innerHTML; };
   editor.appendChild(textarea);
 
   var editorFooter = document.createElement('div');
   editorFooter.style.cssText = 'padding:10px 12px; display:flex; justify-content:flex-end; border-top:1px solid var(--s3); background:var(--s2);';
   var sendBtn = document.createElement('button');
-  sendBtn.className = 'btn btn-primary';
-  sendBtn.textContent = 'Gửi bình luận';
-  sendBtn.onclick = function() { alert('Đã gửi!'); };
+  sendBtn.style.cssText = 'background:#3b82f6; color:#fff; border:none; padding:8px 18px; border-radius:6px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s;';
+  sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"\></i> ' + tr('knowledge.send_comment', 'Gửi bình luận');
+  sendBtn.onmouseenter = function(){ this.style.background='#2563eb'; this.style.transform='translateY(-1px)'; };
+  sendBtn.onmouseleave = function(){ this.style.background='#3b82f6'; this.style.transform=''; };
+  
+  function _doSendComment() {
+    var content = textarea.innerHTML;
+    // Strip trailing brs which some browsers inject
+    content = content.replace(/<br>$/, '').trim();
+    if (!content) return;
+    var token = localStorage.getItem('user_token');
+    if (!token) { (window.App && window.App.showToast ? window.App.showToast('Vui lòng đăng nhập để bình luận.', 'warning') : alert('Vui lòng đăng nhập để bình luận.')); return; }
+    
+    // Loading state
+    var origHTML = sendBtn.innerHTML;
+    sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + tr('knowledge.sending', 'Đang gửi...');
+    sendBtn.disabled = true;
+    sendBtn.style.opacity = '0.7';
+    
+    var currentTopicId = 't1';
+    var tNode = AppState.path.find(n => n.type === 'topic');
+    if (tNode) currentTopicId = tNode.id;
+
+    var bodyPayload = { 
+      topic_id: currentTopicId,
+      order_index: lesson.num,
+      content: content 
+    };
+    if (_replyParentId) bodyPayload.parent_id = _replyParentId;
+    
+    fetch(App.API_BASE + '/api/comment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(bodyPayload)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      sendBtn.innerHTML = '<i class="fa-solid fa-check"></i> ' + tr('knowledge.sent', 'Đã gửi!');
+      sendBtn.style.background = '#22c55e';
+      setTimeout(function(){
+        sendBtn.innerHTML = origHTML;
+        sendBtn.disabled = false;
+        sendBtn.style.opacity = '1';
+        sendBtn.style.background = '#3b82f6';
+      }, 1200);
+      if (data.success) {
+        textarea.innerHTML = '';
+        _replyParentId = null;
+        replyIndicator.style.display = 'none';
+        loadComments();
+      } else {
+        (window.App && window.App.showToast ? window.App.showToast(data.message || 'Lỗi khi ' + tr('knowledge.send_comment', 'Gửi bình luận') + '', 'warning') : alert(data.message || 'Lỗi khi ' + tr('knowledge.send_comment', 'Gửi bình luận') + ''));
+      }
+    })
+    .catch(function(err){
+      console.error(err);
+      sendBtn.innerHTML = origHTML;
+      sendBtn.disabled = false;
+      sendBtn.style.opacity = '1';
+    });
+  }
+  sendBtn.onclick = _doSendComment;
   editorFooter.appendChild(sendBtn);
   editor.appendChild(editorFooter);
-
   commentSection.appendChild(editor);
 
-  // Mock comments
-  var comments = document.createElement('div');
-  comments.style.cssText = 'display:flex; flex-direction:column; gap:20px;';
-
-  comments.innerHTML = '<div style="display:flex; gap:12px;"><div style="width:36px; height:36px; border-radius:50%; background:var(--b9); color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.85rem; flex-shrink:0;">A</div><div><div style="display:flex; gap:8px; align-items:baseline; margin-bottom:5px;"><span style="font-weight:600; color:var(--s12); font-size:0.95rem;">An Nguyễn</span><span style="font-size:0.8rem; color:var(--s9);">2 giờ trước</span></div><p style="font-size:0.9rem; color:var(--s11); line-height:1.5; margin:0 0 8px;">Đoạn giải thích về hệ tọa độ rất hay. Mình thắc mắc nếu trục Z bị lật ngược thì ma trận biến đổi sẽ thay đổi dấu ở các phần tử nào?</p><div style="display:flex; gap:12px; font-size:0.8rem; color:var(--s9);"><span style="cursor:pointer;">▲ 12</span><span style="cursor:pointer;">Phản hồi</span></div><div style="display:flex; gap:12px; margin-top:12px; padding-left:12px; border-left:2px solid var(--s3);"><div style="width:30px; height:30px; border-radius:50%; background:var(--green); color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.75rem; flex-shrink:0;">B</div><div><div style="display:flex; gap:8px; align-items:baseline; margin-bottom:5px;"><span style="font-weight:600; color:var(--s12); font-size:0.9rem;">Bình Trần</span><span style="font-size:0.8rem; color:var(--s9);">30 phút trước</span></div><p style="font-size:0.9rem; color:var(--s11); line-height:1.5; margin:0;">Khi lật trục Z, ma trận biến đổi sẽ bị đảo dấu toàn bộ cột thứ 3 nhé bạn.</p></div></div></div></div>';
-
-  commentSection.appendChild(comments);
+  var commentsContainer = document.createElement('div');
+  commentsContainer.id = 'comments-container';
+  commentsContainer.style.cssText = 'display:flex; flex-direction:column; gap:20px;';
+  commentSection.appendChild(commentsContainer);
   c.appendChild(commentSection);
+  
+  function formatTime(isoString) {
+    if (!isoString) return '';
+    // Nếu chuỗi thời gian không có định dạng múi giờ (Z hoặc +00:00), mặc định ép về UTC
+    if (!isoString.endsWith('Z') && !isoString.match(/[+\-]\d{2}:\d{2}$/)) {
+      isoString += 'Z';
+    }
+    var d = new Date(isoString);
+    var now = new Date();
+    var diffMs = now - d;
+    var diffSec = Math.floor(diffMs / 1000);
+    var diffMin = Math.floor(diffSec / 60);
+    var diffHour = Math.floor(diffMin / 60);
+    var diffDay = Math.floor(diffHour / 24);
+    var diffMonth = Math.floor(diffDay / 30);
+    var diffYear = Math.floor(diffDay / 365);
+
+    if (diffSec < 60) return 'Vừa xong';
+    if (diffMin < 60) return diffMin + tr('knowledge.minutes_ago', ' phút trước');
+    if (diffHour < 24) return diffHour + tr('knowledge.hours_ago', ' giờ trước');
+    if (diffDay < 30) return diffDay + tr('knowledge.days_ago', ' ngày trước');
+    if (diffMonth < 12) return diffMonth + ' tháng trước';
+    return diffYear + ' năm trước';
+  }
+  
+  function getAvatarColor(name) {
+    var colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
+    var hash = 0;
+    for (var i = 0; i < name.length; i++) { hash = name.charCodeAt(i) + ((hash << 5) - hash); }
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  function renderContent(raw) {
+    var s = raw.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // Support legacy tags just in case
+    s = s.replace(/&lt;b&gt;(.*?)&lt;\/b&gt;/g, '<b>$1</b>');
+    s = s.replace(/&lt;i&gt;(.*?)&lt;\/i&gt;/g, '<i>$1</i>');
+    s = s.replace(/&lt;code&gt;(.*?)&lt;\/code&gt;/g, '<code style="background:var(--s2); padding:2px 5px; border-radius:3px; font-family:monospace; font-size:0.85em;">$1</code>');
+    
+    // Support WYSIWYG generated tags
+    s = s.replace(/&lt;strong&gt;(.*?)&lt;\/strong&gt;/gi, '<b>$1</b>');
+    s = s.replace(/&lt;em&gt;(.*?)&lt;\/em&gt;/gi, '<i>$1</i>');
+    s = s.replace(/&lt;br\/?&gt;/gi, '<br>');
+    s = s.replace(/&lt;div&gt;(.*?)&lt;\/div&gt;/gi, '<div>$1</div>');
+    
+    // Support markdown
+    s = s.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    s = s.replace(/\*(.*?)\*/g, '<i>$1</i>');
+    s = s.replace(/`(.*?)`/g, '<code style="background:var(--s2); padding:2px 5px; border-radius:3px; font-family:monospace; font-size:0.85em;">$1</code>');
+    return s;
+  }
+
+  function loadComments() {
+    var currentTopicId = 't1';
+    var tNode = AppState.path.find(n => n.type === 'topic');
+    if (tNode) currentTopicId = tNode.id;
+    
+    fetch(App.API_BASE + '/api/comment/topic/' + currentTopicId + '/lesson/' + lesson.num + '?sort=' + (document.getElementById('comment-sort-select') ? document.getElementById('comment-sort-select').value : 'latest'), {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('user_token') }
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.success) {
+          var rootComments = data.comments;
+          var totalComments = rootComments.length;
+          rootComments.forEach(function(c){ totalComments += (c.replies ? c.replies.length : 0); });
+          document.getElementById('comment-title').textContent = tr('knowledge.discussion', 'Thảo luận') + ' (' + totalComments + ')';
+          
+          var globalPin = null;
+          var maxRootUpvotes = -1;
+          var pinIndex = -1;
+          for (var i = 0; i < rootComments.length; i++) {
+            var upvotes = rootComments[i].upvote_count || 0;
+            if (upvotes >= 3 && upvotes > maxRootUpvotes) {
+              globalPin = rootComments[i];
+              maxRootUpvotes = upvotes;
+              pinIndex = i;
+            }
+          }
+          if (pinIndex > -1) {
+             rootComments.splice(pinIndex, 1);
+             rootComments.unshift(globalPin); // Put it at the beginning
+          }
+
+          var html = '';
+          rootComments.forEach(function(pc, idx){
+            var isGlobalPin = (pinIndex > -1 && idx === 0);
+            var ui = pc.author_name ? pc.author_name.charAt(0).toUpperCase() : 'U';
+            var uColor = getAvatarColor(pc.author_name || 'User');
+            var pAvatarHtml = pc.avatar_url 
+              ? '<div style="width:36px; height:36px; border-radius:50%; background-image:url('+pc.avatar_url+'); background-size:cover; background-position:center; flex-shrink:0;"></div>' 
+              : '<div style="width:36px; height:36px; border-radius:50%; background:' + uColor + '; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.85rem; flex-shrink:0;">' + ui + '</div>';
+            
+            var pinContainerStyle = isGlobalPin ? 'position: relative; background: rgba(59, 130, 246, 0.05); border: 1px solid var(--b9); border-radius: 8px; margin-bottom: 24px; padding: 16px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);' : 'position: relative; margin-bottom: 24px;';
+            var pinIcon = isGlobalPin ? '<div style="position: absolute; top: 16px; right: 16px; color: var(--b9); font-size: 1.2rem; opacity: 0.8;" title="Top Comment"><i class="fa-solid fa-award"></i></div>' : '';
+
+            html += '<div style="' + pinContainerStyle + '">' +
+              pinIcon +
+              '<div style="display:flex; gap:12px;">' +
+                pAvatarHtml +
+                '<div style="flex-grow:1;">' +
+                  '<div style="display:flex; gap:8px; align-items:baseline; margin-bottom:5px;">' +
+                    '<span style="font-weight:600; color:var(--s12); font-size:0.95rem;">' + pc.author_name + '</span>' +
+                  '</div>' +
+                  '<div class="comment-text-content" style="font-size:0.9rem; color:var(--s11); line-height:1.5; margin:0 0 8px; display: block; max-height: 130px; overflow: hidden; word-break: break-word;">' + renderContent(pc.content) + '</div>' +
+                  '<div style="display:flex; gap:12px; font-size:0.8rem; color:var(--s9); align-items:center;">' +
+                    '<span>' + formatTime(pc.created_at) + '</span>' +
+                    '<span id="upvote-btn-' + pc.id + '" style="cursor:pointer; transition:color 0.15s; ' + (pc.is_upvoted_by_me ? 'color:var(--b9); font-weight:bold;' : '') + '" onclick="window._toggleUpvote(\'' + pc.id + '\')">' +
+                      '<i class="fa-solid fa-arrow-up" style="margin-right:4px;"></i><span id="upvote-count-' + pc.id + '">' + (pc.upvote_count || 0) + '</span></span>' +
+                    '<span style="cursor:pointer; transition:color 0.15s;" onmouseover="this.style.color=\'var(--b9)\'" onmouseout="this.style.color=\'\'" onclick="window._startReply(\'' + pc.id + '\',\'' + pc.author_name.replace(/'/g,"") + '\')">' +
+                      '<i class="fa-solid fa-reply" style="margin-right:4px;"></i>' + tr('knowledge.reply', 'Phản hồi') + '</span>' +
+                  '</div>';
+            
+            if (pc.replies && pc.replies.length > 0) {
+              html += '<div style="margin-top:12px; font-size:0.85rem; font-weight:600; color:var(--b9); cursor:pointer; display:inline-flex; align-items:center; gap:6px; user-select:none;" onclick="window._toggleReplies(\'' + pc.id + '\')"><i class="fa-solid fa-chevron-down" id="reply-icon-' + pc.id + '"></i> ' + tr('knowledge.view_replies', 'Xem {count} phản hồi').replace('{count}', pc.replies.length) + '</div>';
+              html += '<div id="replies-container-' + pc.id + '" style="display:none; padding-top:4px;">';
+              pc.replies.sort(function(a,b){ return (b.upvote_count||0) - (a.upvote_count||0); });
+              pc.replies.forEach(function(cc){
+                var ci = cc.author_name ? cc.author_name.charAt(0).toUpperCase() : 'U';
+                var cColor = getAvatarColor(cc.author_name || 'User');
+                var cAvatarHtml = cc.avatar_url 
+                  ? '<div style="width:30px; height:30px; border-radius:50%; background-image:url('+cc.avatar_url+'); background-size:cover; background-position:center; flex-shrink:0;"></div>' 
+                  : '<div style="width:30px; height:30px; border-radius:50%; background:' + cColor + '; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.75rem; flex-shrink:0;">' + ci + '</div>';
+                
+                html += '<div style="display:flex; gap:12px; margin-top:12px; border-left: 2px solid var(--s3); padding-left: 12px;">' +
+                  cAvatarHtml +
+                  '<div>' +
+                    '<div style="display:flex; gap:8px; align-items:baseline; margin-bottom:5px;">' +
+                      '<span style="font-weight:600; color:var(--s12); font-size:0.9rem;">' + cc.author_name + '</span>' +
+                    '</div>' +
+                    '<div class="comment-text-content" style="font-size:0.9rem; color:var(--s11); line-height:1.5; margin:0 0 8px; display: block; max-height: 130px; overflow: hidden; word-break: break-word;">' + renderContent(cc.content) + '</div>' +
+                    '<div style="display:flex; gap:12px; font-size:0.8rem; color:var(--s9); align-items:center;">' +
+                      '<span>' + formatTime(cc.created_at) + '</span>' +
+                      '<span id="upvote-btn-' + cc.id + '" style="cursor:pointer; transition:color 0.15s; ' + (cc.is_upvoted_by_me ? 'color:var(--b9); font-weight:bold;' : '') + '" onclick="window._toggleUpvote(\'' + cc.id + '\')">' +
+                        '<i class="fa-solid fa-arrow-up" style="margin-right:4px;"></i><span id="upvote-count-' + cc.id + '">' + (cc.upvote_count || 0) + '</span></span>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>';
+              });
+              html += '</div>';
+            }
+            html += '</div></div></div>';
+          });
+          
+          document.getElementById('comments-container').innerHTML = html || '<p style="color:var(--s9); font-size:0.9rem;">' + tr('knowledge.no_comments', 'Chưa có bình luận nào') + '</p>';
+          
+          setTimeout(function() {
+            var contents = document.querySelectorAll('.comment-text-content');
+            contents.forEach(function(el) {
+              if (el.scrollHeight > el.clientHeight + 5) {
+                var btn = document.createElement('div');
+                btn.innerHTML = tr('knowledge.see_more', 'Xem thêm');
+                btn.style.cssText = 'color: var(--b9); cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; display: inline-block;';
+                el.parentNode.insertBefore(btn, el.nextSibling);
+                
+                var isExpanded = false;
+                btn.onclick = function() {
+                  if (!isExpanded) {
+                    el.style.maxHeight = 'none';
+                    btn.innerHTML = tr('knowledge.collapse', 'Thu gọn');
+                  } else {
+                    el.style.maxHeight = '130px';
+                    btn.innerHTML = tr('knowledge.see_more', 'Xem thêm');
+                    // Scroll back a bit if needed, but usually fine
+                  }
+                  isExpanded = !isExpanded;
+                };
+              }
+            });
+          }, 50);
+        }
+      })
+      .catch(function(err){ console.error(err); });
+  }
+  
+  window._toggleReplies = function(id) {
+    var c = document.getElementById('replies-container-' + id);
+    var i = document.getElementById('reply-icon-' + id);
+    if (c) {
+      if (c.style.display === 'none') {
+        c.style.display = 'block';
+        if (i) i.className = 'fa-solid fa-chevron-up';
+      } else {
+        c.style.display = 'none';
+        if (i) i.className = 'fa-solid fa-chevron-down';
+      }
+    }
+  };
+
+  // Reply: scroll to main textarea & set parent
+  window._startReply = function(parentId, authorName) {
+    var repContainer = document.getElementById('replies-container-' + parentId);
+    if (repContainer && repContainer.style.display === 'none') {
+      window._toggleReplies(parentId);
+    }
+    
+    _replyParentId = parentId;
+    window._savedReplyParentId = parentId;
+    window._savedReplyAuthorName = authorName;
+    replyIndicator.style.display = 'flex';
+    replyIndicator.innerHTML = '<span><i class="fa-solid fa-reply"></i> ' + tr('knowledge.replying_to', 'Đang phản hồi <b>{name}</b>').replace('{name}', authorName) + '</span>' +
+      '<span style="cursor:pointer; font-size:18px;" onclick="window._cancelReply()">&times;</span>';
+    textarea.setAttribute('data-placeholder', tr('knowledge.reply_to', 'Phản hồi ') + authorName + '...');
+    textarea.focus();
+    editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+  window._cancelReply = function() {
+    _replyParentId = null;
+    window._savedReplyParentId = null;
+    window._savedReplyAuthorName = null;
+    replyIndicator.style.display = 'none';
+    textarea.setAttribute('data-placeholder', tr('knowledge.write_comment', 'Viết bình luận hoặc đặt câu hỏi...'));
+  };
+  
+  window._toggleUpvote = function(commentId) {
+    var btn = document.getElementById('upvote-btn-' + commentId);
+    var countSpan = document.getElementById('upvote-count-' + commentId);
+    if (!btn || !countSpan) return;
+
+    var isUpvoted = btn.style.color === 'var(--b9)';
+    var currentCount = parseInt(countSpan.textContent) || 0;
+
+    // Optimistic UI Update (Phản hồi tức thì)
+    if (isUpvoted) {
+      btn.style.color = '';
+      btn.style.fontWeight = 'normal';
+      countSpan.textContent = currentCount - 1;
+    } else {
+      btn.style.color = 'var(--b9)';
+      btn.style.fontWeight = 'bold';
+      countSpan.textContent = currentCount + 1;
+    }
+
+    fetch(App.API_BASE + '/api/comment/upvote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('user_token') },
+      body: JSON.stringify({ comment_id: parseInt(commentId) })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if(data.success) {
+        loadComments(); // reload to update UI easily
+      } else {
+        (window.App && window.App.showToast ? window.App.showToast(data.message || 'Lỗi khi thả upvote', 'warning') : alert(data.message || 'Lỗi khi thả upvote'));
+      }
+    })
+    .catch(e => console.error(e));
+  };
+  
+  loadComments();
+
+
 
   // Scroll progress
   var scrollContainer = document.getElementById('dd-scroll-container');
@@ -986,9 +1830,1043 @@ function renderLesson(c, lesson) {
     scrollContainer.onscroll = function() {
       var st = scrollContainer.scrollTop;
       var sh = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-      if (sh > 0) { prog.style.width = ((st / sh) * 100) + '%'; }
+      var progElement = document.getElementById('prog');
+      if (sh > 0 && progElement) { progElement.style.width = ((st / sh) * 100) + '%'; }
     };
   }
+}
+
+// ---------- QUIZ SETUP ----------
+function renderQuizSetup(c) {
+  c.innerHTML = '';
+
+  var h = document.createElement('h1');
+  h.className = 'view-title';
+  h.textContent = 'Tạo bộ đề';
+  c.appendChild(h);
+
+  var desc = document.createElement('p');
+  desc.className = 'view-desc';
+  desc.textContent = 'Chọn chủ đề, độ khó và chế độ làm ' + tr('knowledge.lesson_prefix', 'Bài') + ' phù hợp.';
+  c.appendChild(desc);
+
+  var hr = document.createElement('div');
+  hr.style.cssText = 'border-bottom:1px solid var(--s3); margin:20px 0 28px;';
+  c.appendChild(hr);
+
+  var form = document.createElement('div');
+  form.style.cssText = 'max-width:640px;';
+  c.appendChild(form);
+
+  // --- Phạm vi kiến thức ---
+  var topicLabel = document.createElement('div');
+  topicLabel.className = 'side-label';
+  topicLabel.textContent = 'PHẠM VI KIẾN THỨC';
+  topicLabel.style.cssText = 'padding:0; margin-bottom:12px; font-size:0.7rem; letter-spacing:0.05em;';
+  form.appendChild(topicLabel);
+
+  var treeContainer = document.createElement('div');
+  treeContainer.style.cssText = 'border:1px solid var(--s3); border-radius:var(--radius); padding:12px; margin-bottom:28px; max-height: 400px; overflow-y: auto; background: var(--s2); display: flex; flex-direction: column; gap: 8px;';
+  form.appendChild(treeContainer);
+
+  var selectedTopics = {};
+  var selectedLessons = {};
+  
+  function fetchMaxQuestions(callback) {
+      var topics = Object.keys(selectedTopics);
+      var lessons = Object.keys(selectedLessons);
+      var token = localStorage.getItem('user_token');
+      
+      if (!token) return;
+
+      fetch(App.API_BASE + '/api/quiz/available-count', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({
+          selected_topics: topics,
+          selected_lessons: lessons,
+          difficulty_config: typeof selectedDiff !== 'undefined' ? selectedDiff.value : 'MIXED'
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success && callback) {
+          callback(data.count);
+        }
+      }).catch(function(e){});
+  }
+
+  if (typeof MOCK_LIBRARY_DATA !== 'undefined' && MOCK_LIBRARY_DATA.topics) {
+    MOCK_LIBRARY_DATA.topics.forEach(function(topic) {
+      var details = document.createElement('details');
+      // details.open = false; // default closed to keep it neat
+      details.style.cssText = 'background: var(--s1); border: 1px solid var(--s3); border-radius: 6px; padding: 4px 8px;';
+      
+      var summary = document.createElement('summary');
+      summary.style.cssText = 'font-weight: 600; font-size: 0.9rem; color: var(--s11); cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 4px 0; user-select: none; list-style: none;';
+      
+      var topicCheckbox = document.createElement('input');
+      topicCheckbox.type = 'checkbox';
+      topicCheckbox.id = 'chk_' + topic.id;
+      topicCheckbox.style.cssText = 'margin: 0; width: 16px; height: 16px; cursor: pointer; flex-shrink: 0;';
+      
+      var topicText = document.createElement('span');
+      topicText.textContent = tr('library_terms.' + topic.id, topic.title).replace(/^\d+\.\s*/, '');
+      topicText.style.cssText = 'flex-grow: 1;';
+
+      // Small dropdown arrow indicator
+      var arrow = document.createElement('i');
+      arrow.className = 'fa-solid fa-chevron-down';
+      arrow.style.cssText = 'font-size: 0.7rem; color: var(--s8); transition: transform 0.2s;';
+      
+      summary.appendChild(topicCheckbox);
+      summary.appendChild(topicText);
+      summary.appendChild(arrow);
+      
+      details.addEventListener('toggle', function() {
+        arrow.style.transform = details.open ? 'rotate(180deg)' : 'rotate(0deg)';
+      });
+
+      details.appendChild(summary);
+
+      var sectionsContainer = document.createElement('div');
+      sectionsContainer.style.cssText = 'padding: 8px 0 8px 24px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--s3); margin-top: 4px;';
+
+      var lessonCheckboxes = [];
+
+      if (topic.sections) {
+        topic.sections.forEach(function(section) {
+          var secDetails = document.createElement('details');
+          secDetails.open = false; // Closed by default
+          secDetails.style.cssText = 'margin-top: 6px; border-bottom: 1px solid var(--s3); padding-bottom: 6px;';
+          
+          var secSummary = document.createElement('summary');
+          secSummary.style.cssText = 'display:flex; align-items:center; gap:8px; cursor: pointer; list-style: none; user-select: none; padding: 4px 0;';
+          
+          var secArrow = document.createElement('i');
+          secArrow.className = 'fa-solid fa-chevron-right';
+          secArrow.style.cssText = 'font-size: 0.6rem; color: var(--s8); transition: transform 0.2s; width: 12px; text-align: center;';
+          
+          var secCheckbox = document.createElement('input');
+          secCheckbox.type = 'checkbox';
+          secCheckbox.style.cssText = 'margin: 0; width: 14px; height: 14px; cursor: pointer; flex-shrink: 0;';
+          secCheckbox.addEventListener('click', function(e) { e.stopPropagation(); });
+
+          var secLabel = document.createElement('span');
+          secLabel.textContent = tr('library_terms.' + section.id, section.title);
+          secLabel.style.cssText = 'font-weight: 500; font-size: 0.85rem; color: var(--s9);';
+          
+          secSummary.appendChild(secArrow);
+          secSummary.appendChild(secCheckbox);
+          secSummary.appendChild(secLabel);
+          secDetails.appendChild(secSummary);
+          
+          secDetails.addEventListener('toggle', function() {
+            secArrow.style.transform = secDetails.open ? 'rotate(90deg)' : 'rotate(0deg)';
+          });
+
+          var lessonsList = document.createElement('div');
+          lessonsList.style.cssText = 'display: flex; flex-direction: column; gap: 6px; padding-left: 36px; padding-top: 4px; padding-bottom: 8px;';
+          
+          var lessonCheckboxesInSection = [];
+
+          if (section.lessons) {
+            section.lessons.forEach(function(lesson) {
+              var lessLabel = document.createElement('label');
+              lessLabel.style.cssText = 'display: flex; align-items: flex-start; gap: 10px; font-size: 0.85rem; color: var(--s11); cursor: pointer; user-select: none; padding: 4px 0;';
+              
+              var lessCheckbox = document.createElement('input');
+              lessCheckbox.type = 'checkbox';
+              lessCheckbox.value = lesson.id;
+              lessCheckbox.dataset.topicId = topic.id;
+              lessCheckbox.style.cssText = 'margin: 2px 0 0 0; width: 14px; height: 14px; cursor: pointer; flex-shrink: 0;';
+              lessonCheckboxes.push(lessCheckbox);
+              lessonCheckboxesInSection.push(lessCheckbox);
+
+              var lessText = document.createElement('span');
+              lessText.textContent = tr('library_terms.' + lesson.id, lesson.title);
+              lessText.style.cssText = 'line-height: 1.4;';
+
+              lessCheckbox.addEventListener('change', function() {
+                 if (this.checked) {
+                   selectedLessons[lesson.id] = true;
+                   selectedTopics[topic.id] = true;
+                 } else {
+                   delete selectedLessons[lesson.id];
+                 }
+                 
+                 var allSecChecked = lessonCheckboxesInSection.every(cb => cb.checked);
+                 var anySecChecked = lessonCheckboxesInSection.some(cb => cb.checked);
+                 secCheckbox.checked = allSecChecked;
+                 secCheckbox.indeterminate = anySecChecked && !allSecChecked;
+
+                 var anyTopicChecked = lessonCheckboxes.some(cb => cb.checked);
+                 var allTopicChecked = lessonCheckboxes.every(cb => cb.checked);
+                 topicCheckbox.checked = anyTopicChecked;
+                 topicCheckbox.indeterminate = anyTopicChecked && !allTopicChecked;
+                 
+                 if (!anyTopicChecked) {
+                   delete selectedTopics[topic.id];
+                 }
+              });
+
+              lessLabel.appendChild(lessCheckbox);
+              lessLabel.appendChild(lessText);
+              lessonsList.appendChild(lessLabel);
+            });
+          }
+
+          secCheckbox.addEventListener('change', function() {
+            var isChecked = this.checked;
+            this.indeterminate = false;
+            lessonCheckboxesInSection.forEach(function(cb) {
+              if (cb.checked !== isChecked) {
+                cb.checked = isChecked;
+                cb.dispatchEvent(new Event('change'));
+              }
+            });
+          });
+          
+          secDetails.appendChild(lessonsList);
+          sectionsContainer.appendChild(secDetails);
+        });
+      }
+
+      topicCheckbox.addEventListener('change', function() {
+        var isChecked = this.checked;
+        this.indeterminate = false;
+        lessonCheckboxes.forEach(function(cb) {
+          if (cb.checked !== isChecked) {
+            cb.checked = isChecked;
+            cb.dispatchEvent(new Event('change'));
+          }
+        });
+      });
+
+      // Prevent summary click when clicking checkbox
+      topicCheckbox.addEventListener('click', function(e) { e.stopPropagation(); });
+
+      details.appendChild(sectionsContainer);
+      treeContainer.appendChild(details);
+    });
+  }
+
+  var scopeBtnContainer = document.createElement('div');
+  scopeBtnContainer.style.cssText = 'display: flex; gap: 12px; margin-bottom: 28px; margin-top: -16px;';
+  form.appendChild(scopeBtnContainer);
+
+  var confirmScopeBtn = document.createElement('button');
+  confirmScopeBtn.textContent = 'Xác nhận phạm vi';
+  confirmScopeBtn.style.cssText = 'padding:10px 24px; border-radius:var(--radius); border:none; background:var(--b9); color:#fff; font-size:0.85rem; font-family:inherit; font-weight:600; cursor:pointer; transition:all 0.15s ease;';
+
+  var editScopeBtn = document.createElement('button');
+  editScopeBtn.textContent = 'Chỉnh sửa phạm vi';
+  editScopeBtn.style.cssText = 'padding:10px 24px; border-radius:var(--radius); border:1px solid var(--s4); background:transparent; color:var(--s11); font-size:0.85rem; font-family:inherit; font-weight:600; cursor:pointer; display:none;';
+
+  scopeBtnContainer.appendChild(confirmScopeBtn);
+  scopeBtnContainer.appendChild(editScopeBtn);
+
+  var step2Container = document.createElement('div');
+  form.appendChild(step2Container);
+
+  confirmScopeBtn.onclick = function() {
+    var topics = Object.keys(selectedTopics);
+    if (topics.length === 0) {
+      (window.App && window.App.showToast ? window.App.showToast('Vui lòng chọn ít nhất một chủ đề.', 'warning') : alert('Vui lòng chọn ít nhất một chủ đề.'));
+      return;
+    }
+    
+    treeContainer.style.pointerEvents = 'none';
+    treeContainer.style.opacity = '0.7';
+    confirmScopeBtn.textContent = 'Đang kiểm tra...';
+    confirmScopeBtn.disabled = true;
+    confirmScopeBtn.style.opacity = '0.6';
+
+    fetchMaxQuestions(function(maxQ) {
+      window.countSuffix.textContent = 'câu hỏi (Tối đa ' + maxQ + ' câu thỏa mãn)';
+      window.countInput.max = maxQ;
+      if (parseInt(window.countInput.value) > maxQ && maxQ > 0) {
+        window.countInput.value = maxQ;
+      }
+
+      confirmScopeBtn.style.display = 'none';
+      editScopeBtn.style.display = 'inline-block';
+      confirmScopeBtn.textContent = 'Xác nhận phạm vi';
+      confirmScopeBtn.disabled = false;
+      confirmScopeBtn.style.opacity = '1';
+    });
+  };
+
+  editScopeBtn.onclick = function() {
+    treeContainer.style.pointerEvents = 'auto';
+    treeContainer.style.opacity = '1';
+    editScopeBtn.style.display = 'none';
+    confirmScopeBtn.style.display = 'inline-block';
+  };
+
+  // --- Độ khó ---
+  var diffLabel = document.createElement('div');
+  diffLabel.className = 'side-label';
+  diffLabel.textContent = 'ĐỘ KHÓ';
+  diffLabel.style.cssText = 'padding:0; margin-bottom:12px; font-size:0.7rem; letter-spacing:0.05em;';
+  step2Container.appendChild(diffLabel);
+
+  var diffGrid = document.createElement('div');
+  diffGrid.style.cssText = 'display:flex; gap:12px; margin-bottom:28px;';
+  step2Container.appendChild(diffGrid);
+
+  var difficulties = [
+    { value: 'MIXED', label: 'Tổng hợp' },
+    { value: 'EASY', label: 'Dễ' },
+    { value: 'MEDIUM', label: 'Trung bình' },
+    { value: 'HARD', label: 'Khó' }
+  ];
+  var selectedDiff = { value: 'MIXED' };
+  window.selectedDiff = selectedDiff;
+  var diffBtns = [];
+
+  for (var d = 0; d < difficulties.length; d++) {
+    (function(diff, index) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = diff.label;
+      btn.style.cssText = 'padding:8px 16px; border-radius:var(--radius); border:1px solid var(--s3); background:var(--s2); color:var(--s9); font-size:0.82rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:500;';
+      if (index === 0) {
+        btn.style.background = 'var(--b9)';
+        btn.style.borderColor = 'var(--b9)';
+        btn.style.color = '#fff';
+      }
+      btn.onclick = function() {
+        selectedDiff.value = diff.value;
+        for (var x = 0; x < diffBtns.length; x++) {
+          diffBtns[x].style.background = 'var(--s2)';
+          diffBtns[x].style.borderColor = 'var(--s3)';
+          diffBtns[x].style.color = 'var(--s9)';
+        }
+        this.style.background = 'var(--b9)';
+        this.style.borderColor = 'var(--b9)';
+        this.style.color = '#fff';
+        fetchMaxQuestions(function(maxQ) {
+          window.countSuffix.textContent = 'câu hỏi (Tối đa ' + maxQ + ' câu thỏa mãn)';
+          window.countInput.max = maxQ;
+          if (parseInt(window.countInput.value) > maxQ && maxQ > 0) {
+            window.countInput.value = maxQ;
+          }
+        });
+      };
+      diffBtns.push(btn);
+      diffGrid.appendChild(btn);
+    })(difficulties[d], d);
+  }
+
+  // --- Số câu ---
+  var countLabel = document.createElement('div');
+  countLabel.className = 'side-label';
+  countLabel.textContent = 'SỐ CÂU HỎI';
+  countLabel.style.cssText = 'padding:0; margin-bottom:12px; font-size:0.7rem; letter-spacing:0.05em;';
+  step2Container.appendChild(countLabel);
+
+  var countGrid = document.createElement('div');
+  countGrid.style.cssText = 'display:flex; align-items:center; gap:12px; margin-bottom:28px;';
+  step2Container.appendChild(countGrid);
+
+  // Expose to global/closure so updateMaxQuestions can use them
+  window.countInput = document.createElement('input');
+  var countInput = window.countInput;
+  countInput.type = 'number';
+  countInput.min = 1;
+  countInput.max = 100;
+  countInput.value = 10;
+  countInput.style.cssText = 'padding:8px 12px; border-radius:var(--radius); border:1px solid var(--s3); background:var(--s2); color:var(--s11); font-size:0.9rem; font-family:inherit; width: 80px; text-align: center; font-weight: 600; outline: none;';
+  
+  window.countSuffix = document.createElement('span');
+  var countSuffix = window.countSuffix;
+  countSuffix.textContent = 'câu hỏi';
+  countSuffix.style.cssText = 'font-size: 0.85rem; color: var(--s9); font-weight: 500;';
+
+  countGrid.appendChild(countInput);
+  countGrid.appendChild(countSuffix);
+
+  // --- Thời gian ---
+  var timeLabel = document.createElement('div');
+  timeLabel.className = 'side-label';
+  timeLabel.textContent = 'THỜI GIAN';
+  timeLabel.style.cssText = 'padding:0; margin-bottom:12px; font-size:0.7rem; letter-spacing:0.05em;';
+  step2Container.appendChild(timeLabel);
+
+  var timeGrid = document.createElement('div');
+  timeGrid.style.cssText = 'display:flex; align-items:center; gap:12px; margin-bottom:28px;';
+  step2Container.appendChild(timeGrid);
+
+  var timeInput = document.createElement('input');
+  timeInput.type = 'number';
+  timeInput.min = 0;
+  timeInput.max = 180;
+  timeInput.value = 0;
+  timeInput.style.cssText = 'padding:8px 12px; border-radius:var(--radius); border:1px solid var(--s3); background:var(--s2); color:var(--s11); font-size:0.9rem; font-family:inherit; width: 80px; text-align: center; font-weight: 600; outline: none;';
+  
+  var timeSuffix = document.createElement('span');
+  timeSuffix.textContent = 'phút (0 = Không giới hạn)';
+  timeSuffix.style.cssText = 'font-size: 0.85rem; color: var(--s9); font-weight: 500;';
+
+  timeGrid.appendChild(timeInput);
+  timeGrid.appendChild(timeSuffix);
+
+  // --- Chế độ ---
+  var modeLabel = document.createElement('div');
+  modeLabel.className = 'side-label';
+  modeLabel.textContent = 'CHẾ ĐỘ LÀM BÀI';
+  modeLabel.style.cssText = 'padding:0; margin-bottom:12px; font-size:0.7rem; letter-spacing:0.05em;';
+  step2Container.appendChild(modeLabel);
+
+  var modeGrid = document.createElement('div');
+  modeGrid.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:36px;';
+  step2Container.appendChild(modeGrid);
+
+  var modes = [
+    { value: 'PRACTICE', label: 'Luyện tập', desc: 'Xem đáp án ngay sau mỗi câu', icon: 'fa-solid fa-dumbbell' },
+    { value: 'EXAM', label: 'Thi thật', desc: 'Nộp ' + tr('knowledge.lesson_prefix', 'Bài') + ' mới biết kết quả', icon: 'fa-solid fa-graduation-cap' }
+  ];
+  var selectedMode = { value: 'PRACTICE' };
+  var modeCards = [];
+
+  for (var m = 0; m < modes.length; m++) {
+    (function(mode, index) {
+      var card = document.createElement('div');
+      card.style.cssText = 'padding:16px; border-radius:var(--radius); border:1px solid var(--s3); background:var(--s2); cursor:pointer; transition:all 0.15s ease;';
+      if (index === 0) {
+        card.style.borderColor = 'var(--b9)';
+        card.style.background = 'var(--s1)';
+      }
+      card.innerHTML = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><i class="' + mode.icon + '" style="color:var(--s9);font-size:0.9rem;"></i><span style="font-weight:600;font-size:0.9rem;color:var(--s12);">' + mode.label + '</span></div><div style="font-size:0.78rem;color:var(--s9);line-height:1.4;">' + mode.desc + '</div>';
+      card.onclick = function() {
+        selectedMode.value = mode.value;
+        for (var x = 0; x < modeCards.length; x++) {
+          modeCards[x].style.borderColor = 'var(--s3)';
+          modeCards[x].style.background = 'var(--s2)';
+        }
+        this.style.borderColor = 'var(--b9)';
+        this.style.background = 'var(--s1)';
+      };
+      modeCards.push(card);
+      modeGrid.appendChild(card);
+    })(modes[m], m);
+  }
+
+  // --- Nút điều hướng & Xác nhận (Step 2) ---
+  var btnContainer = document.createElement('div');
+  btnContainer.style.cssText = 'display: flex; flex-direction: row; gap: 16px; margin-top: 24px; align-items: center; justify-content: flex-start; width: 100%;';
+  
+  var finalContainer = document.createElement('div');
+  finalContainer.style.cssText = 'display: none; flex-direction: row; gap: 40px; align-items: center; justify-content: space-between; margin-bottom: 24px; width: 100%; flex-wrap: wrap;';
+  
+  var summaryPanel = document.createElement('div');
+  summaryPanel.style.cssText = 'flex: 1; min-width: 300px; max-width: 450px; padding:32px 24px; border-radius:12px; background:var(--s2); color:var(--s11); font-size:0.95rem; line-height:1.8; border: 1px dashed var(--b9);';
+  
+  var illustration = document.createElement('img');
+  illustration.src = 'assets/quiz_illustration.jpg';
+  illustration.style.cssText = 'flex: 1; min-width: 250px; max-width: 400px; border-radius: 12px; object-fit: contain; mix-blend-mode: multiply;';
+  
+  finalContainer.appendChild(summaryPanel);
+  finalContainer.appendChild(illustration);
+  
+  step2Container.appendChild(finalContainer);
+  step2Container.appendChild(btnContainer);
+
+  var confirmBtn = document.createElement('button');
+  confirmBtn.textContent = 'Xác nhận thiết lập';
+  confirmBtn.style.cssText = 'padding:12px 32px; border-radius:var(--radius); border:none; background:var(--b9); color:#fff; font-size:1rem; font-family:inherit; font-weight:600; cursor:pointer; transition:all 0.15s ease; width: 100%;';
+  
+  var editBtn = document.createElement('button');
+  editBtn.textContent = 'Chỉnh sửa lại';
+  editBtn.style.cssText = 'padding:12px 24px; border-radius:var(--radius); border:1px solid var(--s4); background:transparent; color:var(--s11); font-size:1rem; font-family:inherit; font-weight:600; cursor:pointer; display:none; flex: 0 0 auto; margin: 0;';
+
+  var startBtn = document.createElement('button');
+  startBtn.textContent = 'Bắt đầu làm bài';
+  startBtn.style.cssText = 'padding:12px 32px; border-radius:var(--radius); border:none; background:var(--green-600, #16a34a); color:#fff; font-size:1rem; font-family:inherit; font-weight:600; cursor:pointer; display:none; flex: 0 0 auto; margin: 0; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);';
+  
+  btnContainer.appendChild(editBtn);
+  btnContainer.appendChild(startBtn);
+  btnContainer.appendChild(confirmBtn);
+
+  var sectionsToHide = [topicLabel, desc, hr, treeContainer, scopeBtnContainer, diffLabel, diffGrid, countLabel, countGrid, timeLabel, timeGrid, modeLabel, modeGrid];
+  if (typeof h !== 'undefined') sectionsToHide.push(h);
+
+  
+
+  confirmBtn.onclick = function() {
+    var topics = Object.keys(selectedTopics);
+    if (topics.length === 0) {
+      showToast('Vui lòng chọn ít nhất một chủ đề.');
+      return;
+    }
+    
+    sectionsToHide.forEach(el => el.style.display = 'none');
+    
+    var tCount = topics.length;
+    var lCount = Object.keys(selectedLessons).length;
+    var maxStr = window.countSuffix.textContent; 
+    var timeStr = timeInput.value == 0 ? 'Không giới hạn' : timeInput.value + ' phút';
+    var modeStr = selectedMode.value === 'PRACTICE' ? 'Luyện tập' : 'Thi thật';
+    var diffStr = selectedDiff.value === 'MIXED' ? 'Tổng hợp' : (selectedDiff.value === 'EASY' ? 'Dễ' : (selectedDiff.value === 'MEDIUM' ? 'Trung bình' : 'Khó'));
+
+    summaryPanel.innerHTML = `
+      <div style="font-weight:700; font-size:1.1rem; margin-bottom:16px; color:var(--b9);">Kiểm tra lại thiết lập của bạn</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; align-items:center; gap:12px;"><i class="fa-solid fa-book-open" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Phạm vi: <b>${lCount} ' + tr('knowledge.lessons_count', 'Số bài học') + '</b> (thuộc ${tCount} chủ đề)</span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><i class="fa-solid fa-layer-group" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Độ khó: <b>${diffStr}</b></span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><i class="fa-solid fa-list-ol" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Số lượng: <b>${countInput.value}</b> <span style="font-size:0.8rem;color:var(--s8);">${maxStr}</span></span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><i class="fa-solid fa-hourglass-half" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Thời gian: <b>${timeStr}</b></span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><i class="fa-solid fa-gamepad" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Chế độ: <b>${modeStr}</b></span></div>
+      </div>
+    `;
+    
+    finalContainer.style.display = 'flex';
+    confirmBtn.style.display = 'none';
+    editBtn.style.display = 'block';
+    startBtn.style.display = 'block';
+  };
+
+  editBtn.onclick = function() {
+    sectionsToHide.forEach(el => el.style.display = '');
+    finalContainer.style.display = 'none';
+    confirmBtn.style.display = 'block';
+    editBtn.style.display = 'none';
+    startBtn.style.display = 'none';
+  };
+
+  startBtn.onclick = function() {
+    var topics = Object.keys(selectedTopics);
+    var token = localStorage.getItem('user_token');
+    if (!token) {
+      showToast('Vui lòng đăng nhập để làm bài.');
+      return;
+    }
+
+    startBtn.disabled = true;
+    startBtn.textContent = 'Đang tạo đề...';
+    startBtn.style.opacity = '0.6';
+    editBtn.style.opacity = '0.5';
+    editBtn.disabled = true;
+
+    var lessons = Object.keys(selectedLessons);
+    fetch(App.API_BASE + '/api/quiz/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        selected_topics: topics,
+        selected_lessons: lessons,
+        difficulty_config: selectedDiff.value,
+        question_count: parseInt(window.countInput.value) || 10,
+        mode: selectedMode.value,
+        time_limit: parseInt(window.countInput.value) || 0
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.quiz_id && data.questions && data.questions.length > 0) {
+        navigateTo('quiz-room', 'quiz-' + data.quiz_id, 'Làm bài', {
+          quiz_id: data.quiz_id,
+          questions: data.questions,
+          mode: selectedMode.value,
+          time_limit: parseInt(timeInput.value) || 0
+        });
+      } else {
+        console.warn('Backend returned no questions. Mocking quiz room for testing purposes.');
+        navigateTo('quiz-room', 'quiz-mock', 'Làm bài', {
+          quiz_id: 'mock',
+          questions: [
+            { id: 'q1', difficulty_level: 'EASY', content_html: '<p>Câu hỏi mock 1: Khái niệm vector là gì?</p>', option_a: 'Đoạn thẳng có hướng', option_b: 'Một con số', option_c: 'Một điểm', option_d: 'Một mặt phẳng', correct_answer: 'A' },
+            { id: 'q2', difficulty_level: 'MEDIUM', content_html: '<p>Câu hỏi mock 2: 1 + 1 = ?</p>', option_a: '2', option_b: '3', option_c: '4', option_d: '5', correct_answer: 'A' }
+          ],
+          mode: selectedMode.value,
+          time_limit: parseInt(timeInput.value) || 0
+        });
+      }
+    })
+    .catch(function(err) {
+      console.warn('Backend failed. Mocking quiz room for testing purposes.', err);
+      navigateTo('quiz-room', 'quiz-mock', 'Làm bài', {
+          quiz_id: 'mock',
+          questions: [
+            { id: 'q1', difficulty_level: 'EASY', content_html: '<p>Câu hỏi mock 1: Khái niệm vector là gì?</p>', option_a: 'Đoạn thẳng có hướng', option_b: 'Một con số', option_c: 'Một điểm', option_d: 'Một mặt phẳng', correct_answer: 'A' }
+          ],
+          mode: selectedMode.value,
+          time_limit: parseInt(timeInput.value) || 0
+      });
+    });
+  };
+}
+
+// ---------- QUIZ ROOM ----------
+function renderQuizRoom(c, quizData) {
+  if (!quizData || !quizData.questions) {
+    console.warn("Quiz data lost (likely due to page reload). Redirecting to setup.");
+    navigateTo('quiz', 'quiz', 'Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập', null);
+    return;
+  }
+  c.innerHTML = '';
+  window._quizActive = true;
+  if (window._quizTimerInterval) clearInterval(window._quizTimerInterval);
+
+  var questions = quizData.questions;
+  var quizId = quizData.quiz_id;
+  var mode = quizData.mode;
+  var timeLimitMin = quizData.time_limit;
+  var totalQ = questions.length;
+  var answers = {};
+  var currentIdx = 0;
+  var submitted = false;
+
+  // --- Layout ---
+  var layout = document.createElement('div');
+  layout.style.cssText = 'display:grid; grid-template-columns:220px 1fr; gap:24px; height:calc(100vh - 200px);';
+  c.appendChild(layout);
+
+  // --- Sidebar ---
+  var sidebar = document.createElement('div');
+  sidebar.style.cssText = 'display:flex; flex-direction:column; gap:16px;';
+  layout.appendChild(sidebar);
+
+  // Timer
+  var timerBox = document.createElement('div');
+  timerBox.style.cssText = 'background:var(--s2); border:1px solid var(--s3); border-radius:var(--radius); padding:16px; text-align:center;';
+  sidebar.appendChild(timerBox);
+
+  var timerIcon = document.createElement('div');
+  timerIcon.innerHTML = '<i class="fa-regular fa-clock" style="color:var(--s9);font-size:1rem;margin-bottom:6px;"></i>';
+  timerBox.appendChild(timerIcon);
+
+  var timerDisplay = document.createElement('div');
+  timerDisplay.style.cssText = 'font-size:1.6rem; font-weight:700; color:var(--s12); font-variant-numeric:tabular-nums; letter-spacing:0.03em;';
+  timerBox.appendChild(timerDisplay);
+
+  var secondsLeft = timeLimitMin > 0 ? timeLimitMin * 60 : -1;
+
+  function updateTimer() {
+    if (secondsLeft < 0) {
+      timerDisplay.textContent = '∞';
+      return;
+    }
+    var m = Math.floor(secondsLeft / 60);
+    var s = secondsLeft % 60;
+    timerDisplay.textContent = m.toString().padStart(2, '0') + ':' + s.toString().padStart(2, '0');
+    if (secondsLeft <= 60) timerDisplay.style.color = 'var(--red)';
+    else if (secondsLeft <= 300) timerDisplay.style.color = 'var(--amber)';
+  }
+  updateTimer();
+
+  if (secondsLeft > 0) {
+    window._quizTimerInterval = setInterval(function() {
+      if (submitted) { clearInterval(window._quizTimerInterval); return; }
+      secondsLeft--;
+      updateTimer();
+      if (secondsLeft <= 0) {
+        clearInterval(window._quizTimerInterval);
+        if (!submitted) doSubmit();
+      }
+    }, 1000);
+  }
+
+  // Progress
+  var progressBox = document.createElement('div');
+  progressBox.style.cssText = 'background:var(--s2); border:1px solid var(--s3); border-radius:var(--radius); padding:14px;';
+  sidebar.appendChild(progressBox);
+
+  var progressLabel = document.createElement('div');
+  progressLabel.style.cssText = 'font-size:0.75rem; color:var(--s9); margin-bottom:10px; font-weight:500; letter-spacing:0.04em;';
+  progressLabel.textContent = 'TIẾN ĐỘ';
+  progressBox.appendChild(progressLabel);
+
+  var progressText = document.createElement('div');
+  progressText.style.cssText = 'font-size:0.85rem; color:var(--s12); margin-bottom:10px; font-weight:600;';
+  progressBox.appendChild(progressText);
+
+  var progressBar = document.createElement('div');
+  progressBar.style.cssText = 'width:100%; height:4px; background:var(--s3); border-radius:2px; overflow:hidden;';
+  var progressFill = document.createElement('div');
+  progressFill.style.cssText = 'height:100%; background:var(--b9); border-radius:2px; transition:width 0.3s ease; width:0%;';
+  progressBar.appendChild(progressFill);
+  progressBox.appendChild(progressBar);
+
+  function updateProgress() {
+    var answeredCount = Object.keys(answers).length;
+    progressText.textContent = answeredCount + ' / ' + totalQ + ' câu';
+    progressFill.style.width = (answeredCount / totalQ * 100) + '%';
+  }
+  updateProgress();
+
+  // Question nav grid
+  var navBox = document.createElement('div');
+  navBox.style.cssText = 'background:var(--s2); border:1px solid var(--s3); border-radius:var(--radius); padding:14px; flex:1; overflow-y:auto;';
+  sidebar.appendChild(navBox);
+
+  var navLabel = document.createElement('div');
+  navLabel.style.cssText = 'font-size:0.75rem; color:var(--s9); margin-bottom:10px; font-weight:500; letter-spacing:0.04em;';
+  navLabel.textContent = 'CÂU HỎI';
+  navBox.appendChild(navLabel);
+
+  var navGrid = document.createElement('div');
+  navGrid.style.cssText = 'display:grid; grid-template-columns:repeat(5, 1fr); gap:6px;';
+  navBox.appendChild(navGrid);
+
+  var navCells = [];
+  for (var n = 0; n < totalQ; n++) {
+    (function(idx) {
+      var cell = document.createElement('div');
+      cell.style.cssText = 'width:100%; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:4px; font-size:0.78rem; font-weight:600; cursor:pointer; transition:all 0.15s ease; background:var(--s1); border:1px solid var(--s3); color:var(--s9);';
+      cell.textContent = (idx + 1);
+      cell.onclick = function() {
+        if (!submitted) { currentIdx = idx; renderQuestion(); }
+      };
+      navCells.push(cell);
+      navGrid.appendChild(cell);
+    })(n);
+  }
+
+  function updateNavCells() {
+    for (var i = 0; i < navCells.length; i++) {
+      var qid = questions[i].id;
+      if (i === currentIdx) {
+        navCells[i].style.background = 'var(--b9)';
+        navCells[i].style.borderColor = 'var(--b9)';
+        navCells[i].style.color = '#fff';
+      } else if (answers[qid]) {
+        navCells[i].style.background = 'var(--s3)';
+        navCells[i].style.borderColor = 'var(--s4)';
+        navCells[i].style.color = 'var(--s12)';
+      } else {
+        navCells[i].style.background = 'var(--s1)';
+        navCells[i].style.borderColor = 'var(--s3)';
+        navCells[i].style.color = 'var(--s9)';
+      }
+    }
+  }
+
+  // --- Main content area ---
+  var main = document.createElement('div');
+  main.style.cssText = 'display:flex; flex-direction:column;';
+  layout.appendChild(main);
+
+  var questionContainer = document.createElement('div');
+  questionContainer.style.cssText = 'flex:1; overflow-y:auto; background:var(--s2); border:1px solid var(--s3); border-radius:var(--radius); padding:32px;';
+  main.appendChild(questionContainer);
+
+  // Bottom nav buttons
+  var bottomNav = document.createElement('div');
+  bottomNav.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:16px 0 0;';
+  main.appendChild(bottomNav);
+
+  var prevBtn = document.createElement('button');
+  prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left" style="margin-right:6px;"></i>Câu trước';
+  prevBtn.style.cssText = 'padding:10px 20px; border-radius:var(--radius); border:1px solid var(--s3); background:var(--s2); color:var(--s9); font-size:0.85rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:500;';
+  prevBtn.onclick = function() { if (currentIdx > 0) { currentIdx--; renderQuestion(); } };
+  bottomNav.appendChild(prevBtn);
+
+  var submitBtn = document.createElement('button');
+  submitBtn.textContent = 'Nộp bài';
+  submitBtn.style.cssText = 'padding:10px 24px; border-radius:var(--radius); border:none; background:var(--green); color:#fff; font-size:0.85rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:600;';
+  submitBtn.onclick = function() {
+    var answeredCount = Object.keys(answers).length;
+    if (answeredCount < totalQ) {
+      if (!confirm('Bạn còn ' + (totalQ - answeredCount) + ' câu chưa trả lời. Nộp bài?')) return;
+    }
+    doSubmit();
+  };
+  bottomNav.appendChild(submitBtn);
+
+  var nextBtn = document.createElement('button');
+  nextBtn.innerHTML = 'Câu sau<i class="fa-solid fa-chevron-right" style="margin-left:6px;"></i>';
+  nextBtn.style.cssText = 'padding:10px 20px; border-radius:var(--radius); border:1px solid var(--s3); background:var(--s2); color:var(--s9); font-size:0.85rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:500;';
+  nextBtn.onclick = function() { if (currentIdx < totalQ - 1) { currentIdx++; renderQuestion(); } };
+  bottomNav.appendChild(nextBtn);
+
+  // --- Render a question ---
+  function renderQuestion() {
+    questionContainer.innerHTML = '';
+    updateNavCells();
+
+    var q = questions[currentIdx];
+
+    var qNum = document.createElement('div');
+    qNum.style.cssText = 'font-size:0.75rem; color:var(--s9); margin-bottom:16px; font-weight:500; letter-spacing:0.04em;';
+    qNum.textContent = 'CÂU ' + (currentIdx + 1) + ' / ' + totalQ;
+    questionContainer.appendChild(qNum);
+
+    var qContent = document.createElement('div');
+    qContent.style.cssText = 'font-size:1rem; color:var(--s12); line-height:1.7; margin-bottom:28px;';
+    qContent.innerHTML = q.content_html;
+    questionContainer.appendChild(qContent);
+
+    if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+      MathJax.typesetPromise([qContent]).catch(function(){});
+    }
+
+    if (q.image_url) {
+      var img = document.createElement('img');
+      img.src = q.image_url;
+      img.style.cssText = 'max-width:100%; border-radius:var(--radius); margin-bottom:20px;';
+      questionContainer.appendChild(img);
+    }
+
+    var options = [
+      { key: 'A', text: q.option_a },
+      { key: 'B', text: q.option_b },
+      { key: 'C', text: q.option_c },
+      { key: 'D', text: q.option_d }
+    ];
+
+    var optionEls = [];
+    for (var o = 0; o < options.length; o++) {
+      (function(opt) {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-radius:var(--radius); border:1px solid var(--s3); margin-bottom:8px; cursor:pointer; transition:all 0.15s ease; background:var(--s1);';
+
+        var circle = document.createElement('div');
+        circle.style.cssText = 'width:22px; height:22px; border-radius:50%; border:2px solid var(--s4); display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; transition:all 0.15s ease;';
+        var dot = document.createElement('div');
+        dot.style.cssText = 'width:10px; height:10px; border-radius:50%; background:transparent; transition:all 0.15s ease;';
+        circle.appendChild(dot);
+
+        var label = document.createElement('div');
+        label.style.cssText = 'font-weight:600; color:var(--s9); font-size:0.85rem; flex-shrink:0; min-width:18px;';
+        label.textContent = opt.key + '.';
+
+        var text = document.createElement('div');
+        text.style.cssText = 'font-size:0.88rem; color:var(--s12); line-height:1.5; flex:1;';
+        text.innerHTML = opt.text;
+
+        row.appendChild(circle);
+        row.appendChild(label);
+        row.appendChild(text);
+
+        if (answers[q.id] === opt.key) {
+          circle.style.borderColor = 'var(--b9)';
+          dot.style.background = 'var(--b9)';
+          row.style.borderColor = 'var(--b9)';
+          row.style.background = 'rgba(0,144,255,0.04)';
+        }
+
+        row.onmouseover = function() { if (answers[q.id] !== opt.key) this.style.background = 'var(--s2)'; };
+        row.onmouseout = function() {
+          if (answers[q.id] !== opt.key) this.style.background = 'var(--s1)';
+          else this.style.background = 'rgba(0,144,255,0.04)';
+        };
+
+        row.onclick = function() {
+          if (submitted) return;
+          answers[q.id] = opt.key;
+          updateProgress();
+          for (var el = 0; el < optionEls.length; el++) {
+            optionEls[el].row.style.borderColor = 'var(--s3)';
+            optionEls[el].row.style.background = 'var(--s1)';
+            optionEls[el].circle.style.borderColor = 'var(--s4)';
+            optionEls[el].dot.style.background = 'transparent';
+          }
+          circle.style.borderColor = 'var(--b9)';
+          dot.style.background = 'var(--b9)';
+          row.style.borderColor = 'var(--b9)';
+          row.style.background = 'rgba(0,144,255,0.04)';
+          updateNavCells();
+        };
+
+        optionEls.push({ row: row, circle: circle, dot: dot });
+        questionContainer.appendChild(row);
+
+        if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+          MathJax.typesetPromise([text]).catch(function(){});
+        }
+      })(options[o]);
+    }
+  }
+
+  // --- Submit ---
+  function doSubmit() {
+    if (submitted) return;
+    submitted = true;
+    if (window._quizTimerInterval) clearInterval(window._quizTimerInterval);
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Đang chấm...';
+    submitBtn.style.opacity = '0.6';
+
+    if (quizId === 'mock') {
+      setTimeout(() => {
+        window._quizActive = false;
+        var score = 0;
+        for (var i = 0; i < questions.length; i++) {
+          if (answers[questions[i].id] === questions[i].correct_answer) score += 5;
+        }
+        var mockResult = {
+          total_score: score,
+          total_time: timeLimitMin > 0 ? (timeLimitMin * 60) - secondsLeft : 150,
+          questions: questions.map(q => {
+            return {
+              id: q.id,
+              correct: answers[q.id] === q.correct_answer,
+              selected_answer: answers[q.id] || null,
+              correct_answer: q.correct_answer,
+              explanation_html: '<p>Phần giải thích chi tiết (mock) cho câu hỏi này.</p>'
+            };
+          })
+        };
+        renderResult(mockResult);
+      }, 600);
+      return;
+    }
+
+    var answerList = [];
+    for (var qid in answers) {
+      answerList.push({ question_id: parseInt(qid), selected_answer: answers[qid] });
+    }
+
+    var token = localStorage.getItem('user_token');
+    fetch(App.API_BASE + '/api/quiz/' + quizId + '/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ answers: answerList })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.total_score !== undefined) {
+        window._quizActive = false;
+        renderResult(data);
+      } else {
+        (window.App && window.App.showToast ? window.App.showToast(data.message || 'Lỗi khi nộp bài.', 'warning') : alert(data.message || 'Lỗi khi nộp bài.'));
+        submitted = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Nộp bài';
+        submitBtn.style.opacity = '1';
+      }
+    })
+    .catch(function(err) {
+      console.error(err);
+      (window.App && window.App.showToast ? window.App.showToast('Lỗi kết nối.', 'warning') : alert('Lỗi kết nối.'));
+      submitted = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Nộp bài';
+      submitBtn.style.opacity = '1';
+    });
+  }
+
+  // --- Result screen ---
+  function renderResult(result) {
+    c.innerHTML = '';
+
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = 'max-width:680px; margin:0 auto;';
+    c.appendChild(wrapper);
+
+    var header = document.createElement('div');
+    header.style.cssText = 'text-align:center; margin-bottom:36px;';
+    wrapper.appendChild(header);
+
+    var scoreLabel = document.createElement('div');
+    scoreLabel.style.cssText = 'font-size:0.8rem; color:var(--s9); margin-bottom:8px; font-weight:500; letter-spacing:0.04em;';
+    scoreLabel.textContent = 'KẾT QUẢ';
+    header.appendChild(scoreLabel);
+
+    var scoreVal = document.createElement('div');
+    scoreVal.style.cssText = 'font-size:3rem; font-weight:800; color:var(--s12); font-variant-numeric:tabular-nums; line-height:1.1; margin-bottom:8px;';
+    scoreVal.textContent = result.total_score.toFixed(1);
+    header.appendChild(scoreVal);
+
+    var scoreSub = document.createElement('div');
+    scoreSub.style.cssText = 'font-size:0.88rem; color:var(--s9);';
+    scoreSub.textContent = result.correct_count + ' / ' + result.total_questions + ' câu đúng';
+    header.appendChild(scoreSub);
+
+    var scoreBar = document.createElement('div');
+    scoreBar.style.cssText = 'width:200px; height:6px; background:var(--s3); border-radius:3px; overflow:hidden; margin:16px auto 0;';
+    var scoreFill = document.createElement('div');
+    var pct = (result.total_score / 10) * 100;
+    scoreFill.style.cssText = 'height:100%; border-radius:3px; transition:width 0.6s ease;';
+    scoreFill.style.width = pct + '%';
+    if (pct >= 80) scoreFill.style.background = 'var(--green)';
+    else if (pct >= 50) scoreFill.style.background = 'var(--amber)';
+    else scoreFill.style.background = 'var(--red)';
+    scoreBar.appendChild(scoreFill);
+    header.appendChild(scoreBar);
+
+    var hr2 = document.createElement('div');
+    hr2.style.cssText = 'border-bottom:1px solid var(--s3); margin-bottom:24px;';
+    wrapper.appendChild(hr2);
+
+    var reviewLabel = document.createElement('div');
+    reviewLabel.className = 'side-label';
+    reviewLabel.textContent = 'CHI TIẾT ĐÁP ÁN';
+    reviewLabel.style.cssText = 'padding:0; margin-bottom:16px; font-size:0.7rem; letter-spacing:0.05em;';
+    wrapper.appendChild(reviewLabel);
+
+    if (result.results) {
+      for (var r = 0; r < result.results.length; r++) {
+        var item = result.results[r];
+        var origQ = questions.find(function(qq) { return qq.id === item.question_id; });
+        if (!origQ) continue;
+
+        var card = document.createElement('div');
+        card.style.cssText = 'background:var(--s2); border:1px solid var(--s3); border-radius:var(--radius); padding:20px; margin-bottom:12px;';
+
+        var cardHead = document.createElement('div');
+        cardHead.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;';
+
+        var cNum = document.createElement('span');
+        cNum.style.cssText = 'font-size:0.78rem; font-weight:600; color:var(--s9);';
+        cNum.textContent = 'Câu ' + (r + 1);
+
+        var cStatus = document.createElement('span');
+        cStatus.style.cssText = 'font-size:0.75rem; font-weight:600; padding:3px 8px; border-radius:3px;';
+        if (item.is_correct) {
+          cStatus.textContent = 'Đúng';
+          cStatus.style.background = 'rgba(48,164,108,0.12)';
+          cStatus.style.color = 'var(--green)';
+        } else {
+          cStatus.textContent = 'Sai';
+          cStatus.style.background = 'rgba(229,72,77,0.12)';
+          cStatus.style.color = 'var(--red)';
+        }
+        cardHead.appendChild(cNum);
+        cardHead.appendChild(cStatus);
+        card.appendChild(cardHead);
+
+        var cContent = document.createElement('div');
+        cContent.style.cssText = 'font-size:0.88rem; color:var(--s12); line-height:1.6; margin-bottom:12px;';
+        cContent.innerHTML = origQ.content_html;
+        card.appendChild(cContent);
+
+        var answerInfo = document.createElement('div');
+        answerInfo.style.cssText = 'font-size:0.82rem; color:var(--s9); line-height:1.6;';
+        var yourAns = item.selected_answer || '—';
+        answerInfo.innerHTML = '<div style="margin-bottom:4px;">Bạn chọn: <strong style="color:' + (item.is_correct ? 'var(--green)' : 'var(--red)') + ';">' + yourAns + '</strong></div>' +
+          '<div>Đáp án: <strong style="color:var(--green);">' + item.correct_answer + '</strong></div>';
+        card.appendChild(answerInfo);
+
+        if (item.explanation_html) {
+          var expl = document.createElement('div');
+          expl.style.cssText = 'margin-top:12px; padding:12px; background:var(--s1); border-radius:4px; font-size:0.82rem; color:var(--s11); line-height:1.6; border:1px solid var(--s3);';
+          expl.innerHTML = item.explanation_html;
+          card.appendChild(expl);
+        }
+
+        wrapper.appendChild(card);
+
+        if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+          MathJax.typesetPromise([card]).catch(function(){});
+        }
+      }
+    }
+
+    var backBtn = document.createElement('button');
+    backBtn.textContent = 'Quay lại Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập';
+    backBtn.style.cssText = 'padding:12px 28px; border-radius:var(--radius); border:1px solid var(--s3); background:var(--s2); color:var(--s12); font-size:0.88rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:500; margin-top:8px;';
+    backBtn.onclick = function() {
+      AppState.path = AppState.path.filter(function(p) { return p.type !== 'quiz-room'; });
+      renderCurrentView();
+    };
+    wrapper.appendChild(backBtn);
+  }
+
+  renderQuestion();
 }
 
 // ---------- GRAPH VIEW ----------
@@ -998,21 +2876,11 @@ function initGraph() {
   // Render graph breadcrumb
   var gbc = document.getElementById('graph-bc');
   if (gbc) {
-    gbc.innerHTML = '';
-    var a = document.createElement('a');
-    a.textContent = 'Thư viện';
-    a.style.cursor = 'pointer';
-    a.onclick = function() { navigateBackTo(0); };
-    gbc.appendChild(a);
-    var chev = document.createElement('i');
-    chev.className = 'fa-solid fa-chevron-right';
-    chev.style.fontSize = '0.6rem';
-    chev.style.color = 'var(--s6)';
-    gbc.appendChild(chev);
-    var cur = document.createElement('span');
-    cur.className = 'bc-cur';
-    cur.textContent = 'Không gian Tri thức';
-    gbc.appendChild(cur);
+    gbc.innerHTML = `
+      <a class="bc-link" style="cursor:pointer;" onclick="navigateBackTo(0)">${tr('knowledge.library', 'Thư viện')}</a>
+      <i class="fa-solid fa-chevron-right" style="font-size:0.6rem; color:var(--s6); margin:0 8px;"></i>
+      <span class="bc-cur">${tr('knowledge.title', 'Không gian Tri thức')}</span>
+    `;
   }
   // If diagram not rendered yet, render it
   if (!canvas.querySelector('svg')) {
@@ -1020,21 +2888,22 @@ function initGraph() {
       canvas.innerHTML = renderDiagram();
       if (typeof initZP === 'function') initZP();
       if (typeof refreshLegend === 'function') refreshLegend();
+      if (typeof updateVisualState === 'function') updateVisualState();
     }
   }
 }
 
 // ---------- INIT ----------
-setTimeout(function() {
-  var s = document.createElement('style');
-  s.textContent = '.lib-side { display:none !important; } #floatingHamburger { display:none !important; } #mob-toggle { display:none !important; } @media(max-width:768px){ #drill-down-root { padding:16px !important; } }';
-  document.head.appendChild(s);
-  renderCurrentView();
-}, 200);
+// renderCurrentView() moved to safe init after data loads
 </script>
-</main>
 
 <script src="js/mock_library.js"></script>
+<script>
+setTimeout(function() {
+
+  if (typeof renderCurrentView === "function" && !window._deepLinkHandled) renderCurrentView();
+}, 200);
+</script>
 <script>
 
     // GLOBAL GO FUNCTION FOR NAVIGATION
@@ -1154,7 +3023,7 @@ if(lgBar && D.topics) {
   D.topics.forEach((t) => {
     const g = t.id || "t1";
     const c = GROUP_COLORS[g].stroke;
-    lgHtml += `<span style="color: ${c};"><i class="fa-solid fa-circle" style="font-size: 11px; margin-right: 6px;"></i> ${t.title}</span>`;
+    lgHtml += `<span style="color: ${c};"><i class="fa-solid fa-circle" style="font-size: 11px; margin-right: 6px;"></i> ${tr('library_terms.' + t.id, t.title)}</span>`;
   });
   lgBar.innerHTML = lgHtml;
 }
@@ -1216,8 +3085,7 @@ function initZP() {
          if (bbox.width > 0 && bbox.height > 0 && cRect.width > 0) {
            const padding = 40;
            const lgBar = document.getElementById('f-legend');
-           const legendW = (lgBar && lgBar.classList.contains('minimized')) ? 0 : 320;
-           const availW = cRect.width - legendW;
+           const availW = cRect.width;
            const scaleX = (availW - padding*2) / bbox.width;
            const scaleY = (cRect.height - padding*2) / bbox.height;
            const minScale = Math.min(scaleX, scaleY);
@@ -1240,7 +3108,7 @@ function initZP() {
     if (!zoomHint) {
       zoomHint = document.createElement('div');
       zoomHint.id = 'zoom-hint';
-      zoomHint.innerHTML = '<i class="fa-solid fa-circle-info"></i> Giữ <b>Ctrl</b> và cuộn chuột để Thu phóng sơ đồ';
+      zoomHint.innerHTML = tr('knowledge.zoom_hint', '<i class="fa-solid fa-circle-info"></i> Giữ <b>Ctrl</b> và cuộn chuột để Thu phóng sơ đồ');
       zoomHint.style.cssText = 'position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.85); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 10; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);';
       svg.parentElement.appendChild(zoomHint);
     }
@@ -1284,10 +3152,13 @@ function initZP() {
 
     svg.addEventListener('touchstart', e => {
       if (e.touches.length === 1) {
-        zoomHint.innerHTML = '<i class="fa-solid fa-hand-pointer"></i> Dùng 2 ngón tay để kéo thả sơ đồ';
-        zoomHint.style.opacity = '1';
-        clearTimeout(hintTimeout);
-        hintTimeout = setTimeout(() => zoomHint.style.opacity = '0', 2000);
+        if (window.innerWidth <= 900) {
+          pan = { on: true, sx: e.touches[0].clientX - zs.x, sy: e.touches[0].clientY - zs.y };
+        } else {
+          zoomHint.style.opacity = '1';
+          clearTimeout(hintTimeout);
+          hintTimeout = setTimeout(() => zoomHint.style.opacity = '0', 2000);
+        }
       } else if (e.touches.length === 2) {
         e.preventDefault();
         zoomHint.style.opacity = '0';
@@ -1305,7 +3176,12 @@ function initZP() {
     }, {passive: false});
 
     window.addEventListener('touchmove', e => {
-      if (e.touches.length === 2 && initialPinchDist && pan.on) {
+      if (e.touches.length === 1 && pan.on && window.innerWidth <= 900) {
+        e.preventDefault();
+        zs.x = e.touches[0].clientX - pan.sx;
+        zs.y = e.touches[0].clientY - pan.sy;
+        apply();
+      } else if (e.touches.length === 2 && initialPinchDist && pan.on) {
         e.preventDefault();
         let dx = e.touches[0].clientX - e.touches[1].clientX;
         let dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -1387,13 +3263,16 @@ function renderDiagram() {
     '.dark-theme .e-marker { stroke: var(--s5); stroke-width: 1.2px; }' +
     '.dimmed { opacity: 0.15; }' +
     '.highlighted { opacity: 1; }' +
-    '.path-active .n-rect { stroke: #f59e0b !important; stroke-width: 2.5px !important; box-shadow: 0 0 12px rgba(245,158,11,0.4); }' +
-    '.pin-active .n-rect { stroke: #3b82f6 !important; stroke-width: 2.5px !important; }' +
+    '@keyframes solid-glow { 0% { filter: drop-shadow(0 0 6px currentColor); } 50% { filter: drop-shadow(0 0 25px currentColor); } 100% { filter: drop-shadow(0 0 6px currentColor); } }' +
+    '.path-active .n-rect { stroke: #f59e0b !important; stroke-width: 3px !important; }' +
+    '.pin-active { animation: solid-glow 1.5s infinite ease-in-out; }' +
+    '.pin-active .n-rect { fill: currentColor !important; stroke: currentColor !important; }' +
+    '.pin-active text { fill: #ffffff !important; font-weight: 800 !important; }' +
     '.e-highlight { stroke: #f59e0b !important; stroke-width: 3.5px !important; opacity: 1 !important; z-index: 10; }' +
     '.e-pin { stroke: #3b82f6 !important; stroke-width: 2.5px !important; opacity: 1 !important; }' +
     '.e-hidden { opacity: 0.05 !important; }' +
     '.n-g:hover .n-rect { stroke-width: 2px; }' +
-  '</style>';
+  '  svg text { font-family: var(--font) !important; }' + '\n</style>';
 
   svg += '<defs>' +
     '<marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 2 L8 5 L0 8" fill="none" class="e-marker"/></marker>' +
@@ -1441,12 +3320,14 @@ function renderDiagram() {
   D.graph.nodes.forEach(n => {
     const p = pos[n.id];
     const grp = nodeMap[n.id]?.group || 't1';
-    const shortLabel = n.label.replace(/^[0-9.]+\s*/,'');
+    const rawTxt = tr('library_terms.' + n.id, n.label);
+      const shortLabel = rawTxt.replace(/^[0-9.]+\s*/,'');
     const fillBg = 'var(--' + grp + '-fill)';
     const border = 'var(--' + grp + '-stroke)';
     const textMain = 'var(--' + grp + '-text)';
 
-    svg += '<g id="node-' + n.id + '" data-id="' + n.id + '" class="n-g" transform="translate(' + p.x + ',' + p.y + ')" onclick="clickNode(event, \'' + n.id + '\')" onmouseenter="hoverNode(\'' + n.id + '\')" onmouseleave="hoverNode(null)">';
+    svg += '<g id="node-' + n.id + '" data-id="' + n.id + '" class="n-g" style="color: ' + border + ';" transform="translate(' + p.x + ',' + p.y + ')" onclick="clickNode(event, \'' + n.id + '\')" onmouseenter="hoverNode(\'' + n.id + '\')" onmouseleave="hoverNode(null)">';
+    svg += '<rect class="n-ring" width="' + nodeW + '" height="' + nodeH + '" rx="' + (nodeH/2) + '" fill="none" stroke="currentColor" stroke-width="3" style="opacity:0; pointer-events:none;"/>';
     svg += '<rect class="n-rect" width="' + nodeW + '" height="' + nodeH + '" rx="' + (nodeH/2) + '" fill="' + fillBg + '" stroke="' + border + '" stroke-width="1.5"/>';
     svg += '<circle cx="' + (nodeH/2) + '" cy="' + (nodeH/2) + '" r="' + (nodeH/2 - 4) + '" fill="' + border + '"/>';
     svg += '<text x="' + (nodeH/2) + '" y="' + (nodeH/2 + 4) + '" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">' + n.num + '</text>';
@@ -1468,7 +3349,7 @@ window.clickNode = function(e, id) {
     pinnedNode = id;
   }
   updateVisualState();
-  focusLegend(id, true);
+  focusLegend(pinnedNode, false);
 };
 
 window.hoverNode = function(id) {
@@ -1566,9 +3447,9 @@ function focusLegend(id, skipScroll = false) {
   }
 }
 
-// �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //  DIJKSTRA PATHFINDING
-// �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 function dijkstra(s, e, avoid = new Set()) {
   if (s === e || avoid.has(s) || avoid.has(e)) return null;
   const dist = {}, prev = {}, q = new Set(D.graph.nodes.map(n => n.id));
@@ -1620,15 +3501,24 @@ function getPathWithConstraints(s, e, avoidIds = [], includeIds = []) {
 
 function runPath() {
   const s = cbStart.value, e = cbEnd.value;
-  if (s === e) return alert('ĐiỒm bắt �ầu và kết thúc trùng nhau.');
+  if (s === e) return (window.App && window.App.showToast ? window.App.showToast('ĐiỒm bắt �ầu và kết thúc trùng nhau.', 'warning') : alert('ĐiỒm bắt �ầu và kết thúc trùng nhau.'));
   const res = getPathWithConstraints(s, e, cbAvoid.value, cbInclude.value);
-  if (!res) return alert('Không tìm thấy l�" trình phù hợp.');
+  if (!res) return (window.App && window.App.showToast ? window.App.showToast('Không tìm thấy l�" trình phù hợp.', 'warning') : alert('Không tìm thấy l�" trình phù hợp.'));
   activePath = res.path;
   pinnedNode = null;
   document.getElementById('btn-reset').style.display = 'flex';
+  
+  const pfBar = document.querySelector('.pathfind-bar');
+  if (pfBar && pfBar.classList.contains('open')) {
+    pfBar.classList.remove('open');
+    const bd = document.getElementById('sheet-backdrop');
+    if (bd) bd.style.display = 'none';
+  }
+  
   const c = document.getElementById('pf-cost');
   c.style.display = 'flex';
-  c.innerHTML = `<i class="fa-solid fa-bolt" style="margin-right:6px"></i> Tải trọng ($W_u$): ${res.cost.toFixed(2)}`;
+  const costText = tr('knowledge.cost', 'Tải trọng');
+  c.innerHTML = `<i class="fa-solid fa-bolt" style="margin-right:6px"></i> ${costText} ($W_u$): ${res.cost.toFixed(2)}`;
   
   updateVisualState();
   refreshLegend();
@@ -1645,48 +3535,48 @@ function clearPath() {
 }
 
 function refreshLegend() {
-  const body = document.getElementById('legend');
-  if (!body) return;
   const topBar = document.getElementById('top-legend-bar');
-  if (topBar && typeof MOCK_LIBRARY_DATA !== 'undefined' && topBar.children.length === 0) {
+  if (topBar && typeof MOCK_LIBRARY_DATA !== 'undefined') {
     let topHtml = '';
     const colorKeys = ['t1','t2','t3','t4','t5','t6','t7'];
     MOCK_LIBRARY_DATA.topics.forEach((t, idx) => {
       const cid = colorKeys[idx % colorKeys.length];
       const color = GROUP_COLORS[cid] ? GROUP_COLORS[cid].stroke : '#333';
-      topHtml += `<span style="display:flex; align-items:center; gap:6px;"><span style="width:12px; height:12px; border-radius:50%; background:${color}; display:inline-block;"></span>${t.title}</span>`;
+      topHtml += `<span style="display:flex; align-items:center; gap:8px; font-size:0.85rem; font-weight:600; color:var(--s11); padding: 4px 8px; background: var(--s2); border-radius: 6px; border: 1px solid var(--s3);"><span style="width:12px; height:12px; border-radius:50%; background:${color}; display:inline-block; flex-shrink:0;"></span>${tr('library_terms.' + t.id, t.title)}</span>`;
     });
     topBar.innerHTML = topHtml;
   }
 
-  
-  if (typeof MOCK_LIBRARY_DATA !== 'undefined') {
+  const dynLegend = document.getElementById('dynamic-legend-bar');
+  if (dynLegend && typeof MOCK_LIBRARY_DATA !== 'undefined') {
     let html = '';
     MOCK_LIBRARY_DATA.topics.forEach(t => {
-      html += `<div style="font-weight: bold; margin-top: 12px; margin-bottom: 4px; color: var(--s12); font-size: 0.95rem;">${t.title}</div>`;
+      html += `<div style="font-weight: 800; margin-top: 16px; margin-bottom: 8px; padding-left: 8px; color: var(--s12); font-size: 0.95rem; border-bottom: 1px solid var(--s3); padding-bottom: 4px;">${tr('library_terms.' + t.id, t.title)}</div>`;
       t.sections.forEach(s => {
-        html += `<div style="font-weight: 600; margin-left: 8px; margin-top: 6px; margin-bottom: 4px; color: var(--s9); font-size: 0.85rem; ">${s.title}</div>`;
+        html += `<div style="font-weight: 700; margin-left: 12px; margin-top: 8px; margin-bottom: 4px; color: var(--s9); font-size: 0.8rem; text-transform: uppercase;">${tr('library_terms.' + s.id, s.title)}</div>`;
         s.lessons.forEach(l => {
-          const n = D.graph.nodes.find(node => node.id === l.id);
+          const n = typeof D !== 'undefined' && D.graph && D.graph.nodes ? D.graph.nodes.find(node => node.id === l.id) : null;
           if (!n) return;
-          const c = gc(n.id) || {stroke: '#3b82f6'}; 
-          const nodeColor = c.stroke; // FORCE TOPIC COLOR, IGNORE MOCK DATA COLOR
-          const isPf = activePath && activePath.includes(n.id);
-          const isPin = pinnedNode === n.id;
+          const c = typeof gc === 'function' ? gc(n.id) : null;
+          const nodeColor = c ? c.stroke : '#3b82f6';
+          const isPf = typeof activePath !== 'undefined' && activePath && activePath.includes(n.id);
+          const isPin = typeof pinnedNode !== 'undefined' && pinnedNode === n.id;
           let cls = '';
           if (isPf) cls = 'path-active';
           else if (isPin) cls = 'hl';
-          
-          html += `<div class="lg-item ${cls}" style="margin-left: 16px;" id="lg-${n.id}" onclick="clickNode(event, '${n.id}')" onmouseenter="hoverNode('${n.id}')" onmouseleave="hoverNode(null)">
-            <div style="width:20px;height:20px;border-radius:50%;background:${nodeColor};color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${n.num}</div>
-            <span style="font-size:0.84rem;color:var(--s11);flex:1">${n.label}</span>
+
+          html += `<div class="lg-item ${cls}" style="margin-left: 16px; margin-bottom: 4px; padding: 6px 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; border: 1px solid transparent;" id="lg-${n.id}" onclick="if(typeof clickNode==='function') clickNode(event, '${n.id}')" onmouseenter="if(typeof hoverNode==='function') hoverNode('${n.id}')" onmouseleave="if(typeof hoverNode==='function') hoverNode(null)">
+            <div style="width:24px;height:24px;border-radius:50%;background:${nodeColor};color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;">${n.num}</div>
+            <span style="font-size:0.85rem;font-weight:500;color:var(--s11);flex:1;line-height:1.3;">${tr('library_terms.' + n.id, n.label)}</span>
           </div>`;
         });
       });
     });
-    body.innerHTML = html;
+    dynLegend.innerHTML = html;
   }
 }
+  
+
 
 // �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
 //  CUSTOM COMBOBOX CLASS
@@ -1703,10 +3593,11 @@ class CustomCombobox {
 
   init() {
     if (!this.container) return;
+    this.container.classList.add('cb');
     this.container.innerHTML = `
       <div class="cb-trigger"></div>
       <div class="cb-drop">
-        <input type="text" class="cb-search" placeholder="Tìm...">
+        <input type="text" class="cb-search" placeholder="${tr('knowledge.search_content', 'Tìm kiếm nội dung...')}">
         <div class="cb-opts"></div>
       </div>
     `;
@@ -1740,9 +3631,20 @@ class CustomCombobox {
 
   updateTriggerText() {
     if (this.isMulti) {
-      this.trigger.innerText = this.value.length 
-        ? (this.value.length ? this.value.length + ' bài' : 'Không có')
-        : 'Không có';
+      this.trigger.style.whiteSpace = 'nowrap';
+      this.trigger.style.overflow = 'hidden';
+      this.trigger.style.padding = '8px 32px 8px 12px';
+      if (!this.value || this.value.length === 0) {
+        this.trigger.innerHTML = `<span style="color: var(--s9);">${this.placeholder || 'Không có'}</span>`;
+      } else {
+        const labels = this.value.map(id => {
+          const o = this.options.find(opt => opt.id === id);
+          return o ? o.label : id;
+        });
+        const cnt = `<span style="background: var(--primary-base); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; margin-right: 8px; display: inline-flex; align-items: center; flex-shrink: 0;">${this.value.length}</span>`;
+        const text = labels.join(', ');
+        this.trigger.innerHTML = `<div style="display:flex; align-items: center; width: 100%; max-width: 100%; overflow: hidden; white-space: nowrap;">${cnt}<span style="overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; display: block; max-width: 100%;">${text}</span></div>`;
+      }
     } else {
       const opt = this.options.find(o => o.id === this.value);
       this.trigger.innerText = opt ? opt.label : this.placeholder;
@@ -1750,10 +3652,23 @@ class CustomCombobox {
   }
 
   renderOptions(opts) {
-    this.optsContainer.innerHTML = opts.map(o => {
-      const isSelected = this.isMulti ? this.value.includes(o.id) : this.value === o.id;
-      return `<div class="cb-opt ${isSelected ? 'selected' : ''}" data-id="${o.id}">${o.label}</div>`;
-    }).join('');
+    if (this.isMulti) {
+      const selected = opts.filter(o => this.value.includes(o.id));
+      const unselected = opts.filter(o => !this.value.includes(o.id));
+      let html = '';
+      if (selected.length > 0) {
+        html += `<div style="padding: 6px 12px; font-size: 0.7rem; font-weight: 800; color: var(--s9); background: var(--s2); text-transform: uppercase; letter-spacing: 0.5px;">` + tr('knowledge.selected_items', 'Đã chọn') + ` (${selected.length})</div>`;
+        html += selected.map(o => `<div class="cb-opt selected" data-id="${o.id}">${o.label}</div>`).join('');
+        html += `<div style="padding: 6px 12px; font-size: 0.7rem; font-weight: 800; color: var(--s9); background: var(--s2); text-transform: uppercase; letter-spacing: 0.5px;">` + tr('knowledge.all_items', 'Tất cả') + `</div>`;
+      }
+      html += unselected.map(o => `<div class="cb-opt" data-id="${o.id}">${o.label}</div>`).join('');
+      this.optsContainer.innerHTML = html;
+    } else {
+      this.optsContainer.innerHTML = opts.map(o => {
+        const isSelected = this.value === o.id;
+        return `<div class="cb-opt ${isSelected ? 'selected' : ''}" data-id="${o.id}">${o.label}</div>`;
+      }).join('');
+    }
 
     this.optsContainer.querySelectorAll('.cb-opt').forEach(el => {
       el.onclick = () => {
@@ -1767,7 +3682,7 @@ class CustomCombobox {
           this.container.classList.remove('open');
         }
         this.updateTriggerText();
-        this.renderOptions(opts);
+        this.renderOptions(this.options);
       };
     });
   }
@@ -1782,15 +3697,165 @@ window.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('d-canvas');
   if (!canvas) return;
 
-  // Init comboboxes regardless of graph visibility so pathfinding tools work
-  const opts = D.graph.nodes.map(n => ({ id: n.id, label: `${n.num}. ${n.label}` }));
+  // Init comboboxes if they exist
+const opts = D.graph.nodes.map(n => ({ id: n.id, label: n.num + '. ' + tr('library_terms.' + n.id, n.label) }));
+if (document.getElementById('cb-start')) {
   cbStart = new CustomCombobox('cb-start', opts, false);
   cbEnd = new CustomCombobox('cb-end', opts, false);
   cbEnd.value = opts[opts.length - 1]?.id || '';
   cbEnd.updateTriggerText();
-
   cbInclude = new CustomCombobox('cb-include', opts, true);
   cbAvoid = new CustomCombobox('cb-avoid', opts, true);
+}
+
+  // Custom Modal implementation
+  window.showCustomPrompt = function(message, callback) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:9999; opacity:0; transition:opacity 0.2s; backdrop-filter:blur(3px);';
+    
+    var modal = document.createElement('div');
+    modal.style.cssText = 'background:var(--s1); width:90%; max-width:400px; border-radius:12px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2); transform:translateY(-20px); transition:transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);';
+    
+    var title = document.createElement('h3');
+    title.id = 'prompt-title';
+    title.textContent = message;
+    title.style.cssText = 'margin:0 0 16px; font-size:16px; color:var(--text-main); font-weight:600; line-height:1.4;';
+    
+    var input = document.createElement('input');
+    input.id = 'prompt-input';
+    input.type = 'text';
+    input.placeholder = tr('knowledge.note_placeholder', 'Ghi chú...');
+    input.style.cssText = 'width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--s3); background:var(--s2); color:var(--text-main); margin-bottom:24px; font-size:14px; outline:none; transition:border-color 0.2s;';
+    input.onfocus = function() { this.style.borderColor = 'var(--primary-base)'; };
+    input.onblur = function() { this.style.borderColor = 'var(--s3)'; };
+    
+    var actions = document.createElement('div');
+    actions.style.cssText = 'display:flex; justify-content:flex-end; gap:12px;';
+    
+    var cancelBtn = document.createElement('button');
+    cancelBtn.id = 'prompt-btn-cancel';
+    cancelBtn.textContent = tr('knowledge.cancel', 'Hủy');
+    cancelBtn.className = 'btn btn-outline';
+    cancelBtn.style.padding = '8px 16px';
+    
+    var okBtn = document.createElement('button');
+    okBtn.id = 'prompt-btn-save';
+    okBtn.textContent = tr('knowledge.save', 'Lưu');
+    okBtn.className = 'btn btn-primary';
+    okBtn.style.padding = '8px 16px';
+    
+    actions.appendChild(cancelBtn);
+    actions.appendChild(okBtn);
+    
+    modal.appendChild(title);
+    modal.appendChild(input);
+    modal.appendChild(actions);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Animate in
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+      modal.style.transform = 'translateY(0)';
+      input.focus();
+    });
+    
+    function close(val) {
+      overlay.style.opacity = '0';
+      modal.style.transform = 'translateY(-20px)';
+      setTimeout(() => { document.body.removeChild(overlay); callback(val); }, 200);
+    }
+    
+    cancelBtn.onclick = () => close(null);
+    okBtn.onclick = () => close(input.value);
+    input.onkeydown = (e) => { if (e.key === 'Enter') close(input.value); else if (e.key === 'Escape') close(null); };
+  };
+
+  window.addEventListener('beforeunload', function() {
+    sessionStorage.setItem('scrollPos_' + window.location.search, window.scrollY);
+});
+// URL Parsing for Deep Linking
+  window._deepLinkHandled = false;
+  var params = new URLSearchParams(window.location.search);
+  if (params.has('id')) {
+    var id = params.get('id');
+    var type = params.get('type') || 'lesson'; // default to lesson
+    var lessonId = id.split('-')[0]; // for legacy lesson ids
+    
+    if (typeof MOCK_LIBRARY_DATA !== 'undefined' && MOCK_LIBRARY_DATA.topics) {
+      if (type === 'lesson') {
+          for (let t of MOCK_LIBRARY_DATA.topics) {
+            for (let s of t.sections) {
+              for (let l of s.lessons) {
+                if (l.id === lessonId) {
+                   setTimeout(() => {
+                     AppState.path = [
+                       { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') },
+                       { type:'topic', id:t.id, title:t.title, data:t },
+                       { type:'section', id:s.id, title:s.title, data:s }
+                     ];
+                     window._deepLinkHandled = true; navigateTo('lesson', l.id, l.title, l);
+                   }, 100);
+                }
+              }
+            }
+          }
+      } else if (type === 'section') {
+          for (let t of MOCK_LIBRARY_DATA.topics) {
+            for (let s of t.sections) {
+                if (s.id === id) {
+                   setTimeout(() => {
+                     AppState.path = [
+                       { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') },
+                       { type:'topic', id:t.id, title:t.title, data:t }
+                     ];
+                     window._deepLinkHandled = true; navigateTo('section', s.id, s.title, s);
+                   }, 100);
+                }
+            }
+          }
+      } else if (type === 'topic') {
+          for (let t of MOCK_LIBRARY_DATA.topics) {
+              if (t.id === id) {
+                 setTimeout(() => {
+                   AppState.path = [
+                     { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') }
+                   ];
+                   window._deepLinkHandled = true; navigateTo('topic', t.id, t.title, t);
+                 }, 100);
+              }
+          }
+      }
+    }
+    
+    if (type === 'graph') {
+       setTimeout(() => {
+         AppState.path = [
+           { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') }
+         ];
+         window._deepLinkHandled = true;
+         navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'), null);
+       }, 100);
+    }
+    
+    if (type === 'quiz') {
+       setTimeout(() => {
+         AppState.path = [
+           { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') }
+         ];
+         navigateTo('quiz', 'quiz', 'Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập', null);
+       }, 100);
+    }
+    
+    if (type === 'quiz-room') {
+       setTimeout(() => {
+         AppState.path = [
+           { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') }
+         ];
+         navigateTo('quiz-room', id, 'Làm bài', null);
+       }, 100);
+    }
+  }
 
   // Don't auto-render if graph view is hidden (drill-down mode)
   var graphView = document.getElementById('dd-graph-view');
@@ -1801,6 +3866,120 @@ window.addEventListener('DOMContentLoaded', () => {
   refreshLegend();
 });
 
+  // Dynamic Sidebar Population
+  document.addEventListener('DOMContentLoaded', () => {
+    const list = document.getElementById('side-topics-list');
+    if (!list || typeof MOCK_LIBRARY_DATA === 'undefined') return;
+
+    let html = '';
+    
+    html += '<div class="side-label" style="padding: 16px 16px 8px; font-weight: 700; font-size: 0.72rem; color: var(--s9); text-transform: uppercase; letter-spacing: 0.5px;">' + tr('knowledge.library', 'Library') + '</div>';
+    html += '<div class="side-item active" onclick="go(\'root\', this)"><i class="fa-solid fa-compass" style="margin-right: 8px;"></i>' + tr('knowledge.explore_library', 'Khám phá Thư viện') + '</div>';
+    
+    html += '<div class="side-label" style="padding: 16px 16px 8px; font-weight: 700; font-size: 0.72rem; color: var(--s9); text-transform: uppercase; letter-spacing: 0.5px;">' + tr('knowledge.topics', 'Topics') + '</div>';
+
+    MOCK_LIBRARY_DATA.topics.forEach(t => {
+      html += '<div class="topic-group">';
+      html += '  <div class="topic-head" onclick="this.parentElement.classList.toggle(\'open\')">';
+      html += '    <span>' + tr('library_terms.' + t.id, t.title) + '</span>';
+      html += '    <i class="fa-solid fa-chevron-down"></i>';
+      html += '  </div>';
+      html += '  <div class="topic-list">';
+      t.sections.forEach(s => {
+        html += '    <a href="#" class="saas-lesson-link" onclick="go(\'section\', this); navigateTo(\'section\', \'' + s.id + '\', \'' + s.title.replace(/'/g, "\\'") + '\', ' + JSON.stringify(s).replace(/"/g, '&quot;') + '); return false;">' + tr('library_terms.' + s.id, s.title) + '</a>';
+      });
+      html += '  </div>';
+      html += '</div>';
+    });
+
+    list.innerHTML = html;
+  });
+
+  // --- TEXT HIGHLIGHT TOOLBAR FEATURE ---
+document.addEventListener('DOMContentLoaded', () => {
+  const highlightToolbar = document.createElement('div');
+  highlightToolbar.id = 'text-highlight-toolbar';
+  highlightToolbar.style.cssText = 'position:absolute; display:none; background:var(--bg-card, #fff); border:1px solid var(--border-strong); box-shadow:0 4px 12px rgba(0,0,0,0.15); border-radius:8px; padding:4px; z-index:9999; align-items:center; gap:2px;';
+  
+  const hlBtn = document.createElement('button');
+  hlBtn.innerHTML = '<i class="fa-solid fa-highlighter" style="color:var(--primary-base);"></i> Bôi đậm';
+  hlBtn.style.cssText = 'background:none; border:none; cursor:pointer; font-family:var(--font); font-size:13px; font-weight:600; padding:6px 12px; border-radius:6px; color:var(--text-main); display:flex; align-items:center; gap:6px; transition:background 0.2s;';
+  hlBtn.onmouseover = () => hlBtn.style.background = 'var(--s2)';
+  hlBtn.onmouseout = () => hlBtn.style.background = 'transparent';
+  
+  const noteBtn = document.createElement('button');
+  noteBtn.innerHTML = '<i class="fa-solid fa-comment-dots" style="color:#f59e0b;"></i> Ghi chú';
+  noteBtn.style.cssText = hlBtn.style.cssText;
+  noteBtn.onmouseover = () => noteBtn.style.background = 'var(--s2)';
+  noteBtn.onmouseout = () => noteBtn.style.background = 'transparent';
+
+  highlightToolbar.appendChild(hlBtn);
+  highlightToolbar.appendChild(noteBtn);
+  document.body.appendChild(highlightToolbar);
+
+  let currentSelectionRange = null;
+
+  document.addEventListener('mouseup', (e) => {
+    if (highlightToolbar.contains(e.target)) return;
+
+    const selection = window.getSelection();
+    const text = selection.toString().trim();
+    
+    if (text.length > 0 && e.target.closest('#dd-lesson-body')) {
+      const range = selection.getRangeAt(0);
+      currentSelectionRange = range.cloneRange();
+      const rect = range.getBoundingClientRect();
+      
+      highlightToolbar.style.display = 'flex';
+      
+      // Calculate position
+      let top = rect.top + window.scrollY - 45;
+      let left = rect.left + window.scrollX + rect.width/2 - highlightToolbar.offsetWidth/2;
+      
+      // Ensure it doesn't go off screen
+      if (top < 0) top = rect.bottom + window.scrollY + 10;
+      
+      highlightToolbar.style.top = top + 'px';
+      // Fallback left if width is 0 before display
+      highlightToolbar.style.left = (rect.left + window.scrollX + rect.width/2 - 100) + 'px';
+      
+      // Correct left after display is block
+      setTimeout(() => {
+         highlightToolbar.style.left = (rect.left + window.scrollX + rect.width/2 - highlightToolbar.offsetWidth/2) + 'px';
+      }, 0);
+    } else {
+      highlightToolbar.style.display = 'none';
+    }
+  });
+
+  hlBtn.onclick = () => {
+    if (currentSelectionRange) {
+      const span = document.createElement('span');
+      // Thêm class và background highlight
+      span.className = 'user-highlighted-text';
+      span.style.backgroundColor = 'rgba(255, 235, 59, 0.4)';
+      span.style.borderBottom = '2px solid rgba(255, 235, 59, 0.8)';
+      span.style.borderRadius = '2px';
+      
+      try {
+        currentSelectionRange.surroundContents(span);
+      } catch(err) {
+        console.warn("Complex selection crossing nodes.");
+      }
+      window.getSelection().removeAllRanges();
+      highlightToolbar.style.display = 'none';
+    }
+  };
+  
+  noteBtn.onclick = () => {
+     hlBtn.click(); // highlight first
+     const commentInput = document.getElementById('new-comment-input');
+     if (commentInput) {
+        commentInput.scrollIntoView({behavior: 'smooth', block: 'center'});
+        setTimeout(() => commentInput.focus(), 500);
+     }
+  };
+});
 </script>
 
 <!-- UI Interactivity Script -->
@@ -1826,18 +4005,17 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+<script src="js/utils/i18n.js"></script>
 <script src="js/utils/theme-manager.js"></script>
 <script src="js/app/auth.js"></script>
 <script src="js/app/ui/topbar_avatar.js"></script>
 
 
+
+
+
 </body>
+
+
+
 </html>
-
-
-
-
-
-
-
-

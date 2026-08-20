@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -14,6 +14,12 @@
   <link rel="stylesheet" href="css/components.css" />
 </head>
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
+    <script>
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.remove('light-theme');
+        document.body.classList.add('dark-theme', 'dark');
+      }
+    </script>
 
     <!-- Bảng điều khiển (Left Panel) -->
     <div class="w-full md:w-1/3 bg-slate-900 p-6 flex flex-col h-full border-r border-slate-700 overflow-y-auto">
@@ -99,7 +105,7 @@
                 const realData = await response.json();
 
                 if(realData.error) {
-                    alert("Lỗi từ Backend: " + realData.error); return;
+                    (window.App && window.App.showToast ? window.App.showToast("Lỗi từ Backend: " + realData.error, 'warning') : alert("Lỗi từ Backend: " + realData.error)); return;
                 }
 
                 // Lưu trữ và hiển thị Nodes
@@ -135,7 +141,7 @@
 
             } catch (error) {
                 console.error(error);
-                alert("Không thể kết nối đến Backend Flask. Sếp nhớ chạy 'python app.py' nhé!");
+                (window.App && window.App.showToast ? window.App.showToast("Không thể kết nối đến Backend Flask. Sếp nhớ chạy 'python app.py' nhé!", 'warning') : alert("Không thể kết nối đến Backend Flask. Sếp nhớ chạy 'python app.py' nhé!"));
             }
         }
 
@@ -146,8 +152,8 @@
         function addEdge() {
             const from = document.getElementById('edgeFrom').value;
             const to = document.getElementById('edgeTo').value;
-            if (from === to) { alert("Không thể tự nối vào chính mình!"); return; }
-            if (graph[from].includes(to)) { alert("Ràng buộc này đã tồn tại!"); return; }
+            if (from === to) { (window.App && window.App.showToast ? window.App.showToast("Không thể tự nối vào chính mình!", 'warning') : alert("Không thể tự nối vào chính mình!")); return; }
+            if (graph[from].includes(to)) { (window.App && window.App.showToast ? window.App.showToast("Ràng buộc này đã tồn tại!", 'warning') : alert("Ràng buộc này đã tồn tại!")); return; }
 
             graph[from].push(to);
             edges.add({ id: `${from}-${to}`, from: from, to: to });
@@ -227,5 +233,12 @@
     </script>
 <script src="js/app/auth.js"></script>
   <script src="js/app/ui/topbar_avatar.js"></script>
+
+
+
 </body>
+
+
+
 </html>
+

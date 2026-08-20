@@ -1,4 +1,4 @@
-﻿from neo4j import GraphDatabase
+from neo4j import GraphDatabase
 import sys
 
 # --- CẤU HÌNH KẾT NỐI (Lấy từ Neo4j Aura) ---
@@ -16,12 +16,12 @@ try:
     
     # KIỂM TRA ĐƯỜNG TRUYỀN: Test mật khẩu ngay lập tức trước khi chạy lệnh
     driver.verify_connectivity()
-    print("[SUCCESS] BẮT TAY THÀNH CÔNG! Mật khẩu chuẩn 100%, không bị lỗi Unauthorized nữa nhé!\n")
+    print("[SUCCESS] Connected successfully to Neo4j.\n")
     
 except Exception as e:
-    print("[ERROR] LỖI KẾT NỐI NGAY TỪ BƯỚC ĐẦU:")
-    print("1. Nếu vẫn báo Unauthorized: File .txt hệ thống cấp đã bị lỗi (không khớp máy chủ). Sếp HÃY XÓA DB ĐÓ TẠO LẠI DB MỚI.")
-    print(f"Chi tiết lỗi kỹ thuật: {e}")
+    print("[ERROR] Connection error:")
+    print("If Unauthorized: Check credentials.")
+    print(f"Details: {e}")
     sys.exit(1) # Dừng chương trình luôn, không chạy xuống dưới
 
 
