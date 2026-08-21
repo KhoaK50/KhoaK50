@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
@@ -1371,7 +1371,7 @@
 
           // 3. Cập nhật luôn Sidebar Profile (Ép style backgroundImage đồng bộ)
           profileArea.innerHTML = `
-            <div class="user-avatar" style="${savedAvatar ? `background-image: url(${savedAvatar}); font-size:0;` : ''}">${savedAvatar ? '' : initial}</div>
+            <div class="user-avatar" style="${savedAvatar ? `background-image: url(${savedAvatar}); background-size: cover; background-position: center; font-size:0; border:none;` : 'background: var(--bg-hover, #f1f5f9) !important; color: var(--slate-11, #475569) !important; display: flex; align-items: center; justify-content: center;'}">${savedAvatar ? '' : '<i class="fa-solid fa-user"></i>'}</div>
             <h3 style="margin: 0; font-size: 18px">${userName}</h3>
             <span style="color: var(--success-base); font-size: 12px; margin-top: 5px;"><i class="fa-solid fa-cloud-arrow-up"></i> Đã đồng bộ Cloud</span>
             `;

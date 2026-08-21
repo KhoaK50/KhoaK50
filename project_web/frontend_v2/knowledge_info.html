@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
@@ -3756,14 +3756,12 @@ if (document.getElementById('cb-start')) {
     var cancelBtn = document.createElement('button');
     cancelBtn.id = 'prompt-btn-cancel';
     cancelBtn.textContent = tr('knowledge.cancel', 'Hủy');
-    cancelBtn.className = 'btn btn-outline';
-    cancelBtn.style.padding = '8px 16px';
+    cancelBtn.style.cssText = 'padding:8px 16px; border:none; border-radius:6px; background-color:var(--s2, #f1f5f9); color:var(--text-main, #334155); font-weight:500; cursor:pointer; font-size:14px; transition: background 0.2s;';
     
     var okBtn = document.createElement('button');
     okBtn.id = 'prompt-btn-save';
     okBtn.textContent = tr('knowledge.save', 'Lưu');
-    okBtn.className = 'btn btn-primary';
-    okBtn.style.padding = '8px 16px';
+    okBtn.style.cssText = 'padding:8px 16px; border:none; border-radius:6px; background-color:var(--primary-base, #3b82f6); color:#fff; font-weight:500; cursor:pointer; font-size:14px; box-shadow:0 2px 4px rgba(59,130,246,0.3); transition: background 0.2s;';
     
     actions.appendChild(cancelBtn);
     actions.appendChild(okBtn);

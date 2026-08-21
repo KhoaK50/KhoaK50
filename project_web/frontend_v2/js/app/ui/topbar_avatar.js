@@ -1,4 +1,4 @@
-﻿window.TopbarAvatar = {
+window.TopbarAvatar = {
     init: function() {
         const topAvatarBtn = document.getElementById("btnTopAvatar");
         const menuAva = document.getElementById("menuTopAvatar");
@@ -73,9 +73,13 @@
                 topAvatarBtn.style.backgroundImage = `url(${savedAvatar})`;
                 topAvatarBtn.style.backgroundSize = "cover";
                 topAvatarBtn.style.backgroundPosition = "center";
+                topAvatarBtn.style.backgroundColor = "transparent";
+                topAvatarBtn.style.color = "transparent";
             } else {
                 topAvatarBtn.innerHTML = '<i class="fa-solid fa-user"></i>';
                 topAvatarBtn.style.backgroundImage = "none";
+                topAvatarBtn.style.backgroundColor = "var(--bg-hover, #f1f5f9)";
+                topAvatarBtn.style.color = "var(--slate-11, #475569)";
             }
 
             menuAva.innerHTML = `
