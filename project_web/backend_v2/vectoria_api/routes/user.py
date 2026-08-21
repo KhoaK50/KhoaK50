@@ -2,6 +2,52 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
+def get_modern_email(title, greeting, paragraphs, btn_text=None, btn_link=None, fallback_link=None, sub_text=None, lang='vi'):
+    btn_html = ""
+    if btn_text and btn_link:
+        btn_html = f"""
+        <div style="margin: 32px 0;">
+            <a href="{btn_link}" style="display: inline-block; padding: 12px 24px; background-color: #0f172a; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">{btn_text}</a>
+        </div>
+        """
+        if fallback_link:
+            fallback_msg = "Nếu nút bấm không hoạt động, vui lòng sao chép và dán liên kết sau:" if lang == 'vi' else "If the button doesn't work, please copy and paste the following link:"
+            btn_html += f"""
+            <p style="color: #64748b; font-size: 13px; margin-bottom: 8px;">{fallback_msg}</p>
+            <p style="color: #3b82f6; font-size: 13px; word-break: break-all; margin-top: 0;"><a href="{fallback_link}" style="color: #3b82f6; text-decoration: underline;">{fallback_link}</a></p>
+            """
+            
+    p_html = "".join([f'<p style="color: #334155; font-size: 15px; line-height: 1.6; margin-bottom: 16px;">{p}</p>' for p in paragraphs])
+    sub_html = f'<p style="color: #64748b; font-size: 13px; margin-top: 32px;">{sub_text}</p>' if sub_text else ""
+    
+    footer_text = "Nếu bạn không yêu cầu hành động này, vui lòng bỏ qua email này." if lang == 'vi' else "If you didn't request this action, please ignore this email."
+    
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 40px 20px; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+    <tr>
+      <td style="padding: 40px;">
+        <div style="font-weight: 800; font-size: 20px; color: #0f172a; letter-spacing: -0.5px; margin-bottom: 40px;">VECTORIA</div>
+        <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 0; margin-bottom: 24px;">{title}</h2>
+        <p style="color: #334155; font-size: 15px; line-height: 1.6; margin-bottom: 16px;">{greeting}</p>
+        {p_html}
+        {btn_html}
+        {sub_html}
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;">
+        <p style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">{footer_text}</p>
+        <p style="color: #94a3b8; font-size: 12px; margin: 0;">&copy; 2026 Vectoria &mdash; vectoria.io.vn</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
 from flask import Blueprint, request, jsonify, redirect
 import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -174,158 +220,26 @@ def register():
         activation_link = f"{base_url}/verify.html?token={activation_token}"
         
         if language == 'en':
-            email_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    @media (prefers-color-scheme: dark) {{
-      body, .email-wrapper {{ background-color: #1a1a2e !important; }}
-      .email-body {{ background-color: #16213e !important; color: #e0e0e0 !important; }}
-      .email-heading {{ color: #e0e0e0 !important; }}
-      .email-text {{ color: #b0b0b0 !important; }}
-      .email-divider {{ border-color: #2a2a4a !important; }}
-      .email-footer {{ color: #666 !important; }}
-      .email-btn {{ background-color: #0070f3 !important; }}
-    }}
-  </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;">
-  <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table class="email-body" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff;">
-          <tr>
-            <td align="center" style="padding-bottom: 24px;">
-              <span style="font-family: 'Georgia', 'Times New Roman', serif; font-size: 28px; font-weight: 700; letter-spacing: 2px; color: #0f172a;">VECTORIA</span>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 32px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <h1 class="email-heading" style="font-family: 'Georgia', 'Times New Roman', serif; font-size: 22px; font-weight: 600; color: #0f172a; margin: 0 0 20px 0; line-height: 1.3;">Verify your account</h1>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 15px; line-height: 1.7; color: #374151; padding-bottom: 28px;">
-              Hi {display_name},<br><br>Thank you for signing up. Please verify your email to get started.
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding-bottom: 28px;">
-              <a href="{activation_link}" class="email-btn" style="display: inline-block; background-color: #0f172a; color: #ffffff; padding: 14px 32px; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; border-radius: 4px;">Verify now</a>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 12px; color: #9ca3af; line-height: 1.6; padding-bottom: 28px; word-break: break-all;">
-              Or copy and paste this link:<br>{activation_link}
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 13px; color: #6b7280; line-height: 1.6; padding-bottom: 32px;">
-              If you did not create this account, you can safely ignore this email.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 20px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td class="email-footer" align="center" style="font-size: 12px; color: #9ca3af; line-height: 1.6;">
-              &copy; 2026 Vectoria &mdash; vectoria.io.vn
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-"""
+            email_content = get_modern_email(
+                title="Confirm your account",
+                greeting=f"Hi {display_name},",
+                paragraphs=["Thanks for signing up for Vectoria. Please confirm your email address to complete your registration."],
+                btn_text="Verify Email",
+                btn_link=activation_link,
+                fallback_link=activation_link,
+                lang="en"
+            )
             send_auth_email(email, "Verify your Vectoria account", email_content)
         else:
-            email_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    @media (prefers-color-scheme: dark) {{
-      body, .email-wrapper {{ background-color: #1a1a2e !important; }}
-      .email-body {{ background-color: #16213e !important; color: #e0e0e0 !important; }}
-      .email-heading {{ color: #e0e0e0 !important; }}
-      .email-text {{ color: #b0b0b0 !important; }}
-      .email-divider {{ border-color: #2a2a4a !important; }}
-      .email-footer {{ color: #666 !important; }}
-      .email-btn {{ background-color: #0070f3 !important; }}
-    }}
-  </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;">
-  <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table class="email-body" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff;">
-          <tr>
-            <td align="center" style="padding-bottom: 24px;">
-              <span style="font-family: 'Georgia', serif; font-size: 28px; font-weight: 700; letter-spacing: 2px; color: #0f172a;">VECTORIA</span>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 32px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <h1 class="email-heading" style="font-family: 'Georgia', serif; font-size: 22px; font-weight: 600; color: #0f172a; margin: 0 0 20px 0; line-height: 1.3;">Xác thực tài khoản</h1>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 15px; line-height: 1.7; color: #374151; padding-bottom: 28px;">
-              Chào bạn, {display_name},<br><br>Cảm ơn bạn đã đăng ký. Vui lòng xác thực email để hoàn tất.
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding-bottom: 28px;">
-              <a href="{activation_link}" class="email-btn" style="display: inline-block; background-color: #0f172a; color: #ffffff; padding: 14px 32px; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; border-radius: 4px;">Xác thực ngay</a>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 12px; color: #9ca3af; line-height: 1.6; padding-bottom: 28px; word-break: break-all;">
-              Nếu nút bấm không hoạt động, vui lòng sao chép và dán liên kết sau:<br>{activation_link}
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 13px; color: #6b7280; line-height: 1.6; padding-bottom: 32px;">
-              Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 20px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td class="email-footer" align="center" style="font-size: 12px; color: #9ca3af; line-height: 1.6;">
-              &copy; 2026 Vectoria &mdash; vectoria.io.vn
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-"""
+            email_content = get_modern_email(
+                title="Xác thực tài khoản",
+                greeting=f"Chào bạn, {display_name},",
+                paragraphs=["Cảm ơn bạn đã đăng ký. Vui lòng xác thực email để hoàn tất quá trình đăng ký."],
+                btn_text="Xác thực ngay",
+                btn_link=activation_link,
+                fallback_link=activation_link,
+                lang="vi"
+            )
             send_auth_email(email, "Xác thực tài khoản — Vectoria", email_content)
 
         return jsonify({"status": "success", "message": "Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản."}), 201
@@ -468,184 +382,28 @@ def login():
                 confirm_link = f"{API_BASE}/api/confirm-device?token={confirm_token}"
 
                 if language == 'en':
-                    email_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    @media (prefers-color-scheme: dark) {{
-      body, .email-wrapper {{ background-color: #1a1a2e !important; }}
-      .email-body {{ background-color: #16213e !important; color: #e0e0e0 !important; }}
-      .email-heading {{ color: #e0e0e0 !important; }}
-      .email-text {{ color: #b0b0b0 !important; }}
-      .email-divider {{ border-color: #2a2a4a !important; }}
-      .email-footer {{ color: #666 !important; }}
-    }}
-  </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;">
-  <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table class="email-body" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff;">
-          <tr>
-            <td align="center" style="padding-bottom: 24px;">
-              <span style="font-family: 'Georgia', 'Times New Roman', serif; font-size: 28px; font-weight: 700; letter-spacing: 2px; color: #0f172a;">VECTORIA</span>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 32px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <h1 class="email-heading" style="font-family: 'Georgia', 'Times New Roman', serif; font-size: 22px; font-weight: 600; color: #0f172a; margin: 0 0 20px 0; line-height: 1.3;">Login from a new device</h1>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 15px; line-height: 1.7; color: #374151; padding-bottom: 20px;">
-              Hi {display_name},<br><br>We detected a login from an unrecognized device.
-            </td>
-          </tr>
-          <tr>
-            <td style="padding-bottom: 28px;">
-              <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse: collapse; font-size: 14px; color: #6b7280; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                <tr>
-                  <td width="30%" style="font-weight: 600;">IP Address:</td>
-                  <td>{ip_address}</td>
-                </tr>
-                <tr>
-                  <td width="30%" style="font-weight: 600;">Device:</td>
-                  <td>{friendly_device}</td>
-                </tr>
-                <tr>
-                  <td width="30%" style="font-weight: 600;">Time:</td>
-                  <td>{datetime.now().strftime('%H:%M - %d/%m/%Y')}</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding-bottom: 28px;">
-              <a href="{confirm_link}" style="display: inline-block; background-color: #059669; color: #ffffff; padding: 14px 24px; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; border-radius: 4px; margin-right: 10px;">Yes, it was me</a>
-              <a href="{secure_link}" style="display: inline-block; background-color: #dc2626; color: #ffffff; padding: 14px 24px; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; border-radius: 4px;">Secure my account</a>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 13px; color: #6b7280; line-height: 1.6; padding-bottom: 32px;">
-              If you did not authorize this login, please secure your account immediately.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 20px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td class="email-footer" align="center" style="font-size: 12px; color: #9ca3af; line-height: 1.6;">
-              &copy; 2026 Vectoria &mdash; vectoria.io.vn
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-"""
+                    email_content = get_modern_email(
+                title="New login detected",
+                greeting=f"Hi {display_name},",
+                paragraphs=["We detected a new login to your Vectoria account from an unrecognized device."],
+                sub_text=f"<b>Time:</b> {current_time}<br><b>Device IP:</b> {ip_address}<br><b>User Agent:</b> {user_agent}",
+                btn_text="Yes, it was me",
+                btn_link=confirm_link,
+                fallback_link=confirm_link,
+                lang="en"
+            )
                     send_auth_email(email, "Security alert — Vectoria", email_content)
                 else:
-                    email_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    @media (prefers-color-scheme: dark) {{
-      body, .email-wrapper {{ background-color: #1a1a2e !important; }}
-      .email-body {{ background-color: #16213e !important; color: #e0e0e0 !important; }}
-      .email-heading {{ color: #e0e0e0 !important; }}
-      .email-text {{ color: #b0b0b0 !important; }}
-      .email-divider {{ border-color: #2a2a4a !important; }}
-      .email-footer {{ color: #666 !important; }}
-    }}
-  </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;">
-  <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table class="email-body" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff;">
-          <tr>
-            <td align="center" style="padding-bottom: 24px;">
-              <span style="font-family: 'Georgia', serif; font-size: 28px; font-weight: 700; letter-spacing: 2px; color: #0f172a;">VECTORIA</span>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 32px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <h1 class="email-heading" style="font-family: 'Georgia', serif; font-size: 22px; font-weight: 600; color: #0f172a; margin: 0 0 20px 0; line-height: 1.3;">Đăng nhập từ thiết bị mới</h1>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 15px; line-height: 1.7; color: #374151; padding-bottom: 20px;">
-              Chào bạn, {display_name},<br><br>Hệ thống ghi nhận một lượt đăng nhập từ thiết bị chưa xác thực.
-            </td>
-          </tr>
-          <tr>
-            <td style="padding-bottom: 28px;">
-              <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse: collapse; font-size: 14px; color: #6b7280; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                <tr>
-                  <td width="30%" style="font-weight: 600;">Địa chỉ IP:</td>
-                  <td>{ip_address}</td>
-                </tr>
-                <tr>
-                  <td width="30%" style="font-weight: 600;">Thiết bị:</td>
-                  <td>{friendly_device}</td>
-                </tr>
-                <tr>
-                  <td width="30%" style="font-weight: 600;">Thời gian:</td>
-                  <td>{datetime.now().strftime('%H:%M - %d/%m/%Y')}</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding-bottom: 28px;">
-              <a href="{confirm_link}" style="display: inline-block; background-color: #059669; color: #ffffff; padding: 14px 24px; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; border-radius: 4px; margin-right: 10px;">Xác nhận là tôi</a>
-              <a href="{secure_link}" style="display: inline-block; background-color: #dc2626; color: #ffffff; padding: 14px 24px; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; border-radius: 4px;">Bảo vệ tài khoản</a>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 13px; color: #6b7280; line-height: 1.6; padding-bottom: 32px;">
-              Nếu bạn không thực hiện đăng nhập này, vui lòng bảo vệ tài khoản ngay lập tức.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 20px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td class="email-footer" align="center" style="font-size: 12px; color: #9ca3af; line-height: 1.6;">
-              &copy; 2026 Vectoria &mdash; vectoria.io.vn
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-"""
+                    email_content = get_modern_email(
+                title="Phát hiện đăng nhập mới",
+                greeting=f"Chào bạn, {display_name},",
+                paragraphs=["Chúng tôi phát hiện một lượt đăng nhập mới vào tài khoản Vectoria của bạn từ một thiết bị lạ."],
+                sub_text=f"<b>Thời gian:</b> {current_time}<br><b>Địa chỉ IP:</b> {ip_address}<br><b>Thiết bị:</b> {user_agent}",
+                btn_text="Vâng, đó là tôi",
+                btn_link=confirm_link,
+                fallback_link=confirm_link,
+                lang="vi"
+            )
                     send_auth_email(email, "Cảnh báo bảo mật — Vectoria", email_content)
             
             conn.commit()
@@ -716,158 +474,26 @@ def forgot_password():
         reset_link = f"{base_url}/reset_password.html?token={reset_token}"
         
         if language == 'en':
-            email_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    @media (prefers-color-scheme: dark) {{
-      body, .email-wrapper {{ background-color: #1a1a2e !important; }}
-      .email-body {{ background-color: #16213e !important; color: #e0e0e0 !important; }}
-      .email-heading {{ color: #e0e0e0 !important; }}
-      .email-text {{ color: #b0b0b0 !important; }}
-      .email-divider {{ border-color: #2a2a4a !important; }}
-      .email-footer {{ color: #666 !important; }}
-      .email-btn {{ background-color: #0070f3 !important; }}
-    }}
-  </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;">
-  <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table class="email-body" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff;">
-          <tr>
-            <td align="center" style="padding-bottom: 24px;">
-              <span style="font-family: 'Georgia', 'Times New Roman', serif; font-size: 28px; font-weight: 700; letter-spacing: 2px; color: #0f172a;">VECTORIA</span>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 32px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <h1 class="email-heading" style="font-family: 'Georgia', 'Times New Roman', serif; font-size: 22px; font-weight: 600; color: #0f172a; margin: 0 0 20px 0; line-height: 1.3;">Reset your password</h1>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 15px; line-height: 1.7; color: #374151; padding-bottom: 28px;">
-              Hi {display_name},<br><br>We received a request to reset your password. This link expires in 1 hour.
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding-bottom: 28px;">
-              <a href="{reset_link}" class="email-btn" style="display: inline-block; background-color: #0f172a; color: #ffffff; padding: 14px 32px; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; border-radius: 4px;">Reset password</a>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 12px; color: #9ca3af; line-height: 1.6; padding-bottom: 28px; word-break: break-all;">
-              Or copy and paste this link:<br>{reset_link}
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 13px; color: #6b7280; line-height: 1.6; padding-bottom: 32px;">
-              If you did not request this, please ignore this email.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 20px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td class="email-footer" align="center" style="font-size: 12px; color: #9ca3af; line-height: 1.6;">
-              &copy; 2026 Vectoria &mdash; vectoria.io.vn
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-"""
+            email_content = get_modern_email(
+                title="Reset your password",
+                greeting=f"Hi {display_name},",
+                paragraphs=["We received a request to reset the password for your Vectoria account. Click the button below to choose a new password."],
+                btn_text="Reset Password",
+                btn_link=reset_link,
+                fallback_link=reset_link,
+                lang="en"
+            )
             send_auth_email(email, "Reset your password — Vectoria", email_content)
         else:
-            email_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    @media (prefers-color-scheme: dark) {{
-      body, .email-wrapper {{ background-color: #1a1a2e !important; }}
-      .email-body {{ background-color: #16213e !important; color: #e0e0e0 !important; }}
-      .email-heading {{ color: #e0e0e0 !important; }}
-      .email-text {{ color: #b0b0b0 !important; }}
-      .email-divider {{ border-color: #2a2a4a !important; }}
-      .email-footer {{ color: #666 !important; }}
-      .email-btn {{ background-color: #0070f3 !important; }}
-    }}
-  </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;">
-  <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table class="email-body" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff;">
-          <tr>
-            <td align="center" style="padding-bottom: 24px;">
-              <span style="font-family: 'Georgia', serif; font-size: 28px; font-weight: 700; letter-spacing: 2px; color: #0f172a;">VECTORIA</span>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 32px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <h1 class="email-heading" style="font-family: 'Georgia', serif; font-size: 22px; font-weight: 600; color: #0f172a; margin: 0 0 20px 0; line-height: 1.3;">Đặt lại mật khẩu</h1>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 15px; line-height: 1.7; color: #374151; padding-bottom: 28px;">
-              Chào bạn, {display_name},<br><br>Chúng tôi nhận được yêu cầu đặt lại mật khẩu. Liên kết có hiệu lực trong 1 giờ.
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding-bottom: 28px;">
-              <a href="{reset_link}" class="email-btn" style="display: inline-block; background-color: #0f172a; color: #ffffff; padding: 14px 32px; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; border-radius: 4px;">Đặt lại mật khẩu</a>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 12px; color: #9ca3af; line-height: 1.6; padding-bottom: 28px; word-break: break-all;">
-              Nếu nút bấm không hoạt động, vui lòng sao chép và dán liên kết sau:<br>{reset_link}
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 13px; color: #6b7280; line-height: 1.6; padding-bottom: 32px;">
-              Nếu bạn không yêu cầu, vui lòng bỏ qua email này.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 20px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td class="email-footer" align="center" style="font-size: 12px; color: #9ca3af; line-height: 1.6;">
-              &copy; 2026 Vectoria &mdash; vectoria.io.vn
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-"""
+            email_content = get_modern_email(
+                title="Đặt lại mật khẩu",
+                greeting=f"Chào bạn, {display_name},",
+                paragraphs=["Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản Vectoria của bạn. Nhấn vào nút bên dưới để tạo mật khẩu mới."],
+                btn_text="Đặt lại mật khẩu",
+                btn_link=reset_link,
+                fallback_link=reset_link,
+                lang="vi"
+            )
             send_auth_email(email, "Đặt lại mật khẩu — Vectoria", email_content)
 
         return jsonify({"status": "success", "message": "Nếu email tồn tại, thư khôi phục đã được gửi."}), 200
@@ -1106,172 +732,28 @@ def google_login():
             confirm_link = f"{API_BASE}/api/confirm-device?token={confirm_token}"
 
             if language == 'en':
-                email_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    @media (prefers-color-scheme: dark) {{
-      body, .email-wrapper {{ background-color: #1a1a2e !important; }}
-      .email-body {{ background-color: #16213e !important; color: #e0e0e0 !important; }}
-      .email-heading {{ color: #e0e0e0 !important; }}
-      .email-text {{ color: #b0b0b0 !important; }}
-      .email-divider {{ border-color: #2a2a4a !important; }}
-      .email-footer {{ color: #666 !important; }}
-    }}
-  </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;">
-  <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table class="email-body" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff;">
-          <tr>
-            <td align="center" style="padding-bottom: 24px;">
-              <span style="font-family: 'Georgia', 'Times New Roman', serif; font-size: 28px; font-weight: 700; letter-spacing: 2px; color: #0f172a;">VECTORIA</span>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 32px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <h1 class="email-heading" style="font-family: 'Georgia', 'Times New Roman', serif; font-size: 22px; font-weight: 600; color: #0f172a; margin: 0 0 20px 0; line-height: 1.3;">Google login from a new device</h1>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 15px; line-height: 1.7; color: #374151; padding-bottom: 20px;">
-              Hi {display_name},<br><br>We detected a login to your Vectoria account using <b>Google</b> from an unrecognized device.
-            </td>
-          </tr>
-          <tr>
-            <td style="padding-bottom: 28px;">
-              <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse: collapse; font-size: 14px; color: #6b7280; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                <tr>
-                  <td width="30%" style="font-weight: 600;">IP Address:</td>
-                  <td>{ip_address}</td>
-                </tr>
-                <tr>
-                  <td width="30%" style="font-weight: 600;">Device:</td>
-                  <td>{friendly_device}</td>
-                </tr>
-                <tr>
-                  <td width="30%" style="font-weight: 600;">Time:</td>
-                  <td>{datetime.now().strftime('%H:%M - %d/%m/%Y')}</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 13px; color: #dc2626; font-weight: 600; line-height: 1.6; padding-bottom: 32px;">
-              If you did not authorize this login, please secure your Google account immediately.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 20px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td class="email-footer" align="center" style="font-size: 12px; color: #9ca3af; line-height: 1.6;">
-              &copy; 2026 Vectoria &mdash; vectoria.io.vn
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-"""
+                email_content = get_modern_email(
+                title="New Google login detected",
+                greeting=f"Hi {display_name},",
+                paragraphs=["We detected a login to your Vectoria account using Google from an unrecognized device."],
+                sub_text=f"<b>Time:</b> {current_time}<br><b>Device IP:</b> {ip_address}<br><b>User Agent:</b> {user_agent}",
+                btn_text="Yes, it was me",
+                btn_link=confirm_link,
+                fallback_link=confirm_link,
+                lang="en"
+            )
                 send_auth_email(email, "Security alert — Vectoria", email_content)
             else:
-                email_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    @media (prefers-color-scheme: dark) {{
-      body, .email-wrapper {{ background-color: #1a1a2e !important; }}
-      .email-body {{ background-color: #16213e !important; color: #e0e0e0 !important; }}
-      .email-heading {{ color: #e0e0e0 !important; }}
-      .email-text {{ color: #b0b0b0 !important; }}
-      .email-divider {{ border-color: #2a2a4a !important; }}
-      .email-footer {{ color: #666 !important; }}
-    }}
-  </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;">
-  <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table class="email-body" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff;">
-          <tr>
-            <td align="center" style="padding-bottom: 24px;">
-              <span style="font-family: 'Georgia', serif; font-size: 28px; font-weight: 700; letter-spacing: 2px; color: #0f172a;">VECTORIA</span>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 32px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <h1 class="email-heading" style="font-family: 'Georgia', serif; font-size: 22px; font-weight: 600; color: #0f172a; margin: 0 0 20px 0; line-height: 1.3;">Đăng nhập Google từ thiết bị mới</h1>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 15px; line-height: 1.7; color: #374151; padding-bottom: 20px;">
-              Chào bạn, {display_name},<br><br>Hệ thống ghi nhận một lượt đăng nhập bằng <b>Google</b> từ thiết bị chưa xác thực.
-            </td>
-          </tr>
-          <tr>
-            <td style="padding-bottom: 28px;">
-              <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse: collapse; font-size: 14px; color: #6b7280; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                <tr>
-                  <td width="30%" style="font-weight: 600;">Địa chỉ IP:</td>
-                  <td>{ip_address}</td>
-                </tr>
-                <tr>
-                  <td width="30%" style="font-weight: 600;">Thiết bị:</td>
-                  <td>{friendly_device}</td>
-                </tr>
-                <tr>
-                  <td width="30%" style="font-weight: 600;">Thời gian:</td>
-                  <td>{datetime.now().strftime('%H:%M - %d/%m/%Y')}</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td class="email-text" style="font-size: 13px; color: #dc2626; font-weight: 600; line-height: 1.6; padding-bottom: 32px;">
-              Nếu bạn không thực hiện đăng nhập này, vui lòng kiểm tra và bảo mật tài khoản Google của bạn ngay lập tức.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <hr class="email-divider" style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 20px 0;">
-            </td>
-          </tr>
-          <tr>
-            <td class="email-footer" align="center" style="font-size: 12px; color: #9ca3af; line-height: 1.6;">
-              &copy; 2026 Vectoria &mdash; vectoria.io.vn
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-"""
+                email_content = get_modern_email(
+                title="Phát hiện đăng nhập Google mới",
+                greeting=f"Chào bạn, {display_name},",
+                paragraphs=["Chúng tôi phát hiện một lượt đăng nhập vào tài khoản Vectoria của bạn bằng Google từ một thiết bị lạ."],
+                sub_text=f"<b>Thời gian:</b> {current_time}<br><b>Địa chỉ IP:</b> {ip_address}<br><b>Thiết bị:</b> {user_agent}",
+                btn_text="Vâng, đó là tôi",
+                btn_link=confirm_link,
+                fallback_link=confirm_link,
+                lang="vi"
+            )
                 send_auth_email(email, "Cảnh báo bảo mật — Vectoria", email_content)
 
         SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
