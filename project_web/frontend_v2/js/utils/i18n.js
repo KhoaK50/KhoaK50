@@ -1,6 +1,6 @@
-﻿const i18nConfig = {
+const i18nConfig = {
   defaultLocale: 'vi',
-  currentLocale: localStorage.getItem('locale') || 'vi',
+  currentLocale: localStorage.getItem('locale') || (navigator.language && navigator.language.startsWith('vi') ? 'vi' : 'en'),
   translations: {}
 };
 

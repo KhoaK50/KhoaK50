@@ -279,9 +279,9 @@ document.addEventListener('DOMContentLoaded', function() {
         var toast = document.createElement('div');
         toast.style.cssText = 'background: var(--bg-card, #ffffff); border: 1px solid var(--border-strong, #e2e8f0); border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); padding: 14px 16px; min-width: 300px; max-width: 380px; animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; font-family: var(--font, system-ui, sans-serif); position: relative; overflow: hidden; pointer-events: auto;';
         
-        var iconColor = type === 'WARNING' ? '#ef4444' : '#3b82f6';
+        var iconColor = type === 'WARNING' ? 'var(--danger-base, #ef4444)' : 'var(--primary-base, #3b82f6)';
         var iconClass = type === 'WARNING' ? 'fa-triangle-exclamation' : 'fa-bell';
-        var iconBg = type === 'WARNING' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)';
+        var iconBg = type === 'WARNING' ? 'rgba(229, 72, 77, 0.1)' : 'rgba(0, 144, 255, 0.1)';
         
         toast.innerHTML = `
             <div style="display: flex; gap: 12px; align-items: flex-start; z-index: 2; position: relative;">

@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
@@ -735,7 +735,7 @@
     <div id="static-toast">
       <i class="fa-solid fa-circle-check toast-icon"></i>
       <div class="toast-text">
-        <h4 id="toastTitle">Thành công!</h4>
+        <h4 id="toastTitle">Thông báo</h4>
         <p id="toastMessage">Đăng nhập thành công</p>
       </div>
       <div class="toast-bar"></div>
@@ -816,20 +816,6 @@
               <i class="fa-solid fa-arrow-left"></i> Quay lại đăng nhập
             </a>
           </div>
-        </form>
-            <form id="resetPwdForm" style="display: none;" onsubmit="handleAuth(event, 'reset_pwd')">
-          <input type="hidden" id="hiddenResetToken" />
-          <div class="form-group">
-            <label>Mật khẩu mới</label>
-            <div class="input-wrapper">
-              <input type="password" id="newResetPass" class="has-pwd-toggle" placeholder="Nhập mật khẩu mới..." required />
-              <i class="fa-solid fa-lock input-icon"></i>
-              <i class="fa-solid fa-eye-slash toggle-pwd" onclick="togglePassword('newResetPass', this)"></i>
-            </div>
-          </div>
-          <button type="submit" class="btn-submit" id="btnResetPwdSubmit">
-            <span>Lưu mật khẩu mới</span> <i class="fa-solid fa-check"></i>
-          </button>
         </form>
             
             <div class="divider">HOẶC</div>
@@ -959,11 +945,11 @@
       
       vectoriaChannel.onmessage = (event) => {
         if (event.data === 'acc_activated') {
-          showToast("Kích hoạt từ Tab khác thành công! Mời đăng nhập.", true);
+          showToast("Đã xác thực thành công. Vui lòng đăng nhập.", true);
           switchTab('login');
         }
         else if (event.data === 'pwd_reset_done') {
-          showToast("Mật khẩu đã được đổi! Mời đăng nhập lại.", true);
+          showToast("Mật khẩu đã được thay đổi. Vui lòng đăng nhập.", true);
           switchTab('login');
         }
       };
@@ -1032,7 +1018,7 @@
         toast.style.borderLeftColor = isSuccess ? "#2ecc71" : "#e74c3c";
         bar.style.background = isSuccess ? "#2ecc71" : "#e74c3c";
 
-        title.innerText = isSuccess ? "Thành công!" : "Thất bại!";
+        title.innerText = isSuccess ? "Thông báo" : "Có lỗi xảy ra";
         desc.innerText = message;
 
         toast.classList.add("show");
@@ -1086,7 +1072,7 @@
               form.innerHTML = `
                 <div style="text-align: center; padding: 20px;">
                   <i class="fa-solid fa-envelope-circle-check" style="font-size: 3.5rem; color: #2ecc71; margin-bottom: 20px;"></i>
-                  <h3 style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;">Đăng ký thành công!</h3>
+                  <h3 style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;">Đăng ký thành công</h3>
                   <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px;">
                     Chúng tôi đã gửi một email xác thực đến <br><b style="color: var(--text-main);">${email}</b>.<br><br>Vui lòng kiểm tra hộp thư đến (hoặc thư rác) và bấm vào liên kết để kích hoạt tài khoản trước khi đăng nhập.
                   </p>
@@ -1113,40 +1099,6 @@
               setTimeout(() => {
                 switchTab("login"); // Gửi mail xong thì tự quay về form login
               }, 2000);
-            } else {
-              showToast(data.message, false);
-            }
-          } else if (type === "reset_pwd") { 
-            const token = document.getElementById("hiddenResetToken").value;
-            const new_password = document.getElementById("newResetPass").value;
-            const res = await fetch(`${API_BASE}/api/reset-password`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ token, new_password }),
-            });
-            const data = await res.json();
-
-            if (data.status === "success") {
-              // 1. Dọn dẹp URL
-              window.history.replaceState({}, document.title, window.location.pathname);
-              
-              // 2. Báo cho Tab gốc biết
-              vectoriaChannel.postMessage('pwd_reset_done');
-              
-              // 3. Đổi giao diện báo thành công và dọn form
-              showToast("Đổi mật khẩu thành công! Tab này sẽ tự đóng...", true);
-              document.querySelector('.auth-container').innerHTML = `
-                <div class="auth-card" style="text-align: center; padding: 50px 20px;">
-                    <i class="fa-solid fa-key" style="font-size: 60px; color: #2ecc71; margin-bottom: 20px;"></i>
-                    <h2 style="margin-bottom: 10px; color: var(--text-main);">Thành công!</h2>
-                    <p style="color: var(--text-muted); line-height: 1.5;">Mật khẩu mới đã được cập nhật.<br>Bạn có thể đóng trang này và quay lại thẻ cũ để đăng nhập.</p>
-                </div>
-              `;
-
-              // 4. Tự hủy Tab sau 3 giây
-              setTimeout(() => {
-                window.close();
-              }, 3000);
             } else {
               showToast(data.message, false);
             }
@@ -1178,7 +1130,7 @@
               } else {
                 localStorage.removeItem("remembered_email");
               }
-              showToast(`Chào mừng ${data.display_name} trở lại!`, true);
+              showToast(`Chào mừng, ${data.display_name}.`, true);
 
               setTimeout(() => {
                 const returnUrl = sessionStorage.getItem(
@@ -1197,7 +1149,7 @@
           }
         } catch (err) {
           console.error(err);
-          showToast("Lỗi máy chủ! Vui lòng kiểm tra lại kết nối.", false);
+          showToast("Không thể kết nối đến máy chủ.", false);
         } finally {
           btn.disabled = false;
           btn.innerHTML = originalHtml;
@@ -1280,7 +1232,7 @@
         const userToken = localStorage.getItem("user_token");
         if (userToken) {
           // Báo cho người dùng biết đang tự động chuyển hướng
-          showToast("Đang khôi phục phiên đăng nhập...", true);
+          showToast("Đang khôi phục phiên làm việc.", true);
           setTimeout(() => {
             window.location.href = "user-dashboard.html"; // Chuyển thẳng vào web
           }, 1000);
@@ -1297,20 +1249,18 @@
         // 7.2. Tự động xác thực tài khoản nếu có token trên URL
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
-        const resetToken = urlParams.get('reset_token');
-        
                 const activated = urlParams.get('activated');
         const errorMsg = urlParams.get('error');
 
         if (activated === 'true') {
           window.history.replaceState({}, document.title, window.location.pathname);
           vectoriaChannel.postMessage('acc_activated');
-          showToast("Xác thực thành công! Tab này sẽ tự đóng...", true);
+          showToast("Xác thực hoàn tất. Tab này sẽ tự đóng.", true);
           document.querySelector('.auth-container').innerHTML = `
             <div class="auth-card" style="text-align: center; padding: 50px 20px;">
                 <i class="fa-solid fa-circle-check" style="font-size: 60px; color: #2ecc71; margin-bottom: 20px;"></i>
-                <h2 style="margin-bottom: 10px; color: var(--text-main);">Thành công!</h2>
-                <p style="color: var(--text-muted); line-height: 1.5;">Tài khoản đã được kích hoạt.<br>Bạn có thể đóng trang này và quay lại thẻ (tab) cũ để đăng nhập.</p>
+                <h2 style="margin-bottom: 10px; color: var(--text-main);">Xác thực hoàn tất</h2>
+                <p style="color: var(--text-muted); line-height: 1.5;">Tài khoản đã được kích hoạt.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập.</p>
             </div>
           `;
           setTimeout(() => window.close(), 3000);
@@ -1321,36 +1271,8 @@
               'already_activated': "Tài khoản này đã được kích hoạt trước đó!",
               'server_error': "Lỗi máy chủ trong quá trình xác thực!"
           };
-          showToast(msgs[errorMsg] || "Lỗi xác thực!", false);
+          showToast(msgs[errorMsg] || "Lỗi xác thực.", false);
         }
-        if (resetToken) {
-          // Ẩn hết các râu ria, chỉ hiện Form Đổi mật khẩu
-          document.querySelector('.auth-tabs')?.style.setProperty('display', 'none');
-          document.querySelector('.divider')?.style.setProperty('display', 'none');
-          document.querySelector('.btn-social')?.style.setProperty('display', 'none');
-          
-          const loginForm = document.getElementById('loginForm');
-          if (loginForm) loginForm.style.display = 'none';
-          
-          const registerForm = document.getElementById('registerForm');
-          if (registerForm) registerForm.style.display = 'none';
-          
-          const forgotForm = document.getElementById('forgotForm');
-          if (forgotForm) forgotForm.style.display = 'none';
-          
-          const subtitle = document.getElementById('authSubtitle');
-          if (subtitle) subtitle.innerText = "Thiết lập mật khẩu mới";
-          
-          const subtitleLogin = document.getElementById('authSubtitleLogin');
-          if (subtitleLogin) subtitleLogin.innerText = "Thiết lập mật khẩu mới";
-          
-          const resetPwdForm = document.getElementById('resetPwdForm');
-          if (resetPwdForm) resetPwdForm.style.display = 'block';
-          
-          const hiddenResetToken = document.getElementById('hiddenResetToken');
-          if (hiddenResetToken) hiddenResetToken.value = resetToken;
-        }
-
         // KHỞI TẠO GOOGLE OAUTH
         googleClient = google.accounts.oauth2.initTokenClient({
           // Nhớ thay bằng Client ID thực tế của ông lúc test local nhé
@@ -1358,7 +1280,7 @@
           scope: 'email profile',
           callback: async (tokenResponse) => {
             if (tokenResponse && tokenResponse.access_token) {
-              showToast("Đang đồng bộ dữ liệu với Google...", true);
+              showToast("Đang xác thực với Google.", true);
               
               const _l = atob("aHR0cDovLzEyNy4wLjAuMTo1MDAw");
               const _p = atob("aHR0cHM6Ly92aXN1YWxpemF0aW9uLXJyNXYub25yZW5kZXIuY29t");
@@ -1376,13 +1298,13 @@
                 if (data.status === 'success') {
                   localStorage.setItem("user_token", data.token);
                   localStorage.setItem("user_name", data.display_name);
-                  showToast(`Chào mừng ${data.display_name}!`, true);
+                  showToast(`Chào mừng, ${data.display_name}.`, true);
                   setTimeout(() => window.location.href = "user-dashboard.html", 1000);
                 } else {
                   showToast(data.message, false);
                 }
               } catch (err) {
-                showToast("Lỗi máy chủ khi đăng nhập Google!", false);
+                showToast("Không thể kết nối qua Google.", false);
               }
             }
           }
@@ -1542,7 +1464,7 @@
         const score = (regPass.value.length >= 8 ? 1 : 0) + (/[a-zA-Z]/.test(regPass.value) ? 1 : 0) + (/[0-9]/.test(regPass.value) ? 1 : 0);
         if (score < 3 || !emailRegex.test(regEmail.value) || regPassConfirm.value !== regPass.value) {
           e.preventDefault();
-          showToast("Vui lòng kiểm tra lại thông tin đăng ký chưa hợp lệ!", false);
+          showToast("Thông tin đăng ký không hợp lệ.", false);
           return false;
         }
       });
@@ -1551,7 +1473,7 @@
         if (googleClient) {
           googleClient.requestAccessToken();
         } else {
-          showToast("Hệ thống Google đang tải, vui lòng thử lại!", false);
+          showToast("Google chưa sẵn sàng, vui lòng thử lại.", false);
         }
       }
     </script>
