@@ -761,7 +761,7 @@
           
           <div class="auth-right-panel">
             
-            <div class="mobile-only-logo"><img src="assets/images/logoVec2.png" alt="Vectoria" onerror="this.src=\'assets/images/logo.png\'"></div>
+            <div class="mobile-only-logo"><img src="assets/images/logoVec2.png" alt="Vectoria" onerror="this.src='assets/images/logo.png'"></div>
             
             <form id="loginForm" onsubmit="handleAuth(event, 'login')">
           <div class="form-group">
@@ -838,7 +838,7 @@
         <div class="flip-card-back">
           <div class="auth-right-panel">
             
-            <div class="mobile-only-logo"><img src="assets/images/logoVec2.png" alt="Vectoria" onerror="this.src=\'assets/images/logo.png\'"></div>
+            <div class="mobile-only-logo"><img src="assets/images/logoVec2.png" alt="Vectoria" onerror="this.src='assets/images/logo.png'"></div>
             
             <form id="registerForm" onsubmit="handleAuth(event, 'register')">
           <div class="form-group">
@@ -1064,18 +1064,18 @@
 
             if (data.status === "success") {
               const form = document.getElementById("registerForm");
-              form.innerHTML = 
+              form.innerHTML = `
                 <div style="text-align: center; padding: 20px;">
                   <i class="fa-solid fa-envelope-circle-check" style="font-size: 3.5rem; color: #2ecc71; margin-bottom: 20px;"></i>
-                  <h3 style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;"></h3>
+                  <h3 style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;">${window.tr ? tr("auth.reg_success_title", "Đăng ký thành công") : "Đăng ký thành công"}</h3>
                   <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px;">
-                      <br><b style="color: var(--text-main);"></b>.<br><br>
+                     ${window.tr ? tr("auth.reg_success_msg_1", "Chúng tôi đã gửi một email xác thực đến") : "Chúng tôi đã gửi một email xác thực đến"} <br><b style="color: var(--text-main);">${email}</b>.<br><br>${window.tr ? tr("auth.reg_success_msg_2", "Vui lòng kiểm tra hộp thư đến (hoặc thư rác) và bấm vào liên kết để kích hoạt tài khoản trước khi đăng nhập.") : "Vui lòng kiểm tra hộp thư đến (hoặc thư rác) và bấm vào liên kết để kích hoạt tài khoản trước khi đăng nhập."}
                   </p>
                   <button type="button" class="btn-submit" onclick="window.location.reload()">
-                    <i class="fa-solid fa-arrow-left"></i> 
+                    <i class="fa-solid fa-arrow-left"></i> ${window.tr ? tr("auth.back_to_login", "Quay lại đăng nhập") : "Quay lại đăng nhập"}
                   </button>
                 </div>
-              ;
+              `;
             } else {
               showToast(data.message, false);
             }
@@ -1251,13 +1251,13 @@
           window.history.replaceState({}, document.title, window.location.pathname);
           vectoriaChannel.postMessage('acc_activated');
           showToast(window.tr ? tr("auth.toast_account_activated", "Xác thực hoàn tất. Tab này sẽ tự đóng.") : "Xác thực hoàn tất. Tab này sẽ tự đóng.", true, window.tr ? tr("auth.toast_account_activated", "Kích hoạt tài khoản") : "Kích hoạt tài khoản");
-          document.querySelector('.auth-container').innerHTML = 
+          document.querySelector('.auth-container').innerHTML = `
             <div class="auth-card" style="text-align: center; padding: 50px 20px;">
                 <i class="fa-solid fa-circle-check" style="font-size: 60px; color: #2ecc71; margin-bottom: 20px;"></i>
-                <h2 style="margin-bottom: 10px; color: var(--text-main);"></h2>
-                <p style="color: var(--text-muted); line-height: 1.5;"></p>
+                <h2 style="margin-bottom: 10px; color: var(--text-main);">${window.tr ? tr("auth.auth_complete", "Xác thực hoàn tất") : "Xác thực hoàn tất"}</h2>
+                <p style="color: var(--text-muted); line-height: 1.5;">${window.tr ? tr("auth.auth_complete_desc", "Tài khoản đã được kích hoạt.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập.") : "Tài khoản đã được kích hoạt.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập."}</p>
             </div>
-          ;
+          `;
           setTimeout(() => window.close(), 3000);
         } else if (errorMsg) {
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -1376,11 +1376,11 @@
             score++;
             ruleLength.classList.add('valid');
             ruleLength.classList.remove('invalid');
-            ruleLength.innerHTML = \'<i class="fa-solid fa-circle-check"></i> \' + (window.tr ? tr("auth.rule_length_ok", "Tối thiểu 8 ký tự") : "Tối thiểu 8 ký tự");
+            ruleLength.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (window.tr ? tr("auth.rule_length_ok", "Tối thiểu 8 ký tự") : "Tối thiểu 8 ký tự");
           } else {
             ruleLength.classList.remove('valid');
             if(val.length > 0) ruleLength.classList.add('invalid'); else ruleLength.classList.remove('invalid');
-            ruleLength.innerHTML = \'<i class="fa-solid fa-circle-xmark"></i> \' + (window.tr ? tr("auth.rule_length", "Tối thiểu 8 ký tự").replace(/<[^>]*>?/gm, \'\').trim() : "Tối thiểu 8 ký tự");
+            ruleLength.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (window.tr ? tr("auth.rule_length", "Tối thiểu 8 ký tự").replace(/<[^>]*>?/gm, '').trim() : "Tối thiểu 8 ký tự");
           }
           
           // Rule Letter
@@ -1388,11 +1388,11 @@
             score++;
             ruleLetter.classList.add('valid');
             ruleLetter.classList.remove('invalid');
-            ruleLetter.innerHTML = \'<i class="fa-solid fa-circle-check"></i> \' + (window.tr ? tr("auth.rule_letter_ok", "Có ít nhất 1 chữ cái") : "Có ít nhất 1 chữ cái");
+            ruleLetter.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (window.tr ? tr("auth.rule_letter_ok", "Có ít nhất 1 chữ cái") : "Có ít nhất 1 chữ cái");
           } else {
             ruleLetter.classList.remove('valid');
             if(val.length > 0) ruleLetter.classList.add('invalid'); else ruleLetter.classList.remove('invalid');
-            ruleLetter.innerHTML = \'<i class="fa-solid fa-circle-xmark"></i> \' + (window.tr ? tr("auth.rule_letter", "Có ít nhất 1 chữ cái").replace(/<[^>]*>?/gm, \'\').trim() : "Có ít nhất 1 chữ cái");
+            ruleLetter.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (window.tr ? tr("auth.rule_letter", "Có ít nhất 1 chữ cái").replace(/<[^>]*>?/gm, '').trim() : "Có ít nhất 1 chữ cái");
           }
 
           // Rule Number
@@ -1400,11 +1400,11 @@
             score++;
             ruleNumber.classList.add('valid');
             ruleNumber.classList.remove('invalid');
-            ruleNumber.innerHTML = \'<i class="fa-solid fa-circle-check"></i> \' + (window.tr ? tr("auth.rule_number_ok", "Có ít nhất 1 chữ số") : "Có ít nhất 1 chữ số");
+            ruleNumber.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (window.tr ? tr("auth.rule_number_ok", "Có ít nhất 1 chữ số") : "Có ít nhất 1 chữ số");
           } else {
             ruleNumber.classList.remove('valid');
             if(val.length > 0) ruleNumber.classList.add('invalid'); else ruleNumber.classList.remove('invalid');
-            ruleNumber.innerHTML = \'<i class="fa-solid fa-circle-xmark"></i> \' + (window.tr ? tr("auth.rule_number", "Có ít nhất 1 chữ số").replace(/<[^>]*>?/gm, \'\').trim() : "Có ít nhất 1 chữ số");
+            ruleNumber.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (window.tr ? tr("auth.rule_number", "Có ít nhất 1 chữ số").replace(/<[^>]*>?/gm, '').trim() : "Có ít nhất 1 chữ số");
           }
 
           // Update Bar
