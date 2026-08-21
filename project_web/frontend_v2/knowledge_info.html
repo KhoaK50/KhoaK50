@@ -403,6 +403,16 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
           <i class="fa-solid fa-moon icon-light-mode"></i><i class="fa-solid fa-sun icon-dark-mode"></i>
         </button>
 
+<div class="vec-dropdown-container right-align">
+          <button class="vec-icon-btn" title="Ngôn ngữ">
+            <i class="fa-solid fa-globe"></i>
+          </button>
+          <div class="vec-dropdown-menu" style="min-width: 150px;">
+            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('vi')">Tiếng Việt</a>
+            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('en')">English</a>
+          </div>
+        </div>
+
         
           <div class="vec-dropdown-container right-align" id="notificationDropdownContainer" style="display: none;">
             <button class="vec-icon-btn" title="Thông báo" id="notificationBellBtn" style="position: relative;">
@@ -419,17 +429,6 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
               </div>
             </div>
           </div>
-<div class="vec-dropdown-container right-align">
-          <button class="vec-icon-btn" title="Ngôn ngữ">
-            <i class="fa-solid fa-globe"></i>
-          </button>
-          <div class="vec-dropdown-menu" style="min-width: 150px;">
-            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('vi')">Tiếng Việt</a>
-            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('en')">English</a>
-          </div>
-        </div>
-        
-
         
         <div class="vec-dropdown-container right-align">
           <div class="top-avatar-btn" id="btnTopAvatar" style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary-base); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; background-size: cover; background-position: center;">
