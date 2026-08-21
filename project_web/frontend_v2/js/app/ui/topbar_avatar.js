@@ -372,8 +372,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (!notifications || notifications.length === 0) {
-            list.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--s6); font-family: var(--font);">Không có thông báo mới</div>';
-            return;
+            list.innerHTML = `
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center;">
+                <div style="width: 56px; height: 56px; background: var(--bg-hover, #f1f5f9); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; color: var(--text-muted, #94a3b8); font-size: 20px;">
+                  <i class="fa-regular fa-bell-slash"></i>
+                </div>
+                <h4 style="margin: 0 0 4px 0; font-size: 1rem; color: var(--text-main, #0f172a); font-family: 'Lora', serif;">Chưa có thông báo nào</h4>
+                <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted, #64748b);">Khi có hoạt động mới, thông báo sẽ hiển thị ở đây.</p>
+              </div>
+            `;
+              return;
         }
         
         list.innerHTML = '';

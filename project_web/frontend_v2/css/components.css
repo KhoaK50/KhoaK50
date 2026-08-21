@@ -883,3 +883,9 @@ body.dark-theme .icon-light-mode { display: none !important; }
 }
 
 
+
+
+/* --- TYPOGRAPHY REFACTOR --- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Lora', serif;
+}

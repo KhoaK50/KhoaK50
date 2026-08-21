@@ -33,6 +33,7 @@
         }
       });
     </script>
+      <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
   </head>
   <body>
     <script>
@@ -1406,7 +1407,18 @@
             <span style="color: var(--warning-base); font-size: 12px; margin-top: 5px;"><i class="fa-solid fa-triangle-exclamation"></i> Chưa lưu dữ liệu</span>
           `;
           if (historyPromo) historyPromo.style.display = "block";
-          document.getElementById("history-tbody").innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">Danh sách trống.</td></tr>`;
+          document.getElementById("history-tbody").innerHTML = `<tr>
+                          <td colspan="4">
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center;">
+                              <div style="width: 64px; height: 64px; background: var(--bg-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: var(--text-muted); font-size: 24px;">
+                                <i class="fa-solid fa-folder-open"></i>
+                              </div>
+                              <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: var(--text-main); font-family: 'Lora', serif;">Chưa có dữ liệu học tập</h3>
+                              <p style="margin: 0 0 20px 0; font-size: 0.9rem; color: var(--text-muted); max-width: 300px; line-height: 1.5;">Bạn chưa lưu bài tập nào. Hãy bắt đầu luyện tập để hệ thống theo dõi tiến độ của bạn nhé!</p>
+                              <a href="calculation.html" class="vec-btn" style="text-decoration: none;">Đến không gian tính toán</a>
+                            </div>
+                          </td>
+                        </tr>`;
         }
       }
 
