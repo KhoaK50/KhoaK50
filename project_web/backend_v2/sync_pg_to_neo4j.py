@@ -5,8 +5,8 @@ import re
 from neo4j import GraphDatabase
 
 # Neo4j credentials
-NEO4J_URI = "neo4j+s://4dd80172.databases.neo4j.io"
-NEO4J_PASSWORD = "V7LbjDyESk03bsWOMOZx6in4plhZuIuuHH4Of1o2aLA"
+NEO4J_URI = os.getenv("NEO4J_URI", "neo4j+s://4dd80172.databases.neo4j.io")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
 NEO4J_AUTH = ("4dd80172", NEO4J_PASSWORD)
 
 MOCK_FILE_PATH = os.path.join(
