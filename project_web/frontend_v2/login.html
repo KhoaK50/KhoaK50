@@ -1148,7 +1148,7 @@
               return;
             }
 
-            const res = await fetch(${API_BASE}/api/reset-password, {
+            const res = await fetch(`${API_BASE}/api/reset-password`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ token, new_password: newPwd }),
@@ -1157,18 +1157,18 @@
 
             if (data.status === "success") {
               const form = document.getElementById("resetPasswordFormInline");
-              form.innerHTML = 
+              form.innerHTML = `
                 <div style="text-align: center; padding: 20px;">
                   <i class="fa-solid fa-circle-check" style="font-size: 3.5rem; color: #10b981; margin-bottom: 20px;"></i>
-                  <h3 style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;"></h3>
+                  <h3 style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;">${window.tr ? window.tr("auth.password_updated", "Mật khẩu đã được cập nhật") : "Mật khẩu đã được cập nhật"}</h3>
                   <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px;">
-                     
+                     ${window.tr ? window.tr("auth.auth_complete_desc", "Tài khoản đã được cập nhật.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập.") : "Tài khoản đã được cập nhật.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập."}
                   </p>
                   <a href="login.html" class="btn-submit" style="display:inline-block; text-decoration:none; margin-top: 10px;">
-                    
+                    ${window.tr ? window.tr("auth.or_click_login", "Hoặc bấm vào đây để đăng nhập") : "Hoặc bấm vào đây để đăng nhập"}
                   </a>
                 </div>
-              ;
+              `;
               vectoriaChannel.postMessage('pwd_reset_done');
             } else {
               showToast(data.message, false);
@@ -1379,7 +1379,7 @@
           const rightPanel = document.querySelector('.auth-welcome');
           if (rightPanel) rightPanel.style.display = 'none';
 
-          fetch(${API_BASE}/api/verify?token=)
+          fetch(`${API_BASE}/api/verify?token=${verifyToken}`)
             .then(res => res.json())
             .then(data => {
                document.getElementById('verifyLoading').style.display = 'none';
