@@ -1,4 +1,4 @@
-﻿html {
+html {
   overflow-y: scroll;
   overflow-x: hidden;
 }
@@ -872,14 +872,14 @@ body.dark-theme .icon-light-mode { display: none !important; }
   height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--s4, #d7dfe3);
+  background: var(--border-strong, #d7dfe3);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--s6, #8b939a);
+  background: var(--text-muted, #8b939a);
 }
 ::-webkit-scrollbar-track {
-  background: var(--s2, #f9f9fb);
+  background: var(--bg-base, #f9f9fb);
 }
 
 
