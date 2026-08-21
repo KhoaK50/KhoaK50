@@ -55,6 +55,21 @@ function updateDOM() {
 
 window.updateDOM = updateDOM;
 
+window.tr = function(key, fallback = "") {
+  const t = i18nConfig.translations[i18nConfig.currentLocale];
+  if (!t) return fallback;
+  const keys = key.split('.');
+  let value = t;
+  for (const k of keys) {
+    if (value && value[k] !== undefined) {
+      value = value[k];
+    } else {
+      return fallback;
+    }
+  }
+  return value;
+};
+
 window.setLang = async function(lang) {
   if (lang === i18nConfig.currentLocale && i18nConfig.translations[lang]) {
     return;

@@ -232,7 +232,7 @@ def register():
         # 1. Tạo tài khoản với language_pref
         c.execute(
             "INSERT INTO users (display_name, email, password_hash, language_pref) VALUES (%s, %s, %s, %s) RETURNING id",
-            (display_name, email, hashed_password)
+            (display_name, email, hashed_password, language)
         )
         user_id = c.fetchone()[0]
 

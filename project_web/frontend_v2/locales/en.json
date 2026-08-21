@@ -291,7 +291,8 @@
         "ph_new_pass": "e.g. Secret@123",
         "ph_confirm_new_pass": "e.g. Secret@123",
         "password_updated": "Password Updated",
-        "or_click_login": "Or click here to log in"
+        "or_click_login": "Or click here to log in",
+        "processing": "Processing..."
     },
     "verify": {
         "verify_title": "Account Verification - Vectoria",

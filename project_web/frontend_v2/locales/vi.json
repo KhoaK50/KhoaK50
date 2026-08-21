@@ -295,7 +295,8 @@
         "ph_new_pass": "Ví dụ: Secret@123",
         "ph_confirm_new_pass": "Ví dụ: Secret@123",
         "password_updated": "Mật khẩu đã được cập nhật",
-        "or_click_login": "Hoặc bấm vào đây để đăng nhập"
+        "or_click_login": "Hoặc bấm vào đây để đăng nhập",
+        "processing": "Đang xử lý..."
     },
     "verify": {
         "verify_title": "Xác Thực Tài Khoản - Vectoria",

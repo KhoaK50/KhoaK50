@@ -940,11 +940,11 @@
       
       vectoriaChannel.onmessage = (event) => {
         if (event.data === 'acc_activated') {
-          showToast(window.tr ? tr("auth.toast_account_activated", "Đã xác thực thành công. Vui lòng đăng nhập.") : "Đã xác thực thành công. Vui lòng đăng nhập.", true, window.tr ? tr("auth.toast_account_activated", "Xác thực thành công") : "Xác thực thành công");
+          showToast(window.tr ? window.tr("auth.toast_account_activated", "Đã xác thực thành công. Vui lòng đăng nhập.") : "Đã xác thực thành công. Vui lòng đăng nhập.", true, window.tr ? window.tr("auth.toast_account_activated", "Xác thực thành công") : "Xác thực thành công");
           switchTab('login');
         }
         else if (event.data === 'pwd_reset_done') {
-          showToast(window.tr ? tr("auth.toast_reset_password", "Mật khẩu đã được thay đổi. Vui lòng đăng nhập.") : "Mật khẩu đã được thay đổi. Vui lòng đăng nhập.", true, window.tr ? tr("auth.toast_reset_password", "Thay đổi mật khẩu") : "Thay đổi mật khẩu");
+          showToast(window.tr ? window.tr("auth.toast_reset_password", "Mật khẩu đã được thay đổi. Vui lòng đăng nhập.") : "Mật khẩu đã được thay đổi. Vui lòng đăng nhập.", true, window.tr ? window.tr("auth.toast_reset_password", "Thay đổi mật khẩu") : "Thay đổi mật khẩu");
           switchTab('login');
         }
       };
@@ -1013,7 +1013,7 @@
         toast.style.borderLeftColor = isSuccess ? "#2ecc71" : "#e74c3c";
         bar.style.background = isSuccess ? "#2ecc71" : "#e74c3c";
 
-        title.innerText = customTitle ? customTitle : (isSuccess ? (window.tr ? tr("auth.toast_notice", "Thông báo") : "Thông báo") : (window.tr ? tr("auth.toast_error", "Có lỗi xảy ra") : "Có lỗi xảy ra"));
+        title.innerText = customTitle ? customTitle : (isSuccess ? (window.tr ? window.tr("auth.toast_notice", "Thông báo") : "Thông báo") : (window.tr ? window.tr("auth.toast_error", "Có lỗi xảy ra") : "Có lỗi xảy ra"));
         desc.innerText = message;
 
         toast.classList.add("show");
@@ -1041,7 +1041,7 @@
         const originalHtml = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML =
-          '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
+          '<i class="fa-solid fa-spinner fa-spin"></i> ' + (window.tr ? window.tr("auth.processing", "Đang xử lý...") : "Đang xử lý...");
 
         const _l = atob("aHR0cDovLzEyNy4wLjAuMTo1MDAw");
         const _p = atob("aHR0cHM6Ly92aXN1YWxpemF0aW9uLXJyNXYub25yZW5kZXIuY29t");
@@ -1067,12 +1067,12 @@
               form.innerHTML = `
                 <div style="text-align: center; padding: 20px;">
                   <i class="fa-solid fa-envelope-circle-check" style="font-size: 3.5rem; color: #2ecc71; margin-bottom: 20px;"></i>
-                  <h3 style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;">${window.tr ? tr("auth.reg_success_title", "Đăng ký thành công") : "Đăng ký thành công"}</h3>
+                  <h3 style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;">${window.tr ? window.tr("auth.reg_success_title", "Đăng ký thành công") : "Đăng ký thành công"}</h3>
                   <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px;">
-                     ${window.tr ? tr("auth.reg_success_msg_1", "Chúng tôi đã gửi một email xác thực đến") : "Chúng tôi đã gửi một email xác thực đến"} <br><b style="color: var(--text-main);">${email}</b>.<br><br>${window.tr ? tr("auth.reg_success_msg_2", "Vui lòng kiểm tra hộp thư đến (hoặc thư rác) và bấm vào liên kết để kích hoạt tài khoản trước khi đăng nhập.") : "Vui lòng kiểm tra hộp thư đến (hoặc thư rác) và bấm vào liên kết để kích hoạt tài khoản trước khi đăng nhập."}
+                     ${window.tr ? window.tr("auth.reg_success_msg_1", "Chúng tôi đã gửi một email xác thực đến") : "Chúng tôi đã gửi một email xác thực đến"} <br><b style="color: var(--text-main);">${email}</b>.<br><br>${window.tr ? window.tr("auth.reg_success_msg_2", "Vui lòng kiểm tra hộp thư đến (hoặc thư rác) và bấm vào liên kết để kích hoạt tài khoản trước khi đăng nhập.") : "Vui lòng kiểm tra hộp thư đến (hoặc thư rác) và bấm vào liên kết để kích hoạt tài khoản trước khi đăng nhập."}
                   </p>
                   <button type="button" class="btn-submit" onclick="window.location.reload()">
-                    <i class="fa-solid fa-arrow-left"></i> ${window.tr ? tr("auth.back_to_login", "Quay lại đăng nhập") : "Quay lại đăng nhập"}
+                    <i class="fa-solid fa-arrow-left"></i> ${window.tr ? window.tr("auth.back_to_login", "Quay lại đăng nhập") : "Quay lại đăng nhập"}
                   </button>
                 </div>
               `;
@@ -1090,7 +1090,7 @@
             const data = await res.json();
 
             if (data.status === "success") {
-              showToast(data.message, true, window.tr ? tr("auth.toast_reset_password_title", "Khôi phục mật khẩu") : "Khôi phục mật khẩu");
+              showToast(data.message, true, window.tr ? window.tr("auth.toast_reset_password_title", "Khôi phục mật khẩu") : "Khôi phục mật khẩu");
               setTimeout(() => {
                 switchTab("login"); // Gửi mail xong thì tự quay về form login
               }, 2000);
@@ -1144,7 +1144,7 @@
           }
         } catch (err) {
           console.error(err);
-          showToast(window.tr ? tr("auth.toast_server_error", "Không thể kết nối đến máy chủ.") : "Không thể kết nối đến máy chủ.", false);
+          showToast(window.tr ? window.tr("auth.toast_server_error", "Không thể kết nối đến máy chủ.") : "Không thể kết nối đến máy chủ.", false);
         } finally {
           btn.disabled = false;
           btn.innerHTML = originalHtml;
@@ -1227,7 +1227,7 @@
         const userToken = localStorage.getItem("user_token");
         if (userToken) {
           // Báo cho người dùng biết đang tự động chuyển hướng
-          showToast(window.tr ? tr("auth.toast_session", "Đang khôi phục phiên làm việc.") : "Đang khôi phục phiên làm việc.", true, window.tr ? tr("auth.toast_session", "Phiên làm việc") : "Phiên làm việc");
+          showToast(window.tr ? window.tr("auth.toast_session", "Đang khôi phục phiên làm việc.") : "Đang khôi phục phiên làm việc.", true, window.tr ? window.tr("auth.toast_session", "Phiên làm việc") : "Phiên làm việc");
           setTimeout(() => {
             window.location.href = "user-dashboard.html"; // Chuyển thẳng vào web
           }, 1000);
@@ -1250,23 +1250,23 @@
         if (activated === 'true') {
           window.history.replaceState({}, document.title, window.location.pathname);
           vectoriaChannel.postMessage('acc_activated');
-          showToast(window.tr ? tr("auth.toast_account_activated", "Xác thực hoàn tất. Tab này sẽ tự đóng.") : "Xác thực hoàn tất. Tab này sẽ tự đóng.", true, window.tr ? tr("auth.toast_account_activated", "Kích hoạt tài khoản") : "Kích hoạt tài khoản");
+          showToast(window.tr ? window.tr("auth.toast_account_activated", "Xác thực hoàn tất. Tab này sẽ tự đóng.") : "Xác thực hoàn tất. Tab này sẽ tự đóng.", true, window.tr ? window.tr("auth.toast_account_activated", "Kích hoạt tài khoản") : "Kích hoạt tài khoản");
           document.querySelector('.auth-container').innerHTML = `
             <div class="auth-card" style="text-align: center; padding: 50px 20px;">
                 <i class="fa-solid fa-circle-check" style="font-size: 60px; color: #2ecc71; margin-bottom: 20px;"></i>
-                <h2 style="margin-bottom: 10px; color: var(--text-main);">${window.tr ? tr("auth.auth_complete", "Xác thực hoàn tất") : "Xác thực hoàn tất"}</h2>
-                <p style="color: var(--text-muted); line-height: 1.5;">${window.tr ? tr("auth.auth_complete_desc", "Tài khoản đã được kích hoạt.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập.") : "Tài khoản đã được kích hoạt.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập."}</p>
+                <h2 style="margin-bottom: 10px; color: var(--text-main);">${window.tr ? window.tr("auth.auth_complete", "Xác thực hoàn tất") : "Xác thực hoàn tất"}</h2>
+                <p style="color: var(--text-muted); line-height: 1.5;">${window.tr ? window.tr("auth.auth_complete_desc", "Tài khoản đã được kích hoạt.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập.") : "Tài khoản đã được kích hoạt.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập."}</p>
             </div>
           `;
           setTimeout(() => window.close(), 3000);
         } else if (errorMsg) {
           window.history.replaceState({}, document.title, window.location.pathname);
           const msgs = {
-              'invalid_token': window.tr ? tr("auth.err_invalid_token", "Mã xác thực không hợp lệ hoặc đã hết hạn!") : "Mã xác thực không hợp lệ hoặc đã hết hạn!",
-              'already_activated': window.tr ? tr("auth.err_already_activated", "Tài khoản này đã được kích hoạt trước đó!") : "Tài khoản này đã được kích hoạt trước đó!",
-              'server_error': window.tr ? tr("auth.err_server_auth", "Lỗi máy chủ trong quá trình xác thực!") : "Lỗi máy chủ trong quá trình xác thực!"
+              'invalid_token': window.tr ? window.tr("auth.err_invalid_token", "Mã xác thực không hợp lệ hoặc đã hết hạn!") : "Mã xác thực không hợp lệ hoặc đã hết hạn!",
+              'already_activated': window.tr ? window.tr("auth.err_already_activated", "Tài khoản này đã được kích hoạt trước đó!") : "Tài khoản này đã được kích hoạt trước đó!",
+              'server_error': window.tr ? window.tr("auth.err_server_auth", "Lỗi máy chủ trong quá trình xác thực!") : "Lỗi máy chủ trong quá trình xác thực!"
           };
-          showToast(msgs[errorMsg] || (window.tr ? tr("auth.toast_error", "Lỗi xác thực.") : "Lỗi xác thực."), false);
+          showToast(msgs[errorMsg] || (window.tr ? window.tr("auth.toast_error", "Lỗi xác thực.") : "Lỗi xác thực."), false);
         }
         // KHỞI TẠO GOOGLE OAUTH
         googleClient = google.accounts.oauth2.initTokenClient({
@@ -1275,7 +1275,7 @@
           scope: 'email profile',
           callback: async (tokenResponse) => {
             if (tokenResponse && tokenResponse.access_token) {
-              showToast(window.tr ? tr("auth.toast_connecting", "Đang xác thực với Google.") : "Đang xác thực với Google.", true, window.tr ? tr("auth.toast_connecting", "Đang kết nối") : "Đang kết nối");
+              showToast(window.tr ? window.tr("auth.toast_connecting", "Đang xác thực với Google.") : "Đang xác thực với Google.", true, window.tr ? window.tr("auth.toast_connecting", "Đang kết nối") : "Đang kết nối");
               
               const _l = atob("aHR0cDovLzEyNy4wLjAuMTo1MDAw");
               const _p = atob("aHR0cHM6Ly92aXN1YWxpemF0aW9uLXJyNXYub25yZW5kZXIuY29t");
@@ -1299,7 +1299,7 @@
                   showToast(data.message, false);
                 }
               } catch (err) {
-                showToast(window.tr ? tr("auth.toast_server_error", "Không thể kết nối qua Google.") : "Không thể kết nối qua Google.", false);
+                showToast(window.tr ? window.tr("auth.toast_server_error", "Không thể kết nối qua Google.") : "Không thể kết nối qua Google.", false);
               }
             }
           }
@@ -1376,11 +1376,11 @@
             score++;
             ruleLength.classList.add('valid');
             ruleLength.classList.remove('invalid');
-            ruleLength.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (window.tr ? tr("auth.rule_length_ok", "Tối thiểu 8 ký tự") : "Tối thiểu 8 ký tự");
+            ruleLength.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (window.tr ? window.tr("auth.rule_length_ok", "Tối thiểu 8 ký tự") : "Tối thiểu 8 ký tự");
           } else {
             ruleLength.classList.remove('valid');
             if(val.length > 0) ruleLength.classList.add('invalid'); else ruleLength.classList.remove('invalid');
-            ruleLength.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (window.tr ? tr("auth.rule_length", "Tối thiểu 8 ký tự").replace(/<[^>]*>?/gm, '').trim() : "Tối thiểu 8 ký tự");
+            ruleLength.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (window.tr ? window.tr("auth.rule_length", "Tối thiểu 8 ký tự").replace(/<[^>]*>?/gm, '').trim() : "Tối thiểu 8 ký tự");
           }
           
           // Rule Letter
@@ -1388,11 +1388,11 @@
             score++;
             ruleLetter.classList.add('valid');
             ruleLetter.classList.remove('invalid');
-            ruleLetter.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (window.tr ? tr("auth.rule_letter_ok", "Có ít nhất 1 chữ cái") : "Có ít nhất 1 chữ cái");
+            ruleLetter.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (window.tr ? window.tr("auth.rule_letter_ok", "Có ít nhất 1 chữ cái") : "Có ít nhất 1 chữ cái");
           } else {
             ruleLetter.classList.remove('valid');
             if(val.length > 0) ruleLetter.classList.add('invalid'); else ruleLetter.classList.remove('invalid');
-            ruleLetter.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (window.tr ? tr("auth.rule_letter", "Có ít nhất 1 chữ cái").replace(/<[^>]*>?/gm, '').trim() : "Có ít nhất 1 chữ cái");
+            ruleLetter.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (window.tr ? window.tr("auth.rule_letter", "Có ít nhất 1 chữ cái").replace(/<[^>]*>?/gm, '').trim() : "Có ít nhất 1 chữ cái");
           }
 
           // Rule Number
@@ -1400,11 +1400,11 @@
             score++;
             ruleNumber.classList.add('valid');
             ruleNumber.classList.remove('invalid');
-            ruleNumber.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (window.tr ? tr("auth.rule_number_ok", "Có ít nhất 1 chữ số") : "Có ít nhất 1 chữ số");
+            ruleNumber.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (window.tr ? window.tr("auth.rule_number_ok", "Có ít nhất 1 chữ số") : "Có ít nhất 1 chữ số");
           } else {
             ruleNumber.classList.remove('valid');
             if(val.length > 0) ruleNumber.classList.add('invalid'); else ruleNumber.classList.remove('invalid');
-            ruleNumber.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (window.tr ? tr("auth.rule_number", "Có ít nhất 1 chữ số").replace(/<[^>]*>?/gm, '').trim() : "Có ít nhất 1 chữ số");
+            ruleNumber.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (window.tr ? window.tr("auth.rule_number", "Có ít nhất 1 chữ số").replace(/<[^>]*>?/gm, '').trim() : "Có ít nhất 1 chữ số");
           }
 
           // Update Bar
@@ -1459,7 +1459,7 @@
         const score = (regPass.value.length >= 8 ? 1 : 0) + (/[a-zA-Z]/.test(regPass.value) ? 1 : 0) + (/[0-9]/.test(regPass.value) ? 1 : 0);
         if (score < 3 || !emailRegex.test(regEmail.value) || regPassConfirm.value !== regPass.value) {
           e.preventDefault();
-          showToast(window.tr ? tr("auth.toast_invalid_info", "Thông tin đăng ký không hợp lệ.") : "Thông tin đăng ký không hợp lệ.", false);
+          showToast(window.tr ? window.tr("auth.toast_invalid_info", "Thông tin đăng ký không hợp lệ.") : "Thông tin đăng ký không hợp lệ.", false);
           return false;
         }
       });
@@ -1468,7 +1468,7 @@
         if (googleClient) {
           googleClient.requestAccessToken();
         } else {
-          showToast(window.tr ? tr("auth.toast_google_not_ready", "Google chưa sẵn sàng, vui lòng thử lại.") : "Google chưa sẵn sàng, vui lòng thử lại.", false);
+          showToast(window.tr ? window.tr("auth.toast_google_not_ready", "Google chưa sẵn sàng, vui lòng thử lại.") : "Google chưa sẵn sàng, vui lòng thử lại.", false);
         }
       }
     </script>
@@ -1477,7 +1477,7 @@
 
 
 
-<script src="js/utils/i18n.js"></script>
+<script src="js/utils/i18n.js?v=2"></script>
 </body>
 
 
