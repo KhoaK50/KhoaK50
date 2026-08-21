@@ -48,6 +48,42 @@ def get_modern_email(title, greeting, paragraphs, btn_text=None, btn_link=None, 
 </body>
 </html>"""
 
+
+def tr_msg(msg_vi):
+    try:
+        from flask import request
+        if request.method == "GET":
+            lang = request.args.get("lang", "vi")
+        elif request.is_json and request.json:
+            lang = request.json.get("language", "vi")
+        else:
+            lang = "vi"
+    except Exception:
+        lang = "vi"
+        
+    msgs = {
+        "Vui lòng điền đầy đủ thông tin!": "Please fill in all information!",
+        "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ và số!": "Password must be at least 8 characters, including letters and numbers!",
+        "Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.": "Registration successful! Please check your email to activate your account.",
+        "Email này đã được sử dụng!": "This email is already in use!",
+        "Thiếu mã xác thực!": "Missing authentication code!",
+        "Mã xác thực không hợp lệ hoặc đã hết hạn!": "Invalid or expired authentication code!",
+        "Tài khoản này đã được kích hoạt rồi!": "This account is already activated!",
+        "Tài khoản đã được kích hoạt thành công!": "Account activated successfully!",
+        "Vui lòng nhập Email và Mật khẩu!": "Please enter Email and Password!",
+        "Email hoặc mật khẩu không đúng!": "Incorrect email or password!",
+        "Vui lòng nhập Email!": "Please enter Email!",
+        "Nếu email tồn tại, thư khôi phục đã được gửi.": "If the email exists, a recovery email has been sent.",
+        "Thiếu thông tin yêu cầu!": "Missing required information!",
+        "Đường dẫn đổi mật khẩu không hợp lệ hoặc đã hết hạn!": "Invalid or expired password reset link!",
+        "Thay đổi mật khẩu thành công! Tài khoản đã được bảo vệ.": "Password changed successfully! Your account is protected.",
+        "Thiếu mã xác thực Google!": "Missing Google authentication code!",
+        "Token Google không hợp lệ hoặc đã hết hạn!": "Invalid or expired Google token!"
+    }
+    if lang == 'en':
+        return msgs.get(msg_vi, msg_vi)
+    return msg_vi
+
 from flask import Blueprint, request, jsonify, redirect
 import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -182,10 +218,10 @@ def register():
     language = data.get("language", "vi")
 
     if not display_name or not email or not password:
-        return jsonify({"status": "error", "message": "Vui lòng điền đầy đủ thông tin!"}), 400
+        return jsonify({"status": "error", "message": tr_msg("Vui lòng điền đầy đủ thông tin!")}), 400
 
     if not is_strong_password(password):
-        return jsonify({"status": "error", "message": "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ và số!"}), 400
+        return jsonify({"status": "error", "message": tr_msg("Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ và số!")}), 400
 
     hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
 
@@ -196,7 +232,7 @@ def register():
         # 1. Tạo tài khoản với language_pref
         c.execute(
             "INSERT INTO users (display_name, email, password_hash, language_pref) VALUES (%s, %s, %s, %s) RETURNING id",
-            (display_name, email, hashed_password, language)
+            (display_name, email, hashed_password)
         )
         user_id = c.fetchone()[0]
 
@@ -242,10 +278,10 @@ def register():
             )
             send_auth_email(email, "Xác thực tài khoản — Vectoria", email_content)
 
-        return jsonify({"status": "success", "message": "Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản."}), 201
+        return jsonify({"status": "success", "message": tr_msg("Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.")}), 201
     
     except psycopg2.IntegrityError:
-        return jsonify({"status": "error", "message": "Email này đã được sử dụng!"}), 400
+        return jsonify({"status": "error", "message": tr_msg("Email này đã được sử dụng!")}), 400
     except Exception as e:
         return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
     finally:
@@ -259,7 +295,7 @@ def verify_account():
     token = request.args.get("token")
     
     if not token:
-        return jsonify({"status": "error", "message": "Thiếu mã xác thực!"}), 400
+        return jsonify({"status": "error", "message": tr_msg("Thiếu mã xác thực!")}), 400
 
     try:
         conn = psycopg2.connect(DB_URL)
@@ -273,20 +309,20 @@ def verify_account():
         result = c.fetchone()
 
         if not result:
-            return jsonify({"status": "error", "message": "Mã xác thực không hợp lệ hoặc đã hết hạn!"}), 400
+            return jsonify({"status": "error", "message": tr_msg("Mã xác thực không hợp lệ hoặc đã hết hạn!")}), 400
             
         user_id = result[0]
         is_used = result[1]
 
         if is_used:
-            return jsonify({"status": "error", "message": "Tài khoản này đã được kích hoạt rồi!"}), 400
+            return jsonify({"status": "error", "message": tr_msg("Tài khoản này đã được kích hoạt rồi!")}), 400
 
         # Cập nhật trạng thái tài khoản
         c.execute("UPDATE users SET status = 'active' WHERE id = %s", (user_id,))
         c.execute("UPDATE accountactivations SET is_used = TRUE WHERE activation_token = %s", (token,))
         
         conn.commit()
-        return jsonify({"status": "success", "message": "Tài khoản đã được kích hoạt thành công!"}), 200
+        return jsonify({"status": "success", "message": tr_msg("Tài khoản đã được kích hoạt thành công!")}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
     finally:
@@ -303,7 +339,7 @@ def login():
     language = data.get("language", "vi")
 
     if not email or not password:
-        return jsonify({"status": "error", "message": "Vui lòng nhập Email và Mật khẩu!"}), 400
+        return jsonify({"status": "error", "message": tr_msg("Vui lòng nhập Email và Mật khẩu!")}), 400
 
     try:
         conn = psycopg2.connect(DB_URL)
@@ -424,7 +460,7 @@ def login():
                 "avatar_url": avatar_url
             }), 200
         else:
-            return jsonify({"status": "error", "message": "Email hoặc mật khẩu không đúng!"}), 401
+            return jsonify({"status": "error", "message": tr_msg("Email hoặc mật khẩu không đúng!")}), 401
     except Exception as e:
         return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
     finally:
@@ -439,7 +475,7 @@ def forgot_password():
     language = data.get("language", "vi")
 
     if not email:
-        return jsonify({"status": "error", "message": "Vui lòng nhập Email!"}), 400
+        return jsonify({"status": "error", "message": tr_msg("Vui lòng nhập Email!")}), 400
 
     try:
         conn = psycopg2.connect(DB_URL)
@@ -449,7 +485,7 @@ def forgot_password():
         user = c.fetchone()
         
         if not user:
-            return jsonify({"status": "success", "message": "Nếu email tồn tại, thư khôi phục đã được gửi."}), 200
+            return jsonify({"status": "success", "message": tr_msg("Nếu email tồn tại, thư khôi phục đã được gửi.")}), 200
 
         user_id = user[0]
         display_name = user[1]
@@ -496,7 +532,7 @@ def forgot_password():
             )
             send_auth_email(email, "Đặt lại mật khẩu — Vectoria", email_content)
 
-        return jsonify({"status": "success", "message": "Nếu email tồn tại, thư khôi phục đã được gửi."}), 200
+        return jsonify({"status": "success", "message": tr_msg("Nếu email tồn tại, thư khôi phục đã được gửi.")}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
     finally:
@@ -511,10 +547,10 @@ def reset_password():
     new_password = data.get("new_password")
 
     if not token or not new_password:
-        return jsonify({"status": "error", "message": "Thiếu thông tin yêu cầu!"}), 400
+        return jsonify({"status": "error", "message": tr_msg("Thiếu thông tin yêu cầu!")}), 400
 
     if not is_strong_password(new_password):
-        return jsonify({"status": "error", "message": "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ và số!"}), 400
+        return jsonify({"status": "error", "message": tr_msg("Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ và số!")}), 400
 
     try:
         conn = psycopg2.connect(DB_URL)
@@ -527,7 +563,7 @@ def reset_password():
         result = c.fetchone()
 
         if not result:
-            return jsonify({"status": "error", "message": "Đường dẫn đổi mật khẩu không hợp lệ hoặc đã hết hạn!"}), 400
+            return jsonify({"status": "error", "message": tr_msg("Đường dẫn đổi mật khẩu không hợp lệ hoặc đã hết hạn!")}), 400
 
         user_id = result[0]
         hashed_password = generate_password_hash(new_password)
@@ -539,7 +575,7 @@ def reset_password():
         c.execute("UPDATE passwordresets SET is_used = TRUE WHERE user_id = %s AND token = %s", (user_id, token))
         
         conn.commit()
-        return jsonify({"status": "success", "message": "Thay đổi mật khẩu thành công! Tài khoản đã được bảo vệ."}), 200
+        return jsonify({"status": "success", "message": tr_msg("Thay đổi mật khẩu thành công! Tài khoản đã được bảo vệ.")}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
     finally:
@@ -626,14 +662,14 @@ def google_login():
     language = data.get("language", "vi")
 
     if not access_token:
-        return jsonify({"status": "error", "message": "Thiếu mã xác thực Google!"}), 400
+        return jsonify({"status": "error", "message": tr_msg("Thiếu mã xác thực Google!")}), 400
 
     try:
         google_api_url = f"https://www.googleapis.com/oauth2/v3/userinfo?access_token={access_token}"
         google_res = requests.get(google_api_url)
         
         if google_res.status_code != 200:
-            return jsonify({"status": "error", "message": "Token Google không hợp lệ hoặc đã hết hạn!"}), 401
+            return jsonify({"status": "error", "message": tr_msg("Token Google không hợp lệ hoặc đã hết hạn!")}), 401
             
         user_info = google_res.json()
         email = user_info.get("email")
