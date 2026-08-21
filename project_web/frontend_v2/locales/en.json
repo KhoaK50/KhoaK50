@@ -284,7 +284,14 @@
         "rule_number_ok": "At least 1 number",
         "toast_reset_password_title": "Password Recovery",
         "reg_success_msg_1": "We have sent a verification email to",
-        "reg_success_msg_2": "Please check your inbox (or spam folder) and click the link to activate your account before logging in."
+        "reg_success_msg_2": "Please check your inbox (or spam folder) and click the link to activate your account before logging in.",
+        "reset_password_desc_new": "Please enter a new password for your account.",
+        "new_password_label": "New Password",
+        "btn_change_password": "Change Password",
+        "ph_new_pass": "Create new password",
+        "ph_confirm_new_pass": "Re-enter new password",
+        "password_updated": "Password Updated",
+        "or_click_login": "Or click here to log in"
     },
     "verify": {
         "verify_title": "Account Verification - Vectoria",

@@ -288,7 +288,14 @@
         "rule_number_ok": "Có ít nhất 1 chữ số",
         "toast_reset_password_title": "Khôi phục mật khẩu",
         "reg_success_msg_1": "Chúng tôi đã gửi một email xác thực đến",
-        "reg_success_msg_2": "Vui lòng kiểm tra hộp thư đến (hoặc thư rác) và bấm vào liên kết để kích hoạt tài khoản trước khi đăng nhập."
+        "reg_success_msg_2": "Vui lòng kiểm tra hộp thư đến (hoặc thư rác) và bấm vào liên kết để kích hoạt tài khoản trước khi đăng nhập.",
+        "reset_password_desc_new": "Vui lòng nhập mật khẩu mới cho tài khoản của bạn.",
+        "new_password_label": "Mật khẩu mới",
+        "btn_change_password": "Đổi mật khẩu",
+        "ph_new_pass": "Tạo mật khẩu mới",
+        "ph_confirm_new_pass": "Nhập lại mật khẩu mới",
+        "password_updated": "Mật khẩu đã được cập nhật",
+        "or_click_login": "Hoặc bấm vào đây để đăng nhập"
     },
     "verify": {
         "verify_title": "Xác Thực Tài Khoản - Vectoria",
