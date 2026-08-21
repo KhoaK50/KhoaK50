@@ -945,11 +945,11 @@
       
       vectoriaChannel.onmessage = (event) => {
         if (event.data === 'acc_activated') {
-          showToast("Đã xác thực thành công. Vui lòng đăng nhập.", true);
+          showToast("Đã xác thực thành công. Vui lòng đăng nhập.", true, "Xác thực thành công");
           switchTab('login');
         }
         else if (event.data === 'pwd_reset_done') {
-          showToast("Mật khẩu đã được thay đổi. Vui lòng đăng nhập.", true);
+          showToast("Mật khẩu đã được thay đổi. Vui lòng đăng nhập.", true, "Thay đổi mật khẩu");
           switchTab('login');
         }
       };
@@ -1004,7 +1004,7 @@
       }
 
       // 4. HÀM HIỂN THỊ TOAST THÔNG BÁO
-      function showToast(message, isSuccess = true) {
+      function showToast(message, isSuccess = true, customTitle = null) {
         const toast = document.getElementById("static-toast");
         const icon = toast.querySelector(".toast-icon");
         const title = document.getElementById("toastTitle");
@@ -1018,7 +1018,7 @@
         toast.style.borderLeftColor = isSuccess ? "#2ecc71" : "#e74c3c";
         bar.style.background = isSuccess ? "#2ecc71" : "#e74c3c";
 
-        title.innerText = isSuccess ? "Thông báo" : "Có lỗi xảy ra";
+        title.innerText = customTitle ? customTitle : (isSuccess ? "Thông báo" : "Có lỗi xảy ra");
         desc.innerText = message;
 
         toast.classList.add("show");
@@ -1130,7 +1130,7 @@
               } else {
                 localStorage.removeItem("remembered_email");
               }
-              showToast(`Chào mừng, ${data.display_name}.`, true);
+              showToast(`Chào mừng, ${data.display_name}.`, true, "Đăng nhập thành công");
 
               setTimeout(() => {
                 const returnUrl = sessionStorage.getItem(
@@ -1232,7 +1232,7 @@
         const userToken = localStorage.getItem("user_token");
         if (userToken) {
           // Báo cho người dùng biết đang tự động chuyển hướng
-          showToast("Đang khôi phục phiên làm việc.", true);
+          showToast("Đang khôi phục phiên làm việc.", true, "Phiên làm việc");
           setTimeout(() => {
             window.location.href = "user-dashboard.html"; // Chuyển thẳng vào web
           }, 1000);
@@ -1255,7 +1255,7 @@
         if (activated === 'true') {
           window.history.replaceState({}, document.title, window.location.pathname);
           vectoriaChannel.postMessage('acc_activated');
-          showToast("Xác thực hoàn tất. Tab này sẽ tự đóng.", true);
+          showToast("Xác thực hoàn tất. Tab này sẽ tự đóng.", true, "Tài khoản đã kích hoạt");
           document.querySelector('.auth-container').innerHTML = `
             <div class="auth-card" style="text-align: center; padding: 50px 20px;">
                 <i class="fa-solid fa-circle-check" style="font-size: 60px; color: #2ecc71; margin-bottom: 20px;"></i>
@@ -1280,7 +1280,7 @@
           scope: 'email profile',
           callback: async (tokenResponse) => {
             if (tokenResponse && tokenResponse.access_token) {
-              showToast("Đang xác thực với Google.", true);
+              showToast("Đang xác thực với Google.", true, "Đang kết nối");
               
               const _l = atob("aHR0cDovLzEyNy4wLjAuMTo1MDAw");
               const _p = atob("aHR0cHM6Ly92aXN1YWxpemF0aW9uLXJyNXYub25yZW5kZXIuY29t");
@@ -1298,7 +1298,7 @@
                 if (data.status === 'success') {
                   localStorage.setItem("user_token", data.token);
                   localStorage.setItem("user_name", data.display_name);
-                  showToast(`Chào mừng, ${data.display_name}.`, true);
+                  showToast(`Chào mừng, ${data.display_name}.`, true, "Đăng nhập thành công");
                   setTimeout(() => window.location.href = "user-dashboard.html", 1000);
                 } else {
                   showToast(data.message, false);
