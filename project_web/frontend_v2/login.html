@@ -722,6 +722,11 @@
 
 </head>
   <body>
+  <script>
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark-theme', 'dark');
+    }
+  </script>
     <script>
       if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.remove('light-theme');
@@ -868,7 +873,7 @@
                 type="password"
                 id="regPass"
                 class="has-pwd-toggle"
-                placeholder="Tạo mật khẩu" data-i18n-placeholder="auth.ph_create_pass"
+                placeholder="Ví dụ: Secret@123" data-i18n-placeholder="auth.ph_create_pass"
                 required
               />
               <i class="fa-solid fa-lock input-icon"></i>
@@ -893,7 +898,7 @@
                 type="password"
                 id="regPassConfirm"
                 class="has-pwd-toggle"
-                placeholder="Nhập lại mật khẩu" data-i18n-placeholder="auth.ph_confirm_pass"
+                placeholder="Ví dụ: Secret@123" data-i18n-placeholder="auth.ph_confirm_pass"
                 required
               />
               <i class="fa-solid fa-lock input-icon"></i>
@@ -1252,17 +1257,7 @@
                 <h2 style="margin-bottom: 10px; color: var(--text-main);"></h2>
                 <p style="color: var(--text-muted); line-height: 1.5;"></p>
             </div>
-          ; padding: 50px 20px;">
-                <i class="fa-solid fa-circle-check" style="font-size: 60px; color: #2ecc71; margin-bottom: 20px;"></i>
-                <h2 style="margin-bottom: 10px; color: var(--text-main);"></h2>
-                <p style="color: var(--text-muted); line-height: 1.5;"></p>
-            </div>
-          ; padding: 50px 20px;">
-                <i class="fa-solid fa-circle-check" style="font-size: 60px; color: #2ecc71; margin-bottom: 20px;"></i>
-                <h2 style="margin-bottom: 10px; color: var(--text-main);" data-i18n="auth.auth_complete">Xác thực hoàn tất</h2>
-                <p style="color: var(--text-muted); line-height: 1.5;" data-i18n="auth.auth_complete_desc">Tài khoản đã được kích hoạt.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập.</p>
-            </div>
-          `;
+          ;
           setTimeout(() => window.close(), 3000);
         } else if (errorMsg) {
           window.history.replaceState({}, document.title, window.location.pathname);
