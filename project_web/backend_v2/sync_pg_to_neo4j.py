@@ -3,11 +3,16 @@ import os
 import json
 import re
 from neo4j import GraphDatabase
+from dotenv import load_dotenv
+
+# Load .env file
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # Neo4j credentials
 NEO4J_URI = os.getenv("NEO4J_URI", "neo4j+s://4dd80172.databases.neo4j.io")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
-NEO4J_AUTH = ("4dd80172", NEO4J_PASSWORD)
+NEO4J_AUTH = (NEO4J_USER, NEO4J_PASSWORD)
 
 MOCK_FILE_PATH = os.path.join(
     os.path.dirname(__file__),
@@ -37,7 +42,7 @@ def sync_lessons_to_neo4j():
     graph = data.get("graph", {})
     edges = graph.get("edges", [])
 
-    print(f"Connecting to Neo4j...")
+    print(f"Connecting to Neo4j at {NEO4J_URI}...")
     neo4j_driver = GraphDatabase.driver(NEO4J_URI, auth=NEO4J_AUTH)
     
     try:
@@ -99,14 +104,13 @@ def sync_lessons_to_neo4j():
         except Exception:
             pass
             
-        # 3. Create nodes
+        # 3. Create Nodes
         session.execute_write(create_nodes, lessons_data)
         
-        # 4. Create edges
+        # 4. Create Edges
         session.execute_write(create_edges, edges)
 
-    neo4j_driver.close()
-    print("Neo4j Sync complete! All nodes and relationships have been successfully created.")
+    print("Neo4j Sync Complete!")
 
 if __name__ == "__main__":
     sync_lessons_to_neo4j()
