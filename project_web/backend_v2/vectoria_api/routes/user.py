@@ -253,7 +253,7 @@ def register():
         else:
             base_url = request.headers.get("Origin", FRONTEND_URL) + "/frontend_v2" if "127.0.0.1" in request.headers.get("Origin", "") or "localhost" in request.headers.get("Origin", "") else request.headers.get("Origin", FRONTEND_URL)
         
-        activation_link = f"{base_url}/verify.html?token={activation_token}"
+        activation_link = f"{base_url}/login.html?verify_token={activation_token}"
         
         if language == 'en':
             email_content = get_modern_email(
@@ -507,7 +507,7 @@ def forgot_password():
         else:
             base_url = request.headers.get("Origin", FRONTEND_URL) + "/frontend_v2" if "127.0.0.1" in request.headers.get("Origin", "") or "localhost" in request.headers.get("Origin", "") else request.headers.get("Origin", FRONTEND_URL)
             
-        reset_link = f"{base_url}/reset_password.html?token={reset_token}"
+        reset_link = f"{base_url}/login.html?reset_token={reset_token}"
         
         if language == 'en':
             email_content = get_modern_email(
@@ -647,7 +647,7 @@ def secure_account():
         conn.commit()
         
         # Chuyển hướng người dùng đến giao diện đặt lại mật khẩu của frontend
-        return redirect(f"{FRONTEND_URL}/reset_password.html?token={token}")
+        return redirect(f"{FRONTEND_URL}/login.html?reset_token={token}")
     except Exception as e:
         return f"Lỗi hệ thống: {str(e)}", 500
     finally:

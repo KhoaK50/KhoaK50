@@ -931,9 +931,64 @@
         </div>
         
       </div>
-    </div>
+  </div>
 
-    <div id="math-canvas-container"></div>
+  <div id="resetPasswordContainer" style="display: none; width: 100%; height: 100%; justify-content: center; align-items: center; background: var(--bg-card); z-index: 10; border-radius: 16px;">
+    <div style="max-width: 420px; width: 100%; padding: 40px 35px;">
+      <div style="text-align: center; margin-bottom: 25px;">
+        <h2 style="font-family: 'Lora', serif; font-size: 1.8rem; color: var(--text-main); margin-bottom: 8px;" data-i18n="auth.reset_password_title">Đặt lại mật khẩu</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem;" data-i18n="auth.reset_password_desc_new">Nhập mật khẩu mới cho tài khoản của bạn.</p>
+      </div>
+      
+      <form id="resetPasswordFormInline" onsubmit="handleAuth(event, 'reset')">
+        <input type="hidden" id="resetTokenHidden" value="" />
+        
+        <div class="form-group">
+          <label data-i18n="auth.new_password_label">Mật khẩu mới</label>
+          <div class="input-wrapper">
+            <input type="password" id="resetPass" data-i18n-placeholder="auth.ph_new_pass" placeholder="e.g. Secret@123" required />
+            <i class="fa-solid fa-lock input-icon"></i>
+            <i class="fa-solid fa-eye-slash toggle-pwd" onclick="togglePassword('resetPass', this)" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted);"></i>
+          </div>
+        </div>
+        
+        <div class="form-group" style="margin-top: 15px;">
+          <label data-i18n="auth.reg_confirm_pass_label">Xác nhận mật khẩu</label>
+          <div class="input-wrapper">
+            <input type="password" id="resetConfirm" data-i18n-placeholder="auth.ph_confirm_new_pass" placeholder="e.g. Secret@123" required />
+            <i class="fa-solid fa-shield-check input-icon"></i>
+            <i class="fa-solid fa-eye-slash toggle-pwd" onclick="togglePassword('resetConfirm', this)" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted);"></i>
+          </div>
+        </div>
+        
+        <button type="submit" class="btn-submit" id="btnResetSubmit" style="margin-top: 25px;">
+            <span data-i18n="auth.btn_change_password">Cập nhật mật khẩu</span>
+        </button>
+      </form>
+      
+      <div style="text-align: center; margin-top: 25px;">
+        <a href="login.html" style="color: var(--primary-base); font-weight: 600; text-decoration: none;" data-i18n="auth.back_to_login"><i class="fa-solid fa-arrow-left"></i> Quay lại đăng nhập</a>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="verifyContainer" style="display: none; width: 100%; height: 100%; justify-content: center; align-items: center; background: var(--bg-card); z-index: 10; border-radius: 16px;">
+    <div style="max-width: 420px; width: 100%; padding: 40px 35px; text-align: center;">
+      <div id="verifyLoading">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size: 3rem; color: var(--primary-base); margin-bottom: 20px;"></i>
+        <h2 style="font-family: 'Lora', serif; font-size: 1.5rem; color: var(--text-main);" data-i18n="verify.verifying">Đang xác thực...</h2>
+      </div>
+      <div id="verifyResult" style="display: none;">
+        <i id="verifyIcon" class="fa-solid fa-circle-check" style="font-size: 3.5rem; color: #10b981; margin-bottom: 20px;"></i>
+        <h3 id="verifyTitle" style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;">Thành công</h3>
+        <p id="verifyDesc" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px;"></p>
+        <a href="login.html" class="btn-submit" style="display:inline-block; text-decoration:none; margin-top: 10px;" data-i18n="auth.back_to_login">Quay lại đăng nhập</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="math-canvas-container"></div>
 
     <script>
       const vectoriaChannel = new BroadcastChannel('auth_sync_channel');
@@ -1037,6 +1092,10 @@
             ? document.getElementById("btnLoginSubmit")
             : type === "register"
             ? document.getElementById("btnRegSubmit")
+            : type === "reset"
+            ? document.getElementById("btnResetSubmit")
+            : type === "reset"
+            ? document.getElementById("btnResetSubmit")
             : document.getElementById("btnForgotSubmit");
         const originalHtml = btn.innerHTML;
         btn.disabled = true;
@@ -1076,6 +1135,41 @@
                   </button>
                 </div>
               `;
+            } else {
+              showToast(data.message, false);
+            }
+          } else if (type === "reset") {
+            const token = document.getElementById("resetTokenHidden").value;
+            const newPwd = document.getElementById("resetPass").value;
+            const confirmPwd = document.getElementById("resetConfirm").value;
+            
+            if (newPwd !== confirmPwd) {
+              showToast(window.tr ? window.tr("auth.err_pwd_match", "Mật khẩu xác nhận không khớp.") : "Mật khẩu xác nhận không khớp.", false);
+              return;
+            }
+
+            const res = await fetch(${API_BASE}/api/reset-password, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ token, new_password: newPwd }),
+            });
+            const data = await res.json();
+
+            if (data.status === "success") {
+              const form = document.getElementById("resetPasswordFormInline");
+              form.innerHTML = 
+                <div style="text-align: center; padding: 20px;">
+                  <i class="fa-solid fa-circle-check" style="font-size: 3.5rem; color: #10b981; margin-bottom: 20px;"></i>
+                  <h3 style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;"></h3>
+                  <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px;">
+                     
+                  </p>
+                  <a href="login.html" class="btn-submit" style="display:inline-block; text-decoration:none; margin-top: 10px;">
+                    
+                  </a>
+                </div>
+              ;
+              vectoriaChannel.postMessage('pwd_reset_done');
             } else {
               showToast(data.message, false);
             }
@@ -1268,6 +1362,49 @@
           };
           showToast(msgs[errorMsg] || (window.tr ? window.tr("auth.toast_error", "Lỗi xác thực.") : "Lỗi xác thực."), false);
         }
+        // Initialize Check for Reset Token
+        const urlParams2 = new URLSearchParams(window.location.search);
+        const resetToken = urlParams2.get('reset_token');
+        if (resetToken) {
+          document.getElementById('flipCardInner').style.display = 'none';
+          document.getElementById('resetPasswordContainer').style.display = 'flex';
+          document.getElementById('resetTokenHidden').value = resetToken;
+        }
+
+
+        const verifyToken = urlParams2.get('verify_token');
+        if (verifyToken) {
+          document.getElementById('flipCardInner').style.display = 'none';
+          document.getElementById('verifyContainer').style.display = 'flex';
+          const rightPanel = document.querySelector('.auth-welcome');
+          if (rightPanel) rightPanel.style.display = 'none';
+
+          fetch(${API_BASE}/api/verify?token=)
+            .then(res => res.json())
+            .then(data => {
+               document.getElementById('verifyLoading').style.display = 'none';
+               document.getElementById('verifyResult').style.display = 'block';
+               if (data.status === 'success') {
+                  document.getElementById('verifyIcon').className = 'fa-solid fa-circle-check';
+                  document.getElementById('verifyIcon').style.color = '#10b981';
+                  document.getElementById('verifyTitle').innerText = window.tr ? window.tr('verify.success_title', 'Thành công!') : 'Thành công!';
+                  document.getElementById('verifyDesc').innerText = data.message;
+               } else {
+                  document.getElementById('verifyIcon').className = 'fa-solid fa-circle-xmark';
+                  document.getElementById('verifyIcon').style.color = '#ef4444';
+                  document.getElementById('verifyTitle').innerText = window.tr ? window.tr('verify.error_title', 'Lỗi xác thực') : 'Lỗi xác thực';
+                  document.getElementById('verifyDesc').innerText = data.message;
+               }
+            }).catch(err => {
+               document.getElementById('verifyLoading').style.display = 'none';
+               document.getElementById('verifyResult').style.display = 'block';
+               document.getElementById('verifyIcon').className = 'fa-solid fa-circle-xmark';
+               document.getElementById('verifyIcon').style.color = '#ef4444';
+               document.getElementById('verifyTitle').innerText = window.tr ? window.tr('verify.error_title', 'Lỗi hệ thống') : 'Lỗi hệ thống';
+               document.getElementById('verifyDesc').innerText = window.tr ? window.tr('auth.toast_server_error', 'Không thể kết nối máy chủ.') : 'Không thể kết nối máy chủ.';
+            });
+        }
+
         // KHỞI TẠO GOOGLE OAUTH
         googleClient = google.accounts.oauth2.initTokenClient({
           // Nhớ thay bằng Client ID thực tế của ông lúc test local nhé
