@@ -1154,7 +1154,7 @@
             const res = await fetch(`${API_BASE}/api/reset-password`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ token, new_password: newPwd }),
+              body: JSON.stringify({ token, new_password: newPwd, language: localStorage.getItem("locale") || "vi" }),
             });
             const data = await res.json();
 
@@ -1386,7 +1386,8 @@
           const rightPanel = document.querySelector('.auth-welcome');
           if (rightPanel) rightPanel.style.display = 'none';
 
-          fetch(`${API_BASE}/api/verify?token=${verifyToken}`)
+          const lang = localStorage.getItem("locale") || "vi";
+          fetch(`${API_BASE}/api/verify?token=${verifyToken}&lang=${lang}`)
             .then(res => res.json())
             .then(data => {
                document.getElementById('verifyLoading').style.display = 'none';
