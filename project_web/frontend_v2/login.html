@@ -931,7 +931,6 @@
         </div>
         
       </div>
-  </div>
 
   <div id="resetPasswordContainer" style="display: none; width: 100%; height: 100%; justify-content: center; align-items: center; background: var(--bg-card); z-index: 10; border-radius: 16px;">
     <div style="max-width: 420px; width: 100%; padding: 40px 35px;">
@@ -972,7 +971,6 @@
     </div>
   </div>
 
-
   <div id="verifyContainer" style="display: none; width: 100%; height: 100%; justify-content: center; align-items: center; background: var(--bg-card); z-index: 10; border-radius: 16px;">
     <div style="max-width: 420px; width: 100%; padding: 40px 35px; text-align: center;">
       <div id="verifyLoading">
@@ -986,9 +984,14 @@
         <a href="login.html" class="btn-submit" style="display:inline-block; text-decoration:none; margin-top: 10px;" data-i18n="auth.back_to_login">Quay lại đăng nhập</a>
       </div>
     </div>
-  </div>
 
-  <div id="math-canvas-container"></div>
+
+
+  
+  </div>
+</div> <!-- END auth-container wide -->
+
+<div id="math-canvas-container"></div>
 
     <script>
       const vectoriaChannel = new BroadcastChannel('auth_sync_channel');
@@ -1374,6 +1377,10 @@
 
         const verifyToken = urlParams2.get('verify_token');
         if (verifyToken) {
+          const _l_global = atob("aHR0cDovLzEyNy4wLjAuMTo1MDAw");
+          const _p_global = atob("aHR0cHM6Ly92aXN1YWxpemF0aW9uLXJyNXYub25yZW5kZXIuY29t");
+          const API_BASE = (location.hostname === "127.0.0.1" || location.hostname === "localhost") ? _l_global : _p_global;
+
           document.getElementById('flipCardInner').style.display = 'none';
           document.getElementById('verifyContainer').style.display = 'flex';
           const rightPanel = document.querySelector('.auth-welcome');
