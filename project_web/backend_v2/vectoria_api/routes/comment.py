@@ -161,6 +161,13 @@ def create_comment(user_id):
             """
             cursor.execute(flag_query, (result['id'], content, severity, reason, ip_address))
             
+            # Create a notification for the user
+            notif_query = """
+                INSERT INTO notifications (user_id, type, title, message)
+                VALUES (%s, 'WARNING', 'Cảnh báo vi phạm nội dung', 'Bình luận của bạn chứa từ ngữ không phù hợp và đã bị ẩn một phần. Vui lòng tuân thủ quy tắc cộng đồng.')
+            """
+            cursor.execute(notif_query, (user_id,))
+            
         conn.commit()
         
         return jsonify({
