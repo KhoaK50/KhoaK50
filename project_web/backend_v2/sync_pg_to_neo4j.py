@@ -71,7 +71,7 @@ def sync_lessons_to_neo4j():
 
     def clear_db(tx):
         print("Clearing Neo4j database...")
-        tx.run("MATCH (n) DETACH DELETE n")
+        tx.run("MATCH (n:Lesson) DETACH DELETE n")
 
     def create_nodes(tx, lessons_batch):
         print("Creating Lesson nodes...")

@@ -1,6 +1,20 @@
 <!doctype html>
 <html lang="vi">
   <head>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#111113';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#fcfcfd';
+        }
+      } catch (e) {}
+    })();
+  </script>
     <!-- Google tag (gtag.js) -->
     <script
       async
@@ -20,10 +34,7 @@
     <title>Không gian vector - Vectoria Knowledge</title>
 
     <link rel="stylesheet" href="../css/footer.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
@@ -1130,8 +1141,8 @@
 
   <body>
     <div class="theme-transition-icons">
-      <i class="fa-solid fa-sun" id="sunIcon"></i>
-      <i class="fa-solid fa-moon" id="moonIcon"></i>
+      <i class="ph ph-sun" id="sunIcon"></i>
+      <i class="ph ph-moon" id="moonIcon"></i>
     </div>
 
     <div id="topbar">
@@ -1141,13 +1152,13 @@
           class="topbar-icon"
           title="Quay lại thư viện"
         >
-          <i class="fa-solid fa-arrow-left"></i>
+          <i class="ph ph-arrow-left"></i>
         </a>
         <a href="../index.html" class="topbar-icon" title="Về trang chủ">
-          <i class="fa-solid fa-house"></i>
+          <i class="ph ph-house"></i>
         </a>
         <a href="../tltk.html" class="topbar-icon" title="Tài liệu tham khảo">
-          <i class="fa-solid fa-file-lines"></i>
+          <i class="ph ph-file-text"></i>
         </a>
       </div>
 
@@ -1156,12 +1167,12 @@
       <div class="topbar-right" style="margin-right: 25px">
         <div class="settings-container">
           <button id="btnSettings" class="icon-btn" title="Cài đặt">
-            <i class="fa-solid fa-gear"></i>
+            <i class="ph ph-gear"></i>
           </button>
 
           <div class="settings-dropdown" id="settingsDropdown">
             <div class="setting-item">
-              <span><i class="fa-solid fa-moon"></i> Chế độ tối</span>
+              <span><i class="ph ph-moon"></i> Chế độ tối</span>
               <label class="switch">
                 <input type="checkbox" id="themeToggle" />
                 <span class="slider round"></span>
@@ -1187,11 +1198,11 @@
               "
             >
               <span
-                ><i class="fa-solid fa-book-open-reader"></i> Hướng dẫn sử
+                ><i class="ph ph-book-open-text"></i> Hướng dẫn sử
                 dụng</span
               >
               <i
-                class="fa-solid fa-chevron-right"
+                class="ph ph-caret-right"
                 style="font-size: 0.8em; color: var(--muted)"
               ></i>
             </a>
@@ -1200,9 +1211,9 @@
               class="setting-item"
               style="text-decoration: none; color: inherit"
             >
-              <span><i class="fa-solid fa-envelope"></i> Liên hệ / Góp ý</span>
+              <span><i class="ph ph-envelope"></i> Liên hệ / Góp ý</span>
               <i
-                class="fa-solid fa-chevron-right"
+                class="ph ph-caret-right"
                 style="font-size: 0.8em; color: var(--muted)"
               ></i>
             </a>
@@ -1213,7 +1224,7 @@
 
     <div class="container">
       <aside class="sidebar custom-nav">
-        <h3 class="nav-title"><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
+        <h3 class="nav-title"><i class="ph ph-list-bullets"></i> Mục lục</h3>
         <ul class="nav-list">
           <li class="nav-item has-dropdown open">
             <div class="nav-link toggle-btn">
@@ -1227,7 +1238,7 @@
                 "
                 >Lý thuyết</a
               >
-              <i class="fa-solid fa-chevron-right arrow-icon"></i>
+              <i class="ph ph-caret-right arrow-icon"></i>
             </div>
 
             <ul class="sub-menu">
@@ -1262,7 +1273,7 @@
                     >2. Độc lập tuyến tính và Phụ thuộc tuyến tính</a
                   >
                   <i
-                    class="fa-solid fa-chevron-right arrow-icon"
+                    class="ph ph-caret-right arrow-icon"
                     style="padding: 5px; margin-right: -5px"
                   ></i>
                 </div>
@@ -1344,7 +1355,7 @@
           </style>
 
           <h2 class="section-title" style="margin-bottom: 20px">
-            <i class="fa-solid fa-book-open"></i> Lý thuyết
+            <i class="ph ph-book-open"></i> Lý thuyết
           </h2>
 
           <div
@@ -1656,7 +1667,7 @@
           "
         >
           <h2 class="section-title" style="margin-bottom: 20px">
-            <i class="fa-brands fa-youtube"></i> Video trực quan
+            <i class="ph ph-youtube-logo"></i> Video trực quan
           </h2>
 
           <div class="cinema-container">
@@ -1677,7 +1688,7 @@
                     setActive(this);
                   "
                 >
-                  <i class="fa-solid fa-circle-play chapter-icon"></i>
+                  <i class="ph ph-play-circle chapter-icon"></i>
                   <div class="chapter-info">
                     <span class="chapter-title">Đặt vấn đề</span>
                   </div>
@@ -1690,7 +1701,7 @@
                     setActive(this);
                   "
                 >
-                  <i class="fa-solid fa-circle-play chapter-icon"></i>
+                  <i class="ph ph-play-circle chapter-icon"></i>
                   <div class="chapter-info">
                     <span class="chapter-title">Kiến thức chuẩn bị</span>
                   </div>
@@ -1703,7 +1714,7 @@
                     setActive(this);
                   "
                 >
-                  <i class="fa-solid fa-circle-play chapter-icon"></i>
+                  <i class="ph ph-play-circle chapter-icon"></i>
                   <div class="chapter-info">
                     <span class="chapter-title"
                       >Tổ hợp - Độc lập - <br />Phụ thuộc tuyến tính</span
@@ -1719,7 +1730,7 @@
                     setActive(this);
                   "
                 >
-                  <i class="fa-solid fa-circle-play chapter-icon"></i>
+                  <i class="ph ph-play-circle chapter-icon"></i>
                   <div class="chapter-info">
                     <span class="chapter-title">Giải quyết vấn đề</span>
                   </div>
@@ -1732,7 +1743,7 @@
 
         <div class="chapter-card" id="bai-tap">
           <h2 class="section-title">
-            <i class="fa-solid fa-pen-to-square"></i> Bài tập
+            <i class="ph ph-pencil-simple"></i> Bài tập
           </h2>
 
           <div
@@ -2157,7 +2168,7 @@
                 font-size: 0.95rem;
               "
             >
-              <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành các bài
+              <i class="ph ph-info"></i> Bạn đã hoàn thành các bài
               tập? Tải lời giải về để đối chiếu nhé!
             </p>
             <a
@@ -2165,22 +2176,22 @@
               target="_blank"
               class="btn-download"
             >
-              <i class="fa-solid fa-file-arrow-down"></i> Lời giải tham khảo
+              <i class="ph ph-file-arrow-down"></i> Lời giải tham khảo
             </a>
           </div>
         </div>
       
             <div class="chapter-card" id="thao-luan">
-                <h2 class="section-title"><i class="fa-solid fa-comments"></i> Thảo luận & Hỏi đáp</h2>
+                <h2 class="section-title"><i class="ph ph-chats"></i> Thảo luận & Hỏi đáp</h2>
                 
                 <div style="margin-bottom: 20px;">
                     <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg-card);">
                         <div style="background: rgba(0,0,0,0.03); border-bottom: 1px solid var(--border); padding: 8px 12px; display: flex; gap: 10px; align-items: center;">
-                            <button type="button" title="In đậm" onclick="insertMarkdown('**', '**')" style="border:none; background:transparent; cursor:pointer; color:var(--text-sub); font-size: 14px;"><i class="fa-solid fa-bold"></i></button>
-                            <button type="button" title="In nghiêng" onclick="insertMarkdown('*', '*')" style="border:none; background:transparent; cursor:pointer; color:var(--text-sub); font-size: 14px;"><i class="fa-solid fa-italic"></i></button>
-                            <button type="button" title="Code" onclick="insertMarkdown('`', '`')" style="border:none; background:transparent; cursor:pointer; color:var(--text-sub); font-size: 14px;"><i class="fa-solid fa-code"></i></button>
+                            <button type="button" title="In đậm" onclick="insertMarkdown('**', '**')" style="border:none; background:transparent; cursor:pointer; color:var(--text-sub); font-size: 14px;"><i class="ph ph-text-bolder"></i></button>
+                            <button type="button" title="In nghiêng" onclick="insertMarkdown('*', '*')" style="border:none; background:transparent; cursor:pointer; color:var(--text-sub); font-size: 14px;"><i class="ph ph-text-italic"></i></button>
+                            <button type="button" title="Code" onclick="insertMarkdown('`', '`')" style="border:none; background:transparent; cursor:pointer; color:var(--text-sub); font-size: 14px;"><i class="ph ph-code"></i></button>
                             <div style="width: 1px; height: 16px; background: var(--border); margin: 0 4px;"></div>
-                            <button type="button" title="Công thức Toán" onclick="insertMarkdown('\\(', '\\)')" style="border:none; background:transparent; cursor:pointer; color:var(--text-sub); font-size: 14px;"><i class="fa-solid fa-square-root-variable"></i></button>
+                            <button type="button" title="Công thức Toán" onclick="insertMarkdown('\\(', '\\)')" style="border:none; background:transparent; cursor:pointer; color:var(--text-sub); font-size: 14px;"><i class="ph ph-math-operations"></i></button>
                         </div>
                         <textarea id="commentInput" rows="4" style="width: 100%; padding: 12px; border: none; background: transparent; color: var(--text-main); font-family: inherit; resize: vertical; outline: none; box-sizing: border-box;" placeholder="Nhập câu hỏi hoặc bình luận của bạn..."></textarea>
                     </div>
@@ -2239,7 +2250,7 @@
           <h4>Thông tin liên hệ</h4>
           <ul>
             <li>
-              <i class="fa-solid fa-envelope"></i>
+              <i class="ph ph-envelope"></i>
               <a href="mailto:support@vectoria.io.vn">support@vectoria.io.vn</a>
             </li>
           </ul>
@@ -2566,7 +2577,7 @@
         async function postComment() {
             const userStr = localStorage.getItem("user_info");
             if (!userStr) {
-                (window.App && window.App.showToast ? window.App.showToast("Vui lòng đăng nhập để bình luận", 'warning') : alert("Vui lòng đăng nhập để bình luận"));
+                window.App.showToast("Vui lòng đăng nhập để bình luận", 'warning');
                 return;
             }
             const user = JSON.parse(userStr);
@@ -2591,5 +2602,7 @@
             loadComments();
         });
 </script>
+<script src="../js/utils/toast.js"></script>
+  <script src="js/utils/global-search.js"></script>
 </body>
 </html>

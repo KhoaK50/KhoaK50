@@ -1,5 +1,7 @@
 import os
 import psycopg2
+from vectoria_api.database import get_db_connection, release_db_connection
+
 from psycopg2.extras import RealDictCursor
 from flask import Blueprint, request, jsonify
 from vectoria_api.config import DB_URL
@@ -8,7 +10,7 @@ course_bp = Blueprint("course", __name__)
 
 def init_course_db():
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
 
         # 1. TOPIC
@@ -54,6 +56,19 @@ def init_course_db():
                 time INT NOT NULL DEFAULT 45,
                 value INT NOT NULL DEFAULT 5,
                 PRIMARY KEY (topic_id, order_index)
+            )
+        """)
+
+        # 3.1. LESSON TRANSLATIONS
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS lesson_translations (
+                topic_id VARCHAR(10) NOT NULL,
+                order_index INT NOT NULL,
+                language_code VARCHAR(5) NOT NULL,
+                title VARCHAR(150) NOT NULL,
+                content_html TEXT NOT NULL,
+                PRIMARY KEY (topic_id, order_index, language_code),
+                FOREIGN KEY (topic_id, order_index) REFERENCES lessons(topic_id, order_index) ON DELETE CASCADE
             )
         """)
 
@@ -138,7 +153,7 @@ def init_course_db():
         """)
 
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
         print(">> Init Course DB Successfully")
     except Exception as e:
         print(">> Error initializing Course DB:", str(e))
@@ -150,7 +165,8 @@ from vectoria_api.middleware.auth import token_required
 @course_bp.route('/api/course/topic/<topic_id>/lesson/<order_index>', methods=['GET'])
 def get_lesson(topic_id, order_index):
     try:
-        conn = psycopg2.connect(DB_URL)
+        lang = request.args.get('lang', 'vi')
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("SELECT * FROM lessons WHERE topic_id = %s AND order_index = %s", (topic_id, order_index))
         lesson = cursor.fetchone()
@@ -160,6 +176,15 @@ def get_lesson(topic_id, order_index):
                 lesson['created_at'] = lesson['created_at'].isoformat()
             if 'updated_at' in lesson and lesson['updated_at']:
                 lesson['updated_at'] = lesson['updated_at'].isoformat()
+                
+            # Fetch translation if lang is not 'vi' or if we want to ensure translation overrides
+            if lang != 'vi':
+                cursor.execute("SELECT title, content_html FROM lesson_translations WHERE topic_id = %s AND order_index = %s AND language_code = %s", (topic_id, order_index, lang))
+                trans = cursor.fetchone()
+                if trans:
+                    if trans['title'] is not None: lesson['title'] = trans['title']
+                    if trans['content_html'] is not None: lesson['content_html'] = trans['content_html']
+                    
             return jsonify({"success": True, "lesson": lesson}), 200
         return jsonify({"success": False, "message": "Lesson not found"}), 404
     except Exception as e:
@@ -167,12 +192,12 @@ def get_lesson(topic_id, order_index):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 @course_bp.route('/api/course/topic/<topic_id>/lesson/<order_index>/view', methods=['POST'])
 def increment_lesson_view(topic_id, order_index):
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("UPDATE lessons SET total_views = total_views + 1 WHERE topic_id = %s AND order_index = %s", (topic_id, order_index))
         conn.commit()
@@ -182,7 +207,7 @@ def increment_lesson_view(topic_id, order_index):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 @course_bp.route('/api/course/graph', methods=['GET'])
 def get_course_graph():
@@ -202,7 +227,7 @@ def submit_survey(user_id):
         return jsonify({"status": "error", "message": "No data provided"}), 400
         
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Đảm bảo user có dòng trong user_metrics
@@ -234,7 +259,7 @@ def submit_survey(user_id):
         return jsonify({"status": "error", "message": str(e)}), 500
     finally:
         if 'conn' in locals():
-            conn.close()
+            release_db_connection(conn)
 
 @course_bp.route('/api/course/track-quiz', methods=['POST'])
 @token_required
@@ -257,7 +282,7 @@ def track_quiz(user_id):
     s_web_new = score / max_score
     
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # 1. Update user metrics (beta & alpha)
@@ -327,7 +352,7 @@ def track_quiz(user_id):
         return jsonify({"status": "error", "message": str(e)}), 500
     finally:
         if 'conn' in locals():
-            conn.close()
+            release_db_connection(conn)
 
 @course_bp.route('/api/course/track-reading', methods=['POST'])
 @token_required
@@ -346,7 +371,7 @@ def track_reading(user_id):
         return jsonify({"status": "error", "message": "Invalid data"}), 400
         
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # 1. Update user metrics (beta & alpha)
@@ -391,7 +416,7 @@ def track_reading(user_id):
         return jsonify({"status": "error", "message": str(e)}), 500
     finally:
         if 'conn' in locals():
-            conn.close()
+            release_db_connection(conn)
 
 @course_bp.route('/api/quiz/available-count', methods=['POST'])
 @token_required
@@ -402,7 +427,7 @@ def get_available_question_count(user_id):
     difficulty_config = data.get("difficulty_config", "MIXED")
 
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor()
         
         if selected_lessons:
@@ -427,7 +452,7 @@ def get_available_question_count(user_id):
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
         if 'conn' in locals():
-            conn.close()
+            release_db_connection(conn)
 
 @course_bp.route('/api/quiz/generate', methods=['POST'])
 @token_required
@@ -441,7 +466,7 @@ def generate_quiz(user_id):
     time_limit = data.get("time_limit", 30)
 
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         cursor.execute("""
@@ -496,7 +521,7 @@ def generate_quiz(user_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 @course_bp.route('/api/quiz/<int:quiz_id>/submit', methods=['POST'])
 @token_required
@@ -505,7 +530,7 @@ def submit_quiz(user_id, quiz_id):
     answers = data.get("answers", [])
     
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         cursor.execute("SELECT id FROM quizzes WHERE id = %s AND user_id = %s", (quiz_id, user_id))
@@ -567,4 +592,68 @@ def submit_quiz(user_id, quiz_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
+
+
+
+
+@course_bp.route('/api/course/all', methods=['GET'])
+def get_all_course_data():
+    lang = request.args.get('lang', 'vi').strip()
+    try:
+        conn = get_db_connection()
+        c = conn.cursor(cursor_factory=RealDictCursor)
+        
+        if lang == 'vi':
+            c.execute('''
+                SELECT 
+                    l.topic_id,
+                    l.order_index as lesson_num,
+                    l.title as lesson_title,
+                    l.content_html,
+                    t.title as topic_title,
+                    s.id as section_id,
+                    s.title as section_title
+                FROM lessons l
+                JOIN topics t ON l.topic_id = t.id
+                JOIN sections s ON l.section_id = s.id
+                ORDER BY t.created_at ASC, l.order_index ASC
+            ''')
+            rows = c.fetchall()
+        else:
+            # ONLY return lessons that HAVE a translation
+            c.execute('''
+                SELECT 
+                    lt.topic_id,
+                    lt.order_index as lesson_num,
+                    lt.title as lesson_title,
+                    lt.content_html,
+                    t.title as topic_title,
+                    s.id as section_id,
+                    s.title as section_title
+                FROM lesson_translations lt
+                JOIN lessons l ON lt.topic_id = l.topic_id AND lt.order_index = l.order_index
+                JOIN topics t ON lt.topic_id = t.id
+                JOIN sections s ON l.section_id = s.id
+                WHERE lt.language_code = %s
+                ORDER BY t.created_at ASC, lt.order_index ASC
+            ''', (lang,))
+            rows = c.fetchall()
+            
+        import re as regex
+        for row in rows:
+            clean_text = regex.sub(r'<[^>]+>', ' ', row['content_html'])
+            clean_text = regex.sub(r'\s+', ' ', clean_text).strip()
+            row['content_text'] = clean_text
+            del row['content_html']
+            
+        return jsonify({"success": True, "results": rows}), 200
+    except Exception as e:
+        print("GetAll error:", e)
+        return jsonify({"success": False, "error": "Internal server error"}), 500
+    finally:
+        if 'conn' in locals() and conn:
+            release_db_connection(conn)
+
+
+

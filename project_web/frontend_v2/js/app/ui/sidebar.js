@@ -283,7 +283,7 @@
             btnDraw.style.padding = "12px";
             btnDraw.style.fontSize = "15px";
             btnDraw.style.marginBottom = "10px";
-            btnDraw.innerHTML = '<i class="fa-solid fa-plus" style="margin-right:6px;"></i> Thêm Vector';
+            btnDraw.innerHTML = '<i class="ph ph-plus" style="margin-right:6px;"></i> Thêm Vector';
 
             // Biến 2 nút còn lại thành nút phụ (Ghost button)
             btnAuto.className = "btn-sub-action";
@@ -292,7 +292,7 @@
             // Xóa rác text ban đầu nếu dài quá
             if (btnAuto.textContent.includes("BẬT")) btnAuto.innerHTML = 'Auto 2D/3D: Bật';
             if (btnAuto.textContent.includes("TẮT")) btnAuto.innerHTML = 'Auto 2D/3D: Tắt';
-            btnClearAll.innerHTML = '<i class="fa-solid fa-trash-can" style="margin-right:4px;"></i> Xóa hết';
+            btnClearAll.innerHTML = '<i class="ph ph-trash" style="margin-right:4px;"></i> Xóa hết';
 
             // Tạo một hàng con chứa 2 nút phụ
             const subRow = document.createElement("div");
@@ -363,15 +363,15 @@
 
     const btnList = document.createElement("button");
     btnList.className = "tab-btn active";
-    btnList.innerHTML = '<i class="fa-solid fa-layer-group"></i><span>Vector</span>';
+    btnList.innerHTML = '<i class="ph ph-stack"></i><span>Vector</span>';
 
     const btnSpace = document.createElement("button");
     btnSpace.className = "tab-btn";
-    btnSpace.innerHTML = '<i class="fa-solid fa-cube"></i><span>Cơ sở</span>';
+    btnSpace.innerHTML = '<i class="ph ph-cube"></i><span>Cơ sở</span>';
 
     const btnCalc = document.createElement("button");
     btnCalc.className = "tab-btn";
-    btnCalc.innerHTML = '<i class="fa-solid fa-calculator"></i><span>Toán</span>';
+    btnCalc.innerHTML = '<i class="ph ph-calculator"></i><span>Toán</span>';
 
     tabNav.append(btnList, btnSpace, btnCalc);
 
@@ -417,7 +417,7 @@
             </div>
             <div style="position: relative; flex-shrink: 0; margin-left: 8px;">
               <button id="matrixMenuBtn" class="custom-menu-btn" title="Chèn công thức toán học" style="padding: 4px 8px; border-radius: 4px; background: transparent; border: 1px solid var(--border); color: var(--fg); cursor: pointer;">
-                <i class="fa-solid fa-bars"></i>
+                <i class="ph ph-list"></i>
               </button>
               <div id="matrixCustomMenu" class="custom-menu-dropdown" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 10px; z-index: 1000;">
                 <div class="menu-item" onclick="insertLatex('\\\\sqrt{#0}')">
@@ -453,11 +453,11 @@
         </div>
         <div style="margin-top:12px; display:block;">
           <button id="btnAddMatrix" class="btn primary" style="width:100%; padding:12px; font-size:15px; margin-bottom:10px;">
-            <i class="fa-solid fa-plus" style="margin-right:6px;"></i> Thêm Ma Trận
+            <i class="ph ph-plus" style="margin-right:6px;"></i> Thêm Ma Trận
           </button>
           <div style="display:flex; gap:8px;">
             <button id="btnClearAllMatrices" class="btn-sub-action btn-sub-danger" style="flex:1;">
-              <i class="fa-solid fa-trash-can" style="margin-right:4px;"></i> Xóa hết
+              <i class="ph ph-trash" style="margin-right:4px;"></i> Xóa hết
             </button>
           </div>
         </div>
@@ -582,7 +582,7 @@
           </div>
           <div class="matrix-action-bar">
             <button id="btnMatrixCompute" class="btn primary" data-require-vectors="false" style="width:100%; padding:12px; font-size:15px;">
-              <i class="fa-solid fa-play" style="margin-right:6px;"></i> Tính toán Ma trận
+              <i class="ph ph-play" style="margin-right:6px;"></i> Tính toán Ma trận
             </button>
           </div>
           <div id="matrixResultBox" class="nice-result-box" style="display:none; margin-top:16px;"></div>
@@ -610,7 +610,7 @@
           </div>
           <div class="matrix-action-bar">
             <button id="btnMixedCompute" class="btn primary" data-require-vectors="false" style="width:100%; padding:12px; font-size:15px;">
-              <i class="fa-solid fa-play" style="margin-right:6px;"></i> Tính hỗn hợp
+              <i class="ph ph-play" style="margin-right:6px;"></i> Tính hỗn hợp
             </button>
           </div>
           <div id="mixedResultBox" class="nice-result-box" style="display:none; margin-top:16px;"></div>
@@ -907,7 +907,7 @@
         const empty = document.createElement("div");
         empty.className = "mat-empty"; // Dùng chung class style với ma trận cho đồng bộ
         empty.innerHTML = `
-          <i class="fa-regular fa-square-plus" style="font-size:28px; opacity:0.3; margin-bottom:8px;"></i>
+          <i class="ph ph-plus-square" style="font-size:28px; opacity:0.3; margin-bottom:8px;"></i>
           <span>Chưa có vector nào</span>
         `;
         el.appendChild(empty);
@@ -1028,7 +1028,7 @@
 
       const btn = document.createElement("button");
       btn.className = "vec-menu-btn";
-      btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
+      btn.innerHTML = '<i class="ph ph-list"></i>';
       btn.title = "Chèn công thức";
 
       const dropdown = document.createElement("div");
@@ -1133,7 +1133,7 @@
 
       const focusBtn = document.createElement("button");
       focusBtn.className = "btn";
-      focusBtn.innerHTML = item.focus ? '<i class="fa-solid fa-star" style="color:#f59e0b"></i>' : '<i class="fa-regular fa-star"></i>';
+      focusBtn.innerHTML = item.focus ? '<i class="ph ph-star" style="color:#f59e0b"></i>' : '<i class="ph ph-star"></i>';
       focusBtn.title = "Chú ý";
       focusBtn.onclick = (e) => {
         e.stopPropagation();
@@ -1146,19 +1146,19 @@
 
       const toggleBtn = document.createElement("button");
       toggleBtn.className = "btn";
-      toggleBtn.innerHTML = item.visible ? '<i class="fa-regular fa-eye"></i>' : '<i class="fa-regular fa-eye-slash"></i>';
+      toggleBtn.innerHTML = item.visible ? '<i class="ph ph-eye"></i>' : '<i class="ph ph-eye-slash"></i>';
       toggleBtn.title = "Ẩn/Hiện";
       toggleBtn.onclick = (e) => {
         e.stopPropagation();
         item.visible = !item.visible;
-        toggleBtn.innerHTML = item.visible ? '<i class="fa-regular fa-eye"></i>' : '<i class="fa-regular fa-eye-slash" style="color: #888"></i>';
+        toggleBtn.innerHTML = item.visible ? '<i class="ph ph-eye"></i>' : '<i class="ph ph-eye-slash" style="color: #888"></i>';
         if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
         else if (window.Vec2D) Vec2D.draw2DAllVectors();
       };
 
       const del = document.createElement("button");
       del.className = "btn vec-btn-delete";
-      del.innerHTML = '<i class="fa-solid fa-trash"></i>';
+      del.innerHTML = '<i class="ph ph-trash"></i>';
       del.title = "Xóa";
 
       // SỰ KIỆN XÓA (Đã có đủ hàm đồng bộ)
@@ -1270,7 +1270,7 @@
     searchWrap.className = "search-box-modern";
     searchWrap.style.marginBottom = "12px";
     searchWrap.innerHTML = `
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <i class="ph ph-magnifying-glass search-icon"></i>
         <input type="text" class="vec-search-inp" placeholder="Tìm ID hoặc tọa độ..." style="border: none; background: transparent; box-shadow: none;">
     `;
     const searchInp = searchWrap.querySelector("input");
@@ -1503,7 +1503,7 @@
       );
     } else {
       // Fallback if toast system isn't ready
-      (window.App && window.App.showToast ? window.App.showToast("Danh sách trống! Hãy tạo vector trước.", 'warning') : alert("Danh sách trống! Hãy tạo vector trước."));
+      window.App.showToast("Danh sách trống! Hãy tạo vector trước.", 'warning');
     }
 
     // 2. Switch to "Create" Tab
@@ -1986,7 +1986,7 @@
         
         const trigger = document.createElement('div');
         trigger.className = 'v-select-trigger';
-        trigger.innerHTML = `<span class="val"></span><i class="fa-solid fa-chevron-down"></i>`;
+        trigger.innerHTML = `<span class="val"></span><i class="ph ph-caret-down"></i>`;
         wrapper.appendChild(trigger);
         
         // Tạo danh sách (nhưng giấu đi chờ kích hoạt)

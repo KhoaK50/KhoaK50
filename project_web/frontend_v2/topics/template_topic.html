@@ -2,11 +2,25 @@
 <html lang="vi">
 
 <head>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#111113';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#fcfcfd';
+        }
+      } catch (e) {}
+    })();
+  </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cơ sở và Số chiều - Vectoria Knowledge</title>
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
 
@@ -234,14 +248,14 @@
 <body>
 
     <div class="theme-transition-icons">
-        <i class="fa-solid fa-sun" id="sunIcon"></i>
-        <i class="fa-solid fa-moon" id="moonIcon"></i>
+        <i class="ph ph-sun" id="sunIcon"></i>
+        <i class="ph ph-moon" id="moonIcon"></i>
     </div>
 
     <div id="topbar">
         <div class="topbar-left">
             <a href="knowledge_info.html" class="topbar-icon" title="Quay lại thư viện">
-                <i class="fa-solid fa-arrow-left"></i>
+                <i class="ph ph-arrow-left"></i>
             </a>
         </div>
 
@@ -250,12 +264,12 @@
         <div class="topbar-right">
             <div class="settings-container">
                 <button id="btnSettings" class="icon-btn" title="Cài đặt">
-                    <i class="fa-solid fa-gear"></i>
+                    <i class="ph ph-gear"></i>
                 </button>
 
                 <div class="settings-dropdown" id="settingsDropdown">
                     <div class="setting-item">
-                        <span><i class="fa-solid fa-moon"></i> Chế độ tối</span>
+                        <span><i class="ph ph-moon"></i> Chế độ tối</span>
                         <label class="switch">
                             <input type="checkbox" id="themeToggle">
                             <span class="slider round"></span>
@@ -265,7 +279,7 @@
                     <hr style="border: 0; border-top: 1px solid var(--border); margin: 8px 0; opacity: 0.5;">
 
                     <div class="setting-item">
-                        <span><i class="fa-solid fa-film"></i> Hiệu ứng (phép tính)</span>
+                        <span><i class="ph ph-film-strip"></i> Hiệu ứng (phép tính)</span>
                         <label class="switch">
                             <input type="checkbox" id="animToggle" checked>
                             <span class="slider round"></span>
@@ -274,8 +288,8 @@
                     <hr style="border: 0; border-top: 1px solid var(--border); margin: 0; opacity: 0.5;">
 
                     <a href="contact.html" class="setting-item" style="text-decoration: none; color: inherit;">
-                        <span><i class="fa-solid fa-envelope"></i> Liên hệ / Góp ý</span>
-                        <i class="fa-solid fa-chevron-right" style="font-size: 0.8em; color: var(--muted);"></i>
+                        <span><i class="ph ph-envelope"></i> Liên hệ / Góp ý</span>
+                        <i class="ph ph-caret-right" style="font-size: 0.8em; color: var(--muted);"></i>
                     </a>
                 </div>
             </div>
@@ -284,7 +298,7 @@
 
     <div class="container">
         <aside class="sidebar">
-            <h3><i class="fa-solid fa-list-ul"></i> Mục lục bài học</h3>
+            <h3><i class="ph ph-list-bullets"></i> Mục lục bài học</h3>
             <div class="menu-list">
                 <a href="#tong-quan" class="menu-link active">1. Tổng quan</a>
                 <a href="#video-bai-giang" class="menu-link">2. Video bài giảng</a>
@@ -302,7 +316,7 @@
             </div>
 
             <div class="chapter-card" id="video-bai-giang" style="padding: 0; overflow: hidden; border: none; background: transparent;">
-                <h2 class="section-title" style="margin-bottom: 20px;"><i class="fa-brands fa-youtube"></i> Video bài giảng</h2>
+                <h2 class="section-title" style="margin-bottom: 20px;"><i class="ph ph-youtube-logo"></i> Video bài giảng</h2>
 
                 <div class="cinema-container">
                     <div class="video-box">
@@ -316,22 +330,22 @@
                         </div>
                         <div class="chapter-list">
                             <div class="chapter-item playing" onclick="seekTo(0); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
+                                <i class="ph ph-play-circle chapter-icon"></i>
                                 <div class="chapter-info"><span class="chapter-title">Vector ở phổ thông</span></div>
                                 <div class="time-badge">00:00</div>
                             </div>
                             <div class="chapter-item" onclick="seekTo(60); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
+                                <i class="ph ph-play-circle chapter-icon"></i>
                                 <div class="chapter-info"><span class="chapter-title">Quy tắc nối đuôi</span></div>
                                 <div class="time-badge">01:00</div>
                             </div>
                             <div class="chapter-item" onclick="seekTo(230); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
+                                <i class="ph ph-play-circle chapter-icon"></i>
                                 <div class="chapter-info"><span class="chapter-title">Quy tắc hình bình hành</span></div>
                                 <div class="time-badge">03:50</div>
                             </div>
                             <div class="chapter-item" onclick="seekTo(307); setActive(this)">
-                                <i class="fa-solid fa-circle-play chapter-icon"></i>
+                                <i class="ph ph-play-circle chapter-icon"></i>
                                 <div class="chapter-info"><span class="chapter-title">Phép nhân vector với số thực</span></div>
                                 <div class="time-badge">05:07</div>
                             </div>
@@ -350,7 +364,7 @@
             </div>
         
             <div class="chapter-card" id="thao-luan">
-                <h2 class="section-title"><i class="fa-solid fa-comments"></i> Thảo luận & Hỏi đáp</h2>
+                <h2 class="section-title"><i class="ph ph-chats"></i> Thảo luận & Hỏi đáp</h2>
                 
                 <div style="margin-bottom: 20px;">
                     <textarea id="commentInput" rows="3" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); font-family: inherit; resize: vertical;" placeholder="Nhập câu hỏi hoặc bình luận của bạn..."></textarea>
@@ -511,7 +525,7 @@
         async function postComment() {
             const userStr = localStorage.getItem("user_info");
             if (!userStr) {
-                (window.App && window.App.showToast ? window.App.showToast("Vui lòng đăng nhập để bình luận", 'warning') : alert("Vui lòng đăng nhập để bình luận"));
+                window.App.showToast("Vui lòng đăng nhập để bình luận", 'warning');
                 return;
             }
             const user = JSON.parse(userStr);
@@ -536,5 +550,7 @@
             loadComments();
         });
 
+<script src="../js/utils/toast.js"></script>
+  <script src="js/utils/global-search.js"></script>
 </body>
 </html>

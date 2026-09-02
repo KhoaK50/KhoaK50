@@ -1,10 +1,33 @@
 ﻿<!doctype html>
 <html lang="vi">
   <head>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#111113';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#fcfcfd';
+        }
+      } catch (e) {}
+    })();
+  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-GRZR4Y6VFQ');
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Liên hệ - Vectoria</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <title data-i18n="nav.title_contact">Vectoria</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png" />
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
 
@@ -247,7 +270,8 @@
       .toast-text p { margin: 0; font-size: 13px; color: var(--text-muted); }
       .toast-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--success-base, #30a46c); width: 0; border-radius: 0 0 0 12px; }
     </style>
-  </head>
+    <link rel="stylesheet" href="css/global-search.css">
+</head>
   <body>
     <script>
       if (localStorage.getItem('theme') === 'dark') {
@@ -259,23 +283,23 @@
     <header class="vec-topbar" id="globalTopbar">
       <div class="vec-topbar-left">
         <button class="vec-sidebar-toggle" id="globalMobileToggleBtn" title="Menu sidebar">
-          <i class="fa-solid fa-compass"></i>
+          <i class="ph ph-compass"></i>
         </button><a href="index.html" class="vec-brand-group">
           <img src="assets/images/logo+name.png" alt="Vectoria" onerror="this.src='assets/images/logo.png'">
         </a>
         <nav class="vec-nav-links">
-          <a href="index.html" class="vec-nav-link" id="navHome"><i class="fa-solid fa-house"></i> <span data-i18n="nav.home">Trang chủ</span></a>
-          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="fa-solid fa-layer-group"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
-          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="fa-solid fa-calculator"></i> <span data-i18n="nav.calc">Tính toán</span></a>
+          <a href="index.html" class="vec-nav-link" id="navHome"><i class="ph ph-house"></i> <span data-i18n="nav.home">Trang chủ</span></a>
+          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="ph ph-stack"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
+          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="ph ph-calculator"></i> <span data-i18n="nav.calc">Tính toán</span></a>
           <div class="vec-dropdown-container">
-            <span class="vec-nav-link"><i class="fa-solid fa-compass"></i> Khám phá <i class="fa-solid fa-chevron-down" style="font-size: 0.7em;"></i></span>
+            <span class="vec-nav-link"><i class="ph ph-compass"></i> Khám phá <i class="ph ph-caret-down" style="font-size: 0.7em;"></i></span>
             <div class="vec-dropdown-menu">
-              <a href="knowledge_info.html" class="vec-dropdown-item" data-i18n="nav.knowledge"><i class="fa-solid fa-graduation-cap"></i> Thư viện kiến thức</a>
-              <a href="hdsd.html" class="vec-dropdown-item" data-i18n="nav.manual"><i class="fa-solid fa-circle-question"></i> Hướng dẫn sử dụng</a>
-              <a href="tltk.html" class="vec-dropdown-item" data-i18n="nav.docs"><i class="fa-solid fa-file-pdf"></i> Tài liệu tham khảo</a>
+              <a href="knowledge_info.html" class="vec-dropdown-item" data-i18n="nav.knowledge"><i class="ph ph-graduation-cap"></i> Thư viện kiến thức</a>
+              <a href="hdsd.html" class="vec-dropdown-item" data-i18n="nav.manual"><i class="ph ph-question"></i> Hướng dẫn sử dụng</a>
+              <a href="tltk.html" class="vec-dropdown-item" data-i18n="nav.docs"><i class="ph ph-file-pdf"></i> Tài liệu tham khảo</a>
               <div class="dropdown-divider" style="height: 1px; background: var(--border-strong, #cbd5e1); margin: 5px 0;"></div>
-              <a href="about_us.html" class="vec-dropdown-item" data-i18n="nav.about"><i class="fa-solid fa-users"></i> Về chúng tôi</a>
-              <a href="contact.html" class="vec-dropdown-item" data-i18n="nav.contact"><i class="fa-solid fa-envelope"></i> Liên hệ</a>
+              <a href="about_us.html" class="vec-dropdown-item" data-i18n="nav.about"><i class="ph ph-users"></i> Về chúng tôi</a>
+              <a href="contact.html" class="vec-dropdown-item" data-i18n="nav.contact"><i class="ph ph-envelope"></i> Liên hệ</a>
             </div>
           </div>
         </nav>
@@ -283,11 +307,11 @@
       
       <div class="vec-topbar-right">
         <button class="vec-icon-btn" id="themeToggleBtn" title="Chuyển giao diện">
-          <i class="fa-solid fa-moon icon-light-mode"></i><i class="fa-solid fa-sun icon-dark-mode"></i>
+          <i class="ph ph-moon icon-light-mode"></i><i class="ph ph-sun icon-dark-mode"></i>
         </button>
         <div class="vec-dropdown-container right-align">
           <button class="vec-icon-btn" title="Ngôn ngữ">
-            <i class="fa-solid fa-globe"></i>
+            <i class="ph ph-globe"></i>
           </button>
           <div class="vec-dropdown-menu" style="min-width: 150px;">
             <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('vi')">Tiếng Việt</a>
@@ -296,7 +320,7 @@
         </div>
                   <div class="vec-dropdown-container right-align" id="notificationDropdownContainer" style="display: none;">
             <button class="vec-icon-btn" title="Thông báo" id="notificationBellBtn" style="position: relative;">
-              <i class="fa-solid fa-bell"></i>
+              <i class="ph ph-bell"></i>
               <span id="unreadBadge" style="display: none; position: absolute; top: 0px; right: 0px; min-width: 16px; height: 16px; background-color: #ef4444; color: white; border-radius: 10px; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; font-family: sans-serif; box-shadow: 0 0 0 2px var(--bg-card, #fff);"></span>
             </button>
             <div class="vec-dropdown-menu" id="notificationMenu" style="min-width: 320px; max-height: 400px; overflow-y: auto; padding: 0;">
@@ -311,18 +335,18 @@
           </div>
         <div class="vec-dropdown-container right-align">
           <button class="vec-icon-btn" title="Cài đặt">
-            <i class="fa-solid fa-gear"></i>
+            <i class="ph ph-gear"></i>
           </button>
           <div class="vec-dropdown-menu" style="min-width: 180px;">
-            <a href="user-dashboard.html" class="vec-dropdown-item"><i class="fa-solid fa-user-gear"></i> Quản lý tài khoản</a>
-            <a href="#" class="vec-dropdown-item"><i class="fa-solid fa-cloud-arrow-up"></i> Đồng bộ dữ liệu</a>
+            <a href="user-dashboard.html" class="vec-dropdown-item"><i class="ph ph-user-gear"></i> Quản lý tài khoản</a>
+            <a href="#" class="vec-dropdown-item"><i class="ph ph-cloud-arrow-up"></i> Đồng bộ dữ liệu</a>
             <div class="dropdown-divider" style="height: 1px; background: var(--border-light, #e2e8f0); margin: 5px 0;"></div>
-            <a href="hdsd.html" class="vec-dropdown-item"><i class="fa-solid fa-circle-question"></i> Trợ giúp</a>
+            <a href="hdsd.html" class="vec-dropdown-item"><i class="ph ph-question"></i> Trợ giúp</a>
           </div>
         </div>
         <div class="vec-dropdown-container right-align">
           <button class="vec-icon-btn" id="btnTopAvatar" style="background: var(--bg-hover); color: var(--text-main); font-weight: 600;">
-            <i class="fa-solid fa-user"></i>
+            <i class="ph ph-user"></i>
           </button>
           <div class="top-dropdown vec-dropdown-menu" id="menuTopAvatar" style="width: 260px; min-width: 260px;">
           </div>
@@ -331,7 +355,7 @@
     </header>
 
     <div id="static-toast">
-      <i class="fa-solid fa-circle-check toast-icon"></i>
+      <i class="ph ph-check-circle toast-icon"></i>
       <div class="toast-text">
         <h4>Gửi tin nhắn thành công!</h4>
         <p>Cảm ơn bạn đã góp ý :3</p>
@@ -347,13 +371,13 @@
         
         <div class="contact-info-blocks">
           <div class="info-block">
-            <div class="info-icon"><i class="fa-solid fa-envelope"></i></div>
+            <div class="info-icon"><i class="ph ph-envelope"></i></div>
             <div class="info-content">
               <h4>Email Hỗ trợ</h4>
               <p>
                 <a href="mailto:support@vectoria.io.vn" style="color: var(--primary-base); text-decoration: none; font-weight: 500;">support@vectoria.io.vn</a>
-                <span onclick="navigator.clipboard.writeText('support@vectoria.io.vn'); this.innerHTML='<i class=\'fa-solid fa-check\'></i>'; this.style.color='var(--success-base, #30a46c)'; setTimeout(() => { this.innerHTML='<i class=\'fa-regular fa-copy\'></i>'; this.style.color='var(--text-muted)'; }, 2000);" style="cursor: pointer; color: var(--text-muted); margin-left: 8px; font-size: 0.9em; transition: color 0.3s;" title="Sao chép email">
-                  <i class="fa-regular fa-copy"></i>
+                <span onclick="navigator.clipboard.writeText('support@vectoria.io.vn'); this.innerHTML='<i class=\'ph ph-check\'></i>'; this.style.color='var(--success-base, #30a46c)'; setTimeout(() => { this.innerHTML='<i class=\'ph ph-copy\'></i>'; this.style.color='var(--text-muted)'; }, 2000);" style="cursor: pointer; color: var(--text-muted); margin-left: 8px; font-size: 0.9em; transition: color 0.3s;" title="Sao chép email">
+                  <i class="ph ph-copy"></i>
                 </span>
               </p>
             </div>
@@ -366,7 +390,7 @@
           <div class="faq-item" style="margin-bottom: 15px; border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden;">
             <div class="faq-question" style="padding: 15px 20px; background: var(--bg-card); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 0.95rem; user-select: none;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'; this.querySelector('i').style.transform = this.nextElementSibling.style.display === 'block' ? 'rotate(180deg)' : 'none';">
               Làm thế nào để báo cáo lỗi tính toán?
-              <i class="fa-solid fa-chevron-down" style="transition: transform 0.3s; color: var(--text-muted);"></i>
+              <i class="ph ph-caret-down" style="transition: transform 0.3s; color: var(--text-muted);"></i>
             </div>
             <div class="faq-answer" style="display: none; padding: 15px 20px; border-top: 1px solid var(--border-subtle); background: var(--bg-base); font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;">
               Vui lòng cung cấp chi tiết ma trận/vector đầu vào và kết quả bị sai lệch. Nếu được, hãy đính kèm ảnh chụp màn hình không gian 3D để chúng tôi dễ dàng tái tạo và khắc phục lỗi.
@@ -376,7 +400,7 @@
           <div class="faq-item" style="margin-bottom: 15px; border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden;">
             <div class="faq-question" style="padding: 15px 20px; background: var(--bg-card); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 0.95rem; user-select: none;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'; this.querySelector('i').style.transform = this.nextElementSibling.style.display === 'block' ? 'rotate(180deg)' : 'none';">
               Tôi có thể yêu cầu thêm công thức mới không?
-              <i class="fa-solid fa-chevron-down" style="transition: transform 0.3s; color: var(--text-muted);"></i>
+              <i class="ph ph-caret-down" style="transition: transform 0.3s; color: var(--text-muted);"></i>
             </div>
             <div class="faq-answer" style="display: none; padding: 15px 20px; border-top: 1px solid var(--border-subtle); background: var(--bg-base); font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;">
               Tất nhiên! Chúng tôi luôn muốn mở rộng thư viện toán học của Vectoria. Hãy mô tả chi tiết phép toán hoặc dạng đồ thị bạn mong muốn trong phần nội dung tin nhắn.
@@ -386,12 +410,31 @@
           <div class="faq-item" style="margin-bottom: 15px; border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden;">
             <div class="faq-question" style="padding: 15px 20px; background: var(--bg-card); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 0.95rem; user-select: none;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'; this.querySelector('i').style.transform = this.nextElementSibling.style.display === 'block' ? 'rotate(180deg)' : 'none';">
               Có hỗ trợ xuất đồ thị 3D không?
-              <i class="fa-solid fa-chevron-down" style="transition: transform 0.3s; color: var(--text-muted);"></i>
+              <i class="ph ph-caret-down" style="transition: transform 0.3s; color: var(--text-muted);"></i>
             </div>
             <div class="faq-answer" style="display: none; padding: 15px 20px; border-top: 1px solid var(--border-subtle); background: var(--bg-base); font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;">
               Hiện tại bạn có thể chụp ảnh màn hình vùng Canvas trực quan. Tính năng xuất trực tiếp ra PDF hoặc file ảnh độ phân giải cao đang được phát triển và sẽ sớm ra mắt.
             </div>
           </div>
+          <div class="faq-item" style="margin-bottom: 15px; border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden;">
+            <div class="faq-question" style="padding: 15px 20px; background: var(--bg-card); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 0.95rem; user-select: none;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'; this.querySelector('i').style.transform = this.nextElementSibling.style.display === 'block' ? 'rotate(180deg)' : 'none';">
+              Tại sao kết quả tính toán bị sai số nhỏ?
+              <i class="ph ph-caret-down" style="transition: transform 0.3s; color: var(--text-muted);"></i>
+            </div>
+            <div class="faq-answer" style="display: none; padding: 15px 20px; border-top: 1px solid var(--border-subtle); background: var(--bg-base); font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;">
+              Trong một số trường hợp với ma trận có số thập phân dài, thuật toán sử dụng Float64 nên có thể xuất hiện sai số cực kỳ nhỏ (ví dụ 0.000000001). Bạn có thể làm tròn kết quả.
+            </div>
+          </div>
+          <div class="faq-item" style="margin-bottom: 15px; border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden;">
+            <div class="faq-question" style="padding: 15px 20px; background: var(--bg-card); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 0.95rem; user-select: none;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'; this.querySelector('i').style.transform = this.nextElementSibling.style.display === 'block' ? 'rotate(180deg)' : 'none';">
+              Tôi có thể xem lại lịch sử các ma trận đã nhập không?
+              <i class="ph ph-caret-down" style="transition: transform 0.3s; color: var(--text-muted);"></i>
+            </div>
+            <div class="faq-answer" style="display: none; padding: 15px 20px; border-top: 1px solid var(--border-subtle); background: var(--bg-base); font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;">
+              Có, nếu bạn đã đăng nhập tài khoản. Mọi phép toán sẽ được lưu tự động và bạn có thể tra cứu tại mục 'Lịch sử Tính toán' ở thanh điều hướng bên trái.
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -401,24 +444,24 @@
           <form id="contactForm">
             <div class="form-group">
               <label for="user_name">Tên hiển thị</label>
-              <input type="text" id="user_name" placeholder="Ví dụ: Nguyễn Văn A" required />
+              <input type="text" id="user_name" placeholder="Nhập tên của bạn..." required />
             </div>
 
             <div class="form-group">
               <label for="user_email">Địa chỉ Email</label>
-              <input type="email" id="user_email" placeholder="abc@example.com" required />
+              <input type="email" id="user_email" placeholder="Nhập email liên hệ..." required />
             </div>
 
             <div class="form-group">
               <label for="message">Nội dung tin nhắn</label>
-              <textarea id="message" placeholder="Mô tả lỗi hoặc ý tưởng cải thiện web... Có thể là một lời nhắn đầy tình thương!" required></textarea>
+              <textarea id="message" placeholder="Mô tả lỗi hoặc ý tưởng cải thiện hệ thống..." required></textarea>
             </div>
 
             <div class="form-group">
               <input type="file" id="contactFile" class="file-input" accept="image/*, .pdf, .doc, .docx" hidden />
               <label for="contactFile" class="file-upload-label" style="margin:0; display:block;">
                 <div class="file-upload-design">
-                  <i class="fa-solid fa-paperclip"></i>
+                  <i class="ph ph-paperclip"></i>
                   <span id="fileNameDisplay">Đính kèm tệp minh họa (Tối đa 5MB)</span>
                 </div>
               </label>
@@ -427,6 +470,9 @@
             <button type="submit" class="btn-send" id="btnSubmit">
               Gửi tin nhắn
             </button>
+            <p style="font-size: 0.85em; color: var(--text-muted); text-align: center; margin-top: 12px; margin-bottom: 0;">
+              Vectoria sẽ phản hồi bạn qua email trong vòng 24 giờ.
+            </p>
           </form>
         </div>
       </div>
@@ -434,12 +480,10 @@
 
     <script>
       // API BASE URL
-      window.App = window.App || {};
-      if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
-        App.API_BASE = "http://127.0.0.1:5000";
-      } else {
-        // App.API_BASE defined in endpoints.js
-      }
+        window.App = window.App || {};
+        const _l = "http://127.0.0.1:5000";
+        const _p = "https://visualization-rr5v.onrender.com";
+        App.API_BASE = (location.hostname === "127.0.0.1" || location.hostname === "localhost") ? _l : _p;
 
       // Handle File Upload UI
       const fileInput = document.getElementById("contactFile");
@@ -451,17 +495,17 @@
           if (this.files && this.files.length > 0) {
             const file = this.files[0];
             if (file.size > 5 * 1024 * 1024) {
-              (window.App && window.App.showToast ? window.App.showToast("File quá lớn! Vui lòng chọn dưới 5MB.", 'warning') : alert("File quá lớn! Vui lòng chọn dưới 5MB."));
+              window.App.showToast("File quá lớn! Vui lòng chọn dưới 5MB.", 'warning');
               this.value = "";
               return;
             }
             fileNameDisplay.textContent = `Đã chọn: ${file.name}`;
             fileDesign.classList.add("has-file");
-            fileDesign.querySelector("i").className = "fa-solid fa-check";
+            fileDesign.querySelector("i").className = "ph ph-check";
           } else {
             fileNameDisplay.textContent = "Đính kèm tệp minh họa (Tối đa 5MB)";
             fileDesign.classList.remove("has-file");
-            fileDesign.querySelector("i").className = "fa-solid fa-paperclip";
+            fileDesign.querySelector("i").className = "ph ph-paperclip";
           }
         });
       }
@@ -475,7 +519,7 @@
         const bar = document.querySelector(".toast-bar");
 
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Đang gửi...';
         bar.style.transition = `width ${POPUP_TIME}ms linear`;
         popup.classList.add("show");
         
@@ -506,9 +550,9 @@
             })
             .catch((err) => {
               console.error("Lỗi:", err);
-              (window.App && window.App.showToast ? window.App.showToast("Lỗi gửi tin: " + err.message, 'warning') : alert("Lỗi gửi tin: " + err.message));
+              window.App.showToast("Lỗi gửi tin: " + err.message, 'warning');
               btn.disabled = false;
-              btn.innerHTML = 'Gửi yêu cầu <i class="fa-solid fa-paper-plane"></i>';
+              btn.innerHTML = 'Gửi yêu cầu <i class="ph ph-paper-plane-right"></i>';
               popup.classList.remove("show");
             });
         }, POPUP_TIME);
@@ -533,11 +577,14 @@
   
 
 
+<script src="js/utils/toast.js"></script>
+  <script src="js/utils/global-search.js"></script>
 </body>
 
 
 
 </html>
+
 
 
 

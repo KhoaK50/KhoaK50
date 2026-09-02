@@ -6,6 +6,8 @@ from datetime import datetime, timedelta, timezone
 from flask import Blueprint, request, jsonify
 import base64
 import psycopg2
+from vectoria_api.database import get_db_connection, release_db_connection
+
 
 contact_bp = Blueprint("contact", __name__)
 
@@ -14,7 +16,7 @@ from vectoria_api.config import DB_URL
 # 2. HÀM KHỞI TẠO BẢNG (Chạy 1 lần để tạo cấu trúc)
 def init_postgres_db():
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("""
             CREATE TABLE IF NOT EXISTS feedbacks (
@@ -32,22 +34,22 @@ def init_postgres_db():
         c.execute("ALTER TABLE feedbacks ADD COLUMN IF NOT EXISTS replied_at TIMESTAMP;")
         
         conn.commit()
-        conn.close()
-        print(">> [Database] Bảng Feedbacks đã sẵn sàng.")
+        release_db_connection(conn)
+        print(">> [Database] Feedbacks table ready.")
     except Exception as e:
         print(f">> [Database Error] {e}")
 
 # 3. HÀM LƯU TIN NHẮN VÀO DB
 def save_to_postgres(name, email, message):
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute(
             "INSERT INTO feedbacks (name, email, message) VALUES (%s, %s, %s)",
             (name, email, message)
         )
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
         print(">> [PostgreSQL] Đã lưu Data thành công!")
     except Exception as e:
         print(f">> [PostgreSQL Error] Lỗi lưu Data: {e}")
@@ -87,7 +89,7 @@ def send_auto_reply(user_email, user_name, user_message):
             "subject": "Vectoria đã nhận được yêu cầu của bạn",
             "html": html_content,
         }
-        response = requests.post("https://api.resend.com/emails", headers=headers, json=payload)
+        response = requests.post("https://api.resend.com/emails", headers=headers, json=payload, timeout=10)
         print(f">> [Mail API - User] Trạng thái: {response.status_code}")
 
     except Exception as e:

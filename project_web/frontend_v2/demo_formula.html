@@ -1,6 +1,28 @@
 ﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#111113';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#fcfcfd';
+        }
+      } catch (e) {}
+    })();
+  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-GRZR4Y6VFQ');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mô Hình Định Tuyến Học Tập Thích Ứng</title>
@@ -392,10 +414,13 @@
 
 
 
+<script src="js/utils/toast.js"></script>
+  <script src="js/utils/global-search.js"></script>
 </body>
 
 
 
 </html>
+
 
 

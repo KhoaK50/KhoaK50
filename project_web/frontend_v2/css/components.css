@@ -20,7 +20,7 @@ html {
   right: 0;
   z-index: 10000;
   box-sizing: border-box;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-academic);
   transition: background 0.3s, border-color 0.3s;
 }
 
@@ -886,5 +886,5 @@ body.dark-theme .icon-light-mode { display: none !important; }
 
 /* --- TYPOGRAPHY REFACTOR --- */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Lora', serif;
+  font-family: var(--font-academic);
 }

@@ -3,6 +3,8 @@ import jwt
 from flask import Blueprint, request, jsonify
 from functools import wraps
 import psycopg2
+from vectoria_api.database import get_db_connection, release_db_connection
+
 from psycopg2.extras import RealDictCursor
 from vectoria_api.config import DB_URL
 
@@ -36,7 +38,7 @@ def get_flagged_comments():
     status = request.args.get('status', 'PENDING')
     user_id = request.args.get('user_id')
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         query = """
@@ -69,7 +71,7 @@ def get_flagged_comments():
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 @admin_moderation_bp.route('/api/admin/moderation/comments/<flag_id>', methods=['PUT'])
 @admin_required
@@ -82,7 +84,7 @@ def resolve_flagged_comment(flag_id):
         return jsonify({"success": False, "message": "Invalid action"}), 400
         
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         # Get the comment_id first
@@ -107,7 +109,7 @@ def resolve_flagged_comment(flag_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 @admin_moderation_bp.route('/api/admin/moderation/comments/<flag_id>/warn', methods=['POST'])
 @admin_required
@@ -119,7 +121,7 @@ def warn_user(flag_id):
         return jsonify({"success": False, "message": "Warning message is required"}), 400
         
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         # Get user_id from flag
@@ -151,7 +153,7 @@ def warn_user(flag_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 @admin_moderation_bp.route('/api/admin/users/<int:user_id>/ban', methods=['POST'])
 @admin_required
@@ -160,7 +162,7 @@ def ban_user(user_id):
     new_status = data.get('status', 'BANNED')
     
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor()
         
         title = 'Tài khoản của bạn đã bị khóa'
@@ -186,4 +188,4 @@ def ban_user(user_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)

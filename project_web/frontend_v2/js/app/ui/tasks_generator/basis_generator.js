@@ -290,7 +290,7 @@
         stepChunks.push(`
         <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--border);">
             <div class="sol-bold" style="font-size: 0.95em; color: var(--text-main, #333); margin-top: 0; margin-bottom: 8px;">
-                <i class="fa-solid fa-arrow-right-long" style="color: #64b5f6;"></i> Phép biến đổi ${stepCounter++}: $${label ? label : "\\text{Rút gọn}"}$
+                <i class="ph ph-arrow-right" style="color: #64b5f6;"></i> Phép biến đổi ${stepCounter++}: $${label ? label : "\\text{Rút gọn}"}$
             </div>
             <div class="sol-math-block" style="overflow-x: auto; padding: 5px;">
                 \\[ ${matrixToLatex(prevM)} \\;\\to\\; ${matrixToLatex(currentM)} \\]

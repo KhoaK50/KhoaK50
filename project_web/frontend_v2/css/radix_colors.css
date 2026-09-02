@@ -31,8 +31,8 @@
   --text-main: var(--slate-12);     /* Chữ chính */
   --text-muted: var(--slate-11);    /* Chữ phụ, icon */
 
-  --border-subtle: var(--slate-6);  /* Viền mờ phân cách */
-  --border-strong: var(--slate-7);  /* Viền thẻ, viền input */
+  --border-subtle: var(--slate-7);  /* Viền mờ phân cách */
+  --border-strong: var(--slate-8);  /* Viền thẻ, viền input */
 
   --primary-base: var(--blue-9);    /* Màu chủ đạo, Nút bấm */
   --primary-hover: var(--blue-10);  /* Hover nút bấm */

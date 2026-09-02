@@ -15,7 +15,7 @@ export default function Feedbacks() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminAuth');
-      const res = await fetch(`http://127.0.0.1:5000/api/admin/feedbacks`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/admin/feedbacks`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -46,7 +46,7 @@ export default function Feedbacks() {
     try {
       setReplying(true);
       const token = localStorage.getItem('adminAuth');
-      const res = await fetch(`http://127.0.0.1:5000/api/admin/feedbacks/${selectedFeedback.id}/reply`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/admin/feedbacks/${selectedFeedback.id}/reply`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

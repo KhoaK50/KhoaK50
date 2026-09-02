@@ -13,6 +13,7 @@ export default function Courses() {
   const [newBloomLevel, setNewBloomLevel] = useState(1.0);
   const [newTimeSpent, setNewTimeSpent] = useState(15);
   const [isAiDetecting, setIsAiDetecting] = useState(false);
+  const [language, setLanguage] = useState('vi');
 
   // stores raw LaTeX string
   const [markdown, setMarkdown] = useState('');
@@ -43,7 +44,7 @@ export default function Courses() {
 
   const fetchLessons = () => {
     setIsLoading(true);
-    fetch('http://127.0.0.1:5000/api/admin/lessons', {
+    fetch((import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000') + '/api/admin/lessons', {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAuth')}` }
     })
     .then(res => res.json())
@@ -63,6 +64,7 @@ export default function Courses() {
     setMarkdown(lesson.content_html || '');
     setNewBloomLevel(lesson.difficulty_level || 1.0);
     setNewTimeSpent(lesson.estimated_time || 15);
+    setNewTitle(lesson.title || ''); // Update title for edit
     setViewMode('edit');
   };
 
@@ -74,10 +76,10 @@ export default function Courses() {
   const handleSaveEdit = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/admin/lesson/${currentLesson.topic_id}/${currentLesson.order_index}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/admin/lesson/${currentLesson.topic_id}/${currentLesson.order_index}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAuth')}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content_html: markdown, difficulty_level: newBloomLevel, estimated_time: newTimeSpent })
+        body: JSON.stringify({ content_html: markdown, difficulty_level: newBloomLevel, estimated_time: newTimeSpent, lang: language, title: newTitle })
       });
       if (res.ok) alert("Lưu bài học thành công!");
       else alert("Lỗi lưu bài học");
@@ -91,11 +93,11 @@ export default function Courses() {
     if (!newTopicId || !newTitle || !newSectionId) return alert("Vui lòng nhập đủ thông tin!");
     setIsSaving(true);
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/admin/lesson`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/admin/lesson`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAuth')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          topic_id: newTopicId, order_index: newOrder, section_id: newSectionId, title: newTitle, content_html: markdown, difficulty_level: newBloomLevel, estimated_time: newTimeSpent, difficulty_level: newBloomLevel, estimated_time: newTimeSpent 
+          topic_id: newTopicId, order_index: newOrder, section_id: newSectionId, title: newTitle, content_html: markdown, difficulty_level: newBloomLevel, estimated_time: newTimeSpent, lang: language 
         })
       });
       if (res.ok) {
@@ -203,6 +205,14 @@ export default function Courses() {
           <h1 className='text-2xl font-bold text-slate-100'>{titleElement}</h1>
         </div>
         <div className='flex items-center gap-4'>
+          <select 
+            value={language} 
+            onChange={(e) => setLanguage(e.target.value)}
+            className="bg-slate-800 text-slate-200 px-3 py-2 rounded-lg border border-slate-700 outline-none"
+          >
+            <option value="vi">Tiếng Việt</option>
+            <option value="en">English</option>
+          </select>
           <input 
              type="file" 
              accept=".tex,.txt,.md,.zip" 

@@ -2,6 +2,20 @@
 <!doctype html>
 <html lang="vi">
   <head>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#111113';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#fcfcfd';
+        }
+      } catch (e) {}
+    })();
+  </script>
     <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"></script>
   <script>
@@ -16,10 +30,7 @@
     <title>Vector ở phổ thông - Vectoria Knowledge</title>
 
     <link rel="stylesheet" href="../../css/footer.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
@@ -1266,8 +1277,8 @@
 
   <body>
     <div class="theme-transition-icons">
-      <i class="fa-solid fa-sun" id="sunIcon"></i>
-      <i class="fa-solid fa-moon" id="moonIcon"></i>
+      <i class="ph ph-sun" id="sunIcon"></i>
+      <i class="ph ph-moon" id="moonIcon"></i>
     </div>
 
     <div id="topbar">
@@ -1277,17 +1288,17 @@
           class="topbar-icon"
           title="Quay lại thư viện"
         >
-          <i class="fa-solid fa-arrow-left"></i>
+          <i class="ph ph-arrow-left"></i>
         </a>
         <a href="../../index.html" class="topbar-icon" title="Về trang chủ">
-          <i class="fa-solid fa-house"></i>
+          <i class="ph ph-house"></i>
         </a>
         <a
           href="../../tltk.html"
           class="topbar-icon"
           title="Tài liệu tham khảo"
         >
-          <i class="fa-solid fa-file-lines"></i>
+          <i class="ph ph-file-text"></i>
         </a>
       </div>
 
@@ -1296,12 +1307,12 @@
       <div class="topbar-right" style="margin-right: 25px">
         <div class="settings-container">
           <button id="btnSettings" class="icon-btn" title="Cài đặt">
-            <i class="fa-solid fa-gear"></i>
+            <i class="ph ph-gear"></i>
           </button>
 
           <div class="settings-dropdown" id="settingsDropdown">
             <div class="setting-item">
-              <span><i class="fa-solid fa-moon"></i> Chế độ tối</span>
+              <span><i class="ph ph-moon"></i> Chế độ tối</span>
               <label class="switch">
                 <input type="checkbox" id="themeToggle" />
                 <span class="slider round"></span>
@@ -1327,11 +1338,11 @@
               "
             >
               <span
-                ><i class="fa-solid fa-book-open-reader"></i> Hướng dẫn sử
+                ><i class="ph ph-book-open-text"></i> Hướng dẫn sử
                 dụng</span
               >
               <i
-                class="fa-solid fa-chevron-right"
+                class="ph ph-caret-right"
                 style="font-size: 0.8em; color: var(--muted)"
               ></i>
             </a>
@@ -1340,9 +1351,9 @@
               class="setting-item"
               style="text-decoration: none; color: inherit"
             >
-              <span><i class="fa-solid fa-envelope"></i> Liên hệ / Góp ý</span>
+              <span><i class="ph ph-envelope"></i> Liên hệ / Góp ý</span>
               <i
-                class="fa-solid fa-chevron-right"
+                class="ph ph-caret-right"
                 style="font-size: 0.8em; color: var(--muted)"
               ></i>
             </a>
@@ -1353,7 +1364,7 @@
 
     <div class="container">
       <aside class="sidebar custom-nav">
-        <h3 class="nav-title"><i class="fa-solid fa-list-ul"></i> Mục lục</h3>
+        <h3 class="nav-title"><i class="ph ph-list-bullets"></i> Mục lục</h3>
         <ul class="nav-list">
           <li class="nav-item has-dropdown open">
             <div class="nav-link toggle-btn">
@@ -1367,7 +1378,7 @@
                 "
                 >Lý thuyết</a
               >
-              <i class="fa-solid fa-chevron-right arrow-icon"></i>
+              <i class="ph ph-caret-right arrow-icon"></i>
             </div>
             <ul class="sub-menu">
               <li>
@@ -1402,7 +1413,7 @@
                     style="text-decoration: none; color: inherit; flex-grow: 1"
                     >4. Tổng của hai vector</a
                   >
-                  <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                  <i class="ph ph-caret-right arrow-icon"></i>
                 </div>
                 <ul class="sub-menu">
                   <li>
@@ -1426,7 +1437,7 @@
                     style="text-decoration: none; color: inherit; flex-grow: 1"
                     >5. Hiệu của hai vector</a
                   >
-                  <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                  <i class="ph ph-caret-right arrow-icon"></i>
                 </div>
                 <ul class="sub-menu">
                   <li>
@@ -1761,7 +1772,7 @@
             </style>
 
             <h2 class="section-title" style="margin-bottom: 20px">
-              <i class="fa-solid fa-book-open"></i> Lý thuyết
+              <i class="ph ph-book-open"></i> Lý thuyết
             </h2>
             <div class="pdf-h1" id="on-tap-vector">Ôn tập về Vector</div>
 
@@ -2174,7 +2185,7 @@
           "
         >
           <h2 class="section-title" style="margin-bottom: 20px">
-            <i class="fa-brands fa-youtube"></i> Video trực quan
+            <i class="ph ph-youtube-logo"></i> Video trực quan
           </h2>
 
           <div class="cinema-container">
@@ -2195,7 +2206,7 @@
                     setActive(this);
                   "
                 >
-                  <i class="fa-solid fa-circle-play chapter-icon"></i>
+                  <i class="ph ph-play-circle chapter-icon"></i>
                   <div class="chapter-info">
                     <span class="chapter-title">Vector ở phổ thông</span>
                   </div>
@@ -2208,7 +2219,7 @@
                     setActive(this);
                   "
                 >
-                  <i class="fa-solid fa-circle-play chapter-icon"></i>
+                  <i class="ph ph-play-circle chapter-icon"></i>
                   <div class="chapter-info">
                     <span class="chapter-title">Quy tắc nối đuôi</span>
                   </div>
@@ -2221,7 +2232,7 @@
                     setActive(this);
                   "
                 >
-                  <i class="fa-solid fa-circle-play chapter-icon"></i>
+                  <i class="ph ph-play-circle chapter-icon"></i>
                   <div class="chapter-info">
                     <span class="chapter-title">Quy tắc hình bình hành</span>
                   </div>
@@ -2234,7 +2245,7 @@
                     setActive(this);
                   "
                 >
-                  <i class="fa-solid fa-circle-play chapter-icon"></i>
+                  <i class="ph ph-play-circle chapter-icon"></i>
                   <div class="chapter-info">
                     <span class="chapter-title"
                       >Phép nhân vector với số thực</span
@@ -2276,7 +2287,7 @@
           <h4>Thông tin liên hệ</h4>
           <ul>
             <li>
-              <i class="fa-solid fa-envelope"></i>
+              <i class="ph ph-envelope"></i>
               <a href="mailto:support@vectoria.io.vn"
                 >support@vectoria.io.vn</a
               >
@@ -2538,6 +2549,8 @@
     </script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="js/app/live-collab.js"></script>
-  </body>
+  <script src="../../js/utils/toast.js"></script>
+  <script src="js/utils/global-search.js"></script>
+</body>
 </html>
 

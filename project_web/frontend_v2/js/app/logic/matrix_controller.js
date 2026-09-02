@@ -131,7 +131,7 @@
       // Đổi lại UI nút Thêm
       const btn = document.getElementById("btnAddMatrix");
       if (btn) {
-        btn.innerHTML = '<i class="fa-solid fa-plus" style="margin-right:6px;"></i> Thêm Ma Trận';
+        btn.innerHTML = '<i class="ph ph-plus" style="margin-right:6px;"></i> Thêm Ma Trận';
         btn.classList.remove("success");
         btn.classList.add("primary");
       }
@@ -196,7 +196,7 @@
     // Cập nhật nút UI
     const btn = document.getElementById("btnAddMatrix");
     if (btn) {
-      btn.innerHTML = '<i class="fa-solid fa-check" style="margin-right:6px;"></i> Lưu Ma Trận';
+      btn.innerHTML = '<i class="ph ph-check" style="margin-right:6px;"></i> Lưu Ma Trận';
       btn.classList.remove("primary");
       btn.classList.add("success");
     }
@@ -246,7 +246,7 @@
       const empty = document.createElement("div");
       empty.className = "mat-empty";
       empty.innerHTML = `
-        <i class="fa-regular fa-square-plus" style="font-size:28px; opacity:0.3; margin-bottom:8px;"></i>
+        <i class="ph ph-plus-square" style="font-size:28px; opacity:0.3; margin-bottom:8px;"></i>
         <span>Chưa có ma trận nào</span>
       `;
       el.appendChild(empty);
@@ -315,7 +315,7 @@
       // Edit button
       const editBtn = document.createElement("button");
       editBtn.className = "btn mat-btn-del mat-btn-edit";
-      editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+      editBtn.innerHTML = '<i class="ph ph-pen"></i>';
       editBtn.title = "Sửa ma trận";
       editBtn.style.color = "var(--primary-base)";
       editBtn.onmouseenter = () => editBtn.style.background = "rgba(33, 150, 243, 0.1)";
@@ -328,7 +328,7 @@
       // Delete button
       const delBtn = document.createElement("button");
       delBtn.className = "btn mat-btn-del";
-      delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+      delBtn.innerHTML = '<i class="ph ph-trash"></i>';
       delBtn.title = "Xóa ma trận";
       delBtn.onclick = (e) => {
         e.stopPropagation();
@@ -337,7 +337,7 @@
           App.editingMatrixId = null;
           const btn = document.getElementById("btnAddMatrix");
           if (btn) {
-            btn.innerHTML = '<i class="fa-solid fa-plus" style="margin-right:6px;"></i> Thêm Ma Trận';
+            btn.innerHTML = '<i class="ph ph-plus" style="margin-right:6px;"></i> Thêm Ma Trận';
             btn.classList.remove("success");
             btn.classList.add("primary");
           }

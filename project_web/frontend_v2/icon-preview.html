@@ -1,9 +1,31 @@
 ﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#111113';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#fcfcfd';
+        }
+      } catch (e) {}
+    })();
+  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-GRZR4Y6VFQ');
+    </script>
   <meta charset="UTF-8">
   <title>Xem thử Icon</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
     body { font-family: sans-serif; padding: 20px; background: #f8fafc; }
     .icon-box { 
@@ -34,7 +56,7 @@
   <h2>Hãy chọn Icon bạn thích nhất cho Dashboard:</h2>
 
   <div class="icon-box">
-    <div class="icon-preview"><i class="fa-solid fa-table-cells-large"></i></div>
+    <div class="icon-preview"><i class="ph ph-squares-four"></i></div>
     <div class="icon-info">
       <h3>1. fa-table-cells-large (Menu Bento)</h3>
       <p>Hình 4 ô vuông nhỏ. Cảm giác giống Menu ứng dụng của Google/Microsoft.</p>
@@ -42,7 +64,7 @@
   </div>
 
   <div class="icon-box">
-    <div class="icon-preview"><i class="fa-solid fa-bars-staggered"></i></div>
+    <div class="icon-preview"><i class="ph ph-list-dashes"></i></div>
     <div class="icon-info">
       <h3>2. fa-bars-staggered (Menu lệch)</h3>
       <p>3 vạch kẻ nằm ngang nhưng thò thụt không đều nhau. Nhìn rất hiện đại, động đậy.</p>
@@ -50,7 +72,7 @@
   </div>
 
   <div class="icon-box">
-    <div class="icon-preview"><i class="fa-solid fa-grip-lines-vertical"></i></div>
+    <div class="icon-preview"><i class="ph ph-dots-six-vertical"></i></div>
     <div class="icon-info">
       <h3>3. fa-grip-lines-vertical (Gờ ma sát)</h3>
       <p>2 vạch dọc sát nhau. Giống cái gờ trên điều khiển từ xa để lấy ngón tay miết vào kéo ra.</p>
@@ -58,7 +80,7 @@
   </div>
 
   <div class="icon-box">
-    <div class="icon-preview"><i class="fa-solid fa-compass"></i></div>
+    <div class="icon-preview"><i class="ph ph-compass"></i></div>
     <div class="icon-info">
       <h3>4. fa-compass (La bàn)</h3>
       <p>Hình chiếc la bàn. Mang ý nghĩa "Khám phá" hoặc "Bản đồ điều hướng".</p>
@@ -66,7 +88,7 @@
   </div>
 
   <div class="icon-box">
-    <div class="icon-preview"><i class="fa-solid fa-sliders"></i></div>
+    <div class="icon-preview"><i class="ph ph-sliders-horizontal"></i></div>
     <div class="icon-info">
       <h3>5. fa-sliders (Cần gạt Control Panel)</h3>
       <p>Các cần gạt âm thanh. Biểu tượng cho Bảng điều khiển (Control Panel/Dashboard).</p>
@@ -74,13 +96,16 @@
   </div>
   
   <div class="icon-box">
-    <div class="icon-preview"><i class="fa-solid fa-list-timeline"></i> <i class="fa-solid fa-stream"></i></div>
+    <div class="icon-preview"><i class="ph ph-list-dashes"></i> <i class="ph ph-list"></i></div>
     <div class="icon-info">
       <h3>6. fa-stream (Dòng chảy)</h3>
       <p>Các vạch ngang tách rời. Ít đụng hàng hơn 3 gạch.</p>
     </div>
   </div>
+<script src="js/utils/toast.js"></script>
+  <script src="js/utils/global-search.js"></script>
 </body>
 </html>
+
 
 

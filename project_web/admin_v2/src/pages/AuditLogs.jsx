@@ -11,7 +11,7 @@ export default function AuditLogs() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminAuth');
-      const res = await fetch(`http://127.0.0.1:5000/api/admin/logs`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/admin/logs`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     fab.className = "admin-fab";
     fab.style.display = "none";
     fab.title = "Quản lý phòng (Có thể kéo thả)";
-    fab.innerHTML = `<i class="fa-solid fa-users-gear"></i><span class="admin-fab-badge" id="adminFabBadge">0</span>`;
+    fab.innerHTML = `<i class="ph ph-users-three"></i><span class="admin-fab-badge" id="adminFabBadge">0</span>`;
     document.body.appendChild(fab);
 
     // 3. Bơm Khung Popup (BỐ CỤC CHUẨN - KHÔNG BỊ TRÔI)
@@ -63,30 +63,30 @@ document.addEventListener("DOMContentLoaded", () => {
     popup.style.display = "none";
     popup.innerHTML = `
         <div class="admin-popup-header">
-            <label style="margin:0; color:#2196f3; font-weight:bold; font-size: 14px;"><i class="fa-solid fa-crown"></i> ĐIỀU HÀNH</label>
-            <button id="closeAdminPopup" style="background:transparent; border:none; color:inherit; font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            <label style="margin:0; color:#2196f3; font-weight:bold; font-size: 14px;"><i class="ph ph-crown"></i> ĐIỀU HÀNH</label>
+            <button id="closeAdminPopup" style="background:transparent; border:none; color:inherit; font-size:1.2rem; cursor:pointer;"><i class="ph ph-x"></i></button>
         </div>
         <div class="admin-popup-body">
             <div class="admin-popup-body">
             <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <span id="roomCodeDisplay" style="font-size: 0.85em; background: var(--bg, #eee); color: var(--text-main, #333); padding: 5px 10px; border-radius: 4px; border: 1px solid var(--border, #ddd); font-weight: 600;">Phòng: ...</span>
-                    <button id="btnLeaveRoom" style="background: #f44336; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s;" title="Rời khỏi phòng này"><i class="fa-solid fa-right-from-bracket"></i> Rời</button>
+                    <button id="btnLeaveRoom" style="background: #f44336; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s;" title="Rời khỏi phòng này"><i class="ph ph-sign-out"></i> Rời</button>
                 </div>
                 <span class="sol-badge" style="background: #2196f3; color: white; font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: bold; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Bạn (${CURRENT_USER_NAME})</span>
             </div>
             
             <div id="videoFocusArea" style="width: 100%; aspect-ratio: 16/9; max-height: 180px; background: #111; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 2px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
                 <video id="localVideo" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
-                <i id="videoPlaceholder" class="fa-solid fa-user-astronaut fa-3x" style="color: #444;"></i>
+                <i id="videoPlaceholder" class="ph ph-alien fa-3x" style="color: #444;"></i>
                 <div style="position: absolute; bottom: 8px; left: 10px; font-size: 11px; color: #fff; background: rgba(0,0,0,0.7); padding: 3px 8px; border-radius: 4px;">
-                    <i class="fa-solid fa-volume-high" style="color: #4caf50;"></i> Local
+                    <i class="ph ph-speaker-high" style="color: #4caf50;"></i> Local
                 </div>
             </div>
 
             <div class="media-btn-panel">
-                <button id="toggleMic" class="media-btn" title="Tắt/Mở Mic"><i class="fa-solid fa-microphone"></i></button>
-                <button id="toggleCam" class="media-btn" title="Tắt/Mở Cam"><i class="fa-solid fa-video"></i></button>
+                <button id="toggleMic" class="media-btn" title="Tắt/Mở Mic"><i class="ph ph-microphone"></i></button>
+                <button id="toggleCam" class="media-btn" title="Tắt/Mở Cam"><i class="ph ph-video-camera"></i></button>
             </div>
 
             <div style="margin-top: 20px;">
@@ -223,14 +223,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // LOGIC NÚT RỜI PHÒNG
         document.getElementById('btnLeaveRoom').addEventListener('click', () => {
-            if (confirm("Bạn có chắc chắn muốn rời khỏi phòng này?")) {
+            if(window.App && window.App.showConfirm){window.App.showConfirm("Bạn có chắc chắn muốn rời khỏi phòng này?", ()=>{ 
                 // Xóa mã phòng trong bộ nhớ
                 sessionStorage.removeItem("LIVE_ROOM");
                 // Cắt đứt kết nối với Server ngay lập tức
                 if (window.socket) window.socket.disconnect();
                 // Đá văng ra trang tính toán trống (Offline)
                 window.location.href = "calculation.html";
-            }
+             });}else{ 
+                // Xóa mã phòng trong bộ nhớ
+                sessionStorage.removeItem("LIVE_ROOM");
+                // Cắt đứt kết nối với Server ngay lập tức
+                if (window.socket) window.socket.disconnect();
+                // Đá văng ra trang tính toán trống (Offline)
+                window.location.href = "calculation.html";
+             }
         });
   }
 
@@ -373,10 +380,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isOwner && !isMe) {
           rightCol = `<div style="display: flex; gap: 4px;">
                         <button onclick="adminAction('${sid}', 'block', ${!member.blocked})" style="padding: 3px 6px; font-size: 10px; cursor:pointer; background: ${member.blocked ? "#4caf50" : "#f44336"}; color: white; border:none; border-radius:3px;">
-                            ${member.blocked ? '<i class="fa-solid fa-unlock"></i>' : '<i class="fa-solid fa-lock"></i>'}
+                            ${member.blocked ? '<i class="ph ph-lock-open"></i>' : '<i class="ph ph-lock"></i>'}
                         </button>
                         <button onclick="adminAction('${sid}', 'transfer', null)" title="Nhượng quyền" style="padding: 3px 6px; font-size: 10px; cursor:pointer; background: #2196f3; color: white; border:none; border-radius:3px;">
-                            <i class="fa-solid fa-share"></i>
+                            <i class="ph ph-share-network"></i>
                         </button>
                     </div>`;
         }
@@ -387,17 +394,23 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   window.adminAction = function (targetSid, action, value) {
-    if (
-      action === "transfer" &&
-      !confirm("CẢNH BÁO: Bạn có chắc muốn nhượng quyền Chủ phòng?")
-    )
-      return;
-    window.socket.emit("admin_control", {
-      room: CURRENT_ROOM,
-      target_sid: targetSid,
-      action: action,
-      value: value,
-    });
+    const doEmit = () => {
+      window.socket.emit("admin_control", {
+        room: CURRENT_ROOM,
+        target_sid: targetSid,
+        action: action,
+        value: value,
+      });
+    };
+    if (action === "transfer") {
+      if (window.App && window.App.showConfirm) {
+        window.App.showConfirm("CẢNH BÁO: Bạn có chắc muốn nhượng quyền Chủ phòng?", doEmit);
+      } else {
+        doEmit();
+      }
+    } else {
+      doEmit();
+    }
   };
 
   // ==========================================
@@ -538,7 +551,7 @@ document.addEventListener('click', (e) => {
         micEnabled = !micEnabled;
         localStream.getAudioTracks()[0].enabled = micEnabled;
         e.target.closest('#toggleMic').classList.toggle('off', !micEnabled);
-        e.target.closest('#toggleMic').innerHTML = micEnabled ? '<i class="fa-solid fa-microphone"></i>' : '<i class="fa-solid fa-microphone-slash"></i>';
+        e.target.closest('#toggleMic').innerHTML = micEnabled ? '<i class="ph ph-microphone"></i>' : '<i class="ph ph-microphone-slash"></i>';
     }
     
     if (e.target.closest('#toggleCam')) {

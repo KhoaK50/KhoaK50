@@ -75,7 +75,7 @@
             if (!willSnapClose && window.isPanelCollapsed) {
                 window.isPanelCollapsed = false;
                 const btnToggle = document.getElementById("btnTogglePanel");
-                if (btnToggle) btnToggle.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+                if (btnToggle) btnToggle.innerHTML = '<i class="ph ph-caret-down"></i>';
             }
         }
     };
@@ -108,7 +108,7 @@
                 window.isPanelCollapsed = true;
                 appContainer.style.setProperty('--panel-height', '0px');
                 const btnToggle = document.getElementById("btnTogglePanel");
-                if (btnToggle) btnToggle.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+                if (btnToggle) btnToggle.innerHTML = '<i class="ph ph-caret-up"></i>';
                 
                 // We don't reset --panel-height here because the CSS relies on it being 0px to stay closed.
                 // It will be reset to 45vh next time they click the chevron button in calculation.html

@@ -1,13 +1,33 @@
 <!doctype html>
 <html lang="vi">
   <head>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#111113';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#fcfcfd';
+        }
+      } catch (e) {}
+    })();
+  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-GRZR4Y6VFQ');
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Cá Nhân - Vectoria</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <title data-i18n="nav.title_dashboard">Vectoria</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png" />
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <!-- Scripts -->
     <script src="js/mock_library.js"></script>
     <script src="js/app/auth.js"></script>
@@ -34,7 +54,8 @@
       });
     </script>
       <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
-  </head>
+    <link rel="stylesheet" href="css/global-search.css">
+</head>
   <body>
     <script>
       if (localStorage.getItem('theme') === 'dark') {
@@ -185,7 +206,7 @@
         justify-content: center;
         font-size: 28px;
         font-weight: bold;
-        border: 2px solid var(--primary-base);
+        border: none;
         margin: 0 auto 12px;
         background-size: cover !important;
         background-position: center !important;
@@ -693,25 +714,25 @@
 <header class="vec-topbar" id="globalTopbar">
   <div class="vec-topbar-left">
         <button class="vec-sidebar-toggle" id="globalMobileToggleBtn" title="Menu sidebar">
-          <i class="fa-solid fa-compass"></i>
+          <i class="ph ph-compass"></i>
         </button><a href="index.html" class="vec-brand-group">
       <img src="assets/images/logo+name.png" alt="Vectoria" onerror="this.src='assets/images/logo.png'">
     </a>
     
     <nav class="vec-nav-links">
-          <a href="index.html" class="vec-nav-link" id="navHome"><i class="fa-solid fa-house"></i> <span data-i18n="nav.home">Trang chủ</span></a>
-          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="fa-solid fa-layer-group"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
-          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="fa-solid fa-calculator"></i> <span data-i18n="nav.calc">Tính toán</span></a>
+          <a href="index.html" class="vec-nav-link" id="navHome"><i class="ph ph-house"></i> <span data-i18n="nav.home">Trang chủ</span></a>
+          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="ph ph-stack"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
+          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="ph ph-calculator"></i> <span data-i18n="nav.calc">Tính toán</span></a>
           
           <div class="vec-dropdown-container">
-            <span class="vec-nav-link"><i class="fa-solid fa-compass"></i> Khám phá <i class="fa-solid fa-chevron-down" style="font-size: 0.7em;"></i></span>
+            <span class="vec-nav-link"><i class="ph ph-compass"></i> Khám phá <i class="ph ph-caret-down" style="font-size: 0.7em;"></i></span>
             <div class="vec-dropdown-menu">
-              <a href="knowledge_info.html" class="vec-dropdown-item" data-i18n="nav.knowledge"><i class="fa-solid fa-graduation-cap"></i> Thư viện kiến thức</a>
-              <a href="hdsd.html" class="vec-dropdown-item" data-i18n="nav.manual"><i class="fa-solid fa-circle-question"></i> Hướng dẫn sử dụng</a>
-              <a href="tltk.html" class="vec-dropdown-item" data-i18n="nav.docs"><i class="fa-solid fa-file-pdf"></i> Tài liệu tham khảo</a>
+              <a href="knowledge_info.html" class="vec-dropdown-item" data-i18n="nav.knowledge"><i class="ph ph-graduation-cap"></i> Thư viện kiến thức</a>
+              <a href="hdsd.html" class="vec-dropdown-item" data-i18n="nav.manual"><i class="ph ph-question"></i> Hướng dẫn sử dụng</a>
+              <a href="tltk.html" class="vec-dropdown-item" data-i18n="nav.docs"><i class="ph ph-file-pdf"></i> Tài liệu tham khảo</a>
               <div class="dropdown-divider" style="height: 1px; background: var(--border-strong, #cbd5e1); margin: 5px 0;"></div>
-              <a href="about_us.html" class="vec-dropdown-item" data-i18n="nav.about"><i class="fa-solid fa-users"></i> Về chúng tôi</a>
-              <a href="contact.html" class="vec-dropdown-item" data-i18n="nav.contact"><i class="fa-solid fa-envelope"></i> Liên hệ</a>
+              <a href="about_us.html" class="vec-dropdown-item" data-i18n="nav.about"><i class="ph ph-users"></i> Về chúng tôi</a>
+              <a href="contact.html" class="vec-dropdown-item" data-i18n="nav.contact"><i class="ph ph-envelope"></i> Liên hệ</a>
             </div>
           </div>
         </nav>
@@ -719,12 +740,12 @@
   
   <div class="vec-topbar-right">
     <button class="vec-icon-btn" id="themeToggleBtn" title="Chuyển giao diện">
-          <i class="fa-solid fa-moon icon-light-mode"></i><i class="fa-solid fa-sun icon-dark-mode"></i>
+          <i class="ph ph-moon icon-light-mode"></i><i class="ph ph-sun icon-dark-mode"></i>
         </button>
 
         <div class="vec-dropdown-container right-align">
           <button class="vec-icon-btn" title="Ngôn ngữ">
-            <i class="fa-solid fa-globe"></i>
+            <i class="ph ph-globe"></i>
           </button>
           <div class="vec-dropdown-menu" style="min-width: 150px;">
             <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('vi')">Tiếng Việt</a>
@@ -734,7 +755,7 @@
         
                   <div class="vec-dropdown-container right-align" id="notificationDropdownContainer" style="display: none;">
             <button class="vec-icon-btn" title="Thông báo" id="notificationBellBtn" style="position: relative;">
-              <i class="fa-solid fa-bell"></i>
+              <i class="ph ph-bell"></i>
               <span id="unreadBadge" style="display: none; position: absolute; top: 0px; right: 0px; min-width: 16px; height: 16px; background-color: #ef4444; color: white; border-radius: 10px; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; font-family: sans-serif; box-shadow: 0 0 0 2px var(--bg-card, #fff);"></span>
             </button>
             <div class="vec-dropdown-menu" id="notificationMenu" style="min-width: 320px; max-height: 400px; overflow-y: auto; padding: 0;">
@@ -750,7 +771,7 @@
         
         <div class="vec-dropdown-container right-align">
           <div class="top-avatar-btn" id="btnTopAvatar" style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary-base); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; background-size: cover; background-position: center;">
-            <i class="fa-solid fa-user"></i>
+            <i class="ph ph-user"></i>
           </div>
           <div class="top-dropdown vec-dropdown-menu" id="menuTopAvatar" style="width: 260px; min-width: 260px;">
           </div>
@@ -804,49 +825,27 @@
           <div class="sidebar-group">
             <div class="sidebar-label">Không gian làm việc</div>
             <div class="nav-item" onclick="switchTab('overview', 'Tổng quan')">
-              <i class="fa-solid fa-house"></i> Tổng quan
+              <i class="ph ph-house"></i> Tổng quan
             </div>
             <div class="nav-item active" onclick="switchTab('history', 'Lịch sử Tính toán')">
-              <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử Tính toán
+              <i class="ph ph-clock-counter-clockwise"></i> Lịch sử Tính toán
             </div>
           </div>
 
           <div class="sidebar-group">
             <div class="sidebar-label">Học tập & Đánh giá</div>
             <div class="nav-item" onclick="switchTab('learning-path', 'Lộ trình Học tập')">
-              <i class="fa-solid fa-route"></i> Lộ trình Học tập
-              <span style="margin-left:auto; font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(33,150,243,0.15); color:var(--primary-base); font-weight:700;">MỚI</span>
+              <i class="ph ph-map-trifold"></i> Lộ trình Học tập
             </div>
             <div class="nav-item" onclick="switchTab('saved', 'Bài học đã lưu')">
-              <i class="fa-regular fa-bookmark"></i> Bài học đã lưu
-              <span style="margin-left:auto; font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(33,150,243,0.15); color:var(--primary-base); font-weight:700;">MỚI</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('progress', 'Tiến độ & Năng lực')" style="opacity: 0.5; cursor: default;">
-              <i class="fa-solid fa-chart-pie"></i> Tiến độ & Năng lực
-              <span style="margin-left:auto; font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,180,36,0.15); color:#d97706; font-weight:700;">SẮP RA MẮT</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('practice', 'Ngân hàng Luyện tập')" style="opacity: 0.5; cursor: default;">
-              <i class="fa-solid fa-layer-group"></i> Ngân hàng Luyện tập
-              <span style="margin-left:auto; font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,180,36,0.15); color:#d97706; font-weight:700;">SẮP RA MẮT</span>
-            </div>
-          </div>
-
-          <div class="sidebar-group">
-            <div class="sidebar-label">Cộng đồng</div>
-            <div class="nav-item" onclick="switchTab('collab', 'Phòng h� c Live')" style="opacity: 0.5; cursor: default;">
-              <i class="fa-solid fa-satellite-dish"></i> Phòng h� c Live
-              <span style="margin-left:auto; font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,180,36,0.15); color:#d97706; font-weight:700;">SẮP RA MẮT</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('leaderboard', 'Bảng xếp hạng')" style="opacity: 0.5; cursor: default;">
-              <i class="fa-solid fa-ranking-star"></i> Bảng xếp hạng
-              <span style="margin-left:auto; font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,180,36,0.15); color:#d97706; font-weight:700;">SẮP RA MẮT</span>
+              <i class="ph ph-bookmark"></i> Bài học đã lưu
             </div>
           </div>
 
           <div class="sidebar-group">
             <div class="sidebar-label">Hệ thống</div>
             <div class="nav-item" onclick="switchTab('settings', 'Cài đặt Tài khoản')">
-              <i class="fa-solid fa-user-gear"></i> Cài đặt Tài khoản
+              <i class="ph ph-user-gear"></i> Cài đặt Tài khoản
             </div>
           </div>
 
@@ -855,7 +854,7 @@
 
       <main class="dash-main">
         <button class="mobile-dash-toggle-btn" onclick="document.querySelector('.dash-sidebar').classList.toggle('open')" style="display: none;" title="Mở Danh mục Dashboard">
-          <i class="fa-solid fa-bars"></i>
+          <i class="ph ph-list"></i>
         </button>
         <div id="tab-history" class="tab-content active">
           <div style="margin-bottom: 25px">
@@ -868,27 +867,7 @@
           <div class="dash-card">
             <div class="card-title">Dữ liệu gần đây</div>
 
-            <div id="historyPromo" class="promo-banner" style="display: none">
-              <i
-                class="fa-solid fa-cloud-arrow-up"
-                style="
-                  color: var(--primary-base);
-                  font-size: 20px;
-                  margin-bottom: 10px;
-                "
-              ></i>
-              <p style="margin: 0 0 10px">
-                Bạn đang sử dụng phiên bản Khách. Đăng nhập để tự động lưu mọi
-                bài toán lên Cloud!
-              </p>
-              <button
-                class="btn btn-primary"
-                style="padding: 6px 15px; font-size: 13px"
-                onclick="window.location.href = 'login.html'"
-              >
-                Đăng nhập ngay
-              </button>
-            </div>
+            
 
             <table class="history-table">
               <thead>
@@ -914,12 +893,12 @@
               </p>
             </div>
             <div style="position:relative;">
-              <i class="fa-solid fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); opacity:0.7;"></i>
+              <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); opacity:0.7;"></i>
               <input type="text" id="saved-filter-input" placeholder="Tìm kiếm bài học, ghi chú..." style="padding: 10px 12px 10px 36px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--bg-card); color: var(--text-main); font-size: 14px; min-width: 280px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary-base)'" onblur="this.style.borderColor='var(--border-strong)'" onkeyup="filterBookmarks()">
             </div>
           </div>
           <div id="saved-empty" style="display:none; text-align:center; padding:60px 20px;">
-            <i class="fa-regular fa-bookmark" style="font-size:48px; color:var(--text-muted); margin-bottom:16px;"></i>
+            <i class="ph ph-bookmark" style="font-size:48px; color:var(--text-muted); margin-bottom:16px;"></i>
             <p style="color:var(--text-muted); font-size:15px;">Chưa có bài học nào được lưu.<br>Nhấn nút <b>Lưu bài</b> trên bài học để bookmark.</p>
           </div>
           <div id="saved-list" style="display:flex; flex-direction:column; gap:12px;"></div>
@@ -935,7 +914,7 @@
             </div>
             <div>
               <button class="btn btn-primary" onclick="optimizeLearningPath()" id="btnOptimizePath">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Đánh giá & Tối ưu lộ trình
+                <i class="ph ph-magic-wand"></i> Đánh giá & Tối ưu lộ trình
               </button>
             </div>
           </div>
@@ -945,7 +924,7 @@
               <!-- Current Path -->
               <div class="dash-card" style="border-top: 4px solid var(--text-muted);">
                 <div class="card-title">
-                  <span><i class="fa-solid fa-list-ol"></i> Lộ trình hiện tại</span>
+                  <span><i class="ph ph-list-numbers"></i> Lộ trình hiện tại</span>
                 </div>
                 <div id="current-path-list" style="display: flex; flex-direction: column; gap: 10px;">
                 </div>
@@ -954,7 +933,7 @@
               <!-- Proposed Path -->
               <div class="dash-card" style="border-top: 4px solid var(--primary-base); background: rgba(33, 150, 243, 0.02);">
                 <div class="card-title">
-                  <span style="color: var(--primary-base);"><i class="fa-solid fa-rocket"></i> Lộ trình đề xuất</span>
+                  <span style="color: var(--primary-base);"><i class="ph ph-rocket"></i> Lộ trình đề xuất</span>
                   <span class="badge-pro" style="font-size: 11px;">AI TỐI ƯU</span>
                 </div>
                 <div id="proposed-path-list" style="display: flex; flex-direction: column; gap: 10px;">
@@ -967,16 +946,16 @@
                  <b>Lưu ý:</b> Lộ trình đề xuất được tính toán tự động qua Graph Routing dựa trên Năng lực và Lịch sử của bạn.
                </p>
                <button class="btn btn-secondary" onclick="rollbackLearningPath()" id="btnRollbackPath">
-                 <i class="fa-solid fa-rotate-left"></i> Hoàn tác (Rollback)
+                 <i class="ph ph-rotate-left"></i> Hoàn tác (Rollback)
                </button>
                <button class="btn btn-primary" onclick="acceptLearningPath()" id="btnAcceptPath">
-                 <i class="fa-solid fa-check-double"></i> Chọn lộ trình mới
+                 <i class="ph ph-checks"></i> Chọn lộ trình mới
                </button>
             </div>
           </div>
           
           <div id="routing-empty" class="dash-card" style="text-align: center; padding: 40px 20px;">
-              <i class="fa-solid fa-route" style="font-size: 40px; color: var(--text-muted); margin-bottom: 15px;"></i>
+              <i class="ph ph-map-trifold" style="font-size: 40px; color: var(--text-muted); margin-bottom: 15px;"></i>
               <h3>Chưa có dữ liệu Lộ trình mới</h3>
               <p style="color: var(--text-muted);">Bấm nút "Tối ưu lộ trình" để hệ thống tính toán đường đi tốt nhất cho bạn.</p>
           </div>
@@ -995,12 +974,12 @@
             <div style="background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: 12px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); transition: transform 0.2s;">
               <div style="display: flex; align-items: flex-start; gap: 16px;">
                 <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(33, 150, 243, 0.1); color: var(--primary-base); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
-                  <i class="fa-solid fa-chart-line"></i>
+                  <i class="ph ph-chart-line-up"></i>
                 </div>
                 <div>
                   <div style="color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Năng lực cốt lõi</div>
                   <div style="font-size: 32px; font-weight: 700; color: var(--text-main); line-height: 1;">0.75 
-                    <span style="font-size: 13px; color: var(--success-base); font-weight: 600; margin-left: 6px; vertical-align: middle;"><i class="fa-solid fa-arrow-trend-up"></i> Tốt</span>
+                    <span style="font-size: 13px; color: var(--success-base); font-weight: 600; margin-left: 6px; vertical-align: middle;"><i class="ph ph-trend-up"></i> Tốt</span>
                   </div>
                 </div>
               </div>
@@ -1009,7 +988,7 @@
             <div style="background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: 12px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); transition: transform 0.2s;">
               <div style="display: flex; align-items: flex-start; gap: 16px;">
                 <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(255, 152, 0, 0.1); color: var(--warning-base); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
-                  <i class="fa-solid fa-fire-flame-curved"></i>
+                  <i class="ph ph-fire"></i>
                 </div>
                 <div>
                   <div style="color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Độ khó thích nghi</div>
@@ -1023,7 +1002,7 @@
             <div style="background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: 12px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); transition: transform 0.2s;">
               <div style="display: flex; align-items: flex-start; gap: 16px;">
                 <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(76, 175, 80, 0.1); color: var(--success-base); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
-                  <i class="fa-regular fa-bookmark"></i>
+                  <i class="ph ph-bookmark"></i>
                 </div>
                 <div>
                   <div style="color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Câu hỏi đã lưu</div>
@@ -1044,7 +1023,7 @@
               <div style="border-bottom: 1px solid var(--border-strong); padding: 20px 0; display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; gap: 16px; align-items: center;">
                   <div style="width: 44px; height: 44px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-strong); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 18px;">
-                    <i class="fa-solid fa-file-signature"></i>
+                    <i class="ph ph-signature"></i>
                   </div>
                   <div>
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
@@ -1052,9 +1031,9 @@
                       <span style="background: rgba(76, 175, 80, 0.1); color: var(--success-base); padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">ACTIVE</span>
                     </div>
                     <div style="font-size: 13px; color: var(--text-muted); display: flex; gap: 16px; align-items: center;">
-                      <span><i class="fa-solid fa-layer-group" style="margin-right: 4px;"></i>15 Câu hỏi</span>
-                      <span><i class="fa-solid fa-gauge-high" style="margin-right: 4px;"></i>Medium</span>
-                      <span><i class="fa-solid fa-bullseye" style="margin-right: 4px;"></i>Phân loại: 0.4</span>
+                      <span><i class="ph ph-stack" style="margin-right: 4px;"></i>15 Câu hỏi</span>
+                      <span><i class="ph ph-gauge" style="margin-right: 4px;"></i>Medium</span>
+                      <span><i class="ph ph-target" style="margin-right: 4px;"></i>Phân loại: 0.4</span>
                     </div>
                   </div>
                 </div>
@@ -1066,7 +1045,7 @@
               <div style="padding: 20px 0; display: flex; justify-content: space-between; align-items: center; opacity: 0.6;">
                 <div style="display: flex; gap: 16px; align-items: center;">
                   <div style="width: 44px; height: 44px; background: transparent; border: 1px dashed var(--border-strong); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 18px;">
-                    <i class="fa-solid fa-lock"></i>
+                    <i class="ph ph-lock"></i>
                   </div>
                   <div>
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
@@ -1074,9 +1053,9 @@
                       <span style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">INACTIVE</span>
                     </div>
                     <div style="font-size: 13px; color: var(--text-muted); display: flex; gap: 16px; align-items: center;">
-                      <span><i class="fa-solid fa-layer-group" style="margin-right: 4px;"></i>10 Câu hỏi</span>
-                      <span><i class="fa-solid fa-gauge-high" style="margin-right: 4px;"></i>Hard</span>
-                      <span><i class="fa-solid fa-bullseye" style="margin-right: 4px;"></i>Phân loại: 0.6</span>
+                      <span><i class="ph ph-stack" style="margin-right: 4px;"></i>10 Câu hỏi</span>
+                      <span><i class="ph ph-gauge" style="margin-right: 4px;"></i>Hard</span>
+                      <span><i class="ph ph-target" style="margin-right: 4px;"></i>Phân loại: 0.6</span>
                     </div>
                   </div>
                 </div>
@@ -1118,7 +1097,7 @@
                 margin: 0 auto 20px;
               "
             >
-              <i class="fa-solid fa-satellite-dish"></i>
+              <i class="ph ph-broadcast"></i>
             </div>
             <h2 style="margin: 0 0 10px">Kết nối ngay với bạn bè</h2>
             <p style="color: var(--text-muted); margin-bottom: 30px">
@@ -1128,11 +1107,11 @@
 
             <div style="display: flex; gap: 15px; justify-content: center">
               <button class="btn btn-primary" onclick="handleCreateRoom()">
-                <i class="fa-solid fa-plus"></i> Tạo Phòng Mới
+                <i class="ph ph-plus"></i> Tạo Phòng Mới
               </button>
 
               <button class="btn btn-secondary" onclick="joinRoom()">
-                <i class="fa-solid fa-door-open"></i> Nhập Mã Phòng
+                <i class="ph ph-door-open"></i> Nhập Mã Phòng
               </button>
             </div>
           </div>
@@ -1140,7 +1119,7 @@
       
         <div id="tab-overview" class="tab-content">
           <div class="dash-card" style="text-align: center; padding: 60px 20px;">
-              <i class="fa-solid fa-person-digging" style="font-size: 50px; color: var(--primary-base); margin-bottom: 20px;"></i>
+              <i class="ph ph-person" style="font-size: 50px; color: var(--primary-base); margin-bottom: 20px;"></i>
               <h2>Tổng quan</h2>
               <p style="color: var(--text-muted); font-size: 16px;">Tính năng này đang trong quá trình phát triển và sẽ sớm ra mắt.</p>
           </div>
@@ -1149,7 +1128,7 @@
       
         <div id="tab-practice" class="tab-content">
           <div class="dash-card" style="text-align: center; padding: 60px 20px;">
-              <i class="fa-solid fa-person-digging" style="font-size: 50px; color: var(--primary-base); margin-bottom: 20px;"></i>
+              <i class="ph ph-person" style="font-size: 50px; color: var(--primary-base); margin-bottom: 20px;"></i>
               <h2>Ngân hàng Luyện tập</h2>
               <p style="color: var(--text-muted); font-size: 16px;">Tính năng này đang trong quá trình phát triển và sẽ sớm ra mắt.</p>
           </div>
@@ -1158,7 +1137,7 @@
       
         <div id="tab-leaderboard" class="tab-content">
           <div class="dash-card" style="text-align: center; padding: 60px 20px;">
-              <i class="fa-solid fa-person-digging" style="font-size: 50px; color: var(--primary-base); margin-bottom: 20px;"></i>
+              <i class="ph ph-person" style="font-size: 50px; color: var(--primary-base); margin-bottom: 20px;"></i>
               <h2>Bảng xếp hạng</h2>
               <p style="color: var(--text-muted); font-size: 16px;">Tính năng này đang trong quá trình phát triển và sẽ sớm ra mắt.</p>
           </div>
@@ -1167,7 +1146,7 @@
       
         <div id="tab-settings" class="tab-content">
           <div class="dash-card">
-              <h2 style="margin-bottom: 24px; border-bottom: 1px solid var(--border-light); padding-bottom: 12px; font-size: 1.5rem; color: var(--text-dark);"><i class="fa-solid fa-language" style="color: var(--primary-base);"></i> Cài đặt Dịch thuật (BETA)</h2>
+              <h2 style="margin-bottom: 24px; border-bottom: 1px solid var(--border-light); padding-bottom: 12px; font-size: 1.5rem; color: var(--text-dark);"><i class="ph ph-translate" style="color: var(--primary-base);"></i> Cài đặt Dịch thuật (BETA)</h2>
               
               <div style="margin-bottom: 24px;">
                 <label style="display:block; font-weight: 600; margin-bottom: 8px; color: var(--text-dark); font-size: 1.05rem;">
@@ -1186,9 +1165,9 @@
                 </select>
               </div>
 
-              <button onclick="saveTranslationSettings()" class="btn" style="background: var(--primary-base); color: white; padding: 12px 28px; border-radius: 8px; border: none; font-weight: 600; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary-base)'"><i class="fa-solid fa-floppy-disk"></i> Lưu cài đặt</button>
+              <button onclick="saveTranslationSettings()" class="btn" style="background: var(--primary-base); color: white; padding: 12px 28px; border-radius: 8px; border: none; font-weight: 600; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary-base)'"><i class="ph ph-floppy-disk"></i> Lưu cài đặt</button>
 
-              <div id="saveSettingsSuccess" style="display: none; color: var(--success, #10b981); font-size: 0.95rem; margin-top: 16px; font-weight: 600; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-circle-check"></i> Đã lưu cấu hình dịch thuật thành công!</div>
+              <div id="saveSettingsSuccess" style="display: none; color: var(--success, #10b981); font-size: 0.95rem; margin-top: 16px; font-weight: 600; display: flex; align-items: center; gap: 6px;"><i class="ph ph-check-circle"></i> Đã lưu cấu hình dịch thuật thành công!</div>
           </div>
         </div>
         
@@ -1223,7 +1202,7 @@
         show: function (options) {
           const overlay = document.getElementById("customModal");
           document.getElementById("modalTitle").innerHTML =
-            options.title || '<i class="fa-solid fa-bell"></i> Thông báo';
+            options.title || '<i class="ph ph-bell"></i> Thông báo';
           document.getElementById("modalMessage").innerHTML =
             options.message || "";
 
@@ -1377,16 +1356,18 @@
 
         if (isLoggedIn) {
           const userName = localStorage.getItem("user_name") || "Người dùng";
-          const initial = userName.charAt(0).toUpperCase();
+          let sidebarAvatarHTML = "";
+          if (window.TopbarAvatar && typeof window.TopbarAvatar._renderAvatarHTML === "function") {
+              sidebarAvatarHTML = window.TopbarAvatar._renderAvatarHTML(userName, savedAvatar, 70);
+          } else {
+              sidebarAvatarHTML = `<div class="user-avatar" style="${savedAvatar ? `background-image: url(${savedAvatar}); background-size: cover; background-position: center; font-size:0; border:none;` : 'background: var(--bg-hover, #f1f5f9) !important; color: var(--slate-11, #475569) !important; display: flex; align-items: center; justify-content: center;'}">${savedAvatar ? '' : '<i class="ph ph-user"></i>'}</div>`;
+          }
 
-          // 2. Render Dropdown Info (Đã thêm style background ép ảnh)
-          
-
-          // 3. Cập nhật luôn Sidebar Profile (Ép style backgroundImage đồng bộ)
           profileArea.innerHTML = `
-            <div class="user-avatar" style="${savedAvatar ? `background-image: url(${savedAvatar}); background-size: cover; background-position: center; font-size:0; border:none;` : 'background: var(--bg-hover, #f1f5f9) !important; color: var(--slate-11, #475569) !important; display: flex; align-items: center; justify-content: center;'}">${savedAvatar ? '' : '<i class="fa-solid fa-user"></i>'}</div>
+            <div style="margin: 0 auto 12px; display: flex; justify-content: center;">
+              ${sidebarAvatarHTML}
+            </div>
             <h3 style="margin: 0; font-size: 18px">${userName}</h3>
-            <span style="color: var(--success-base); font-size: 12px; margin-top: 5px;"><i class="fa-solid fa-cloud-arrow-up"></i> Đã đồng bộ Cloud</span>
             `;
           if (historyPromo) historyPromo.style.display = "none";
           fetchHistory(userName);
@@ -1394,7 +1375,7 @@
         
         } else {
           // Giao diện cho Khách (Chưa đăng nhập)
-          topAvatarBtn.innerHTML = '<i class="fa-solid fa-user"></i>';
+          topAvatarBtn.innerHTML = '<i class="ph ph-user"></i>';
           topAvatarBtn.style.background = "var(--bg-card)";
           topAvatarBtn.style.color = "var(--text-muted)";
           topAvatarBtn.style.borderColor = "var(--border-strong)";
@@ -1402,20 +1383,19 @@
           
 
           profileArea.innerHTML = `
-            <div class="user-avatar" style="background: var(--bg-card); color: var(--text-muted); border-color: var(--border-strong);"><i class="fa-solid fa-user"></i></div>
-            <h3 style="margin: 0; font-size: 18px; color: var(--text-muted);">Khách vô danh</h3>
-            <span style="color: var(--warning-base); font-size: 12px; margin-top: 5px;"><i class="fa-solid fa-triangle-exclamation"></i> Chưa lưu dữ liệu</span>
+            <div class="user-avatar" style="background: var(--bg-card); color: var(--text-muted); border-color: var(--border-strong);"><i class="ph ph-user"></i></div>
+            <h3 style="margin: 0; font-size: 18px; color: var(--text-muted);">Chưa đăng nhập</h3>
           `;
           if (historyPromo) historyPromo.style.display = "block";
           document.getElementById("history-tbody").innerHTML = `<tr>
                           <td colspan="4">
                             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center;">
                               <div style="width: 64px; height: 64px; background: var(--bg-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: var(--text-muted); font-size: 24px;">
-                                <i class="fa-solid fa-folder-open"></i>
+                                <i class="ph ph-folder-open"></i>
                               </div>
                               <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: var(--text-main); font-family: 'Lora', serif;">Chưa có dữ liệu học tập</h3>
                               <p style="margin: 0 0 20px 0; font-size: 0.9rem; color: var(--text-muted); max-width: 300px; line-height: 1.5;">Bạn chưa lưu bài tập nào. Hãy bắt đầu luyện tập để hệ thống theo dõi tiến độ của bạn nhé!</p>
-                              <a href="calculation.html" class="vec-btn" style="text-decoration: none;">Đến không gian tính toán</a>
+                              <a href="calculation.html" class="btn btn-primary" style="text-decoration: none; padding: 8px 16px; border-radius: 8px;">Đến không gian tính toán</a>
                             </div>
                           </td>
                         </tr>`;
@@ -1448,7 +1428,7 @@
         window.AuthGuard.requireAuth(() => {
           // Xài Modal thay vì prompt()
           window.Modal.show({
-            title: '<i class="fa-solid fa-door-open"></i> Tham gia phòng',
+            title: '<i class="ph ph-door-open"></i> Tham gia phòng',
             message:
               "Nhập Mã phòng và Mật khẩu (nếu có) để kết nối với bạn bè.",
             type: "join_room",
@@ -1467,9 +1447,9 @@
       function startQuiz(quizId) {
         if (!window.AuthGuard) return;
         window.AuthGuard.requireAuth(() => {
-          // Xài Modal thay vì alert()
+          // Xài Modal thay vì window.App.showToast(, "warning")
           window.Modal.show({
-            title: '<i class="fa-solid fa-hourglass-start"></i> Chuẩn bị thi',
+            title: '<i class="ph ph-hourglass-low"></i> Chuẩn bị thi',
             message: `Đang chuẩn bị đề thi "${quizId}" cho tài khoản <b>${localStorage.getItem("user_name")}</b>.<br>Tính năng này sắp ra mắt!`,
             hideCancel: true,
             confirmText: "Đóng",
@@ -1481,36 +1461,24 @@
         console.log("Đang kéo lịch sử cho:", userName);
         const tbody = document.getElementById("history-tbody");
         
-        // Dữ liệu mô phỏng cấu trúc trả về từ Database
-        const mockData = [
-          { time: "Hôm nay, 14:30", type: "Chéo hóa Ma trận", desc: "Ma trận A (3x3)", status: "active" },
-          { time: "Hôm qua, 09:15", type: "Trực giao Gram-Schmidt", desc: "Hệ 4 vector R4", status: "active" },
-          { time: "12/07/2026", type: "Tìm cơ sở và số chiều", desc: "Không gian con U", status: "error" }
-        ];
+        // Hiện tại chưa có backend API cho lịch sử tính toán, trả về rỗng theo rule taste-skill (không fake data)
+        const mockData = [];
 
-        let html = "";
-        mockData.forEach(item => {
-          // Render Badge trạng thái chuẩn SaaS
-          const badge = item.status === "active" 
-            ? `<span style="background: rgba(76, 175, 80, 0.1); color: var(--success-base); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; border: 1px solid rgba(76, 175, 80, 0.2);">Thành công</span>`
-            : `<span style="background: rgba(244, 67, 54, 0.1); color: var(--danger-base); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; border: 1px solid rgba(244, 67, 54, 0.2);">Lỗi tính toán</span>`;
-          
-          html += `
-            <tr>
-              <td style="color: var(--text-muted); font-size: 14px;">${item.time}</td>
-              <td style="font-weight: 600; color: var(--text-main);">${item.type}</td>
-              <td style="color: var(--text-muted); font-size: 14px;">${item.desc}</td>
-              <td>${badge}</td>
-              <td>
-                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="window.Modal.show({title: '<i class=\\'fa-solid fa-folder-open\\'></i> Mở lại Workspace', message: 'Tải lại toàn bộ dữ liệu của bài toán: <b>${item.type}</b>', confirmText: 'Khôi phục'})">
-                  Mở lại
-                </button>
-              </td>
-            </tr>
-          `;
-        });
-        
-        tbody.innerHTML = html;
+        if (mockData.length === 0) {
+          tbody.innerHTML = `<tr>
+            <td colspan="5">
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center;">
+                <div style="width: 64px; height: 64px; background: var(--bg-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: var(--text-muted); font-size: 24px;">
+                  <i class="ph ph-folder-open"></i>
+                </div>
+                <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: var(--text-main); font-family: 'Lora', serif;">Chưa có dữ liệu tính toán</h3>
+                <p style="margin: 0 0 20px 0; font-size: 0.9rem; color: var(--text-muted); max-width: 300px; line-height: 1.5;">Bạn chưa thực hiện hoặc lưu bài toán nào trên hệ thống.</p>
+                <a href="calculation.html" class="vec-btn" style="text-decoration: none; padding: 8px 16px; background: var(--primary-base); color: white; border-radius: 8px;">Đến không gian tính toán</a>
+              </div>
+            </td>
+          </tr>`;
+          return;
+        }
       }
 
       // FETCH BOOKMARKS
@@ -1538,7 +1506,7 @@
           var savedAt = safeDate ? new Date(safeDate).toLocaleString('vi-VN') : '';
           var complexity = bm.complexity ? parseFloat(bm.complexity).toFixed(1) : '—';
           var time = bm.time ? bm.time + ' phút' : '—';
-          var pinIcon = bm.is_pinned ? '<i class="fa-solid fa-thumbtack" style="color:var(--warning-base); margin-right:6px;"></i>' : '';
+          var pinIcon = bm.is_pinned ? '<i class="ph ph-push-pin" style="color:var(--warning-base); margin-right:6px;"></i>' : '';
           
           var breadcrumb = '';
           var topicName = bm.topic_id;
@@ -1577,17 +1545,17 @@
             '<div style="flex-grow:1; min-width:0; padding-right:24px;">' +
               '<div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">' +
                 '<span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--primary-base);">' + breadcrumb + '</span>' +
-                (bm.is_pinned ? '<span style="background:var(--warning-bg, #fffbeb); color:var(--warning-text, #d97706); padding:2px 8px; border-radius:12px; font-size:10px; font-weight:600;"><i class="fa-solid fa-star" style="margin-right:4px;"></i>Quan trọng</span>' : '') +
+                (bm.is_pinned ? '<span style="background:var(--warning-bg, #fffbeb); color:var(--warning-text, #d97706); padding:2px 8px; border-radius:12px; font-size:10px; font-weight:600;"><i class="ph ph-star" style="margin-right:4px;"></i>Quan trọng</span>' : '') +
               '</div>' +
               '<h3 style="margin:0 0 10px 0; font-weight:600; color:var(--text-main); font-size:17px; line-height:1.4;">' + title + '</h3>' +
               '<div style="display:flex; flex-wrap:wrap; gap:10px; font-size:13px; color:var(--text-muted);">' +
-                '<span style="display:flex; align-items:center; gap:6px; background:var(--s2); padding:4px 12px; border-radius:6px; font-weight:500;"><i class="fa-regular fa-calendar-check" style="opacity:0.7;"></i> Đã lưu lúc ' + savedAt + '</span>' +
+                '<span style="display:flex; align-items:center; gap:6px; background:var(--s2); padding:4px 12px; border-radius:6px; font-weight:500;"><i class="ph ph-calendar-check" style="opacity:0.7;"></i> Đã lưu lúc ' + savedAt + '</span>' +
               '</div>' +
               (bm.note ? '<div style="margin-top:14px; padding:12px 16px; background:var(--bg-hover); border-radius:6px; border:1px solid var(--border-strong); font-size:13px; color:var(--text-main); line-height:1.5;">' + bm.note + '</div>' : '') +
             '</div>' +
             '<div style="flex-shrink:0;">' +
               '<button onclick="removeBookmark(\'' + bm.lesson_id + '\', this)" style="background:transparent; border:1px solid transparent; color:var(--text-muted); cursor:pointer; padding:10px; border-radius:8px; transition:all 0.2s; font-size:16px; display:flex; align-items:center; justify-content:center; width:40px; height:40px;" onmouseenter="this.style.background=\'rgba(239,68,68,0.1)\'; this.style.color=\'#ef4444\'; this.style.borderColor=\'rgba(239,68,68,0.2)\'" onmouseleave="this.style.background=\'transparent\'; this.style.color=\'var(--text-muted)\'; this.style.borderColor=\'transparent\'" title="Bỏ lưu">' +
-                '<i class="fa-solid fa-bookmark"></i>' +
+                '<i class="ph ph-bookmark"></i>' +
               '</button>' +
             '</div>' +
           '</div>';
@@ -1609,11 +1577,11 @@
       }
 
       function fetchBookmarks() {
-        var token = localStorage.getItem('user_token');
+        var token = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
         if (!token) return;
         var savedList = document.getElementById('saved-list');
         if (!savedList) return;
-        savedList.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</div>';
+        savedList.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);"><i class="ph ph-spinner ph-spin"></i> Đang tải...</div>';
         
         var API = (typeof App !== 'undefined' && App.API_BASE) || 'https://visualization-rr5v.onrender.com';
         fetch(API + '/api/bookmarks', {
@@ -1636,7 +1604,7 @@
       }
 
       window.removeBookmark = function(lessonId, btnEl) {
-        var token = localStorage.getItem('user_token');
+        var token = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
         if (!token) return;
         var API = (typeof App !== 'undefined' && App.API_BASE) || 'https://visualization-rr5v.onrender.com';
         var card = btnEl.closest('.dash-card');
@@ -1661,11 +1629,14 @@
 
 
 
+<script src="js/utils/toast.js"></script>
+  <script src="js/utils/global-search.js"></script>
 </body>
 
 
 
 </html>
+
 
 
 

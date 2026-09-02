@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Code2, FileCode, FileText, Braces, Palette, Globe, Database as DbIcon } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const API = 'http://127.0.0.1:5000';
+const API = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
 
 const userGrowthData = [
   { name: 'T2', users: 400 },

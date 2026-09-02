@@ -1,12 +1,13 @@
-
 import os
 import jwt
 from functools import wraps
 from flask import request, jsonify
 import psycopg2
+from vectoria_api.database import get_db_connection, release_db_connection
+
 from vectoria_api.config import DB_URL
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
+from vectoria_api.config import JWT_SECRET_KEY as SECRET_KEY
 
 def token_required(f):
     @wraps(f)
@@ -26,11 +27,11 @@ def token_required(f):
             token_version = data.get("token_version")
             
             # Kiểm tra token_version với Database
-            conn = psycopg2.connect(DB_URL)
+            conn = get_db_connection()
             c = conn.cursor()
             c.execute("SELECT token_version FROM users WHERE id = %s", (user_id,))
             record = c.fetchone()
-            conn.close()
+            release_db_connection(conn)
             
             if not record or record[0] != token_version:
                 return jsonify({"status": "error", "message": "Phiên đăng nhập đã hết hạn hoặc bị đăng xuất!"}), 401

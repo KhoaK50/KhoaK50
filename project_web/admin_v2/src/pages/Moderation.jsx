@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ShieldAlert, AlertTriangle, CheckCircle, XCircle, Edit, Trash, Lock, Filter } from 'lucide-react';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
 
 export default function Moderation() {
   const [activeTab, setActiveTab] = useState('PENDING'); // PENDING or RESOLVED

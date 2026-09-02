@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Square, RefreshCw, Zap, AlertTriangle, Clock, Activity, Target, Users, ShieldAlert, TrendingUp } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-const API = 'http://127.0.0.1:5000';
+const API = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
 
 const DEFAULT_TARGETS = [
   { id: '__db_benchmark__', label: 'Cơ sở dữ liệu (PostgreSQL)' },
@@ -129,7 +129,7 @@ export default function StressTest() {
   const [numUsers, setNumUsers] = useState(50);
   const [selectedTargets, setSelectedTargets] = useState([]);
   const [selectAll, setSelectAll] = useState(true);
-  const [baseUrl, setBaseUrl] = useState('http://127.0.0.1:5000');
+  const [baseUrl, setBaseUrl] = useState(import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000');
   const [testMode, setTestMode] = useState('real'); // 'real' | 'simulate'
   const [status, setStatus] = useState(null);
   const [isPolling, setIsPolling] = useState(false);

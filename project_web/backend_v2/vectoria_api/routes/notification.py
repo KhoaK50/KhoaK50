@@ -1,6 +1,8 @@
 import os
 from flask import Blueprint, request, jsonify
 import psycopg2
+from vectoria_api.database import get_db_connection, release_db_connection
+
 from psycopg2.extras import RealDictCursor
 from vectoria_api.config import DB_URL
 from vectoria_api.middleware.auth import token_required
@@ -11,7 +13,7 @@ notification_bp = Blueprint('notification_bp', __name__)
 @token_required
 def get_notifications(user_id):
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         # Get unread count
@@ -41,13 +43,13 @@ def get_notifications(user_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 @notification_bp.route('/api/notifications/<int:notif_id>/read', methods=['PUT'])
 @token_required
 def mark_as_read(user_id, notif_id):
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor()
         
         cursor.execute("UPDATE notifications SET is_read = TRUE WHERE id = %s AND user_id = %s", (notif_id, user_id))
@@ -60,13 +62,13 @@ def mark_as_read(user_id, notif_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
         
 @notification_bp.route('/api/notifications/read-all', methods=['PUT'])
 @token_required
 def mark_all_as_read(user_id):
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor()
         
         cursor.execute("UPDATE notifications SET is_read = TRUE WHERE user_id = %s AND is_read = FALSE", (user_id,))
@@ -79,4 +81,4 @@ def mark_all_as_read(user_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)

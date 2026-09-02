@@ -2,23 +2,24 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit
-from flask_socketio import join_room, leave_room
+from flask_socketio import SocketIO, emit, join_room, leave_room
 
 from vectoria_api.routes import register_blueprints
-from vectoria_api.config import HOST, PORT, DEBUG
+from vectoria_api.config import HOST, PORT, DEBUG, JWT_SECRET_KEY, ADMIN_SECRET_KEY
+import sys
+
+if not DEBUG and (not JWT_SECRET_KEY or not ADMIN_SECRET_KEY):
+    print('CRITICAL: Missing JWT_SECRET_KEY or ADMIN_SECRET_KEY in production. Exiting.')
+    sys.exit(1)
+
 from vectoria_api.explainers import init_explainers
-
-# Import module contact
 from vectoria_api.routes.contact import contact_bp
-
-# [BƯỚC 1] IMPORT MODULE USER VÀO ĐÂY
 from vectoria_api.routes.user import user_bp
-from flask import jsonify
 from test_neo4j import driver
-# Tạo instance global cho SocketIO
+
+# T?o instance global cho SocketIO
 socketio = SocketIO()
 
 rooms_state = {}
@@ -29,7 +30,12 @@ def create_app():
     app = Flask(__name__)
 
     # Cấu hình CORS
-    CORS(app)
+    from vectoria_api.config import ALLOWED_ORIGINS
+    CORS(app, origins=list(ALLOWED_ORIGINS))
+
+    from vectoria_api.middleware.rate_limit import limiter
+    limiter.init_app(app)
+
 
     # Nạp explainers
     init_explainers()
@@ -64,7 +70,7 @@ def create_app():
     from vectoria_api.routes.notification import notification_bp
     app.register_blueprint(notification_bp)
 
-    socketio.init_app(app, cors_allowed_origins="*")
+    socketio.init_app(app, cors_allowed_origins=list(ALLOWED_ORIGINS))
     return app
 
 
@@ -72,9 +78,44 @@ def create_app():
 app = create_app()
 
 
+@app.errorhandler(Exception)
+def handle_global_error(error):
+    from werkzeug.exceptions import HTTPException
+    import traceback
+    import uuid
+    if isinstance(error, HTTPException):
+        return jsonify({"error": error.description}), error.code
+    
+    req_id = str(uuid.uuid4())
+    print(f"[ERROR {req_id}] {str(error)}")
+    traceback.print_exc()
+    return jsonify({
+        "error": "Lỗi hệ thống nội bộ, vui lòng thử lại sau.",
+        "request_id": req_id
+    }), 500
+
+
+
 @socketio.on("join")
 def on_join(data):
-    room = data["room"]
+    token = data.get("token")
+    if not token:
+        emit("error", {"msg": "Authentication required. Vui lòng đăng nhập."})
+        return
+    
+    try:
+        from vectoria_api.config import JWT_SECRET_KEY
+        import jwt
+        decoded = jwt.decode(token, JWT_SECRET_KEY, algorithms=["HS256"])
+        user_id = decoded.get("user_id")
+    except Exception as e:
+        emit("error", {"msg": "Invalid or expired token."})
+        return
+
+    room = data.get("room")
+    if not room:
+        return
+        
     name = data.get("name", "Ẩn danh")
     sid = request.sid  # Lấy ID duy nhất của kết nối này
 
@@ -165,8 +206,8 @@ def on_disconnect():
 @app.route('/api/graph-data', methods=['GET'])
 def get_graph_data():
     query = """
-    MATCH (n:Subject)
-    OPTIONAL MATCH (n)-[r:REQUIRES]->(m:Subject)
+    MATCH (n:Lesson)
+    OPTIONAL MATCH (n)-[r:REQUIRES]->(m:Lesson)
     RETURN n.id AS id, n.name AS name, m.id AS target
     """
     nodes_dict = {}
@@ -204,4 +245,4 @@ def keep_awake():
 
 if __name__ == "__main__":
     print(f">> Server đang chạy tại: http://{HOST}:{PORT}")
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True, allow_unsafe_werkzeug=True)
+    socketio.run(app, host="0.0.0.0", port=5000, allow_unsafe_werkzeug=True)

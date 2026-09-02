@@ -1,5 +1,7 @@
 from flask import Blueprint, jsonify
 import psycopg2
+from vectoria_api.database import get_db_connection, release_db_connection
+
 
 from test_neo4j import driver 
 from vectoria_api.config import DB_URL
@@ -11,6 +13,7 @@ def home():
     return jsonify({"status": "ok"})
 
 @bp.get("/api/health")
+@bp.get("/healthz")
 def health():
     try:
         # 1. Đánh thức Neo4j
@@ -18,10 +21,10 @@ def health():
             session.run("RETURN 1")
             
         # 2. Đánh thức PostgreSQL (Supabase)
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("SELECT 1")
-        conn.close()
+        release_db_connection(conn)
             
         return jsonify({"ok": True, "neo4j": "awake", "postgres": "awake"})
         

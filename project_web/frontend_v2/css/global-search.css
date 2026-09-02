@@ -1,0 +1,105 @@
+/* Overlay */
+.search-modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: rgba(17, 17, 19, 0.5); backdrop-filter: blur(4px);
+  z-index: 999999; display: flex; justify-content: center; align-items: flex-start;
+  padding-top: 12vh; opacity: 0; pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.search-modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+/* Container */
+.search-modal-container {
+  width: 100%; max-width: 720px; max-height: 75vh;
+  background-color: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: 8px; display: flex; flex-direction: column;
+  box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.15);
+  transform: scale(0.98); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.search-modal-overlay.open .search-modal-container { transform: scale(1); }
+
+/* Header */
+.search-modal-header { padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+.search-modal-header .search-icon { font-size: 18px; color: var(--text-muted); }
+.search-modal-header input { flex: 1; border: none !important; outline: none !important; box-shadow: none !important; background: transparent; font-size: 16px; color: var(--text-main); padding: 8px 0; border-bottom: 1px solid var(--border-subtle) !important; border-radius: 0; }
+.search-modal-header input:focus { border-bottom-color: var(--primary-base) !important; }
+.search-modal-header input::placeholder { color: var(--text-muted); }
+.search-modal-header .search-close-btn {
+  background: transparent; border: 1px solid var(--border-subtle); color: var(--text-muted);
+  font-size: 16px; padding: 6px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background-color 0.1s, color 0.1s;
+}
+.search-modal-header .search-close-btn:hover { background-color: var(--border-subtle); color: var(--text-main); }
+.search-modal-header .kbd-hint {
+  font-size: 11px; color: var(--text-muted); border: 1px solid var(--border-subtle);
+  padding: 3px 6px; border-radius: 4px; margin-right: 4px;
+}
+
+/* Body */
+.search-modal-body {
+  padding: 24px 32px; overflow-y: auto; flex: 1; max-height: calc(75vh - 56px);
+}
+.search-modal-body::-webkit-scrollbar { width: 4px; }
+.search-modal-body::-webkit-scrollbar-thumb { background-color: var(--border-subtle); border-radius: 4px; }
+
+/* Hierarchical Layout */
+.index-chapter { margin-bottom: 24px; }
+.index-chapter .chapter-title { font-size: 17px; color: var(--text-main); font-weight: 700; cursor: pointer; text-decoration: none !important; display: block; margin-bottom: 8px; font-family: var(--font-academic); letter-spacing: 0; }
+.index-chapter .chapter-title:hover { color: var(--primary-base); }
+.lesson-group { padding-left: 14px; margin-bottom: 12px; margin-left: 6px; border-left: 1px solid var(--border-subtle); }
+.lesson-group .lesson-name { font-size: 16px; color: var(--text-main); font-weight: 700; margin-bottom: 8px; cursor: pointer; text-decoration: none !important; display: inline-block; font-family: var(--font-academic); }
+.lesson-group .lesson-name:hover { color: var(--primary-base); }
+
+
+.search-result-item { padding-left: 14px; margin-bottom: 8px; margin-left: 6px; border-left: 1px solid var(--border-subtle); text-decoration: none !important; display: block; }
+
+.search-result-item .result-title { font-size: 15px; font-weight: 700; color: var(--text-main); text-decoration: none !important; display: block; padding: 6px 0px; border-radius: 4px; transition: color 0.15s; font-family: var(--font-academic); }
+
+
+.search-result-item .result-title i { font-size: 16px; color: var(--text-muted); }
+
+.snippet-row { font-size: 14px; color: var(--text-muted) !important; font-family: var(--font-academic); margin-top: 2px; padding: 4px 8px 4px 16px; display: block; text-decoration: none !important; line-height: 1.6; cursor: pointer; border-radius: 4px; transition: background 0.15s; font-weight: 400; }
+
+
+
+
+.more-snippets-btn {
+  font-size: 12px; color: var(--primary-base); cursor: pointer; margin-top: 4px; margin-left: 36px; padding: 4px 8px; border-radius: 4px; display: inline-block; font-weight: 500;
+}
+.more-snippets-btn:hover { background-color: rgba(0,0,0,0.05); }
+
+.hidden-snippets { display: none; }
+.hidden-snippets.expanded { display: block; }
+.search-status { text-align: center; margin-top: 40px; color: var(--text-muted); font-size: 14px; }
+.search-status.error { color: var(--danger-base, #e5484d); }
+
+/* Mobile */
+@media (max-width: 640px) {
+  .search-modal-overlay { padding-top: 5vh; }
+  .search-modal-container { max-width: 95vw; max-height: 85vh; border-radius: 12px; }
+  .search-modal-body { padding: 16px 16px; }
+  .search-result-item .dot-leader { display: none; }
+  .search-result-item .result-snippet { max-width: 100%; font-size: 13px; }
+  .search-result-item { padding-left: 14px; margin-bottom: 8px; margin-left: 6px; border-left: 1px solid var(--border-subtle); text-decoration: none !important; display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .search-modal-container { transform: none !important; transition: none !important; }
+  .search-modal-overlay { transition: none !important; }
+}
+
+.hl { color: var(--primary-base); font-weight: bold; background-color: rgba(0, 144, 255, 0.1); padding: 0 2px; border-radius: 2px; }
+
+
+
+
+
+
+
+.search-hl, .result-title .search-hl, .snippet-row .search-hl, .chapter-title .search-hl { color: var(--primary-base) !important; font-weight: 600; background-color: rgba(0, 144, 255, 0.1); text-decoration: none !important; padding: 0 2px; border-radius: 2px; }
+
+.search-result-item .result-title:hover { color: var(--primary-base); }
+.snippet-row:hover { background-color: var(--bg-hover) !important; }
+/* Exceptions for saved lessons empty state */
+.saved-lesson-item { border-left: none !important; margin-left: 0 !important; padding-left: 0 !important; }
+.saved-lesson-item .result-title { font-weight: 500 !important; }
+.saved-lesson-item .result-title:hover { background-color: var(--bg-hover) !important; color: var(--text-main) !important; }

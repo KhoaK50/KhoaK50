@@ -1,15 +1,38 @@
 <!doctype html>
 <html lang="vi">
 <head>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#111113';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#fcfcfd';
+        }
+      } catch (e) {}
+    })();
+  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-GRZR4Y6VFQ');
+    </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Không gian Tri thức - Vectoria</title>
+  <title data-i18n="nav.title_knowledge">Vectoria</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/knowledge.css" />
   <link rel="stylesheet" href="css/footer.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/radix_colors.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
 <style>
 /* """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -359,7 +382,11 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
 
 </style>
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
-  </head>
+    <link rel="stylesheet" href="css/global-search.css">
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+</head>
 <body class="light-theme">
 <!-- ==================== UNIFIED TOPBAR ==================== -->
 <style>
@@ -370,25 +397,25 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
 <header class="vec-topbar" id="globalTopbar">
   <div class="vec-topbar-left">
         <button class="vec-sidebar-toggle" id="globalMobileToggleBtn" title="Menu sidebar">
-          <i class="fa-solid fa-compass"></i>
+          <i class="ph ph-compass"></i>
         </button><a href="index.html" class="vec-brand-group">
       <img src="assets/images/logo+name.png" alt="Vectoria" onerror="this.src='assets/images/logo.png'">
     </a>
     
     <nav class="vec-nav-links">
-          <a href="index.html" class="vec-nav-link" id="navHome"><i class="fa-solid fa-house"></i> <span data-i18n="nav.home">Trang chủ</span></a>
-          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="fa-solid fa-layer-group"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
-          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="fa-solid fa-calculator"></i> <span data-i18n="nav.calc">Tính toán</span></a>
+          <a href="index.html" class="vec-nav-link" id="navHome"><i class="ph ph-house"></i> <span data-i18n="nav.home">Trang chủ</span></a>
+          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="ph ph-stack"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
+          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="ph ph-calculator"></i> <span data-i18n="nav.calc">Tính toán</span></a>
           
           <div class="vec-dropdown-container">
-<span class="vec-nav-link" data-i18n="nav.explore"><i class="fa-solid fa-compass"></i> Khám phá <i class="fa-solid fa-chevron-down" style="font-size: 0.7em;"></i></span>
+<span class="vec-nav-link" data-i18n="nav.explore"><i class="ph ph-compass"></i> Khám phá <i class="ph ph-caret-down" style="font-size: 0.7em;"></i></span>
             <div class="vec-dropdown-menu">
-              <a href="knowledge_info.html" class="vec-dropdown-item" data-i18n="nav.knowledge"><i class="fa-solid fa-graduation-cap"></i> Thư viện kiến thức</a>
-              <a href="hdsd.html" class="vec-dropdown-item" data-i18n="nav.manual"><i class="fa-solid fa-circle-question"></i> Hướng dẫn sử dụng</a>
-              <a href="tltk.html" class="vec-dropdown-item" data-i18n="nav.docs"><i class="fa-solid fa-file-pdf"></i> Tài liệu tham khảo</a>
+              <a href="knowledge_info.html" class="vec-dropdown-item" data-i18n="nav.knowledge"><i class="ph ph-graduation-cap"></i> Thư viện kiến thức</a>
+              <a href="hdsd.html" class="vec-dropdown-item" data-i18n="nav.manual"><i class="ph ph-question"></i> Hướng dẫn sử dụng</a>
+              <a href="tltk.html" class="vec-dropdown-item" data-i18n="nav.docs"><i class="ph ph-file-pdf"></i> Tài liệu tham khảo</a>
               <div class="dropdown-divider" style="height: 1px; background: var(--border-strong, #cbd5e1); margin: 5px 0;"></div>
-              <a href="about_us.html" class="vec-dropdown-item" data-i18n="nav.about"><i class="fa-solid fa-users"></i> Về chúng tôi</a>
-              <a href="contact.html" class="vec-dropdown-item" data-i18n="nav.contact"><i class="fa-solid fa-envelope"></i> Liên hệ</a>
+              <a href="about_us.html" class="vec-dropdown-item" data-i18n="nav.about"><i class="ph ph-users"></i> Về chúng tôi</a>
+              <a href="contact.html" class="vec-dropdown-item" data-i18n="nav.contact"><i class="ph ph-envelope"></i> Liên hệ</a>
             </div>
           </div>
         </nav>
@@ -396,16 +423,16 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
   
       <div class="vec-topbar-center" style="flex: 1; max-width: 450px; margin: 0 32px; position: relative;">
         <input type="text" placeholder="Tìm kiếm toàn cục..." data-i18n-placeholder="nav.search_global" style="width: 100%; padding: 10px 16px 10px 42px; border: 1px solid var(--s3); border-radius: 8px; background: var(--s2); color: var(--s12); font: 500 .9rem/1 var(--font); transition: all 0.2s ease; outline: none;" onfocus="this.style.borderColor='var(--b9)'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.12)'" onblur="this.style.borderColor='var(--s3)'; this.style.boxShadow='none'">
-        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--s6); font-size: .9rem;"></i>
+        <i class="ph ph-magnifying-glass" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--s6); font-size: .9rem;"></i>
       </div>
   <div class="vec-topbar-right">
     <button class="vec-icon-btn" id="themeToggleBtn" title="Chuyển giao diện">
-          <i class="fa-solid fa-moon icon-light-mode"></i><i class="fa-solid fa-sun icon-dark-mode"></i>
+          <i class="ph ph-moon icon-light-mode"></i><i class="ph ph-sun icon-dark-mode"></i>
         </button>
 
 <div class="vec-dropdown-container right-align">
           <button class="vec-icon-btn" title="Ngôn ngữ">
-            <i class="fa-solid fa-globe"></i>
+            <i class="ph ph-globe"></i>
           </button>
           <div class="vec-dropdown-menu" style="min-width: 150px;">
             <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('vi')">Tiếng Việt</a>
@@ -416,7 +443,7 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
         
           <div class="vec-dropdown-container right-align" id="notificationDropdownContainer" style="display: none;">
             <button class="vec-icon-btn" title="Thông báo" id="notificationBellBtn" style="position: relative;">
-              <i class="fa-solid fa-bell"></i>
+              <i class="ph ph-bell"></i>
               <span id="unreadBadge" style="display: none; position: absolute; top: 0px; right: 0px; min-width: 16px; height: 16px; background-color: #ef4444; color: white; border-radius: 10px; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; font-family: sans-serif; box-shadow: 0 0 0 2px var(--bg-card, #fff);"></span>
             </button>
             <div class="vec-dropdown-menu" id="notificationMenu" style="min-width: 320px; max-height: 400px; overflow-y: auto; padding: 0;">
@@ -432,7 +459,7 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
         
         <div class="vec-dropdown-container right-align">
           <div class="top-avatar-btn" id="btnTopAvatar" style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary-base); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; background-size: cover; background-position: center;">
-            <i class="fa-solid fa-user"></i>
+            <i class="ph ph-user"></i>
           </div>
           <div class="top-dropdown vec-dropdown-menu" id="menuTopAvatar" style="width: 260px; min-width: 260px;">
           </div>
@@ -445,7 +472,7 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
   <div class="lib-side" id="lib-side">
     <div class="lib-side-search">
       <input type="text" placeholder="Tìm kiếm nội dung..." data-i18n-placeholder="knowledge.search_content" />
-      <i class="fa-solid fa-search"></i>
+      <i class="ph ph-magnifying-glass"></i>
     </div>
     <div id="side-topics-list"></div>
   </div>
@@ -478,7 +505,7 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
           <div id="graph-bc" class="bc" style="margin-bottom: 8px;"></div>
           <h1 class="view-title" style="font-size:1.8rem; font-weight:800; color:var(--s12); margin:0; font-family:'Merriweather',serif;" data-i18n="knowledge.title">Không gian Tri thức</h1>
         </div>
-        <button onclick="var el = document.getElementById('pf-container'); el.classList.toggle('open');" class="btn pf-header-btn" style="padding: 10px 16px; border-radius: 8px; border: 1px solid var(--s4); background: var(--s2); font-weight: 600; cursor: pointer; color: var(--s11); transition: 0.2s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'" data-i18n="knowledge.tool_pathfinding"><i class="fa-solid fa-route"></i> Công cụ Tìm lộ trình</button>
+        <button onclick="var el = document.getElementById('pf-container'); el.classList.toggle('open');" class="btn pf-header-btn" style="padding: 10px 16px; border-radius: 8px; border: 1px solid var(--s4); background: var(--s2); font-weight: 600; cursor: pointer; color: var(--s11); transition: 0.2s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'" data-i18n="knowledge.tool_pathfinding"><i class="ph ph-map-trifold"></i> Công cụ Tìm lộ trình</button>
       </div>
 
       <div id="pf-container" class="pf-container" style="margin-bottom: 24px; position: relative; z-index: 50;">
@@ -500,8 +527,8 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
             <div id="cb-avoid"></div>
           </div>
           <div style="display:flex; align-items: flex-end; gap: 8px;">
-            <button id="btn-find-path" style="padding: 10px 20px; height: 42px; border-radius: 8px; background: var(--primary-base); color: white; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary-hover, #2563eb)'" onmouseout="this.style.background='var(--primary-base)'" onclick="if(typeof runPath==='function')runPath()" data-i18n="knowledge.find_path_btn_only"><i class="fa-solid fa-route"></i> Tìm lộ trình</button>
-            <button id="btn-reset" style="padding: 10px 16px; height: 42px; border-radius: 8px; background: var(--s3); color: var(--s11); border: none; font-weight: 600; cursor: pointer; display: none; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'" onclick="if(typeof clearPath==='function')clearPath()"><i class="fa-solid fa-rotate-left"></i> Xóa lộ trình</button>
+            <button id="btn-find-path" style="padding: 10px 20px; height: 42px; border-radius: 8px; background: var(--primary-base); color: white; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary-hover, #2563eb)'" onmouseout="this.style.background='var(--primary-base)'" onclick="if(typeof runPath==='function')runPath()" data-i18n="knowledge.find_path_btn_only"><i class="ph ph-map-trifold"></i> Tìm lộ trình</button>
+            <button id="btn-reset" style="padding: 10px 16px; height: 42px; border-radius: 8px; background: var(--s3); color: var(--s11); border: none; font-weight: 600; cursor: pointer; display: none; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'" onclick="if(typeof clearPath==='function')clearPath()"><i class="ph ph-rotate-left"></i> Xóa lộ trình</button>
           </div>
         </div>
       </div>
@@ -515,8 +542,8 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
             <div id="d-canvas" style="width:100%; height:100%;"></div>
           </div>
           <div class="mobile-tools-bar">
-            <button class="btn" onclick="document.getElementById('pf-container').classList.add('open'); document.getElementById('mob-overlay').classList.add('show');" data-i18n="knowledge.find_path_btn"><i class="fa-solid fa-route"></i> Lộ trình</button>
-            <button class="btn" onclick="document.querySelector('.diagram-split > div:nth-child(2)').classList.add('mob-open'); document.getElementById('mob-overlay').classList.add('show');"><i class="fa-solid fa-list-ol"></i> <span data-i18n="knowledge.reference_table">Bảng đối chiếu</span></button>
+            <button class="btn" onclick="document.getElementById('pf-container').classList.add('open'); document.getElementById('mob-overlay').classList.add('show');" data-i18n="knowledge.find_path_btn"><i class="ph ph-map-trifold"></i> Lộ trình</button>
+            <button class="btn" onclick="document.querySelector('.diagram-split > div:nth-child(2)').classList.add('mob-open'); document.getElementById('mob-overlay').classList.add('show');"><i class="ph ph-list-numbers"></i> <span data-i18n="knowledge.reference_table">Bảng đối chiếu</span></button>
           </div>
         </div>
         <div style="width: 320px; flex-shrink: 0; background: var(--s1); border-radius: 12px; border: 1px solid var(--s3); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
@@ -589,7 +616,18 @@ window.addEventListener("DOMContentLoaded", async () => {
       navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'));
     } else if (urlParams.get('type') === 'lesson') {
       window._deepLinkHandled = true;
-      navigateTo('lesson', urlParams.get('id'), 'Bài học');
+      var lid = urlParams.get('id');
+      var ldata = null;
+      if (typeof MOCK_LIBRARY_DATA !== 'undefined') {
+        for (var t of MOCK_LIBRARY_DATA.topics) {
+          for (var s of t.sections) {
+            for (var l of s.lessons) { if (l.id === lid) { ldata = l; break; } }
+            if (ldata) break;
+          }
+          if (ldata) break;
+        }
+      }
+      navigateTo('lesson', lid, 'Bài học', ldata);
     }
     if (typeof renderCurrentView === "function" && !window._deepLinkHandled) renderCurrentView();
   const _origSetLang = window.setLang;
@@ -605,7 +643,18 @@ window.addEventListener("DOMContentLoaded", async () => {
           navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'));
           return; // navigateTo triggers renderCurrentView
         } else if (urlParams.get('type') === 'lesson') {
-          navigateTo('lesson', urlParams.get('id'), tr('knowledge.lesson', 'Bài học'));
+          var lid = urlParams.get('id');
+          var ldata = null;
+          if (typeof MOCK_LIBRARY_DATA !== 'undefined') {
+            for (var t of MOCK_LIBRARY_DATA.topics) {
+              for (var s of t.sections) {
+                for (var l of s.lessons) { if (l.id === lid) { ldata = l; break; } }
+                if (ldata) break;
+              }
+              if (ldata) break;
+            }
+          }
+          navigateTo('lesson', lid, tr('knowledge.lesson', 'Bài học'), ldata);
           return;
         }
       }
@@ -694,7 +743,7 @@ function renderBreadcrumb() {
       a.appendChild(span);
       bc.appendChild(a);
       var chevron = document.createElement('i');
-      chevron.className = 'fa-solid fa-chevron-right';
+      chevron.className = 'ph ph-caret-right';
       chevron.style.fontSize = '0.6rem';
       chevron.style.color = 'var(--s6)';
       bc.appendChild(chevron);
@@ -716,12 +765,9 @@ function updateUrl(node) {
 
 function navigateBackTo(idx) {
   if (window._quizActive) {
-    if (!confirm('Bạn đang làm ' + tr('knowledge.lesson_prefix', 'Bài') + ' dang dở. Có chắc chắn muốn thoát? Kết quả sẽ không được lưu!')) return;
-    window._quizActive = false;
-  }
-  AppState.path = AppState.path.slice(0, idx + 1);
-  renderCurrentView();
-  updateUrl(AppState.path[AppState.path.length - 1]);
+    const doNav = () => { window._quizActive = false; AppState.path = AppState.path.slice(0, idx + 1); renderCurrentView(); updateUrl(AppState.path[AppState.path.length - 1]); };
+    if (window.App && window.App.showConfirm) { window.App.showConfirm('Bạn đang làm ' + tr('knowledge.lesson_prefix', 'Bài') + ' dang dở. Có chắc chắn muốn thoát? Kết quả sẽ không được lưu!', doNav); } else { doNav(); } return; }
+    AppState.path = AppState.path.slice(0, idx + 1); renderCurrentView(); updateUrl(AppState.path[AppState.path.length - 1]);
 }
 
 function navigateTo(type, id, title, data) {
@@ -784,9 +830,9 @@ function renderRoot(c) {
   c.appendChild(toolsGrid);
 
   var tools = [
-    { title: tr('knowledge.title', 'Không gian Tri thức'), desc: tr('knowledge.tool_graph_desc', 'Bản đồ đồ thị các ' + tr('knowledge.lessons_count', 'Số bài học') + ' và công cụ tối ưu lộ trình.'), icon: 'fa-solid fa-diagram-project', action: function() { navigateTo('graph','graph',tr('knowledge.title', 'Không gian Tri thức'),null); } },
-    { title: tr('knowledge.tool_doc_title', 'Tài liệu tham khảo'), desc: tr('knowledge.tool_doc_desc', 'Giáo trình, sách và các tài liệu bổ trợ.'), icon: 'fa-solid fa-book-bookmark', action: function() { (window.App && window.App.showToast ? window.App.showToast('Chức năng đang được phát triển.', 'warning') : alert('Chức năng đang được phát triển.')); } },
-    { title: tr('knowledge.tool_quiz_title', 'Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập'), desc: tr('knowledge.tool_quiz_desc', 'Hệ thống thực hành phân loại theo chủ đề.'), icon: 'fa-solid fa-code-branch', action: function() { navigateTo('quiz','quiz',tr('knowledge.tool_quiz_title', 'Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập'),null); } }
+    { title: tr('knowledge.title', 'Không gian Tri thức'), desc: tr('knowledge.tool_graph_desc', 'Bản đồ đồ thị các ' + tr('knowledge.lessons_count', 'Số bài học') + ' và công cụ tối ưu lộ trình.'), icon: 'ph ph-tree-structure', action: function() { navigateTo('graph','graph',tr('knowledge.title', 'Không gian Tri thức'),null); } },
+    { title: tr('knowledge.tool_doc_title', 'Tài liệu tham khảo'), desc: tr('knowledge.tool_doc_desc', 'Giáo trình, sách và các tài liệu bổ trợ.'), icon: 'ph ph-bookmark', action: function() { window.App.showToast('Chức năng đang được phát triển.', 'warning'); } },
+    { title: tr('knowledge.tool_quiz_title', 'Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập'), desc: tr('knowledge.tool_quiz_desc', 'Hệ thống thực hành phân loại theo chủ đề.'), icon: 'ph ph-git-branch', action: function() { navigateTo('quiz','quiz',tr('knowledge.tool_quiz_title', 'Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập'),null); } }
   ];
 
   for (var t = 0; t < tools.length; t++) {
@@ -858,8 +904,8 @@ function renderRoot(c) {
         topic.sections.forEach(function(s) { numL += (s.lessons ? s.lessons.length : 0); });
       }
       
-      meta.innerHTML = '<span><i class="fa-solid fa-list-ul" style="margin-right:4px;"\></i>' + numS + ' ' + tr('knowledge.sections_count', 'Số học phần') + '</span>' +
-                       '<span><i class="fa-regular fa-file-lines" style="margin-right:4px;"\></i>' + numL + ' ' + tr('knowledge.lessons_count', 'Số bài học') + '</span>';
+      meta.innerHTML = '<span><i class="ph ph-list-bullets" style="margin-right:4px;"\></i>' + numS + ' ' + tr('knowledge.sections_count', 'Số học phần') + '</span>' +
+                       '<span><i class="ph ph-file-text" style="margin-right:4px;"\></i>' + numL + ' ' + tr('knowledge.lessons_count', 'Số bài học') + '</span>';
       
       tc.appendChild(meta);
       topicsGrid.appendChild(tc);
@@ -912,7 +958,7 @@ function renderTopic(c, topic) {
       var right = document.createElement('div');
       right.style.cssText = 'font-size:0.85rem; color:var(--s9); display:flex; align-items:center; gap:8px;';
       var numL = sec.lessons ? sec.lessons.length : 0;
-      right.innerHTML = '<span>' + numL + ' ' + tr('knowledge.lessons_count', 'Số bài học') + '</span><i class="fa-solid fa-chevron-right" style="font-size:0.7em; color:var(--s6);"></i>';
+      right.innerHTML = '<span>' + numL + ' ' + tr('knowledge.lessons_count', 'Số bài học') + '</span><i class="ph ph-caret-right" style="font-size:0.7em; color:var(--s6);"></i>';
       row.appendChild(right);
 
       c.appendChild(row);
@@ -973,7 +1019,7 @@ function renderSection(c, section) {
       var foot = document.createElement('div');
       foot.style.cssText = 'font-size:0.8rem; color:var(--s6); border-top:1px solid var(--s3); padding-top:10px; display:flex; gap:12px;';
       var views = lesson.total_views || 0;
-      foot.innerHTML = '<span><i class="fa-solid fa-eye"\></i> <span id="grid-view-count-' + lesson.num + '"\>' + views + '</span> ' + tr('knowledge.views', 'lượt xem') + '</span>';
+      foot.innerHTML = '<span><i class="ph ph-eye"\></i> <span id="grid-view-count-' + lesson.num + '"\>' + views + '</span> ' + tr('knowledge.views', 'lượt xem') + '</span>';
       card.appendChild(foot);
 
       grid.appendChild(card);
@@ -1008,7 +1054,7 @@ function renderLesson(c, lesson) {
     var d = new Date(iso);
     timeStr = tr('knowledge.updated', 'Cập nhật') + ' ' + d.getDate().toString().padStart(2, '0') + '/' + (d.getMonth() + 1).toString().padStart(2, '0') + '/' + d.getFullYear();
   }
-  meta.innerHTML = '<span><i class="fa-solid fa-eye"></i> <span id="lesson-view-count">...</span> ' + tr('knowledge.views', 'lượt xem') + '</span><span><i class="fa-regular fa-calendar-days"></i> <span id="lesson-updated-time">' + timeStr + '</span></span>';
+  meta.innerHTML = '<span><i class="ph ph-eye"></i> <span id="lesson-view-count">...</span> ' + tr('knowledge.views', 'lượt xem') + '</span><span><i class="ph ph-calendar-blank"></i> <span id="lesson-updated-time">' + timeStr + '</span></span>';
   left.appendChild(meta);
 
   hdr.appendChild(left);
@@ -1016,10 +1062,10 @@ function renderLesson(c, lesson) {
   var saveBtn = document.createElement('button');
   saveBtn.className = 'btn btn-outline';
   saveBtn.style.cssText = 'display:flex; gap:6px; align-items:center; white-space:nowrap; flex-shrink:0;';
-  saveBtn.innerHTML = '<i class="fa-regular fa-bookmark"\></i> ' + tr('knowledge.save_lesson', 'Lưu bài học');
+  saveBtn.innerHTML = '<i class="ph ph-bookmark"\></i> ' + tr('knowledge.save_lesson', 'Lưu bài học');
   
   // Check if already bookmarked
-  var _bmToken = localStorage.getItem('user_token');
+  var _bmToken = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
   if (_bmToken) {
     fetch(App.API_BASE + '/api/bookmarks', { headers: { 'Authorization': 'Bearer ' + _bmToken } })
       .then(function(r){ return r.json(); })
@@ -1029,7 +1075,7 @@ function renderLesson(c, lesson) {
             return b.topic_id === currentTopicId && parseInt(b.order_index) === parseInt(lesson.num);
           });
           if (found) {
-            saveBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i> ' + tr('knowledge.saved', 'Đã lưu');
+            saveBtn.innerHTML = '<i class="ph ph-bookmark"></i> ' + tr('knowledge.saved', 'Đã lưu');
             saveBtn.style.cssText = 'display:flex; gap:6px; align-items:center; background:#3b82f6; color:#fff; border-color:#3b82f6;';
             saveBtn.dataset.saved = '1';
           }
@@ -1038,8 +1084,8 @@ function renderLesson(c, lesson) {
   }
   
   saveBtn.onclick = function() {
-    var token = localStorage.getItem('user_token');
-    if (!token) { (window.App && window.App.showToast ? window.App.showToast(tr('knowledge.login_required', 'Vui lòng đăng nhập để ') + tr('knowledge.save_lesson', 'Lưu bài học') + '.', 'warning') : alert(tr('knowledge.login_required', 'Vui lòng đăng nhập để ') + tr('knowledge.save_lesson', 'Lưu bài học') + '.')); return; }
+    var token = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
+    if (!token) { if (window.App && window.App.showToast) window.App.showToast(tr('knowledge.login_required', 'Vui lòng đăng nhập để ') + tr('knowledge.save_lesson', 'Lưu bài học') + '.', 'warning'); return; }
     
     var isSaved = this.dataset.saved === '1';
     var action = isSaved ? 'remove' : 'save';
@@ -1065,11 +1111,11 @@ function renderLesson(c, lesson) {
     // Optimistic UI Update
     self.style.pointerEvents = 'none';
     if (action === 'save') {
-      self.innerHTML = '<i class="fa-solid fa-bookmark"></i> ' + tr('knowledge.saved', 'Đã lưu');
+      self.innerHTML = '<i class="ph ph-bookmark"></i> ' + tr('knowledge.saved', 'Đã lưu');
       self.style.cssText = 'display:flex; gap:6px; align-items:center; background:#3b82f6; color:#fff; border-color:#3b82f6; transition:all 0.3s;';
       self.dataset.saved = '1';
     } else {
-      self.innerHTML = '<i class="fa-regular fa-bookmark"\></i> ' + tr('knowledge.save_lesson', 'Lưu bài học');
+      self.innerHTML = '<i class="ph ph-bookmark"\></i> ' + tr('knowledge.save_lesson', 'Lưu bài học');
       self.style.cssText = 'display:flex; gap:6px; align-items:center; transition:all 0.3s;';
       self.className = 'btn btn-outline';
       self.dataset.saved = '0';
@@ -1084,7 +1130,7 @@ function renderLesson(c, lesson) {
     .then(function(d){
       self.style.pointerEvents = 'auto';
       if (!d.success) {
-        if(window.App && window.App.showToast) window.App.showToast(tr('knowledge.error', tr('knowledge.error', 'Lỗi: ')) + (d.message || "' + tr('knowledge.save_lesson', 'Lưu bài học') + ' failed."), 'warning'); else alert(tr('knowledge.error', tr('knowledge.error', 'Lỗi: ')) + (d.message || "' + tr('knowledge.save_lesson', 'Lưu bài học') + ' failed."));
+        if(window.App && window.App.showToast) window.App.showToast(tr('knowledge.error', 'Lỗi: ') + (d.message || 'Lưu bài học failed.'), 'warning');
         // Revert UI
         self.innerHTML = originalHTML;
         self.style.cssText = originalCssText;
@@ -1093,7 +1139,7 @@ function renderLesson(c, lesson) {
       }
     }).catch(function(e){ 
       console.error(e); 
-      (window.App && window.App.showToast ? window.App.showToast(tr('knowledge.error_server', 'Lỗi kết nối máy chủ. Xin thử lại.'), 'warning') : alert(tr('knowledge.error_server', 'Lỗi kết nối máy chủ. Xin thử lại.')));
+      window.App.showToast(tr('knowledge.error_server', 'Lỗi kết nối máy chủ. Xin thử lại.'), 'warning');
       self.style.pointerEvents = 'auto';
       // Revert UI
       self.innerHTML = originalHTML;
@@ -1193,41 +1239,41 @@ function renderLesson(c, lesson) {
 
     // Display math: $$...$$ or \[...\] or \begin{equation}...\end{equation}
     html = html.replace(/\$\$([\s\S]+?)\$\$/g, function(match, math) {
-      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, displayMode: true }); }
+      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, strict: "ignore", displayMode: true }); }
       catch (e) { return match; }
     });
     html = html.replace(/\\\[([\s\S]+?)\\\]/g, function(match, math) {
-      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, displayMode: true }); }
+      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, strict: "ignore", displayMode: true }); }
       catch (e) { return match; }
     });
     html = html.replace(/\\begin\{equation\}([\s\S]*?)\\end\{equation\}/g, function(match, math) {
-      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, displayMode: true }); }
+      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, strict: "ignore", displayMode: true }); }
       catch (e) { return match; }
     });
     html = html.replace(/\\begin\{align\}([\s\S]*?)\\end\{align\}/g, function(match, math) {
-      try { return katex.renderToString('\\begin{aligned}' + unescapeMath(math) + '\\end{aligned}', { throwOnError: false, displayMode: true }); }
+      try { return katex.renderToString('\\begin{aligned}' + unescapeMath(math) + '\\end{aligned}', { throwOnError: false, strict: "ignore", displayMode: true }); }
       catch (e) { return match; }
     });
     
     // Inline math: $...$ or \(...\)
     html = html.replace(/\$([^\$]+?)\$/g, function(match, math) {
-      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, displayMode: false }); }
+      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, strict: "ignore", displayMode: false }); }
       catch (e) { return match; }
     });
     html = html.replace(/\\\(([\s\S]*?)\\\)/g, function(match, math) {
-      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, displayMode: false }); }
+      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, strict: "ignore", displayMode: false }); }
       catch (e) { return match; }
     });
 
     // Standalone environments (in case user forgot math delimiters)
     html = html.replace(/\\begin\{cases\}([\s\S]*?)\\end\{cases\}/g, function(match) {
-      try { return katex.renderToString(unescapeMath(match), { throwOnError: false, displayMode: true }); } catch (e) { return match; }
+      try { return katex.renderToString(unescapeMath(match), { throwOnError: false, strict: "ignore", displayMode: true }); } catch (e) { return match; }
     });
     html = html.replace(/\\begin\{pmatrix\}([\s\S]*?)\\end\{pmatrix\}/g, function(match) {
-      try { return katex.renderToString(unescapeMath(match), { throwOnError: false, displayMode: true }); } catch (e) { return match; }
+      try { return katex.renderToString(unescapeMath(match), { throwOnError: false, strict: "ignore", displayMode: true }); } catch (e) { return match; }
     });
     html = html.replace(/\\begin\{vmatrix\}([\s\S]*?)\\end\{vmatrix\}/g, function(match) {
-      try { return katex.renderToString(unescapeMath(match), { throwOnError: false, displayMode: true }); } catch (e) { return match; }
+      try { return katex.renderToString(unescapeMath(match), { throwOnError: false, strict: "ignore", displayMode: true }); } catch (e) { return match; }
     });
 
     // 6.5. Xử lý các lệnh khoảng trắng/xuống dòng (sau KaTeX)
@@ -1285,15 +1331,6 @@ function renderLesson(c, lesson) {
       svg text { font-family: var(--font, 'Merriweather', 'Times New Roman', serif) !important; }
 </style>
     <div style="padding: 10px 0; opacity: 0.8; margin-top: 10px;">
-      <div class="skeleton-box sk-title"></div>
-      <div class="skeleton-box sk-text"></div>
-      <div class="skeleton-box sk-text"></div>
-      <div class="skeleton-box sk-text"></div>
-      <div class="skeleton-box sk-text-short"></div>
-      <div class="skeleton-box sk-text-shorter"></div>
-      <div class="skeleton-box sk-block"></div>
-      <div class="skeleton-box sk-text"></div>
-      <div class="skeleton-box sk-text-short"></div>
     </div>
   `;
   body.innerHTML = skeletonHtml;
@@ -1305,7 +1342,7 @@ function renderLesson(c, lesson) {
   var tNode = AppState.path.find(n => n.type === 'topic');
   if (tNode) currentTopicId = tNode.id;
 
-  fetch(App.API_BASE + '/api/course/topic/' + currentTopicId + '/lesson/' + lesson.num)
+  fetch(App.API_BASE + '/api/course/topic/' + currentTopicId + '/lesson/' + lesson.num + '?lang=' + (window.i18nConfig ? window.i18nConfig.currentLocale : 'vi'))
     .then(res => {
       if (!res.ok) throw new Error('Not found');
       return res.json();
@@ -1316,7 +1353,22 @@ function renderLesson(c, lesson) {
           body.innerHTML = parseLatexToHTML(data.lesson.content_html);
         } else {
           var fallback = lesson.contentHTML || lesson.abstract || '';
-      body.innerHTML = fallback.length < 200 ? '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>' : fallback;
+      body.innerHTML = fallback.length < 200 ? '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>' : parseLatexToHTML(fallback);
+        }
+        // Trigger highlight after real content is loaded using task queue
+        var taskStr = sessionStorage.getItem('vecHighlightTask');
+        if (taskStr) {
+          sessionStorage.removeItem('vecHighlightTask');
+          try {
+             var task = JSON.parse(taskStr);
+             setTimeout(function() {
+               if (typeof window.highlightAndScroll === 'function') {
+                  window.highlightAndScroll(task.query, task.match);
+               } else {
+                  console.error('highlightAndScroll function not found!');
+               }
+             }, 400);
+          } catch(e) { console.error('Error parsing highlight task', e); }
         }
 
         var viewCountEl = document.getElementById('lesson-view-count');
@@ -1356,13 +1408,39 @@ function renderLesson(c, lesson) {
 
       } else {
         var fallback = lesson.contentHTML || lesson.abstract || '';
-      body.innerHTML = fallback.length < 200 ? '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>' : fallback;
+      body.innerHTML = fallback.length < 200 ? '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>' : parseLatexToHTML(fallback);
+        // Trigger highlight for fallback content too
+        var taskStr = sessionStorage.getItem('vecHighlightTask');
+        if (taskStr) {
+          sessionStorage.removeItem('vecHighlightTask');
+          try {
+             var task = JSON.parse(taskStr);
+             setTimeout(function() {
+               if (typeof window.highlightAndScroll === 'function') {
+                  window.highlightAndScroll(task.query, task.match);
+               }
+             }, 400);
+          } catch(e) {}
+        }
       }
     })
     .catch(err => {
       console.error("Lỗi fetch DB, dùng content mặc định:", err);
       var fallback = lesson.contentHTML || lesson.abstract || '';
-      body.innerHTML = fallback.length < 200 ? '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>' : fallback;
+      body.innerHTML = fallback.length < 200 ? '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>' : parseLatexToHTML(fallback);
+      // Trigger highlight for fallback content too
+      var taskStr = sessionStorage.getItem('vecHighlightTask');
+      if (taskStr) {
+        sessionStorage.removeItem('vecHighlightTask');
+        try {
+           var task = JSON.parse(taskStr);
+           setTimeout(function() {
+             if (typeof window.highlightAndScroll === 'function') {
+                window.highlightAndScroll(task.query, task.match);
+             }
+           }, 400);
+        } catch(e) {}
+      }
     });
 
   // Comments
@@ -1390,7 +1468,7 @@ function renderLesson(c, lesson) {
   var sortTrigger = document.createElement('div');
   sortTrigger.id = 'comment-sort-trigger';
   sortTrigger.style.cssText = 'padding: 6px 12px; border-radius: 6px; border: 1px solid var(--s3); background: var(--s1); color: var(--s12); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;';
-  sortTrigger.innerHTML = '<span>' + tr('knowledge.top_comments', 'Nổi bật nhất') + '</span> <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; color: var(--s9);"></i>';
+  sortTrigger.innerHTML = '<span>' + tr('knowledge.top_comments', 'Nổi bật nhất') + '</span> <i class="ph ph-caret-down" style="font-size: 0.7rem; color: var(--s9);"></i>';
   
   var sortMenu = document.createElement('div');
   sortMenu.style.cssText = 'position: absolute; top: 100%; right: 0; margin-top: 4px; width: 160px; background: var(--s1); border: 1px solid var(--s3); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 4px; display: none; flex-direction: column; gap: 2px;';
@@ -1406,7 +1484,7 @@ function renderLesson(c, lesson) {
       var item = document.createElement('div');
       var isSelected = sortSelect.value === opt.value;
       item.style.cssText = 'padding: 8px 12px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s; font-weight: ' + (isSelected ? '600' : '400') + '; color: ' + (isSelected ? 'var(--b9)' : 'var(--s11)') + '; background: ' + (isSelected ? 'rgba(59, 130, 246, 0.05)' : 'transparent') + ';';
-      item.innerHTML = '<span>' + opt.label + '</span>' + (isSelected ? '<i class="fa-solid fa-check" style="font-size:0.8rem;"></i>' : '');
+      item.innerHTML = '<span>' + opt.label + '</span>' + (isSelected ? '<i class="ph ph-check" style="font-size:0.8rem;"></i>' : '');
       
       item.onmouseover = function() { if(!isSelected) item.style.background = 'var(--s3)'; item.style.color = 'var(--s12)'; };
       item.onmouseout = function() { if(!isSelected) item.style.background = 'transparent'; item.style.color = isSelected ? 'var(--b9)' : 'var(--s11)'; };
@@ -1456,7 +1534,7 @@ function renderLesson(c, lesson) {
 
   if (_replyParentId && window._savedReplyAuthorName) {
     replyIndicator.style.display = 'flex';
-    replyIndicator.innerHTML = '<span><i class="fa-solid fa-reply"></i> ' + tr('knowledge.replying_to', 'Đang phản hồi <b>{name}</b>').replace('{name}', window._savedReplyAuthorName) + '</span>' +
+    replyIndicator.innerHTML = '<span><i class="ph ph-arrow-u-up-left"></i> ' + tr('knowledge.replying_to', 'Đang phản hồi <b>{name}</b>').replace('{name}', window._savedReplyAuthorName) + '</span>' +
       '<span style="cursor:pointer; font-size:18px;" onclick="window._cancelReply()">&times;</span>';
   }
 
@@ -1464,10 +1542,10 @@ function renderLesson(c, lesson) {
   var toolbar = document.createElement('div');
   toolbar.style.cssText = 'background: var(--s2); border-bottom: 1px solid var(--s3); padding: 6px 12px; display: flex; gap: 2px; align-items: center;';
   var tbBtns = [
-    { icon: 'fa-bold', title: 'In đậm (Ctrl+B)', cmd: 'bold' },
-    { icon: 'fa-italic', title: 'In nghiêng (Ctrl+I)', cmd: 'italic' },
+    { icon: 'ph ph-text-bolder', title: 'In đậm (Ctrl+B)', cmd: 'bold' },
+    { icon: 'ph ph-text-italic', title: 'In nghiêng (Ctrl+I)', cmd: 'italic' },
     null,
-    { icon: 'fa-square-root-variable', title: 'Công thức Toán (LaTeX)', cmd: 'math' }
+    { icon: 'ph ph-math-operations', title: 'Công thức Toán (LaTeX)', cmd: 'math' }
   ];
   tbBtns.forEach(function(btn) {
     if (!btn) {
@@ -1480,7 +1558,7 @@ function renderLesson(c, lesson) {
     b.type = 'button';
     b.title = btn.title;
     b.style.cssText = 'border:none; background:transparent; cursor:pointer; color:var(--s11); font-size:14px; padding:5px 8px; border-radius:4px; transition:background 0.15s;';
-    b.innerHTML = '<i class="fa-solid ' + btn.icon + '"></i>';
+    b.innerHTML = '<i class="' + btn.icon + '"></i>';
     b.onmouseenter = function(){ this.style.background = 'var(--s3)'; };
     b.onmouseleave = function(){ this.style.background = 'transparent'; };
     b.onclick = function(e) {
@@ -1502,36 +1580,65 @@ function renderLesson(c, lesson) {
   ceStyle.innerHTML = '[contenteditable="true"]:empty:before { content: attr(data-placeholder); color: var(--s9); pointer-events: none; display: block; }';
   document.head.appendChild(ceStyle);
 
+  // -- Textarea wrapper (chứa textarea + nút send) --
+  var textareaWrap = document.createElement('div');
+  textareaWrap.style.cssText = 'position:relative; background:var(--s1);';
+
   var textarea = document.createElement('div');
   textarea.id = 'comment-textarea';
   textarea.contentEditable = true;
   textarea.setAttribute('data-placeholder', _replyParentId ? (tr('knowledge.reply_to', 'Phản hồi ') + window._savedReplyAuthorName + '...') : tr('knowledge.write_comment', 'Viết bình luận hoặc đặt câu hỏi...'));
-  textarea.style.cssText = 'width:100%; min-height:100px; max-height:300px; overflow-y:auto; padding:14px; border:none; outline:none; font-family:var(--font); font-size:0.95rem; color:var(--s12); background:var(--s1); line-height:1.5; box-sizing:border-box;';
+  textarea.style.cssText = 'width:100%; min-height:100px; max-height:300px; overflow-y:auto; padding:14px; padding-bottom:44px; border:none; outline:none; font-family:var(--font); font-size:0.95rem; color:var(--s12); background:transparent; line-height:1.6; box-sizing:border-box;';
   if (window._savedCommentText) textarea.innerHTML = window._savedCommentText;
-  textarea.oninput = function() { window._savedCommentText = this.innerHTML; };
-  editor.appendChild(textarea);
 
-  var editorFooter = document.createElement('div');
-  editorFooter.style.cssText = 'padding:10px 12px; display:flex; justify-content:flex-end; border-top:1px solid var(--s3); background:var(--s2);';
+  // -- Send button (icon nhỏ, nằm góc dưới phải trong textarea) --
   var sendBtn = document.createElement('button');
-  sendBtn.style.cssText = 'background:#3b82f6; color:#fff; border:none; padding:8px 18px; border-radius:6px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s;';
-  sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"\></i> ' + tr('knowledge.send_comment', 'Gửi bình luận');
-  sendBtn.onmouseenter = function(){ this.style.background='#2563eb'; this.style.transform='translateY(-1px)'; };
-  sendBtn.onmouseleave = function(){ this.style.background='#3b82f6'; this.style.transform=''; };
-  
+  sendBtn.style.cssText = 'position:absolute; bottom:8px; right:10px; width:32px; height:32px; border-radius:8px; border:none; background:transparent; color:var(--s8); cursor:default; display:flex; align-items:center; justify-content:center; transition:all 0.15s cubic-bezier(0.4,0,0.2,1); font-size:16px; pointer-events:none;';
+  sendBtn.innerHTML = '<i class="ph ph-paper-plane-right"></i>';
+  sendBtn.title = tr('knowledge.send_comment', 'Gửi bình luận');
+  sendBtn.disabled = true;
+
+  function _updateSendState() {
+    var content = textarea.innerHTML.replace(/<br>/g, '').trim();
+    var hasContent = content.length > 0;
+    if (hasContent) {
+      sendBtn.style.background = 'var(--primary-base, #3b82f6)';
+      sendBtn.style.color = '#fff';
+      sendBtn.style.cursor = 'pointer';
+      sendBtn.style.pointerEvents = 'auto';
+      sendBtn.disabled = false;
+    } else {
+      sendBtn.style.background = 'transparent';
+      sendBtn.style.color = 'var(--s8)';
+      sendBtn.style.cursor = 'default';
+      sendBtn.style.pointerEvents = 'none';
+      sendBtn.disabled = true;
+    }
+  }
+
+  textarea.oninput = function() {
+    window._savedCommentText = this.innerHTML;
+    _updateSendState();
+  };
+  // Khởi tạo trạng thái ban đầu
+  setTimeout(_updateSendState, 50);
+
+  textareaWrap.appendChild(textarea);
+  textareaWrap.appendChild(sendBtn);
+  editor.appendChild(textareaWrap);
+
   function _doSendComment() {
     var content = textarea.innerHTML;
-    // Strip trailing brs which some browsers inject
     content = content.replace(/<br>$/, '').trim();
     if (!content) return;
-    var token = localStorage.getItem('user_token');
-    if (!token) { (window.App && window.App.showToast ? window.App.showToast('Vui lòng đăng nhập để bình luận.', 'warning') : alert('Vui lòng đăng nhập để bình luận.')); return; }
+    var token = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
+    if (!token) { window.App.showToast('Vui lòng đăng nhập để bình luận.', 'warning'); return; }
     
     // Loading state
-    var origHTML = sendBtn.innerHTML;
-    sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + tr('knowledge.sending', 'Đang gửi...');
+    sendBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i>';
     sendBtn.disabled = true;
-    sendBtn.style.opacity = '0.7';
+    sendBtn.style.opacity = '0.6';
+    sendBtn.style.pointerEvents = 'none';
     
     var currentTopicId = 't1';
     var tNode = AppState.path.find(n => n.type === 'topic');
@@ -1552,37 +1659,35 @@ function renderLesson(c, lesson) {
     .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.success) {
-          sendBtn.innerHTML = '<i class="fa-solid fa-check"></i> ' + tr('knowledge.sent', 'Đã gửi!');
-          sendBtn.style.background = '#22c55e';
+          sendBtn.innerHTML = '<i class="ph ph-check"></i>';
+          sendBtn.style.background = 'var(--success-base, #22c55e)';
+          sendBtn.style.color = '#fff';
+          sendBtn.style.opacity = '1';
           setTimeout(function(){
-            sendBtn.innerHTML = origHTML;
-            sendBtn.disabled = false;
-            sendBtn.style.opacity = '1';
-            sendBtn.style.background = '#3b82f6';
+            sendBtn.innerHTML = '<i class="ph ph-paper-plane-right"></i>';
+            _updateSendState();
           }, 1200);
           
           textarea.innerHTML = '';
+          window._savedCommentText = '';
           _replyParentId = null;
           replyIndicator.style.display = 'none';
           loadComments();
         } else {
-          sendBtn.innerHTML = origHTML;
-          sendBtn.disabled = false;
+          sendBtn.innerHTML = '<i class="ph ph-paper-plane-right"></i>';
           sendBtn.style.opacity = '1';
-          sendBtn.style.background = '#3b82f6';
-          (window.App && window.App.showToast ? window.App.showToast(data.message || 'Lỗi khi gửi', 'warning') : alert(data.message || 'Lỗi khi gửi'));
+          _updateSendState();
+          window.App.showToast(data.message || 'Lỗi khi gửi', 'warning');
         }
       })
       .catch(function(err){
       console.error(err);
-      sendBtn.innerHTML = origHTML;
-      sendBtn.disabled = false;
+      sendBtn.innerHTML = '<i class="ph ph-paper-plane-right"></i>';
       sendBtn.style.opacity = '1';
+      _updateSendState();
     });
   }
   sendBtn.onclick = _doSendComment;
-  editorFooter.appendChild(sendBtn);
-  editor.appendChild(editorFooter);
   commentSection.appendChild(editor);
 
   var commentsContainer = document.createElement('div');
@@ -1648,7 +1753,7 @@ function renderLesson(c, lesson) {
     if (tNode) currentTopicId = tNode.id;
     
     fetch(App.API_BASE + '/api/comment/topic/' + currentTopicId + '/lesson/' + lesson.num + '?sort=' + (document.getElementById('comment-sort-select') ? document.getElementById('comment-sort-select').value : 'latest'), {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('user_token') }
+      headers: { 'Authorization': 'Bearer ' + (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token')) }
     })
       .then(function(r){ return r.json(); })
       .then(function(data){
@@ -1684,7 +1789,7 @@ function renderLesson(c, lesson) {
               : '<div style="width:36px; height:36px; border-radius:50%; background:' + uColor + '; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.85rem; flex-shrink:0;">' + ui + '</div>';
             
             var pinContainerStyle = isGlobalPin ? 'position: relative; background: rgba(59, 130, 246, 0.05); border: 1px solid var(--b9); border-radius: 8px; margin-bottom: 24px; padding: 16px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);' : 'position: relative; margin-bottom: 24px;';
-            var pinIcon = isGlobalPin ? '<div style="position: absolute; top: 16px; right: 16px; color: var(--b9); font-size: 1.2rem; opacity: 0.8;" title="Top Comment"><i class="fa-solid fa-award"></i></div>' : '';
+            var pinIcon = isGlobalPin ? '<div style="position: absolute; top: 16px; right: 16px; color: var(--b9); font-size: 1.2rem; opacity: 0.8;" title="Top Comment"><i class="ph ph-medal"></i></div>' : '';
 
             html += '<div style="' + pinContainerStyle + '">' +
               pinIcon +
@@ -1698,13 +1803,13 @@ function renderLesson(c, lesson) {
                   '<div style="display:flex; gap:12px; font-size:0.8rem; color:var(--s9); align-items:center;">' +
                     '<span>' + formatTime(pc.created_at) + '</span>' +
                     '<span id="upvote-btn-' + pc.id + '" style="cursor:pointer; transition:color 0.15s; ' + (pc.is_upvoted_by_me ? 'color:var(--b9); font-weight:bold;' : '') + '" onclick="window._toggleUpvote(\'' + pc.id + '\')">' +
-                      '<i class="fa-solid fa-arrow-up" style="margin-right:4px;"></i><span id="upvote-count-' + pc.id + '">' + (pc.upvote_count || 0) + '</span></span>' +
+                      '<i class="ph ph-arrow-up" style="margin-right:4px;"></i><span id="upvote-count-' + pc.id + '">' + (pc.upvote_count || 0) + '</span></span>' +
                     '<span style="cursor:pointer; transition:color 0.15s;" onmouseover="this.style.color=\'var(--b9)\'" onmouseout="this.style.color=\'\'" onclick="window._startReply(\'' + pc.id + '\',\'' + pc.author_name.replace(/'/g,"") + '\')">' +
-                      '<i class="fa-solid fa-reply" style="margin-right:4px;"></i>' + tr('knowledge.reply', 'Phản hồi') + '</span>' +
+                      '<i class="ph ph-arrow-u-up-left" style="margin-right:4px;"></i>' + tr('knowledge.reply', 'Phản hồi') + '</span>' +
                   '</div>';
             
             if (pc.replies && pc.replies.length > 0) {
-              html += '<div style="margin-top:12px; font-size:0.85rem; font-weight:600; color:var(--b9); cursor:pointer; display:inline-flex; align-items:center; gap:6px; user-select:none;" onclick="window._toggleReplies(\'' + pc.id + '\')"><i class="fa-solid fa-chevron-down" id="reply-icon-' + pc.id + '"></i> ' + tr('knowledge.view_replies', 'Xem {count} phản hồi').replace('{count}', pc.replies.length) + '</div>';
+              html += '<div style="margin-top:12px; font-size:0.85rem; font-weight:600; color:var(--b9); cursor:pointer; display:inline-flex; align-items:center; gap:6px; user-select:none;" onclick="window._toggleReplies(\'' + pc.id + '\')"><i class="ph ph-caret-down" id="reply-icon-' + pc.id + '"></i> ' + tr('knowledge.view_replies', 'Xem {count} phản hồi').replace('{count}', pc.replies.length) + '</div>';
               html += '<div id="replies-container-' + pc.id + '" style="display:none; padding-top:4px;">';
               pc.replies.sort(function(a,b){ return (b.upvote_count||0) - (a.upvote_count||0); });
               pc.replies.forEach(function(cc){
@@ -1724,7 +1829,7 @@ function renderLesson(c, lesson) {
                     '<div style="display:flex; gap:12px; font-size:0.8rem; color:var(--s9); align-items:center;">' +
                       '<span>' + formatTime(cc.created_at) + '</span>' +
                       '<span id="upvote-btn-' + cc.id + '" style="cursor:pointer; transition:color 0.15s; ' + (cc.is_upvoted_by_me ? 'color:var(--b9); font-weight:bold;' : '') + '" onclick="window._toggleUpvote(\'' + cc.id + '\')">' +
-                        '<i class="fa-solid fa-arrow-up" style="margin-right:4px;"></i><span id="upvote-count-' + cc.id + '">' + (cc.upvote_count || 0) + '</span></span>' +
+                        '<i class="ph ph-arrow-up" style="margin-right:4px;"></i><span id="upvote-count-' + cc.id + '">' + (cc.upvote_count || 0) + '</span></span>' +
                     '</div>' +
                   '</div>' +
                 '</div>';
@@ -1771,10 +1876,10 @@ function renderLesson(c, lesson) {
     if (c) {
       if (c.style.display === 'none') {
         c.style.display = 'block';
-        if (i) i.className = 'fa-solid fa-chevron-up';
+        if (i) i.className = 'ph ph-caret-up';
       } else {
         c.style.display = 'none';
-        if (i) i.className = 'fa-solid fa-chevron-down';
+        if (i) i.className = 'ph ph-caret-down';
       }
     }
   };
@@ -1790,7 +1895,7 @@ function renderLesson(c, lesson) {
     window._savedReplyParentId = parentId;
     window._savedReplyAuthorName = authorName;
     replyIndicator.style.display = 'flex';
-    replyIndicator.innerHTML = '<span><i class="fa-solid fa-reply"></i> ' + tr('knowledge.replying_to', 'Đang phản hồi <b>{name}</b>').replace('{name}', authorName) + '</span>' +
+    replyIndicator.innerHTML = '<span><i class="ph ph-arrow-u-up-left"></i> ' + tr('knowledge.replying_to', 'Đang phản hồi <b>{name}</b>').replace('{name}', authorName) + '</span>' +
       '<span style="cursor:pointer; font-size:18px;" onclick="window._cancelReply()">&times;</span>';
     textarea.setAttribute('data-placeholder', tr('knowledge.reply_to', 'Phản hồi ') + authorName + '...');
     textarea.focus();
@@ -1825,7 +1930,7 @@ function renderLesson(c, lesson) {
 
     fetch(App.API_BASE + '/api/comment/upvote', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('user_token') },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token')) },
       body: JSON.stringify({ comment_id: parseInt(commentId) })
     })
     .then(r => r.json())
@@ -1833,7 +1938,7 @@ function renderLesson(c, lesson) {
       if(data.success) {
         loadComments(); // reload to update UI easily
       } else {
-        (window.App && window.App.showToast ? window.App.showToast(data.message || 'Lỗi khi thả upvote', 'warning') : alert(data.message || 'Lỗi khi thả upvote'));
+        window.App.showToast(data.message || 'Lỗi khi thả upvote', 'warning');
       }
     })
     .catch(e => console.error(e));
@@ -1894,7 +1999,7 @@ function renderQuizSetup(c) {
   function fetchMaxQuestions(callback) {
       var topics = Object.keys(selectedTopics);
       var lessons = Object.keys(selectedLessons);
-      var token = localStorage.getItem('user_token');
+      var token = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
       
       if (!token) return;
 
@@ -1935,7 +2040,7 @@ function renderQuizSetup(c) {
 
       // Small dropdown arrow indicator
       var arrow = document.createElement('i');
-      arrow.className = 'fa-solid fa-chevron-down';
+      arrow.className = 'ph ph-caret-down';
       arrow.style.cssText = 'font-size: 0.7rem; color: var(--s8); transition: transform 0.2s;';
       
       summary.appendChild(topicCheckbox);
@@ -1963,7 +2068,7 @@ function renderQuizSetup(c) {
           secSummary.style.cssText = 'display:flex; align-items:center; gap:8px; cursor: pointer; list-style: none; user-select: none; padding: 4px 0;';
           
           var secArrow = document.createElement('i');
-          secArrow.className = 'fa-solid fa-chevron-right';
+          secArrow.className = 'ph ph-caret-right';
           secArrow.style.cssText = 'font-size: 0.6rem; color: var(--s8); transition: transform 0.2s; width: 12px; text-align: center;';
           
           var secCheckbox = document.createElement('input');
@@ -2091,7 +2196,7 @@ function renderQuizSetup(c) {
   confirmScopeBtn.onclick = function() {
     var topics = Object.keys(selectedTopics);
     if (topics.length === 0) {
-      (window.App && window.App.showToast ? window.App.showToast('Vui lòng chọn ít nhất một chủ đề.', 'warning') : alert('Vui lòng chọn ít nhất một chủ đề.'));
+      window.App.showToast('Vui lòng chọn ít nhất một chủ đề.', 'warning');
       return;
     }
     
@@ -2243,8 +2348,8 @@ function renderQuizSetup(c) {
   step2Container.appendChild(modeGrid);
 
   var modes = [
-    { value: 'PRACTICE', label: 'Luyện tập', desc: 'Xem đáp án ngay sau mỗi câu', icon: 'fa-solid fa-dumbbell' },
-    { value: 'EXAM', label: 'Thi thật', desc: 'Nộp ' + tr('knowledge.lesson_prefix', 'Bài') + ' mới biết kết quả', icon: 'fa-solid fa-graduation-cap' }
+    { value: 'PRACTICE', label: 'Luyện tập', desc: 'Xem đáp án ngay sau mỗi câu', icon: 'ph ph-barbell' },
+    { value: 'EXAM', label: 'Thi thật', desc: 'Nộp ' + tr('knowledge.lesson_prefix', 'Bài') + ' mới biết kết quả', icon: 'ph ph-graduation-cap' }
   ];
   var selectedMode = { value: 'PRACTICE' };
   var modeCards = [];
@@ -2332,11 +2437,11 @@ function renderQuizSetup(c) {
     summaryPanel.innerHTML = `
       <div style="font-weight:700; font-size:1.1rem; margin-bottom:16px; color:var(--b9);">Kiểm tra lại thiết lập của bạn</div>
       <div style="display:flex; flex-direction:column; gap:10px;">
-        <div style="display:flex; align-items:center; gap:12px;"><i class="fa-solid fa-book-open" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Phạm vi: <b>${lCount} ' + tr('knowledge.lessons_count', 'Số bài học') + '</b> (thuộc ${tCount} chủ đề)</span></div>
-        <div style="display:flex; align-items:center; gap:12px;"><i class="fa-solid fa-layer-group" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Độ khó: <b>${diffStr}</b></span></div>
-        <div style="display:flex; align-items:center; gap:12px;"><i class="fa-solid fa-list-ol" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Số lượng: <b>${countInput.value}</b> <span style="font-size:0.8rem;color:var(--s8);">${maxStr}</span></span></div>
-        <div style="display:flex; align-items:center; gap:12px;"><i class="fa-solid fa-hourglass-half" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Thời gian: <b>${timeStr}</b></span></div>
-        <div style="display:flex; align-items:center; gap:12px;"><i class="fa-solid fa-gamepad" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Chế độ: <b>${modeStr}</b></span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><i class="ph ph-book-open" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Phạm vi: <b>${lCount} ' + tr('knowledge.lessons_count', 'Số bài học') + '</b> (thuộc ${tCount} chủ đề)</span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><i class="ph ph-stack" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Độ khó: <b>${diffStr}</b></span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><i class="ph ph-list-numbers" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Số lượng: <b>${countInput.value}</b> <span style="font-size:0.8rem;color:var(--s8);">${maxStr}</span></span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><i class="ph ph-hourglass" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Thời gian: <b>${timeStr}</b></span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><i class="ph ph-game-controller" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Chế độ: <b>${modeStr}</b></span></div>
       </div>
     `;
     
@@ -2356,7 +2461,7 @@ function renderQuizSetup(c) {
 
   startBtn.onclick = function() {
     var topics = Object.keys(selectedTopics);
-    var token = localStorage.getItem('user_token');
+    var token = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
     if (!token) {
       showToast('Vui lòng đăng nhập để làm bài.');
       return;
@@ -2453,7 +2558,7 @@ function renderQuizRoom(c, quizData) {
   sidebar.appendChild(timerBox);
 
   var timerIcon = document.createElement('div');
-  timerIcon.innerHTML = '<i class="fa-regular fa-clock" style="color:var(--s9);font-size:1rem;margin-bottom:6px;"></i>';
+  timerIcon.innerHTML = '<i class="ph ph-clock" style="color:var(--s9);font-size:1rem;margin-bottom:6px;"></i>';
   timerBox.appendChild(timerIcon);
 
   var timerDisplay = document.createElement('div');
@@ -2577,7 +2682,7 @@ function renderQuizRoom(c, quizData) {
   main.appendChild(bottomNav);
 
   var prevBtn = document.createElement('button');
-  prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left" style="margin-right:6px;"></i>Câu trước';
+  prevBtn.innerHTML = '<i class="ph ph-caret-left" style="margin-right:6px;"></i>Câu trước';
   prevBtn.style.cssText = 'padding:10px 20px; border-radius:var(--radius); border:1px solid var(--s3); background:var(--s2); color:var(--s9); font-size:0.85rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:500;';
   prevBtn.onclick = function() { if (currentIdx > 0) { currentIdx--; renderQuestion(); } };
   bottomNav.appendChild(prevBtn);
@@ -2588,14 +2693,12 @@ function renderQuizRoom(c, quizData) {
   submitBtn.onclick = function() {
     var answeredCount = Object.keys(answers).length;
     if (answeredCount < totalQ) {
-      if (!confirm('Bạn còn ' + (totalQ - answeredCount) + ' câu chưa trả lời. Nộp bài?')) return;
-    }
-    doSubmit();
+      if(window.App && window.App.showConfirm){window.App.showConfirm('Bạn còn ' + (totalQ - answeredCount) + ' câu chưa trả lời. Nộp bài?', doSubmit);}else{doSubmit();} return; } doSubmit();
   };
   bottomNav.appendChild(submitBtn);
 
   var nextBtn = document.createElement('button');
-  nextBtn.innerHTML = 'Câu sau<i class="fa-solid fa-chevron-right" style="margin-left:6px;"></i>';
+  nextBtn.innerHTML = 'Câu sau<i class="ph ph-caret-right" style="margin-left:6px;"></i>';
   nextBtn.style.cssText = 'padding:10px 20px; border-radius:var(--radius); border:1px solid var(--s3); background:var(--s2); color:var(--s9); font-size:0.85rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:500;';
   nextBtn.onclick = function() { if (currentIdx < totalQ - 1) { currentIdx++; renderQuestion(); } };
   bottomNav.appendChild(nextBtn);
@@ -2739,7 +2842,7 @@ function renderQuizRoom(c, quizData) {
       answerList.push({ question_id: parseInt(qid), selected_answer: answers[qid] });
     }
 
-    var token = localStorage.getItem('user_token');
+    var token = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
     fetch(App.API_BASE + '/api/quiz/' + quizId + '/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -2751,7 +2854,7 @@ function renderQuizRoom(c, quizData) {
         window._quizActive = false;
         renderResult(data);
       } else {
-        (window.App && window.App.showToast ? window.App.showToast(data.message || 'Lỗi khi nộp bài.', 'warning') : alert(data.message || 'Lỗi khi nộp bài.'));
+        window.App.showToast(data.message || 'Lỗi khi nộp bài.', 'warning');
         submitted = false;
         submitBtn.disabled = false;
         submitBtn.textContent = 'Nộp bài';
@@ -2760,7 +2863,7 @@ function renderQuizRoom(c, quizData) {
     })
     .catch(function(err) {
       console.error(err);
-      (window.App && window.App.showToast ? window.App.showToast('Lỗi kết nối.', 'warning') : alert('Lỗi kết nối.'));
+      window.App.showToast('Lỗi kết nối.', 'warning');
       submitted = false;
       submitBtn.disabled = false;
       submitBtn.textContent = 'Nộp bài';
@@ -2897,7 +3000,7 @@ function initGraph() {
   if (gbc) {
     gbc.innerHTML = `
       <a class="bc-link" style="cursor:pointer;" onclick="navigateBackTo(0)">${tr('knowledge.library', 'Thư viện')}</a>
-      <i class="fa-solid fa-chevron-right" style="font-size:0.6rem; color:var(--s6); margin:0 8px;"></i>
+      <i class="ph ph-caret-right" style="font-size:0.6rem; color:var(--s6); margin:0 8px;"></i>
       <span class="bc-cur">${tr('knowledge.title', 'Không gian Tri thức')}</span>
     `;
   }
@@ -3042,7 +3145,7 @@ if(lgBar && D.topics) {
   D.topics.forEach((t) => {
     const g = t.id || "t1";
     const c = GROUP_COLORS[g].stroke;
-    lgHtml += `<span style="color: ${c};"><i class="fa-solid fa-circle" style="font-size: 11px; margin-right: 6px;"></i> ${tr('library_terms.' + t.id, t.title)}</span>`;
+    lgHtml += `<span style="color: ${c};"><i class="ph ph-circle" style="font-size: 11px; margin-right: 6px;"></i> ${tr('library_terms.' + t.id, t.title)}</span>`;
   });
   lgBar.innerHTML = lgHtml;
 }
@@ -3127,7 +3230,7 @@ function initZP() {
     if (!zoomHint) {
       zoomHint = document.createElement('div');
       zoomHint.id = 'zoom-hint';
-      zoomHint.innerHTML = tr('knowledge.zoom_hint', '<i class="fa-solid fa-circle-info"></i> Giữ <b>Ctrl</b> và cuộn chuột để Thu phóng sơ đồ');
+      zoomHint.innerHTML = tr('knowledge.zoom_hint', '<i class="ph ph-info"></i> Giữ <b>Ctrl</b> và cuộn chuột để Thu phóng sơ đồ');
       zoomHint.style.cssText = 'position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.85); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 10; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);';
       svg.parentElement.appendChild(zoomHint);
     }
@@ -3520,9 +3623,9 @@ function getPathWithConstraints(s, e, avoidIds = [], includeIds = []) {
 
 function runPath() {
   const s = cbStart.value, e = cbEnd.value;
-  if (s === e) return (window.App && window.App.showToast ? window.App.showToast('ĐiỒm bắt �ầu và kết thúc trùng nhau.', 'warning') : alert('ĐiỒm bắt �ầu và kết thúc trùng nhau.'));
+  if (s === e) return window.App.showToast('ĐiỒm bắt �ầu và kết thúc trùng nhau.', 'warning');
   const res = getPathWithConstraints(s, e, cbAvoid.value, cbInclude.value);
-  if (!res) return (window.App && window.App.showToast ? window.App.showToast('Không tìm thấy l�" trình phù hợp.', 'warning') : alert('Không tìm thấy l�" trình phù hợp.'));
+  if (!res) return window.App.showToast('Không tìm thấy l�" trình phù hợp.', 'warning');
   activePath = res.path;
   pinnedNode = null;
   document.getElementById('btn-reset').style.display = 'flex';
@@ -3537,7 +3640,7 @@ function runPath() {
   const c = document.getElementById('pf-cost');
   c.style.display = 'flex';
   const costText = tr('knowledge.cost', 'Tải trọng');
-  c.innerHTML = `<i class="fa-solid fa-bolt" style="margin-right:6px"></i> ${costText} ($W_u$): ${res.cost.toFixed(2)}`;
+  c.innerHTML = `<i class="ph ph-lightning" style="margin-right:6px"></i> ${costText} ($W_u$): ${res.cost.toFixed(2)}`;
   
   updateVisualState();
   refreshLegend();
@@ -3891,7 +3994,7 @@ if (document.getElementById('cb-start')) {
     let html = '';
     
     html += '<div class="side-label" style="padding: 16px 16px 8px; font-weight: 700; font-size: 0.72rem; color: var(--s9); text-transform: uppercase; letter-spacing: 0.5px;">' + tr('knowledge.library', 'Library') + '</div>';
-    html += '<div class="side-item active" onclick="go(\'root\', this)"><i class="fa-solid fa-compass" style="margin-right: 8px;"></i>' + tr('knowledge.explore_library', 'Khám phá Thư viện') + '</div>';
+    html += '<div class="side-item active" onclick="go(\'root\', this)"><i class="ph ph-compass" style="margin-right: 8px;"></i>' + tr('knowledge.explore_library', 'Khám phá Thư viện') + '</div>';
     
     html += '<div class="side-label" style="padding: 16px 16px 8px; font-weight: 700; font-size: 0.72rem; color: var(--s9); text-transform: uppercase; letter-spacing: 0.5px;">' + tr('knowledge.topics', 'Topics') + '</div>';
 
@@ -3899,7 +4002,7 @@ if (document.getElementById('cb-start')) {
       html += '<div class="topic-group">';
       html += '  <div class="topic-head" onclick="this.parentElement.classList.toggle(\'open\')">';
       html += '    <span>' + tr('library_terms.' + t.id, t.title) + '</span>';
-      html += '    <i class="fa-solid fa-chevron-down"></i>';
+      html += '    <i class="ph ph-caret-down"></i>';
       html += '  </div>';
       html += '  <div class="topic-list">';
       t.sections.forEach(s => {
@@ -3911,92 +4014,6 @@ if (document.getElementById('cb-start')) {
 
     list.innerHTML = html;
   });
-
-  // --- TEXT HIGHLIGHT TOOLBAR FEATURE ---
-document.addEventListener('DOMContentLoaded', () => {
-  const highlightToolbar = document.createElement('div');
-  highlightToolbar.id = 'text-highlight-toolbar';
-  highlightToolbar.style.cssText = 'position:absolute; display:none; background:var(--bg-card, #fff); border:1px solid var(--border-strong); box-shadow:0 4px 12px rgba(0,0,0,0.15); border-radius:8px; padding:4px; z-index:9999; align-items:center; gap:2px;';
-  
-  const hlBtn = document.createElement('button');
-  hlBtn.innerHTML = '<i class="fa-solid fa-highlighter" style="color:var(--primary-base);"></i> Bôi đậm';
-  hlBtn.style.cssText = 'background:none; border:none; cursor:pointer; font-family:var(--font); font-size:13px; font-weight:600; padding:6px 12px; border-radius:6px; color:var(--text-main); display:flex; align-items:center; gap:6px; transition:background 0.2s;';
-  hlBtn.onmouseover = () => hlBtn.style.background = 'var(--s2)';
-  hlBtn.onmouseout = () => hlBtn.style.background = 'transparent';
-  
-  const noteBtn = document.createElement('button');
-  noteBtn.innerHTML = '<i class="fa-solid fa-comment-dots" style="color:#f59e0b;"></i> Ghi chú';
-  noteBtn.style.cssText = hlBtn.style.cssText;
-  noteBtn.onmouseover = () => noteBtn.style.background = 'var(--s2)';
-  noteBtn.onmouseout = () => noteBtn.style.background = 'transparent';
-
-  highlightToolbar.appendChild(hlBtn);
-  highlightToolbar.appendChild(noteBtn);
-  document.body.appendChild(highlightToolbar);
-
-  let currentSelectionRange = null;
-
-  document.addEventListener('mouseup', (e) => {
-    if (highlightToolbar.contains(e.target)) return;
-
-    const selection = window.getSelection();
-    const text = selection.toString().trim();
-    
-    if (text.length > 0 && e.target.closest('#dd-lesson-body')) {
-      const range = selection.getRangeAt(0);
-      currentSelectionRange = range.cloneRange();
-      const rect = range.getBoundingClientRect();
-      
-      highlightToolbar.style.display = 'flex';
-      
-      // Calculate position
-      let top = rect.top + window.scrollY - 45;
-      let left = rect.left + window.scrollX + rect.width/2 - highlightToolbar.offsetWidth/2;
-      
-      // Ensure it doesn't go off screen
-      if (top < 0) top = rect.bottom + window.scrollY + 10;
-      
-      highlightToolbar.style.top = top + 'px';
-      // Fallback left if width is 0 before display
-      highlightToolbar.style.left = (rect.left + window.scrollX + rect.width/2 - 100) + 'px';
-      
-      // Correct left after display is block
-      setTimeout(() => {
-         highlightToolbar.style.left = (rect.left + window.scrollX + rect.width/2 - highlightToolbar.offsetWidth/2) + 'px';
-      }, 0);
-    } else {
-      highlightToolbar.style.display = 'none';
-    }
-  });
-
-  hlBtn.onclick = () => {
-    if (currentSelectionRange) {
-      const span = document.createElement('span');
-      // Thêm class và background highlight
-      span.className = 'user-highlighted-text';
-      span.style.backgroundColor = 'rgba(255, 235, 59, 0.4)';
-      span.style.borderBottom = '2px solid rgba(255, 235, 59, 0.8)';
-      span.style.borderRadius = '2px';
-      
-      try {
-        currentSelectionRange.surroundContents(span);
-      } catch(err) {
-        console.warn("Complex selection crossing nodes.");
-      }
-      window.getSelection().removeAllRanges();
-      highlightToolbar.style.display = 'none';
-    }
-  };
-  
-  noteBtn.onclick = () => {
-     hlBtn.click(); // highlight first
-     const commentInput = document.getElementById('new-comment-input');
-     if (commentInput) {
-        commentInput.scrollIntoView({behavior: 'smooth', block: 'center'});
-        setTimeout(() => commentInput.focus(), 500);
-     }
-  };
-});
 </script>
 
 <!-- UI Interactivity Script -->
@@ -4031,7 +4048,95 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+<script src="js/utils/toast.js"></script>
+  <script src="js/utils/global-search.js"></script>
+
+<!-- Search Highlight Script -->
+<script>
+window.highlightAndScroll = function(query, matchIndex) {
+    console.log("highlightAndScroll CALLED", {query, matchIndex});
+    if (!query) return;
+    const body = document.getElementById('dd-lesson-body');
+    if (!body) { console.error("highlightAndScroll: body not found"); return; }
+    
+    const term = query.toLowerCase();
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    
+    const nodesToReplace = [];
+    function traverse(node) {
+        if (node.nodeType === 3) { // Text node
+            if (node.nodeValue && node.nodeValue.toLowerCase().includes(term)) {
+                if (node.parentNode && !['SCRIPT', 'STYLE'].includes(node.parentNode.tagName)) {
+                    nodesToReplace.push(node);
+                }
+            }
+        } else if (node.nodeType === 1) { // Element node
+            if (!['SCRIPT', 'STYLE', 'MARK'].includes(node.tagName)) {
+                for (let i = 0; i < node.childNodes.length; i++) {
+                    traverse(node.childNodes[i]);
+                }
+            }
+        }
+    }
+    
+    traverse(body);
+    console.log("highlightAndScroll: found text nodes:", nodesToReplace.length);
+    
+    matchIndex = parseInt(matchIndex);
+    if (isNaN(matchIndex)) matchIndex = 0;
+    
+    let counter = 0;
+    let targetMark = null;
+    
+    nodesToReplace.forEach(n => {
+        let text = n.nodeValue;
+        if (regex.test(text)) {
+            regex.lastIndex = 0; // reset regex state after test()
+            const span = document.createElement('span');
+            span.innerHTML = text.replace(regex, (match) => {
+                if (counter === matchIndex) {
+                    counter++;
+                    return '<mark class="search-hl-target">' + match + '</mark>';
+                }
+                counter++;
+                return match;
+            });
+            n.parentNode.replaceChild(span, n);
+            const m = span.querySelector('mark.search-hl-target');
+            if (m) targetMark = m;
+        }
+    });
+    
+    console.log("highlightAndScroll: targetMark found?", !!targetMark);
+    
+    if (targetMark) {
+        console.log("highlightAndScroll: scrolling to target", targetMark);
+        setTimeout(() => {
+            targetMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+    } else {
+        console.warn("highlightAndScroll: no targetMark found");
+    }
+};
+
+(function initHighlightObserver() {
+    // DO NOT RUN OBSERVER. IT IS DEAD.
+})();
+</script>
+<style>
+mark.search-hl-target {
+    background-color: rgba(255, 204, 0, 0.6);
+    color: inherit;
+    border-radius: 2px;
+    animation: flashHl 2s ease-in-out;
+}
+@keyframes flashHl {
+    0%, 100% { background-color: rgba(255, 204, 0, 0.6); box-shadow: 0 0 8px rgba(255, 204, 0, 0.4); }
+    50% { background-color: rgba(255, 255, 0, 0.8); box-shadow: none; }
+}
+</style>
 </body>
+
 
 
 

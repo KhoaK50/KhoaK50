@@ -1,3 +1,5 @@
+import bleach
+from vectoria_api.middleware.auth import token_required as bookmark_token_required
 import os
 from dotenv import load_dotenv
 
@@ -8,7 +10,7 @@ def get_modern_email(title, greeting, paragraphs, btn_text=None, btn_link=None, 
     if btn_text and btn_link:
         btn_html = f"""
         <div style="margin: 32px 0;">
-            <a href="{btn_link}" style="display: inline-block; padding: 12px 24px; background-color: #0f172a; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">{btn_text}</a>
+            <a href="{btn_link}" style="display: inline-block; padding: 12px 24px; background-color: #0090ff; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">{btn_text}</a>
         </div>
         """
         if fallback_link:
@@ -24,7 +26,7 @@ def get_modern_email(title, greeting, paragraphs, btn_text=None, btn_link=None, 
     footer_text = "Nếu bạn không yêu cầu hành động này, vui lòng bỏ qua email này." if lang == 'vi' else "If you didn't request this action, please ignore this email."
     
     return f"""<!DOCTYPE html>
-<html>
+<html lang="{lang}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -33,7 +35,7 @@ def get_modern_email(title, greeting, paragraphs, btn_text=None, btn_link=None, 
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
     <tr>
       <td style="padding: 40px;">
-        <div style="font-weight: 800; font-size: 20px; color: #0f172a; letter-spacing: -0.5px; margin-bottom: 40px;">VECTORIA</div>
+        <div style="font-weight: 800; font-size: 20px; color: #0090ff; letter-spacing: -0.5px; margin-bottom: 40px;"><span translate="no" class="notranslate">VECTORIA</span></div>
         <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 0; margin-bottom: 24px;">{title}</h2>
         <p style="color: #334155; font-size: 15px; line-height: 1.6; margin-bottom: 16px;">{greeting}</p>
         {p_html}
@@ -41,7 +43,7 @@ def get_modern_email(title, greeting, paragraphs, btn_text=None, btn_link=None, 
         {sub_html}
         <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;">
         <p style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">{footer_text}</p>
-        <p style="color: #94a3b8; font-size: 12px; margin: 0;">&copy; 2026 Vectoria &mdash; vectoria.io.vn</p>
+        <p style="color: #94a3b8; font-size: 12px; margin: 0;">&copy; 2026 <span translate="no" class="notranslate">Vectoria</span> &mdash; vectoria.io.vn</p>
       </td>
     </tr>
   </table>
@@ -86,6 +88,8 @@ def tr_msg(msg_vi):
 
 from flask import Blueprint, request, jsonify, redirect
 import psycopg2
+from vectoria_api.database import get_db_connection, release_db_connection
+
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Import DB_URL tập trung từ file config
@@ -111,7 +115,7 @@ user_bp = Blueprint("user", __name__)
 
 def init_user_db():
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
 
         # 1. Bảng USER
@@ -169,8 +173,8 @@ def init_user_db():
             )
         ''')
         conn.commit()
-        conn.close()
-        print(">> [Database] Các bảng Users, LoginHistory, AccountActivations & PasswordResets đã sẵn sàng.")
+        release_db_connection(conn)
+        print(">> [Database] Users, LoginHistory, AccountActivations & PasswordResets ready.")
     except Exception as e:
         print(f">> [Database Error - User DB] {e}")
 
@@ -226,7 +230,7 @@ def register():
     hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
 
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # 1. Tạo tài khoản với language_pref
@@ -283,10 +287,10 @@ def register():
     except psycopg2.IntegrityError:
         return jsonify({"status": "error", "message": tr_msg("Email này đã được sử dụng!")}), 400
     except Exception as e:
-        return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
+        return jsonify({"status": "error", "message": f"System Error: {str(e)}"}), 500
     finally:
         if 'conn' in locals():
-            conn.close()
+            release_db_connection(conn)
 
 
 # --- API XÁC THỰC KÍCH HOẠT TÀI KHOẢN ---
@@ -298,7 +302,7 @@ def verify_account():
         return jsonify({"status": "error", "message": tr_msg("Thiếu mã xác thực!")}), 400
 
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
 
         # Kiểm tra token có hợp lệ không
@@ -324,10 +328,10 @@ def verify_account():
         conn.commit()
         return jsonify({"status": "success", "message": tr_msg("Tài khoản đã được kích hoạt thành công!")}), 200
     except Exception as e:
-        return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
+        return jsonify({"status": "error", "message": f"System Error: {str(e)}"}), 500
     finally:
         if 'conn' in locals():
-            conn.close()
+            release_db_connection(conn)
 
 
 # --- API ĐĂNG NHẬP TÀI KHOẢN ---
@@ -342,14 +346,14 @@ def login():
         return jsonify({"status": "error", "message": tr_msg("Vui lòng nhập Email và Mật khẩu!")}), 400
 
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
 
-        # Cập nhật ngôn ngữ ưu tiên mới nhất khi đăng nhập
-        c.execute("UPDATE users SET language_pref = %s WHERE email = %s", (language, email))
+        # Không cập nhật ngôn ngữ ưu tiên từ Frontend nữa. Chỉ lấy từ DB ra.
+
 
         # Tìm kiếm tài khoản bằng email
-        c.execute("SELECT id, display_name, email, password_hash, status, token_version, avatar_url FROM users WHERE email = %s", (email,))
+        c.execute("SELECT id, display_name, email, password_hash, status, token_version, avatar_url, language_pref FROM users WHERE email = %s", (email,))
         user = c.fetchone()
 
         if user and check_password_hash(user[3], password):
@@ -358,6 +362,7 @@ def login():
             user_status = user[4]
             token_version = user[5]
             avatar_url = user[6]
+            user_lang = user[7]
             
             if user_status == 'pending':
                 return jsonify({
@@ -406,13 +411,15 @@ def login():
                     (user_id, secure_token)
                 )
                 
-                SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
+                from vectoria_api.config import JWT_SECRET_KEY as SECRET_KEY
                 confirm_token = jwt.encode(
                     {"user_id": user_id, "device_info": device_info, "action": "confirm_device", "exp": datetime.now(timezone.utc) + timedelta(days=7)},
                     SECRET_KEY, 
                     algorithm="HS256"
                 )
 
+                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                user_agent = friendly_device
                 API_BASE = os.getenv("API_BASE", "https://visualization-rr5v.onrender.com")
                 secure_link = f"{API_BASE}/api/secure-account?token={secure_token}"
                 confirm_link = f"{API_BASE}/api/confirm-device?token={confirm_token}"
@@ -445,7 +452,7 @@ def login():
             conn.commit()
 
             # Trả về token JWT thực sự
-            SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
+            from vectoria_api.config import JWT_SECRET_KEY as SECRET_KEY
             real_token = jwt.encode(
                 {"user_id": user_id, "token_version": token_version, "exp": datetime.now(timezone.utc) + timedelta(days=7)},
                 SECRET_KEY, 
@@ -457,14 +464,15 @@ def login():
                 "token": real_token,
                 "display_name": display_name,
                 "email": user[2],
-                "avatar_url": avatar_url
+                "avatar_url": avatar_url,
+                "language": user_lang
             }), 200
         else:
             return jsonify({"status": "error", "message": tr_msg("Email hoặc mật khẩu không đúng!")}), 401
     except Exception as e:
-        return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
+        return jsonify({"status": "error", "message": f"System Error: {str(e)}"}), 500
     finally:
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 
 # --- API QUÊN MẬT KHẨU ---
@@ -478,7 +486,7 @@ def forgot_password():
         return jsonify({"status": "error", "message": tr_msg("Vui lòng nhập Email!")}), 400
 
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
 
         c.execute("SELECT id, display_name, language_pref FROM users WHERE email = %s", (email,))
@@ -534,9 +542,9 @@ def forgot_password():
 
         return jsonify({"status": "success", "message": tr_msg("Nếu email tồn tại, thư khôi phục đã được gửi.")}), 200
     except Exception as e:
-        return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
+        return jsonify({"status": "error", "message": f"System Error: {str(e)}"}), 500
     finally:
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 
 # --- API ĐẶT LẠI MẬT KHẨU MỚI ---
@@ -553,7 +561,7 @@ def reset_password():
         return jsonify({"status": "error", "message": tr_msg("Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ và số!")}), 400
 
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
 
         c.execute("""
@@ -577,9 +585,9 @@ def reset_password():
         conn.commit()
         return jsonify({"status": "success", "message": tr_msg("Thay đổi mật khẩu thành công! Tài khoản đã được bảo vệ.")}), 200
     except Exception as e:
-        return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
+        return jsonify({"status": "error", "message": f"System Error: {str(e)}"}), 500
     finally:
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 
 
@@ -592,7 +600,7 @@ def confirm_device():
         return "Thiếu mã xác nhận (Missing token)", 400
 
     try:
-        SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
+        from vectoria_api.config import JWT_SECRET_KEY as SECRET_KEY
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         
         if payload.get("action") != "confirm_device":
@@ -601,7 +609,7 @@ def confirm_device():
         user_id = payload.get("user_id")
         device_info = payload.get("device_info")
 
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
 
         # Cập nhật thiết bị thành is_trusted
@@ -614,10 +622,10 @@ def confirm_device():
     except jwt.InvalidTokenError:
         return "Mã xác nhận không hợp lệ (Invalid token)", 400
     except Exception as e:
-        return f"Lỗi hệ thống: {str(e)}", 500
+        return f"System Error: {str(e)}", 500
     finally:
         if 'conn' in locals():
-            conn.close()
+            release_db_connection(conn)
 
 # --- API BẢO VỆ TÀI KHOẢN KHI BỊ XÂM NHẬP ---
 @user_bp.route("/api/secure-account", methods=["GET"])
@@ -627,7 +635,7 @@ def secure_account():
         return "Thiếu mã bảo vệ (Missing token)", 400
 
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
 
         # Kiểm tra token hợp lệ
@@ -649,10 +657,10 @@ def secure_account():
         # Chuyển hướng người dùng đến giao diện đặt lại mật khẩu của frontend
         return redirect(f"{FRONTEND_URL}/login.html?reset_token={token}")
     except Exception as e:
-        return f"Lỗi hệ thống: {str(e)}", 500
+        return f"System Error: {str(e)}", 500
     finally:
         if 'conn' in locals():
-            conn.close()
+            release_db_connection(conn)
 
 # --- API ĐĂNG NHẬP BẰNG GOOGLE ---
 @user_bp.route("/api/google-login", methods=["POST"])
@@ -676,13 +684,13 @@ def google_login():
         google_id = user_info.get("sub")
         display_name = user_info.get("name", email.split('@')[0]) 
 
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
 
-        c.execute("SELECT id, status, auth_provider, token_version, avatar_url FROM users WHERE email = %s", (email,))
+        c.execute("SELECT id, status, auth_provider, token_version, avatar_url, language_pref FROM users WHERE email = %s", (email,))
         user = c.fetchone()
         
-        c.execute("UPDATE users SET language_pref = %s WHERE email = %s", (language, email))
+        # Không cập nhật language_pref từ frontend nếu user đã tồn tại
 
         if user:
             user_id = user[0]
@@ -690,6 +698,7 @@ def google_login():
             user_provider = user[2]
             token_version = user[3]
             avatar_url = user[4]
+            user_lang = user[5]
             
             if user_provider == 'local':
                 return jsonify({
@@ -720,6 +729,7 @@ def google_login():
             )
             user_id = c.fetchone()[0]
             token_version = 1
+            user_lang = language
 
         ip_address = request.remote_addr
         device_info = request.headers.get('User-Agent', 'Unknown Device')
@@ -756,13 +766,15 @@ def google_login():
                 (user_id, secure_token)
             )
             
-            SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
+            from vectoria_api.config import JWT_SECRET_KEY as SECRET_KEY
             confirm_token = jwt.encode(
                 {"user_id": user_id, "device_info": device_info, "action": "confirm_device", "exp": datetime.now(timezone.utc) + timedelta(days=7)},
                 SECRET_KEY, 
                 algorithm="HS256"
             )
 
+            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            user_agent = friendly_device
             API_BASE = os.getenv("API_BASE", "https://visualization-rr5v.onrender.com")
             secure_link = f"{API_BASE}/api/secure-account?token={secure_token}"
             confirm_link = f"{API_BASE}/api/confirm-device?token={confirm_token}"
@@ -791,8 +803,10 @@ def google_login():
                 lang="vi"
             )
                 send_auth_email(email, "Cảnh báo bảo mật — Vectoria", email_content)
+        
+        conn.commit()
 
-        SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
+        from vectoria_api.config import JWT_SECRET_KEY as SECRET_KEY
         real_token = jwt.encode(
             {"user_id": user_id, "token_version": token_version, "exp": datetime.now(timezone.utc) + timedelta(days=7)},
             SECRET_KEY, 
@@ -804,28 +818,30 @@ def google_login():
             "token": real_token,
             "display_name": display_name,
             "email": email,
-            "avatar_url": avatar_url
+            "avatar_url": avatar_url,
+            "language": user_lang
         }), 200
 
     except Exception as e:
-        return jsonify({"status": "error", "message": f"Lỗi hệ thống: {str(e)}"}), 500
+        return jsonify({"status": "error", "message": f"System Error: {str(e)}"}), 500
     finally:
         if 'conn' in locals():
-            conn.close()
+            release_db_connection(conn)
 
 # --- API LẤY DANH SÁCH BÀI ĐÃ LƯU (BOOKMARKS) ---
-@user_bp.route("/api/user/<int:user_id>/bookmarks", methods=["GET", "POST"])
+@user_bp.route("/api/user/bookmarks", methods=["GET", "POST"])
+@bookmark_token_required
 def manage_user_bookmarks(user_id):
     try:
         from psycopg2.extras import RealDictCursor
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         if request.method == "POST":
             data = request.json
             topic_id = data.get("topic_id")
             order_index = data.get("order_index")
-            note = data.get("note", "")
+            note = bleach.clean(data.get("note", ""))
             action = data.get("action") # "save" or "remove"
             
             if not topic_id or order_index is None:
@@ -870,25 +886,25 @@ def manage_user_bookmarks(user_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 
 # --- API BOOKMARK VỚI JWT AUTH (Frontend dùng endpoint này) ---
-from vectoria_api.middleware.auth import token_required as bookmark_token_required
+
 
 @user_bp.route("/api/bookmarks", methods=["GET", "POST"])
 @bookmark_token_required
 def manage_bookmarks_jwt(user_id):
     try:
         from psycopg2.extras import RealDictCursor
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         if request.method == "POST":
             data = request.json
             lesson_id = data.get("lesson_id")
             action = data.get("action")
-            note = data.get("note", "")
+            note = bleach.clean(data.get("note", ""))
             
             if not lesson_id:
                 return jsonify({"success": False, "message": "Missing lesson_id"}), 400
@@ -952,15 +968,16 @@ def manage_bookmarks_jwt(user_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 
 # --- API LẤY LỊCH SỬ HỌC TẬP (HISTORY) ---
-@user_bp.route("/api/user/<int:user_id>/history", methods=["GET"])
+@user_bp.route("/api/user/history", methods=["GET"])
+@bookmark_token_required
 def get_user_history(user_id):
     try:
         from psycopg2.extras import RealDictCursor
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         query = """
@@ -981,13 +998,14 @@ def get_user_history(user_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 # --- API ĐÁNH GIÁ & TỐI ƯU LỘ TRÌNH (GRAPH ROUTING) ---
 from vectoria_api.routes.routing_logic import calculate_optimal_path
 import json
 
-@user_bp.route("/api/user/<int:user_id>/routing/optimize", methods=["POST"])
+@user_bp.route("/api/user/routing/optimize", methods=["POST"])
+@bookmark_token_required
 def optimize_routing(user_id):
     try:
         is_new, proposed, notes = calculate_optimal_path(user_id)
@@ -1000,10 +1018,11 @@ def optimize_routing(user_id):
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
-@user_bp.route("/api/user/<int:user_id>/routing/accept", methods=["POST"])
+@user_bp.route("/api/user/routing/accept", methods=["POST"])
+@bookmark_token_required
 def accept_routing(user_id):
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Get proposed path
@@ -1031,12 +1050,13 @@ def accept_routing(user_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'c' in locals(): c.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
-@user_bp.route("/api/user/<int:user_id>/routing/rollback", methods=["POST"])
+@user_bp.route("/api/user/routing/rollback", methods=["POST"])
+@bookmark_token_required
 def rollback_routing(user_id):
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # We stored the old path in proposed_path during accept
@@ -1062,7 +1082,7 @@ def rollback_routing(user_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'c' in locals(): c.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 from vectoria_api.core.cloudinary_service import upload_avatar_to_cloudinary
 
@@ -1075,7 +1095,7 @@ def upload_avatar():
     token = auth_header.split(" ")[1]
     try:
         import os
-        SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026")
+        from vectoria_api.config import JWT_SECRET_KEY as SECRET_KEY
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         user_id = payload.get("user_id")
     except Exception as e:
@@ -1105,6 +1125,27 @@ def upload_avatar():
         return jsonify({"success": False, "message": "Failed to save avatar URL to database"}), 500
     finally:
         if 'c' in locals(): c.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
         
     return jsonify({"success": True, "avatar_url": secure_url})
+
+@user_bp.route('/api/user/language', methods=['POST'])
+@bookmark_token_required
+def update_user_language(user_id):
+    data = request.get_json()
+    language = data.get('language')
+    if not language:
+        return jsonify({'success': False, 'message': 'Missing language'}), 400
+    try:
+        from psycopg2 import connect
+        from vectoria_api.config import DB_URL
+        conn = connect(DB_URL)
+        c = conn.cursor()
+        c.execute('UPDATE users SET language_pref = %s WHERE id = %s', (language, user_id))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        if 'conn' in locals(): release_db_connection(conn)
+

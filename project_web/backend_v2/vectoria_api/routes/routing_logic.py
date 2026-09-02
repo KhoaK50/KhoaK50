@@ -1,5 +1,7 @@
 import json
 import psycopg2
+from vectoria_api.database import get_db_connection, release_db_connection
+
 import heapq
 from vectoria_api.config import DB_URL
 
@@ -34,7 +36,7 @@ def calculate_optimal_path(user_id):
     Returns: (is_new_proposal, proposed_path, reasoning_notes)
     """
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         c = conn.cursor()
 
         # 1. Get all lessons
@@ -175,4 +177,4 @@ def calculate_optimal_path(user_id):
         return False, [], []
     finally:
         if 'conn' in locals():
-            conn.close()
+            release_db_connection(conn)

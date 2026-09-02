@@ -46,7 +46,7 @@
       if (container && !document.getElementById('btnClearPaper')) {
         const btnClear = document.createElement('button');
         btnClear.id = 'btnClearPaper';
-        btnClear.innerHTML = '<i class="fa-solid fa-trash-can" style="margin-right: 6px;"></i> Xóa lịch sử';
+        btnClear.innerHTML = '<i class="ph ph-trash" style="margin-right: 6px;"></i> Xóa lịch sử';
         btnClear.style.cssText = `
           display: block; margin: 30px auto 0; padding: 10px 20px;
           background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444;
@@ -76,7 +76,7 @@
             font-family: 'Inter', sans-serif; text-align: center;
           `;
           box.innerHTML = `
-            <div style="font-size: 48px; color: #ef4444; margin-bottom: 16px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div style="font-size: 48px; color: #ef4444; margin-bottom: 16px;"><i class="ph ph-warning"></i></div>
             <h3 style="margin: 0 0 12px 0; color: var(--text-main, #111); font-size: 20px;">Xoá toàn bộ sổ tay?</h3>
             <p style="color: var(--text-muted, #666); font-size: 15px; margin-bottom: 24px; line-height: 1.5;">Hành động này sẽ xoá vĩnh viễn toàn bộ lịch sử các phép tính trong sổ tay của bạn. Bạn không thể khôi phục lại!</p>
             <div style="display: flex; gap: 12px; justify-content: center;">
@@ -126,7 +126,7 @@
       if (logArea) {
         logArea.innerHTML = `
           <div style="text-align: center; color: var(--text-muted); margin-top: 100px; font-style: italic; font-family: 'Inter', sans-serif;" id="paperPlaceholder">
-            <i class="fa-solid fa-pen-nib" style="font-size: 32px; margin-bottom: 15px; opacity: 0.5;"></i><br>
+            <i class="ph ph-pen-nib" style="font-size: 32px; margin-bottom: 15px; opacity: 0.5;"></i><br>
             Các thao tác toán học bạn thực hiện trên thanh công cụ sẽ được ghi chép tự động tại đây...
           </div>
         `;
@@ -339,7 +339,7 @@
           <div style="display: flex; align-items: center; gap: 12px;">
             <span style="font-family: 'Inter', sans-serif; font-size: 12px; color: var(--muted);">${log.time}</span>
             <button class="btn-del-log" onclick="window.App.PaperLogger.deleteLog(${log.id})" style="background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding: 4px;" title="Xoá log này">
-              <i class="fa-solid fa-times"></i>
+              <i class="ph ph-x"></i>
             </button>
           </div>
         </div>
@@ -362,7 +362,7 @@
           // Render a button to open the solution panel
           innerHTML += `
             <button class="btn-open-solution-log" onclick='window.App.PaperLogger.openSolution(${log.id})' style="margin-top: 12px; padding: 10px 16px; background: rgba(37, 99, 235, 0.1); color: var(--primary-base); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
-              <i class="fa-solid fa-file-invoice"></i> Xem Lời giải chi tiết
+              <i class="ph ph-invoice"></i> Xem Lời giải chi tiết
             </button>
           `;
         }
@@ -371,7 +371,7 @@
           // Render a button to play animation
           innerHTML += `
             <button class="btn-play-animation-log" onclick='window.App.PaperLogger.playAnimation(${log.id})' style="margin-top: 12px; padding: 10px 16px; background: rgba(16, 185, 129, 0.1); color: var(--success-base, #10b981); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; margin-left: 10px;">
-              <i class="fa-solid fa-play"></i> Khảo sát Đồ thị
+              <i class="ph ph-play"></i> Khảo sát Đồ thị
             </button>
           `;
         }

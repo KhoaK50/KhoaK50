@@ -1,6 +1,20 @@
 ﻿<!doctype html>
 <html lang="vi">
   <head>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#111113';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#fcfcfd';
+        }
+      } catch (e) {}
+    })();
+  </script>
     <!-- Google tag (gtag.js) -->
     <script
       async
@@ -17,12 +31,10 @@
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tài liệu tham khảo - Vectoria</title>
+    <title data-i18n="nav.title_docs">Vectoria</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png" />
 
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="css/footer.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@500;700&display=swap"
@@ -443,6 +455,7 @@
       }
     </style>
     <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/global-search.css">
 </head>
 
   <body>
@@ -471,25 +484,25 @@
 <header class="vec-topbar" id="globalTopbar">
   <div class="vec-topbar-left">
         <button class="vec-sidebar-toggle" id="globalMobileToggleBtn" title="Menu sidebar">
-          <i class="fa-solid fa-compass"></i>
+          <i class="ph ph-compass"></i>
         </button><a href="index.html" class="vec-brand-group">
       <img src="assets/images/logo+name.png" alt="Vectoria" onerror="this.src='assets/images/logo.png'">
     </a>
     
     <nav class="vec-nav-links">
-          <a href="index.html" class="vec-nav-link" id="navHome"><i class="fa-solid fa-house"></i> <span data-i18n="nav.home">Trang chủ</span></a>
-          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="fa-solid fa-layer-group"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
-          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="fa-solid fa-calculator"></i> <span data-i18n="nav.calc">Tính toán</span></a>
+          <a href="index.html" class="vec-nav-link" id="navHome"><i class="ph ph-house"></i> <span data-i18n="nav.home">Trang chủ</span></a>
+          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="ph ph-stack"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
+          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="ph ph-calculator"></i> <span data-i18n="nav.calc">Tính toán</span></a>
           
           <div class="vec-dropdown-container">
-            <span class="vec-nav-link"><i class="fa-solid fa-compass"></i> Khám phá <i class="fa-solid fa-chevron-down" style="font-size: 0.7em;"></i></span>
+            <span class="vec-nav-link"><i class="ph ph-compass"></i> Khám phá <i class="ph ph-caret-down" style="font-size: 0.7em;"></i></span>
             <div class="vec-dropdown-menu">
-              <a href="knowledge_info.html" class="vec-dropdown-item" data-i18n="nav.knowledge"><i class="fa-solid fa-graduation-cap"></i> Thư viện kiến thức</a>
-              <a href="hdsd.html" class="vec-dropdown-item" data-i18n="nav.manual"><i class="fa-solid fa-circle-question"></i> Hướng dẫn sử dụng</a>
-              <a href="tltk.html" class="vec-dropdown-item" data-i18n="nav.docs"><i class="fa-solid fa-file-pdf"></i> Tài liệu tham khảo</a>
+              <a href="knowledge_info.html" class="vec-dropdown-item" data-i18n="nav.knowledge"><i class="ph ph-graduation-cap"></i> Thư viện kiến thức</a>
+              <a href="hdsd.html" class="vec-dropdown-item" data-i18n="nav.manual"><i class="ph ph-question"></i> Hướng dẫn sử dụng</a>
+              <a href="tltk.html" class="vec-dropdown-item" data-i18n="nav.docs"><i class="ph ph-file-pdf"></i> Tài liệu tham khảo</a>
               <div class="dropdown-divider" style="height: 1px; background: var(--border-strong, #cbd5e1); margin: 5px 0;"></div>
-              <a href="about_us.html" class="vec-dropdown-item" data-i18n="nav.about"><i class="fa-solid fa-users"></i> Về chúng tôi</a>
-              <a href="contact.html" class="vec-dropdown-item" data-i18n="nav.contact"><i class="fa-solid fa-envelope"></i> Liên hệ</a>
+              <a href="about_us.html" class="vec-dropdown-item" data-i18n="nav.about"><i class="ph ph-users"></i> Về chúng tôi</a>
+              <a href="contact.html" class="vec-dropdown-item" data-i18n="nav.contact"><i class="ph ph-envelope"></i> Liên hệ</a>
             </div>
           </div>
         </nav>
@@ -497,12 +510,12 @@
   
   <div class="vec-topbar-right">
     <button class="vec-icon-btn" id="themeToggleBtn" title="Chuyển giao diện">
-          <i class="fa-solid fa-moon icon-light-mode"></i><i class="fa-solid fa-sun icon-dark-mode"></i>
+          <i class="ph ph-moon icon-light-mode"></i><i class="ph ph-sun icon-dark-mode"></i>
         </button>
 
         <div class="vec-dropdown-container right-align">
           <button class="vec-icon-btn" title="Ngôn ngữ">
-            <i class="fa-solid fa-globe"></i>
+            <i class="ph ph-globe"></i>
           </button>
           <div class="vec-dropdown-menu" style="min-width: 150px;">
             <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('vi')">Tiếng Việt</a>
@@ -512,7 +525,7 @@
         
                   <div class="vec-dropdown-container right-align" id="notificationDropdownContainer" style="display: none;">
             <button class="vec-icon-btn" title="Thông báo" id="notificationBellBtn" style="position: relative;">
-              <i class="fa-solid fa-bell"></i>
+              <i class="ph ph-bell"></i>
               <span id="unreadBadge" style="display: none; position: absolute; top: 0px; right: 0px; min-width: 16px; height: 16px; background-color: #ef4444; color: white; border-radius: 10px; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; font-family: sans-serif; box-shadow: 0 0 0 2px var(--bg-card, #fff);"></span>
             </button>
             <div class="vec-dropdown-menu" id="notificationMenu" style="min-width: 320px; max-height: 400px; overflow-y: auto; padding: 0;">
@@ -528,7 +541,7 @@
         
         <div class="vec-dropdown-container right-align">
           <div class="top-avatar-btn" id="btnTopAvatar" style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary-base); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; background-size: cover; background-position: center;">
-            <i class="fa-solid fa-user"></i>
+            <i class="ph ph-user"></i>
           </div>
           <div class="top-dropdown vec-dropdown-menu" id="menuTopAvatar" style="width: 260px; min-width: 260px;">
           </div>
@@ -593,7 +606,7 @@
               href="https://drive.google.com/uc?export=download&id=1ajmC1ANFjC1kQhy08RgGrQLOJJQaDZnQ"
               target="_blank"
               class="btn-dl"
-              ><i class="fa-solid fa-file-pdf"></i> Tải PDF</a
+              ><i class="ph ph-file-pdf"></i> Tải PDF</a
             >
           </div>
         </div>
@@ -612,7 +625,7 @@
               href="https://drive.google.com/uc?export=download&id=1_XchW4RJ9KOrf_JLF5fdAkr0knCTTKQd"
               target="_blank"
               class="btn-dl"
-              ><i class="fa-solid fa-file-pdf"></i> Tải PDF</a
+              ><i class="ph ph-file-pdf"></i> Tải PDF</a
             >
           </div>
         </div>
@@ -628,7 +641,7 @@
               href="https://drive.google.com/uc?export=download&id=19EYTfLjFOkic_DNnYpmhMhKt_XMzpSrC"
               target="_blank"
               class="btn-dl"
-              ><i class="fa-solid fa-file-pdf"></i> Tải PDF</a
+              ><i class="ph ph-file-pdf"></i> Tải PDF</a
             >
           </div>
         </div>
@@ -644,7 +657,7 @@
               href="https://drive.google.com/uc?export=download&id=1Ra0947JJCd5hZSiI51jtEmVltBvG93MV"
               target="_blank"
               class="btn-dl"
-              ><i class="fa-solid fa-file-pdf"></i> Tải PDF</a
+              ><i class="ph ph-file-pdf"></i> Tải PDF</a
             >
           </div>
         </div>
@@ -661,7 +674,7 @@
               href="https://drive.google.com/uc?export=download&id=1uytIoDZek4GKYQmjA4pKtoEM0oOc-xKq"
               target="_blank"
               class="btn-dl"
-              ><i class="fa-solid fa-file-pdf"></i> Tải PDF</a
+              ><i class="ph ph-file-pdf"></i> Tải PDF</a
             >
           </div>
         </div>
@@ -678,7 +691,7 @@
               href="https://drive.google.com/uc?export=download&id=11-7We3tUcU4oT_-sYiG2GveahYksC3ld"
               target="_blank"
               class="btn-dl"
-              ><i class="fa-solid fa-file-pdf"></i> Tải PDF</a
+              ><i class="ph ph-file-pdf"></i> Tải PDF</a
             >
           </div>
         </div>
@@ -695,7 +708,7 @@
               href="https://drive.google.com/uc?export=download&id=1vOTXIKSeae58cMwi6rme6fu7Zu7hBUdI"
               target="_blank"
               class="btn-dl"
-              ><i class="fa-solid fa-file-pdf"></i> Tải PDF</a
+              ><i class="ph ph-file-pdf"></i> Tải PDF</a
             >
           </div>
         </div>
@@ -711,7 +724,7 @@
               href="https://drive.google.com/uc?export=download&id=16Z1eKj8AJtTnhpnNKFXliTrzxL0KpQM_"
               target="_blank"
               class="btn-dl"
-              ><i class="fa-solid fa-file-pdf"></i> Tải PDF</a
+              ><i class="ph ph-file-pdf"></i> Tải PDF</a
             >
           </div>
         </div>
@@ -727,7 +740,7 @@
               href="https://drive.google.com/uc?export=download&id=1u4MWR4K4C8aFmr-XVone9Y1_6fE2gyZH"
               target="_blank"
               class="btn-dl"
-              ><i class="fa-solid fa-file-pdf"></i> Tải PDF</a
+              ><i class="ph ph-file-pdf"></i> Tải PDF</a
             >
           </div>
         </div>
@@ -744,7 +757,7 @@
               href="https://drive.google.com/uc?export=download&id=1M6HNVKrxlA6kao5VWvoBnNzxYlJ2bgeL"
               target="_blank"
               class="btn-dl"
-              ><i class="fa-solid fa-file-pdf"></i> Tải PDF</a
+              ><i class="ph ph-file-pdf"></i> Tải PDF</a
             >
           </div>
         </div>
@@ -760,7 +773,7 @@
               href="https://drive.google.com/uc?export=download&id=1vJlhB_L5QuaeHyULSmUc5SfW8qBn9WNB"
               target="_blank"
               class="btn-dl"
-              ><i class="fa-solid fa-file-pdf"></i> Tải PDF</a
+              ><i class="ph ph-file-pdf"></i> Tải PDF</a
             >
           </div>
         </div>
@@ -795,7 +808,7 @@
           <h4>Thông tin liên hệ</h4>
           <ul>
             <li>
-              <i class="fa-solid fa-envelope"></i>
+              <i class="ph ph-envelope"></i>
               <a href="mailto:support@vectoria.io.vn">support@vectoria.io.vn</a>
             </li>
           </ul>
@@ -883,11 +896,14 @@
 
 
 
+<script src="js/utils/toast.js"></script>
+  <script src="js/utils/global-search.js"></script>
 </body>
 
 
 
 </html>
+
 
 
 

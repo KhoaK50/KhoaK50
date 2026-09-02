@@ -35,7 +35,7 @@ except Exception as e:
 # --- HÀM 2: LẤY LỘ TRÌNH TỪ NEO4J TRẢ VỀ FLASK ---
 def tim_lo_trinh_ngan_nhat(tx, diem_bat_dau, dich_den):
     query = """
-    MATCH (start:Subject {id: $diem_bat_dau}), (end:Subject {id: $dich_den})
+    MATCH (start:Lesson {id: $diem_bat_dau}), (end:Lesson {id: $dich_den})
     MATCH p = shortestPath((start)-[:REQUIRES*]->(end))
     RETURN [n in nodes(p) | n.id] AS lo_trinh
     """

@@ -84,7 +84,7 @@
           hud.style.fontWeight = "500";
           
           hud.innerHTML = `
-              <span><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary-base);"></i> Đang phát lại mô phỏng</span>
+              <span><i class="ph ph-clock-counter-clockwise" style="color: var(--primary-base);"></i> Đang phát lại mô phỏng</span>
               <button onclick="if(window.App && App.cleanupReplayGhosts) App.cleanupReplayGhosts()" style="background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.2s;">Kết thúc</button>
           `;
           document.body.appendChild(hud);
@@ -716,7 +716,7 @@
         <div class="vec-hud-header">
             <div id="hud-step" class="vec-hud-step"></div>
             <button id="btnPausePlay" class="vec-btn-pause" title="Dừng / Phát">
-                <i class="fa-solid fa-square"></i>
+                <i class="ph ph-square"></i>
             </button>
         </div>
         <div id="hud-text" class="vec-hud-text"></div>
@@ -736,7 +736,7 @@
     const btnPP = hud.querySelector("#btnPausePlay");
     btnPP.onclick = () => {
         App.isAnimPaused = !App.isAnimPaused;
-        btnPP.innerHTML = App.isAnimPaused ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-square"></i>';
+        btnPP.innerHTML = App.isAnimPaused ? '<i class="ph ph-play"></i>' : '<i class="ph ph-square"></i>';
         btnPP.style.color = App.isAnimPaused ? '#ff9800' : 'inherit'; 
     };
 
@@ -877,7 +877,7 @@
 
       const hud = createVectoriaHUD();
       
-      hud.setStep("<i class='fa-solid fa-down-long'></i> BƯỚC 1: PHÉP CHIẾU", `Hạ vuông góc v2 xuống giá của v1 để tạo <b>Vector hình chiếu</b>.`);
+      hud.setStep("<i class='ph ph-arrow-down'></i> BƯỚC 1: PHÉP CHIẾU", `Hạ vuông góc v2 xuống giá của v1 để tạo <b>Vector hình chiếu</b>.`);
       
       runTween(1500, Easing.easeInOutCubic, function(v) {
         dashedTubeGroup.scale.set(1, 1, Math.max(0.001, v));
@@ -893,7 +893,7 @@
       }, function() {
         
         setTimeout(() => {
-            hud.setStep("<i class='fa-solid fa-expand'></i> BƯỚC 2: TỶ LỆ HÓA", `Nhân bản Vector chiếu lên gấp <b>||v1||</b> lần (hệ số ${uLenMath.toFixed(2)}).`);
+            hud.setStep("<i class='ph ph-corners-out'></i> BƯỚC 2: TỶ LỆ HÓA", `Nhân bản Vector chiếu lên gấp <b>||v1||</b> lần (hệ số ${uLenMath.toFixed(2)}).`);
             
             const rawDotWorld = pLenWorld * uLenMath; 
 
@@ -911,7 +911,7 @@
                     const signStr = resVal >= 0 ? "Cùng chiều" : "Ngược chiều";
                     const formattedRes = App.formatScalar ? App.formatScalar(resVal) : resVal;
                     
-                    hud.setStep("<i class='fa-solid fa-check-circle'></i> KẾT LUẬN", `
+                    hud.setStep("<i class='ph ph-check-circle'></i> KẾT LUẬN", `
                         Độ dài Vector: <b>${Math.abs(resVal).toFixed(2)}</b><br/>
                         Hướng so với v1: <b>${signStr}</b>
                         <hr style="margin:6px 0; border:0; border-top:1px solid rgba(128,128,128,0.2);">
@@ -991,7 +991,7 @@
       syncTheme2D();
       // ---------------------------------------------------------
       
-      hud.setStep("<i class='fa-solid fa-down-long'></i> BƯỚC 1: PHÉP CHIẾU", `Hạ vuông góc v2 xuống giá của v1 để tạo <b>Vector hình chiếu</b>.`);
+      hud.setStep("<i class='ph ph-arrow-down'></i> BƯỚC 1: PHÉP CHIẾU", `Hạ vuông góc v2 xuống giá của v1 để tạo <b>Vector hình chiếu</b>.`);
       dropGhost.alpha = 1; projGhost.alpha = 1;
       
       runTween(1500, Easing.easeInOutCubic, function(v) {
@@ -1000,7 +1000,7 @@
       }, function() {
           
           setTimeout(() => {
-              hud.setStep("<i class='fa-solid fa-expand'></i> BƯỚC 2: TỶ LỆ HÓA", `Nhân bản Vector chiếu lên gấp <b>||v1||</b> lần (hệ số ${uLen.toFixed(2)}).`);
+              hud.setStep("<i class='ph ph-corners-out'></i> BƯỚC 2: TỶ LỆ HÓA", `Nhân bản Vector chiếu lên gấp <b>||v1||</b> lần (hệ số ${uLen.toFixed(2)}).`);
               
               runTween(2000, Easing.easeInOutCubic, function(v) {
                   projGhost.vec = [px + (finalPx - px) * v, py + (finalPy - py) * v];
@@ -1010,7 +1010,7 @@
                       const signStr = resVal >= 0 ? "Cùng chiều" : "Ngược chiều";
                       const formattedRes = App.formatScalar ? App.formatScalar(resVal) : resVal;
 
-                      hud.setStep("<i class='fa-solid fa-check-circle'></i> KẾT LUẬN", `
+                      hud.setStep("<i class='ph ph-check-circle'></i> KẾT LUẬN", `
                           Độ dài Vector: <b>${Math.abs(resVal).toFixed(2)}</b><br/>
                           Hướng so với v1: <b>${signStr}</b>
                           <hr style="margin:6px 0; border:0; border-top:1px solid rgba(128,128,128,0.2);">
@@ -1132,7 +1132,7 @@
         `;
 
         // BƯỚC 1: KHUNG CƠ SỞ
-        hud.setStep("<i class='fa-solid fa-layer-group'></i> BƯỚC 1: ĐỊNH NGHĨA MẶT PHẲNG", "Tịnh tiến các vector thành phần để thiết lập mặt phẳng cơ sở (chứa hình bình hành).");
+        hud.setStep("<i class='ph ph-stack'></i> BƯỚC 1: ĐỊNH NGHĨA MẶT PHẲNG", "Tịnh tiến các vector thành phần để thiết lập mặt phẳng cơ sở (chứa hình bình hành).");
         await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
             ghostV1.position.copy(origin).lerp(pB, v);
             ghostV2.position.copy(origin).lerp(pA, v);
@@ -1149,7 +1149,7 @@
         await waitAnim(1000);
 
         // BƯỚC 2: KHAI TRIỂN ĐẠI SỐ
-        hud.setStep("<i class='fa-solid fa-calculator'></i> BƯỚC 2: KHAI TRIỂN ĐỊNH THỨC", `Áp dụng định thức ma trận vuông để tính tọa độ Vector kết quả:${mathHtml}`);
+        hud.setStep("<i class='ph ph-calculator'></i> BƯỚC 2: KHAI TRIỂN ĐỊNH THỨC", `Áp dụng định thức ma trận vuông để tính tọa độ Vector kết quả:${mathHtml}`);
         if (resG) { resG.scale.set(0.001, 0.001, 0.001); setOpacity3D(resG, 1); }
         
         // Ngâm 3.5 giây để user kịp nhấn Pause đọc công thức
@@ -1162,7 +1162,7 @@
         await waitAnim(1000);
 
         // BƯỚC 3: HỆ QUẢ HÌNH HỌC
-        hud.setStep("<i class='fa-solid fa-check-circle'></i> BƯỚC 3: TÍNH CHẤT HÌNH HỌC", `
+        hud.setStep("<i class='ph ph-check-circle'></i> BƯỚC 3: TÍNH CHẤT HÌNH HỌC", `
             Hệ quả từ định thức tọa độ <span class="vec-result-hl">${formattedCoords}</span>:
             <ul class="vec-math-list">
                 <li><b>Phương:</b> Trực giao (vuông góc) với mặt phẳng cơ sở.</li>
@@ -1296,7 +1296,7 @@
                 </math-field>
             </div>`;
 
-        hud.setStep("<i class='fa-solid fa-shapes'></i> BƯỚC 1: PHÂN RÃ MẶT ĐÁY", `Từ hình chiếu dưới mặt phẳng tọa độ Oxy, ta tính được bình phương đường chéo:${mathHtmlBase}`);
+        hud.setStep("<i class='ph ph-shapes'></i> BƯỚC 1: PHÂN RÃ MẶT ĐÁY", `Từ hình chiếu dưới mặt phẳng tọa độ Oxy, ta tính được bình phương đường chéo:${mathHtmlBase}`);
         
         await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
             // Thay thế toàn bộ gán trực tiếp bằng hàm an toàn
@@ -1321,7 +1321,7 @@
                 </div>
             </div>`;
 
-        hud.setStep("<i class='fa-solid fa-cube'></i> BƯỚC 2: ĐỊNH LÝ PYTHAGORAS", `Dựng tam giác vuông chứa đường chéo đáy và chiều cao z để tìm độ dài Vector:${mathHtmlTotal}`);
+        hud.setStep("<i class='ph ph-cube'></i> BƯỚC 2: ĐỊNH LÝ PYTHAGORAS", `Dựng tam giác vuông chứa đường chéo đáy và chiều cao z để tìm độ dài Vector:${mathHtmlTotal}`);
         
         await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
             // An toàn cho bước 2
@@ -1424,14 +1424,14 @@
             </div>
         `;
 
-        hud.setStep("<i class='fa-solid fa-vector-square'></i> BƯỚC 1: DỰNG TAM GIÁC", "Phân rã vector thành hai thành phần tọa độ để tạo thành một tam giác vuông.");
+        hud.setStep("<i class='ph ph-bounding-box'></i> BƯỚC 1: DỰNG TAM GIÁC", "Phân rã vector thành hai thành phần tọa độ để tạo thành một tam giác vuông.");
         await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
             App.tempGhosts.forEach(g => g.alpha = v * 0.8);
             lblX.style.opacity = v; lblY.style.opacity = v;
         });
         await waitAnim(1500);
 
-        hud.setStep("<i class='fa-solid fa-calculator'></i> BƯỚC 2: CHUẨN EUCLID", `Áp dụng định lý Pythagoras tính độ dài cạnh huyền:${mathHtml}`);
+        hud.setStep("<i class='ph ph-calculator'></i> BƯỚC 2: CHUẨN EUCLID", `Áp dụng định lý Pythagoras tính độ dài cạnh huyền:${mathHtml}`);
         await waitAnim(6000);
 
         hud.close();
@@ -1523,7 +1523,7 @@
                 </div>
             </div>`;
 
-        hud.setStep("<i class='fa-solid fa-fan'></i> BƯỚC 1: QUÉT GÓC MẶT PHẲNG", "Mọi cặp vector cắt nhau đều tạo thành một mặt phẳng. Góc được đo bằng cách quét từ vector này sang vector kia trên mặt phẳng đó.");
+        hud.setStep("<i class='ph ph-fan'></i> BƯỚC 1: QUÉT GÓC MẶT PHẲNG", "Mọi cặp vector cắt nhau đều tạo thành một mặt phẳng. Góc được đo bằng cách quét từ vector này sang vector kia trên mặt phẳng đó.");
         
         // Animation Quét hình quạt (Thay đổi geometry để tạo cảm giác quét)
         await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
@@ -1534,7 +1534,7 @@
         });
         await waitAnim(1000);
 
-        hud.setStep("<i class='fa-solid fa-calculator'></i> BƯỚC 2: CÔNG THỨC COSIN", `Đại số sử dụng Tích vô hướng và Độ dài để tính toán chính xác số đo góc:${mathHtml}`);
+        hud.setStep("<i class='ph ph-calculator'></i> BƯỚC 2: CÔNG THỨC COSIN", `Đại số sử dụng Tích vô hướng và Độ dài để tính toán chính xác số đo góc:${mathHtml}`);
         
         // Hiện lại Arc gốc đẹp đẽ
         if (App.currentAngleVisual3D) App.currentAngleVisual3D.visible = true;
@@ -1582,7 +1582,7 @@
                 </div>
             </div>`;
 
-        hud.setStep("<i class='fa-solid fa-fan'></i> BƯỚC 1: ĐO GÓC PHẲNG", "Tiến hành quét góc cung tròn từ Vector thứ nhất sang Vector thứ hai.");
+        hud.setStep("<i class='ph ph-fan'></i> BƯỚC 1: ĐO GÓC PHẲNG", "Tiến hành quét góc cung tròn từ Vector thứ nhất sang Vector thứ hai.");
         
         // Animation xoay vector giả mạo (để mồi cho viewer2D tự quét cung tròn)
         // viewer2D vẽ cung dựa vào App.currentAngleVisual2D {a, b}
@@ -1604,7 +1604,7 @@
         App.currentAngleVisual2D.deg = degVal;
         await waitAnim(1000);
 
-        hud.setStep("<i class='fa-solid fa-calculator'></i> BƯỚC 2: CÔNG THỨC COSIN", `Góc được chứng minh thông qua định lý hình chiếu (Cosin):${mathHtml}`);
+        hud.setStep("<i class='ph ph-calculator'></i> BƯỚC 2: CÔNG THỨC COSIN", `Góc được chứng minh thông qua định lý hình chiếu (Cosin):${mathHtml}`);
         await waitAnim(7000);
 
         hud.close();

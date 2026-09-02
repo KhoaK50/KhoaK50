@@ -1,6 +1,28 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#111113';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#fcfcfd';
+        }
+      } catch (e) {}
+    })();
+  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-GRZR4Y6VFQ');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vectoria - Đồ thị tri thức (Demo)</title>
@@ -26,6 +48,22 @@
     <div class="w-full md:w-1/3 bg-slate-900 p-6 flex flex-col h-full border-r border-slate-700 overflow-y-auto">
         <h1 class="text-2xl font-bold text-blue-400 mb-2">Đồ Thị Tri Thức</h1>
         <p class="text-sm text-slate-400 mb-6">Demo thuật toán tìm lộ trình học tập ngắn nhất.</p>
+
+        <!-- Mode Toggle -->
+        <div class="bg-slate-800 p-4 rounded-lg mb-6 border border-slate-700">
+            <h2 class="text-lg font-semibold text-white mb-3">Chế độ hiển thị</h2>
+            <div class="flex items-center space-x-4">
+                <label class="flex items-center cursor-pointer text-sm text-slate-300 hover:text-white">
+                    <input type="radio" name="viewMode" value="all" checked onchange="applyViewMode()" class="mr-2">
+                    Tổng quát (Toàn bộ sơ đồ)
+                </label>
+                <label class="flex items-center cursor-pointer text-sm text-slate-300 hover:text-white">
+                    <input type="radio" name="viewMode" value="real" onchange="applyViewMode()" class="mr-2">
+                    Thực tế (Đang thử nghiệm)
+                </label>
+            </div>
+            <p class="text-xs text-slate-500 mt-2">* Chế độ thực tế sẽ làm mờ các bài học chưa có nội dung (giả lập giới hạn 15 bài học đầu tiên).</p>
+        </div>
 
         <!-- Block 1: Thêm ràng buộc (Tạo Mũi tên) -->
         <div class="bg-slate-800 p-4 rounded-lg mb-6 border border-slate-700">
@@ -88,6 +126,7 @@
         let edges = new vis.DataSet([]);
         let graph = {}; 
         let originalNodesData = []; // Lưu lại dữ liệu gốc để reset
+        let currentMode = 'all'; // 'all' hoặc 'real'
 
         // 2. KHỞI TẠO ĐỒ THỊ VIS.JS
         const container = document.getElementById('mynetwork');
@@ -106,43 +145,95 @@
                 const realData = await response.json();
 
                 if(realData.error) {
-                    (window.App && window.App.showToast ? window.App.showToast("Lỗi từ Backend: " + realData.error, 'warning') : alert("Lỗi từ Backend: " + realData.error)); return;
+                    window.App.showToast("Lỗi từ Backend: " + realData.error, 'warning'); return;
                 }
 
-                // Lưu trữ và hiển thị Nodes
                 originalNodesData = realData.nodes;
-                const formattedNodes = realData.nodes.map(n => ({
-                    id: n.id,
-                    label: n.id + ":\n" + n.label, // Thêm \n cho dễ nhìn
-                    color: { background: '#3b82f6', border: '#2563eb' },
-                    font: { color: 'white', size: 12 }
-                }));
-                nodes.clear(); nodes.add(formattedNodes);
                 
-                // Khởi tạo mảng kề và hiển thị Edges
-                edges.clear();
+                // Lưu mảng kề gốc
                 realData.nodes.forEach(n => graph[n.id] = []); 
                 realData.edges.forEach(e => {
-                    edges.add({ id: `${e.from}-${e.to}`, from: e.from, to: e.to });
                     if(graph[e.from]) graph[e.from].push(e.to);
                 });
-
-                // Đổ dữ liệu vào 4 thẻ <select>
-                const selects = ['edgeFrom', 'edgeTo', 'pathStart', 'pathEnd'];
-                selects.forEach(selectId => {
-                    const select = document.getElementById(selectId);
-                    select.innerHTML = ''; 
-                    realData.nodes.forEach(n => {
-                        let option = document.createElement('option');
-                        option.value = n.id;
-                        option.text = n.id + " - " + n.label;
-                        select.appendChild(option);
-                    });
-                });
+                
+                applyViewMode(); // Khởi tạo đồ thị theo chế độ hiện tại
 
             } catch (error) {
                 console.error(error);
-                (window.App && window.App.showToast ? window.App.showToast("Không thể kết nối đến Backend Flask. Sếp nhớ chạy 'python app.py' nhé!", 'warning') : alert("Không thể kết nối đến Backend Flask. Sếp nhớ chạy 'python app.py' nhé!"));
+                window.App.showToast("Không thể kết nối đến Backend Flask. Sếp nhớ chạy 'python app.py' nhé!", 'warning');
+            }
+        }
+
+        // HÀM ÁP DỤNG CHẾ ĐỘ HIỂN THỊ
+        function applyViewMode() {
+            currentMode = document.querySelector('input[name="viewMode"]:checked').value;
+            
+            // Format Nodes
+            const formattedNodes = originalNodesData.map((n, index) => {
+                // Giả lập: 15 bài đầu tiên là "thực tế", còn lại là "chưa xong"
+                const isCompleted = index < 15; 
+                const isLocked = currentMode === 'real' && !isCompleted;
+                
+                return {
+                    id: n.id,
+                    label: isLocked ? n.id + ":\n(Đang phát triển)" : n.id + ":\n" + n.label,
+                    color: isLocked 
+                        ? { background: '#334155', border: '#475569' } // Xám tối cho node khóa
+                        : { background: '#3b82f6', border: '#2563eb' }, // Xanh lam cho node thật
+                    font: { color: isLocked ? '#94a3b8' : 'white', size: 12 },
+                    shapeProperties: { borderDashes: isLocked ? [5, 5] : false }, // Viền đứt khúc
+                    opacity: isLocked ? 0.6 : 1
+                };
+            });
+            nodes.clear(); nodes.add(formattedNodes);
+
+            // Format Edges
+            edges.clear();
+            const edgeList = [];
+            originalNodesData.forEach(n => {
+                const neighbors = graph[n.id] || [];
+                neighbors.forEach(to => {
+                    const fromIndex = originalNodesData.findIndex(x => x.id === n.id);
+                    const toIndex = originalNodesData.findIndex(x => x.id === to);
+                    const isLockedEdge = currentMode === 'real' && (fromIndex >= 15 || toIndex >= 15);
+                    
+                    edgeList.push({
+                        id: `${n.id}-${to}`,
+                        from: n.id,
+                        to: to,
+                        color: { color: isLockedEdge ? '#334155' : '#64748b', opacity: isLockedEdge ? 0.3 : 1 }
+                    });
+                });
+            });
+            edges.add(edgeList);
+
+            // Cập nhật Dropdowns
+            updateDropdowns();
+        }
+
+        function updateDropdowns() {
+            const selects = ['edgeFrom', 'edgeTo', 'pathStart', 'pathEnd'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = ''; 
+                originalNodesData.forEach((n, index) => {
+                    const isLocked = currentMode === 'real' && index >= 15;
+                    let option = document.createElement('option');
+                    option.value = n.id;
+                    option.text = isLocked ? n.id + " - (Khóa)" : n.id + " - " + n.label;
+                    if (isLocked) {
+                        option.disabled = true;
+                    }
+                    select.appendChild(option);
+                });
+            });
+        }
+
+
+
+            } catch (error) {
+                console.error(error);
+                window.App.showToast("Không thể kết nối đến Backend Flask. Sếp nhớ chạy 'python app.py' nhé!", 'warning');
             }
         }
 
@@ -153,8 +244,8 @@
         function addEdge() {
             const from = document.getElementById('edgeFrom').value;
             const to = document.getElementById('edgeTo').value;
-            if (from === to) { (window.App && window.App.showToast ? window.App.showToast("Không thể tự nối vào chính mình!", 'warning') : alert("Không thể tự nối vào chính mình!")); return; }
-            if (graph[from].includes(to)) { (window.App && window.App.showToast ? window.App.showToast("Ràng buộc này đã tồn tại!", 'warning') : alert("Ràng buộc này đã tồn tại!")); return; }
+            if (from === to) { window.App.showToast("Không thể tự nối vào chính mình!", 'warning'); return; }
+            if (graph[from].includes(to)) { window.App.showToast("Ràng buộc này đã tồn tại!", 'warning'); return; }
 
             graph[from].push(to);
             edges.add({ id: `${from}-${to}`, from: from, to: to });
@@ -237,9 +328,12 @@
 
 
 
+<script src="js/utils/toast.js"></script>
+  <script src="js/utils/global-search.js"></script>
 </body>
 
 
 
 </html>
+
 

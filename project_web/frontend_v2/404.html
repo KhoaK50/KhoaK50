@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#111113';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#fcfcfd';
+        }
+      } catch (e) {}
+    })();
+  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-GRZR4Y6VFQ');
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 - Trang không tồn tại | Vectoria</title>
+    <meta name="description" content="Trang bạn tìm kiếm không tồn tại trên Vectoria." />
+    <link rel="icon" type="image/png" href="assets/images/logo.png" />
+    <link rel="stylesheet" href="css/radix_colors.css" />
+    <script src="js/utils/theme-manager.js"></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: var(--bg-base);
+        color: var(--text-main);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
+      }
+
+      .error-container {
+        max-width: 520px;
+      }
+
+      .error-code {
+        font-size: clamp(6rem, 15vw, 10rem);
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.04em;
+        color: var(--primary-base);
+        opacity: 0.18;
+        user-select: none;
+      }
+
+      .error-title {
+        font-size: clamp(1.25rem, 3vw, 1.75rem);
+        font-weight: 700;
+        margin-top: -1rem;
+        line-height: 1.25;
+        color: var(--text-main);
+      }
+
+      .error-desc {
+        margin-top: 1rem;
+        font-size: 1rem;
+        line-height: 1.6;
+        color: var(--text-muted);
+      }
+
+      .error-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.7rem 1.5rem;
+        background: var(--primary-base);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .btn-primary:hover { background: var(--primary-hover); }
+
+      .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.7rem 1.5rem;
+        background: transparent;
+        color: var(--text-main);
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s;
+      }
+      .btn-secondary:hover {
+        background: var(--bg-hover);
+        border-color: var(--text-muted);
+      }
+
+      .error-hint {
+        margin-top: 2.5rem;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        opacity: 0.7;
+      }
+
+      /* Vector decoration - subtle math reference */
+      .vector-deco {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        font-size: 5rem;
+        font-weight: 200;
+        color: var(--border-subtle);
+        opacity: 0.3;
+        user-select: none;
+        pointer-events: none;
+        line-height: 1;
+      }
+
+      @media (max-width: 480px) {
+        .error-actions { flex-direction: column; }
+        .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+        .vector-deco { display: none; }
+      }
+    </style>
+    <link rel="stylesheet" href="css/global-search.css">
+</head>
+  <body>
+    <div class="error-container">
+      <div class="error-code">404</div>
+      <h1 class="error-title">Trang này không tồn tại</h1>
+      <p class="error-desc">
+        Đường dẫn bạn truy cập có thể đã bị thay đổi hoặc không còn khả dụng.
+        Hãy quay về trang chủ hoặc khám phá thư viện kiến thức.
+      </p>
+      <div class="error-actions">
+        <a href="/" class="btn-primary">Về trang chủ</a>
+        <a href="/knowledge_info.html" class="btn-secondary">Thư viện kiến thức</a>
+      </div>
+      <p class="error-hint">Nếu bạn cho rằng đây là lỗi hệ thống, vui lòng liên hệ vectoria.official@gmail.com</p>
+    </div>
+
+    <div class="vector-deco" aria-hidden="true">v</div>
+  <script src="js/utils/toast.js"></script>
+  <script src="js/utils/global-search.js"></script>
+</body>
+</html>

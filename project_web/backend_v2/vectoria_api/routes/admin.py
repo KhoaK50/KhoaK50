@@ -1,8 +1,12 @@
+import bleach
+from vectoria_api.config import ADMIN_SECRET_KEY
 import os
 import threading
 import time
 import requests
 import psycopg2
+from vectoria_api.database import get_db_connection, release_db_connection
+
 import jwt
 import zipfile
 import re
@@ -17,10 +21,9 @@ from flask import Blueprint, request, jsonify
 admin_bp = Blueprint("admin", __name__)
 
 def get_admin_secret():
-    return os.environ.get("ADMIN_SECRET_KEY", "vectoria-admin-123")
+    return ADMIN_SECRET_KEY
 
-def get_db_connection():
-    return psycopg2.connect(DB_URL)
+
 
 def parse_latex_to_html(text):
     if not text: return text
@@ -99,7 +102,7 @@ def init_admin_db():
 
 
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
         print(">> [Database] Admin & Audit Logs tables initialized.")
     except Exception as e:
         print(f">> [Database Error] Admin init: {e}")
@@ -134,7 +137,7 @@ def log_admin_action(username, action, details):
             (username, action, details, ip)
         )
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
     except Exception as e:
         print(f"Failed to log admin action: {e}")
 
@@ -154,7 +157,7 @@ def admin_login():
         c = conn.cursor()
         c.execute("SELECT id, password_hash FROM admins WHERE username = %s", (username,))
         row = c.fetchone()
-        conn.close()
+        release_db_connection(conn)
         
         if row and check_password_hash(row[1], password):
             # Tạo JWT Token
@@ -196,7 +199,7 @@ def admin_register():
             (username, password_hash)
         )
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
         
         log_admin_action("system", "REGISTER_ADMIN", f"Tạo tài khoản admin mới: {username}")
         return jsonify({"message": "Tạo tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ."}), 201
@@ -223,7 +226,7 @@ def get_audit_logs():
         rows = c.fetchall()
         cols = [desc[0] for desc in c.description]
         data = [dict(zip(cols, row)) for row in rows]
-        conn.close()
+        release_db_connection(conn)
         for item in data:
             if item['created_at']:
                 item['created_at'] = item['created_at'].strftime("%Y-%m-%d %H:%M:%S")
@@ -240,7 +243,7 @@ def get_tables():
         c = conn.cursor()
         c.execute("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public';")
         tables = [row[0] for row in c.fetchall()]
-        conn.close()
+        release_db_connection(conn)
         return jsonify(tables)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -261,7 +264,7 @@ def get_table_data(table_name):
         rows = c.fetchall()
         cols = [desc[0] for desc in c.description]
         data = [dict(zip(cols, row)) for row in rows]
-        conn.close()
+        release_db_connection(conn)
         return jsonify({"columns": cols, "data": data})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -275,7 +278,8 @@ def get_lessons():
         c = conn.cursor()
         c.execute("""
             SELECT l.topic_id, l.order_index, l.title, l.content_html, l.total_views, l.created_at,
-                   l.section_id, t.title as topic_title, s.title as section_title
+                   l.section_id, t.title as topic_title, s.title as section_title,
+                   l.complexity as difficulty_level, l.time as estimated_time
             FROM lessons l
             LEFT JOIN topics t ON l.topic_id = t.id
             LEFT JOIN sections s ON l.section_id = s.id
@@ -284,7 +288,7 @@ def get_lessons():
         rows = c.fetchall()
         cols = [desc[0] for desc in c.description]
         data = [dict(zip(cols, row)) for row in rows]
-        conn.close()
+        release_db_connection(conn)
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -296,22 +300,50 @@ def update_lesson(topic_id, order_index):
     try:
         data = request.json
         content_html = data.get("content_html")
+        lang = data.get("lang", "vi")
+        title = data.get("title", "") # if they provide title
+        difficulty_level = data.get("difficulty_level")
+        estimated_time = data.get("estimated_time")
         
         conn = get_db_connection()
         c = conn.cursor()
+        
+        if lang == 'vi':
+            # Update base attributes along with vi content
+            if difficulty_level is not None and estimated_time is not None:
+                c.execute(
+                    "UPDATE lessons SET content_html = %s, complexity = %s, time = %s WHERE topic_id = %s AND order_index = %s RETURNING title;",
+                    (content_html, difficulty_level, estimated_time, topic_id, order_index)
+                )
+            else:
+                c.execute(
+                    "UPDATE lessons SET content_html = %s WHERE topic_id = %s AND order_index = %s RETURNING title;",
+                    (content_html, topic_id, order_index)
+                )
+                
+            if c.rowcount == 0:
+                release_db_connection(conn)
+                return jsonify({"error": "Lesson not found"}), 404
+            lesson_title = c.fetchone()[0]
+        else:
+            # For non-vi, still update the shared base properties if provided
+            if difficulty_level is not None and estimated_time is not None:
+                c.execute(
+                    "UPDATE lessons SET complexity = %s, time = %s WHERE topic_id = %s AND order_index = %s;",
+                    (difficulty_level, estimated_time, topic_id, order_index)
+                )
+            lesson_title = f"Topic {topic_id} Lesson {order_index}"
+            
+        # Also upsert to translations
         c.execute(
-            "UPDATE lessons SET content_html = %s WHERE topic_id = %s AND order_index = %s RETURNING title;",
-            (content_html, topic_id, order_index)
+            "INSERT INTO lesson_translations (topic_id, order_index, language_code, title, content_html) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (topic_id, order_index, language_code) DO UPDATE SET title = EXCLUDED.title, content_html = EXCLUDED.content_html;",
+            (topic_id, order_index, lang, title, content_html)
         )
-        if c.rowcount == 0:
-            conn.close()
-            return jsonify({"error": "Lesson not found"}), 404
         
-        lesson_title = c.fetchone()[0]
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
         
-        log_admin_action(username, "UPDATE_LESSON", f"Updated content for lesson: {lesson_title} (Topic: {topic_id})")
+        log_admin_action(username, "UPDATE_LESSON", f"Updated content for lesson: {lesson_title} (Topic: {topic_id}, Lang: {lang})")
         return jsonify({"message": "Lesson updated successfully"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -327,6 +359,9 @@ def create_lesson():
         section_id = data.get("section_id")
         title = data.get("title")
         content_html = data.get("content_html", "")
+        lang = data.get("lang", "vi")
+        difficulty_level = data.get("difficulty_level", 5)
+        estimated_time = data.get("estimated_time", 45)
         
         conn = get_db_connection()
         c = conn.cursor()
@@ -334,14 +369,28 @@ def create_lesson():
         c.execute("INSERT INTO topics (id, title) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING;", (topic_id, title + ' Topic'))
         c.execute("INSERT INTO sections (id, topic_id, title, order_index) VALUES (%s, %s, %s, 1) ON CONFLICT (id) DO NOTHING;", (section_id, topic_id, title + ' Section'))
         
+        # Backward compatibility: always upsert lessons table for 'vi' or just to ensure it exists
+        if lang == 'vi':
+            c.execute(
+                "INSERT INTO lessons (topic_id, order_index, section_id, title, content_html, complexity, time) VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (topic_id, order_index) DO UPDATE SET title = EXCLUDED.title, content_html = EXCLUDED.content_html, complexity = EXCLUDED.complexity, time = EXCLUDED.time;",
+                (topic_id, order_index, section_id, title, content_html, difficulty_level, estimated_time)
+            )
+        else:
+            c.execute(
+                "INSERT INTO lessons (topic_id, order_index, section_id, title, content_html, complexity, time) VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (topic_id, order_index) DO UPDATE SET complexity = EXCLUDED.complexity, time = EXCLUDED.time;",
+                (topic_id, order_index, section_id, title, "", difficulty_level, estimated_time)
+            )
+            
+        # Upsert into translations table
         c.execute(
-            "INSERT INTO lessons (topic_id, order_index, section_id, title, content_html) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (topic_id, order_index) DO UPDATE SET title = EXCLUDED.title, content_html = EXCLUDED.content_html RETURNING topic_id;",
-            (topic_id, order_index, section_id, title, content_html)
+            "INSERT INTO lesson_translations (topic_id, order_index, language_code, title, content_html) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (topic_id, order_index, language_code) DO UPDATE SET title = EXCLUDED.title, content_html = EXCLUDED.content_html;",
+            (topic_id, order_index, lang, title, content_html)
         )
-        conn.commit()
-        conn.close()
         
-        log_admin_action(username, "CREATE_LESSON", f"Created/Updated lesson: {title} in Topic: {topic_id}")
+        conn.commit()
+        release_db_connection(conn)
+        
+        log_admin_action(username, "CREATE_LESSON", f"Created/Updated lesson: {title} in Topic: {topic_id} (Lang: {lang})")
         return jsonify({"message": "Lesson created/updated successfully"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -354,7 +403,7 @@ def get_public_lesson(lesson_id):
         c = conn.cursor()
         c.execute("SELECT content_html FROM lessons WHERE order_index = %s LIMIT 1;", (order_idx,))
         row = c.fetchone()
-        conn.close()
+        release_db_connection(conn)
         if row:
             return jsonify({"content_html": row[0]})
         return jsonify({"error": "Not found"}), 404
@@ -376,7 +425,7 @@ def get_feedbacks():
         rows = c.fetchall()
         cols = [desc[0] for desc in c.description]
         data = [dict(zip(cols, row)) for row in rows]
-        conn.close()
+        release_db_connection(conn)
         
         for item in data:
             if item['created_at']:
@@ -404,14 +453,14 @@ def reply_feedback(feedback_id):
         feedback = c.fetchone()
         
         if not feedback:
-            conn.close()
+            release_db_connection(conn)
             return jsonify({"error": "Feedback not found"}), 404
             
         user_name, user_email, original_message = feedback
 
         api_key = os.getenv("RESEND_API_KEY")
         if not api_key:
-            conn.close()
+            release_db_connection(conn)
             return jsonify({"error": "RESEND_API_KEY is not configured"}), 500
 
         html_content = f"""
@@ -445,7 +494,7 @@ def reply_feedback(feedback_id):
         response = requests.post("https://api.resend.com/emails", headers=headers, json=payload)
         
         if response.status_code >= 400:
-            conn.close()
+            release_db_connection(conn)
             return jsonify({"error": f"Failed to send email: {response.text}"}), 500
 
         current_time = datetime.now(timezone.utc)
@@ -455,7 +504,7 @@ def reply_feedback(feedback_id):
             WHERE id = %s
         """, (reply_message, current_time, feedback_id))
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
 
         log_admin_action(username, "REPLY_FEEDBACK", f"Replied to feedback #{feedback_id} from {user_email}")
         return jsonify({"status": "success", "message": "Đã gửi phản hồi thành công"})
@@ -471,7 +520,7 @@ def get_db_tables():
         c = conn.cursor()
         c.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")
         tables = [row[0] for row in c.fetchall()]
-        conn.close()
+        release_db_connection(conn)
         return jsonify(tables)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -499,44 +548,14 @@ def get_db_table_data(table_name):
                 if isinstance(v, datetime):
                     row[k] = v.strftime("%Y-%m-%d %H:%M:%S")
                     
-        conn.close()
+        release_db_connection(conn)
         return jsonify({"columns": cols, "data": data})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @admin_bp.route("/api/admin/db/query", methods=["POST"])
 def execute_db_query():
-    is_valid, username = check_auth()
-    if not is_valid: return jsonify({"error": "Unauthorized"}), 401
-    try:
-        query = request.json.get("query", "").strip()
-        if not query:
-            return jsonify({"error": "Empty query"}), 400
-            
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute(query)
-        
-        if query.upper().startswith("SELECT"):
-            rows = c.fetchall()
-            cols = [desc[0] for desc in c.description]
-            data = [dict(zip(cols, row)) for row in rows]
-            
-            for row in data:
-                for k, v in row.items():
-                    if isinstance(v, datetime):
-                        row[k] = v.strftime("%Y-%m-%d %H:%M:%S")
-            conn.close()
-            return jsonify({"columns": cols, "data": data})
-        else:
-            conn.commit()
-            affected = c.rowcount
-            conn.close()
-            log_admin_action(username, "DB_QUERY", f"Executed query affecting {affected} rows: {query[:100]}")
-            return jsonify({"message": f"Query executed successfully. Affected rows: {affected}"})
-            
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify({"error": "Endpoint chạy SQL tự do đã bị khóa để bảo mật dữ liệu."}), 403
 
 # ========================================================
 # ADMIN QUIZ MANAGEMENT
@@ -582,7 +601,7 @@ def admin_get_questions():
                     q_dict[k] = float(v)
             questions.append(q_dict)
             
-        conn.close()
+        release_db_connection(conn)
         return jsonify({'success': True, 'questions': questions}), 200
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -631,7 +650,7 @@ def admin_create_question():
         
         new_id = c.fetchone()[0]
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
         
         log_admin_action(username, 'CREATE_QUESTION', f'Created question #{new_id}')
         return jsonify({'success': True, 'question': {'id': new_id}}), 201
@@ -678,7 +697,7 @@ def admin_update_question(question_id):
         ))
         
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
         
         log_admin_action(username, 'UPDATE_QUESTION', f'Updated question #{question_id}')
         return jsonify({'success': True}), 200
@@ -698,11 +717,11 @@ def admin_toggle_question(question_id):
         c.execute('UPDATE questions SET is_active = NOT is_active, updated_at = CURRENT_TIMESTAMP WHERE id = %s RETURNING is_active', (question_id,))
         row = c.fetchone()
         if not row:
-            conn.close()
+            release_db_connection(conn)
             return jsonify({'success': False, 'error': 'Not found'}), 404
         
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
         
         new_status = row[0]
         log_admin_action(username, 'TOGGLE_QUESTION', f'Question #{question_id} is_active={new_status}')
@@ -739,7 +758,7 @@ def admin_upload_question_image(question_id):
         c = conn.cursor()
         c.execute('UPDATE questions SET image_url = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s', (image_url, question_id))
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
         
         log_admin_action(username, 'UPLOAD_IMAGE', f'Question #{question_id}: {filename}')
         return jsonify({'success': True, 'image_url': image_url}), 200
@@ -795,7 +814,7 @@ def admin_import_questions():
             inserted += 1
             
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
         log_admin_action(username, 'IMPORT_QUESTIONS', f'Imported {inserted} questions.')
         return jsonify({'success': True, 'message': f'Imported {inserted} questions.', 'count': inserted}), 200
     except Exception as e:
@@ -888,7 +907,7 @@ def admin_import_questions_zip():
                         inserted += 1
                         
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
         shutil.rmtree(temp_dir)
         log_admin_action(username, 'IMPORT_ZIP', f'Imported {inserted} questions from ZIP.')
         return jsonify({'success': True, 'message': f'Imported {inserted} questions.', 'count': inserted}), 200
@@ -1071,13 +1090,13 @@ def _run_stress_worker(config):
         else: # mode == 'real'
             if target_id == '__db_benchmark__':
                 try:
-                    conn = psycopg2.connect(DB_URL)
+                    conn = get_db_connection()
                     cur = conn.cursor()
                     # Query giả lập tải nặng
                     cur.execute("SELECT * FROM lessons ORDER BY RANDOM() LIMIT 5;")
                     cur.fetchall()
                     cur.close()
-                    conn.close()
+                    release_db_connection(conn)
                     status = 200
                 except Exception:
                     status = 500

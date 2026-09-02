@@ -1,8 +1,17 @@
+let savedLocale = null;
+if (localStorage.getItem('user_token')) {
+    savedLocale = localStorage.getItem('locale');
+} else {
+    savedLocale = sessionStorage.getItem('guest_locale');
+}
+const defaultBrowser = navigator.language && navigator.language.startsWith('vi') ? 'vi' : 'en';
+
 const i18nConfig = {
   defaultLocale: 'vi',
-  currentLocale: localStorage.getItem('locale') || (navigator.language && navigator.language.startsWith('vi') ? 'vi' : 'en'),
+  currentLocale: savedLocale || defaultBrowser,
   translations: {}
 };
+window.i18nConfig = i18nConfig;
 
 let _loadPromise = null;
 async function loadTranslations(lang) {
@@ -76,19 +85,44 @@ window.setLang = async function(lang) {
   }
   
   i18nConfig.currentLocale = lang;
-  localStorage.setItem('locale', lang);
+  if (localStorage.getItem('user_token')) {
+      localStorage.setItem('locale', lang);
+  } else {
+      sessionStorage.setItem('guest_locale', lang);
+  }
   
   if (!i18nConfig.translations[lang]) {
     await loadTranslations(lang);
   }
   
   updateDOM();
+  window.dispatchEvent(new CustomEvent('languageChanged', { detail: i18nConfig.currentLocale }));
+
+  // Sync to backend if logged in (with Anti-Spam Debounce)
+  const token = (window.AuthGuard && window.AuthGuard.getToken) ? window.AuthGuard.getToken() : localStorage.getItem("user_token");
+  if (token) {
+    if (window.langSyncTimeout) clearTimeout(window.langSyncTimeout);
+    window.langSyncTimeout = setTimeout(() => {
+      const API_BASE = (window.App && window.App.API_BASE) ? window.App.API_BASE : "http://127.0.0.1:5000";
+      try {
+        fetch(`${API_BASE}/api/user/language`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ language: lang })
+        }).catch(e => console.error("Language sync error:", e));
+      } catch(e) {}
+    }, 1500); // Wait 1.5s after the last click before saving to DB
+  }
 };
 
 // Initialize
 async function initI18n() {
   await loadTranslations(i18nConfig.currentLocale);
   updateDOM();
+  window.dispatchEvent(new CustomEvent('languageChanged', { detail: i18nConfig.currentLocale }));
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initI18n);

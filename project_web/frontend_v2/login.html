@@ -1,13 +1,33 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="vi">
   <head>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#111113';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#fcfcfd';
+        }
+      } catch (e) {}
+    })();
+  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-GRZR4Y6VFQ');
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title data-i18n="auth.page_title">Đăng nhập / Đăng ký - Vectoria</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <title data-i18n="nav.title_login">Vectoria</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png" />
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap"
       rel="stylesheet"
@@ -720,25 +740,26 @@
       }
     </style>
 
+  <link rel="stylesheet" href="css/global-search.css">
 </head>
   <body>
   <script>
-    if (localStorage.getItem('theme') === 'dark') {
+    if (localStorage.getItem('vec_theme') === 'dark') {
       document.body.classList.add('dark-theme', 'dark');
     }
   </script>
     <script>
-      if (localStorage.getItem('theme') === 'dark') {
+      if (localStorage.getItem('vec_theme') === 'dark') {
         document.body.classList.remove('light-theme');
         document.body.classList.add('dark-theme', 'dark');
       }
     </script>
     <button class="back-arrow" onclick="history.back()" title="Quay lại">
-      <i class="fa-solid fa-arrow-left"></i>
+      <i class="ph ph-arrow-left"></i>
     </button>
 
     <div id="static-toast">
-      <i class="fa-solid fa-circle-check toast-icon"></i>
+      <i class="ph ph-check-circle toast-icon"></i>
       <div class="toast-text">
         <h4 id="toastTitle" data-i18n="auth.toast_notice">Thông báo</h4>
         <p id="toastMessage">Đăng nhập thành công</p>
@@ -773,7 +794,7 @@
                 placeholder="abc@example.com" data-i18n-placeholder="auth.ph_email"
                 required
               />
-              <i class="fa-regular fa-envelope input-icon"></i>
+              <i class="ph ph-envelope input-icon"></i>
             </div>
           </div>
           <div class="form-group">
@@ -786,9 +807,9 @@
                 placeholder="••••••••"
                 required
               />
-              <i class="fa-solid fa-lock input-icon"></i>
+              <i class="ph ph-lock input-icon"></i>
               <i
-                class="fa-solid fa-eye-slash toggle-pwd"
+                class="ph ph-eye-slash toggle-pwd"
                 onclick="togglePassword('loginPass', this)"
                 title="Hiện/Ẩn mật khẩu"
               ></i>
@@ -799,7 +820,7 @@
             <a href="#" class="forgot-link" onclick="switchTab('forgot')" data-i18n="auth.forgot_password_link">Quên mật khẩu?</a>
           </div>
           <button type="submit" class="btn-submit" id="btnLoginSubmit">
-            <span data-i18n="auth.login_now">Đăng nhập</span> <i class="fa-solid fa-right-to-bracket"></i>
+            <span data-i18n="auth.login_now">Đăng nhập</span> <i class="ph ph-sign-in"></i>
           </button>
         </form>
             <form id="forgotForm" style="display: none;" onsubmit="handleAuth(event, 'forgot')">
@@ -810,15 +831,15 @@
             <label data-i18n="auth.forgot_email_label">Email khôi phục</label>
             <div class="input-wrapper">
               <input type="email" id="forgotEmail" placeholder="abc@example.com" data-i18n-placeholder="auth.ph_email" required />
-              <i class="fa-regular fa-envelope input-icon"></i>
+              <i class="ph ph-envelope input-icon"></i>
             </div>
           </div>
           <button type="submit" class="btn-submit" id="btnForgotSubmit">
-            <span data-i18n="auth.send_link">Gửi liên kết</span> <i class="fa-solid fa-paper-plane"></i>
+            <span data-i18n="auth.send_link">Gửi liên kết</span> <i class="ph ph-paper-plane-right"></i>
           </button>
           <div style="text-align: center; margin-top: 20px;">
             <a href="#" class="forgot-link" onclick="switchTab('login')">
-              <i class="fa-solid fa-arrow-left"></i> Quay lại đăng nhập
+              <i class="ph ph-arrow-left"></i> <span data-i18n="auth.back_to_login">Quay lại đăng nhập</span>
             </a>
           </div>
         </form>
@@ -850,7 +871,7 @@
                 placeholder="Ví dụ: Khoa K50" data-i18n-placeholder="auth.ph_username"
                 required
               />
-              <i class="fa-regular fa-user input-icon"></i>
+              <i class="ph ph-user input-icon"></i>
             </div>
           </div>
           <div class="form-group">
@@ -862,7 +883,7 @@
                 placeholder="abc@example.com" data-i18n-placeholder="auth.ph_email"
                 required
               />
-              <i class="fa-regular fa-envelope input-icon"></i>
+              <i class="ph ph-envelope input-icon"></i>
             </div>
             <div class="error-msg" id="regEmailError" data-i18n="auth.err_invalid_email">Email không hợp lệ</div>
           </div>
@@ -876,18 +897,18 @@
                 placeholder="Ví dụ: Secret@123" data-i18n-placeholder="auth.ph_create_pass"
                 required
               />
-              <i class="fa-solid fa-lock input-icon"></i>
-              <i class="fa-solid fa-eye-slash toggle-pwd" onclick="togglePassword('regPass', this)" title="Hiện/Ẩn mật khẩu"></i>
-              <i class="fa-solid fa-keyboard caps-lock-warning" id="regCapsWarning" title="Caps Lock đang bật"></i>
+              <i class="ph ph-lock input-icon"></i>
+              <i class="ph ph-eye-slash toggle-pwd" onclick="togglePassword('regPass', this)" title="Hiện/Ẩn mật khẩu"></i>
+              <i class="ph ph-keyboard caps-lock-warning" id="regCapsWarning" title="Caps Lock đang bật"></i>
             </div>
             <div class="pwd-strength-container" id="pwdStrengthContainer">
               <div class="pwd-strength-bar">
                 <div class="pwd-strength-fill" id="pwdStrengthFill"></div>
               </div>
               <ul class="pwd-rules">
-                <li id="ruleLength" data-i18n="auth.rule_length"><i class="fa-solid fa-circle-xmark"></i> Tối thiểu 8 ký tự</li>
-                <li id="ruleLetter" data-i18n="auth.rule_letter"><i class="fa-solid fa-circle-xmark"></i> Có ít nhất 1 chữ cái</li>
-                <li id="ruleNumber" data-i18n="auth.rule_number"><i class="fa-solid fa-circle-xmark"></i> Có ít nhất 1 chữ số</li>
+                <li id="ruleLength" data-i18n="auth.rule_length"><i class="ph ph-circle-xmark"></i> Tối thiểu 8 ký tự</li>
+                <li id="ruleLetter" data-i18n="auth.rule_letter"><i class="ph ph-circle-xmark"></i> Có ít nhất 1 chữ cái</li>
+                <li id="ruleNumber" data-i18n="auth.rule_number"><i class="ph ph-circle-xmark"></i> Có ít nhất 1 chữ số</li>
               </ul>
             </div>
           </div>
@@ -901,23 +922,25 @@
                 placeholder="Ví dụ: Secret@123" data-i18n-placeholder="auth.ph_confirm_pass"
                 required
               />
-              <i class="fa-solid fa-lock input-icon"></i>
-              <i class="fa-solid fa-eye-slash toggle-pwd" onclick="togglePassword('regPassConfirm', this)" title="Hiện/Ẩn mật khẩu"></i>
+              <i class="ph ph-lock input-icon"></i>
+              <i class="ph ph-eye-slash toggle-pwd" onclick="togglePassword('regPassConfirm', this)" title="Hiện/Ẩn mật khẩu"></i>
             </div>
             <div class="error-msg" id="regPassConfirmError" data-i18n="auth.err_pass_mismatch">Mật khẩu không khớp</div>
           </div>
           <button type="submit" class="btn-submit" id="btnRegSubmit">
-            <span data-i18n="auth.btn_create_account">Tạo tài khoản</span> <i class="fa-solid fa-user-plus"></i>
+            <span data-i18n="auth.btn_create_account">Tạo tài khoản</span> <i class="ph ph-user-plus"></i>
           </button>
         </form>
             
+        <div id="regExtra">
             <div class="divider" data-i18n="auth.or_text">HOẶC</div>
-        <button class="btn-social" type="button" onclick="handleGoogleAuth()">
-          <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" alt="Google" width="20" /> <span data-i18n="auth.continue_google">Tiếp tục với Google</span>
-        </button>
+            <button class="btn-social" type="button" onclick="handleGoogleAuth()">
+            <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" alt="Google" width="20" /> <span data-i18n="auth.continue_google">Tiếp tục với Google</span>
+            </button>
             <div class="mobile-flip-link">
               <span data-i18n="auth.have_account">Đã có tài khoản?</span> <a href="#" onclick="flipCard(false); return false;" style="color: var(--primary-base); font-weight: 600; text-decoration: none;" data-i18n="auth.login_now">Đăng nhập ngay</a>
             </div>
+        </div>
 
           </div>
           
@@ -943,30 +966,42 @@
         <input type="hidden" id="resetTokenHidden" value="" />
         
         <div class="form-group">
-          <label data-i18n="auth.new_password_label">Mật khẩu mới</label>
-          <div class="input-wrapper">
-            <input type="password" id="resetPass" data-i18n-placeholder="auth.ph_new_pass" placeholder="e.g. Secret@123" required />
-            <i class="fa-solid fa-lock input-icon"></i>
-            <i class="fa-solid fa-eye-slash toggle-pwd" onclick="togglePassword('resetPass', this)" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted);"></i>
+            <label data-i18n="auth.new_password_label">Mật khẩu mới</label>
+            <div class="input-wrapper" id="resetPassWrapper">
+              <input type="password" id="resetPass" data-i18n-placeholder="auth.ph_new_pass" placeholder="e.g. Secret@123" required />
+              <i class="ph ph-lock input-icon"></i>
+              <i class="ph ph-eye-slash toggle-pwd" onclick="togglePassword('resetPass', this)" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted);"></i>
+              <i class="ph ph-keyboard caps-lock-warning" id="resetCapsWarning" title="Caps Lock đang bật"></i>
+            </div>
+            <div class="pwd-strength-container" id="resetPwdStrengthContainer">
+              <div class="pwd-strength-bar">
+                <div class="pwd-strength-fill" id="resetPwdStrengthFill"></div>
+              </div>
+              <ul class="pwd-rules">
+                <li id="resetRuleLength" data-i18n="auth.rule_length"><i class="ph ph-circle-xmark"></i> Tối thiểu 8 ký tự</li>
+                <li id="resetRuleLetter" data-i18n="auth.rule_letter"><i class="ph ph-circle-xmark"></i> Có ít nhất 1 chữ cái</li>
+                <li id="resetRuleNumber" data-i18n="auth.rule_number"><i class="ph ph-circle-xmark"></i> Có ít nhất 1 chữ số</li>
+              </ul>
+            </div>
           </div>
-        </div>
-        
-        <div class="form-group" style="margin-top: 15px;">
-          <label data-i18n="auth.reg_confirm_pass_label">Xác nhận mật khẩu</label>
-          <div class="input-wrapper">
-            <input type="password" id="resetConfirm" data-i18n-placeholder="auth.ph_confirm_new_pass" placeholder="e.g. Secret@123" required />
-            <i class="fa-solid fa-shield-check input-icon"></i>
-            <i class="fa-solid fa-eye-slash toggle-pwd" onclick="togglePassword('resetConfirm', this)" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted);"></i>
+          
+          <div class="form-group" style="margin-top: 15px;">
+            <label data-i18n="auth.reg_confirm_pass_label">Xác nhận mật khẩu</label>
+            <div class="input-wrapper" id="resetConfirmWrapper">
+              <input type="password" id="resetConfirm" data-i18n-placeholder="auth.ph_confirm_new_pass" placeholder="e.g. Secret@123" required />
+              <i class="ph ph-shield-check input-icon"></i>
+              <i class="ph ph-eye-slash toggle-pwd" onclick="togglePassword('resetConfirm', this)" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted);"></i>
+            </div>
+            <div class="error-msg" id="resetConfirmError" data-i18n="auth.err_pass_mismatch">Mật khẩu không khớp</div>
           </div>
-        </div>
         
         <button type="submit" class="btn-submit" id="btnResetSubmit" style="margin-top: 25px;">
             <span data-i18n="auth.btn_change_password">Cập nhật mật khẩu</span>
         </button>
       </form>
       
-      <div style="text-align: center; margin-top: 25px;">
-        <a href="login.html" style="color: var(--primary-base); font-weight: 600; text-decoration: none;" data-i18n="auth.back_to_login"><i class="fa-solid fa-arrow-left"></i> Quay lại đăng nhập</a>
+      <div id="resetPassExtra" style="text-align: center; margin-top: 20px;">
+        <a href="login.html" style="color: var(--primary-base); font-weight: 600; text-decoration: none;" data-i18n="auth.back_to_login"><i class="ph ph-arrow-left"></i> Quay lại đăng nhập</a>
       </div>
     </div>
   </div>
@@ -974,11 +1009,11 @@
   <div id="verifyContainer" style="display: none; width: 100%; height: 100%; justify-content: center; align-items: center; background: var(--bg-card); z-index: 10; border-radius: 16px;">
     <div style="max-width: 420px; width: 100%; padding: 40px 35px; text-align: center;">
       <div id="verifyLoading">
-        <i class="fa-solid fa-spinner fa-spin" style="font-size: 3rem; color: var(--primary-base); margin-bottom: 20px;"></i>
+        <i class="ph ph-spinner ph-spin" style="font-size: 3rem; color: var(--primary-base); margin-bottom: 20px;"></i>
         <h2 style="font-family: 'Lora', serif; font-size: 1.5rem; color: var(--text-main);" data-i18n="verify.verifying">Đang xác thực...</h2>
       </div>
       <div id="verifyResult" style="display: none;">
-        <i id="verifyIcon" class="fa-solid fa-circle-check" style="font-size: 3.5rem; color: #10b981; margin-bottom: 20px;"></i>
+        <i id="verifyIcon" class="ph ph-check-circle" style="font-size: 3.5rem; color: #10b981; margin-bottom: 20px;"></i>
         <h3 id="verifyTitle" style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;">Thành công</h3>
         <p id="verifyDesc" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px;"></p>
         <a href="login.html" class="btn-submit" style="display:inline-block; text-decoration:none; margin-top: 10px;" data-i18n="auth.back_to_login">Quay lại đăng nhập</a>
@@ -1045,13 +1080,13 @@
           flipCard(false);
           document.getElementById("forgotForm").style.display = "none";
           document.getElementById("loginForm").style.display = "block";
-          document.getElementById("authSubtitleLogin").innerText = "Đăng nhập để đồng bộ dữ liệu";
+          document.getElementById("authSubtitleLogin").innerText = window.tr ? window.tr("auth.login_to_sync", "Đăng nhập để đồng bộ dữ liệu") : "Đăng nhập để đồng bộ dữ liệu";
           setTimeout(() => document.getElementById("loginEmail").focus(), 300);
         } else if (tab === "forgot") {
           flipCard(false);
           document.getElementById("loginForm").style.display = "none";
           document.getElementById("forgotForm").style.display = "block";
-          document.getElementById("authSubtitleLogin").innerText = "Khôi phục mật khẩu";
+          document.getElementById("authSubtitleLogin").innerText = window.tr ? window.tr("auth.toast_reset_password_title", "Khôi phục mật khẩu") : "Khôi phục mật khẩu";
           setTimeout(() => document.getElementById("forgotEmail").focus(), 300);
         }
       }
@@ -1065,26 +1100,50 @@
         const bar = toast.querySelector(".toast-bar");
 
         icon.className = isSuccess
-          ? "fa-solid fa-circle-check toast-icon"
-          : "fa-solid fa-circle-xmark toast-icon";
+          ? "ph ph-check-circle toast-icon"
+          : "ph ph-circle-xmark toast-icon";
         icon.style.color = isSuccess ? "#2ecc71" : "#e74c3c";
         toast.style.borderLeftColor = isSuccess ? "#2ecc71" : "#e74c3c";
         bar.style.background = isSuccess ? "#2ecc71" : "#e74c3c";
 
-        title.innerText = customTitle ? customTitle : (isSuccess ? (window.tr ? window.tr("auth.toast_notice", "Thông báo") : "Thông báo") : (window.tr ? window.tr("auth.toast_error", "Có lỗi xảy ra") : "Có lỗi xảy ra"));
-        desc.innerText = message;
+        if (customTitle) {
+          title.innerText = customTitle;
+          if (message) {
+            desc.innerText = message;
+            desc.style.display = "block";
+          } else {
+            desc.innerText = "";
+            desc.style.display = "none";
+          }
+        } else {
+          // UX Improvement: Extract first sentence as Title, the rest as Description
+          let splitIdx = message.indexOf('. ');
+          if (splitIdx === -1) splitIdx = message.indexOf('! ');
+          if (splitIdx === -1) splitIdx = message.indexOf('? ');
+          if (splitIdx === -1 && message.indexOf(': ') !== -1) splitIdx = message.indexOf(': ');
+          
+          if (splitIdx !== -1) {
+            title.innerText = message.substring(0, splitIdx + 1);
+            desc.innerText = message.substring(splitIdx + 2).trim();
+            desc.style.display = "block";
+          } else {
+            title.innerText = message;
+            desc.innerText = "";
+            desc.style.display = "none";
+          }
+        }
 
         toast.classList.add("show");
         bar.style.transition = "none";
         bar.style.width = "0%";
 
         setTimeout(() => {
-          bar.style.transition = "width 2s linear";
+          bar.style.transition = "width 5s linear";
           bar.style.width = "100%";
         }, 50);
         setTimeout(() => {
           toast.classList.remove("show");
-        }, 2000);
+        }, 5000);
       }
 
       // 5. XỬ LÝ GỌI API BACKEND
@@ -1103,7 +1162,7 @@
         const originalHtml = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML =
-          '<i class="fa-solid fa-spinner fa-spin"></i> ' + (window.tr ? window.tr("auth.processing", "Đang xử lý...") : "Đang xử lý...");
+          '<i class="ph ph-spinner ph-spin"></i> ' + (window.tr ? window.tr("auth.processing", "Đang xử lý...") : "Đang xử lý...");
 
         const _l = atob("aHR0cDovLzEyNy4wLjAuMTo1MDAw");
         const _p = atob("aHR0cHM6Ly92aXN1YWxpemF0aW9uLXJyNXYub25yZW5kZXIuY29t");
@@ -1115,7 +1174,7 @@
             const email = document.getElementById("regEmail").value;
             const password = document.getElementById("regPass").value;
 
-            const lang = localStorage.getItem('locale') || "vi";
+            const lang = (window.i18nConfig ? window.i18nConfig.currentLocale : "vi");
 
             const res = await fetch(`${API_BASE}/api/register`, {
               method: "POST",
@@ -1126,15 +1185,17 @@
 
             if (data.status === "success") {
               const form = document.getElementById("registerForm");
+              const regExtra = document.getElementById("regExtra");
+              if (regExtra) regExtra.style.display = "none";
               form.innerHTML = `
                 <div style="text-align: center; padding: 20px;">
-                  <i class="fa-solid fa-envelope-circle-check" style="font-size: 3.5rem; color: #2ecc71; margin-bottom: 20px;"></i>
+                  <i class="ph ph-envelope-simple-open" style="font-size: 3.5rem; color: #2ecc71; margin-bottom: 20px;"></i>
                   <h3 style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;">${window.tr ? window.tr("auth.reg_success_title", "Đăng ký thành công") : "Đăng ký thành công"}</h3>
                   <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px;">
                      ${window.tr ? window.tr("auth.reg_success_msg_1", "Chúng tôi đã gửi một email xác thực đến") : "Chúng tôi đã gửi một email xác thực đến"} <br><b style="color: var(--text-main);">${email}</b>.<br><br>${window.tr ? window.tr("auth.reg_success_msg_2", "Vui lòng kiểm tra hộp thư đến (hoặc thư rác) và bấm vào liên kết để kích hoạt tài khoản trước khi đăng nhập.") : "Vui lòng kiểm tra hộp thư đến (hoặc thư rác) và bấm vào liên kết để kích hoạt tài khoản trước khi đăng nhập."}
                   </p>
                   <button type="button" class="btn-submit" onclick="window.location.reload()">
-                    <i class="fa-solid fa-arrow-left"></i> ${window.tr ? window.tr("auth.back_to_login", "Quay lại đăng nhập") : "Quay lại đăng nhập"}
+                    <i class="ph ph-arrow-left"></i> ${window.tr ? window.tr("auth.back_to_login", "Quay lại đăng nhập") : "Quay lại đăng nhập"}
                   </button>
                 </div>
               `;
@@ -1146,23 +1207,31 @@
             const newPwd = document.getElementById("resetPass").value;
             const confirmPwd = document.getElementById("resetConfirm").value;
             
+            const score = (newPwd.length >= 8 ? 1 : 0) + (/[a-zA-Z]/.test(newPwd) ? 1 : 0) + (/[0-9]/.test(newPwd) ? 1 : 0);
+            if (score < 3) {
+              showToast(window.tr ? window.tr("auth.toast_invalid_pass", "Mật khẩu chưa đủ mạnh.") : "Mật khẩu chưa đủ mạnh.", false);
+              return;
+            }
+            
             if (newPwd !== confirmPwd) {
-              showToast(window.tr ? window.tr("auth.err_pwd_match", "Mật khẩu xác nhận không khớp.") : "Mật khẩu xác nhận không khớp.", false);
+              showToast(window.tr ? window.tr("auth.err_pass_mismatch", "Mật khẩu xác nhận không khớp.") : "Mật khẩu xác nhận không khớp.", false);
               return;
             }
 
             const res = await fetch(`${API_BASE}/api/reset-password`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ token, new_password: newPwd, language: localStorage.getItem("locale") || "vi" }),
+              body: JSON.stringify({ token, new_password: newPwd, language: (window.i18nConfig ? window.i18nConfig.currentLocale : "vi") }),
             });
             const data = await res.json();
 
             if (data.status === "success") {
               const form = document.getElementById("resetPasswordFormInline");
+              const resetExtra = document.getElementById("resetPassExtra");
+              if (resetExtra) resetExtra.style.display = "none";
               form.innerHTML = `
                 <div style="text-align: center; padding: 20px;">
-                  <i class="fa-solid fa-circle-check" style="font-size: 3.5rem; color: #10b981; margin-bottom: 20px;"></i>
+                  <i class="ph ph-check-circle" style="font-size: 3.5rem; color: #10b981; margin-bottom: 20px;"></i>
                   <h3 style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;">${window.tr ? window.tr("auth.password_updated", "Mật khẩu đã được cập nhật") : "Mật khẩu đã được cập nhật"}</h3>
                   <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px;">
                      ${window.tr ? window.tr("auth.auth_complete_desc", "Tài khoản đã được cập nhật.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập.") : "Tài khoản đã được cập nhật.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập."}
@@ -1178,7 +1247,7 @@
             }
           } else if (type === "forgot") {
             const email = document.getElementById("forgotEmail").value;
-            const lang = localStorage.getItem('locale') || "vi";
+            const lang = (window.i18nConfig ? window.i18nConfig.currentLocale : "vi");
             const res = await fetch(`${API_BASE}/api/forgot-password`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1198,7 +1267,7 @@
             const email = document.getElementById("loginEmail").value;
             const password = document.getElementById("loginPass").value;
 
-            const lang = localStorage.getItem('locale') || "vi";
+            const lang = (window.i18nConfig ? window.i18nConfig.currentLocale : "vi");
 
             const res = await fetch(`${API_BASE}/api/login`, {
               method: "POST",
@@ -1208,7 +1277,13 @@
             const data = await res.json();
 
             if (data.status === "success") {
-              localStorage.setItem("user_token", data.token);
+              const isRemember = document.getElementById("rememberMe").checked;
+              // Lưu Token theo cơ chế Remember Me
+              if (window.AuthGuard && window.AuthGuard.saveToken) {
+                window.AuthGuard.saveToken(data.token, isRemember);
+              } else {
+                localStorage.setItem("user_token", data.token);
+              }
               localStorage.setItem("user_name", data.display_name);
               localStorage.setItem("user_email", data.email);
               if (data.avatar_url) {
@@ -1216,13 +1291,38 @@
               } else {
                 localStorage.removeItem("user_avatar");
               }
-              const isRemember = document.getElementById("rememberMe").checked;
+              
+              if (data.language) {
+                  localStorage.setItem("locale", data.language);
+                  if (window.setLang) window.setLang(data.language);
+              }
               if (isRemember) {
                 localStorage.setItem("remembered_email", email);
               } else {
                 localStorage.removeItem("remembered_email");
               }
-              showToast(`Chào mừng, ${data.display_name}.`, true, "Đăng nhập thành công");
+
+              // Lưu tài khoản vào danh sách đa tài khoản
+              try {
+                var accounts = JSON.parse(localStorage.getItem("saved_accounts") || "[]");
+                var existing = accounts.findIndex(function(a) { return a.email === data.email; });
+                var accountData = {
+                  email: data.email,
+                  name: data.display_name,
+                  avatar: data.avatar_url || null,
+                  token: data.token,
+                  lastLogin: new Date().toISOString()
+                };
+                if (existing > -1) {
+                  accounts[existing] = accountData;
+                } else {
+                  accounts.push(accountData);
+                }
+                localStorage.setItem("saved_accounts", JSON.stringify(accounts));
+              } catch(e) { /* bỏ qua lỗi parse */ }
+              const successTitle = window.tr ? window.tr("auth.toast_login_success", "Đăng nhập thành công") : "Đăng nhập thành công";
+              const welcomeMsg = window.tr ? window.tr("auth.toast_welcome_msg", "Chào mừng, {name}.").replace("{name}", data.display_name) : `Chào mừng, ${data.display_name}.`;
+              showToast(welcomeMsg, true, successTitle);
 
               setTimeout(() => {
                 const returnUrl = sessionStorage.getItem(
@@ -1251,11 +1351,11 @@
       // 6. HIỆU ỨNG NỀN TOÁN HỌC (Copy y nguyên từ Contact)
       const CONFIG = { count: 20, speed: 0.6, repelRadius: 160, repelForce: 6 };
       const icons = [
-        '<i class="fa-solid fa-cube"></i>',
-        '<i class="fa-solid fa-shapes"></i>',
-        '<i class="fa-solid fa-vector-square"></i>',
-        '<i class="fa-solid fa-layer-group"></i>',
-        '<i class="fa-solid fa-square-root-variable"></i>',
+        '<i class="ph ph-cube"></i>',
+        '<i class="ph ph-shapes"></i>',
+        '<i class="ph ph-bounding-box"></i>',
+        '<i class="ph ph-stack"></i>',
+        '<i class="ph ph-math-operations"></i>',
         '<span style="font-family: serif;">&pi;</span>',
         '<span style="font-family: serif;">&Sigma;</span>',
         '<span style="font-family: serif;">&int;</span>',
@@ -1321,12 +1421,15 @@
       let googleClient;
       // 7. TỰ ĐỘNG CHẠY KHI MỞ TRANG (ĐIỀN EMAIL & KÍCH HOẠT ACC)
       window.addEventListener('load', async () => {
-        const userToken = localStorage.getItem("user_token");
-        if (userToken) {
-          // Báo cho người dùng biết đang tự động chuyển hướng
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAddingAccount = urlParams.get('add_account') === '1';
+
+        // Kiểm tra phiên đăng nhập hợp lệ (bao gồm check JWT hết hạn)
+        const stillLoggedIn = window.AuthGuard && window.AuthGuard.isLoggedIn();
+        if (stillLoggedIn && !isAddingAccount) {
           showToast(window.tr ? window.tr("auth.toast_session", "Đang khôi phục phiên làm việc.") : "Đang khôi phục phiên làm việc.", true, window.tr ? window.tr("auth.toast_session", "Phiên làm việc") : "Phiên làm việc");
           setTimeout(() => {
-            window.location.href = "user-dashboard.html"; // Chuyển thẳng vào web
+            window.location.href = "user-dashboard.html";
           }, 1000);
           return; 
         }
@@ -1339,7 +1442,7 @@
         }
 
         // 7.2. Tự động xác thực tài khoản nếu có token trên URL
-        const urlParams = new URLSearchParams(window.location.search);
+        
         const token = urlParams.get('token');
                 const activated = urlParams.get('activated');
         const errorMsg = urlParams.get('error');
@@ -1350,7 +1453,7 @@
           showToast(window.tr ? window.tr("auth.toast_account_activated", "Xác thực hoàn tất. Tab này sẽ tự đóng.") : "Xác thực hoàn tất. Tab này sẽ tự đóng.", true, window.tr ? window.tr("auth.toast_account_activated", "Kích hoạt tài khoản") : "Kích hoạt tài khoản");
           document.querySelector('.auth-container').innerHTML = `
             <div class="auth-card" style="text-align: center; padding: 50px 20px;">
-                <i class="fa-solid fa-circle-check" style="font-size: 60px; color: #2ecc71; margin-bottom: 20px;"></i>
+                <i class="ph ph-check-circle" style="font-size: 60px; color: #2ecc71; margin-bottom: 20px;"></i>
                 <h2 style="margin-bottom: 10px; color: var(--text-main);">${window.tr ? window.tr("auth.auth_complete", "Xác thực hoàn tất") : "Xác thực hoàn tất"}</h2>
                 <p style="color: var(--text-muted); line-height: 1.5;">${window.tr ? window.tr("auth.auth_complete_desc", "Tài khoản đã được kích hoạt.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập.") : "Tài khoản đã được kích hoạt.<br>Bạn có thể đóng tab này và quay lại trang đăng nhập."}</p>
             </div>
@@ -1381,35 +1484,24 @@
           const _p_global = atob("aHR0cHM6Ly92aXN1YWxpemF0aW9uLXJyNXYub25yZW5kZXIuY29t");
           const API_BASE = (location.hostname === "127.0.0.1" || location.hostname === "localhost") ? _l_global : _p_global;
 
-          document.getElementById('flipCardInner').style.display = 'none';
-          document.getElementById('verifyContainer').style.display = 'flex';
-          const rightPanel = document.querySelector('.auth-welcome');
-          if (rightPanel) rightPanel.style.display = 'none';
+          // Clean URL immediately
+          const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+          window.history.replaceState({path:newUrl}, '', newUrl);
 
-          const lang = localStorage.getItem("locale") || "vi";
+          // Show a temporary loading toast
+          showToast(window.tr ? window.tr('verify.verifying', 'Đang xác thực...') : 'Đang xác thực...', true);
+
+          const lang = (window.i18nConfig ? window.i18nConfig.currentLocale : "vi");
           fetch(`${API_BASE}/api/verify?token=${verifyToken}&lang=${lang}`)
             .then(res => res.json())
             .then(data => {
-               document.getElementById('verifyLoading').style.display = 'none';
-               document.getElementById('verifyResult').style.display = 'block';
                if (data.status === 'success') {
-                  document.getElementById('verifyIcon').className = 'fa-solid fa-circle-check';
-                  document.getElementById('verifyIcon').style.color = '#10b981';
-                  document.getElementById('verifyTitle').innerText = window.tr ? window.tr('verify.success_title', 'Thành công!') : 'Thành công!';
-                  document.getElementById('verifyDesc').innerText = data.message;
+                  showToast(data.message, true, window.tr ? window.tr('verify.success_title', 'Thành công!') : 'Thành công!');
                } else {
-                  document.getElementById('verifyIcon').className = 'fa-solid fa-circle-xmark';
-                  document.getElementById('verifyIcon').style.color = '#ef4444';
-                  document.getElementById('verifyTitle').innerText = window.tr ? window.tr('verify.error_title', 'Lỗi xác thực') : 'Lỗi xác thực';
-                  document.getElementById('verifyDesc').innerText = data.message;
+                  showToast(data.message, false, window.tr ? window.tr('verify.error_title', 'Lỗi xác thực') : 'Lỗi xác thực');
                }
             }).catch(err => {
-               document.getElementById('verifyLoading').style.display = 'none';
-               document.getElementById('verifyResult').style.display = 'block';
-               document.getElementById('verifyIcon').className = 'fa-solid fa-circle-xmark';
-               document.getElementById('verifyIcon').style.color = '#ef4444';
-               document.getElementById('verifyTitle').innerText = window.tr ? window.tr('verify.error_title', 'Lỗi hệ thống') : 'Lỗi hệ thống';
-               document.getElementById('verifyDesc').innerText = window.tr ? window.tr('auth.toast_server_error', 'Không thể kết nối máy chủ.') : 'Không thể kết nối máy chủ.';
+               showToast(window.tr ? window.tr('auth.toast_server_error', 'Không thể kết nối máy chủ.') : 'Không thể kết nối máy chủ.', false, window.tr ? window.tr('verify.error_title', 'Lỗi hệ thống') : 'Lỗi hệ thống');
             });
         }
 
@@ -1436,9 +1528,48 @@
                 const data = await res.json();
 
                 if (data.status === 'success') {
-                  localStorage.setItem("user_token", data.token);
+                  // Google login → luôn remember (vì không có checkbox)
+                  if (window.AuthGuard && window.AuthGuard.saveToken) {
+                    window.AuthGuard.saveToken(data.token, true);
+                  } else {
+                    localStorage.setItem("user_token", data.token);
+                  }
                   localStorage.setItem("user_name", data.display_name);
-                  showToast(`Chào mừng, ${data.display_name}.`, true, "Đăng nhập thành công");
+                  if (data.email) {
+                      localStorage.setItem("user_email", data.email);
+                  }
+                  if (data.avatar_url) {
+                      localStorage.setItem("user_avatar", data.avatar_url);
+                  } else {
+                      localStorage.removeItem("user_avatar");
+                  }
+                  if (data.language) {
+                      localStorage.setItem("locale", data.language);
+                      if (window.setLang) window.setLang(data.language);
+                  }
+
+                  // Lưu vào danh sách đa tài khoản
+                  try {
+                    var accounts = JSON.parse(localStorage.getItem("saved_accounts") || "[]");
+                    var gEmail = data.email || data.display_name;
+                    var existing = accounts.findIndex(function(a) { return a.email === gEmail; });
+                    var accountData = {
+                      email: gEmail,
+                      name: data.display_name,
+                      avatar: data.avatar_url || null,
+                      token: data.token,
+                      lastLogin: new Date().toISOString()
+                    };
+                    if (existing > -1) accounts[existing] = accountData;
+                    else accounts.push(accountData);
+                    localStorage.setItem("saved_accounts", JSON.stringify(accounts));
+                  } catch(e) {}
+
+                  const successTitle = window.tr ? window.tr("auth.toast_login_success", "Đăng nhập thành công") : "Đăng nhập thành công";
+                  const welcomeMsg = window.tr ? window.tr("auth.toast_welcome_msg", "Chào mừng, {name}.").replace("{name}", data.display_name) : `Chào mừng, ${data.display_name}.`;
+                  
+                  showToast(welcomeMsg, true, successTitle);
+                  
                   setTimeout(() => window.location.href = "user-dashboard.html", 1000);
                 } else {
                   showToast(data.message, false);
@@ -1521,11 +1652,11 @@
             score++;
             ruleLength.classList.add('valid');
             ruleLength.classList.remove('invalid');
-            ruleLength.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (window.tr ? window.tr("auth.rule_length_ok", "Tối thiểu 8 ký tự") : "Tối thiểu 8 ký tự");
+            ruleLength.innerHTML = '<i class="ph ph-check-circle"></i> ' + (window.tr ? window.tr("auth.rule_length_ok", "Tối thiểu 8 ký tự") : "Tối thiểu 8 ký tự");
           } else {
             ruleLength.classList.remove('valid');
             if(val.length > 0) ruleLength.classList.add('invalid'); else ruleLength.classList.remove('invalid');
-            ruleLength.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (window.tr ? window.tr("auth.rule_length", "Tối thiểu 8 ký tự").replace(/<[^>]*>?/gm, '').trim() : "Tối thiểu 8 ký tự");
+            ruleLength.innerHTML = '<i class="ph ph-circle-xmark"></i> ' + (window.tr ? window.tr("auth.rule_length", "Tối thiểu 8 ký tự").replace(/<[^>]*>?/gm, '').trim() : "Tối thiểu 8 ký tự");
           }
           
           // Rule Letter
@@ -1533,11 +1664,11 @@
             score++;
             ruleLetter.classList.add('valid');
             ruleLetter.classList.remove('invalid');
-            ruleLetter.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (window.tr ? window.tr("auth.rule_letter_ok", "Có ít nhất 1 chữ cái") : "Có ít nhất 1 chữ cái");
+            ruleLetter.innerHTML = '<i class="ph ph-check-circle"></i> ' + (window.tr ? window.tr("auth.rule_letter_ok", "Có ít nhất 1 chữ cái") : "Có ít nhất 1 chữ cái");
           } else {
             ruleLetter.classList.remove('valid');
             if(val.length > 0) ruleLetter.classList.add('invalid'); else ruleLetter.classList.remove('invalid');
-            ruleLetter.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (window.tr ? window.tr("auth.rule_letter", "Có ít nhất 1 chữ cái").replace(/<[^>]*>?/gm, '').trim() : "Có ít nhất 1 chữ cái");
+            ruleLetter.innerHTML = '<i class="ph ph-circle-xmark"></i> ' + (window.tr ? window.tr("auth.rule_letter", "Có ít nhất 1 chữ cái").replace(/<[^>]*>?/gm, '').trim() : "Có ít nhất 1 chữ cái");
           }
 
           // Rule Number
@@ -1545,11 +1676,11 @@
             score++;
             ruleNumber.classList.add('valid');
             ruleNumber.classList.remove('invalid');
-            ruleNumber.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (window.tr ? window.tr("auth.rule_number_ok", "Có ít nhất 1 chữ số") : "Có ít nhất 1 chữ số");
+            ruleNumber.innerHTML = '<i class="ph ph-check-circle"></i> ' + (window.tr ? window.tr("auth.rule_number_ok", "Có ít nhất 1 chữ số") : "Có ít nhất 1 chữ số");
           } else {
             ruleNumber.classList.remove('valid');
             if(val.length > 0) ruleNumber.classList.add('invalid'); else ruleNumber.classList.remove('invalid');
-            ruleNumber.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (window.tr ? window.tr("auth.rule_number", "Có ít nhất 1 chữ số").replace(/<[^>]*>?/gm, '').trim() : "Có ít nhất 1 chữ số");
+            ruleNumber.innerHTML = '<i class="ph ph-circle-xmark"></i> ' + (window.tr ? window.tr("auth.rule_number", "Có ít nhất 1 chữ số").replace(/<[^>]*>?/gm, '').trim() : "Có ít nhất 1 chữ số");
           }
 
           // Update Bar
@@ -1599,6 +1730,116 @@
         regPassConfirm.addEventListener('blur', checkPassConfirm);
       }
 
+        // Logic for Reset Password Strength
+        const resetPass = document.getElementById('resetPass');
+        const resetPassWrapper = document.getElementById('resetPassWrapper');
+        const resetPwdStrengthContainer = document.getElementById('resetPwdStrengthContainer');
+        const resetPwdStrengthFill = document.getElementById('resetPwdStrengthFill');
+        const resetCapsWarning = document.getElementById('resetCapsWarning');
+        
+        const resetRuleLength = document.getElementById('resetRuleLength');
+        const resetRuleLetter = document.getElementById('resetRuleLetter');
+        const resetRuleNumber = document.getElementById('resetRuleNumber');
+        
+        if(resetPass) {
+          resetPass.addEventListener('focus', () => {
+            resetPwdStrengthContainer.style.display = 'block';
+          });
+  
+          resetPass.addEventListener('keyup', (e) => {
+            // Caps Lock Check
+            if (e.getModifierState && e.getModifierState('CapsLock')) {
+              resetCapsWarning.classList.add('show');
+            } else {
+              resetCapsWarning.classList.remove('show');
+            }
+  
+            const val = resetPass.value;
+            let score = 0;
+            
+            // Rule Length
+            if (val.length >= 8) {
+              score++;
+              resetRuleLength.classList.add('valid');
+              resetRuleLength.classList.remove('invalid');
+              resetRuleLength.innerHTML = '<i class="ph ph-check-circle"></i> ' + (window.tr ? window.tr("auth.rule_length_ok", "Tối thiểu 8 ký tự") : "Tối thiểu 8 ký tự");
+            } else {
+              resetRuleLength.classList.remove('valid');
+              if(val.length > 0) resetRuleLength.classList.add('invalid'); else resetRuleLength.classList.remove('invalid');
+              resetRuleLength.innerHTML = '<i class="ph ph-circle-xmark"></i> ' + (window.tr ? window.tr("auth.rule_length", "Tối thiểu 8 ký tự").replace(/<[^>]*>?/gm, '').trim() : "Tối thiểu 8 ký tự");
+            }
+            
+            // Rule Letter
+            if (/[a-zA-Z]/.test(val)) {
+              score++;
+              resetRuleLetter.classList.add('valid');
+              resetRuleLetter.classList.remove('invalid');
+              resetRuleLetter.innerHTML = '<i class="ph ph-check-circle"></i> ' + (window.tr ? window.tr("auth.rule_letter_ok", "Có ít nhất 1 chữ cái") : "Có ít nhất 1 chữ cái");
+            } else {
+              resetRuleLetter.classList.remove('valid');
+              if(val.length > 0) resetRuleLetter.classList.add('invalid'); else resetRuleLetter.classList.remove('invalid');
+              resetRuleLetter.innerHTML = '<i class="ph ph-circle-xmark"></i> ' + (window.tr ? window.tr("auth.rule_letter", "Có ít nhất 1 chữ cái").replace(/<[^>]*>?/gm, '').trim() : "Có ít nhất 1 chữ cái");
+            }
+  
+            // Rule Number
+            if (/[0-9]/.test(val)) {
+              score++;
+              resetRuleNumber.classList.add('valid');
+              resetRuleNumber.classList.remove('invalid');
+              resetRuleNumber.innerHTML = '<i class="ph ph-check-circle"></i> ' + (window.tr ? window.tr("auth.rule_number_ok", "Có ít nhất 1 chữ số") : "Có ít nhất 1 chữ số");
+            } else {
+              resetRuleNumber.classList.remove('valid');
+              if(val.length > 0) resetRuleNumber.classList.add('invalid'); else resetRuleNumber.classList.remove('invalid');
+              resetRuleNumber.innerHTML = '<i class="ph ph-circle-xmark"></i> ' + (window.tr ? window.tr("auth.rule_number", "Có ít nhất 1 chữ số").replace(/<[^>]*>?/gm, '').trim() : "Có ít nhất 1 chữ số");
+            }
+  
+            // Update Bar
+            if (score === 0 && val.length > 0) {
+              resetPwdStrengthFill.style.width = '10%';
+              resetPwdStrengthFill.style.backgroundColor = '#ff4d4d'; // Red
+            } else if (score === 1) {
+              resetPwdStrengthFill.style.width = '33%';
+              resetPwdStrengthFill.style.backgroundColor = '#ff4d4d';
+            } else if (score === 2) {
+              resetPwdStrengthFill.style.width = '66%';
+              resetPwdStrengthFill.style.backgroundColor = '#f1c40f'; // Yellow
+            } else if (score === 3) {
+              resetPwdStrengthFill.style.width = '100%';
+              resetPwdStrengthFill.style.backgroundColor = '#2ecc71'; // Green
+            } else {
+              resetPwdStrengthFill.style.width = '0%';
+            }
+            
+            checkResetConfirm();
+          });
+        }
+
+        const resetConfirm = document.getElementById('resetConfirm');
+        const resetConfirmWrapper = document.getElementById('resetConfirmWrapper');
+        const resetConfirmError = document.getElementById('resetConfirmError');
+  
+        const checkResetConfirm = () => {
+          if (!resetConfirm.value) {
+            resetConfirmWrapper.classList.remove('error', 'success');
+            resetConfirmError.classList.remove('show');
+            return;
+          }
+          if (resetConfirm.value !== resetPass.value) {
+            resetConfirmWrapper.classList.add('error');
+            resetConfirmWrapper.classList.remove('success');
+            resetConfirmError.classList.add('show');
+          } else {
+            resetConfirmWrapper.classList.remove('error');
+            resetConfirmWrapper.classList.add('success');
+            resetConfirmError.classList.remove('show');
+          }
+        };
+  
+        if(resetConfirm) {
+          resetConfirm.addEventListener('keyup', checkResetConfirm);
+          resetConfirm.addEventListener('blur', checkResetConfirm);
+        }
+
       // Pre-flight check before submit
       document.getElementById('registerForm').addEventListener('submit', (e) => {
         const score = (regPass.value.length >= 8 ? 1 : 0) + (/[a-zA-Z]/.test(regPass.value) ? 1 : 0) + (/[0-9]/.test(regPass.value) ? 1 : 0);
@@ -1623,11 +1864,15 @@
 
 
 <script src="js/utils/i18n.js?v=2"></script>
+<script src="js/utils/toast.js"></script>
+  <script src="js/utils/global-search.js"></script>
 </body>
 
 
 
 </html>
+
+
 
 
 

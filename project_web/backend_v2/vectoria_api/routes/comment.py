@@ -1,6 +1,10 @@
+import bleach
+from vectoria_api.config import JWT_SECRET_KEY
 import os
 from flask import Blueprint, request, jsonify
 import psycopg2
+from vectoria_api.database import get_db_connection, release_db_connection
+
 from psycopg2.extras import RealDictCursor
 from vectoria_api.config import DB_URL, GEMINI_API_KEY
 from vectoria_api.middleware.auth import token_required
@@ -53,7 +57,7 @@ def get_comments(topic_id, order_index):
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(" ")[1]
             try:
-                data = jwt.decode(token, os.getenv("JWT_SECRET_KEY", "super-secret-key-vectoria-2026"), algorithms=["HS256"])
+                data = jwt.decode(token, JWT_SECRET_KEY, algorithms=["HS256"])
                 current_user_id = data.get('user_id')
             except:
                 pass
@@ -65,7 +69,7 @@ def get_comments(topic_id, order_index):
         elif sort_by == 'oldest':
             order_clause = "ORDER BY c.created_at ASC"
 
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         # JOIN with users table to get display_name and avatar_url
@@ -114,7 +118,7 @@ def get_comments(topic_id, order_index):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 @comment_bp.route('/api/comment', methods=['POST'])
 @token_required
@@ -129,7 +133,7 @@ def create_comment(user_id):
         return jsonify({"success": False, "message": "Missing required fields"}), 400
         
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         # Check user status
@@ -158,7 +162,7 @@ def create_comment(user_id):
             import psycopg2
             from vectoria_api.config import DB_URL
             try:
-                local_conn = psycopg2.connect(DB_URL)
+                local_conn = get_db_connection()
                 local_cursor = local_conn.cursor()
                 
                 masked_content, is_flagged, reason, severity = check_profanity_and_mask(orig_content)
@@ -185,7 +189,7 @@ def create_comment(user_id):
                 print(f"Background profanity check failed: {e}")
             finally:
                 if 'local_cursor' in locals(): local_cursor.close()
-                if 'local_conn' in locals(): local_conn.close()
+                if 'local_conn' in locals(): local_release_db_connection(conn)
                 
         # Start thread
         import threading
@@ -204,7 +208,7 @@ def create_comment(user_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)
 
 @comment_bp.route('/api/comment/upvote', methods=['POST'])
 @token_required
@@ -216,7 +220,7 @@ def toggle_upvote(user_id):
         return jsonify({"success": False, "message": "Missing comment_id"}), 400
         
     try:
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         # Check if already upvoted
@@ -244,4 +248,4 @@ def toggle_upvote(user_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): release_db_connection(conn)

@@ -117,90 +117,7 @@
        PHẦN 1: TIỆN ÍCH & GIAO DIỆN
        ======================================================================= */
 
-  // Hiển thị thông báo Toast (Đồng bộ cây đỏ/vàng/xanh + Hiệu ứng trượt ngang)
-  App.showToast = function (message, type = "error") {
-    let container = document.getElementById("toast-container");
-    if (!container) {
-      container = document.createElement("div");
-      container.id = "toast-container";
-      document.body.appendChild(container);
-    }
-
-    const removeToastSmoothly = (t) => {
-      if (t.isRemoving) return;
-      t.isRemoving = true;
-      t.style.opacity = "0";
-      t.style.transform = "translateX(120%)";
-      setTimeout(() => {
-        t.style.marginTop = "0";
-        t.style.marginBottom = "0";
-        t.style.paddingTop = "0";
-        t.style.paddingBottom = "0";
-        t.style.height = "0";
-      }, 150);
-      setTimeout(() => {
-        if (t.parentNode) t.remove();
-      }, 400);
-    };
-
-    let activeToasts = Array.from(container.children).filter(
-      (t) => !t.isRemoving,
-    );
-    while (activeToasts.length >= 3) {
-      let oldest = activeToasts.shift();
-      removeToastSmoothly(oldest);
-    }
-
-    const toast = document.createElement("div");
-    toast.className = "toast-item";
-
-    // Ghi đè CSS cứng để đảm bảo không bị dính màu đỏ mặc định của class
-    toast.style.cssText = `
-        opacity: 0; transform: translateY(20px); overflow: hidden;
-        transition: all 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        cursor: pointer; display: flex; align-items: center;
-    `;
-
-    let iconSVG = "",
-      colorHex = "";
-    if (type === "error") {
-      colorHex = "#f44336"; // Đỏ
-      iconSVG =
-        '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>';
-    } else if (type === "warning") {
-      colorHex = "#ff9800"; // Vàng cam chuẩn
-      iconSVG =
-        '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>';
-    } else {
-      colorHex = "#4caf50"; // Xanh
-      iconSVG =
-        '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
-    }
-
-    toast.style.borderLeft = `4px solid ${colorHex}`;
-
-    toast.innerHTML = `
-            <div class="toast-content" style="display: flex; align-items: center; gap: 10px;">
-                <span class="toast-icon" style="color: ${colorHex}; display: flex;">${iconSVG}</span>
-                <span style="color: var(--text); font-weight: 500;">${message}</span>
-            </div>
-            <div class="toast-progress" style="background: ${colorHex};"></div>
-        `;
-
-    toast.onclick = function () {
-      removeToastSmoothly(toast);
-    };
-    container.appendChild(toast);
-
-    requestAnimationFrame(() => {
-      toast.style.opacity = "1";
-      toast.style.transform = "translateY(0) translateX(0)";
-    });
-
-    setTimeout(function () {
-      removeToastSmoothly(toast);
-    }, 5000);
-  };
+  
 
   // =======================================================================
   // CHUẨN HIỂN THỊ KẾT QUẢ THỐNG NHẤT (UNIFIED RESULT UI)
@@ -1428,7 +1345,7 @@
       interactMode = true;
       const btn = document.getElementById("btnInteract");
       if (btn) {
-        btn.innerHTML = '<i class="fa-solid fa-stop"></i> Dừng';
+        btn.innerHTML = '<i class="ph ph-stop"></i> Dừng';
         btn.classList.add("active");
       }
 
@@ -1447,7 +1364,7 @@
       interactMode = false;
       const btn = document.getElementById("btnInteract");
       if (btn) {
-        btn.innerHTML = '<i class="fa-solid fa-cube"></i> Tương tác Hộp';
+        btn.innerHTML = '<i class="ph ph-cube"></i> Tương tác Hộp';
         btn.classList.remove("active");
       }
 
