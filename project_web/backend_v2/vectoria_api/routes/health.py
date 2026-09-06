@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 import psycopg2
 from vectoria_api.database import get_db_connection, release_db_connection
-
+from vectoria_api.middleware.rate_limit import limiter
 
 from test_neo4j import driver 
 from vectoria_api.config import DB_URL
@@ -9,11 +9,13 @@ from vectoria_api.config import DB_URL
 bp = Blueprint("health", __name__)
 
 @bp.get("/")
+@limiter.exempt
 def home():
     return jsonify({"status": "ok"})
 
 @bp.get("/api/health")
 @bp.get("/healthz")
+@limiter.exempt
 def health():
     try:
         # 1. Đánh thức Neo4j
