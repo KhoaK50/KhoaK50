@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="vi">
   <head>
   <script>
@@ -28,11 +28,7 @@
     <title data-i18n="nav.title_login">Vectoria</title>
     <link rel="icon" type="image/png" href="assets/images/logo.png" />
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
-    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
+
 
         <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="stylesheet" href="css/radix_colors.css" />
@@ -47,7 +43,7 @@
         align-items: center;
         min-height: 100vh;
         margin: 0;
-        font-family: "Inter", sans-serif;
+        font-family: var(--font-sans);
         color: var(--text-main);
         background-color: var(--bg-base);
         background-image:
@@ -134,7 +130,8 @@
         perspective: 1200px;
         max-width: 900px;
         width: 95%;
-        height: 600px; /* Fixed height! Không phình to thu nhỏ */
+        height: 620px;
+        max-height: calc(100vh - 40px);
       }
       .flip-card-inner {
         position: relative;
@@ -206,7 +203,7 @@
       .auth-left-panel h2 {
         font-size: 2rem;
         margin-bottom: 15px;
-        font-family: 'STIX Two Text', serif;
+        font-family: var(--font-academic);
         font-weight: 700;
         position: relative;
         z-index: 2;
@@ -220,13 +217,43 @@
       }
       .auth-right-panel {
         flex: 1;
-        padding: 30px 40px; /* Reduced from 40px 45px to save vertical space */
+        padding: 28px 36px;
         position: relative;
         background: var(--bg-card);
         display: flex;
         flex-direction: column;
         justify-content: center;
         overflow-y: auto;
+        box-sizing: border-box;
+      }
+      .flip-card-back .auth-right-panel {
+        justify-content: flex-start;
+        padding: 24px 36px;
+      }
+      .flip-card-back .form-group {
+        margin-bottom: 12px;
+      }
+      .flip-card-back .form-group label {
+        margin-bottom: 5px;
+      }
+      .flip-card-back input {
+        padding: 10.5px 15px 10.5px 40px;
+      }
+      .flip-card-back .pwd-strength-container {
+        margin-top: 8px;
+      }
+      .flip-card-back .pwd-rules li {
+        margin-bottom: 2px;
+      }
+      .flip-card-back .divider {
+        margin: 16px 0 12px;
+      }
+      .flip-card-back .btn-submit {
+        margin-top: 6px;
+        padding: 12px;
+      }
+      .flip-card-back .btn-social {
+        padding: 10.5px;
       }
       
       .toggle-flip-btn {
@@ -292,6 +319,7 @@
         .auth-right-panel {
           padding: 20px 25px !important;
           flex: 1;
+          justify-content: flex-start !important;
         }
         .desktop-flip-link {
           display: none !important;
@@ -868,7 +896,7 @@
               <input
                 type="text"
                 id="regName"
-                placeholder="Ví dụ: Khoa K50" data-i18n-placeholder="auth.ph_username"
+                placeholder="Tên được công khai với mọi người" data-i18n-placeholder="auth.ph_username"
                 required
               />
               <i class="ph ph-user input-icon"></i>
@@ -927,6 +955,15 @@
             </div>
             <div class="error-msg" id="regPassConfirmError" data-i18n="auth.err_pass_mismatch">Mật khẩu không khớp</div>
           </div>
+          <div class="form-group" style="margin-bottom: 20px; font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: flex-start; gap: 8px;">
+            <input type="checkbox" id="agreeTerms" required style="width: 16px; height: 16px; margin-top: 2px; accent-color: var(--primary-base); cursor: pointer; flex-shrink: 0;" />
+            <label for="agreeTerms" style="font-weight: 500; cursor: pointer; line-height: 1.4; display: inline; margin-bottom: 0;">
+              <span data-i18n="auth.agree_terms_prefix">Tôi đã đọc và đồng ý với </span>
+              <a href="terms.html" target="_blank" style="color: var(--primary-base); text-decoration: none;" data-i18n="auth.agree_terms_tos">Điều khoản dịch vụ</a> 
+              <span data-i18n="auth.agree_terms_and"> và </span> 
+              <a href="privacy.html" target="_blank" style="color: var(--primary-base); text-decoration: none;" data-i18n="auth.agree_terms_privacy">Chính sách bảo mật</a>.
+            </label>
+          </div>
           <button type="submit" class="btn-submit" id="btnRegSubmit">
             <span data-i18n="auth.btn_create_account">Tạo tài khoản</span> <i class="ph ph-user-plus"></i>
           </button>
@@ -958,7 +995,7 @@
   <div id="resetPasswordContainer" style="display: none; width: 100%; height: 100%; justify-content: center; align-items: center; background: var(--bg-card); z-index: 10; border-radius: 16px;">
     <div style="max-width: 420px; width: 100%; padding: 40px 35px;">
       <div style="text-align: center; margin-bottom: 25px;">
-        <h2 style="font-family: 'Lora', serif; font-size: 1.8rem; color: var(--text-main); margin-bottom: 8px;" data-i18n="auth.reset_password_title">Đặt lại mật khẩu</h2>
+        <h2 style="font-family: var(--font-ui); font-weight: 700; font-size: 1.8rem; color: var(--text-main); margin-bottom: 8px;" data-i18n="auth.reset_password_title">Đặt lại mật khẩu</h2>
         <p style="color: var(--text-muted); font-size: 0.95rem;" data-i18n="auth.reset_password_desc_new">Nhập mật khẩu mới cho tài khoản của bạn.</p>
       </div>
       
@@ -1010,7 +1047,7 @@
     <div style="max-width: 420px; width: 100%; padding: 40px 35px; text-align: center;">
       <div id="verifyLoading">
         <i class="ph ph-spinner ph-spin" style="font-size: 3rem; color: var(--primary-base); margin-bottom: 20px;"></i>
-        <h2 style="font-family: 'Lora', serif; font-size: 1.5rem; color: var(--text-main);" data-i18n="verify.verifying">Đang xác thực...</h2>
+        <h2 style="font-family: var(--font-ui); font-weight: 700; font-size: 1.5rem; color: var(--text-main);" data-i18n="verify.verifying">Đang xác thực...</h2>
       </div>
       <div id="verifyResult" style="display: none;">
         <i id="verifyIcon" class="ph ph-check-circle" style="font-size: 3.5rem; color: #10b981; margin-bottom: 20px;"></i>
@@ -1069,6 +1106,7 @@
         } else {
           inner.classList.remove('is-flipped');
         }
+        document.querySelectorAll('.auth-right-panel').forEach(p => p.scrollTop = 0);
       }
 
       function switchTab(tab) {

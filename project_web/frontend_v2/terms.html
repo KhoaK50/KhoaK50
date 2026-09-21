@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#111113';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#fcfcfd';
+        }
+      } catch (e) {}
+    })();
+  </script>
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-GRZR4Y6VFQ"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-GRZR4Y6VFQ");
+    </script>
+    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Điều khoản dịch vụ và quy tắc sử dụng của nền tảng học tập Vectoria." />
+    <title>Điều khoản Dịch vụ | Vectoria</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png" />
+
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="css/footer.css" />
+    <link rel="stylesheet" href="css/radix_colors.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    
+    <script src="js/utils/theme-manager.js"></script>
+
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+
+      h1, h2, h3, h4, h5, h6, p, li, body {
+        font-family: var(--font-ui);
+      }
+      body {
+        background-color: transparent !important;
+        color: var(--text-main);
+        margin: 0;
+        padding-top: var(--topbar-h);
+        min-height: 100vh;
+        transition:
+          background-color 0.3s,
+          color 0.3s;
+      }
+
+      /* =================== BACKGROUND HỌC THUẬT =================== */
+      .academic-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -2;
+        background-color: var(--bg-base);
+        background-image: radial-gradient(
+          var(--border-subtle) 1.5px,
+          transparent 1.5px
+        );
+        background-size: 30px 30px;
+        background-position: 0 0;
+        transition: background-color 0.3s;
+      }
+
+      .ambient-glow-1,
+      .ambient-glow-2 {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(120px);
+        z-index: -1;
+        pointer-events: none;
+        animation: floatGlow 15s ease-in-out infinite alternate;
+      }
+
+      .ambient-glow-1 {
+        top: -15%;
+        left: -10%;
+        width: 50vw;
+        height: 50vw;
+        background: rgba(58, 120, 255, 0.06);
+      }
+
+      .ambient-glow-2 {
+        bottom: -20%;
+        right: -10%;
+        width: 60vw;
+        height: 60vw;
+        background: rgba(16, 185, 129, 0.04);
+        animation-delay: -5s;
+      }
+
+      body.dark-theme .ambient-glow-1 {
+        background: rgba(59, 130, 246, 0.12);
+      }
+
+      body.dark-theme .ambient-glow-2 {
+        background: rgba(139, 92, 246, 0.08);
+      }
+
+      @keyframes floatGlow {
+        0% {
+          transform: translate(0, 0) scale(1);
+        }
+        100% {
+          transform: translate(60px, 40px) scale(1.1);
+        }
+      }
+
+      /* CONTENT CONTAINER */
+      .privacy-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 60px 20px;
+        line-height: 1.7;
+      }
+
+      .privacy-container h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-main);
+      }
+      
+      .privacy-container .last-updated {
+        font-size: 1rem;
+        color: var(--text-muted);
+        margin-bottom: 3rem;
+        font-style: italic;
+      }
+
+      .privacy-container h2 {
+        font-size: 1.8rem;
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--text-main);
+        border-bottom: 1px solid var(--border-subtle);
+        padding-bottom: 0.5rem;
+      }
+
+      .privacy-container p, .privacy-container li {
+        font-size: 1.1rem;
+        color: var(--text-main);
+        margin-bottom: 1rem;
+      }
+
+      .privacy-container ul {
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+      }
+    </style>
+    <link rel="stylesheet" href="css/global-search.css">
+</head>
+  <body>
+    
+    <div class="academic-bg"></div>
+    <div class="ambient-glow-1"></div>
+    <div class="ambient-glow-2"></div>
+
+    <header class="vec-topbar" id="globalTopbar">
+      <div class="vec-topbar-left">
+        <button class="vec-sidebar-toggle" id="globalMobileToggleBtn" title="Menu sidebar">
+          <i class="ph ph-compass"></i>
+        </button><a href="index.html" class="vec-brand-group">
+          <img src="assets/images/logo+name.png" alt="Vectoria" onerror="this.src='assets/images/logo.png'">
+        </a>
+        
+        <nav class="vec-nav-links">
+          <a href="index.html" class="vec-nav-link" id="navHome"><i class="ph ph-house"></i> <span data-i18n="nav.home">Trang chủ</span></a>
+          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="ph ph-stack"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
+          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="ph ph-calculator"></i> <span data-i18n="nav.calc">Tính toán</span></a>
+          
+          <div class="vec-dropdown-container">
+            <span class="vec-nav-link"><i class="ph ph-compass"></i> Khám phá <i class="ph ph-caret-down" style="font-size: 0.7em;"></i></span>
+            <div class="vec-dropdown-menu">
+              <a href="knowledge_info.html" class="vec-dropdown-item" data-i18n="nav.knowledge"><i class="ph ph-graduation-cap"></i> Thư viện kiến thức</a>
+              <a href="hdsd.html" class="vec-dropdown-item" data-i18n="nav.manual"><i class="ph ph-question"></i> Hướng dẫn sử dụng</a>
+              <a href="tltk.html" class="vec-dropdown-item" data-i18n="nav.docs"><i class="ph ph-file-pdf"></i> Tài liệu tham khảo</a>
+              <div class="dropdown-divider" style="height: 1px; background: var(--border-strong, #cbd5e1); margin: 5px 0;"></div>
+              <a href="about_us.html" class="vec-dropdown-item" data-i18n="nav.about"><i class="ph ph-users"></i> Về chúng tôi</a>
+              <a href="contact.html" class="vec-dropdown-item" data-i18n="nav.contact"><i class="ph ph-envelope"></i> Liên hệ</a>
+            </div>
+          </div>
+        </nav>
+      </div>
+      
+      <div class="vec-topbar-right">
+        <button class="vec-icon-btn" id="themeToggleBtn" title="Chuyển giao diện">
+          <i class="ph ph-moon icon-light-mode"></i><i class="ph ph-sun icon-dark-mode"></i>
+        </button>
+
+        <div class="vec-dropdown-container right-align">
+          <button class="vec-icon-btn" title="Ngôn ngữ">
+            <i class="ph ph-globe"></i>
+          </button>
+          <div class="vec-dropdown-menu" style="min-width: 150px;">
+            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('vi')">Tiếng Việt</a>
+            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('en')">English</a>
+          </div>
+        </div>
+        
+        <div class="vec-dropdown-container right-align" id="notificationDropdownContainer" style="display: none;">
+          <button class="vec-icon-btn" title="Thông báo" id="notificationBellBtn" style="position: relative;">
+            <i class="ph ph-bell"></i>
+            <span id="unreadBadge" style="display: none; position: absolute; top: 0px; right: 0px; min-width: 16px; height: 16px; background-color: #ef4444; color: white; border-radius: 10px; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; font-family: var(--font-ui); box-shadow: 0 0 0 2px var(--bg-card, #fff);"></span>
+          </button>
+          <div class="vec-dropdown-menu" id="notificationMenu" style="min-width: 320px; max-height: 400px; overflow-y: auto; padding: 0;">
+            <div style="padding: 12px 16px; border-bottom: 1px solid var(--s3); font-weight: 600; font-family: var(--font); display: flex; justify-content: space-between; align-items: center;">
+              <span>Thông báo</span>
+              <button id="markAllReadBtn" style="font-size: 0.8em; color: var(--b9); background: none; border: none; cursor: pointer; display: none;">Đánh dấu đã đọc</button>
+            </div>
+            <div id="notificationList">
+              <div style="padding: 16px; text-align: center; color: var(--s6); font-family: var(--font);">Không có thông báo mới</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="vec-dropdown-container right-align">
+          <div class="top-avatar-btn" id="btnTopAvatar" style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary-base); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; background-size: cover; background-position: center;">
+            <i class="ph ph-user"></i>
+          </div>
+          <div class="top-dropdown vec-dropdown-menu" id="menuTopAvatar" style="width: 260px; min-width: 260px;">
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="privacy-container">
+      <h1>Điều khoản Dịch vụ</h1>
+      <p class="last-updated">Cập nhật lần cuối: 02/09/2026</p>
+
+      <p>Chào mừng bạn đến với Vectoria (vectoria.io.vn). Bằng việc truy cập hoặc sử dụng nền tảng của chúng tôi, bạn đồng ý tuân thủ các Điều khoản Dịch vụ này. Nếu bạn không đồng ý với bất kỳ điều khoản nào, vui lòng ngừng sử dụng dịch vụ.</p>
+
+      <h2>1. Mô Tả Dịch Vụ</h2>
+      <p>Vectoria là một nền tảng giáo dục hỗ trợ học đại số tuyến tính và trực quan hóa vector. Dịch vụ cung cấp các tính năng bao gồm:</p>
+      <ul>
+        <li>Công cụ tính toán và trực quan hóa vector 2D, 3D.</li>
+        <li>Hệ thống bài học, bài giảng và tài liệu học tập.</li>
+        <li>Hệ thống bài kiểm tra, câu đố.</li>
+        <li>Hệ thống điểm thưởng Gamification bao gồm VEX, VP và danh hiệu.</li>
+      </ul>
+
+      <h2>2. Tài Khoản Người Dùng</h2>
+      <p>Để sử dụng đầy đủ các tính năng, bạn cần tạo tài khoản. Bằng việc đăng ký, bạn đồng ý:</p>
+      <ul>
+        <li>Cung cấp thông tin chính xác và đầy đủ.</li>
+        <li>Tự chịu trách nhiệm bảo mật mật khẩu và thông tin đăng nhập của mình.</li>
+        <li>Không chia sẻ tài khoản hoặc cho phép người khác sử dụng tài khoản của bạn để gian lận.</li>
+        <li>Không tạo tài khoản giả mạo hoặc sử dụng bot để khai thác hệ thống.</li>
+      </ul>
+
+      <h2>3. Quy Tắc Sử Dụng</h2>
+      <p>Bạn không được phép thực hiện các hành vi sau khi sử dụng Vectoria:</p>
+      <ul>
+        <li>Tấn công, phá hoại, hoặc cố gắng truy cập trái phép vào hệ thống, máy chủ, hoặc cơ sở dữ liệu của chúng tôi.</li>
+        <li>Khai thác lỗ hổng phần mềm để trục lợi cá nhân, ví dụ như tăng điểm VP/VEX gian lận.</li>
+        <li>Sử dụng các công cụ tự động để spam API hoặc gửi hàng loạt request gây quá tải hệ thống.</li>
+        <li>Sao chép, phân phối hoặc sửa đổi mã nguồn, tài liệu, hoặc nội dung bài học mà không có sự đồng ý của Vectoria.</li>
+        <li>Đăng tải nội dung độc hại, xúc phạm hoặc vi phạm pháp luật.</li>
+      </ul>
+
+      <h2>4. Gamification (Hệ Thống Điểm Thưởng VP/VEX)</h2>
+      <p>Vectoria sử dụng hệ thống điểm thưởng để khuyến khích học tập:</p>
+      <ul>
+        <li><strong>VP (Vectoria Points) & VEX (Vectoria Experience):</strong> Đây là các điểm số nội bộ chỉ có giá trị sử dụng trên nền tảng Vectoria.</li>
+        <li>Chúng hoàn toàn không phải là tiền thật, không có giá trị quy đổi thành tiền tệ, tài sản hoặc phần thưởng vật chất nào ngoài hệ thống.</li>
+        <li>Nghiêm cấm mọi hình thức mua bán, chuyển nhượng VP/VEX giữa các người dùng dưới bất kỳ hình thức nào.</li>
+        <li>Chúng tôi có toàn quyền thu hồi điểm, reset xếp hạng hoặc khóa tài khoản nếu phát hiện hành vi gian lận kết quả quiz để cày điểm.</li>
+      </ul>
+
+      <h2>5. Quyền Sở Hữu Trí Tuệ</h2>
+      <p>Tất cả mã nguồn, thiết kế giao diện, logo, nội dung bài giảng và tài liệu trên Vectoria đều thuộc bản quyền của chúng tôi hoặc các đối tác hợp pháp.</p>
+      <p>Vectoria có sử dụng một số thư viện mã nguồn mở (ví dụ: MathJax, Three.js). Các thư viện này thuộc về chủ sở hữu hợp pháp của chúng và tuân thủ các giấy phép mã nguồn mở tương ứng.</p>
+
+      <h2>6. Miễn Trừ Trách Nhiệm</h2>
+      <p>Vectoria được xây dựng nhằm mục đích hỗ trợ học tập và trực quan hóa toán học. Kết quả tính toán hoặc các mô phỏng được cung cấp trên nền tảng nhằm mục đích giáo dục, chúng tôi không đảm bảo tính chính xác tuyệt đối 100% trong mọi trường hợp phức tạp. Dịch vụ được cung cấp "nguyên trạng" và không thay thế cho các tư vấn hay công cụ chuyên ngành khắt khe.</p>
+
+      <h2>7. Chấm Dứt Tài Khoản</h2>
+      <p>Chúng tôi có quyền đình chỉ hoặc xóa vĩnh viễn tài khoản của bạn mà không cần báo trước nếu bạn vi phạm nghiêm trọng các Điều khoản Dịch vụ này, đặc biệt là các hành vi tấn công mạng, phá hoại hệ thống hoặc gian lận có tổ chức.</p>
+
+      <h2>8. Thay Đổi Điều Khoản</h2>
+      <p>Vectoria có thể cập nhật Điều khoản Dịch vụ này bất cứ lúc nào. Ngày cập nhật sẽ được hiển thị ở đầu trang. Việc bạn tiếp tục sử dụng nền tảng sau khi điều khoản mới được đăng tải đồng nghĩa với việc bạn chấp nhận các thay đổi đó.</p>
+
+      <h2>9. Liên Hệ</h2>
+      <p>Nếu bạn có bất kỳ câu hỏi nào về Điều khoản Dịch vụ, vui lòng liên hệ với chúng tôi qua email: <a href="mailto:support@vectoria.io.vn" style="color: var(--primary-base);">support@vectoria.io.vn</a>.</p>
+    </main>
+
+    <footer class="vectoria-footer distraction-element">
+      <div class="footer-container">
+        <div class="brand-col">
+          <div class="partner-logo" style="display: flex; align-items: center; gap: 10px">
+            <img src="assets/images/logoMoi.png" alt="Logo Nhóm/Trường" />
+            <img src="assets/images/logoChu.png" id="textLogo" alt="Logo Chữ Vectoria" style="height: 35px; width: auto" />
+          </div>
+          <p>
+            Vectoria — Vương quốc của những Vector — được kiến tạo để thay đổi
+            hoàn toàn cách chúng ta nhìn nhận về vector. Không còn là những khái
+            niệm khô khan, tại nơi đây, mỗi vector đều mang một hình hài, một
+            hướng đi và sinh khí riêng. Chúng tôi khao khát trao cho bạn một góc
+            nhìn thấu thị để toàn bộ vẻ đẹp trừu tượng của không gian vector
+            được thu trọn vào tầm mắt.
+          </p>
+        </div>
+        <div class="footer-col">
+          <h4>Thông tin liên hệ</h4>
+          <ul>
+            <li>
+              <i class="ph ph-envelope"></i>
+              <a href="mailto:support@vectoria.io.vn">support@vectoria.io.vn</a>
+            </li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Pháp lý</h4>
+          <ul>
+            <li>
+              <i class="ph ph-shield-check"></i>
+              <a href="terms.html">Điều khoản dịch vụ</a>
+            </li>
+            <li>
+              <i class="ph ph-lock-key"></i>
+              <a href="privacy.html">Chính sách bảo mật</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p style="margin: 0">
+          © 2026 Vectoria. Học và trực quan hóa Không gian vector.
+        </p>
+      </div>
+    </footer>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="js/utils/live-collab.js"></script>
+    <script src="js/app/auth.js"></script>
+    <script src="js/app/ui/topbar_avatar.js"></script>
+  <script src="js/utils/toast.js"></script>
+  <script src="js/utils/global-search.js"></script>
+</body>
+</html>

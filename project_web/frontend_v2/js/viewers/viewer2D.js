@@ -190,6 +190,11 @@
         const hitId = getHitVectorId(mouseX, mouseY);
         if (hitId && !(window.App && App.isAnimating)) {
             Vec2D.S2D.draggedVectorId = hitId;
+            if (window.App && App.History && typeof App.History.snapshot === "function") {
+              Vec2D.S2D._dragPreState = App.History.snapshot(`Di chuyển vector #${hitId}`);
+              const hitV = App.vectorList.find((v) => v.id === hitId);
+              Vec2D.S2D._dragStartVec = hitV ? [...hitV.vec] : null;
+            }
             canvas2d.style.cursor = "crosshair";
             canvas2d.setPointerCapture(e.pointerId);
             return; // Dừng tại đây, KHÔNG bật cờ Pan đồ thị
@@ -367,8 +372,26 @@
               draggedVec.vec = draggedVec.vec.map(val => Number(Number(val).toFixed(2)));
               // Nạp lại chuỗi Latex để Sidebar cập nhật số mới
               draggedVec.latex = `[${draggedVec.vec.join(", ")}]`;
+
+              // [HOÀN TÁC THÔNG MINH]: Chỉ lưu nếu vector có thay đổi vị trí thực tế
+              if (
+                Vec2D.S2D._dragPreState &&
+                Vec2D.S2D._dragStartVec &&
+                window.App &&
+                App.History &&
+                typeof App.History.record === "function"
+              ) {
+                const moved = draggedVec.vec.some(
+                  (val, i) => Math.abs(val - (Vec2D.S2D._dragStartVec[i] || 0)) > 0.001
+                );
+                if (moved) {
+                  App.History.record(`Di chuyển vector #${draggedVec.id}`, Vec2D.S2D._dragPreState);
+                }
+              }
           }
 
+          Vec2D.S2D._dragPreState = null;
+          Vec2D.S2D._dragStartVec = null;
           Vec2D.S2D.draggedVectorId = null;
           canvas2d.style.cursor = "default";
           
@@ -489,47 +512,41 @@
 
     ctx2d.strokeStyle = App.getCSS?.("--grid-light") || "#2b2b2b";
     ctx2d.lineWidth = 0.5;
+    ctx2d.beginPath();
     for (let x = cx % subTickPx; x <= w; x += subTickPx) {
-      ctx2d.beginPath();
       ctx2d.moveTo(x, 0);
       ctx2d.lineTo(x, h);
-      ctx2d.stroke();
     }
     for (let y = cy % subTickPx; y <= h; y += subTickPx) {
-      ctx2d.beginPath();
       ctx2d.moveTo(0, y);
       ctx2d.lineTo(w, y);
-      ctx2d.stroke();
     }
+    ctx2d.stroke();
 
     ctx2d.strokeStyle = App.getCSS?.("--grid-light") || "#2b2b2b";
     ctx2d.lineWidth = 1.2;
+    ctx2d.beginPath();
     const startKx = Math.floor(-cx / tickPx) - 1,
       endKx = Math.ceil((w - cx) / tickPx) + 1;
     for (let k = startKx; k <= endKx; k++) {
       const x = cx + k * tickPx;
-      ctx2d.beginPath();
       ctx2d.moveTo(x, 0);
       ctx2d.lineTo(x, h);
-      ctx2d.stroke();
     }
     const startKy = Math.floor((cy - h) / tickPx) - 1,
       endKy = Math.ceil((cy + h) / tickPx) + 1;
     for (let k = startKy; k <= endKy; k++) {
       const y = cy - k * tickPx;
-      ctx2d.beginPath();
       ctx2d.moveTo(0, y);
       ctx2d.lineTo(w, y);
-      ctx2d.stroke();
     }
+    ctx2d.stroke();
 
     ctx2d.strokeStyle = App.getCSS?.("--axis") || "#aaa";
     ctx2d.lineWidth = 2;
     ctx2d.beginPath();
     ctx2d.moveTo(0, cy);
     ctx2d.lineTo(w, cy);
-    ctx2d.stroke();
-    ctx2d.beginPath();
     ctx2d.moveTo(cx, 0);
     ctx2d.lineTo(cx, h);
     ctx2d.stroke();
@@ -707,11 +724,11 @@
   // --- VÒNG LẶP VẼ CHÍNH ---
   Vec2D.draw2DAllVectors = function () {
     const App = window.App || {};
+    if (Vec2D._animLoopId) {
+      cancelAnimationFrame(Vec2D._animLoopId);
+      Vec2D._animLoopId = null;
+    }
     if (App.mode !== "2D") {
-      if (Vec2D._animLoopId) {
-        cancelAnimationFrame(Vec2D._animLoopId);
-        Vec2D._animLoopId = null;
-      }
       return;
     }
 
@@ -730,15 +747,35 @@
 
     Vec2D.gridInfo2D = Vec2D.render2DGrid();
 
+    // [LINEAR TRANSFORMATION ENGINE HOOK]
+    const isLT = !!(window.App && App.LinearTransform && App.LinearTransform.isActive());
+    const ltMatrix = isLT ? App.LinearTransform.getInterpMatrix(App.LinearTransform.t) : null;
+
+    if (isLT) {
+      App.LinearTransform.render2D(ctx2d, Vec2D.gridInfo2D);
+    }
+
     // Focus Logic: Dim others
     const hasFocus = App.vectorList?.some((v) => v.focus);
     const list = (App.vectorList || []).filter((v) => v.visible !== false);
     list.sort((a, b) => (a.focus ? 1 : 0) - (b.focus ? 1 : 0)); // Focus vẽ sau
 
     for (const it of list) {
-      const v2 = toVec2(it.vec);
+      // Nếu LinearTransform đang chạy và có danh sách targetVectors:
+      if (isLT && App.LinearTransform.hasTargetVectors?.()) {
+        if (App.LinearTransform.isVectorSelected?.(it.id)) {
+          // Vector này đã được LinearTransform.render2D vẽ kèm ghost mốc, vệt quỹ đạo và nhãn live
+          continue;
+        }
+      }
+
+      let v2 = toVec2(it.vec);
       let alpha = typeof it.alpha === "number" ? it.alpha : 1;
       if (hasFocus && !it.focus) alpha *= 0.15; // Mờ đi
+      if (isLT) {
+        // Vector không tham gia biến đổi: giữ nguyên vị trí ban đầu và làm mờ 0.25 để đối chiếu không gian
+        alpha *= 0.25;
+      }
       draw2DVectorSingle(
         v2,
         it.colorCss,
@@ -805,7 +842,13 @@
       const suffix = vOriginal.length > 2 ? " (Chiếu 2D)" : "";
       App.coordOut?.(`Toạ độ: ${vStr}` + suffix);
     } else {
-      App.coordOut?.("—");
+      App.coordOut?.("-");
+    }
+
+    // Khi LinearTransform đang kích hoạt ở chế độ 2D, LinearTransform.loop chịu trách nhiệm điều phối RAF.
+    // Không lên lịch vòng lặp song song để tránh nhân bản requestAnimationFrame gây giật lag.
+    if (window.App?.LinearTransform?.isActive?.() && window.App?.LinearTransform?.dim === 2) {
+      return;
     }
 
     Vec2D._animLoopId = requestAnimationFrame(Vec2D.draw2DAllVectors);

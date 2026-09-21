@@ -1,373 +1,610 @@
 /* ========================================================== */
+
 /* FILE: css/style.css (Full Updated) */
+
 /* ========================================================== */
 
 @import url("./theme.css");
+
 @import url("./base.css");
+
 @import url("./layout.css");
+
 @import url("./components.css");
+
 @import url("./viewer.css");
+
 @import url("./effects.css");
 
 /* =================== 1. LAYOUT CHUNG & MOBILE SPLIT VIEW =================== */
 
 /* TOPBAR GLOBAL */
+
 #topbar {
+
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
+
   height: var(--topbar-h);
+
   padding: 0 16px;
+
   background: var(--bg);
+
   border-bottom: 1px solid var(--border);
+
   position: fixed;
+
   inset: 0 0 auto 0;
+
   z-index: 300;
+
 }
 
 .topbar-left {
+
   display: flex;
+
   align-items: center;
+
   gap: 10px;
+
   flex: 1;
+
 }
 
 .brand {
+
   position: absolute;
+
   left: 50%;
+
   transform: translateX(-50%);
+
   font-size: 18px;
+
   font-weight: 800;
+
   text-align: center;
+
   white-space: nowrap;
+
 }
 
 .topbar-right {
+
   flex: 1;
+
   display: flex;
+
   justify-content: flex-end;
+
 }
 
 #themeBadge {
+
   position: static !important;
+
   display: inline-flex;
+
   align-items: center;
+
   justify-content: center;
+
   margin: 0;
+
   cursor: pointer;
+
 }
 
 /* MOBILE CONFIGURATION (Max-width: 768px) */
+
 @media (max-width: 768px) {
+
   #hamburger {
+
     display: none !important;
+
   }
 
-  /* Chia đôi màn hình */
+  /* Chia Ä‘Ã´i mÃ n hÃ¬nh */
+
   #app {
+
     display: flex !important;
+
     flex-direction: column !important;
+
     height: calc(100vh - var(--topbar-h));
+
     overflow: hidden;
+
   }
 
   /* Viewer: 40% */
+
   #viewerWrap {
+
     order: 1;
+
     width: 100% !important;
+
     height: 40vh !important;
+
     flex: none !important;
+
     border-radius: 0 !important;
+
     border-bottom: 2px solid var(--border);
+
     border-left: none;
+
     border-right: none;
+
     z-index: 1;
+
   }
 
   /* Controls: 60% */
+
   #controls {
+
     order: 2;
+
     position: static !important;
+
     width: 100% !important;
+
     height: auto !important;
+
     flex: 1 1 auto !important;
+
     background: var(--bg) !important;
+
     transform: none !important;
+
     box-shadow: none !important;
+
     border: none;
+
     padding: 12px;
+
     padding-bottom: 80px;
-    /* Chừa chỗ cho bàn phím ảo */
+
+    /* Chá»«a chá»— cho bÃ n phÃ­m áº£o */
+
     overflow-y: auto;
+
     z-index: 2;
+
   }
 
   #overlay {
+
     display: none !important;
+
   }
 
   .row {
+
     display: grid !important;
+
     grid-template-columns: 1fr 1fr;
+
     gap: 10px;
+
   }
 
   .row button,
+
   input,
+
   select {
+
     width: 100%;
+
     margin: 0 !important;
+
     min-height: 42px;
+
     font-size: 15px;
+
   }
+
 }
 
 /* =================== 2. VIEWER & RESET BUTTON =================== */
 
 #viewerWrap {
+
   position: relative !important;
+
   overflow: hidden;
+
 }
 
-/* --- CSS CHO 2 NÚT CÔNG CỤ TRÊN GÓC PHẢI DƯỚI --- */
+/* --- CSS CHO 2 NÃšT CÃ”NG Cá»¤ TRÃŠN GÃ“C PHáº¢I DÆ¯á»šI --- */
+
 .view-tool-btn {
+
   position: absolute;
+
   right: 15px;
+
   z-index: 10;
-  width: 40px; /* Thu nhỏ lại 1 chút cho đỡ thô */
+
+  width: 40px; /* Thu nhá»� láº¡i 1 chÃºt cho Ä‘á»¡ thÃ´ */
+
   height: 40px;
+
   border-radius: 50%;
+
   border: 1px solid var(--border);
+
   background: var(--card, #fff);
+
   color: var(--fg, #333);
+
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   cursor: pointer;
+
   transition: all 0.3s ease;
+
   font-size: 1.2rem;
+
 }
 
 .view-tool-btn:hover {
+
   background: var(--accent, var(--primary-base));
+
   color: #fff;
+
   border-color: var(--accent, var(--primary-base));
+
 }
 
-/* Vị trí mặc định trên Desktop */
+/* Vá»‹ trÃ­ máº·c Ä‘á»‹nh trÃªn Desktop */
+
 #btnTogglePanel {
-  bottom: 65px; /* Nằm trên nút crosshair */
-  display: none; /* TRÊN DESKTOP ẨN NÚT NÀY ĐI VÌ KHÔNG CẦN THIẾT */
+
+  bottom: 65px; /* Náº±m trÃªn nÃºt crosshair */
+
+  display: none; /* TRÃŠN DESKTOP áº¨N NÃšT NÃ€Y Ä�I VÃŒ KHÃ”NG Cáº¦N THIáº¾T */
+
 }
+
 #btnResetView {
+
   bottom: 15px;
+
 }
 
 body.dark .view-tool-btn {
+
   background: #1e1e1e;
+
   border-color: #444;
+
   color: #fff;
+
 }
 
-/* ================= TỐI ƯU MOBILE - LÀM LẠI CHUẨN GRID ================= */
+/* ================= Tá»�I Æ¯U MOBILE - LÃ€M Láº I CHUáº¨N GRID ================= */
+
 @media (max-width: 768px) {
-  /* Hiện nút mũi tên trên Mobile */
+
+  /* Hiá»‡n nÃºt mÅ©i tÃªn trÃªn Mobile */
+
   #btnTogglePanel {
+
     display: flex !important;
+
   }
 
-  /* CẤU TRÚC GRID ĐỘNG ĐỂ JS CAN THIỆP */
+  /* Cáº¤U TRÃšC GRID Ä�á»˜NG Ä�á»‚ JS CAN THIá»†P */
+
   #app {
+
     display: grid !important;
-    /* Mặc định Panel hiển thị 40vh. Biến CSS này sẽ bị JS thay đổi khi bấm nút */
+
+    /* Máº·c Ä‘á»‹nh Panel hiá»ƒn thá»‹ 40vh. Biáº¿n CSS nÃ y sáº½ bá»‹ JS thay Ä‘á»•i khi báº¥m nÃºt */
+
     grid-template-rows: var(--app-grid-rows, 1fr 40vh) !important;
+
     height: calc(100vh - 60px) !important;
+
     overflow: hidden !important;
+
     transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
   }
 
   #viewerWrap {
+
     grid-row: 1 !important;
+
     height: 100% !important;
+
     position: relative !important;
+
   }
 
   #controls {
+
     grid-row: 2 !important;
+
     height: 100% !important;
+
     overflow-y: auto !important;
+
     display: block !important;
+
     background: var(--bg);
+
     padding-bottom: 20px !important;
+
   }
 
   .tab-content {
+
     padding-bottom: 50px !important;
+
     height: auto !important;
+
   }
 
-  /* Cập nhật Header Icon */
-  .topbar-left a.topbar-icon[title="Thư viện kiến thức"],
-  .topbar-left a.topbar-icon[title="Tài liệu tham khảo"] {
+  /* Cáº­p nháº­t Header Icon */
+
+  .topbar-left a.topbar-icon[title="ThÆ° viá»‡n kiáº¿n thá»©c"],
+
+  .topbar-left a.topbar-icon[title="TÃ i liá»‡u tham kháº£o"] {
+
     display: none !important;
+
   }
+
   .brand {
+
     font-size: 1.2rem !important;
+
     margin-left: -5px;
+
   }
+
   .mobile-only-hr-book,
+
   .mobile-only-link-book,
+
   .mobile-only-hr-file,
+
   .mobile-only-link-file {
+
     display: flex !important;
+
   }
+
 }
 
-/* =================== 3. PRO TOAST NOTIFICATION (POPUP ĐỘNG) =================== */
+/* =================== 3. PRO TOAST NOTIFICATION (POPUP Ä�á»˜NG) =================== */
 
 #toast-container {
+
   position: fixed;
+
   top: 80px;
+
   right: 20px;
+
   z-index: 10000;
+
   display: flex;
+
   flex-direction: column;
+
   gap: 12px;
+
   pointer-events: none;
+
 }
 
 .toast-item {
+
   pointer-events: auto;
+
   position: relative;
+
   min-width: 320px;
+
   max-width: 400px;
+
   background: var(--card);
+
   color: var(--fg);
+
   border-left: 5px solid #ff4d4f;
-  /* Viền đỏ báo lỗi */
+
+  /* Viá»�n Ä‘á»� bÃ¡o lá»—i */
+
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+
   border-radius: 6px;
+
   padding: 14px 18px;
+
   padding-bottom: 18px;
+
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
+
   overflow: hidden;
+
   animation: toastSlideIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+
 }
 
 .toast-item.hide {
+
   animation: toastSlideOut 0.4s forwards;
+
 }
 
 .toast-content {
+
   display: flex;
+
   align-items: center;
+
   gap: 12px;
+
   font-size: 0.95em;
+
   font-weight: 500;
+
   line-height: 1.4;
+
 }
 
 .toast-icon {
+
   color: #ff4d4f;
+
   font-size: 1.4em;
+
   flex-shrink: 0;
+
 }
 
 .toast-progress {
+
   position: absolute;
+
   bottom: 0;
+
   left: 0;
+
   height: 3px;
+
   background-color: #ff4d4f;
+
   width: 100%;
+
   animation: progressRun 5s linear forwards;
+
 }
 
 @keyframes toastSlideIn {
+
   from {
+
     transform: translateX(120%);
+
     opacity: 0;
+
   }
 
   to {
+
     transform: translateX(0);
+
     opacity: 1;
+
   }
+
 }
 
 @keyframes toastSlideOut {
+
   from {
+
     transform: translateX(0);
+
     opacity: 1;
+
   }
 
   to {
+
     transform: translateX(120%);
+
     opacity: 0;
+
   }
+
 }
 
 @keyframes progressRun {
+
   from {
+
     width: 100%;
+
   }
 
   to {
+
     width: 0%;
+
   }
+
 }
 
-/* =================== 4. CHECKLIST NÂNG CẤP (LAYOUT CHUẨN) =================== */
+/* =================== 4. CHECKLIST NÃ‚NG Cáº¤P (LAYOUT CHUáº¨N) =================== */
 
 .checklist-tools {
+
   padding-bottom: 8px;
+
   margin-bottom: 8px;
+
   border-bottom: 1px solid var(--border);
+
   display: flex;
+
   flex-direction: column;
+
   gap: 8px;
+
 }
 
-/* --- THANH SEARCH HIỆN ĐẠI (FIGMA STYLE) --- */
+/* --- THANH SEARCH HIá»†N Ä�áº I (FIGMA STYLE) --- */
+
 .search-box-modern {
     position: relative; 
-    margin-bottom: 14px; /* Tăng lề đẩy dòng Lọc (Chips) ra xa */
+    margin-bottom: 14px;
 }
 .search-box-modern .search-icon {
     position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-    color: #9ca3af; font-size: 14px; pointer-events: none;
+    color: var(--muted); font-size: 14px; pointer-events: none;
 }
 .vec-search-inp {
     width: 100%; 
-    padding: 8px 12px 8px 36px !important; /* Lùi chữ nhường chỗ cho cái kính lúp */
-    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px 8px 36px !important;
+    border: 1px solid var(--border); border-radius: 6px;
     background: rgba(0,0,0,0.03); color: var(--fg);
     font-size: 0.95em; transition: all 0.2s ease;
     box-sizing: border-box;
 }
-body.dark .vec-search-inp { background: rgba(255,255,255,0.05); }
-.vec-search-inp:focus { background: transparent; border-color: var(--primary-base); box-shadow: 0 0 0 3px rgba(33,150,243,0.15); outline: none; }
+body.dark .vec-search-inp, body.dark-theme .vec-search-inp { background: rgba(255,255,255,0.06); border-color: var(--border); }
+.vec-search-inp:focus { background: transparent; border-color: var(--primary-base); box-shadow: 0 0 0 2px rgba(0,144,255,0.2); outline: none; }
 
-/* --- FIX LỖI CẦU VỒNG VÀ THÙNG RÁC --- */
-/* Ép nền cứng để đè chết cái hover-gradient nếu lỡ còn dính */
-.vec-item { background: transparent !important; }
-.vec-item:hover { background: rgba(0,0,0,0.03) !important; }
-body.dark .vec-item:hover { background: rgba(255,255,255,0.05) !important; }
-
-/* Ép màu thùng rác đỏ bất chấp light/dark mode */
-.vec-actions .btn.danger i { color: #ef4444 !important; }
-.vec-actions .btn.danger:hover { background: #fee2e2 !important; }
-body.dark .vec-actions .btn.danger:hover { background: rgba(239, 68, 68, 0.2) !important; }
-
-/* Dòng "Chọn tất cả" và Dòng Vector */
 .select-all-row,
 .vec-item-row {
   display: flex;
   justify-content: space-between;
-  /* Chữ trái - Tick phải */
   align-items: center;
   padding: 8px 6px;
   cursor: pointer;
@@ -377,689 +614,1183 @@ body.dark .vec-actions .btn.danger:hover { background: rgba(239, 68, 68, 0.2) !i
 }
 
 .vec-item-row {
+
   border-bottom: 1px dashed var(--border);
+
 }
 
 .vec-item-row:last-child {
+
   border-bottom: none;
+
 }
 
 .vec-item-row:hover,
+
 .select-all-row:hover {
+
   background: var(--hover);
+
 }
 
 .vec-label-text,
+
 .select-all-text {
+
   flex: 1;
+
   text-align: left;
+
   white-space: nowrap;
+
   overflow: hidden;
+
   text-overflow: ellipsis;
+
   margin-right: 15px;
+
   font-weight: 500;
+
   font-size: 0.95em;
+
   color: var(--fg);
+
 }
 
 .vec-label-text {
+
   font-family: "Consolas", monospace;
+
 }
 
 .vec-checkbox,
+
 .select-all-cb {
+
   flex-shrink: 0;
+
   width: 18px;
+
   height: 18px;
+
   cursor: pointer;
+
   accent-color: var(--primary);
+
 }
 
-/* [SỬA HOẶC THÊM MỚI] */
+/* [Sá»¬A HOáº¶C THÃŠM Má»šI] */
+
 .vec-list-scroll {
+
   max-height: 280px;
-  /* Tăng chiều cao lên để nhìn được nhiều hơn */
+
+  /* TÄƒng chiá»�u cao lÃªn Ä‘á»ƒ nhÃ¬n Ä‘Æ°á»£c nhiá»�u hÆ¡n */
+
   overflow-y: auto;
-  /* Bắt buộc có thanh cuộn */
+
+  /* Báº¯t buá»™c cÃ³ thanh cuá»™n */
+
   padding-right: 4px;
 
-  /* Thêm viền nhẹ để phân biệt vùng cuộn (tùy chọn) */
+  /* ThÃªm viá»�n nháº¹ Ä‘á»ƒ phÃ¢n biá»‡t vÃ¹ng cuá»™n (tÃ¹y chá»�n) */
+
   border: 1px solid var(--border);
+
   border-radius: 4px;
+
   margin-top: 4px;
+
 }
 
 .empty-list-msg {
+
   text-align: center;
+
   color: #ff4d4f;
+
   font-size: 0.95em;
+
   padding: 15px;
+
   border: 1px dashed #ff4d4f;
+
   border-radius: 6px;
+
   cursor: pointer;
+
   background: rgba(255, 77, 79, 0.05);
+
   margin-top: 5px;
+
 }
 
 .empty-list-msg:hover {
+
   background: rgba(255, 77, 79, 0.1);
+
   font-weight: 600;
+
 }
 
 /* =================== 5. MATH KEYPAD (FULL WIDTH) =================== */
 
 #mathKeypad {
+
   position: fixed !important;
+
   left: 0 !important;
+
   right: 0 !important;
+
   bottom: 0 !important;
+
   width: 100% !important;
+
   background: var(--bg);
+
   border-top: 1px solid var(--border);
+
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+
   z-index: 2147483647;
+
   transform: translateY(100%);
+
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+
   display: flex;
+
   flex-direction: column;
+
   align-items: center;
+
 }
 
 #mathKeypad.open {
+
   transform: translateY(0);
+
 }
 
 .keypad-header {
+
   width: 100%;
+
   height: 32px;
+
   display: flex;
+
   align-items: center;
+
   justify-content: flex-end;
+
   padding: 0 15px;
+
   background: color-mix(in srgb, var(--bg) 95%, var(--fg));
+
   border-bottom: 1px solid var(--border);
+
 }
 
 #keypadClose {
+
   background: transparent;
+
   border: none;
+
   font-size: 20px;
+
   color: var(--muted);
+
   cursor: pointer;
+
   padding: 0 10px;
+
   line-height: 1;
+
 }
 
 #keypadClose:hover {
+
   color: var(--danger);
+
 }
 
 .keypad-grid {
+
   display: grid;
+
   grid-template-columns: repeat(5, 1fr);
+
   gap: 8px;
+
   padding: 10px;
+
   width: 100%;
+
   max-width: 900px;
+
 }
 
 .k-btn {
+
   height: 46px;
+
   border: 1px solid var(--border);
+
   border-radius: 6px;
+
   background: var(--card);
+
   color: var(--fg);
+
   font-size: 18px;
+
   font-family: "JetBrains Mono", monospace;
+
   font-weight: 500;
+
   cursor: pointer;
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   transition: all 0.1s;
+
 }
 
 .k-btn:active {
+
   background: var(--border);
+
   transform: scale(0.98);
+
 }
 
 .k-btn.op {
+
   color: var(--accent);
+
   background: color-mix(in srgb, var(--accent) 5%, var(--card));
+
 }
 
 .k-btn.primary {
+
   background: var(--accent);
+
   color: #fff;
+
   border-color: var(--accent);
+
 }
 
 .drag-handle {
+
   display: none;
+
 }
 
 input,
+
 .lbl,
+
 .card-header button,
+
 .card-header .btn,
+
 .vec-item input {
+
   font-family: "JetBrains Mono", "Consolas", monospace;
+
   font-weight: 600;
+
 }
 
 input:focus {
+
   border-color: var(--accent) !important;
+
   box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);
+
 }
 
 body.has-keypad #controls {
+
   padding-bottom: 50vh !important;
+
   scroll-behavior: smooth;
+
 }
 
-/* =================== 6. TÙY CHỈNH INPUT HỆ SỐ K (ĐÃ SỬA) =================== */
+/* =================== 6. TÙY CHỈNH INPUT HỆ SỐ K =================== */
 
-/* Căn giữa chữ trong ô input K */
 #scalarInp {
-  text-align: center;
-  /* Số nằm giữa */
-  font-weight: bold;
-  color: var(--accent);
-  font-size: 1.1em;
-  padding: 0;
-  /* Bỏ padding thừa để căn giữa chuẩn hơn */
+  font-weight: 600;
+  font-size: 13px;
 }
 
-/* Ẩn mũi tên lên xuống (Spinners) cho Chrome/Safari/Edge */
+/* áº¨n mÅ©i tÃªn lÃªn xuá»‘ng (Spinners) cho Chrome/Safari/Edge */
+
 input::-webkit-outer-spin-button,
+
 input::-webkit-inner-spin-button {
+
   -webkit-appearance: none;
+
   margin: 0;
+
 }
 
-/* Ẩn mũi tên cho Firefox (Sửa để hết gạch vàng: dùng appearance chuẩn) */
+/* áº¨n mÅ©i tÃªn cho Firefox (Sá»­a Ä‘á»ƒ háº¿t gáº¡ch vÃ ng: dÃ¹ng appearance chuáº©n) */
+
 input[type="number"] {
+
   appearance: textfield;
-  /* Chuẩn mới */
+
+  /* Chuáº©n má»›i */
+
   -moz-appearance: textfield;
-  /* Chuẩn cũ Firefox */
+
+  /* Chuáº©n cÅ© Firefox */
+
 }
 
 /* =================== SETTINGS MENU & ANIMATION =================== */
 
-/* Container nút cài đặt nằm trong Topbar */
+/* Container nÃºt cÃ i Ä‘áº·t náº±m trong Topbar */
+
 .settings-container {
+
   position: relative;
+
   display: flex;
+
   align-items: center;
+
 }
 
-/* Style Nút Bánh Răng */
+/* Style NÃºt BÃ¡nh RÄƒng */
+
 .icon-btn {
+
   width: 36px;
+
   height: 36px;
+
   border-radius: 50%;
+
   border: 1px solid var(--border);
+
   background: var(--bg);
+
   color: var(--fg);
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   cursor: pointer;
+
   transition: all 0.3s ease;
+
   font-size: 1.1rem;
+
 }
 
 .icon-btn:hover {
+
   background: var(--accent);
+
   color: #fff;
+
   border-color: var(--accent);
+
   transform: rotate(45deg);
+
 }
 
 /* Menu Dropdown */
+
 .settings-dropdown {
+
   position: absolute;
+
   top: 45px;
-  /* Cách topbar một chút */
+
+  /* CÃ¡ch topbar má»™t chÃºt */
+
   right: 0;
+
   width: 250px;
+
   background: var(--card);
+
   border: 1px solid var(--border);
+
   border-radius: 8px;
+
   box-shadow: var(--shadow-lg);
+
   padding: 12px;
+
   display: none;
+
   flex-direction: column;
+
   gap: 6px;
+
   z-index: 1000;
+
 }
 
 .settings-dropdown.show {
+
   display: flex;
+
   animation: slideDown 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+
 }
 
 @keyframes slideDown {
+
   from {
+
     opacity: 0;
+
     transform: translateY(-10px);
+
   }
 
   to {
+
     opacity: 1;
+
     transform: translateY(0);
+
   }
+
 }
 
 .setting-item {
+
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
   padding: 4px 0;
+
 }
 
 .st-label {
+
   display: flex;
+
   align-items: center;
+
   gap: 10px;
+
   font-size: 0.9rem;
+
   font-weight: 500;
+
   color: var(--fg);
+
 }
 
-/* Toggle Switch đẹp */
+/* Toggle Switch Ä‘áº¹p */
+
 .switch {
+
   position: relative;
+
   display: inline-block;
+
   width: 40px;
+
   height: 22px;
+
 }
 
 .switch input {
+
   opacity: 0;
+
   width: 0;
+
   height: 0;
+
 }
 
 .slider {
+
   position: absolute;
+
   cursor: pointer;
+
   top: 0;
+
   left: 0;
+
   right: 0;
+
   bottom: 0;
+
   background-color: var(--muted);
+
   opacity: 0.5;
+
   transition: 0.3s;
+
   border-radius: 34px;
+
 }
 
 .slider:before {
+
   position: absolute;
+
   content: "";
+
   height: 16px;
+
   width: 16px;
+
   left: 3px;
+
   bottom: 3px;
+
   background-color: white;
+
   transition: 0.3s;
+
   border-radius: 50%;
+
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+
 }
 
 input:checked + .slider {
+
   background-color: var(--accent);
+
   opacity: 1;
+
 }
 
 input:checked + .slider:before {
+
   transform: translateX(18px);
+
 }
 
-/* Animation Mặt Trời / Mặt Trăng */
+/* Animation Máº·t Trá»�i / Máº·t TrÄƒng */
+
 .theme-transition-icons {
+
   position: fixed;
+
   top: 50%;
+
   left: 50%;
+
   transform: translate(-50%, -50%);
+
   z-index: 9999;
+
   pointer-events: none;
+
   display: flex;
+
   justify-content: center;
+
   align-items: center;
+
 }
 
 #sunIcon,
+
 #moonIcon {
+
   font-size: 8rem;
+
   position: absolute;
+
   opacity: 0;
+
   transform: translateY(100px) scale(0.5);
+
 }
 
 #sunIcon {
+
   color: var(--warning-base);
+
   filter: drop-shadow(0 0 40px rgba(245, 158, 11, 0.8));
+
 }
 
 #moonIcon {
+
   color: var(--text-main);
+
   filter: drop-shadow(0 0 40px rgba(248, 250, 252, 0.8));
+
 }
 
 .animate-rise-fade {
+
   animation: riseAndFade 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+
 }
 
 @keyframes riseAndFade {
+
   0% {
+
     opacity: 0;
+
     transform: translateY(150px) scale(0.5);
+
   }
 
   40% {
+
     opacity: 1;
+
     transform: translateY(0px) scale(1.2);
+
   }
 
   100% {
+
     opacity: 0;
+
     transform: translateY(-100px) scale(0.8);
+
   }
+
 }
 
 body {
+
   opacity: 0;
+
   transition: opacity 0.25s ease-in;
+
 }
 
-/* CSS Bổ sung để chỉnh nút Setting nằm gọn trong Topbar */
+/* CSS Bá»• sung Ä‘á»ƒ chá»‰nh nÃºt Setting náº±m gá»�n trong Topbar */
+
 .topbar-right {
+
   display: flex;
+
   align-items: center;
+
   justify-content: flex-end;
+
   gap: 15px;
+
 }
 
 .settings-container {
+
   position: relative;
+
   display: flex;
+
   align-items: center;
+
 }
 
 /* Style cho menu dropdown */
+
 .settings-dropdown {
+
   position: absolute;
+
   top: 45px;
+
   right: 0;
+
   width: 260px;
+
   background: var(--card, #fff);
+
   border: 1px solid var(--border, #ddd);
+
   border-radius: 8px;
+
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+
   padding: 12px;
+
   display: none;
+
   flex-direction: column;
+
   gap: 8px;
+
   z-index: 1000;
+
 }
 
 .settings-dropdown.show {
+
   display: flex;
+
   animation: slideDown 0.2s ease-out;
+
 }
 
 @keyframes slideDown {
+
   from {
+
     opacity: 0;
+
     transform: translateY(-10px);
+
   }
 
   to {
+
     opacity: 1;
+
     transform: translateY(0);
+
   }
+
 }
 
 .setting-item {
+
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
   font-weight: 500;
+
   color: var(--fg, #333);
+
   font-size: 0.95rem;
+
 }
 
 .setting-item i {
+
   width: 20px;
+
   text-align: center;
+
   margin-right: 8px;
+
   color: var(--muted, #888);
+
 }
 
-/* Nút Bánh Răng */
+/* NÃºt BÃ¡nh RÄƒng */
+
 .icon-btn {
+
   width: 38px;
+
   height: 38px;
+
   border-radius: 50%;
+
   border: 1px solid var(--border, #ccc);
+
   background: var(--bg, #fff);
+
   color: var(--fg, #333);
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   cursor: pointer;
+
   transition: all 0.2s;
+
   font-size: 1.1rem;
+
 }
 
 .icon-btn:hover {
+
   background: var(--accent, var(--primary-base));
+
   color: #fff;
+
   border-color: var(--accent, var(--primary-base));
+
   transform: rotate(45deg);
+
 }
 
 /* ========================================================== */
-/* FIX LỖI KHÔNG NHẬP ĐƯỢC DANH SÁCH VECTOR (QUAN TRỌNG) */
+
+/* FIX Lá»–I KHÃ”NG NHáº¬P Ä�Æ¯á»¢C DANH SÃ�CH VECTOR (QUAN TRá»ŒNG) */
+
 /* ========================================================== */
 
-/* 1. Mở khóa tương tác cho Math-field */
+/* 1. Má»Ÿ khÃ³a tÆ°Æ¡ng tÃ¡c cho Math-field */
+
 math-field.vec-math-input,
+
 .vec-item math-field {
+
   user-select: text !important;
+
   -webkit-user-select: text !important;
+
   pointer-events: auto !important;
+
   cursor: text !important;
+
   touch-action: manipulation !important;
 
-  /* Đảm bảo nó nổi lên trên để nhận click */
+  /* Ä�áº£m báº£o nÃ³ ná»•i lÃªn trÃªn Ä‘á»ƒ nháº­n click */
+
   position: relative !important;
+
   z-index: 10 !important;
 
-  /* Fix màu text hiển thị rõ ràng */
+  /* Fix mÃ u text hiá»ƒn thá»‹ rÃµ rÃ ng */
+
   color: var(--fg) !important;
+
   opacity: 1 !important;
+
 }
 
-/* 2. Cho phép chọn văn bản trong các phần tử nội bộ của MathLive */
+/* 2. Cho phÃ©p chá»�n vÄƒn báº£n trong cÃ¡c pháº§n tá»­ ná»™i bá»™ cá»§a MathLive */
+
 math-field::part(content),
+
 math-field::part(container) {
+
   user-select: text !important;
+
   -webkit-user-select: text !important;
+
   cursor: text !important;
+
 }
 
-/* 3. Ngăn thẻ cha (.vec-item) chặn sự kiện của con */
+/* 3. NgÄƒn tháº» cha (.vec-item) cháº·n sá»± kiá»‡n cá»§a con */
+
 .vec-item,
+
 .vec-header {
+
   user-select: auto !important;
+
   pointer-events: auto !important;
+
 }
 
-/* 4. Fix lỗi hiển thị màu trong chế độ tối (Dark Mode) cho ô nhập này */
+/* 4. Fix lá»—i hiá»ƒn thá»‹ mÃ u trong cháº¿ Ä‘á»™ tá»‘i (Dark Mode) cho Ã´ nháº­p nÃ y */
+
 body.dark math-field.vec-math-input {
+
   background-color: rgba(255, 255, 255, 0.08) !important;
+
   border-color: rgba(255, 255, 255, 0.2) !important;
+
   color: #fff !important;
+
   --caret-color: #fff !important;
+
 }
 
-
-
-
-/* ========================================= */
-/* BỘ FIX UI CUỐI CÙNG DÁN Ở ĐÁY STYLE.CSS   */
 /* ========================================= */
 
-/* 1. Thanh Search & Kính lúp */
+/* Bá»˜ FIX UI CUá»�I CÃ™NG DÃ�N á»ž Ä�Ã�Y STYLE.CSS   */
+
+/* ========================================= */
+
+/* 1. Thanh Search & KÃ­nh lÃºp */
+
 .search-box-modern { position: relative; margin-bottom: 12px; }
+
 .search-box-modern .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 14px; pointer-events: none; }
+
 .vec-search-inp { width: 100%; padding: 8px 12px 8px 36px !important; border: 1px solid var(--border); border-radius: 8px; background: rgba(0,0,0,0.03); color: var(--fg); font-size: 0.95em; box-sizing: border-box; }
+
 body.dark .vec-search-inp { background: rgba(255,255,255,0.05); }
+
 .vec-search-inp:focus { background: transparent; border-color: var(--primary-base); box-shadow: 0 0 0 3px rgba(33,150,243,0.15); outline: none; }
 
-/* 2. Bộ lọc (Chips) */
+/* 2. Bá»™ lá»�c (Chips) */
+
 .vec-filters { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 10px; padding-bottom: 4px; }
-.filter-chip { padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 11px; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
+
+.filter-chip { padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); background: var(--card); color: var(--muted); font-size: 11px; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
+.filter-chip:hover { background: var(--bg-hover, var(--border)); color: var(--fg); border-color: var(--border-strong); }
+
 .filter-chip:hover { background: var(--border); }
+
 .filter-chip.active { background: var(--primary-base); color: white; border-color: var(--primary-base); }
 
-/* 3. Hover Thẻ Vector (Xanh nổi bật, Tương phản) */
-.vec-item { background: transparent !important; }
-.vec-item:hover { background: rgba(0, 144, 255, 0.1) !important; border-color: rgba(0, 144, 255, 0.3) !important; }
-body.dark .vec-item:hover { background: rgba(0, 144, 255, 0.15) !important; }
+/* 3. Hover Tháº» Vector (Xanh ná»•i báº­t, TÆ°Æ¡ng pháº£n) */
 
-/* 4. Thùng Rác (Trong suốt, Chữ đỏ, Hover Đỏ nhạt) */
+.vec-item {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  box-shadow: var(--shadow-sm);
+}
+.vec-item:hover {
+  background: var(--bg-hover, rgba(0, 144, 255, 0.08)) !important;
+  border-color: var(--primary-base) !important;
+}
+body.dark .vec-item:hover, body.dark-theme .vec-item:hover {
+  background: rgba(0, 144, 255, 0.12) !important;
+  border-color: var(--blue-9, #0090ff) !important;
+}
+
+/* 4. ThÃ¹ng RÃ¡c (Trong suá»‘t, Chá»¯ Ä‘á»�, Hover Ä�á»� nháº¡t) */
+
 .vec-actions .btn.vec-btn-delete { background: transparent !important; color: #ef4444 !important; border: none !important; box-shadow: none !important; }
+
 .vec-actions .btn.vec-btn-delete:hover { background: #fee2e2 !important; color: #dc2626 !important; }
+
 body.dark .vec-actions .btn.vec-btn-delete:hover { background: rgba(239, 68, 68, 0.2) !important; color: #f87171 !important; }
 
-/* [TÌM VÀ DÁN ĐÈ Ở ĐÁY style.css] */
-/* 5. Fix Menu bị đè và cắt xén */
+/* [TÃŒM VÃ€ DÃ�N Ä�Ãˆ á»ž Ä�Ã�Y style.css] */
+
+/* 5. Fix Menu bá»‹ Ä‘Ã¨ vÃ  cáº¯t xÃ©n */
+
 .vec-dropdown { 
+
     display: none; 
-    position: fixed !important; /* Bứt hoàn toàn khỏi DOM cha */
-    margin: 0 !important; /* Xóa sạch margin */
+
+    position: fixed !important; /* Bá»©t hoÃ n toÃ n khá»�i DOM cha */
+
+    margin: 0 !important; /* XÃ³a sáº¡ch margin */
+
     width: 240px; 
+
     background: var(--card) !important; 
+
     border: 1px solid var(--border) !important; 
+
     box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important; 
+
     border-radius: 8px; 
-    z-index: 999999 !important; /* Đẩy lên cao nhất */
+
+    z-index: 999999 !important; /* Ä�áº©y lÃªn cao nháº¥t */
+
     max-height: 250px; overflow-y: auto; padding: 5px 0; 
+
     transform: scale(0.95); opacity: 0;
+
     transition: transform 0.15s ease-out, opacity 0.15s ease-out;
-}
-.vec-dropdown.show { 
-    display: block; 
-    transform: scale(1); opacity: 1;
+
 }
 
-/* Bật khiên quá tải: Tàng hình triệt để mọi thể loại nhãn 3D */
+.vec-dropdown.show { 
+
+    display: block; 
+
+    transform: scale(1); opacity: 1;
+
+}
+
+/* Báº­t khiÃªn quÃ¡ táº£i: TÃ ng hÃ¬nh triá»‡t Ä‘á»ƒ má»�i thá»ƒ loáº¡i nhÃ£n 3D */
+
 body.overload-3d .vec-label-3d,
+
 body.overload-3d .label,
+
 body.overload-3d #viewerWrap div[style*="translate"] { 
+
     display: none !important; 
+
     pointer-events: none !important;
+
 }
 
 /* =========================================================
-   FIX LAYOUT: CHỐNG TRÔI ICON KHI PANEL THU HẸP
+
+   FIX LAYOUT: CHá»�NG TRÃ”I ICON KHI PANEL THU Háº¸P
+
    ========================================================= */
+
 .vec-main {
+
     display: flex !important;
+
     flex: 1;
-    min-width: 0; /* Ép thằng cha chịu co lại */
+
+    min-width: 0; /* Ã‰p tháº±ng cha chá»‹u co láº¡i */
+
     align-items: center;
+
     justify-content: space-between;
+
     gap: 8px;
+
 }
 
 .vec-header {
+
     display: flex !important;
+
     flex: 1;
-    min-width: 0; /* Chìa khóa để ô input không đẩy văng icon */
+
+    min-width: 0; /* ChÃ¬a khÃ³a Ä‘á»ƒ Ã´ input khÃ´ng Ä‘áº©y vÄƒng icon */
+
     align-items: center;
+
     gap: 8px;
+
 }
 
 .vec-input-wrapper {
+
     flex: 1;
+
     min-width: 0; 
+
     display: flex;
+
     background: var(--card) !important;
+
     border: 1px solid var(--border);
+
     border-radius: 8px;
+
     transition: all 0.2s;
+
     align-items: center;
+
 }
 
 .vec-item.active .vec-input-wrapper {
+
     border-color: var(--primary-base);
+
     box-shadow: 0 0 0 3px rgba(33,150,243,0.15);
+
 }
 
 .vec-math-field {
+
     width: 100%;
-    min-width: 0; /* Bắt MathLive thu hẹp nếu hết chỗ */
+
+    min-width: 0; /* Báº¯t MathLive thu háº¹p náº¿u háº¿t chá»— */
+
     background: transparent !important;
+
     border: none !important;
+
     box-shadow: none !important;
+
     outline: none !important;
+
     padding: 0 !important;
+
 }
 
 .vec-actions {
+
     display: flex !important;
+
     align-items: center;
+
     gap: 4px;
-    flex-shrink: 0 !important; /* CẤM THU NHỎ CỤM ICON */
+
+    flex-shrink: 0 !important; /* Cáº¤M THU NHá»Ž Cá»¤M ICON */
+
 }
 
-/* Tinh chỉnh lại nút icon cho vuông vắn đều nhau */
+/* Tinh chá»‰nh láº¡i nÃºt icon cho vuÃ´ng váº¯n Ä‘á»�u nhau */
+
 .vec-actions .btn {
+
     width: 28px;
+
     height: 28px;
+
     padding: 0;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
 }
 
-/* [DÁN VÀO ĐÁY style.css] - Xóa nền xám rác của checklist cũ */
+/* [DÃ�N VÃ€O Ä�Ã�Y style.css] - XÃ³a ná»�n xÃ¡m rÃ¡c cá»§a checklist cÅ© */
+
 .checklist-tools { background: transparent !important; border: none !important; padding: 0 !important; }
+
 body.dark .checklist-tools { background: transparent !important; border: none !important; }
+
 .checkitem:hover { background: rgba(0,0,0,0.03) !important; border-color: var(--border) !important; }
+
 body.dark .checkitem:hover { background: rgba(255,255,255,0.05) !important; border-color: #444 !important; }
 
 .search-box-modern {
+
     transition: all 0.2s ease;
+
     border: 1px solid var(--border) !important;
+
 }
 
 .search-box-modern:focus-within {
+
     border-color: var(--primary-base) !important;
+
     box-shadow: 0 0 0 2px rgba(0, 144, 255, 0.1) !important;
+
 }
 
 .search-box-modern input:focus {
+
     outline: none !important;
+
 }
 
-/* Chế độ Dark Mode */
+/* Cháº¿ Ä‘á»™ Dark Mode */
+
 body.dark .search-box-modern:focus-within {
+
     border-color: var(--primary-hover) !important;
+
     box-shadow: 0 0 0 2px rgba(0, 144, 255, 0.2) !important;
+
 }
 /* =========================================================
-   VIEW TRANSITIONS API - Mu?t m� kh�ng nh�y flash
+   VIEW TRANSITIONS API - Mượt mà đồng bộ không giật lag
    ========================================================= */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 0.3s;
-  animation-timing-function: ease-in-out;
+  animation-duration: 0.25s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}

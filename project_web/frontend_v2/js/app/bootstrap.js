@@ -34,7 +34,9 @@
     bindClick("themeBadge", App.toggleTheme);
     bindClick("modeBadge", App.toggleMode);
 
-    bindChange("opSelect", App.refreshCalcUI);
+    bindChange("opSelect", () => {
+      if (typeof App.refreshCalcUI === "function") App.refreshCalcUI(false);
+    });
 
     // Nút tính toán & xem trước
     const btnCompute = document.getElementById("btnCompute");
@@ -162,14 +164,15 @@
     ) {
       App.SolutionPanel.init();
     }
+
     // --- XỬ LÝ NÚT RESET VIEW (QUAY VỀ GỐC) ---
     const btnResetView = document.getElementById("btnResetView");
     if (btnResetView) {
       btnResetView.addEventListener("click", function () {
-        // Hiệu ứng xoay icon cho ngầu
-        const icon = this.querySelector("svg");
+        // Hiệu ứng xoay icon cho trực quan
+        const icon = this.querySelector("svg, i");
         if (icon) {
-          icon.style.transition = "transform 0.5s";
+          icon.style.transition = "transform 0.5s ease";
           icon.style.transform = "rotate(360deg)";
           setTimeout(() => (icon.style.transform = "none"), 500);
         }
@@ -179,6 +182,21 @@
           if (window.Vec3D && Vec3D.resetView) Vec3D.resetView();
         } else {
           if (window.Vec2D && Vec2D.resetView) Vec2D.resetView();
+        }
+      });
+    }
+
+    // --- XỬ LÝ MENU TÙY CHỌN CANVAS (CANVAS HUD) ---
+    const canvasMenuContainer = document.getElementById("canvasMenuContainer");
+    const canvasMenuBtn = document.getElementById("canvasMenuBtn");
+    if (canvasMenuBtn && canvasMenuContainer) {
+      canvasMenuBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        canvasMenuContainer.classList.toggle("open");
+      });
+      document.addEventListener("click", function (e) {
+        if (!canvasMenuContainer.contains(e.target)) {
+          canvasMenuContainer.classList.remove("open");
         }
       });
     }
@@ -197,6 +215,3 @@
     App.init();
   }
 })();
-
-
-

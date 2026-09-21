@@ -1,5 +1,9 @@
-# Environments
+# Environments & Secrets
 .env
+.env.*
+*.env
+**/.env
+**/.env.*
 .venv
 venv/
 env/
@@ -29,6 +33,14 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+
 # Node / React
 node_modules/
 npm-debug.log*
@@ -44,6 +56,10 @@ admin_v2/dist/
 .DS_Store
 Thumbs.db
 
-# Logs & Scratch
+# Logs, Backups & Scratch
 *.log
+*.tmp
+*.bak
 scratch/
+test_*.html
+preview_*.html

@@ -5,6 +5,7 @@
   /* Base */
   --bg: #ffffff;
   --fg: #0f1117;
+  --text: var(--fg);
   --muted: #6b6f76;
   --border: #e4e6eb;
   --card: #ffffff;
@@ -52,20 +53,22 @@
   --t-slow: 220ms cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 
-body.dark {
-  --bg: #0f1116;
-  --fg: #e9e9ef;
-  --muted: #a8acb4;
-  --border: #2a2f36;
-  --card: #11151d;
-  --chip-bg: #161b24;
-  --chip-border: rgba(255, 255, 255, 0.22);
+:root.dark, :root.dark-theme, :root[data-theme="dark"], body.dark, body.dark-theme {
+  --bg: #111113;
+  --fg: #edeef0;
+  --text: var(--fg);
+  --muted: #b0b4ba;
+  --border: #3b3e44;
+  --border-strong: #51585f;
+  --card: #18191b;
+  --chip-bg: #212225;
+  --chip-border: #43484e;
   --chip-fg: var(--fg);
 
-  --accent: #4f85ff;
-  --accent-600: #4073ef;
-  --accent-700: #355fd0;
-  --accent-soft: rgba(79, 133, 255, 0.14);
+  --accent: #0090ff;
+  --accent-600: #3b9eff;
+  --accent-700: #52a9ff;
+  --accent-soft: rgba(0, 144, 255, 0.16);
 
   --grid-light: #262b36;
   --axis: #dadbe3;
@@ -77,9 +80,9 @@ body.dark {
   --angle: #ffd166; /* màu quạt góc ở theme tối */
   --angle-text: #fff6bf; /* màu chữ 8.1° ở theme tối */
 
-  --label-bg: rgba(0, 0, 0, 0.6);
-  --label-fg: #ffffff;
-  --pill-bg: rgba(19, 22, 28, 0.85);
+  --label-bg: rgba(24, 25, 27, 0.9);
+  --label-fg: #edeef0;
+  --pill-bg: #18191b;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.35);

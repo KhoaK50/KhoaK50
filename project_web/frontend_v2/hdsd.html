@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="vi">
   <head>
   <script>
@@ -39,11 +39,6 @@
 
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="css/footer.css" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/radix_colors.css" />
   <link rel="stylesheet" href="css/components.css" />
     <script src="js/utils/theme-manager.js"></script>
@@ -60,7 +55,7 @@
       }
 
       body {
-        font-family: "Inter", sans-serif;
+        font-family: var(--font-ui);
         background-color: var(--bg-base);
         color: var(--text-main);
         margin: 0;
@@ -931,7 +926,7 @@
                   <div class="vec-dropdown-container right-align" id="notificationDropdownContainer" style="display: none;">
             <button class="vec-icon-btn" title="Thông báo" id="notificationBellBtn" style="position: relative;">
               <i class="ph ph-bell"></i>
-              <span id="unreadBadge" style="display: none; position: absolute; top: 0px; right: 0px; min-width: 16px; height: 16px; background-color: #ef4444; color: white; border-radius: 10px; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; font-family: sans-serif; box-shadow: 0 0 0 2px var(--bg-card, #fff);"></span>
+              <span id="unreadBadge" style="display: none; position: absolute; top: 0px; right: 0px; min-width: 16px; height: 16px; background-color: #ef4444; color: white; border-radius: 10px; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; font-family: var(--font-ui); box-shadow: 0 0 0 2px var(--bg-card, #fff);"></span>
             </button>
             <div class="vec-dropdown-menu" id="notificationMenu" style="min-width: 320px; max-height: 400px; overflow-y: auto; padding: 0;">
               <div style="padding: 12px 16px; border-bottom: 1px solid var(--s3); font-weight: 600; font-family: var(--font); display: flex; justify-content: space-between; align-items: center;">
@@ -1879,17 +1874,9 @@
     <footer class="vectoria-footer distraction-element">
       <div class="footer-container">
         <div class="brand-col">
-          <div
-            class="partner-logo"
-            style="display: flex; align-items: center; gap: 10px"
-          >
+          <div class="partner-logo" style="display: flex; align-items: center; gap: 10px">
             <img src="assets/images/logoMoi.png" alt="Logo Nhóm/Trường" />
-            <img
-              src="assets/images/logoChu.png"
-              id="textLogo"
-              alt="Logo Chữ Vectoria"
-              style="height: 35px; width: auto"
-            />
+            <img src="assets/images/logoChu.png" id="textLogo" alt="Logo Chữ Vectoria" style="height: 35px; width: auto" />
           </div>
           <p>
             Vectoria — Vương quốc của những Vector — được kiến tạo để thay đổi
@@ -1906,6 +1893,19 @@
             <li>
               <i class="ph ph-envelope"></i>
               <a href="mailto:support@vectoria.io.vn">support@vectoria.io.vn</a>
+            </li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Pháp lý</h4>
+          <ul>
+            <li>
+              <i class="ph ph-shield-check"></i>
+              <a href="terms.html">Điều khoản dịch vụ</a>
+            </li>
+            <li>
+              <i class="ph ph-lock-key"></i>
+              <a href="privacy.html">Chính sách bảo mật</a>
             </li>
           </ul>
         </div>

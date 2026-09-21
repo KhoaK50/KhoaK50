@@ -34,15 +34,26 @@ const ThemeManager = (() => {
     }
   }
 
+  function notifyApp(isDark) {
+    if (typeof window !== "undefined" && window.App) {
+      window.App.theme = isDark ? "dark" : "light";
+      if (typeof window.App.applyTheme === "function") {
+        window.App.applyTheme();
+      }
+    }
+  }
+
   function applyTheme(isDark) {
     // Nếu trình duyệt hỗ trợ View Transitions API -> Dùng hiệu ứng mượt
     if (document.startViewTransition) {
       document.startViewTransition(() => {
         applyClasses(isDark);
+        notifyApp(isDark);
       });
     } else {
       // Fallback: Chuyển tức thì (Instant Snap) cho trình duyệt cũ
       applyClasses(isDark);
+      notifyApp(isDark);
     }
   }
 

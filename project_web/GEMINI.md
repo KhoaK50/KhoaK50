@@ -71,13 +71,12 @@ Các quy tắc dưới đây được trích xuất từ hệ sinh thái `taste-
 - **Navbar:** Không làm thanh điều hướng dính chặt vào viền trên một cách cứng nhắc rập khuôn. Nếu dùng sticky navbar, phải có hiệu ứng phân biệt (backdrop blur, đổ bóng nhẹ khi cuộn, thu nhỏ padding).
 - **Page Theme Lock:** Trang có MỘT theme duy nhất (light, dark, hoặc auto). Cấm pha trộn một Section nền sáng vào giữa trang đang tối (hoặc ngược lại). Các biến thể nhẹ trong cùng họ màu thì được (VD: `--bg-body` kế `--bg-card`).
 
-## 3.3 Typography (Định dạng kiểu LaTeX PDF - Tiêu chuẩn Cao)
-- **Font chữ bắt buộc:** Dùng font học thuật chuyên dụng làm mặc định cho **100% UI** (Heading, Body, Button, Navigation). Ưu tiên `Latin Modern Roman` (nếu có bản đủ Tiếng Việt), hoặc dùng `STIX Two Text` / `Libertinus Serif` để đảm bảo 100% hiển thị hoàn hảo dấu Tiếng Việt.
-- **Cấm dùng CDN bên ngoài (Self-hosting bắt buộc):** Tuyệt đối không dùng Google Fonts hay các đường dẫn trung gian. Phải tải file font (`.woff2`) về lưu trữ tĩnh trực tiếp trên server dự án để tránh rủi ro bị geoblock (chặn IP quốc gia) và loại bỏ hoàn toàn độ trễ kết nối (network delay).
-- **Kỹ thuật tải Font & Fallback:** Bắt buộc preload font trong `<head>`. Chuỗi fallback trong Tailwind: `['Font_Hoc_Thuat', 'Times New Roman', 'Times', 'serif']`.
+## 3.3 Typography (Định dạng Phân lớp: UI Hiện đại & Nội dung Học thuật)
+- **Nội dung bài học (Lesson Content & Math):** Dùng font học thuật chuyên dụng (`STIX Two Text`, `Latin Modern Roman`) độc quyền cho phần nội dung bài giảng lấy từ Database và các khối lý thuyết học thuật. Công thức toán học (KaTeX/MathJax) là bất khả xâm phạm, giữ nguyên 100% engine hiển thị.
+- **Toàn bộ giao diện (UI - Navbar, Button, Card, Modal, Input, Dashboard):** Bắt buộc sử dụng font chữ hiện đại, nét chữ rõ ràng, độ dày vừa vặn (đặc biệt tại các nút bấm, nhãn input, thanh điều hướng không để chữ bị mỏng, nhỏ khó đọc). Tuyệt đối tránh A.I Slop (không lạm dụng Inter/Roboto 400 phẳng lì cẩu thả; phải áp dụng phân cấp font-weight 500, 600, 700 và letter-spacing, line-height chỉn chu). Ưu tiên `Be Vietnam Pro` hoặc system-ui stack hiện đại được tối ưu hiển thị tiếng Việt.
+- **Cấm dùng CDN bên ngoài (Self-hosting bắt buộc):** Tuyệt đối không dùng Google Fonts hay các đường dẫn trung gian khi deploy production. Phải tải file font (`.woff2`) về lưu trữ tĩnh trực tiếp trên server dự án để tránh rủi ro bị geoblock và loại bỏ hoàn toàn độ trễ kết nối (network delay).
+- **Kỹ thuật tải Font & Fallback:** Bắt buộc preload font chính trong `<head>`. Chuỗi fallback chuẩn: `['Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif]`.
 - **Chống Layout Shift (CLS):** Bắt buộc dùng `size-adjust`, `ascent-override` ở CSS `@font-face` để đồng bộ kích thước khung hình của font dự phòng sao cho khớp tuyệt đối với font chính.
-- **Cấm Sans-serif:** Cấm sử dụng các font sans-serif (Inter, Roboto) ở bất kỳ đâu trên giao diện. Ghi đè toàn bộ `theme.fontFamily` của Tailwind.
-- **Render Toán học (Bất khả xâm phạm):** Giữ nguyên engine mặc định của KaTeX/MathJax. Tuyệt đối không dùng CSS toàn cục can thiệp vào `font-family`, `letter-spacing`, `margin`, hay `line-height` của các class toán học.
 
 ## 3.4 Khối hình học & Chi tiết UI (Anti-Industrial App)
 - **Định hướng UI:** Loại bỏ hoàn toàn cảm giác "App công nghiệp/SaaS rập khuôn". Giao diện phải mang lại trải nghiệm thị giác tĩnh lặng, chính xác của tài liệu PDF học thuật.

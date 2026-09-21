@@ -11,7 +11,7 @@
 /* 2. TIÊU ĐỀ & NỘI DUNG */
 .driver-popover-title {
   /* Ép font chuẩn, hỗ trợ 100% Tiếng Việt */
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-family: var(--font-ui) !important;
   font-size: 1.3rem !important; /* Chỉnh nhỏ lại xíu cho thanh lịch */
   font-weight: 700 !important; /* Dùng Bold 700 thay vì 800 để không bị gãy dấu */
   color: #1a73e8 !important;
@@ -23,7 +23,7 @@
 
 .driver-popover-description {
   /* Ép luôn font cho nội dung bên dưới */
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-family: var(--font-ui) !important;
   font-size: 0.95rem !important;
   line-height: 1.6 !important;
   color: #3c4043 !important;
@@ -38,6 +38,7 @@
 
 /* 4. CÁC NÚT BẤM (BUTTONS) */
 .driver-popover-footer button {
+  font-family: var(--font-ui) !important;
   text-shadow: none !important;
   padding: 8px 16px !important;
   border-radius: 8px !important;

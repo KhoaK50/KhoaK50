@@ -31,7 +31,16 @@ def create_app():
 
     # Cấu hình CORS
     from vectoria_api.config import ALLOWED_ORIGINS
-    CORS(app, origins=list(ALLOWED_ORIGINS))
+    from vectoria_api.middleware.cors import attach_cors_middleware
+    CORS(
+        app,
+        resources={r"/*": {"origins": list(ALLOWED_ORIGINS)}},
+        supports_credentials=True,
+        allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        max_age=3600
+    )
+    attach_cors_middleware(app)
 
     from vectoria_api.middleware.rate_limit import limiter
     limiter.init_app(app)
@@ -69,6 +78,10 @@ def create_app():
     # Register Notification Blueprint
     from vectoria_api.routes.notification import notification_bp
     app.register_blueprint(notification_bp)
+    
+    # Register Learning Path Blueprint (Task Mode & Personalization)
+    from vectoria_api.routes.learning_path import learning_path_bp
+    app.register_blueprint(learning_path_bp)
 
     socketio.init_app(app, cors_allowed_origins=list(ALLOWED_ORIGINS))
     return app
@@ -244,5 +257,5 @@ def keep_awake():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
-    print(f">> Server đang chạy tại: http://{HOST}:{PORT}")
+    print(f">> Server running at: http://{HOST}:{PORT}")
     socketio.run(app, host="0.0.0.0", port=5000, allow_unsafe_werkzeug=True)

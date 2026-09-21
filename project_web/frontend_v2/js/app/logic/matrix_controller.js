@@ -1,5 +1,5 @@
 // ===================== js/app/logic/matrix_controller.js =====================
-// Quản lý tạo, xóa, hiển thị ma trận — kế thừa pattern từ vector_controller.js
+// Quản lý tạo, xóa, hiển thị ma trận - kế thừa pattern từ vector_controller.js
 (function () {
   window.App = window.App || {};
 
@@ -97,8 +97,8 @@
     const colsInput = document.getElementById("matrixCreateCols");
     if (!rowsInput || !colsInput) return;
 
-    const rows = Math.max(2, Math.min(5, parseInt(rowsInput.value) || 3));
-    const cols = Math.max(2, Math.min(5, parseInt(colsInput.value) || 3));
+    const rows = Math.max(1, Math.min(5, parseInt(rowsInput.value) || 3));
+    const cols = Math.max(1, Math.min(5, parseInt(colsInput.value) || 3));
 
     const gridData = readGridValues("matrixCreateGrid", rows, cols);
     if (!gridData) {
@@ -120,6 +120,9 @@
       const targetIdx = App.matrixList.findIndex(m => m.id === App.editingMatrixId);
       if (targetIdx !== -1) {
         const item = App.matrixList[targetIdx];
+        if (App.History && typeof App.History.record === "function") {
+          App.History.record(`Sửa ma trận ${item.name}`);
+        }
         item.rows = rows;
         item.cols = cols;
         item.values = values;
@@ -139,6 +142,9 @@
       // Chế độ Thêm mới
       const hue = App._pickMatrixHue();
       const item = createMatrixItem(rows, cols, values, latexValues, hue);
+      if (App.History && typeof App.History.record === "function") {
+        App.History.record(`Thêm ma trận ${item.name}`);
+      }
       App.matrixList.push(item);
 
       // Scroll danh sách xuống cuối để thấy item vừa tạo
@@ -215,6 +221,9 @@
     const idx = App.matrixList.findIndex(m => m.id === id);
     if (idx < 0) return;
     const name = App.matrixList[idx].name;
+    if (App.History && typeof App.History.record === "function") {
+      App.History.record(`Xóa ma trận ${name}`);
+    }
     App.matrixList.splice(idx, 1);
     App.renderMatrixList();
   };
@@ -226,6 +235,9 @@
     if (App.matrixList.length === 0) {
       App.showToast("Danh sách đã trống rồi!", "warning");
       return;
+    }
+    if (App.History && typeof App.History.record === "function") {
+      App.History.record("Xóa tất cả ma trận");
     }
     App.matrixList.length = 0;
     App.nextMatrixId = 1;
@@ -250,6 +262,7 @@
         <span>Chưa có ma trận nào</span>
       `;
       el.appendChild(empty);
+      if (typeof App.refreshMatrixDropdowns === "function") App.refreshMatrixDropdowns();
       return;
     }
 
@@ -266,13 +279,12 @@
       sw.className = "mat-swatch";
       sw.style.background = item.colorCss;
 
-      // Main content
-      const main = document.createElement("div");
-      main.className = "mat-main";
+      // Header row: name + dimension badge on left, actions on right
+      const headerRow = document.createElement("div");
+      headerRow.className = "mat-header-row";
 
-      // Header row: name + dimension badge
-      const header = document.createElement("div");
-      header.className = "mat-header";
+      const headerLeft = document.createElement("div");
+      headerLeft.className = "mat-header-left";
 
       const tag = document.createElement("span");
       tag.className = "mat-tag";
@@ -282,33 +294,11 @@
       dim.className = "mat-dim";
       dim.textContent = `${item.rows}×${item.cols}`;
 
-      header.appendChild(tag);
-      header.appendChild(dim);
+      headerLeft.appendChild(sw);
+      headerLeft.appendChild(tag);
+      headerLeft.appendChild(dim);
 
-      // Mini preview: grid nhỏ hiển thị giá trị
-      const preview = document.createElement("div");
-      preview.className = "mat-preview";
-      preview.style.gridTemplateColumns = `repeat(${item.cols}, 1fr)`;
-
-      for (let i = 0; i < item.rows; i++) {
-        for (let j = 0; j < item.cols; j++) {
-          const val = item.values[i][j];
-          const lat = (item.latexValues && item.latexValues[i] && item.latexValues[i][j]) 
-                      ? item.latexValues[i][j] 
-                      : fmtCell(val);
-
-          // Render bằng math-field để hiển thị đúng chuẩn LaTeX
-          const cell = document.createElement("math-field");
-          cell.className = "matrix-cell";
-          cell.readOnly = true;
-          cell.setAttribute("readonly", "");
-          cell.style.cssText = "pointer-events: none; user-select: none;";
-          cell.value = lat;
-          
-          preview.appendChild(cell);
-        }
-      }
-
+      // Actions
       const actions = document.createElement("div");
       actions.className = "mat-actions";
 
@@ -353,14 +343,50 @@
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
 
-      main.appendChild(header);
-      main.appendChild(preview);
+      headerRow.appendChild(headerLeft);
+      headerRow.appendChild(actions);
 
-      li.appendChild(sw);
-      li.appendChild(main);
-      li.appendChild(actions);
+      // Mini preview: grid hiển thị trọn vẹn 100% chiều ngang thẻ
+      const preview = document.createElement("div");
+      preview.className = "mat-preview";
+      preview.style.gridTemplateColumns = `repeat(${item.cols}, 1fr)`;
+
+      for (let i = 0; i < item.rows; i++) {
+        for (let j = 0; j < item.cols; j++) {
+          const val = item.values[i][j];
+          const lat = (item.latexValues && item.latexValues[i] && item.latexValues[i][j]) 
+                      ? item.latexValues[i][j] 
+                      : fmtCell(val);
+
+          // Nếu là số hoặc chữ thông thường thì dùng thẻ div.mat-cell để không bị ảnh hưởng bởi padding của math-field
+          const isComplexLatex = /[\\[\\^\\_\\{\\}]/.test(lat);
+          if (!isComplexLatex) {
+            const cell = document.createElement("div");
+            cell.className = "mat-cell";
+            cell.textContent = lat;
+            cell.title = lat;
+            preview.appendChild(cell);
+          } else {
+            // Render bằng math-field khi chứa công thức LaTeX đặc biệt
+            const cell = document.createElement("math-field");
+            cell.className = "matrix-cell";
+            cell.readOnly = true;
+            cell.setAttribute("readonly", "");
+            cell.style.cssText = "pointer-events: none; user-select: none; padding: 2px 4px !important; padding-right: 4px !important; height: 26px; min-height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 2px; min-width: 0; box-sizing: border-box;";
+            cell.value = lat;
+            preview.appendChild(cell);
+          }
+        }
+      }
+
+      li.appendChild(headerRow);
+      li.appendChild(preview);
 
       el.appendChild(li);
+    }
+
+    if (typeof App.refreshMatrixDropdowns === "function") {
+      App.refreshMatrixDropdowns();
     }
   };
 

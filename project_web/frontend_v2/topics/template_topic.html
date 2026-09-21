@@ -21,8 +21,6 @@
     <title>Cơ sở và Số chiều - Vectoria Knowledge</title>
     
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
 
     <script src="../js/utils/theme-manager.js"></script>
 
@@ -71,7 +69,7 @@
         html { scroll-behavior: smooth; }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-ui, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
             background-color: var(--bg-body);
             color: var(--text-main);
             margin: 0;
@@ -243,6 +241,7 @@
         .pdf-wrapper { width: 100%; height: 700px; border: 1px solid var(--border); border-radius: 8px; }
         .code-block { background: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 8px; font-family: monospace; overflow-x: auto; }
     </style>
+    <link rel="stylesheet" href="../css/radix_colors.css" />
 </head>
 
 <body>

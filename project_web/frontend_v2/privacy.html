@@ -28,14 +28,16 @@
       gtag("js", new Date());
       gtag("config", "G-GRZR4Y6VFQ");
     </script>
+    
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Chính sách bảo mật và quyền riêng tư của nền tảng học tập Vectoria." />
-    <title>Chính sách Bảo mật - Vectoria</title>
+    <title>Chính sách Bảo mật | Vectoria</title>
     <link rel="icon" type="image/png" href="assets/images/logo.png" />
 
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="css/footer.css" />
+    <link rel="stylesheet" href="css/radix_colors.css" />
     <link rel="stylesheet" href="css/components.css" />
     
     <script src="js/utils/theme-manager.js"></script>
@@ -45,8 +47,10 @@
         scroll-behavior: smooth;
       }
 
+      h1, h2, h3, h4, h5, h6, p, li, body {
+        font-family: var(--font-ui);
+      }
       body {
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         background-color: transparent !important;
         color: var(--text-main);
         margin: 0;
@@ -163,12 +167,7 @@
     <link rel="stylesheet" href="css/global-search.css">
 </head>
   <body>
-    <script>
-      if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.remove('light-theme');
-        document.body.classList.add('dark-theme', 'dark');
-      }
-    </script>
+    
     <div class="academic-bg"></div>
     <div class="ambient-glow-1"></div>
     <div class="ambient-glow-2"></div>
@@ -218,7 +217,7 @@
         <div class="vec-dropdown-container right-align" id="notificationDropdownContainer" style="display: none;">
           <button class="vec-icon-btn" title="Thông báo" id="notificationBellBtn" style="position: relative;">
             <i class="ph ph-bell"></i>
-            <span id="unreadBadge" style="display: none; position: absolute; top: 0px; right: 0px; min-width: 16px; height: 16px; background-color: #ef4444; color: white; border-radius: 10px; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; font-family: sans-serif; box-shadow: 0 0 0 2px var(--bg-card, #fff);"></span>
+            <span id="unreadBadge" style="display: none; position: absolute; top: 0px; right: 0px; min-width: 16px; height: 16px; background-color: #ef4444; color: white; border-radius: 10px; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; font-family: var(--font-ui); box-shadow: 0 0 0 2px var(--bg-card, #fff);"></span>
           </button>
           <div class="vec-dropdown-menu" id="notificationMenu" style="min-width: 320px; max-height: 400px; overflow-y: auto; padding: 0;">
             <div style="padding: 12px 16px; border-bottom: 1px solid var(--s3); font-weight: 600; font-family: var(--font); display: flex; justify-content: space-between; align-items: center;">
@@ -250,22 +249,22 @@
       <h2>1. Thông Tin Chúng Tôi Thu Thập</h2>
       <p>Chúng tôi thu thập các thông tin cá nhân cần thiết để cung cấp trải nghiệm học tập tốt nhất, bao gồm:</p>
       <ul>
-        <li><strong>Thông tin tài khoản:</strong> Địa chỉ email, tên hiển thị (display name), mật khẩu (đã được băm an toàn), và ảnh đại diện (avatar).</li>
-        <li><strong>Hoạt động học tập:</strong> Lịch sử học tập, tiến độ, và danh sách bài học đã lưu (bookmarks).</li>
-        <li><strong>Đăng nhập bên thứ ba:</strong> Nếu bạn chọn đăng nhập qua Google Login (OAuth), chúng tôi sẽ nhận các thông tin cơ bản từ Google như email và tên.</li>
+        <li><strong>Thông tin tài khoản:</strong> Địa chỉ email, tên hiển thị, mật khẩu, và ảnh đại diện.</li>
+        <li><strong>Hoạt động học tập:</strong> Lịch sử học tập, tiến độ, và danh sách bài học đã lưu.</li>
+        <li><strong>Đăng nhập bên thứ ba:</strong> Nếu bạn chọn đăng nhập qua Google Login, chúng tôi sẽ nhận các thông tin cơ bản từ Google như email và tên.</li>
       </ul>
 
       <h2>2. Cookie và Theo Dõi Phân Tích</h2>
       <p>Vectoria sử dụng cookie và các công nghệ tương tự để duy trì phiên đăng nhập và ghi nhớ tùy chọn của người dùng.</p>
-      <p>Chúng tôi sử dụng <strong>Google Analytics (G-GRZR4Y6VFQ)</strong> để theo dõi lưu lượng truy cập và hành vi người dùng trên trang web. Dữ liệu này giúp chúng tôi phân tích, cải thiện hiệu suất và chất lượng nền tảng. Các thông tin được thu thập dưới dạng ẩn danh và tuân thủ chính sách của Google.</p>
+      <p>Chúng tôi sử dụng <strong>Google Analytics</strong> để theo dõi lưu lượng truy cập và hành vi người dùng trên trang web. Dữ liệu này giúp chúng tôi phân tích, cải thiện hiệu suất và chất lượng nền tảng. Các thông tin được thu thập dưới dạng ẩn danh và tuân thủ chính sách của Google.</p>
 
       <h2>3. Lưu Trữ và Bảo Vệ Dữ Liệu</h2>
       <p>Dữ liệu của bạn được lưu trữ an toàn và bảo mật thông qua các hạ tầng đám mây uy tín:</p>
       <ul>
-        <li>Cơ sở dữ liệu người dùng và nội dung được lưu trữ tại <strong>Supabase (PostgreSQL)</strong>.</li>
+        <li>Cơ sở dữ liệu người dùng và nội dung được lưu trữ tại <strong>Supabase</strong>.</li>
         <li>Máy chủ ứng dụng và backend được vận hành trên nền tảng <strong>Render.com</strong>.</li>
       </ul>
-      <p>Mật khẩu người dùng được băm (hash) và mã hóa mạnh trước khi lưu trữ, đảm bảo không ai, kể cả quản trị viên, có thể đọc được mật khẩu gốc của bạn.</p>
+      <p>Mật khẩu người dùng được băm và mã hóa mạnh trước khi lưu trữ, đảm bảo không ai, kể cả quản trị viên, có thể đọc được mật khẩu gốc của bạn.</p>
 
       <h2>4. Các Dịch Vụ Bên Thứ Ba</h2>
       <p>Chúng tôi tích hợp một số dịch vụ bên thứ ba để nâng cao tính năng của Vectoria:</p>
@@ -286,11 +285,10 @@
       <h2>6. Chính Sách Lưu Giữ Dữ Liệu</h2>
       <p>Chúng tôi chỉ lưu giữ dữ liệu cá nhân của bạn trong khoảng thời gian cần thiết để duy trì tài khoản và cung cấp dịch vụ. Khi bạn yêu cầu xóa tài khoản, tất cả dữ liệu cá nhân, lịch sử học tập và thông tin liên quan sẽ được xóa vĩnh viễn khỏi hệ thống cơ sở dữ liệu của chúng tôi.</p>
 
-      <h2>7. Quyền Riêng Tư Của Trẻ Em</h2>
-      <p>Với tư cách là một nền tảng giáo dục, Vectoria đặc biệt chú trọng đến việc bảo vệ trẻ em. Chúng tôi không chủ ý thu thập dữ liệu cá nhân của trẻ em dưới 13 tuổi mà không có sự đồng ý của phụ huynh hoặc người giám hộ hợp pháp. Nếu chúng tôi phát hiện đã vô tình thu thập thông tin từ trẻ em dưới 13 tuổi, chúng tôi sẽ tiến hành xóa dữ liệu đó ngay lập tức.</p>
+      
 
-      <h2>8. Liên Hệ</h2>
-      <p>Nếu bạn có bất kỳ thắc mắc nào về Chính sách Bảo mật này hoặc muốn thực hiện các quyền đối với dữ liệu của mình, vui lòng liên hệ với chúng tôi qua email: <a href="mailto:vectoria.official@gmail.com" style="color: var(--primary-base);">vectoria.official@gmail.com</a>.</p>
+      <h2>7. Liên Hệ</h2>
+      <p>Nếu bạn có bất kỳ thắc mắc nào về Chính sách Bảo mật này hoặc muốn thực hiện các quyền đối với dữ liệu của mình, vui lòng liên hệ với chúng tôi qua email: <a href="mailto:support@vectoria.io.vn" style="color: var(--primary-base);">support@vectoria.io.vn</a>.</p>
     </main>
 
     <footer class="vectoria-footer distraction-element">
@@ -315,6 +313,19 @@
             <li>
               <i class="ph ph-envelope"></i>
               <a href="mailto:support@vectoria.io.vn">support@vectoria.io.vn</a>
+            </li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Pháp lý</h4>
+          <ul>
+            <li>
+              <i class="ph ph-shield-check"></i>
+              <a href="terms.html">Điều khoản dịch vụ</a>
+            </li>
+            <li>
+              <i class="ph ph-lock-key"></i>
+              <a href="privacy.html">Chính sách bảo mật</a>
             </li>
           </ul>
         </div>

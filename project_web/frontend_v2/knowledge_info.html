@@ -33,7 +33,6 @@
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/radix_colors.css" />
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
 <style>
 /* """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
    1. DESIGN TOKENS (RADIX UI SLATE + BLUE)
@@ -56,7 +55,15 @@
   --red: #e5484d;
   --radius: 6px; 
   --shadow: 0 1px 3px rgba(0,0,0,.06);
-  --font: 'Merriweather', 'Cambria', 'Times New Roman', serif;
+  /* TYPOGRAPHY SYSTEM:
+     - Topbar dùng font UI hiện đại (Be Vietnam Pro) đồng bộ các trang khác
+     - Search input, Search modal và toàn bộ nội dung học thuật/view dùng STIX Two Text
+  */
+  --font-modern-ui: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-academic: 'STIX Two Text', 'Latin Modern Roman', 'Academic Font', 'Times New Roman', Times, serif;
+  --font-ui: var(--font-modern-ui);
+  --font-sans: var(--font-modern-ui);
+  --font: var(--font-academic);
 }
 body.dark-theme {
   /* TẦNG 1: STRICT RADIX SLATE (DARK) */
@@ -70,8 +77,71 @@ body.dark-theme {
   --s11: #b0b4ba; /* step 11 */
   --s12: #edeef0; /* step 12 */
 }
-input, button, textarea, select { font-family: var(--font) !important; }
-body{font-family:var(--font)!important;margin:0;overflow:hidden;background:var(--s1);color:var(--s12);display:flex;flex-direction:column;height:100vh}
+/* ==========================================================================
+   TYPOGRAPHY RULES CHO KNOWLEDGE_INFO.HTML
+   1. Mặc định toàn bộ trang (body, sidebar, main-content, graph, workspace, lesson, quiz): FONT HỌC THUẬT
+   2. Riêng Topbar (trừ search): FONT GIAO DIỆN HIỆN ĐẠI đồng bộ như các trang khác
+   3. Thanh Search trên Topbar và Search Modal: FONT HỌC THUẬT
+   ========================================================================== */
+
+/* 1. MẶC ĐỊNH TOÀN BỘ NỘI DUNG VÀ GIAO DIỆN TRANG DÙNG FONT HỌC THUẬT */
+body, 
+button:not(.ph):not([class*="ph-"]), 
+input, select, textarea,
+h1, h2, h3, h4, h5, h6,
+p, span:not(.ph):not([class*="ph-"]):not(.katex *), 
+a:not(.ph):not([class*="ph-"]), 
+div:not(.ph):not([class*="ph-"]):not(.katex *),
+li, label, table, th, td,
+.lib-side, .lib-side *:not(.ph):not([class*="ph-"]),
+.lib-item, .lib-cat-header,
+.view-title, .bc, .bc *,
+#main-content, #main-content *:not(.ph):not([class*="ph-"]):not(.katex *):not(mjx-container *),
+#dd-content, #dd-content *:not(.ph):not([class*="ph-"]):not(.katex *):not(mjx-container *),
+#dd-graph-view, #dd-graph-view *:not(.ph):not([class*="ph-"]),
+#learning-path-workspace-container, #learning-path-workspace-container *:not(.ph):not([class*="ph-"]),
+svg text {
+  font-family: var(--font-academic) !important;
+}
+
+/* 2. RIÊNG TOPBAR DÙNG FONT GIAO DIỆN HIỆN ĐẠI (ĐỒNG BỘ CÙNG TẤT CẢ CÁC TRANG KHÁC) */
+header.vec-topbar,
+header.vec-topbar *:not(.ph):not([class*="ph-"]):not(.vec-topbar-center):not(.vec-topbar-center *),
+.vec-topbar-left, .vec-topbar-left *:not(.ph):not([class*="ph-"]),
+.vec-nav-links, .vec-nav-links *:not(.ph):not([class*="ph-"]),
+.vec-nav-link, .vec-nav-link *,
+.vec-dropdown-menu, .vec-dropdown-menu *:not(.ph):not([class*="ph-"]),
+.vec-dropdown-item,
+.vec-topbar-right, .vec-topbar-right *:not(.ph):not([class*="ph-"]),
+.vec-profile-name, .user-dropdown-menu, .user-dropdown-menu *:not(.ph):not([class*="ph-"]),
+#menuTopAvatar, #menuTopAvatar *:not(.ph):not([class*="ph-"]),
+#notificationMenu, #notificationMenu *:not(.ph):not([class*="ph-"]),
+#unreadBadge {
+  font-family: var(--font-modern-ui) !important;
+}
+
+/* 3. TRỪ THANH SEARCH TRÊN TOPBAR VÀ SEARCH MODAL: DÙNG FONT HỌC THUẬT */
+.vec-topbar-center,
+.vec-topbar-center input,
+.vec-topbar-center input::placeholder,
+.search-modal-container,
+.search-modal-container *:not(.ph):not([class*="ph-"]),
+.search-modal-container input,
+.search-modal-container input::placeholder,
+.search-result-item,
+.search-result-item * {
+  font-family: var(--font-academic) !important;
+}
+
+/* 4. BẢO TOÀN CHO CODE BLOCKS VÀ ICON FONT */
+code, pre, .font-mono, kbd, samp {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+}
+i.ph, [class*="ph-"] {
+  font-family: "Phosphor" !important;
+}
+
+body{font-family:var(--font-academic)!important;margin:0;overflow:hidden;background:var(--s1);color:var(--s12);display:flex;flex-direction:column;height:100vh}
 *,*::before,*::after{box-sizing:border-box}
 
 /* """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -313,7 +383,7 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
     line-height: 1.2;
     }
   }
-  svg text { font-family: var(--font, 'Merriweather', 'Times New Roman', serif) !important; }
+  svg text { font-family: var(--font-academic) !important; }
 
 @media (max-width: 900px) {
   #dd-graph-view { padding: 16px !important; }
@@ -376,22 +446,36 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
   flex: 1; background: var(--s2) !important; color: var(--s12) !important; border: 1px solid var(--s4) !important; justify-content: center; padding: 12px; font-weight: 700; font-size: 0.9rem;
 }
 #mob-overlay {
-  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 900; opacity: 0; pointer-events: none; transition: opacity 0.3s;
-}
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 900; opacity: 0; pointer-events: none; transition: opacity 0.3s;}
 #mob-overlay.show { opacity: 1; pointer-events: auto; }
 
 </style>
-    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/global-search.css">
   <!-- KaTeX -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <!-- MathJax (Đồng bộ cấu hình giải mã ký tự đô la $...$ như trang Admin) -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      },
+      startup: { typeset: false }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body class="light-theme">
 <!-- ==================== UNIFIED TOPBAR ==================== -->
 <style>
   
-    svg text { font-family: var(--font, 'Merriweather', 'Times New Roman', serif) !important; }
+    svg text { font-family: var(--font-academic) !important; }
 </style>
 
 <header class="vec-topbar" id="globalTopbar">
@@ -444,7 +528,7 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
           <div class="vec-dropdown-container right-align" id="notificationDropdownContainer" style="display: none;">
             <button class="vec-icon-btn" title="Thông báo" id="notificationBellBtn" style="position: relative;">
               <i class="ph ph-bell"></i>
-              <span id="unreadBadge" style="display: none; position: absolute; top: 0px; right: 0px; min-width: 16px; height: 16px; background-color: #ef4444; color: white; border-radius: 10px; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; font-family: sans-serif; box-shadow: 0 0 0 2px var(--bg-card, #fff);"></span>
+              <span id="unreadBadge" style="display: none; position: absolute; top: 0px; right: 0px; min-width: 16px; height: 16px; background-color: #ef4444; color: white; border-radius: 10px; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; font-family: var(--font-modern-ui); box-shadow: 0 0 0 2px var(--bg-card, #fff);"></span>
             </button>
             <div class="vec-dropdown-menu" id="notificationMenu" style="min-width: 320px; max-height: 400px; overflow-y: auto; padding: 0;">
               <div style="padding: 12px 16px; border-bottom: 1px solid var(--s3); font-weight: 600; font-family: var(--font); display: flex; justify-content: space-between; align-items: center;">
@@ -497,13 +581,13 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
           opacity: 1;
           overflow: visible; /* Prevent clipping dropdowns */
         }
-        svg text { font-family: var(--font, 'Merriweather', 'Times New Roman', serif) !important; }
+        svg text { font-family: var(--font-academic) !important; }
 </style>
 
       <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; border-bottom: 1px solid var(--s3); padding-bottom: 16px;">
         <div>
           <div id="graph-bc" class="bc" style="margin-bottom: 8px;"></div>
-          <h1 class="view-title" style="font-size:1.8rem; font-weight:800; color:var(--s12); margin:0; font-family:'Merriweather',serif;" data-i18n="knowledge.title">Không gian Tri thức</h1>
+          <h1 class="view-title" style="font-size:1.8rem; font-weight:800; color:var(--s12); margin:0; font-family:var(--font-academic);" data-i18n="knowledge.title">Không gian Tri thức</h1>
         </div>
         <button onclick="var el = document.getElementById('pf-container'); el.classList.toggle('open');" class="btn pf-header-btn" style="padding: 10px 16px; border-radius: 8px; border: 1px solid var(--s4); background: var(--s2); font-weight: 600; cursor: pointer; color: var(--s11); transition: 0.2s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'" data-i18n="knowledge.tool_pathfinding"><i class="ph ph-map-trifold"></i> Công cụ Tìm lộ trình</button>
       </div>
@@ -528,6 +612,7 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
           </div>
           <div style="display:flex; align-items: flex-end; gap: 8px;">
             <button id="btn-find-path" style="padding: 10px 20px; height: 42px; border-radius: 8px; background: var(--primary-base); color: white; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary-hover, #2563eb)'" onmouseout="this.style.background='var(--primary-base)'" onclick="if(typeof runPath==='function')runPath()" data-i18n="knowledge.find_path_btn_only"><i class="ph ph-map-trifold"></i> Tìm lộ trình</button>
+            <button id="btn-execute-path" style="padding: 10px 20px; height: 42px; border-radius: 8px; background: #10b981; color: white; border: none; font-weight: 600; cursor: pointer; display: none; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'" onclick="executePath()"><i class="ph ph-play-circle"></i> Thực hiện</button>
             <button id="btn-reset" style="padding: 10px 16px; height: 42px; border-radius: 8px; background: var(--s3); color: var(--s11); border: none; font-weight: 600; cursor: pointer; display: none; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'" onclick="if(typeof clearPath==='function')clearPath()"><i class="ph ph-rotate-left"></i> Xóa lộ trình</button>
           </div>
         </div>
@@ -611,9 +696,15 @@ window.addEventListener("DOMContentLoaded", async () => {
     
         // Handle deep links on load
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('type') === 'graph') {
+    if (urlParams.get('type') === 'learning-path' || urlParams.get('view') === 'learning-path' || urlParams.get('view') === 'path' || (urlParams.has('path_id') && !urlParams.has('practice_lesson_id') && !urlParams.has('final_exam'))) {
       window._deepLinkHandled = true;
-      navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'));
+      var reqPathId = urlParams.get('path_id');
+      if (reqPathId) localStorage.setItem('committed_path_id', reqPathId);
+      navigateTo('learning-path', 'learning-path', tr('learning_path.title', 'Lộ trình học tập'), reqPathId ? { path_id: reqPathId } : null);
+    } else if (urlParams.get('type') === 'graph') {
+      window._deepLinkHandled = true;
+      var openPf = urlParams.has('open_pathfinder') || urlParams.get('open_pathfinder') === '1';
+      navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'), openPf ? { open_pathfinder: true } : null);
     } else if (urlParams.get('type') === 'lesson') {
       window._deepLinkHandled = true;
       var lid = urlParams.get('id');
@@ -639,8 +730,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (!window._deepLinkHandled) {
         window._deepLinkHandled = true;
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('type') === 'graph') {
-          navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'));
+        if (urlParams.get('type') === 'learning-path' || urlParams.get('view') === 'learning-path' || urlParams.get('view') === 'path' || (urlParams.has('path_id') && !urlParams.has('practice_lesson_id') && !urlParams.has('final_exam'))) {
+          var reqPathId = urlParams.get('path_id');
+          if (reqPathId) localStorage.setItem('committed_path_id', reqPathId);
+          navigateTo('learning-path', 'learning-path', tr('learning_path.title', 'Lộ trình học tập'), reqPathId ? { path_id: reqPathId } : null);
+          return;
+        } else if (urlParams.get('type') === 'graph') {
+          var openPf = urlParams.has('open_pathfinder') || urlParams.get('open_pathfinder') === '1';
+          navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'), openPf ? { open_pathfinder: true } : null);
           return; // navigateTo triggers renderCurrentView
         } else if (urlParams.get('type') === 'lesson') {
           var lid = urlParams.get('id');
@@ -721,16 +818,31 @@ function renderBreadcrumb() {
   var bc = document.getElementById('dd-breadcrumb');
   if (!bc) return;
   bc.innerHTML = '';
+  
+  // Deduplicate consecutive nodes with identical type and id
+  var cleanPath = [];
+  for (var k = 0; k < AppState.path.length; k++) {
+    var pNode = AppState.path[k];
+    if (cleanPath.length === 0 || cleanPath[cleanPath.length - 1].type !== pNode.type || cleanPath[cleanPath.length - 1].id !== pNode.id) {
+      cleanPath.push(pNode);
+    }
+  }
+  AppState.path = cleanPath;
+
   for (var i = 0; i < AppState.path.length; i++) {
     var node = AppState.path[i];
     var isLast = (i === AppState.path.length - 1);
     var span = document.createElement('span');
     if (node.id === 'root') {
-        span.setAttribute('data-i18n', 'knowledge.breadcrumb');
-        span.textContent = tr('knowledge.breadcrumb', node.title);
-      } else {
-        span.textContent = tr('library_terms.' + node.id, node.title);
-      }
+      span.setAttribute('data-i18n', 'knowledge.breadcrumb');
+      span.textContent = tr('knowledge.breadcrumb', node.title);
+    } else if (node.type === 'quiz' || node.type === 'quiz-room') {
+      span.textContent = node.title || 'Bài tập';
+    } else if (node.type === 'learning-path') {
+      span.textContent = tr('knowledge.learning_path', 'Lộ trình học tập');
+    } else {
+      span.textContent = tr('library_terms.' + node.id, node.title);
+    }
     if (isLast) {
       span.className = 'bc-cur';
     } else {
@@ -758,6 +870,12 @@ function updateUrl(node) {
      window.history.replaceState(null, '', window.location.pathname);
   } else if (node.type === 'lesson') {
      window.history.replaceState(null, '', '?id=' + node.id);
+  } else if (node.type === 'learning-path') {
+     var reqId = (node.data && node.data.path_id) || '';
+     window.history.replaceState(null, '', '?type=learning-path&id=learning-path' + (reqId ? '&path_id=' + encodeURIComponent(reqId) : ''));
+  } else if (node.type === 'graph') {
+     var openPf = node.data && node.data.open_pathfinder;
+     window.history.replaceState(null, '', '?type=graph&id=graph' + (openPf ? '&open_pathfinder=1' : ''));
   } else {
      window.history.replaceState(null, '', '?type=' + node.type + '&id=' + node.id);
   }
@@ -765,16 +883,103 @@ function updateUrl(node) {
 
 function navigateBackTo(idx) {
   if (window._quizActive) {
-    const doNav = () => { window._quizActive = false; AppState.path = AppState.path.slice(0, idx + 1); renderCurrentView(); updateUrl(AppState.path[AppState.path.length - 1]); };
-    if (window.App && window.App.showConfirm) { window.App.showConfirm('Bạn đang làm ' + tr('knowledge.lesson_prefix', 'Bài') + ' dang dở. Có chắc chắn muốn thoát? Kết quả sẽ không được lưu!', doNav); } else { doNav(); } return; }
-    AppState.path = AppState.path.slice(0, idx + 1); renderCurrentView(); updateUrl(AppState.path[AppState.path.length - 1]);
+    if (window.exitQuizWithZero) {
+      window.exitQuizWithZero(() => {
+        AppState.path = AppState.path.slice(0, idx + 1);
+        renderCurrentView();
+        updateUrl(AppState.path[AppState.path.length - 1]);
+      });
+      return;
+    }
+  }
+  AppState.path = AppState.path.slice(0, idx + 1);
+  renderCurrentView();
+  updateUrl(AppState.path[AppState.path.length - 1]);
 }
 
 function navigateTo(type, id, title, data) {
-  AppState.path.push({ type:type, id:id, title:title, data:data });
+  if (type === 'root') {
+    AppState.path = [{ type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') }];
+  } else if (type === 'learning-path' || type === 'graph') {
+    // Top-level sections always branch directly from root
+    AppState.path = [
+      { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') },
+      { type:type, id:id, title:title, data:data }
+    ];
+  } else if (type === 'quiz') {
+    var fromLp = (data && data.from === 'learning-path') || 
+                 AppState.path.some(function(p) { return p.type === 'learning-path'; }) || 
+                 Boolean(window._autoPracticePathId) || 
+                 Boolean(window._autoFinalExamPathId) || 
+                 Boolean(sessionStorage.getItem('auto_practice_path_id'));
+    var lpId = (data && data.path_id) || window._autoPracticePathId || window._autoFinalExamPathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id');
+
+    if (fromLp && lpId) {
+      AppState.path = [
+        { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') },
+        { type:'learning-path', id:'learning-path', title:tr('knowledge.learning_path', 'Lộ trình học tập'), data: { path_id: lpId } },
+        { type:'quiz', id:'quiz', title:title, data:data }
+      ];
+    } else {
+      AppState.path = [
+        { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') },
+        { type:'quiz', id:'quiz', title:title, data:data }
+      ];
+    }
+  } else if (type === 'quiz-room') {
+    var lastNode = AppState.path[AppState.path.length - 1];
+    var roomTitle = (lastNode && (lastNode.title === 'Bài tập' || lastNode.title === 'Bài đánh giá tổng kết')) ? lastNode.title : title;
+    if (lastNode && lastNode.type === 'quiz') {
+      AppState.path.pop();
+    }
+    AppState.path.push({ type:type, id:id, title:roomTitle, data:data });
+  } else {
+    var lastNode = AppState.path[AppState.path.length - 1];
+    if (lastNode && lastNode.type === type && lastNode.id === id) {
+      lastNode.title = title;
+      lastNode.data = data;
+    } else {
+      var existingIdx = -1;
+      for (var p = 0; p < AppState.path.length; p++) {
+        if (AppState.path[p].type === type && AppState.path[p].id === id) {
+          existingIdx = p;
+          break;
+        }
+      }
+      if (existingIdx >= 0) {
+        AppState.path = AppState.path.slice(0, existingIdx + 1);
+        AppState.path[existingIdx].title = title;
+        AppState.path[existingIdx].data = data;
+      } else {
+        if (lastNode && (lastNode.type === 'learning-path' || lastNode.type === 'graph' || lastNode.type === 'quiz')) {
+          AppState.path = [{ type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') }];
+        }
+        AppState.path.push({ type:type, id:id, title:title, data:data });
+      }
+    }
+  }
   try { updateUrl(AppState.path[AppState.path.length - 1]); } catch(e) {}
   renderCurrentView();
 }
+
+window.openGraphWithPathFinder = function() {
+  if (typeof navigateTo === 'function') {
+    navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'), { open_pathfinder: true });
+    setTimeout(function() {
+      var el = document.getElementById('pf-container');
+      if (el) {
+        el.classList.add('open');
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      var mob = document.getElementById('mob-overlay');
+      if (mob && window.innerWidth <= 768) {
+        mob.classList.add('show');
+      }
+    }, 150);
+  } else {
+    window.location.href = 'knowledge_info.html?type=graph&id=graph&open_pathfinder=1';
+  }
+};
 
 function renderCurrentView() {
   renderBreadcrumb();
@@ -791,8 +996,36 @@ function renderCurrentView() {
   cnt.style.animation = 'fadeUp 0.25s ease';
 
   var cur = AppState.path[AppState.path.length - 1];
+  
+  // Synchronize sidebar active state
+  var sideItems = document.querySelectorAll('#side-topics-list .side-item');
+  if (sideItems && sideItems.length >= 3) {
+    sideItems.forEach(function(el) { el.classList.remove('active'); });
+    if (cur.type === 'root') sideItems[0].classList.add('active');
+    else if (cur.type === 'graph') sideItems[1].classList.add('active');
+    else if (cur.type === 'learning-path') sideItems[2].classList.add('active');
+  }
+
   if (cur.type === 'root') renderRoot(cnt);
-  else if (cur.type === 'graph') { root.style.display = 'none'; graphView.style.display = 'flex'; initGraph(); }
+  else if (cur.type === 'graph') { 
+    root.style.display = 'none'; 
+    graphView.style.display = 'flex'; 
+    initGraph(); 
+    if (cur.data && cur.data.open_pathfinder) {
+      setTimeout(function() {
+        var el = document.getElementById('pf-container');
+        if (el) {
+          el.classList.add('open');
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        var mob = document.getElementById('mob-overlay');
+        if (mob && window.innerWidth <= 768) {
+          mob.classList.add('show');
+        }
+      }, 150);
+    }
+  }
+  else if (cur.type === 'learning-path') renderLearningPathWorkspace(cnt);
   else if (cur.type === 'topic') renderTopic(cnt, cur.data);
   else if (cur.type === 'section') renderSection(cnt, cur.data);
   else if (cur.type === 'lesson') renderLesson(cnt, cur.data);
@@ -831,6 +1064,7 @@ function renderRoot(c) {
 
   var tools = [
     { title: tr('knowledge.title', 'Không gian Tri thức'), desc: tr('knowledge.tool_graph_desc', 'Bản đồ đồ thị các ' + tr('knowledge.lessons_count', 'Số bài học') + ' và công cụ tối ưu lộ trình.'), icon: 'ph ph-tree-structure', action: function() { navigateTo('graph','graph',tr('knowledge.title', 'Không gian Tri thức'),null); } },
+    { title: tr('knowledge.learning_path', 'Lộ trình học tập'), desc: tr('knowledge.tool_path_desc', 'Không gian thực thi lộ trình cá nhân, dòng thời gian bài học và cố vấn học tập.'), icon: 'ph ph-path', action: function() { navigateTo('learning-path','learning-path',tr('knowledge.learning_path', 'Lộ trình học tập'),null); } },
     { title: tr('knowledge.tool_doc_title', 'Tài liệu tham khảo'), desc: tr('knowledge.tool_doc_desc', 'Giáo trình, sách và các tài liệu bổ trợ.'), icon: 'ph ph-bookmark', action: function() { window.App.showToast('Chức năng đang được phát triển.', 'warning'); } },
     { title: tr('knowledge.tool_quiz_title', 'Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập'), desc: tr('knowledge.tool_quiz_desc', 'Hệ thống thực hành phân loại theo chủ đề.'), icon: 'ph ph-git-branch', action: function() { navigateTo('quiz','quiz',tr('knowledge.tool_quiz_title', 'Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập'),null); } }
   ];
@@ -912,6 +1146,270 @@ function renderRoot(c) {
     }
   }
 }
+// ---------- LEVEL: LEARNING PATH WORKSPACE ----------
+function renderLearningPathWorkspace(c) {
+  c.innerHTML = '';
+
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 24px; border-bottom: 1px solid var(--s3); padding-bottom: 16px; flex-wrap: wrap; gap: 12px;';
+  
+  var titleWrap = document.createElement('div');
+  var h = document.createElement('h1');
+  h.className = 'view-title';
+  h.textContent = 'Lộ trình học tập';
+  h.style.margin = '0 0 4px 0';
+  titleWrap.appendChild(h);
+  
+  var sub = document.createElement('div');
+  sub.style.cssText = 'font-size: 0.85rem; color: var(--s9); font-family: var(--font-academic);';
+  sub.textContent = 'Các bài học và bài kiểm tra theo tiến trình.';
+  titleWrap.appendChild(sub);
+  header.appendChild(titleWrap);
+
+  window.updateHeaderCreatePathButton = function(show) {
+    var btn = document.getElementById('btn-header-create-path');
+    if (btn) btn.style.display = show ? 'inline-flex' : 'none';
+  };
+
+  var rightAction = document.createElement('div');
+  rightAction.id = 'lp-header-actions';
+  rightAction.style.cssText = 'display:flex; gap:8px; align-items:center; flex-wrap:wrap;';
+  rightAction.innerHTML = '<button type="button" id="btn-header-create-path" onclick="window.openGraphWithPathFinder();" style="display:none; align-items:center; gap:6px; font-size:13px; font-weight:600; color:#ffffff; padding:6px 14px; border:1px solid var(--b9); border-radius:0px; background:var(--b9); cursor:pointer;"><i class="ph ph-plus"></i> Tạo lộ trình</button>';
+  header.appendChild(rightAction);
+
+  c.appendChild(header);
+
+  var workspaceContainer = document.createElement('div');
+  workspaceContainer.id = 'learning-path-workspace-container';
+  workspaceContainer.style.minHeight = '320px';
+  c.appendChild(workspaceContainer);
+
+  var token = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
+  var userId = null;
+  if (token) {
+    if (window.AuthGuard && window.AuthGuard._decodeJWT) {
+      var p = window.AuthGuard._decodeJWT(token);
+      if (p && p.user_id) userId = p.user_id;
+    }
+  }
+  if (!userId) userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+
+  var cur = AppState.path[AppState.path.length - 1];
+  var targetPathId = (cur && cur.data && cur.data.path_id);
+
+  workspaceContainer.innerHTML = '<div style="padding: 32px 0; color: var(--s9); font-size: 14px; display:flex; align-items:center; gap:10px;"><i class="ph ph-spinner ph-spin" style="font-size:20px;"></i> Đang tải...</div>';
+
+  var API = window.App?.API_BASE || 'http://127.0.0.1:5000';
+  var headers = {};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+
+  fetch(API + '/api/path/list' + (userId ? '?user_id=' + encodeURIComponent(userId) : ''), { headers: headers })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      var paths = (data && data.paths) || [];
+      window._cachedPaths = window._cachedPaths || {};
+      paths.forEach(function(p) { window._cachedPaths[p.path_id] = p; });
+
+      if (paths.length === 0) {
+        if (typeof window.updateHeaderCreatePathButton === 'function') {
+          window.updateHeaderCreatePathButton(false);
+        }
+        renderActionableEmptyState(workspaceContainer, []);
+        return;
+      }
+
+      if (targetPathId) {
+        var activePath = paths.find(function(p) { return p.path_id === targetPathId; });
+        if (activePath) {
+          localStorage.setItem('committed_path_id', activePath.path_id);
+          window._currentPathObj = activePath;
+          if (typeof openPathDetail === 'function') {
+            openPathDetail(activePath, 'learning-path-workspace-container');
+            return;
+          }
+        }
+      }
+
+      // Default: show path catalog
+      workspaceContainer.innerHTML = '<div id="vertical-timeline-container" style="position:relative; z-index:2;"></div>';
+      if (typeof renderPathList === 'function') {
+        renderPathList(paths);
+      } else {
+        renderActionableEmptyState(workspaceContainer, paths);
+      }
+    })
+    .catch(function(err) {
+      console.error('Error fetching paths:', err);
+      if (targetPathId && window._cachedPaths && window._cachedPaths[targetPathId]) {
+        openPathDetail(window._cachedPaths[targetPathId], 'learning-path-workspace-container');
+      } else {
+        renderActionableEmptyState(workspaceContainer, []);
+      }
+    });
+}
+
+window.showPathCatalogInWorkspace = function() {
+  var workspaceContainer = document.getElementById('learning-path-workspace-container');
+  if (!workspaceContainer) return;
+
+  var token = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
+  var userId = null;
+  if (token && window.AuthGuard && window.AuthGuard._decodeJWT) {
+    var p = window.AuthGuard._decodeJWT(token);
+    if (p && p.user_id) userId = p.user_id;
+  }
+  if (!userId) userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+
+  var API = (window.App && window.App.API_BASE) || 
+            (location.hostname === '127.0.0.1' || location.hostname === 'localhost' ? 'http://127.0.0.1:5000' : 'https://visualization-rr5v.onrender.com');
+  var headers = {};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+
+  workspaceContainer.innerHTML = '<div style="padding: 32px 0; color: var(--s9); font-size: 14px; display:flex; align-items:center; gap:10px;"><i class="ph ph-spinner ph-spin" style="font-size:20px;"></i> Đang tải...</div>';
+
+  fetch(API + '/api/path/list' + (userId ? '?user_id=' + encodeURIComponent(userId) : ''), { headers: headers })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      var paths = (data && data.paths) || [];
+      window._cachedPaths = window._cachedPaths || {};
+      paths.forEach(function(p) { window._cachedPaths[p.path_id] = p; });
+
+      if (paths.length === 0) {
+        renderActionableEmptyState(workspaceContainer, []);
+        return;
+      }
+
+      workspaceContainer.innerHTML = '<div id="vertical-timeline-container" style="position:relative; z-index:2;"></div>';
+      if (typeof renderPathList === 'function') {
+        renderPathList(paths);
+      }
+    })
+    .catch(function(err) {
+      console.error('Error fetching catalog:', err);
+      workspaceContainer.innerHTML = '<div style="color:var(--danger-base);">Lỗi khi tải danh mục lộ trình.</div>';
+    });
+};
+
+function renderActionableEmptyState(container, paths) {
+  paths = paths || [];
+  var pendingPaths = paths.filter(function(p) { return p.status !== 'completed' && p.status !== 'active'; });
+  
+  if (typeof window.updateHeaderCreatePathButton === 'function') {
+    window.updateHeaderCreatePathButton(false);
+  }
+
+  var html = `
+    <div style="border: 1px solid var(--s3); background: var(--s2); padding: 32px 28px; border-radius: 0px; margin-bottom: 24px;">
+      <div style="max-width: 600px;">
+        <div style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: var(--s1); border: 1px solid var(--s4); margin-bottom: 16px; color: var(--b9); font-size: 1.25rem;">
+          <i class="ph ph-compass"></i>
+        </div>
+        <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--s12); margin: 0 0 6px 0; font-family: var(--font-academic);">
+          Chưa có lộ trình nào đang học
+        </h2>
+        <p style="font-size: 0.88rem; color: var(--s9); line-height: 1.6; margin: 0 0 20px 0;">
+          Hãy chọn một lộ trình đã lưu bên dưới hoặc tạo lộ trình mới từ Đồ thị tri thức.
+        </p>
+        <div>
+          <button id="btn-empty-create-path" style="padding: 7px 16px; background: var(--b9); color: #ffffff; border: 1px solid var(--b9); font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 0px; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="ph ph-plus"></i> Tạo lộ trình
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (pendingPaths.length > 0) {
+    html += `
+      <div style="margin-top: 16px;">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--s9); margin-bottom: 12px;">
+          Lộ trình đã lưu (${pendingPaths.length})
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+    `;
+    pendingPaths.forEach(function(p) {
+      var startNode = (p.path_nodes && p.path_nodes.length > 0) ? p.path_nodes[0] : (p.start_node_id || 'l1');
+      var endNode = (p.path_nodes && p.path_nodes.length > 0) ? p.path_nodes[p.path_nodes.length - 1] : (p.target_node_id || 'l3');
+      var sData = (typeof getLessonData === 'function') ? getLessonData(startNode) : { title: startNode };
+      var eData = (typeof getLessonData === 'function') ? getLessonData(endNode) : { title: endNode };
+      var nodeCount = (p.path_nodes && p.path_nodes.length) || 0;
+      var dStr = p.created_at ? new Date(p.created_at).toLocaleDateString('vi-VN') : '';
+
+      html += `
+        <div style="border: 1px solid var(--s3); background: var(--s1); padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-radius: 0px;">
+          <div>
+            <div style="font-weight: 600; font-size: 0.95rem; color: var(--s12); margin-bottom: 3px;">
+              Lộ trình: ${sData.title} ➔ ${eData.title}
+            </div>
+            <div style="font-size: 12px; color: var(--s9);">
+              ${nodeCount} bài học · Ngày tạo: ${dStr}
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button onclick="activateAndStartPath('${p.path_id}')" style="padding: 6px 14px; background: transparent; color: var(--b9); border: 1px solid var(--b9); font-size: 12.5px; font-weight: 600; cursor: pointer; border-radius: 0px;">
+              Bắt đầu
+            </button>
+            <button onclick="deletePath('${p.path_id}')" style="padding: 6px 10px; background: transparent; color: var(--danger-base, #e5484d); border: 1px solid var(--danger-base, #e5484d); font-size: 12.5px; cursor: pointer; border-radius: 0px;">
+              Xóa
+            </button>
+          </div>
+        </div>
+      `;
+    });
+    html += `</div></div>`;
+  }
+
+  container.innerHTML = html;
+
+  var createBtn = container.querySelector('#btn-empty-create-path');
+  if (createBtn) {
+    createBtn.onclick = function() {
+      if (typeof window.openGraphWithPathFinder === 'function') {
+        window.openGraphWithPathFinder();
+      } else {
+        navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'), { open_pathfinder: true });
+      }
+    };
+  }
+}
+
+window.openLessonFromTimeline = function(nId) {
+  var queryId = nId.startsWith('lesson_') ? nId.replace('lesson_', 'l') : nId;
+  if (typeof MOCK_LIBRARY_DATA !== 'undefined' && MOCK_LIBRARY_DATA.topics) {
+    for (var t of MOCK_LIBRARY_DATA.topics) {
+      for (var s of t.sections) {
+        for (var l of s.lessons) {
+          if (l.id === queryId) {
+            AppState.path.push({ type: 'lesson', id: l.id, title: l.title, data: l });
+            try { updateUrl(AppState.path[AppState.path.length - 1]); } catch(e) {}
+            renderCurrentView();
+            return;
+          }
+        }
+      }
+    }
+  }
+  navigateTo('lesson', queryId, 'Bài học ' + queryId, { id: queryId, num: queryId.replace('l', ''), title: 'Bài học ' + queryId });
+};
+
+window.startPracticeFromTimeline = function(pathId, nId, nodeIdx) {
+  window._autoPracticeLessonId = nId;
+  window._activePracticeLessonId = nId;
+  window._autoPracticePathId = pathId;
+  window._autoPracticeNodeIdx = nodeIdx;
+  sessionStorage.setItem('auto_practice_lesson_id', nId);
+  sessionStorage.setItem('auto_practice_path_id', pathId);
+  sessionStorage.setItem('auto_practice_node_idx', nodeIdx);
+  navigateTo('quiz', 'quiz', 'Bài tập', { from: 'learning-path', path_id: pathId, lesson_id: nId });
+};
+
+window.startFinalExamFromTimeline = function(pathId) {
+  window._autoFinalExam = true;
+  window._autoFinalExamPathId = pathId;
+  sessionStorage.setItem('auto_practice_path_id', pathId);
+  navigateTo('quiz', 'quiz', 'Bài đánh giá tổng kết', { from: 'learning-path', path_id: pathId, is_final: true });
+};
+
 function renderTopic(c, topic) {
   c.innerHTML = '';
 
@@ -1031,7 +1529,24 @@ function renderSection(c, section) {
 function renderLesson(c, lesson) {
   c.innerHTML = '';
 
-  
+  if (AppState.path.some(function(p) { return p.type === 'learning-path'; })) {
+    var backToPathBtn = document.createElement('button');
+    backToPathBtn.style.cssText = 'display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; color:var(--b9); background:transparent; border:1px solid var(--b9); padding:5px 12px; margin-bottom:16px; cursor:pointer; border-radius:0px;';
+    backToPathBtn.innerHTML = '<i class="ph ph-arrow-left"></i> Quay lại Lộ trình học tập';
+    backToPathBtn.onclick = function() {
+      while (AppState.path.length > 0 && AppState.path[AppState.path.length - 1].type !== 'learning-path') {
+        AppState.path.pop();
+      }
+      if (AppState.path.length === 0) {
+        AppState.path = [
+          { type: 'root', id: 'root', title: tr('knowledge.library', 'Thư viện') },
+          { type: 'learning-path', id: 'learning-path', title: 'Lộ trình học tập', data: null }
+        ];
+      }
+      renderCurrentView();
+    };
+    c.appendChild(backToPathBtn);
+  }
 
   // Header
   var hdr = document.createElement('div');
@@ -1041,7 +1556,7 @@ function renderLesson(c, lesson) {
   left.style.maxWidth = '80%';
 
   var title = document.createElement('h1');
-  title.style.cssText = "font-size:1.8rem; font-weight:800; color:var(--s12); margin-bottom:12px; font-family:'Merriweather',serif; line-height:1.3;";
+  title.style.cssText = "font-size:1.8rem; font-weight:800; color:var(--s12); margin-bottom:12px; font-family:var(--font-academic); line-height:1.3;";
   title.textContent = tr('library_terms.' + lesson.id, lesson.title);
   left.appendChild(title);
 
@@ -1156,7 +1671,7 @@ function renderLesson(c, lesson) {
   // Body
   var body = document.createElement('div');
   body.id = 'dd-lesson-body';
-  body.style.cssText = "font-family:var(--font); font-size:1.1rem; line-height:1.8; color:var(--s12); margin-bottom:50px; min-height:40vh; text-align:left; max-width:1100px; margin-left:auto; margin-right:auto; padding: 0 16px;";
+  body.style.cssText = "font-family:var(--font-academic); font-size:1.15rem; line-height:1.8; color:var(--s12); margin-bottom:50px; min-height:40vh; text-align:left; max-width:1100px; margin-left:auto; margin-right:auto; padding: 0 16px;";
 
   var content = lesson.contentHTML || '';
   content = content.replace(/<h2>.*?<\/h2>/, '<h2>' + tr('library_terms.' + lesson.id, lesson.title) + '</h2>');
@@ -1303,7 +1818,7 @@ function renderLesson(c, lesson) {
         @media (max-width: 768px) {
           .latex-multicols { column-count: 1 !important; }
         }
-        svg text { font-family: var(--font, 'Merriweather', 'Times New Roman', serif) !important; }
+        svg text { font-family: var(--font-academic) !important; }
 </style>
     `;
     return responsiveStyle + html;
@@ -1328,7 +1843,7 @@ function renderLesson(c, lesson) {
       .sk-text-short { height: 18px; width: 85%; }
       .sk-text-shorter { height: 18px; width: 40%; margin-bottom: 30px; }
       .sk-block { height: 160px; width: 100%; border-radius: 12px; margin-bottom: 30px; }
-      svg text { font-family: var(--font, 'Merriweather', 'Times New Roman', serif) !important; }
+      svg text { font-family: var(--font-academic) !important; }
 </style>
     <div style="padding: 10px 0; opacity: 0.8; margin-top: 10px;">
     </div>
@@ -2416,6 +2931,12 @@ function renderQuizSetup(c) {
   var sectionsToHide = [topicLabel, desc, hr, treeContainer, scopeBtnContainer, diffLabel, diffGrid, countLabel, countGrid, timeLabel, timeGrid, modeLabel, modeGrid];
   if (typeof h !== 'undefined') sectionsToHide.push(h);
 
+  var isAutoFromTimeline = !!(window._autoFinalExam || window._autoPracticeLessonId || sessionStorage.getItem('auto_practice_lesson_id'));
+  if (isAutoFromTimeline) {
+    sectionsToHide.forEach(function(el) { if (el) el.style.display = 'none'; });
+    confirmBtn.style.display = 'none';
+  }
+
   
 
   confirmBtn.onclick = function() {
@@ -2437,9 +2958,9 @@ function renderQuizSetup(c) {
     summaryPanel.innerHTML = `
       <div style="font-weight:700; font-size:1.1rem; margin-bottom:16px; color:var(--b9);">Kiểm tra lại thiết lập của bạn</div>
       <div style="display:flex; flex-direction:column; gap:10px;">
-        <div style="display:flex; align-items:center; gap:12px;"><i class="ph ph-book-open" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Phạm vi: <b>${lCount} ' + tr('knowledge.lessons_count', 'Số bài học') + '</b> (thuộc ${tCount} chủ đề)</span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><i class="ph ph-book-open" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Phạm vi: <b>${lCount} ${tr('knowledge.lessons_count', 'Số bài học')}</b> (thuộc ${tCount} chủ đề)</span></div>
         <div style="display:flex; align-items:center; gap:12px;"><i class="ph ph-stack" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Độ khó: <b>${diffStr}</b></span></div>
-        <div style="display:flex; align-items:center; gap:12px;"><i class="ph ph-list-numbers" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Số lượng: <b>${countInput.value}</b> <span style="font-size:0.8rem;color:var(--s8);">${maxStr}</span></span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><i class="ph ph-list-numbers" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Số lượng: <b id="quiz-summary-count-num">${countInput.value}</b> <span id="quiz-summary-count-suffix" style="font-size:0.8rem;color:var(--s8);">${maxStr}</span></span></div>
         <div style="display:flex; align-items:center; gap:12px;"><i class="ph ph-hourglass" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Thời gian: <b>${timeStr}</b></span></div>
         <div style="display:flex; align-items:center; gap:12px;"><i class="ph ph-game-controller" style="width:24px; color:var(--s9); text-align:center;"></i> <span>Chế độ: <b>${modeStr}</b></span></div>
       </div>
@@ -2467,6 +2988,10 @@ function renderQuizSetup(c) {
       return;
     }
 
+    // Retrieve learning path progress metadata without wiping early
+    var pId = window._autoPracticePathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id');
+    var pLessonId = window._activePracticeLessonId || window._autoPracticeLessonId || sessionStorage.getItem('auto_practice_lesson_id');
+
     startBtn.disabled = true;
     startBtn.textContent = 'Đang tạo đề...';
     startBtn.style.opacity = '0.6';
@@ -2483,7 +3008,7 @@ function renderQuizSetup(c) {
         difficulty_config: selectedDiff.value,
         question_count: parseInt(window.countInput.value) || 10,
         mode: selectedMode.value,
-        time_limit: parseInt(window.countInput.value) || 0
+        time_limit: parseInt(timeInput.value) || 0
       })
     })
     .then(function(r) { return r.json(); })
@@ -2493,18 +3018,22 @@ function renderQuizSetup(c) {
           quiz_id: data.quiz_id,
           questions: data.questions,
           mode: selectedMode.value,
-          time_limit: parseInt(timeInput.value) || 0
+          time_limit: parseInt(timeInput.value) || 0,
+          node_id: pLessonId,
+          path_id: pId
         });
       } else {
         console.warn('Backend returned no questions. Mocking quiz room for testing purposes.');
         navigateTo('quiz-room', 'quiz-mock', 'Làm bài', {
-          quiz_id: 'mock',
-          questions: [
-            { id: 'q1', difficulty_level: 'EASY', content_html: '<p>Câu hỏi mock 1: Khái niệm vector là gì?</p>', option_a: 'Đoạn thẳng có hướng', option_b: 'Một con số', option_c: 'Một điểm', option_d: 'Một mặt phẳng', correct_answer: 'A' },
-            { id: 'q2', difficulty_level: 'MEDIUM', content_html: '<p>Câu hỏi mock 2: 1 + 1 = ?</p>', option_a: '2', option_b: '3', option_c: '4', option_d: '5', correct_answer: 'A' }
-          ],
-          mode: selectedMode.value,
-          time_limit: parseInt(timeInput.value) || 0
+            quiz_id: 'mock',
+            questions: [
+              { id: 'q1', difficulty_level: 'EASY', content_html: '<p>Câu hỏi mock 1: Khái niệm vector là gì?</p>', option_a: 'Đoạn thẳng có hướng', option_b: 'Một con số', option_c: 'Một điểm', option_d: 'Một mặt phẳng', correct_answer: 'A' },
+              { id: 'q2', difficulty_level: 'MEDIUM', content_html: '<p>Câu hỏi mock 2: 1 + 1 = ?</p>', option_a: '2', option_b: '3', option_c: '4', option_d: '5', correct_answer: 'A' }
+            ],
+            mode: selectedMode.value,
+            time_limit: parseInt(timeInput.value) || 0,
+            node_id: pLessonId,
+            path_id: pId
         });
       }
     })
@@ -2516,10 +3045,123 @@ function renderQuizSetup(c) {
             { id: 'q1', difficulty_level: 'EASY', content_html: '<p>Câu hỏi mock 1: Khái niệm vector là gì?</p>', option_a: 'Đoạn thẳng có hướng', option_b: 'Một con số', option_c: 'Một điểm', option_d: 'Một mặt phẳng', correct_answer: 'A' }
           ],
           mode: selectedMode.value,
-          time_limit: parseInt(timeInput.value) || 0
+          time_limit: parseInt(timeInput.value) || 0,
+          node_id: pLessonId,
+          path_id: pId
       });
     });
   };
+
+  // Auto-config logic for Final Exam (Comprehensive Exam)
+  if (window._autoFinalExam) {
+    selectedLessons = { 'l1': true, 'l2': true, 'l3': true };
+    selectedTopics = { 't1': true };
+
+    window.countInput.value = 5;
+    timeInput.value = 15; // 15 phút
+    selectedMode.value = 'EXAM';
+    if (typeof selectedDiff !== 'undefined') selectedDiff.value = 'MIXED';
+
+    var autoConfirmedFinal = false;
+    function triggerAutoConfirmFinal() {
+      if (autoConfirmedFinal) return;
+      autoConfirmedFinal = true;
+      confirmBtn.click();
+
+      editBtn.style.pointerEvents = 'none';
+      editBtn.style.opacity = '0.5';
+      editBtn.style.cursor = 'not-allowed';
+      editBtn.title = 'Hệ thống tự động thiết lập cho Bài thi Tổng hợp';
+
+      window._autoFinalExam = null;
+    }
+
+    // Trigger immediately to eliminate screen flicker
+    triggerAutoConfirmFinal();
+
+    fetchMaxQuestions(function(maxQ) {
+      if (window.countSuffix) {
+        window.countSuffix.textContent = 'câu hỏi (Tối đa ' + maxQ + ' câu thỏa mãn)';
+      }
+      if (window.countInput) {
+        window.countInput.max = maxQ;
+        if (maxQ > 0 && maxQ < 5) {
+          window.countInput.value = maxQ;
+        }
+      }
+      var countEl = summaryPanel.querySelector('#quiz-summary-count-num');
+      if (countEl) countEl.textContent = window.countInput.value;
+      var suffixEl = summaryPanel.querySelector('#quiz-summary-count-suffix');
+      if (suffixEl && window.countSuffix) suffixEl.textContent = window.countSuffix.textContent;
+    });
+  }
+
+  // Auto-config logic for Learning Path Task 2
+  var autoLessonId = window._autoPracticeLessonId || sessionStorage.getItem('auto_practice_lesson_id');
+  if (autoLessonId) {
+    window._activePracticeLessonId = autoLessonId;
+    selectedLessons = {};
+    var rawLId = autoLessonId.trim();
+    selectedLessons[rawLId] = true;
+
+    // Find topic implicitly to satisfy validation if any
+    var tId = null;
+    if (typeof MOCK_LIBRARY_DATA !== 'undefined' && MOCK_LIBRARY_DATA.topics) {
+      for (let t of MOCK_LIBRARY_DATA.topics) {
+        for (let s of t.sections) {
+          for (let l of s.lessons) {
+            if (l.id === rawLId) {
+              tId = t.id;
+              break;
+            }
+          }
+        }
+      }
+    }
+    selectedTopics = {};
+    if (tId) selectedTopics[tId] = true;
+
+    window.countInput.value = 5; // Gom random 5 câu hỏi
+    timeInput.value = 0; // Không giới hạn
+    selectedMode.value = 'PRACTICE';
+    if (typeof selectedDiff !== 'undefined') selectedDiff.value = 'MIXED'; // Tổng hợp
+
+    var autoConfirmed = false;
+    function triggerAutoConfirm() {
+      if (autoConfirmed) return;
+      autoConfirmed = true;
+      confirmBtn.click();
+      
+      // Disable Edit button
+      editBtn.style.pointerEvents = 'none';
+      editBtn.style.opacity = '0.5';
+      editBtn.style.cursor = 'not-allowed';
+      editBtn.title = 'Hệ thống tự động thiết lập cho Lộ trình học tập';
+      
+      // Keep activePracticeLessonId intact for submission
+      window._activePracticeLessonId = rawLId;
+      sessionStorage.setItem('auto_practice_lesson_id', rawLId);
+    }
+
+    // Trigger immediately to eliminate screen flicker
+    triggerAutoConfirm();
+
+    fetchMaxQuestions(function(maxQ) {
+      if (window.countSuffix) {
+        window.countSuffix.textContent = 'câu hỏi (Tối đa ' + maxQ + ' câu thỏa mãn)';
+      }
+      if (window.countInput) {
+        window.countInput.max = maxQ;
+        if (maxQ > 0 && maxQ < 5) {
+          window.countInput.value = maxQ;
+        }
+      }
+      var countEl = summaryPanel.querySelector('#quiz-summary-count-num');
+      if (countEl) countEl.textContent = window.countInput.value;
+      var suffixEl = summaryPanel.querySelector('#quiz-summary-count-suffix');
+      if (suffixEl && window.countSuffix) suffixEl.textContent = window.countSuffix.textContent;
+    });
+  }
 }
 
 // ---------- QUIZ ROOM ----------
@@ -2539,12 +3181,143 @@ function renderQuizRoom(c, quizData) {
   var timeLimitMin = quizData.time_limit;
   var totalQ = questions.length;
   var answers = {};
+  var visited = {};
   var currentIdx = 0;
   var submitted = false;
+  var resultsMap = {};
+
+  // Vi hành vi (Telemetry): thời gian làm từng câu và số lần đổi đáp án
+  var telemetryMap = {};
+  for (var ti = 0; ti < questions.length; ti++) {
+    telemetryMap[questions[ti].id] = {
+      time_spent_ms: 0,
+      switch_count: 0
+    };
+  }
+  var activeQuestionEnterTime = Date.now();
+  var lastActiveQId = questions[0] ? questions[0].id : null;
+
+  // Hàm giải mã ký hiệu Toán học LaTeX ($...$, $$...$$, \(...\), \[...\]) bằng KaTeX và MathJax
+  function formatMathContent(str) {
+    if (!str || typeof str !== 'string') return '';
+    if (typeof katex !== 'undefined') {
+      var unesc = function(s) { return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>'); };
+      try {
+        return str
+          .replace(/\$\$([\s\S]+?)\$\$/g, function(_, m) {
+            try { return katex.renderToString(unesc(m), { displayMode: true, throwOnError: false }); } catch(err) { return _; }
+          })
+          .replace(/\\\[([\s\S]+?)\\\]/g, function(_, m) {
+            try { return katex.renderToString(unesc(m), { displayMode: true, throwOnError: false }); } catch(err) { return _; }
+          })
+          .replace(/\$([^\$]+?)\$/g, function(_, m) {
+            try { return katex.renderToString(unesc(m), { displayMode: false, throwOnError: false }); } catch(err) { return _; }
+          })
+          .replace(/\\\(([\s\S]*?)\\\)/g, function(_, m) {
+            try { return katex.renderToString(unesc(m), { displayMode: false, throwOnError: false }); } catch(err) { return _; }
+          });
+      } catch(e) {
+        return str;
+      }
+    }
+    return str;
+  }
+
+  function renderMath(element) {
+    if (!element) return;
+    if (window.renderMathInElement) {
+      try {
+        window.renderMathInElement(element, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '\\[', right: '\\]', display: true},
+            {left: '$', right: '$', display: false},
+            {left: '\\(', right: '\\)', display: false}
+          ],
+          throwOnError: false
+        });
+      } catch(e) {}
+    }
+    if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+      MathJax.typesetPromise([element]).catch(function(){});
+    }
+  }
+
+  // Ensure CSS Styles for Academic LaTeX Quiz Room
+  if (!document.getElementById('quiz-room-custom-styles')) {
+    var st = document.createElement('style');
+    st.id = 'quiz-room-custom-styles';
+    st.textContent = `
+      .quiz-nav-cell {
+        width: 100%;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0px !important;
+        font-family: 'Latin Modern Roman', 'Times New Roman', 'Times', serif !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: all 0.15s ease !important;
+        user-select: none !important;
+        box-sizing: border-box !important;
+      }
+      /* 1. Chưa xem: Màu trắng ở Light, màu xám ở Dark */
+      .quiz-nav-cell.status-unvisited {
+        background: #ffffff !important;
+        border: 1px solid var(--border-strong, #cbd5e1) !important;
+        color: var(--text-main, #334155) !important;
+      }
+      body.dark-theme .quiz-nav-cell.status-unvisited {
+        background: var(--s3, #2d3139) !important;
+        border: 1px solid var(--s4, #43484e) !important;
+        color: var(--s12, #edeef0) !important;
+      }
+      /* 2. Đã xem nhưng chưa chọn: Màu vàng */
+      .quiz-nav-cell.status-visited-empty {
+        background: #fef08a !important;
+        border: 1px solid #eab308 !important;
+        color: #854d0e !important;
+      }
+      body.dark-theme .quiz-nav-cell.status-visited-empty {
+        background: #713f12 !important;
+        border: 1px solid #ca8a04 !important;
+        color: #fef9c3 !important;
+      }
+      /* 3. Đã chọn đáp án: Màu xanh */
+      .quiz-nav-cell.status-answered {
+        background: var(--b9, #0090ff) !important;
+        border: 1px solid var(--b9, #0090ff) !important;
+        color: #ffffff !important;
+      }
+      /* 4. Viền xanh aura khi đang xem hoặc làm */
+      .quiz-nav-cell.status-active {
+        position: relative !important;
+        outline: 2px solid #38bdf8 !important;
+        outline-offset: 2px !important;
+        box-shadow: 0 0 0 1px #0284c7, 0 0 16px rgba(56, 189, 248, 0.95), 0 0 26px rgba(14, 165, 233, 0.6) !important;
+        z-index: 5 !important;
+      }
+      /* 5. Sau khi nộp bài: Ô đúng (Xanh lá) */
+      .quiz-nav-cell.status-correct {
+        background: var(--green, #30a46c) !important;
+        border: 1px solid var(--green, #30a46c) !important;
+        color: #ffffff !important;
+      }
+      /* 6. Sau khi nộp bài: Ô sai (Màu đỏ) */
+      .quiz-nav-cell.status-wrong {
+        background: var(--red, #e5484d) !important;
+        border: 1px solid var(--red, #e5484d) !important;
+        color: #ffffff !important;
+      }
+    `;
+    document.head.appendChild(st);
+  }
 
   // --- Layout ---
   var layout = document.createElement('div');
-  layout.style.cssText = 'display:grid; grid-template-columns:220px 1fr; gap:24px; height:calc(100vh - 200px);';
+  layout.style.cssText = 'display:grid; grid-template-columns:220px 1fr; gap:24px; min-height:calc(100vh - 200px); font-family: "Latin Modern Roman", "Times New Roman", serif;';
   c.appendChild(layout);
 
   // --- Sidebar ---
@@ -2552,9 +3325,9 @@ function renderQuizRoom(c, quizData) {
   sidebar.style.cssText = 'display:flex; flex-direction:column; gap:16px;';
   layout.appendChild(sidebar);
 
-  // Timer
+  // Timer Box
   var timerBox = document.createElement('div');
-  timerBox.style.cssText = 'background:var(--s2); border:1px solid var(--s3); border-radius:var(--radius); padding:16px; text-align:center;';
+  timerBox.style.cssText = 'background:var(--s2); border:1px solid var(--border-strong, var(--s3)); border-radius:0px; padding:16px; text-align:center; font-family: "Latin Modern Roman", "Times New Roman", serif;';
   sidebar.appendChild(timerBox);
 
   var timerIcon = document.createElement('div');
@@ -2562,7 +3335,7 @@ function renderQuizRoom(c, quizData) {
   timerBox.appendChild(timerIcon);
 
   var timerDisplay = document.createElement('div');
-  timerDisplay.style.cssText = 'font-size:1.6rem; font-weight:700; color:var(--s12); font-variant-numeric:tabular-nums; letter-spacing:0.03em;';
+  timerDisplay.style.cssText = 'font-size:1.6rem; font-weight:700; color:var(--s12); font-variant-numeric:tabular-nums; letter-spacing:0.03em; font-family: "Latin Modern Roman", "Times New Roman", serif;';
   timerBox.appendChild(timerDisplay);
 
   var secondsLeft = timeLimitMin > 0 ? timeLimitMin * 60 : -1;
@@ -2592,41 +3365,17 @@ function renderQuizRoom(c, quizData) {
     }, 1000);
   }
 
-  // Progress
-  var progressBox = document.createElement('div');
-  progressBox.style.cssText = 'background:var(--s2); border:1px solid var(--s3); border-radius:var(--radius); padding:14px;';
-  sidebar.appendChild(progressBox);
+  // Track start time for stats
+  window._quizStartTime = Date.now();
+  function updateProgress() {}
 
-  var progressLabel = document.createElement('div');
-  progressLabel.style.cssText = 'font-size:0.75rem; color:var(--s9); margin-bottom:10px; font-weight:500; letter-spacing:0.04em;';
-  progressLabel.textContent = 'TIẾN ĐỘ';
-  progressBox.appendChild(progressLabel);
-
-  var progressText = document.createElement('div');
-  progressText.style.cssText = 'font-size:0.85rem; color:var(--s12); margin-bottom:10px; font-weight:600;';
-  progressBox.appendChild(progressText);
-
-  var progressBar = document.createElement('div');
-  progressBar.style.cssText = 'width:100%; height:4px; background:var(--s3); border-radius:2px; overflow:hidden;';
-  var progressFill = document.createElement('div');
-  progressFill.style.cssText = 'height:100%; background:var(--b9); border-radius:2px; transition:width 0.3s ease; width:0%;';
-  progressBar.appendChild(progressFill);
-  progressBox.appendChild(progressBar);
-
-  function updateProgress() {
-    var answeredCount = Object.keys(answers).length;
-    progressText.textContent = answeredCount + ' / ' + totalQ + ' câu';
-    progressFill.style.width = (answeredCount / totalQ * 100) + '%';
-  }
-  updateProgress();
-
-  // Question nav grid
+  // Question nav grid (5 columns per row)
   var navBox = document.createElement('div');
-  navBox.style.cssText = 'background:var(--s2); border:1px solid var(--s3); border-radius:var(--radius); padding:14px; flex:1; overflow-y:auto;';
+  navBox.style.cssText = 'background:var(--s2); border:1px solid var(--border-strong, var(--s3)); border-radius:0px; padding:14px; flex:1; overflow-y:auto; font-family: "Latin Modern Roman", "Times New Roman", serif;';
   sidebar.appendChild(navBox);
 
   var navLabel = document.createElement('div');
-  navLabel.style.cssText = 'font-size:0.75rem; color:var(--s9); margin-bottom:10px; font-weight:500; letter-spacing:0.04em;';
+  navLabel.style.cssText = 'font-size:0.72rem; color:var(--s9); margin-bottom:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;';
   navLabel.textContent = 'CÂU HỎI';
   navBox.appendChild(navLabel);
 
@@ -2638,10 +3387,11 @@ function renderQuizRoom(c, quizData) {
   for (var n = 0; n < totalQ; n++) {
     (function(idx) {
       var cell = document.createElement('div');
-      cell.style.cssText = 'width:100%; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:4px; font-size:0.78rem; font-weight:600; cursor:pointer; transition:all 0.15s ease; background:var(--s1); border:1px solid var(--s3); color:var(--s9);';
+      cell.className = 'quiz-nav-cell status-unvisited';
       cell.textContent = (idx + 1);
       cell.onclick = function() {
-        if (!submitted) { currentIdx = idx; renderQuestion(); }
+        currentIdx = idx;
+        renderQuestion();
       };
       navCells.push(cell);
       navGrid.appendChild(cell);
@@ -2650,84 +3400,109 @@ function renderQuizRoom(c, quizData) {
 
   function updateNavCells() {
     for (var i = 0; i < navCells.length; i++) {
+      var cell = navCells[i];
       var qid = questions[i].id;
-      if (i === currentIdx) {
-        navCells[i].style.background = 'var(--b9)';
-        navCells[i].style.borderColor = 'var(--b9)';
-        navCells[i].style.color = '#fff';
-      } else if (answers[qid]) {
-        navCells[i].style.background = 'var(--s3)';
-        navCells[i].style.borderColor = 'var(--s4)';
-        navCells[i].style.color = 'var(--s12)';
+      
+      // Reset base class
+      cell.className = 'quiz-nav-cell';
+      
+      if (submitted) {
+        var isCorr = resultsMap[qid] && resultsMap[qid].is_correct;
+        if (isCorr) {
+          cell.classList.add('status-correct');
+        } else {
+          cell.classList.add('status-wrong');
+        }
+        if (i === currentIdx) {
+          cell.classList.add('status-active');
+        }
       } else {
-        navCells[i].style.background = 'var(--s1)';
-        navCells[i].style.borderColor = 'var(--s3)';
-        navCells[i].style.color = 'var(--s9)';
+        if (answers[qid]) {
+          cell.classList.add('status-answered');
+        } else if (visited[i]) {
+          cell.classList.add('status-visited-empty');
+        } else {
+          cell.classList.add('status-unvisited');
+        }
+        if (i === currentIdx) {
+          cell.classList.add('status-active');
+        }
       }
     }
   }
 
   // --- Main content area ---
   var main = document.createElement('div');
-  main.style.cssText = 'display:flex; flex-direction:column;';
+  main.style.cssText = 'display:flex; flex-direction:column; font-family: "Latin Modern Roman", "Times New Roman", serif;';
   layout.appendChild(main);
 
   var questionContainer = document.createElement('div');
-  questionContainer.style.cssText = 'flex:1; overflow-y:auto; background:var(--s2); border:1px solid var(--s3); border-radius:var(--radius); padding:32px;';
+  questionContainer.style.cssText = 'flex:1; overflow-y:auto; background:var(--s2); border:1px solid var(--border-strong, var(--s3)); border-radius:0px; padding:32px; font-family: "Latin Modern Roman", "Times New Roman", serif;';
   main.appendChild(questionContainer);
 
   // Bottom nav buttons
   var bottomNav = document.createElement('div');
-  bottomNav.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:16px 0 0;';
+  bottomNav.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:16px 0 0; font-family: "Latin Modern Roman", "Times New Roman", serif;';
   main.appendChild(bottomNav);
 
   var prevBtn = document.createElement('button');
   prevBtn.innerHTML = '<i class="ph ph-caret-left" style="margin-right:6px;"></i>Câu trước';
-  prevBtn.style.cssText = 'padding:10px 20px; border-radius:var(--radius); border:1px solid var(--s3); background:var(--s2); color:var(--s9); font-size:0.85rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:500;';
+  prevBtn.style.cssText = 'padding:9px 18px; border-radius:0px; border:1px solid var(--border-strong, var(--s3)); background:var(--s1); color:var(--text-main); font-size:0.85rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:500;';
   prevBtn.onclick = function() { if (currentIdx > 0) { currentIdx--; renderQuestion(); } };
   bottomNav.appendChild(prevBtn);
 
   var submitBtn = document.createElement('button');
   submitBtn.textContent = 'Nộp bài';
-  submitBtn.style.cssText = 'padding:10px 24px; border-radius:var(--radius); border:none; background:var(--green); color:#fff; font-size:0.85rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:600;';
+  submitBtn.style.cssText = 'padding:10px 26px; border-radius:0px; border:none; background:var(--green); color:#fff; font-size:0.85rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:600;';
   submitBtn.onclick = function() {
     var answeredCount = Object.keys(answers).length;
     if (answeredCount < totalQ) {
-      if(window.App && window.App.showConfirm){window.App.showConfirm('Bạn còn ' + (totalQ - answeredCount) + ' câu chưa trả lời. Nộp bài?', doSubmit);}else{doSubmit();} return; } doSubmit();
+      if (window.App && window.App.showConfirm) {
+        window.App.showConfirm('Bạn còn ' + (totalQ - answeredCount) + ' câu chưa trả lời. Bạn có chắc chắn muốn nộp bài?', doSubmit);
+      } else {
+        if (confirm('Bạn còn ' + (totalQ - answeredCount) + ' câu chưa trả lời. Bạn có chắc chắn muốn nộp bài?')) doSubmit();
+      }
+      return;
+    }
+    doSubmit();
   };
   bottomNav.appendChild(submitBtn);
 
   var nextBtn = document.createElement('button');
   nextBtn.innerHTML = 'Câu sau<i class="ph ph-caret-right" style="margin-left:6px;"></i>';
-  nextBtn.style.cssText = 'padding:10px 20px; border-radius:var(--radius); border:1px solid var(--s3); background:var(--s2); color:var(--s9); font-size:0.85rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:500;';
+  nextBtn.style.cssText = 'padding:9px 18px; border-radius:0px; border:1px solid var(--border-strong, var(--s3)); background:var(--s1); color:var(--text-main); font-size:0.85rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:500;';
   nextBtn.onclick = function() { if (currentIdx < totalQ - 1) { currentIdx++; renderQuestion(); } };
   bottomNav.appendChild(nextBtn);
 
   // --- Render a question ---
   function renderQuestion() {
+    var now = Date.now();
+    if (lastActiveQId && telemetryMap[lastActiveQId]) {
+      telemetryMap[lastActiveQId].time_spent_ms += (now - activeQuestionEnterTime);
+    }
+    var q = questions[currentIdx];
+    lastActiveQId = q.id;
+    activeQuestionEnterTime = now;
+
     questionContainer.innerHTML = '';
+    visited[currentIdx] = true;
     updateNavCells();
 
-    var q = questions[currentIdx];
-
     var qNum = document.createElement('div');
-    qNum.style.cssText = 'font-size:0.75rem; color:var(--s9); margin-bottom:16px; font-weight:500; letter-spacing:0.04em;';
+    qNum.style.cssText = 'font-size:0.75rem; color:var(--s9); margin-bottom:16px; font-weight:700; letter-spacing:0.05em; display:flex; align-items:center;';
     qNum.textContent = 'CÂU ' + (currentIdx + 1) + ' / ' + totalQ;
     questionContainer.appendChild(qNum);
 
     var qContent = document.createElement('div');
-    qContent.style.cssText = 'font-size:1rem; color:var(--s12); line-height:1.7; margin-bottom:28px;';
-    qContent.innerHTML = q.content_html;
+    qContent.style.cssText = 'font-size:1.05rem; color:var(--s12); line-height:1.7; margin-bottom:28px; font-family:inherit;';
+    qContent.innerHTML = formatMathContent(q.content_html);
     questionContainer.appendChild(qContent);
-
-    if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
-      MathJax.typesetPromise([qContent]).catch(function(){});
-    }
+    renderMath(qContent);
 
     if (q.image_url) {
       var img = document.createElement('img');
       img.src = q.image_url;
-      img.style.cssText = 'max-width:100%; border-radius:var(--radius); margin-bottom:20px;';
+      img.style.cssText = 'max-width:100%; border-radius:0px; margin-bottom:20px; border:1px solid var(--s3);';
       questionContainer.appendChild(img);
     }
 
@@ -2742,67 +3517,281 @@ function renderQuizRoom(c, quizData) {
     for (var o = 0; o < options.length; o++) {
       (function(opt) {
         var row = document.createElement('div');
-        row.style.cssText = 'display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-radius:var(--radius); border:1px solid var(--s3); margin-bottom:8px; cursor:pointer; transition:all 0.15s ease; background:var(--s1);';
+        row.style.cssText = 'display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-radius:0px; border:1px solid var(--border-strong, var(--s3)); margin-bottom:10px; transition:all 0.15s ease; background:var(--s1); font-family:inherit;';
 
         var circle = document.createElement('div');
-        circle.style.cssText = 'width:22px; height:22px; border-radius:50%; border:2px solid var(--s4); display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; transition:all 0.15s ease;';
+        circle.style.cssText = 'width:20px; height:20px; border-radius:50%; border:2px solid var(--s4); display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; transition:all 0.15s ease;';
         var dot = document.createElement('div');
         dot.style.cssText = 'width:10px; height:10px; border-radius:50%; background:transparent; transition:all 0.15s ease;';
         circle.appendChild(dot);
 
         var label = document.createElement('div');
-        label.style.cssText = 'font-weight:600; color:var(--s9); font-size:0.85rem; flex-shrink:0; min-width:18px;';
+        label.style.cssText = 'font-weight:700; color:var(--s9); font-size:0.9rem; flex-shrink:0; min-width:20px;';
         label.textContent = opt.key + '.';
 
         var text = document.createElement('div');
-        text.style.cssText = 'font-size:0.88rem; color:var(--s12); line-height:1.5; flex:1;';
-        text.innerHTML = opt.text;
+        text.style.cssText = 'font-size:0.95rem; color:var(--s12); line-height:1.5; flex:1; font-family:inherit;';
+        text.innerHTML = formatMathContent(opt.text);
 
         row.appendChild(circle);
         row.appendChild(label);
         row.appendChild(text);
+        renderMath(text);
 
-        if (answers[q.id] === opt.key) {
-          circle.style.borderColor = 'var(--b9)';
-          dot.style.background = 'var(--b9)';
-          row.style.borderColor = 'var(--b9)';
-          row.style.background = 'rgba(0,144,255,0.04)';
-        }
+        if (submitted) {
+          // Locked in review mode
+          row.style.cursor = 'default';
+          row.style.pointerEvents = 'none';
 
-        row.onmouseover = function() { if (answers[q.id] !== opt.key) this.style.background = 'var(--s2)'; };
-        row.onmouseout = function() {
-          if (answers[q.id] !== opt.key) this.style.background = 'var(--s1)';
-          else this.style.background = 'rgba(0,144,255,0.04)';
-        };
+          var qRes = resultsMap[q.id] || {};
+          var isCorrectAnswer = (qRes.correct_answer === opt.key);
+          var isUserSelected = (answers[q.id] === opt.key);
 
-        row.onclick = function() {
-          if (submitted) return;
-          answers[q.id] = opt.key;
-          updateProgress();
-          for (var el = 0; el < optionEls.length; el++) {
-            optionEls[el].row.style.borderColor = 'var(--s3)';
-            optionEls[el].row.style.background = 'var(--s1)';
-            optionEls[el].circle.style.borderColor = 'var(--s4)';
-            optionEls[el].dot.style.background = 'transparent';
+          if (isCorrectAnswer) {
+            row.style.borderColor = 'var(--green)';
+            row.style.background = 'rgba(48,164,108,0.08)';
+            circle.style.borderColor = 'var(--green)';
+            dot.style.background = 'var(--green)';
+            var correctBadge = document.createElement('span');
+            correctBadge.style.cssText = 'margin-left:auto; font-size:0.75rem; font-weight:700; color:var(--green); letter-spacing:0.02em; padding:2px 6px;';
+            correctBadge.textContent = 'Đáp án đúng';
+            row.appendChild(correctBadge);
+          } else if (isUserSelected && !isCorrectAnswer) {
+            row.style.borderColor = 'var(--red)';
+            row.style.background = 'rgba(229,72,77,0.08)';
+            circle.style.borderColor = 'var(--red)';
+            dot.style.background = 'var(--red)';
+            var wrongBadge = document.createElement('span');
+            wrongBadge.style.cssText = 'margin-left:auto; font-size:0.75rem; font-weight:700; color:var(--red); letter-spacing:0.02em; padding:2px 6px;';
+            wrongBadge.textContent = 'Đáp án bạn chọn';
+            row.appendChild(wrongBadge);
+          } else {
+            row.style.borderColor = 'var(--s3)';
+            row.style.background = 'var(--s1)';
+            row.style.opacity = '0.65';
           }
-          circle.style.borderColor = 'var(--b9)';
-          dot.style.background = 'var(--b9)';
-          row.style.borderColor = 'var(--b9)';
-          row.style.background = 'rgba(0,144,255,0.04)';
-          updateNavCells();
-        };
+        } else {
+          // Active quiz answering mode
+          row.style.cursor = 'pointer';
+
+          if (answers[q.id] === opt.key) {
+            circle.style.borderColor = 'var(--b9)';
+            dot.style.background = 'var(--b9)';
+            row.style.borderColor = 'var(--b9)';
+            row.style.background = 'rgba(0,144,255,0.05)';
+          }
+
+          row.onmouseover = function() {
+            if (answers[q.id] !== opt.key) this.style.background = 'var(--s2)';
+          };
+          row.onmouseout = function() {
+            if (answers[q.id] !== opt.key) this.style.background = 'var(--s1)';
+            else this.style.background = 'rgba(0,144,255,0.05)';
+          };
+
+          row.onclick = function() {
+            if (submitted) return;
+            if (answers[q.id] && answers[q.id] !== opt.key) {
+              if (telemetryMap[q.id]) telemetryMap[q.id].switch_count++;
+            }
+            answers[q.id] = opt.key;
+            updateProgress();
+            updateNavCells();
+            for (var el = 0; el < optionEls.length; el++) {
+              optionEls[el].row.style.borderColor = 'var(--border-strong, var(--s3))';
+              optionEls[el].row.style.background = 'var(--s1)';
+              optionEls[el].circle.style.borderColor = 'var(--s4)';
+              optionEls[el].dot.style.background = 'transparent';
+            }
+            circle.style.borderColor = 'var(--b9)';
+            dot.style.background = 'var(--b9)';
+            row.style.borderColor = 'var(--b9)';
+            row.style.background = 'rgba(0,144,255,0.05)';
+          };
+        }
 
         optionEls.push({ row: row, circle: circle, dot: dot });
         questionContainer.appendChild(row);
-
-        if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
-          MathJax.typesetPromise([text]).catch(function(){});
-        }
       })(options[o]);
+    }
+
+    // Explanation section in review mode
+    if (submitted) {
+      var explCard = document.createElement('div');
+      explCard.style.cssText = 'margin-top:24px; padding:18px 20px; border:1px solid var(--border-strong, var(--s4)); background:var(--s1); border-radius:0px; font-family:inherit;';
+
+      var explTitle = document.createElement('div');
+      explTitle.style.cssText = 'font-weight:700; font-size:0.75rem; color:var(--b9); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.05em;';
+      explTitle.textContent = 'GIẢI THÍCH CHI TIẾT';
+      explCard.appendChild(explTitle);
+
+      var explBody = document.createElement('div');
+      explBody.style.cssText = 'font-size:0.92rem; color:var(--s12); line-height:1.7; font-family:inherit;';
+      var rawExpl = (resultsMap[q.id] && resultsMap[q.id].explanation_html) ? resultsMap[q.id].explanation_html : (q.explanation_html || '<p>Đáp án đúng là <strong>' + ((resultsMap[q.id] && resultsMap[q.id].correct_answer) || q.correct_answer) + '</strong> theo định nghĩa và tính chất cơ bản trong đại số tuyến tính.</p>');
+      explBody.innerHTML = formatMathContent(rawExpl);
+      explCard.appendChild(explBody);
+
+      questionContainer.appendChild(explCard);
+      renderMath(explBody);
     }
   }
 
-  // --- Submit ---
+  // Handle post-submission evaluation without destroying the layout
+  function handleSubmissionResults(resultData) {
+    window._quizActive = false;
+    submitted = true;
+    if (window._quizTimerInterval) clearInterval(window._quizTimerInterval);
+
+    resultsMap = {};
+    var list = resultData.results || resultData.questions || [];
+    for (var r = 0; r < list.length; r++) {
+      var it = list[r];
+      var qId = it.question_id || it.id;
+      resultsMap[qId] = {
+        is_correct: it.is_correct !== undefined ? it.is_correct : (it.correct !== undefined ? it.correct : (answers[qId] === it.correct_answer)),
+        selected_answer: it.selected_answer || answers[qId] || null,
+        correct_answer: it.correct_answer,
+        explanation_html: it.explanation_html || ''
+      };
+    }
+
+    for (var i = 0; i < questions.length; i++) {
+      var q = questions[i];
+      if (!resultsMap[q.id]) {
+        resultsMap[q.id] = {
+          is_correct: false,
+          selected_answer: answers[q.id] || null,
+          correct_answer: q.correct_answer || '',
+          explanation_html: q.explanation_html || ''
+        };
+      }
+    }
+
+    var totalScore = resultData.total_score !== undefined ? resultData.total_score : 0;
+    var correctCount = resultData.correct_count !== undefined ? resultData.correct_count : 0;
+    if (resultData.correct_count === undefined) {
+      correctCount = 0;
+      for (var i = 0; i < questions.length; i++) {
+        if (resultsMap[questions[i].id] && resultsMap[questions[i].id].is_correct) correctCount++;
+      }
+    }
+
+    // 1. Update Timer Box in sidebar
+    var elapsedSec = timeLimitMin > 0 ? (timeLimitMin * 60) - secondsLeft : (window._quizStartTime ? Math.round((Date.now() - window._quizStartTime) / 1000) : 0);
+    var elMin = Math.floor(elapsedSec / 60);
+    var elSec = elapsedSec % 60;
+    var timeTakenStr = elMin.toString().padStart(2, '0') + ':' + elSec.toString().padStart(2, '0');
+
+    timerBox.innerHTML = `
+      <div style="font-size:0.72rem; color:var(--s9); font-weight:700; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:6px;">
+        Trạng thái
+      </div>
+      <div style="font-size:1.15rem; font-weight:700; color:var(--green); font-family:inherit; margin-bottom:4px;">
+        Đã nộp bài
+      </div>
+      <div style="font-size:0.82rem; color:var(--s11); font-family:inherit;">
+        Thời gian: ${timeTakenStr}
+      </div>
+    `;
+
+    // 2. Insert Stats Box with Client-Side SVG Donut Chart (Zero server overhead)
+    var statsBox = document.getElementById('quiz-stats-sidebar-box');
+    if (!statsBox) {
+      statsBox = document.createElement('div');
+      statsBox.id = 'quiz-stats-sidebar-box';
+      statsBox.style.cssText = 'background:var(--s2); border:1px solid var(--border-strong, var(--s3)); border-radius:0px; padding:16px 14px; font-family:inherit;';
+      sidebar.insertBefore(statsBox, navBox);
+    }
+
+    var accuracyPct = totalQ > 0 ? Math.round((correctCount / totalQ) * 100) : 0;
+    var circ = 238.76;
+    var strokeOffset = circ * (1 - (accuracyPct / 100));
+
+    statsBox.innerHTML = `
+      <div style="font-size:0.72rem; color:var(--s9); font-weight:700; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:10px; text-align:center;">
+        Thống kê kết quả
+      </div>
+      <div style="display:flex; justify-content:center; align-items:center; margin:10px 0;">
+        <svg width="104" height="104" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="38" fill="none" stroke="var(--red, #e5484d)" stroke-width="8" opacity="0.8"></circle>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="var(--green, #30a46c)" stroke-width="8"
+            stroke-dasharray="238.76" stroke-dashoffset="${strokeOffset}"
+            stroke-linecap="butt" transform="rotate(-90 50 50)"></circle>
+          <text x="50" y="47" text-anchor="middle" dominant-baseline="middle" font-size="16" font-weight="700" fill="var(--s12)" font-family="'Latin Modern Roman', serif">${accuracyPct}%</text>
+          <text x="50" y="63" text-anchor="middle" dominant-baseline="middle" font-size="7.5" font-weight="600" fill="var(--s9)" letter-spacing="0.05em" font-family="'Latin Modern Roman', serif">CHÍNH XÁC</text>
+        </svg>
+      </div>
+      <div style="font-size:1.45rem; font-weight:800; color:var(--s12); font-variant-numeric:tabular-nums; line-height:1.1; margin-bottom:10px; text-align:center;">
+        ${totalScore.toFixed(1)} <span style="font-size:0.85rem; font-weight:500; color:var(--s9);">/ 10 điểm</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; font-size:0.82rem; border-top:1px solid var(--border-strong, var(--s3)); padding-top:10px;">
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--s11);">Số câu đúng:</span>
+          <span style="font-weight:700; color:var(--green);">${correctCount} câu</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--s11);">Số câu sai:</span>
+          <span style="font-weight:700; color:var(--red);">${totalQ - correctCount} câu</span>
+        </div>
+      </div>
+    `;
+
+    // 2b. Save Diagnostic Metadata for Timeline Mentor
+    if (resultData && (resultData.metadata || resultData.diagnosis)) {
+      try {
+        var baseMeta = {
+          quiz_id: quizId,
+          total_score: totalScore,
+          correct_count: correctCount,
+          total_questions: totalQ,
+          timestamp: Date.now()
+        };
+        var metaToSave = resultData.metadata ? Object.assign({}, resultData.metadata, baseMeta) : Object.assign({}, resultData.diagnosis, baseMeta);
+        sessionStorage.setItem('latest_mentor_session', JSON.stringify(metaToSave));
+      } catch (e) {}
+    }
+
+    // 2c. Tiến trình lộ trình: CHỈ thăng cấp node nếu học viên đạt điểm đạt (>= 5.0)
+    var pId = (quizData && quizData.path_id) || window._autoPracticePathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id');
+    if (totalScore >= 5.0 && pId) {
+      var pKey = 'path_progress_' + pId;
+      var curProg = JSON.parse(localStorage.getItem(pKey) || '{"nodeIndex":0,"taskLevel":0}');
+      var finishedNodeIdx = (window._autoPracticeNodeIdx !== null && window._autoPracticeNodeIdx !== undefined) 
+                            ? parseInt(window._autoPracticeNodeIdx) 
+                            : (sessionStorage.getItem('auto_practice_node_idx') !== null ? parseInt(sessionStorage.getItem('auto_practice_node_idx')) : curProg.nodeIndex);
+      if (curProg.nodeIndex <= finishedNodeIdx) {
+        curProg.nodeIndex = finishedNodeIdx + 1;
+        curProg.taskLevel = 0;
+        localStorage.setItem(pKey, JSON.stringify(curProg));
+      }
+    }
+
+    // 3. Update Bottom Nav Submit Button
+    submitBtn.disabled = false;
+    submitBtn.textContent = pId ? 'Quay lại Lộ trình học tập' : 'Quay lại Kho Bài tập';
+    submitBtn.style.opacity = '1';
+    submitBtn.style.background = 'transparent';
+    submitBtn.style.color = 'var(--text-main)';
+    submitBtn.style.border = '1px solid var(--border-strong, var(--s4))';
+    submitBtn.onclick = function() {
+      if (pId) {
+        AppState.path = [
+          { type: 'root', id: 'root', title: tr('knowledge.library', 'Thư viện') },
+          { type: 'learning-path', id: 'learning-path', title: 'Lộ trình học tập', data: { path_id: pId } }
+        ];
+        renderCurrentView();
+      } else {
+        AppState.path = AppState.path.filter(function(p) { return p.type !== 'quiz-room'; });
+        renderCurrentView();
+      }
+    };
+
+    // 4. Update Nav Cells and Re-render current question with explanation
+    updateNavCells();
+    renderQuestion();
+  }
+
+  // --- Submit logic ---
   function doSubmit() {
     if (submitted) return;
     submitted = true;
@@ -2812,47 +3801,42 @@ function renderQuizRoom(c, quizData) {
     submitBtn.textContent = 'Đang chấm...';
     submitBtn.style.opacity = '0.6';
 
-    if (quizId === 'mock') {
-      setTimeout(() => {
-        window._quizActive = false;
-        var score = 0;
-        for (var i = 0; i < questions.length; i++) {
-          if (answers[questions[i].id] === questions[i].correct_answer) score += 5;
-        }
-        var mockResult = {
-          total_score: score,
-          total_time: timeLimitMin > 0 ? (timeLimitMin * 60) - secondsLeft : 150,
-          questions: questions.map(q => {
-            return {
-              id: q.id,
-              correct: answers[q.id] === q.correct_answer,
-              selected_answer: answers[q.id] || null,
-              correct_answer: q.correct_answer,
-              explanation_html: '<p>Phần giải thích chi tiết (mock) cho câu hỏi này.</p>'
-            };
-          })
-        };
-        renderResult(mockResult);
-      }, 600);
-      return;
+    var now = Date.now();
+    if (lastActiveQId && telemetryMap[lastActiveQId]) {
+      telemetryMap[lastActiveQId].time_spent_ms += (now - activeQuestionEnterTime);
     }
 
     var answerList = [];
-    for (var qid in answers) {
-      answerList.push({ question_id: parseInt(qid), selected_answer: answers[qid] });
+    for (var i = 0; i < questions.length; i++) {
+      var qid = questions[i].id;
+      var tObj = telemetryMap[qid] || { time_spent_ms: 0, switch_count: 0 };
+      var spentSec = Math.max(1, Math.round((tObj.time_spent_ms || 0) / 1000));
+      answerList.push({
+        question_id: parseInt(qid),
+        selected_answer: answers[qid] || null,
+        time_spent_seconds: spentSec,
+        switch_count: tObj.switch_count || 0
+      });
     }
+
+    var practiceNodeId = (quizData && quizData.node_id) || window._activePracticeLessonId || window._autoPracticeLessonId || sessionStorage.getItem('auto_practice_lesson_id') || null;
+    var currentPathId = (quizData && quizData.path_id) || window._autoPracticePathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id') || null;
+    var submitPayload = {
+      answers: answerList,
+      path_id: currentPathId,
+      node_id: practiceNodeId
+    };
 
     var token = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
     fetch(App.API_BASE + '/api/quiz/' + quizId + '/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ answers: answerList })
+      body: JSON.stringify(submitPayload)
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data.total_score !== undefined) {
-        window._quizActive = false;
-        renderResult(data);
+        handleSubmissionResults(data);
       } else {
         window.App.showToast(data.message || 'Lỗi khi nộp bài.', 'warning');
         submitted = false;
@@ -2871,123 +3855,76 @@ function renderQuizRoom(c, quizData) {
     });
   }
 
-  // --- Result screen ---
-  function renderResult(result) {
-    c.innerHTML = '';
-
-    var wrapper = document.createElement('div');
-    wrapper.style.cssText = 'max-width:680px; margin:0 auto;';
-    c.appendChild(wrapper);
-
-    var header = document.createElement('div');
-    header.style.cssText = 'text-align:center; margin-bottom:36px;';
-    wrapper.appendChild(header);
-
-    var scoreLabel = document.createElement('div');
-    scoreLabel.style.cssText = 'font-size:0.8rem; color:var(--s9); margin-bottom:8px; font-weight:500; letter-spacing:0.04em;';
-    scoreLabel.textContent = 'KẾT QUẢ';
-    header.appendChild(scoreLabel);
-
-    var scoreVal = document.createElement('div');
-    scoreVal.style.cssText = 'font-size:3rem; font-weight:800; color:var(--s12); font-variant-numeric:tabular-nums; line-height:1.1; margin-bottom:8px;';
-    scoreVal.textContent = result.total_score.toFixed(1);
-    header.appendChild(scoreVal);
-
-    var scoreSub = document.createElement('div');
-    scoreSub.style.cssText = 'font-size:0.88rem; color:var(--s9);';
-    scoreSub.textContent = result.correct_count + ' / ' + result.total_questions + ' câu đúng';
-    header.appendChild(scoreSub);
-
-    var scoreBar = document.createElement('div');
-    scoreBar.style.cssText = 'width:200px; height:6px; background:var(--s3); border-radius:3px; overflow:hidden; margin:16px auto 0;';
-    var scoreFill = document.createElement('div');
-    var pct = (result.total_score / 10) * 100;
-    scoreFill.style.cssText = 'height:100%; border-radius:3px; transition:width 0.6s ease;';
-    scoreFill.style.width = pct + '%';
-    if (pct >= 80) scoreFill.style.background = 'var(--green)';
-    else if (pct >= 50) scoreFill.style.background = 'var(--amber)';
-    else scoreFill.style.background = 'var(--red)';
-    scoreBar.appendChild(scoreFill);
-    header.appendChild(scoreBar);
-
-    var hr2 = document.createElement('div');
-    hr2.style.cssText = 'border-bottom:1px solid var(--s3); margin-bottom:24px;';
-    wrapper.appendChild(hr2);
-
-    var reviewLabel = document.createElement('div');
-    reviewLabel.className = 'side-label';
-    reviewLabel.textContent = 'CHI TIẾT ĐÁP ÁN';
-    reviewLabel.style.cssText = 'padding:0; margin-bottom:16px; font-size:0.7rem; letter-spacing:0.05em;';
-    wrapper.appendChild(reviewLabel);
-
-    if (result.results) {
-      for (var r = 0; r < result.results.length; r++) {
-        var item = result.results[r];
-        var origQ = questions.find(function(qq) { return qq.id === item.question_id; });
-        if (!origQ) continue;
-
-        var card = document.createElement('div');
-        card.style.cssText = 'background:var(--s2); border:1px solid var(--s3); border-radius:var(--radius); padding:20px; margin-bottom:12px;';
-
-        var cardHead = document.createElement('div');
-        cardHead.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;';
-
-        var cNum = document.createElement('span');
-        cNum.style.cssText = 'font-size:0.78rem; font-weight:600; color:var(--s9);';
-        cNum.textContent = 'Câu ' + (r + 1);
-
-        var cStatus = document.createElement('span');
-        cStatus.style.cssText = 'font-size:0.75rem; font-weight:600; padding:3px 8px; border-radius:3px;';
-        if (item.is_correct) {
-          cStatus.textContent = 'Đúng';
-          cStatus.style.background = 'rgba(48,164,108,0.12)';
-          cStatus.style.color = 'var(--green)';
-        } else {
-          cStatus.textContent = 'Sai';
-          cStatus.style.background = 'rgba(229,72,77,0.12)';
-          cStatus.style.color = 'var(--red)';
-        }
-        cardHead.appendChild(cNum);
-        cardHead.appendChild(cStatus);
-        card.appendChild(cardHead);
-
-        var cContent = document.createElement('div');
-        cContent.style.cssText = 'font-size:0.88rem; color:var(--s12); line-height:1.6; margin-bottom:12px;';
-        cContent.innerHTML = origQ.content_html;
-        card.appendChild(cContent);
-
-        var answerInfo = document.createElement('div');
-        answerInfo.style.cssText = 'font-size:0.82rem; color:var(--s9); line-height:1.6;';
-        var yourAns = item.selected_answer || '—';
-        answerInfo.innerHTML = '<div style="margin-bottom:4px;">Bạn chọn: <strong style="color:' + (item.is_correct ? 'var(--green)' : 'var(--red)') + ';">' + yourAns + '</strong></div>' +
-          '<div>Đáp án: <strong style="color:var(--green);">' + item.correct_answer + '</strong></div>';
-        card.appendChild(answerInfo);
-
-        if (item.explanation_html) {
-          var expl = document.createElement('div');
-          expl.style.cssText = 'margin-top:12px; padding:12px; background:var(--s1); border-radius:4px; font-size:0.82rem; color:var(--s11); line-height:1.6; border:1px solid var(--s3);';
-          expl.innerHTML = item.explanation_html;
-          card.appendChild(expl);
-        }
-
-        wrapper.appendChild(card);
-
-        if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
-          MathJax.typesetPromise([card]).catch(function(){});
-        }
-      }
+  // Force Exit with 0 points modal & handler
+  window.exitQuizWithZero = function(onDone) {
+    if (!window._quizActive) {
+      if (onDone) onDone();
+      return;
     }
 
-    var backBtn = document.createElement('button');
-    backBtn.textContent = 'Quay lại Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập';
-    backBtn.style.cssText = 'padding:12px 28px; border-radius:var(--radius); border:1px solid var(--s3); background:var(--s2); color:var(--s12); font-size:0.88rem; font-family:inherit; cursor:pointer; transition:all 0.15s ease; font-weight:500; margin-top:8px;';
-    backBtn.onclick = function() {
-      AppState.path = AppState.path.filter(function(p) { return p.type !== 'quiz-room'; });
-      renderCurrentView();
-    };
-    wrapper.appendChild(backBtn);
-  }
+    var doExit = function() {
+      window._quizActive = false;
+      if (window._quizTimerInterval) clearInterval(window._quizTimerInterval);
+      submitted = true;
 
+      var zeroList = questions.map(function(q) {
+        return {
+          question_id: q.id,
+          is_correct: false,
+          selected_answer: answers[q.id] || null,
+          correct_answer: q.correct_answer,
+          explanation_html: q.explanation_html || '<p>Bạn đã dừng bài làm giữa chừng. Bài thi được tính 0 điểm.</p>'
+        };
+      });
+
+      var zeroResult = {
+        total_score: 0.0,
+        correct_count: 0,
+        total_questions: totalQ,
+        results: zeroList
+      };
+
+      if (quizId !== 'mock') {
+        var token = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
+        if (token) {
+          var answerList = [];
+          for (var qid in answers) {
+            answerList.push({ question_id: parseInt(qid), selected_answer: answers[qid] });
+          }
+          var practiceNodeId = (quizData && quizData.node_id) || window._activePracticeLessonId || window._autoPracticeLessonId || sessionStorage.getItem('auto_practice_lesson_id') || null;
+          var currentPathId = (quizData && quizData.path_id) || window._autoPracticePathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id') || null;
+          fetch(App.API_BASE + '/api/quiz/' + quizId + '/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ 
+              answers: answerList,
+              path_id: currentPathId,
+              node_id: practiceNodeId
+            })
+          }).catch(function(err){ console.error(err); });
+        }
+      }
+
+      if (onDone) {
+        onDone();
+      } else {
+        handleSubmissionResults(zeroResult);
+      }
+    };
+
+    if (window.App && window.App.showConfirm) {
+      window.App.showConfirm(
+        'Bạn đang trong phiên làm bài. Nếu thoát ra lúc này, bài thi sẽ tự động bị tính 0 điểm và kết thúc lượt làm. Bạn có chắc chắn muốn thoát?',
+        doExit
+      );
+    } else {
+      if (confirm('Bạn đang trong phiên làm bài. Nếu thoát ra lúc này, bài thi sẽ tự động bị tính 0 điểm và kết thúc lượt làm. Bạn có chắc chắn muốn thoát?')) {
+        doExit();
+      }
+    }
+  };
+
+  // Initial render
   renderQuestion();
 }
 
@@ -3020,6 +3957,8 @@ function initGraph() {
 </script>
 
 <script src="js/mock_library.js"></script>
+<script src="js/app/ui/learning_path.js"></script>
+<script src="js/app/simulation/persona_simulator.js"></script>
 <script>
 setTimeout(function() {
 
@@ -3373,7 +4312,7 @@ function renderDiagram() {
     };
   });
 
-  let svg = '<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="font-family: \'Merriweather\', \'Cambria\', \'Times New Roman\', serif; background: transparent; opacity: 0; transition: opacity 0.2s ease-in-out;">';
+  let svg = '<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="font-family: var(--font-academic); background: transparent; opacity: 0; transition: opacity 0.2s ease-in-out;">';
   
   svg += '<style>' +
     '.n-g { transition: opacity 0.25s ease; cursor: pointer; }' +
@@ -3394,7 +4333,7 @@ function renderDiagram() {
     '.e-pin { stroke: #3b82f6 !important; stroke-width: 2.5px !important; opacity: 1 !important; }' +
     '.e-hidden { opacity: 0.05 !important; }' +
     '.n-g:hover .n-rect { stroke-width: 2px; }' +
-  '  svg text { font-family: var(--font) !important; }' + '\n</style>';
+  '  svg text { font-family: var(--font-academic) !important; }' + '\n</style>';
 
   svg += '<defs>' +
     '<marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 2 L8 5 L0 8" fill="none" class="e-marker"/></marker>' +
@@ -3572,6 +4511,121 @@ function focusLegend(id, skipScroll = false) {
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //  DIJKSTRA PATHFINDING
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+function runPath() {
+  const s = cbStart.value, e = cbEnd.value;
+  if (s === e) return window.App.showToast('Điểm bắt đầu và kết thúc trùng nhau.', 'warning');
+  const res = getPathWithConstraints(s, e, cbAvoid.value, cbInclude.value);
+  if (!res) return window.App.showToast('Không tìm thấy lộ trình phù hợp.', 'warning');
+  activePath = res.path;
+  pinnedNode = null;
+  document.getElementById('btn-reset').style.display = 'flex';
+  document.getElementById('btn-execute-path').style.display = 'flex';
+  
+  const pfBar = document.querySelector('.pathfind-bar');
+  if (pfBar && pfBar.classList.contains('open')) {
+    pfBar.classList.remove('open');
+    const bd = document.getElementById('sheet-backdrop');
+    if (bd) bd.style.display = 'none';
+  }
+  
+  const c = document.getElementById('pf-cost');
+  if(c) c.style.display = 'none';
+  
+  updateVisualState();
+  refreshLegend();
+}
+
+function executePath() {
+  if (!activePath || activePath.length === 0) {
+    window.App.showToast('Vui lòng tìm lộ trình trước khi thực hiện.', 'warning');
+    return;
+  }
+  function getAuthToken() {
+      if (window.AuthGuard && window.AuthGuard.getToken) {
+          return window.AuthGuard.getToken();
+      }
+      return sessionStorage.getItem('user_token') || localStorage.getItem('user_token');
+  }
+
+  function getUserId() {
+      var token = getAuthToken();
+      if (!token) return null;
+      if (window.AuthGuard && window.AuthGuard._decodeJWT) {
+          var p = window.AuthGuard._decodeJWT(token);
+          if (p && p.user_id) return p.user_id;
+      }
+      try {
+          var parts = token.split('.');
+          if (parts.length === 3) {
+              var payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+              return JSON.parse(atob(payload)).user_id;
+          }
+      } catch(e) {}
+      return null;
+  }
+  
+  const token = getAuthToken();
+  const userId = getUserId();
+  if (!token && !userId) {
+      alert('Lỗi: Không tìm thấy phiên đăng nhập. Vui lòng đăng nhập lại.');
+      return;
+  }
+  const startNode = activePath[0];
+  const targetNode = activePath[activePath.length - 1];
+
+  const API = window.App?.API_BASE || 'http://127.0.0.1:5000';
+  
+  // Show loading state
+  const btn = document.getElementById('btn-execute-path');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Đang tạo...';
+  btn.disabled = true;
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+
+  fetch(API + '/api/path/create', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+          user_id: userId,
+          start_node_id: startNode,
+          target_node_id: targetNode,
+          path_nodes: activePath
+      })
+  })
+  .then(res => res.json())
+  .then(data => {
+      if (data.message || data.path_id) {
+          const newPathId = data.path_id || (data.path && data.path.path_id);
+          if (newPathId) {
+              localStorage.setItem('committed_path_id', newPathId);
+          }
+          navigateTo('learning-path', 'learning-path', tr('learning_path.title', 'Lộ trình học tập'), { path_id: newPathId });
+      } else {
+          alert('Lỗi tạo lộ trình: ' + (data.error || 'Không thể tạo lộ trình'));
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+      }
+  })
+  .catch(err => {
+      console.error(err);
+      // Fallback for local testing if DB is down
+      localStorage.setItem('vectoria_active_path', JSON.stringify(activePath));
+      navigateTo('learning-path', 'learning-path', tr('learning_path.title', 'Lộ trình học tập'), null);
+  });
+}
+function clearPath() {
+  activePath = null;
+  document.getElementById('btn-reset').style.display = 'none';
+  document.getElementById('btn-execute-path').style.display = 'none';
+  const c = document.getElementById('pf-cost');
+  if(c) c.style.display = 'none';
+  pinnedNode = null;
+  updateVisualState();
+  refreshLegend();
+}
+
 function dijkstra(s, e, avoid = new Set()) {
   if (s === e || avoid.has(s) || avoid.has(e)) return null;
   const dist = {}, prev = {}, q = new Set(D.graph.nodes.map(n => n.id));
@@ -3619,41 +4673,6 @@ function getPathWithConstraints(s, e, avoidIds = [], includeIds = []) {
     fp = fp.concat(seg); tc += sc;
   }
   return { path: fp, cost: tc };
-}
-
-function runPath() {
-  const s = cbStart.value, e = cbEnd.value;
-  if (s === e) return window.App.showToast('ĐiỒm bắt �ầu và kết thúc trùng nhau.', 'warning');
-  const res = getPathWithConstraints(s, e, cbAvoid.value, cbInclude.value);
-  if (!res) return window.App.showToast('Không tìm thấy l�" trình phù hợp.', 'warning');
-  activePath = res.path;
-  pinnedNode = null;
-  document.getElementById('btn-reset').style.display = 'flex';
-  
-  const pfBar = document.querySelector('.pathfind-bar');
-  if (pfBar && pfBar.classList.contains('open')) {
-    pfBar.classList.remove('open');
-    const bd = document.getElementById('sheet-backdrop');
-    if (bd) bd.style.display = 'none';
-  }
-  
-  const c = document.getElementById('pf-cost');
-  c.style.display = 'flex';
-  const costText = tr('knowledge.cost', 'Tải trọng');
-  c.innerHTML = `<i class="ph ph-lightning" style="margin-right:6px"></i> ${costText} ($W_u$): ${res.cost.toFixed(2)}`;
-  
-  updateVisualState();
-  refreshLegend();
-}
-
-function clearPath() {
-  activePath = null;
-  pinnedNode = null;
-  hoveredNode = null;
-  document.getElementById('btn-reset').style.display = 'none';
-  document.getElementById('pf-cost').style.display = 'none';
-  updateVisualState();
-  refreshLegend();
 }
 
 function refreshLegend() {
@@ -3891,13 +4910,83 @@ if (document.getElementById('cb-start')) {
     input.onkeydown = (e) => { if (e.key === 'Enter') close(input.value); else if (e.key === 'Escape') close(null); };
   };
 
-  window.addEventListener('beforeunload', function() {
+  window.addEventListener('beforeunload', function(e) {
     sessionStorage.setItem('scrollPos_' + window.location.search, window.scrollY);
-});
-// URL Parsing for Deep Linking
-  window._deepLinkHandled = false;
-  var params = new URLSearchParams(window.location.search);
-  if (params.has('id')) {
+    if (window._quizActive) {
+      e.preventDefault();
+      e.returnValue = 'Bạn đang trong phiên làm bài. Nếu thoát ra, bài thi sẽ tự động bị tính 0 điểm!';
+      return e.returnValue;
+    }
+  });
+
+  // Intercept any link clicks while taking quiz
+  document.addEventListener('click', function(e) {
+    if (!window._quizActive) return;
+    var a = e.target.closest('a');
+    if (a && a.href && !a.href.startsWith('javascript:') && !a.href.includes('#')) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (window.exitQuizWithZero) {
+        window.exitQuizWithZero(function() {
+          window.location.href = a.href;
+        });
+      }
+    }
+  }, true);
+
+  // Browser back/forward button during quiz
+  window.addEventListener('popstate', function(e) {
+    if (window._quizActive) {
+      window.history.pushState({ inQuiz: true }, '');
+      if (window.exitQuizWithZero) {
+        window.exitQuizWithZero(function() {
+          window._quizActive = false;
+          window.history.back();
+        });
+      }
+    }
+  });
+
+  // URL Parsing for Deep Linking (only if not already handled by early init)
+  if (!window._deepLinkHandled) {
+    var params = new URLSearchParams(window.location.search);
+    
+    if (params.get('view') === 'path' || params.get('view') === 'learning-path' || params.get('type') === 'learning-path' || (params.has('path_id') && !params.has('practice_lesson_id') && !params.has('final_exam'))) {
+      window._deepLinkHandled = true;
+      var reqPathId = params.get('path_id');
+      if (reqPathId) localStorage.setItem('committed_path_id', reqPathId);
+      AppState.path = [ { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') } ];
+      setTimeout(function() {
+          navigateTo('learning-path', 'learning-path', 'Lộ trình học tập', reqPathId ? { path_id: reqPathId } : null);
+      }, 100);
+  } else if (params.has('final_exam')) {
+      window._deepLinkHandled = true;
+      window._autoFinalExam = true;
+      window._autoFinalExamPathId = params.get('path_id');
+      var fPathId = window._autoFinalExamPathId || localStorage.getItem('committed_path_id');
+      AppState.path = [ 
+          { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') },
+          { type:'learning-path', id:'learning-path', title:tr('knowledge.learning_path', 'Lộ trình học tập'), data: { path_id: fPathId } }
+      ];
+      setTimeout(function() {
+          navigateTo('quiz', 'quiz', 'Bài đánh giá tổng kết', { from: 'learning-path', path_id: fPathId, is_final: true });
+      }, 100);
+  } else if (params.has('practice_lesson_id')) {
+      window._deepLinkHandled = true;
+      window._autoPracticeLessonId = params.get('practice_lesson_id');
+      window._autoPracticePathId = params.get('path_id');
+      window._autoPracticeNodeIdx = params.get('node_idx');
+      if (window._autoPracticePathId) sessionStorage.setItem('auto_practice_path_id', window._autoPracticePathId);
+      if (window._autoPracticeNodeIdx !== null) sessionStorage.setItem('auto_practice_node_idx', window._autoPracticeNodeIdx);
+      var pPathId = window._autoPracticePathId || localStorage.getItem('committed_path_id');
+      AppState.path = [ 
+          { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') },
+          { type:'learning-path', id:'learning-path', title:tr('knowledge.learning_path', 'Lộ trình học tập'), data: { path_id: pPathId } }
+      ];
+      setTimeout(function() {
+          navigateTo('quiz', 'quiz', 'Bài tập', { from: 'learning-path', path_id: pPathId, lesson_id: window._autoPracticeLessonId });
+      }, 100);
+  } else if (params.has('id')) {
     var id = params.get('id');
     var type = params.get('type') || 'lesson'; // default to lesson
     var lessonId = id.split('-')[0]; // for legacy lesson ids
@@ -3949,12 +5038,13 @@ if (document.getElementById('cb-start')) {
     }
     
     if (type === 'graph') {
+       var openPf = params.has('open_pathfinder') || params.get('open_pathfinder') === '1';
        setTimeout(() => {
          AppState.path = [
            { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') }
          ];
          window._deepLinkHandled = true;
-         navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'), null);
+         navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'), openPf ? { open_pathfinder: true } : null);
        }, 100);
     }
     
@@ -3974,7 +5064,8 @@ if (document.getElementById('cb-start')) {
          ];
          navigateTo('quiz-room', id, 'Làm bài', null);
        }, 100);
-    }
+     }
+   }
   }
 
   // Don't auto-render if graph view is hidden (drill-down mode)
@@ -3993,10 +5084,12 @@ if (document.getElementById('cb-start')) {
 
     let html = '';
     
-    html += '<div class="side-label" style="padding: 16px 16px 8px; font-weight: 700; font-size: 0.72rem; color: var(--s9); text-transform: uppercase; letter-spacing: 0.5px;">' + tr('knowledge.library', 'Library') + '</div>';
-    html += '<div class="side-item active" onclick="go(\'root\', this)"><i class="ph ph-compass" style="margin-right: 8px;"></i>' + tr('knowledge.explore_library', 'Khám phá Thư viện') + '</div>';
+    html += '<div class="side-label" style="padding: 16px 16px 8px; font-weight: 700; font-size: 0.72rem; color: var(--s9); text-transform: uppercase; letter-spacing: 0.5px;">' + tr('knowledge.overview', 'Tổng quan') + '</div>';
+    html += '<div class="side-item active" onclick="AppState.path=[{type:\'root\',id:\'root\',title:tr(\'knowledge.library\',\'Thư viện\')}]; renderCurrentView(); document.querySelectorAll(\'.side-item\').forEach(i=>i.classList.remove(\'active\')); this.classList.add(\'active\');"><i class="ph ph-compass" style="margin-right: 8px;"></i>' + tr('knowledge.explore_library', 'Khám phá Thư viện') + '</div>';
+    html += '<div class="side-item" onclick="navigateTo(\'graph\',\'graph\',tr(\'knowledge.title\',\'Không gian Tri thức\'),null); document.querySelectorAll(\'.side-item\').forEach(i=>i.classList.remove(\'active\')); this.classList.add(\'active\');"><i class="ph ph-tree-structure" style="margin-right: 8px;"></i>' + tr('knowledge.title', 'Không gian Tri thức') + '</div>';
+    html += '<div class="side-item" onclick="navigateTo(\'learning-path\',\'learning-path\',tr(\'knowledge.learning_path\',\'Lộ trình học tập\'),null); document.querySelectorAll(\'.side-item\').forEach(i=>i.classList.remove(\'active\')); this.classList.add(\'active\');"><i class="ph ph-path" style="margin-right: 8px;"></i>' + tr('knowledge.learning_path', 'Lộ trình học tập') + '</div>';
     
-    html += '<div class="side-label" style="padding: 16px 16px 8px; font-weight: 700; font-size: 0.72rem; color: var(--s9); text-transform: uppercase; letter-spacing: 0.5px;">' + tr('knowledge.topics', 'Topics') + '</div>';
+    html += '<div class="side-label" style="padding: 16px 16px 8px; font-weight: 700; font-size: 0.72rem; color: var(--s9); text-transform: uppercase; letter-spacing: 0.5px;">' + tr('knowledge.topics', 'Chủ đề') + '</div>';
 
     MOCK_LIBRARY_DATA.topics.forEach(t => {
       html += '<div class="topic-group">';

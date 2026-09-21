@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bạch Thư Kỹ Thuật: Khung Lý Luận & Hệ Thống Logic Chẩn Đoán Lỗ Hổng Tri Thức | Vectoria</title>
+  
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('vec_theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Công Cụ Kết Xuất Toán Học MathJax 3 -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        renderActions: {
+          addMenu: []
+        }
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    :root {
+      --bg-page: #fcfcfd;
+      --bg-card: #ffffff;
+      --bg-subtle: #f4f4f6;
+      --border-color: #e4e4e7;
+      --border-strong: #a1a1aa;
+      --text-main: #18181b;
+      --text-muted: #52525b;
+      --text-soft: #71717a;
+      --accent-academic: #1e3a8a;
+      --accent-blue-light: #eff6ff;
+      --accent-gold: #b45309;
+      --accent-gold-light: #fef3c7;
+      --accent-ruby: #991b1b;
+      --accent-ruby-light: #fee2e2;
+      --accent-emerald: #065f46;
+      --accent-emerald-light: #d1fae5;
+      --font-body: 'STIX Two Text', 'Times New Roman', Times, serif;
+      --font-heading: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', Consolas, Menlo, monospace;
+    }
+
+    html.dark {
+      --bg-page: #0d0d10;
+      --bg-card: #151518;
+      --bg-subtle: #1c1c21;
+      --border-color: #27272a;
+      --border-strong: #52525b;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --text-soft: #71717a;
+      --accent-academic: #60a5fa;
+      --accent-blue-light: #1e293b;
+      --accent-gold: #fbbf24;
+      --accent-gold-light: #312108;
+      --accent-ruby: #f87171;
+      --accent-ruby-light: #361214;
+      --accent-emerald: #34d399;
+      --accent-emerald-light: #062b1e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 1.05rem;
+      line-height: 1.85;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .paper-wrapper {
+      max-width: 1020px;
+      margin: 40px auto;
+      padding: 60px 75px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+    }
+
+    @media (max-width: 768px) {
+      .paper-wrapper {
+        margin: 0;
+        padding: 25px 16px;
+        border: none;
+      }
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 35px;
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .top-bar a {
+      color: var(--accent-academic);
+      text-decoration: none;
+    }
+    .theme-toggle-btn {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 6px 14px;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+
+    h1.paper-title {
+      font-family: var(--font-heading);
+      font-size: 2.2rem;
+      line-height: 1.35;
+      color: var(--text-main);
+      text-align: center;
+      margin-bottom: 18px;
+      font-weight: 700;
+    }
+    .paper-subtitle {
+      text-align: center;
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+    .paper-meta {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--text-soft);
+      padding-bottom: 25px;
+      margin-bottom: 40px;
+      border-bottom: 2px solid var(--border-color);
+    }
+    .paper-meta span {
+      margin: 0 10px;
+    }
+
+    h2 {
+      font-family: var(--font-heading);
+      font-size: 1.45rem;
+      margin: 50px 0 20px;
+      color: var(--text-main);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    h3 {
+      font-family: var(--font-heading);
+      font-size: 1.22rem;
+      margin: 32px 0 14px;
+      color: var(--accent-academic);
+    }
+    h4 {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 1.08rem;
+      margin: 24px 0 10px;
+      color: var(--text-main);
+    }
+
+    p {
+      margin-bottom: 18px;
+      text-align: justify;
+    }
+    ul, ol {
+      margin-bottom: 20px;
+      padding-left: 28px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+
+    .math-card {
+      background: var(--bg-subtle);
+      border-left: 3px solid var(--accent-academic);
+      border-top: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 22px 26px;
+      margin: 26px 0;
+      border-radius: 2px;
+    }
+    .math-card-title {
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent-academic);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .callout {
+      padding: 22px 26px;
+      margin: 26px 0;
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+      background: var(--bg-subtle);
+    }
+    .callout-warning {
+      border-left: 4px solid var(--accent-gold);
+      background: var(--accent-gold-light);
+      color: var(--text-main);
+    }
+    .callout-danger {
+      border-left: 4px solid var(--accent-ruby);
+      background: var(--accent-ruby-light);
+      color: var(--text-main);
+    }
+    .callout-info {
+      border-left: 4px solid var(--accent-academic);
+      background: var(--accent-blue-light);
+      color: var(--text-main);
+    }
+    .callout-title {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1.02rem;
+      margin-bottom: 10px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin: 28px 0;
+    }
+    table.academic-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+      background: var(--bg-card);
+    }
+    table.academic-table th, 
+    table.academic-table td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+    }
+    table.academic-table thead th {
+      border-top: 2px solid var(--border-strong);
+      border-bottom: 1px solid var(--border-strong);
+      font-family: var(--font-heading);
+      font-weight: 700;
+      color: var(--text-main);
+      background: var(--bg-subtle);
+    }
+    table.academic-table tbody tr:last-child td {
+      border-bottom: 2px solid var(--border-strong);
+    }
+    table.academic-table tr:hover {
+      background-color: var(--bg-subtle);
+    }
+
+    pre, code {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+    }
+    code {
+      background: var(--bg-subtle);
+      padding: 2px 6px;
+      border-radius: 2px;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+    pre.code-block {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      padding: 18px 22px;
+      overflow-x: auto;
+      margin: 22px 0;
+      border-radius: 2px;
+      line-height: 1.5;
+    }
+
+    /* Khối thẻ Trường hợp biên */
+    .edge-box {
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      padding: 22px 26px;
+      margin: 24px 0;
+      border-radius: 2px;
+      border-top: 3px solid var(--accent-academic);
+    }
+    .edge-box-title {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .edge-box-tag {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 3px 8px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      border-radius: 2px;
+    }
+    .edge-row {
+      margin-bottom: 12px;
+    }
+    .edge-label {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* Khối Mô phỏng Tương tác */
+    .sim-panel {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-strong);
+      border-radius: 2px;
+      padding: 30px;
+      margin: 35px 0;
+    }
+    .sim-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 25px;
+    }
+    @media (max-width: 768px) {
+      .sim-grid { grid-template-columns: 1fr; }
+    }
+    .sim-control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .sim-label {
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .sim-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+    .sim-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent-academic);
+    }
+    .sim-value-badge {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 3px 8px;
+      min-width: 75px;
+      text-align: center;
+    }
+    select.sim-select {
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      padding: 9px 12px;
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    .sim-output-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 24px;
+      margin-top: 15px;
+      border-radius: 2px;
+    }
+    .sim-status-title {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .badge-status {
+      display: inline-block;
+      padding: 4px 12px;
+      font-size: 0.82rem;
+      font-family: var(--font-mono);
+      border-radius: 2px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-slip { background: var(--accent-gold-light); color: var(--accent-gold); border: 1px solid var(--accent-gold); }
+    .badge-gap { background: var(--accent-ruby-light); color: var(--accent-ruby); border: 1px solid var(--accent-ruby); }
+    .badge-luck { background: #f3e8ff; color: #7e22ce; border: 1px solid #7e22ce; }
+    .badge-procedural { background: #e0f2fe; color: #0369a1; border: 1px solid #0369a1; }
+    .badge-mastery { background: var(--accent-emerald-light); color: var(--accent-emerald); border: 1px solid var(--accent-emerald); }
+
+    /* Tài liệu tham khảo */
+    .reference-list {
+      list-style-type: none;
+      padding-left: 0;
+      margin-top: 20px;
+    }
+    .reference-item {
+      padding-left: 36px;
+      text-indent: -36px;
+      margin-bottom: 18px;
+      font-size: 0.95rem;
+      line-height: 1.65;
+    }
+    .reference-item a {
+      color: var(--accent-academic);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      word-break: break-all;
+    }
+    .doi-tag {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      padding: 1px 6px;
+      border-radius: 2px;
+      text-decoration: none !important;
+      color: var(--text-muted);
+      margin-left: 6px;
+    }
+
+    .footer-note {
+      margin-top: 60px;
+      padding-top: 25px;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.85rem;
+      color: var(--text-soft);
+      text-align: center;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+<div class="paper-wrapper">
+
+  <!-- Tiêu Đề Tài Liệu Kỹ Thuật -->
+  <header style="margin-top: 20px; margin-bottom: 40px; padding-bottom: 25px; border-bottom: 2px solid var(--border-color);">
+    <h1 class="paper-title">Bạch Thư Kỹ Thuật: Khung Lý Luận & Hệ Thống Logic Chẩn Đoán Lỗ Hổng Tri Thức</h1>
+    <div class="paper-subtitle" style="margin-bottom: 0;">Giải mã toàn diện cơ chế đối chiếu dữ liệu vi hành vi người học, phân biệt Bất cẩn với Hổng bản chất, xử lý 8 trường hợp biên nhận thức và ứng dụng toán học xác suất thay thế hoàn toàn dự đoán của mô hình ngôn ngữ lớn</div>
+  </header>
+
+  <!-- CHƯƠNG 1 -->
+  <section>
+    <h2>Chương 1: Câu Chuyện Bắt Đầu - Nghịch Lý "Luyện Tập Điểm Mười, Thi Tổng Kết Điểm Ba"</h2>
+    
+    <p>
+      Hãy bắt đầu bằng một hình ảnh đời thường rất trực quan: <strong>Một người học lái xe ô tô</strong>.
+    </p>
+    <p>
+      Khi người đó tập trong bãi sa hình (tương ứng với <strong>Nhiệm vụ luyện tập vi mô sau bài học</strong>), họ chỉ cần lùi xe vào chuồng đúng theo các vạch sơn kẻ sẵn. Họ vừa nghe người hướng dẫn giải thích 2 phút trước, áp dụng ngay tức thì, và họ thực hiện hoàn hảo 10 lần liên tiếp đạt điểm tối đa 10/10. Nhưng khi đưa chiếc xe đó ra ngã tư đường phố vào giờ cao điểm (tương ứng với <strong>Bài thi tổng kết kiểm tra mốc tri thức</strong>), nơi có đèn tín hiệu giao thông, người đi bộ băng qua đường, và nhiều dòng xe cộ tạt đầu cùng lúc, người lái xe lập tức hoảng loạn và đâm vào dải phân cách.
+    </p>
+    <p>
+      Trong môn <strong>Đại số Tuyến tính</strong>, hiện tượng tâm lý học nhận thức tương tự diễn ra mỗi ngày:
+    </p>
+    <ul>
+      <li>
+        <strong>Ở bài luyện tập nhỏ sau từng bài học:</strong> Sinh viên vừa đọc xong định nghĩa phép nhân ma trận hoặc quy tắc tính định thức cấp $2 \times 2$. Bộ não chỉ đang sử dụng <em>bộ nhớ làm việc ngắn hạn (working memory)</em> để tính toán số học đơn giản. Đề bài chỉ hỏi đúng một thao tác đơn lẻ, sinh viên chỉ việc áp dụng ngay công thức vừa nhìn thấy để chọn đáp án. Điểm số 10/10 lúc này rất dễ đạt được.
+      </li>
+      <li>
+        <strong>Ở bài thi tổng kết định kỳ:</strong> Đề bài không hề nhắc sinh viên phải dùng công thức nào. Ví dụ câu hỏi: <em>"Tìm điều kiện của tham số $m$ để hệ phương trình tuyến tính có vô số nghiệm"</em>. Bài toán tổng hợp này đòi hỏi sinh viên phải tự mình kết hợp đồng thời 3 tầng kiến thức: (1) Tính định thức của ma trận hệ số, (2) Biến đổi ma trận mở rộng về dạng bậc thang, và (3) So sánh hạng của hai ma trận theo định lý Kronecker-Capelli.
+      </li>
+    </ul>
+    <p>
+      Chỉ cần sinh viên bị hổng đúng một mắt xích nhỏ (ví dụ: quên mất quy tắc đổi dấu khi hoán vị hai dòng của ma trận), toàn bộ kết quả bài tổng kết sẽ sai hoàn toàn. Người phát triển hệ thống nếu chỉ nhìn điểm số bề mặt sẽ hoang mang: <em>"Rõ ràng mấy hôm trước bài tập nào bạn này cũng làm đúng 10/10, tại sao bây giờ điểm lại thấp như vậy? Làm sao hệ thống biết bạn ấy hổng ở đâu để chỉ ra lý do thuyết phục?"</em>.
+    </p>
+
+    <div class="callout callout-warning">
+      <div class="callout-title">Tại sao cấm tuyệt đối việc đưa dữ liệu cho mô hình ngôn ngữ lớn (LLM / ChatGPT) để đoán mò?</div>
+      <p style="margin-bottom: 0;">
+        Nhiều người nghĩ đơn giản: <em>"Gom hết bài làm của sinh viên thành tệp dữ liệu rồi gửi vào một câu lệnh nhờ mô hình ngôn ngữ lớn (LLM) phân tích xem bạn này yếu chỗ nào"</em>. Đây là một sai lầm nghiêm trọng trong phương pháp luận khoa học:
+        <br>1. <strong>Mô hình ngôn ngữ lớn bản chất là mô hình sinh từ ngẫu nhiên (stochastic):</strong> Cùng một tệp dữ liệu bài làm, lần bấm này nó bảo sinh viên yếu định thức, lần bấm sau nó lại bảo sinh viên ẩu ở phép cộng trừ. Nó thiếu tính nhất quán khoa học.
+        <br>2. <strong>Hiện tượng ảo giác thông tin (hallucination):</strong> Mô hình ngôn ngữ lớn sẵn sàng tự tạo ra một lý do nghe rất mượt tai nhưng hoàn toàn không có thật trong lịch sử làm bài của sinh viên.
+        <br>3. <strong>Không thể giải trình toán học trước hội đồng nghiên cứu khoa học:</strong> Nhà nghiên cứu không thể bảo vệ đề tài bằng lý lẽ: <em>"Hệ thống phát hiện ra lỗ hổng vì trí tuệ nhân tạo bảo thế"</em>. Mọi kết luận sư phạm bắt buộc phải có bằng chứng toán học, đo lường cụ thể bằng số giây thao tác, mã câu hỏi và cấu trúc đồ thị tri thức rõ ràng.
+      </p>
+    </div>
+  </section>
+
+  <!-- CHƯƠNG 2 -->
+  <section>
+    <h2>Chương 2: Chú Ý Khoa Học - Giới Hạn Của Hệ Thống & Ước Lượng Độ Tin Cậy</h2>
+
+    <p>
+      Một câu hỏi rất thực tế và thẳng thắn: <strong>"Hệ thống logic này có hoàn hảo 100% không? Có thể bao quát được tất cả mọi trường hợp trên đời không?"</strong>.
+    </p>
+    <p>
+      Câu trả lời khoa học chuẩn mực và trung thực nhất là: <strong>KHÔNG CÓ BẤT KỲ HỆ THỐNG NÀO TRÊN THẾ GIỚI CÓ THỂ ĐẠT MỨC ĐỘ CHÍNH XÁC 100%.</strong>
+    </p>
+
+    <div class="callout callout-danger">
+      <div class="callout-title">Những biến số ngoài đời thực mà máy tính hoàn toàn bất lực (các yếu tố ngoại sinh - exogenous factors)</div>
+      <p>
+        Màn hình máy tính chỉ ghi nhận được các thao tác chuột và thời gian chuyển câu. Hệ thống không thể gắn cảm biến nhìn vào đầu sinh viên để biết được thế giới vật lý bên ngoài đang xảy ra chuyện gì:
+      </p>
+      <ul style="margin-top: 8px;">
+        <li><strong>Sự cố thể chất và môi trường bất ngờ:</strong> Sinh viên đang làm bài thì bị đau bụng dữ dội, bị hoa mắt, hoặc phòng thi bị chập chờn mạng Internet khiến nút bấm bị đơ 20 giây. Thời gian làm bài bị kéo dài bất thường, nhưng nguyên nhân không hề nằm ở kiến thức hay tư duy toán học.</li>
+        <li><strong>Hành vi gian lận nhìn bài bạn (collusion):</strong> Hai sinh viên ngồi cạnh nhau, bạn A giỏi làm bài và bạn B chỉ việc nhìn lén đáp án để bấm theo. Hệ thống thấy bạn B chọn đúng 100% trong thời gian siêu nhanh thì sẽ lầm tưởng bạn B là người nắm vững bài học.</li>
+        <li><strong>Hành vi cố tình phá hoại để trêu chọc thuật toán (gaming the system):</strong> Sinh viên biết phần mềm có đo thời gian, nên mở câu hỏi ra rồi cố tình bỏ đi pha mì tôm 5 phút sau mới quay lại bấm bừa nhằm thử xem thuật toán thông minh đến mức nào.</li>
+      </ul>
+    </div>
+
+    <h3>1. Ước lượng Độ tin cậy Thực tế: Hệ thống tiệm cận bao nhiêu phần trăm?</h3>
+    <p>
+      Nếu loại trừ các yếu tố gian lận hoặc sự cố ngoài đời thực nêu trên, và chỉ xét trong phạm vi đo lường nhận thức giữa người học với bài kiểm tra:
+    </p>
+    <div class="math-card">
+      <div class="math-card-title">Ngưỡng Giới Hạn Trần Thực Nghiệm Chuẩn Quốc Tế (Empirical Glass Ceiling)</div>
+      $$\text{Độ tin cậy tiệm cận tối ưu: } 85\% - 90\% \quad \Longleftrightarrow \quad \text{Chỉ số diện tích dưới đường cong } \text{AUC} \in [0.82, \; 0.88]$$
+    </div>
+    <p>
+      Trong các công trình khoa học quốc tế uy tín về lĩnh vực Khai phá dữ liệu giáo dục (Educational Data Mining) của các giáo sư hàng đầu thế giới:
+      <br>- Mức độ chính xác khi dự đoán trạng thái người học luôn chạm trần ở ngưỡng <strong>85% đến 90%</strong>.
+      <br>- Khoảng 10% đến 15% còn lại được định nghĩa là <em>độ nhiễu nhận thức tự nhiên của con người (epistemic noise)</em>. Con người không phải là cỗ máy vô cảm, tâm lý sinh viên có lúc hưng phấn, lúc mệt mỏi, lúc phân tâm.
+      <br>- <strong>Nếu một đề tài nghiên cứu tuyên bố đạt độ chính xác 99% hay 100%, hội đồng khoa học sẽ đánh trượt ngay</strong>, vì đó là dấu hiệu của việc gian lận số liệu hoặc mô hình bị học vẹt dữ liệu (overfitting). Con số 85% - 90% là chuẩn mực khoa học cao nhất được thừa nhận rộng rãi.
+    </p>
+
+    <h3>2. Cơ chế Tự Sửa Sai: Không vội vàng phán xét bằng một lần thử</h3>
+    <p>
+      Điểm đắt giá nhất của hệ thống Vectoria không phải là "đoán trúng ngay từ câu đầu tiên", mà là <strong>khả năng tự động kiểm chứng và sửa sai qua thời gian (self-correcting mechanism)</strong>:
+    </p>
+    <p>
+      Khi gặp một hành vi bất thường (ví dụ: làm đúng câu siêu khó nhưng lại làm sai câu dễ ợt), hệ thống không vội vàng kết luận sinh viên dốt hay giỏi. Nó xếp hành vi đó vào diện <strong>NGHI VẤN (SUSPECTED)</strong>.
+      <br>Ở các bài học tiếp theo, hệ thống âm thầm đưa vào một <strong>câu hỏi đồng cấu (isomorphic question)</strong>, tức là câu hỏi giữ nguyên bản chất toán học nhưng thay đổi ma trận số liệu ngẫu nhiên.
+    </p>
+    <p>
+      Quy luật xác suất toán học chỉ ra rằng:
+      <br>- Đoán mò đúng 1 câu trắc nghiệm 4 lựa chọn: Xác suất may mắn là $\frac{1}{4} = 25\%$.
+      <br>- Đoán mò đúng 2 câu cùng dạng liên tiếp: Xác suất chỉ còn $\left(\frac{1}{4}\right)^2 = \frac{1}{16} = 6.25\%$.
+      <br>- Đoán mò đúng 3 câu cùng dạng liên tiếp: Xác suất chỉ còn $\left(\frac{1}{4}\right)^3 = \frac{1}{64} \approx 1.56\%$.
+      <br><strong>Sau 3 lần kiểm chứng, yếu tố ăn may bị triệt tiêu hoàn toàn xuống dưới 2%.</strong> Sự thật về việc sinh viên hiểu bài hay chỉ là đoán mò sẽ tự động lộ diện một cách rõ ràng.
+    </p>
+  </section>
+
+  <!-- CHƯƠNG 3 -->
+  <section>
+    <h2>Chương 3: Bản Chất Dữ Liệu - Dữ Liệu Đặc Tả Đa Tầng Và Cơ Chế Không Ghi Đè, Không Phình Bộ Nhớ</h2>
+    
+    <p>
+      Nhiều người thắc mắc: <em>"Nếu ở bài luyện tập sinh viên được làm lại nhiều lần, rồi thi tổng kết, rồi thi lại, hệ thống sinh ra rất nhiều bản ghi dữ liệu thì lưu thế nào? Bản ghi mới có đè lên bản ghi cũ không? Có sợ lưu nhiều quá làm sập máy chủ không?"</em>.
+    </p>
+    <p>
+      Hệ thống Vectoria giải quyết triệt để điều này bằng <strong>kiến trúc phân tầng dữ liệu 2 lớp</strong>:
+    </p>
+
+    <div class="table-container">
+      <table class="academic-table">
+        <thead>
+          <tr>
+            <th style="width: 25%;">Tầng Dữ Liệu</th>
+            <th style="width: 32%;">Ý Nghĩa Đời Thường</th>
+            <th style="width: 20%;">Cơ Chế Lưu Trữ</th>
+            <th style="width: 23%;">Tác Dụng Thực Tế</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Tầng 1: Nhật ký hành vi tương tác thô<br>(Event Telemetry Log)</strong></td>
+            <td>Giống như <strong>camera an ninh giám sát</strong>: Ghi lại chi tiết từng giây làm bài, sinh viên bấm vào đâu, đổi từ đáp án A sang đáp án B mấy lần, chọn trúng bẫy câu hỏi gì.</td>
+            <td><strong>Chỉ ghi thêm (append-only):</strong> Lần làm thứ nhất ghi dòng 1, lần làm thứ hai ghi dòng 2 (đánh số thứ tự lần thử). Tuyệt đối không ghi đè, không xóa dữ liệu cũ.</td>
+            <td>Dùng để vẽ biểu đồ theo dõi sự tiến bộ hoặc thụt lùi của sinh viên qua từng lần thi (đường cong học tập - learning curve).</td>
+          </tr>
+          <tr>
+            <td><strong>Tầng 2: Vector trạng thái năng lực tổng hợp<br>(Aggregated State Vector)</strong></td>
+            <td>Giống như <strong>số dư tài khoản ngân hàng</strong>: Dù bạn chuyển tiền hay nhận tiền hàng trăm lần, màn hình chính chỉ hiển thị đúng một con số số dư khả dụng mới nhất.</td>
+            <td><strong>Cập nhật trạng thái mới (state mutation):</strong> Sau khi nộp bài, công thức toán học tính ra một con số năng lực mới và ghi đè con số này vào hồ sơ sinh viên trên cơ sở dữ liệu PostgreSQL và Neo4j.</td>
+            <td>Dùng làm đầu vào siêu nhẹ cho thuật toán tìm đường ngắn nhất Dijkstra để mở bài học tiếp theo mà không cần đọc lại toàn bộ nhật ký cũ.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Đặc tả Chi tiết Các Bảng Cơ Sở Dữ Liệu PostgreSQL Thực Tế Đã Được Đồng Bộ</h3>
+    <p>
+      Dưới đây là cấu trúc 3 bảng dữ liệu cốt lõi trong hệ quản trị cơ sở dữ liệu PostgreSQL của hệ thống Vectoria, đảm bảo tính bất biến, hiệu năng cao và không làm phình bộ nhớ:
+    </p>
+
+    <div class="table-container">
+      <table class="academic-table">
+        <thead>
+          <tr>
+            <th style="width: 20%;">Bảng & Thực thể</th>
+            <th style="width: 25%;">Tên Cột (Kiểu dữ liệu)</th>
+            <th style="width: 25%;">Ràng Buộc (Constraints)</th>
+            <th style="width: 30%;">Vai Trò Kỹ Thuật & Sư Phạm</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td rowspan="4"><strong>QUIZZ_QUESTIONS</strong><br>(Chi tiết câu hỏi trong đề)</td>
+            <td><code>quiz_id</code> (INT)<br><code>question_id</code> (INT)</td>
+            <td>PRIMARY KEY (quiz_id, question_id)<br>FK (quizzes.id, questions.id)</td>
+            <td>Khóa chính phức hợp cố định, liên kết đề thi và câu hỏi.</td>
+          </tr>
+          <tr>
+            <td><code>selected_answer</code> (CHAR(1))<br><code>status</code> (VARCHAR(10))</td>
+            <td>status IN ('UNSEEN', 'VIEWED', 'ANSWERED')</td>
+            <td>Lưu phương án chọn và trạng thái vẽ sơ đồ phòng thi trên giao diện Frontend (tuyệt đối không bị ghi đè bởi thuật toán).</td>
+          </tr>
+          <tr>
+            <td><code>time_spent_seconds</code> (INT)<br><code>switch_count</code> (INT)</td>
+            <td>NOT NULL, DEFAULT 0</td>
+            <td><strong>Dữ liệu vi hành vi (Telemetry):</strong> Đo số giây dừng lại tư duy và số lần đổi phương án từ Client.</td>
+          </tr>
+          <tr>
+            <td><code>diagnosis_flag</code> (VARCHAR(30))</td>
+            <td>NOT NULL, DEFAULT 'NORMAL'</td>
+            <td>Lưu cờ chẩn đoán của thuật toán: 'NORMAL', 'SUSPECTED_LUCKY', 'CARELESS_ERROR', 'PROCEDURAL_ONLY'.</td>
+          </tr>
+          <tr>
+            <td rowspan="3"><strong>QUESTIONS</strong><br>(Ngân hàng câu hỏi)</td>
+            <td><code>id</code> (SERIAL), <code>lesson_id</code> (VARCHAR(50))<br><code>topic_id</code> (VARCHAR(10))</td>
+            <td>PRIMARY KEY (id)<br>FK (lessons.id, topics.id)</td>
+            <td>Mã định danh duy nhất và liên kết trực tiếp tới bài học cụ thể trên đồ thị tri thức Neo4j.</td>
+          </tr>
+          <tr>
+            <td><code>option_a</code>, <code>option_b</code>,<br><code>option_c</code>, <code>option_d</code> (TEXT)</td>
+            <td>NOT NULL</td>
+            <td>4 phương án trả lời tách rời trực quan, dễ dàng truy vấn SQL.</td>
+          </tr>
+          <tr>
+            <td><code>distractor_mapping</code> (JSONB)</td>
+            <td>NULLABLE</td>
+            <td>Bản đồ phân loại 4 họ bẫy đáp án, phục vụ phân biệt nhầm dấu số học với rỗng bản chất định lý.</td>
+          </tr>
+          <tr>
+            <td rowspan="2"><strong>KNOWLEDGE_DEBTS</strong><br>(Hàng đợi nợ tri thức)</td>
+            <td><code>user_id</code> (INT)<br><code>debt_node_id</code> (VARCHAR(50))</td>
+            <td>PRIMARY KEY (user_id, debt_node_id)<br>FK (users.id)</td>
+            <td>Khóa chính phức hợp xác định sinh viên đang nợ kiến thức nào.</td>
+          </tr>
+          <tr>
+            <td><code>source_node_id</code> (VARCHAR(50))<br><code>suspected_count</code> (INT)<br><code>is_cleared</code> (BOOLEAN)</td>
+            <td>suspected_count >= 1<br>DEFAULT FALSE</td>
+            <td>Lưu bài học gốc gây nghi ngờ, số lượng câu nghi ngờ, và cờ giải tỏa nợ khi đã vượt qua câu hỏi kiểm chứng.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Minh họa một bản tin dữ liệu gửi lên máy chủ khi sinh viên nộp bài:</h4>
+    <pre class="code-block"><code>{
+  "quiz_id": 105,
+  "lesson_id": "l2",
+  "attempt_index": 2,               // Lần làm thứ 2 (lưu riêng, không đè lên lần 1)
+  "total_duration_seconds": 240,    // Tổng thời gian làm bài: 4 phút
+  "item_telemetry": [
+    {
+      "question_id": 42,
+      "kc_id": "matrix_determinant",  // Nút kiến thức: Tính định thức ma trận
+      "time_spent_seconds": 15,       // Làm trong 15 giây (tốc độ rất nhanh)
+      "switch_count": 0,              // Chọn dứt khoát, không đổi qua lại
+      "selected_option": "B",
+      "distractor_type": "ARITHMETIC_SIGN_SLIP", // Rơi vào bẫy nhầm dấu số học
+      "is_correct": false             // Kết quả: Sai
+    },
+    {
+      "question_id": 45,
+      "kc_id": "cramer_rule",         // Nút kiến thức: Quy tắc Cramer
+      "time_spent_seconds": 130,      // Ngồi ngẫm nghĩ tận 130 giây
+      "switch_count": 3,              // Đổi đáp án 3 lần (rất phân vân)
+      "selected_option": "C",
+      "distractor_type": "CONCEPTUAL_FALLACY",   // Rơi vào bẫy hiểu sai bản chất định lý
+      "is_correct": false             // Kết quả: Sai
+    }
+  ]
+}</code></pre>
+  </section>
+
+  <!-- CHƯƠNG 4 -->
+  <section>
+    <h2>Chương 4: "Bộ Não" Toán Học - Giải Mã Công Thức Bằng Ngôn Từ Đời Thường</h2>
+    <p>
+      Để hiểu được cách hệ thống phân định giữa <strong>Bất cẩn</strong> và <strong>Hổng bản chất</strong>, chúng ta không cần dùng các thuật ngữ quá nặng nề, mà chỉ cần nắm rõ ý nghĩa đời thường của các biến số toán học sau:
+    </p>
+
+    <div class="table-container">
+      <table class="academic-table">
+        <thead>
+          <tr>
+            <th style="width: 22%;">Ký Hiệu Toán Học</th>
+            <th style="width: 28%;">Thuật Ngữ Chuyên Môn</th>
+            <th style="width: 50%;">Ý Nghĩa Đời Thường Dễ Hiểu</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>$P(L_{t-1})$</td>
+            <td>Xác suất tiền nghiệm (Prior Knowledge)</td>
+            <td><strong>Độ hiểu bài ban đầu tích lũy từ quá khứ:</strong> Trước khi làm câu này, sinh viên đã nắm vững bài học đến mức nào? (Nếu các bài tập trước đó làm rất tốt, con số này rất cao, ví dụ $0.92$ trên thang điểm $1.00$).</td>
+          </tr>
+          <tr>
+            <td>$P(S)$</td>
+            <td>Tham số sơ suất (Slip Parameter)</td>
+            <td><strong>Xác suất bất cẩn / sơ suất / tính nhẩm ẩu:</strong> Khả năng một người thực sự hiểu bài nhưng vô tình làm sai (như đọc lướt đề, tính nhầm dấu cộng trừ).</td>
+          </tr>
+          <tr>
+            <td>$P(G)$</td>
+            <td>Tham số đoán mò (Guess Parameter)</td>
+            <td><strong>Xác suất đoán mò trúng:</strong> Khả năng một người hoàn toàn không hiểu bài nhưng nhắm mắt chọn bừa trúng đáp án đúng (với bài trắc nghiệm 4 lựa chọn, xác suất này mặc định là $0.25$ tức $25\%$).</td>
+          </tr>
+          <tr>
+            <td>$P(L_t \mid \text{Sai})$</td>
+            <td>Xác suất hậu nghiệm (Posterior Knowledge)</td>
+            <td><strong>Độ hiểu bài được tính lại sau khi vừa làm sai:</strong> Sau khi thấy sinh viên làm sai câu này, hệ thống sẽ đánh giá lại mức độ hiểu bài của sinh viên còn bao nhiêu.</td>
+          </tr>
+          <tr>
+            <td>$T_{\text{spent}}$ và $T_{\text{expected}}$</td>
+            <td>Thời gian phản hồi thực tế và kỳ vọng (Response Time)</td>
+            <td><strong>Thời gian thực tế sinh viên bỏ ra ($T_{\text{spent}}$)</strong> so với <strong>Thời gian tối thiểu người bình thường cần có để đọc đề và giải bài ($T_{\text{expected}}$)</strong>.</td>
+          </tr>
+          <tr>
+            <td>$l_z$</td>
+            <td>Chỉ số đo độ phù hợp cá nhân (Person-Fit Statistic)</td>
+            <td><strong>Thước đo độ bất thường / vô lý của bài làm:</strong> Đo xem bài làm có mâu thuẫn nhận thức không (ví dụ câu dễ làm sai nhưng câu khó lại làm đúng).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Công thức cập nhật độ hiểu bài theo định lý xác suất Bayes hoạt động thế nào?</h3>
+    <p>
+      Khi sinh viên làm <strong>SAI</strong> một câu hỏi, công thức xác suất Bayes cập nhật độ hiểu bài như sau:
+    </p>
+    <div class="math-card">
+      <div class="math-card-title">Công thức Bayes Đánh giá Lại Năng lực Sau Khi Làm Sai</div>
+      $$P(L_t \mid \text{Sai}) = \frac{P(L_{t-1}) \cdot P(S)}{P(L_{t-1}) \cdot P(S) + (1 - P(L_{t-1})) \cdot (1 - P(G))}$$
+    </div>
+    
+    <p>
+      Hãy cùng đưa các số liệu thực tế vào công thức để thấy sự phân hóa rõ rệt:
+    </p>
+    <ul>
+      <li>
+        <strong>Tình huống 1: Người học hiểu bài nhưng bị bất cẩn (sơ suất - Slip)</strong>
+        <br>- Sinh viên có độ hiểu bài ban đầu tích lũy từ quá khứ rất cao: $P(L_{t-1}) = 0.95$.
+        <br>- Thời gian làm bài rất nhanh ($15$ giây) và chọn trúng bẫy nhầm dấu số học $\to$ Xác suất bất cẩn được thuật toán nâng lên cao: $P(S) = 0.35$.
+        <br>- Đưa vào công thức tính toán, kết quả độ hiểu bài sau khi làm sai $P(L_t \mid \text{Sai})$ vẫn đạt xấp xỉ <strong>$0.82$</strong> (vẫn ở ngưỡng hiểu bài an toàn).
+        <br>$\to$ <strong>Kết luận của hệ thống:</strong> Không trừ điểm nặng, không bắt học lại từ đầu, chỉ gửi cảnh báo: <em>"Bạn tính nhẩm quá vội nên nhầm dấu rồi nhé!"</em>.
+      </li>
+      <li style="margin-top: 15px;">
+        <strong>Tình huống 2: Người học thực sự không hiểu bản chất (hổng kiến thức - Knowledge Gap)</strong>
+        <br>- Sinh viên ngồi ngẫm nghĩ rất lâu ($120$ giây) nhưng lại chọn trúng bẫy hiểu sai hoàn toàn định lý toán học cơ bản.
+        <br>- Khi sinh viên chọn bẫy sai định lý, khả năng bất cẩn là cực kỳ thấp: $P(S)$ giảm xuống chỉ còn $0.03$.
+        <br>- Đưa vào công thức tính toán, độ hiểu bài $P(L_t \mid \text{Sai})$ lập tức tụt dốc xuống <strong>$0.31$</strong> (rơi khỏi ngưỡng an toàn).
+        <br>$\to$ <strong>Kết luận của hệ thống:</strong> Xác nhận đây là <strong>nợ kiến thức thực sự (knowledge debt)</strong> và lập tức kích hoạt nhánh học phụ đạo trên đồ thị Neo4j.
+      </li>
+    </ul>
+
+    <h3>Công thức Thước đo độ bất thường mẫu làm bài (Chỉ số Person-Fit $l_z$)</h3>
+    <p>
+      Để phát hiện các trường hợp mẫu làm bài có dấu hiệu bất thường (như ăn may ở câu khó hoặc cố tình phá hoại), hệ thống sử dụng chỉ số khớp cá nhân $l_z$ dựa trên Lý thuyết phản ứng câu hỏi (Item Response Theory - IRT):
+    </p>
+    <div class="math-card">
+      <div class="math-card-title">Hàm Hợp Lý Logarit (Log-likelihood) của Mẫu Trả Lời</div>
+      $$l(\theta) = \sum_{i=1}^N \left[ X_i \ln P_i(\theta) + (1 - X_i) \ln(1 - P_i(\theta)) \right]$$
+    </div>
+    <p>
+      Trong đó:
+      <br>- $N$: Tổng số câu hỏi trong bài kiểm tra.
+      <br>- $X_i$: Kết quả làm bài thực tế ở câu $i$ ($X_i = 1$ nếu làm đúng, $X_i = 0$ nếu làm sai).
+      <br>- $P_i(\theta)$: Xác suất một người có năng lực $\theta$ trả lời đúng câu $i$ theo mô hình IRT 2 tham số:
+      $$P_i(\theta) = \frac{1}{1 + e^{-a_i(\theta - b_i)}}$$
+      với $b_i$ là độ khó câu hỏi (cột <code>difficulty_index</code>) và $a_i$ là độ phân hóa (cột <code>discrimination_index</code>).
+    </p>
+
+    <div class="math-card">
+      <div class="math-card-title">Giá Trị Kỳ Vọng $\mathbb{E}$ và Phương Sai $\text{Var}$ của Mẫu Làm Bài</div>
+      $$\mathbb{E}[l(\theta)] = \sum_{i=1}^N \left[ P_i(\theta) \ln P_i(\theta) + (1 - P_i(\theta)) \ln(1 - P_i(\theta)) \right]$$
+      $$\text{Var}[l(\theta)] = \sum_{i=1}^N P_i(\theta)(1 - P_i(\theta)) \left[ \ln \frac{P_i(\theta)}{1 - P_i(\theta)} \right]^2$$
+    </div>
+
+    <div class="math-card">
+      <div class="math-card-title">Chỉ Số Chuẩn Hóa $l_z$ (Standardized Person-Fit Statistic)</div>
+      $$l_z = \frac{l(\theta) - \mathbb{E}[l(\theta)]}{\sqrt{\text{Var}[l(\theta)]}}$$
+    </div>
+    <p>
+      <strong>Ý nghĩa đời thường:</strong>
+      <br>- $\mathbb{E}[l(\theta)]$ là "điểm số logic kỳ vọng" của một người bình thường có cùng năng lực $\theta$.
+      <br>- $\text{Var}[l(\theta)]$ là "khoảng dao động tự nhiên cho phép".
+      <br>- Khi kết quả tính ra <strong>$l_z < -2.00$</strong>, tức là mẫu bài làm bị lệch quá 2 độ lệch chuẩn so với quy luật tự nhiên (nghịch lý đúng câu siêu khó mà sai câu siêu dễ). Thuật toán ngay lập tức kích hoạt cờ cảnh báo <code>SUSPECTED_LUCK</code>.
+    </p>
+
+    <h3>Công thức Chỉ số Nỗ lực Thời gian Phản hồi (Response Time Effort - RTE)</h3>
+    <p>
+      Để phát hiện hành vi buông xuôi, đánh lụi phút chót, hệ thống xác định ngưỡng thời gian tối thiểu cho từng câu hỏi $i$:
+    </p>
+    <div class="math-card">
+      <div class="math-card-title">Ngưỡng Thời Gian Định Mức $NT_{10\%}$ (Normative Threshold)</div>
+      $$T_{\text{threshold}, i} = \max\left(3.0\text{ giây}, \; 0.10 \times T_{i, \text{median}}\right)$$
+      $$\text{RTE}_i = \begin{cases} 1 & \text{nếu } T_{\text{spent}, i} \ge T_{\text{threshold}, i} \quad (\text{Người học có suy nghĩ đọc đề}) \\ 0 & \text{nếu } T_{\text{spent}, i} < T_{\text{threshold}, i} \quad (\text{Bấm bừa cực nhanh, không đọc đề}) \end{cases}$$
+    </div>
+  </section>
+
+  <!-- CHƯƠNG 5 -->
+  <section>
+    <h2>Chương 5: Bóc Tách Chi Tiết 8 Trường Hợp Biên Nhận Thức (Edge Cases) Bằng Ngôn Ngữ Đời Thường</h2>
+    <p>
+      Dưới đây là 8 tình huống hóc búa nhất trong khảo thí trực tuyến mà các hệ thống thông thường hay phán đoán sai, cùng cách giải quyết bằng toán học:
+    </p>
+
+    <!-- EC-1 -->
+    <div class="edge-box">
+      <div class="edge-box-title">
+        <span>Trường hợp biên 1: Ăn May Ở Câu Khó (Lucky Guessing)</span>
+        <span class="edge-box-tag">Vi phạm thang đo Guttman</span>
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Hiện tượng đời thực:</span> Sinh viên làm đúng câu cực khó (độ khó cấp 3 - tìm ma trận nghịch đảo cấp $4 \times 4$), nhưng lại làm sai câu dễ ợt (độ khó cấp 1 - hỏi hai ma trận cộng nhau có tính giao hoán không).
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Bản chất nhận thức:</span> Câu khó làm đúng thực chất là do đánh lụi ăn may (xác suất đoán mò trúng $P(G) = 0.25$). Câu dễ bị sai mới chính là thước đo phản ánh trình độ thật.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Các biến số biến động:</span> Thước đo độ bất thường của bài làm ($l_z$) tụt xuống dưới mức cho phép ($l_z < -2.00$). Thời gian làm câu khó ($T_{\text{spent}}$) ngắn bất thường so với độ phức tạp.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Thuật toán ra quyết định:</span> Dán nhãn câu khó là <strong>NGHI NGỜ ĂN MAY (SUSPECTED_LUCK)</strong>. Tạm thời không cộng điểm năng lực trọn vẹn cho câu khó. Kích hoạt ngay 1 câu hỏi đồng cấu (cùng dạng toán nhưng đổi số liệu ngẫu nhiên) ở bài học sau để kiểm chứng lại.
+      </div>
+    </div>
+
+    <!-- PHÂN TÍCH CHUYÊN SÂU: ĐIỀU PHỐI CÂU HỎI ĐỒNG CẤU & XỬ LÝ ĐA NGHI NGỜ -->
+    <div class="callout callout-info" style="margin: 35px 0;">
+      <div class="callout-title">Cơ Chế Sư Phạm Chuyên Sâu: Điều Phối Câu Hỏi Đồng Cấu & Xử Lý Đa Nghi Ngờ</div>
+      <p>
+        Trong khảo thí thích ứng, có hai bài toán hóc búa được đặt ra: 
+        <em>"Lỡ câu hỏi đồng cấu kiểm chứng không khớp với nội dung bài tiếp theo thì sao? Chèn vào có bị lộ liễu và vô duyên không? Và chắc gì sinh viên chỉ bị nghi ngờ ở đúng 1 câu duy nhất?"</em>. 
+        Hệ thống Vectoria giải quyết triệt để bằng hai quy tắc điều phối dưới đây:
+      </p>
+
+      <h4 style="color: var(--accent-academic); margin-top: 18px; margin-bottom: 8px;">1. Cơ Chế 3 Tầng Điều Phối Tránh Lộ Liễu (Smart Contextual Routing)</h4>
+      <p>
+        Để việc đưa câu hỏi kiểm chứng vào bài học mới diễn ra hoàn toàn tự nhiên và tôn trọng trải nghiệm người học, thuật toán áp dụng 3 tầng định tuyến:
+      </p>
+      <ul>
+        <li>
+          <strong>Tầng 1 - Bốc "Câu hỏi giao thoa" (Bridge Question):</strong> 
+          Nếu bài học mới có mối quan hệ phụ thuộc tiên quyết (<code>[:REQUIRES]</code>) với bài học cũ trên đồ thị Neo4j, hệ thống sẽ bốc một câu hỏi kết hợp bản chất của cả hai bài.
+          <br><em>Ví dụ thực tế:</em> Bài cũ là "Định thức ma trận", bài mới là "Ma trận nghịch đảo". Công thức ma trận nghịch đảo cấp 2 và cấp 3 đòi hỏi phải chia cho định thức ($A^{-1} = \frac{1}{\det(A)} \text{adj}(A)$). Thay vì hỏi một câu tính định thức cơ học của bài cũ, hệ thống bốc câu hỏi: 
+          <em>"Cho ma trận vuông cấp 3 $A$ thỏa mãn $\det(A) = 0$. Khẳng định nào sau đây về tính khả nghịch của $A$ là đúng?"</em>. 
+          Câu hỏi này vừa kiểm tra bản chất định thức của bài trước, vừa phục vụ trực tiếp kiến thức trọng tâm của bài mới. Sinh viên cảm thấy bài tập hoàn toàn tự nhiên 100%!
+        </li>
+        <li>
+          <strong>Tầng 2 - Huy hiệu sư phạm "Khởi động phản xạ kiến thức nền tảng" (Warm-up Retrieval):</strong> 
+          Nếu bài mới nằm ở một phân nhánh kiến thức độc lập (ví dụ chuyển từ Chương Ma trận sang Không gian Vector), hệ thống không chèn lén lút mà hiển thị một huy hiệu nhỏ trang trọng trên giao diện Task 2: 
+          <em>"Khởi động phản xạ: Ôn tập kiến thức liên hệ"</em>. 
+          Dưới góc độ sư phạm, đây là phương pháp <strong>Phục hồi giãn cách (Spaced Retrieval Practice)</strong> kinh điển được kiểm chứng giúp tăng $40\%$ độ bền trí nhớ dài hạn (Dunlosky et al., 2013). Người học không cảm thấy bị nghi ngờ mà cảm nhận được sự chu đáo của hệ thống.
+        </li>
+        <li>
+          <strong>Tầng 3 - Tạm giữ trong hàng đợi nợ tri thức (Knowledge Debt Queue):</strong> 
+          Nếu bài tiếp theo hoàn toàn không phù hợp để lồng ghép, câu hỏi kiểm chứng được lưu trong bảng <code>knowledge_debts</code> (trạng thái <code>is_cleared = FALSE</code>) và tự động xuất hiện ở <strong>Task 3 (Bài kiểm tra tổng kết chặng / Milestone Quiz)</strong> khi học xong cả cụm chủ đề.
+        </li>
+      </ul>
+
+      <h4 style="color: var(--accent-academic); margin-top: 18px; margin-bottom: 8px;">2. Quy Tắc Phân Ngưỡng Nhận Thức Khi Có Nhiều Hơn Một Câu Bị Nghi Ngờ</h4>
+      <p>
+        Nếu trong một bài kiểm tra có 5 câu mà sinh viên khoanh lụi hoặc đoán mò trúng 2 đến 3 câu, thuật toán phân loại theo hai ngưỡng toán học:
+      </p>
+      <ul>
+        <li>
+          <strong>Trường hợp Nghi ngờ Cục bộ ($\le 30\%$ số câu của bài - ví dụ: 1/5 câu hoặc 2/10 câu):</strong>
+          <br>- Hệ thống vẫn tạm thời công nhận sinh viên đạt điểm qua bài để giữ nhịp học tập hứng khởi.
+          <br>- Các câu nghi ngờ được đưa vào bảng <code>knowledge_debts</code> theo cơ chế <strong>Hàng đợi vào trước ra trước (FIFO)</strong>.
+          <br>- <strong>Quy tắc giãn cách nghiêm ngặt:</strong> Mỗi bài học tiếp theo chỉ được phép trả nợ <strong>TỐI ĐA 1 CÂU</strong> kiểm chứng để tuyệt đối không làm loãng trọng tâm kiến thức của bài mới. Bài kế tiếp kiểm chứng câu thứ nhất, bài sau đó nữa kiểm chứng câu thứ hai.
+        </li>
+        <li>
+          <strong>Trường hợp Ảo tưởng Thành thạo ($> 40\%$ số câu của bài - ví dụ: 2/5 câu hoặc 4/10 câu):</strong>
+          <br>- Khi một bài làm có quá nhiều câu đúng tốc độ dưới 5 giây hoặc đổi đáp án liên tục, Thước đo độ bất thường mẫu làm bài ($l_z$) tụt sâu dưới ngưỡng an toàn: $l_z < -2.00$. Xác suất kết quả này phản ánh thực lực thật của sinh viên là dưới $2.2\%$.
+          <br>- <strong>Đình chỉ công nhận vượt qua bài (Mastery Invalidation):</strong> Hệ thống tuyệt đối <strong>KHÔNG</strong> cho qua bài giả tạo! Điểm số $s_{\text{web}}$ tạm thời không được cộng dồn.
+          <br>- Hệ thống hiển thị thông báo sư phạm tích cực: 
+          <em>"Hệ thống nhận thấy bạn giải quyết các câu hỏi then chốt rất nhanh. Để đảm bảo kiến thức nền tảng thực sự vững vàng trước khi mở bài tiếp theo, bạn vui lòng hoàn thành 3 câu hỏi kiểm chứng cốt lõi dưới đây!"</em>. 
+          Sinh viên làm ngay 3 câu hỏi đồng cấu tại chỗ để chứng minh thực lực.
+        </li>
+      </ul>
+    </div>
+
+    <!-- EC-2 -->
+    <div class="edge-box">
+      <div class="edge-box-title">
+        <span>Trường hợp biên 2: Bẫy Học Vẹt Thao Tác (Procedural Trap)</span>
+        <span class="edge-box-tag">Rỗng Bản Chất</span>
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Hiện tượng đời thực:</span> Sinh viên giải các bài tính toán số học rất nhanh (bấm máy tính khử Gauss ro ro đạt 10/10), nhưng khi hỏi câu lý thuyết bản chất: <em>"Tại sao khi hoán vị 2 dòng thì định thức đổi dấu?"</em> thì hoàn toàn không biết trả lời.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Bản chất nhận thức:</span> Người học chỉ thuộc lòng các bước bấm máy như một cái máy (năng lực thao tác - procedural fluency), nhưng não bộ rỗng hoàn toàn về khái niệm và tiên đề định lý (năng lực bản chất - conceptual deficit).
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Các biến số biến động:</span> Điểm nhóm câu hỏi Thao tác đạt $1.00$, nhưng điểm nhóm câu hỏi Bản chất bằng $0.00$. Thời gian làm câu hỏi bản chất ($T_{\text{spent}}$) rất nhanh và chọn trúng bẫy sai định lý.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Thuật toán ra quyết định:</span> Dán nhãn <strong>HỌC VẸT THAO TÁC (PROCEDURAL_TRAP)</strong>. Chặn không cho học bài mới, phạt nợ kiến thức vào Nút Khái niệm trên đồ thị Neo4j để bắt buộc xem lại bài giảng lý thuyết.
+      </div>
+    </div>
+
+    <!-- EC-3 -->
+    <div class="edge-box">
+      <div class="edge-box-title">
+        <span>Trường hợp biên 3: Sơ Suất Do Nghĩ Quá Nhiều (Overthinking Slip)</span>
+        <span class="edge-box-tag">Bẫy Nhận Thức</span>
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Hiện tượng đời thực:</span> Một học sinh giỏi gặp một câu hỏi độ khó cấp 1 quá đơn giản, liền tự nhủ: <em>"Chắc đề thi đại học không bao giờ dễ thế này, chắc có bẫy gì hiểm hóc ở trường hợp ma trận suy biến chăng?"</em>. Ngồi ngẫm nghĩ rất lâu rồi chọn một đáp án sai mang tính giả định xa vời.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Bản chất nhận thức:</span> Người học hiểu sâu nhưng bị tâm lý hoang mang, tự suy diễn phức tạp và sa vào các trường hợp biên đặc biệt (boundary cases).
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Các biến số biến động:</span> Độ hiểu bài ban đầu tích lũy từ quá khứ ($P(L_{t-1})$) rất cao ($> 0.90$). Thời gian làm bài ($T_{\text{spent}}$) kéo dài gấp 3-4 lần bình thường. Đáp án chọn rơi đúng vào bẫy điều kiện biên (trường hợp ma trận suy biến có định thức bằng 0).
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Thuật toán ra quyết định:</span> Phân loại là <strong>BẤT CẨN DO NGHĨ QUÁ NHIỀU (OVERTHINKING_SLIP)</strong>. Giữ nguyên độ hiểu bài nền tảng, gửi phản hồi giải tỏa tâm lý cho sinh viên.
+      </div>
+    </div>
+
+    <!-- EC-4 -->
+    <div class="edge-box">
+      <div class="edge-box-title">
+        <span>Trường hợp biên 4: Buông Xuôi / Đánh Lụi Phút Chót (Rapid Guessing Disengagement)</span>
+        <span class="edge-box-tag">Mất Nỗ Lực</span>
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Hiện tượng đời thực:</span> Gần hết giờ làm bài hoặc bị nản chí, sinh viên bấm bừa liên tiếp 3 câu cuối trong vòng chưa đầy 5 giây mà không thèm đọc đề bài.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Bản chất nhận thức:</span> Hành vi này phản ánh sự buông xuôi, mất tập trung hoặc hết thời gian, không hề phản ánh trí thông minh hay lượng kiến thức thực sự trong đầu sinh viên.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Các biến số biến động:</span> Chỉ số nỗ lực phản hồi (RTE) bằng $0$. Thời gian làm bài ($T_{\text{spent}}$) dưới 3 giây, nhỏ hơn rất nhiều so với ngưỡng tối thiểu ($T_{\text{threshold}} = 0.10 \times T_{\text{median}}$).
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Thuật toán ra quyết định:</span> <strong>CÔ LẬP VÀ LOẠI BỎ DỮ LIỆU</strong>. Không đưa kết quả các câu này vào công thức cập nhật độ hiểu bài để tránh làm méo mó hồ sơ năng lực của người học.
+      </div>
+    </div>
+
+    <!-- EC-5 -->
+    <div class="edge-box">
+      <div class="edge-box-title">
+        <span>Trường hợp biên 5: Mệt Mỏi Suy Kiệt Nhận Thức Cuối Bài (Cognitive Fatigue Effect)</span>
+        <span class="edge-box-tag">Kiệt Sức</span>
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Hiện tượng đời thực:</span> Đề thi dài 20 câu. Mười câu đầu sinh viên làm đúng toàn bộ với phong độ xuất sắc, nhưng đến 5 câu cuối cùng thì sai hàng loạt.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Bản chất nhận thức:</span> Não bộ bị cạn kiệt năng lượng nhận thức sau thời gian dài tập trung căng thẳng. Sinh viên không phải không biết làm bài, mà do não bộ đã quá mệt mỏi.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Các biến số biến động:</span> Tỷ lệ sai tăng dần đều theo số thứ tự câu hỏi; thời gian làm bài giảm dần theo hàm số mũ.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Thuật toán ra quyết định:</span> Áp dụng hàm bù trừ suy kiệt theo vị trí câu hỏi $e^{-\lambda (\text{pos}-1)}$. Hệ thống không đánh tụt điểm năng lực ở các bài học cuối, mà nhắc nhở sinh viên nghỉ ngơi giải lao.
+      </div>
+    </div>
+
+    <!-- EC-6 -->
+    <div class="edge-box">
+      <div class="edge-box-title">
+        <span>Trường hợp biên 6: Giao Thoa Tri Thức Tiêu Cực (Negative Concept Interference)</span>
+        <span class="edge-box-tag">Nhầm Lẫn Chéo</span>
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Hiện tượng đời thực:</span> Sinh viên vốn làm bài phép cộng ma trận rất tốt ($A + B = B + A$). Nhưng vừa học xong bài phép nhân ma trận (vốn không có tính giao hoán $AB \neq BA$), quay lại làm bài kiểm tra thì lại khẳng định $A + B \neq B + A$.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Bản chất nhận thức:</span> Kiến thức mới học can thiệp và làm nhiễu loạn kiến thức cũ (hiện tượng "râu ông nọ cắm cằm bà kia").
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Các biến số biến động:</span> Sai sót xuất hiện ngay sau khi hoàn thành một nút bài học có tính chất toán học tương phản trên đồ thị Neo4j.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Thuật toán ra quyết định:</span> Neo4j truy quét cặp quan hệ xung đột; hệ thống tự động tạo một thẻ so sánh đối chiếu đặt hai công thức cạnh nhau để não bộ phân biệt ranh giới rõ ràng.
+      </div>
+    </div>
+
+    <!-- EC-7 -->
+    <div class="edge-box">
+      <div class="edge-box-title">
+        <span>Trường hợp biên 7: Bệnh Ở Ngọn Nhưng Gốc Ở Rễ (Prerequisite Bottleneck)</span>
+        <span class="edge-box-tag">Nút Thắt Cổ Chai</span>
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Hiện tượng đời thực:</span> Sinh viên làm sai bài toán tổng hợp tìm ma trận nghịch đảo bằng ma trận phụ hợp: $A^{-1} = \frac{1}{\det(A)} P_A$.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Bản chất nhận thức:</span> Sinh viên hoàn toàn nhớ đúng công thức nghịch đảo, nhưng lại tính sai do nhầm dấu ở bước tính phần bù đại số con cấp 1 (kiến thức nền tảng của bài học trước).
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Các biến số biến động:</span> Thuật toán đối chiếu câu sai với đồ thị tiên quyết có hướng (DAG) cho thấy lỗi bắt nguồn từ nút tiên quyết cấp dưới.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Thuật toán ra quyết định:</span> Thuật toán dò ngược nút tiên quyết trên Neo4j bỏ qua bài nghịch đảo, phạt đúng vào **nút thắt cổ chai** là phép tính phần bù đại số, tránh việc bắt sinh viên phải học lại cả cụm bài không cần thiết.
+      </div>
+    </div>
+
+    <!-- EC-8 -->
+    <div class="edge-box">
+      <div class="edge-box-title">
+        <span>Trường hợp biên 8: Ảo Tưởng Sức Mạnh / Tự Tin Thái Quá (Dunning-Kruger Effect)</span>
+        <span class="edge-box-tag">Lệch Chuẩn Siêu Nhận Thức</span>
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Hiện tượng đời thực:</span> Sinh viên làm bài 15 phút xong nộp bài ngay trong khi giờ làm bài là 30 phút. Rất tự tin nhưng kết quả thực tế chỉ đạt 2/10 điểm.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Bản chất nhận thức:</span> Người có trình độ kém thường không nhận thức được độ khó và độ sâu của vấn đề nên sinh ra tự tin thái quá.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Các biến số biến động:</span> Độ lệch chuẩn âm giữa thời gian nộp bài sớm và tỷ lệ sai lầm thực tế.
+      </div>
+      <div class="edge-row">
+        <span class="edge-label">Thuật toán ra quyết định:</span> Gửi cảnh báo siêu nhận thức; bắt buộc sinh viên phải làm bài kiểm tra phân hóa sâu trước khi được tiếp tục lộ trình học tập.
+      </div>
+    </div>
+  </section>
+
+  <!-- CHƯƠNG 6 -->
+  <section>
+    <h2>Chương 6: Ba Kịch Bản Sinh Viên Minh Họa Trực Quan</h2>
+
+    <h3>Kịch bản 1: Sinh viên An - "Nghịch lý Task Luyện tập 10/10 nhưng Thi Tổng kết 3/10"</h3>
+    <p>
+      An học bài <em>Phép nhân ma trận</em> và <em>Định thức</em>. Ở bài luyện tập nhỏ sau từng bài, An làm đúng 5/5 câu vì đề bài chỉ yêu cầu nhân hai ma trận cụ thể bằng số. Nhưng trong bài thi tổng kết 5 câu, An chỉ được 3/10 điểm.
+    </p>
+    <div class="callout callout-info">
+      <div class="callout-title">Dữ liệu phân tích hành vi của An:</div>
+      <p>
+        - Tại câu số 3: <em>"Cho hai ma trận vuông $A, B$. Mệnh đề nào sau đây luôn đúng? (A) $\det(A+B) = \det(A)+\det(B)$; (B) $\det(AB) = \det(A)\det(B)$..."</em>.<br>
+        - Thời gian làm bài của An ($T_{\text{spent}}$): Chỉ mất <strong>8 giây</strong>.<br>
+        - Lựa chọn: An chọn ngay phương án (A), một sai lầm bản chất về tiên đề định thức.<br>
+        - <strong>Kết luận của thuật toán:</strong> Rơi vào <strong>Trường hợp biên 2 (Bẫy học vẹt thao tác)</strong>. An chỉ biết bấm máy tính chứ không hiểu bản chất định lý. Hệ thống ghi nợ kiến thức cho nút <code>prop_determinant_multiplicative</code> trên Neo4j.
+      </p>
+    </div>
+
+    <h3>Kịch bản 2: Sinh viên Bình - "Đúng câu Khó cấp 3, Sai câu Dễ cấp 1"</h3>
+    <p>
+      Bình giải đúng một câu hỏi cực khó cấp 3 về tìm ma trận nghịch đảo cấp $4 \times 4$ (cả khóa chỉ 18% sinh viên làm được), nhưng lại làm sai câu cấp 1: <em>"Phép cộng ma trận có tính giao hoán không?"</em>.
+    </p>
+    <div class="callout callout-info">
+      <div class="callout-title">Xử lý của thuật toán đối với Bình:</div>
+      <p>
+        - Thước đo độ bất thường bài làm của Bình ($l_z$) bằng $-2.41$ (vượt ngưỡng cho phép $-2.00$).<br>
+        - Thuật toán nhận diện ngay đây là <strong>Trường hợp biên 1 (Ăn may ở câu khó)</strong>. Điểm năng lực tạm thời không được cộng trọn vẹn.<br>
+        - Ở bài học tiếp theo, hệ thống bí mật đưa vào 1 câu hỏi đồng cấu tìm nghịch đảo ma trận $4 \times 4$ khác số liệu. Bình không làm được câu này trong 120 giây $\to$ Hệ thống bóc trần việc ăn may và xác nhận lỗ hổng thực sự.
+      </p>
+    </div>
+
+    <h3>Kịch bản 3: Sinh viên Chi - "Học lực Xuất sắc nhưng Sai câu Dễ vì Nghĩ Quá Nhiều"</h3>
+    <p>
+      Chi có độ hiểu bài ban đầu tích lũy từ quá khứ ($P(L_{t-1})$) đạt $0.94$. Khi gặp câu hỏi cấp 1: <em>"Hệ phương trình thuần nhất $AX = 0$ có luôn có nghiệm không?"</em> (Đáp án hiển nhiên: Luôn có nghiệm tầm thường $X = 0$).
+    </p>
+    <div class="callout callout-info">
+      <div class="callout-title">Dữ liệu vi hành vi của Chi:</div>
+      <p>
+        - Chi ngồi suy nghĩ tới <strong>145 giây</strong> (trong khi cả lớp chỉ mất 15 giây). Chi đổi đáp án qua lại 4 lần.<br>
+        - Chi chọn đáp án sai về trường hợp vô số nghiệm khi định thức bằng 0.<br>
+        - <strong>Thuật toán phân loại:</strong> <strong>Trường hợp biên 3 (Sơ suất do nghĩ quá nhiều)</strong>. Hệ thống không trừ điểm năng lực nền tảng, không bắt Chi học lại từ đầu, mà chỉ gửi một lời giải thích ngắn gọn giúp Chi tự tin hơn.
+      </p>
+    </div>
+  </section>
+
+  <!-- CHƯƠNG 7 -->
+  <section>
+    <h2>Chương 7: Công Cụ Mô Phỏng Chẩn Đoán Trực Quan Tương Tác</h2>
+    <p>
+      Bạn có thể trực tiếp điều chỉnh các thanh trượt và lựa chọn dưới đây để xem thuật toán toán học hoạt động và đưa ra kết luận trong thời gian thực:
+    </p>
+
+    <div class="sim-panel">
+      <div class="sim-grid">
+        <!-- Cột 1 -->
+        <div class="sim-control-group">
+          <label class="sim-label">1. Thời gian làm bài thực tế (Biến $T_{\text{spent}}$)</label>
+          <div class="sim-desc">Thời gian tiêu chuẩn để giải câu này là 60 giây ($T_{\text{expected}} = 60\text{s}$).</div>
+          <div class="sim-slider-row">
+            <input type="range" id="simTime" min="2" max="180" value="12" oninput="runSimulation()">
+            <span class="sim-value-badge" id="simTimeVal">12 s</span>
+          </div>
+        </div>
+
+        <div class="sim-control-group">
+          <label class="sim-label">2. Loại Bẫy Đáp Án Đã Chọn (Phân loại lỗi nhận thức)</label>
+          <div class="sim-desc">Tính chất của phương án sai trong đề bài trắc nghiệm.</div>
+          <select class="sim-select" id="simDistractor" onchange="runSimulation()">
+            <option value="ARITHMETIC_SLIP">Bẫy tính nhẩm số học (Quên đổi dấu, cộng trừ nhầm)</option>
+            <option value="CONCEPTUAL_FALLACY">Bẫy tiên đề bản chất (Hiểu sai hoàn toàn định lý toán)</option>
+            <option value="BOUNDARY_CASE">Bẫy điều kiện biên (Ma trận suy biến, chia cho 0)</option>
+            <option value="RANDOM_NOISE">Chọn ngẫu nhiên / Bấm lụi không đọc đề</option>
+          </select>
+        </div>
+
+        <!-- Cột 2 -->
+        <div class="sim-control-group">
+          <label class="sim-label">3. Độ hiểu bài ban đầu tích lũy từ trước (Biến $P(L_{t-1})$)</label>
+          <div class="sim-desc">Điểm số phong độ ở các bài tập luyện tập trước đây.</div>
+          <div class="sim-slider-row">
+            <input type="range" id="simPrior" min="10" max="98" value="92" oninput="runSimulation()">
+            <span class="sim-value-badge" id="simPriorVal">0.92</span>
+          </div>
+        </div>
+
+        <div class="sim-control-group">
+          <label class="sim-label">4. Tính nhất quán giữa các câu hỏi trong bài thi</label>
+          <div class="sim-desc">Mẫu trả lời giữa các câu hỏi cùng chủ đề.</div>
+          <select class="sim-select" id="simConsistency" onchange="runSimulation()">
+            <option value="HIGH_HARD_LOW_EASY">Đúng câu Khó (Cấp 3), nhưng Sai câu Dễ (Cấp 1) [Nghịch lý]</option>
+            <option value="NORMAL_ALL_WRONG">Sai toàn bộ các câu cùng chủ đề</option>
+            <option value="NORMAL_CONSISTENT">Đúng câu Dễ, chỉ sai câu Cực khó</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Kết quả Mô phỏng -->
+      <div class="sim-output-box">
+        <div class="sim-status-title">
+          <span>Kết Quả Chẩn Đoán Của Thuật Toán:</span>
+          <span id="simBadge" class="badge-status badge-slip">BẤT CẨN (Slip)</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 18px 0; text-align: center;">
+          <div style="background: var(--bg-subtle); padding: 12px; border: 1px solid var(--border-color); border-radius: 2px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Xác suất Sơ suất P(S)</div>
+            <div id="simPsVal" style="font-family: var(--font-mono); font-size: 1.4rem; font-weight: 700; color: var(--accent-academic); margin-top: 4px;">0.350</div>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 12px; border: 1px solid var(--border-color); border-radius: 2px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Độ hiểu bài sau cập nhật P(Lt)</div>
+            <div id="simPostVal" style="font-family: var(--font-mono); font-size: 1.4rem; font-weight: 700; color: var(--accent-gold); margin-top: 4px;">0.814</div>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 12px; border: 1px solid var(--border-color); border-radius: 2px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Hành động Hệ thống</div>
+            <div id="simActionVal" style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 700; margin-top: 8px; color: var(--text-main);">CẢNH BÁO TỐC ĐỘ</div>
+          </div>
+        </div>
+        <p id="simExplanation" style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-main); line-height: 1.6;">
+          Người học có lịch sử điểm số rất cao ($0.92$), làm bài quá nhanh ($12$s so với chuẩn $60$s) và rơi vào bẫy dấu số học. Thuật toán phân loại đây là sai sót do bất cẩn (Slip), giữ nguyên độ hiểu bài an toàn ($0.81$) và không tạo nợ kiến thức trên Neo4j.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHƯƠNG 8 -->
+  <section>
+    <h2>Chương 8: Công Thức Tối Thượng Tính Dung Lượng Ngân Hàng Câu Hỏi Tối Thiểu (Item Bank Sizing) & Công Cụ Dự Tính Tương Tác</h2>
+    <p>
+      Một trăn trở rất thực tế của người phát triển hệ thống: <em>"Để thuật toán có thể bốc câu hỏi đồng cấu, phân loại đủ 2 chiều Thao tác - Bản chất, 3 mức độ khó Bloom và 4 họ bẫy đáp án, thì ngân hàng đề thi cần tối thiểu bao nhiêu câu hỏi? Nếu ngân hàng đề quá ít thì điều tồi tệ gì sẽ xảy ra?"</em>.
+    </p>
+
+    <div class="callout callout-danger">
+      <div class="callout-title">Ba Nguy Cơ Nghiêm Trọng Khi Ngân Hàng Câu Hỏi Quá Ít</div>
+      <ul>
+        <li><strong>1. Cạn kiệt câu hỏi khi làm lại (Item Bank Exhaustion):</strong> Khi sinh viên thi rớt và bấm làm lại lần 2 hoặc lần 3, nếu ngân hàng đề không còn câu hỏi mới, hệ thống buộc phải lặp lại câu hỏi cũ. Người học lúc này chỉ việc chọn theo trí nhớ cơ học chứ không cần tư duy, làm sai lệch hoàn toàn kết quả chẩn đoán năng lực.</li>
+        <li><strong>2. Tê liệt cơ chế kiểm chứng đồng cấu (Isomorphic Verification Breakdown):</strong> Khi phát hiện nghi ngờ ăn may (Trường hợp biên 1) hoặc học vẹt thao tác (Trường hợp biên 2), thuật toán cần tìm một câu hỏi cùng dạng toán nhưng khác số liệu để kiểm tra chéo. Nếu kho đề trống, thuật toán bị gãy nhánh và bất lực trong việc xác thực sự thật.</li>
+        <li><strong>3. Hiện tượng lộ đề thi diện rộng (Item Overexposure):</strong> Khi số lượng câu hỏi quá ít, tỷ lệ xuất hiện của mỗi câu vượt ngưỡng an toàn ($r_i > 0.30$). Sinh viên sẽ chụp ảnh màn hình truyền tay nhau ngân hàng đáp án, phá hủy giá trị đo lường của kỳ thi.</li>
+      </ul>
+    </div>
+
+    <h3>Công thức toán học xác định dung lượng tối thiểu của Ngân hàng đề thi ($N_{\text{min}}$)</h3>
+    <p>
+      Dựa trên lý thuyết Thiết kế Ngân hàng Khảo thí Thích ứng Máy tính (Computerized Adaptive Testing - CAT) của Reckase (2010), dung lượng ngân hàng câu hỏi tối thiểu được tính bằng công thức tích hợp đa chiều:
+    </p>
+    <div class="math-card">
+      <div class="math-card-title">Công Thức Tối Thượng Tính Dung Lượng Ngân Hàng Đề Thi</div>
+      $$N_{\text{min}} = K \times D \times L \times R \times E$$
+    </div>
+    <p>
+      Trong đó các biến số được giải thích bằng ngôn ngữ đời thường:
+      <br>- <strong>$K$ (Số lượng bài học / thành phần tri thức):</strong> Tổng số nút bài học trên đồ thị Neo4j (ví dụ: môn Đại số Tuyến tính có 15 bài học).
+      <br>- <strong>$D$ (Số chiều nhận thức):</strong> Bắt buộc gồm <strong>$2$</strong> chiều nhận thức tách biệt (Chiều thao tác tính toán và Chiều bản chất định lý, $D = 2$).
+      <br>- <strong>$L$ (Số cấp độ khó theo thang Bloom):</strong> Gồm <strong>$3$</strong> mức độ chuẩn: Dễ (Cấp 1), Trung bình (Cấp 2), Khó (Cấp 3), do đó $L = 3$.
+      <br>- <strong>$R$ (Hệ số dự phòng biến thể đồng cấu):</strong> Số lượng câu hỏi cùng một dạng bài nhưng khác số liệu để chống học vẹt và phục vụ kiểm tra chéo (khuyến nghị chuẩn $R \ge 3$).
+      <br>- <strong>$E$ (Hệ số an toàn kiểm soát độ lộ đề):</strong> Hệ số đệm chống cạn kiệt khi sinh viên làm lại nhiều lần ($E \approx 1.2$).
+    </p>
+
+    <div class="callout callout-info">
+      <div class="callout-title">Con Số Thực Tế Để Phục Vụ Thử Nghiệm Nghiên Cứu Khoa Học</div>
+      <p style="margin-bottom: 0;">
+        - Đối với <strong>1 bài học cụ thể</strong>: Số câu hỏi tối thiểu cần soạn là:
+        $$N_{\text{lesson}} = 2 \times 3 \times 3 \times 1.2 \approx 18 \text{ đến } 20 \text{ câu hỏi / bài học}$$
+        - Nếu bạn xây dựng đề tài NCKH thử nghiệm trọn vẹn cho <strong>10 bài học cốt lõi</strong>: Bạn chỉ cần một ngân hàng gồm <strong>$180 - 200$ câu hỏi</strong> là toàn bộ hệ thống logic chẩn đoán 8 trường hợp biên sẽ vận hành mượt mà $100\%$, không bao giờ bị cạn kiệt hay lặp đề!
+      </p>
+    </div>
+
+    <h3>Công Cụ Dự Tính Dung Lượng Ngân Hàng Đề Thi Tương Tác</h3>
+    <p>
+      Bạn có thể trực tiếp kéo thanh trượt dưới đây để hệ thống tự động tính toán tổng số câu hỏi cần soạn cho quy mô đề tài của bạn:
+    </p>
+
+    <div class="sim-panel" style="margin-top: 20px;">
+      <div class="sim-grid">
+        <div class="sim-control-group">
+          <label class="sim-label">1. Số lượng bài học trên đồ thị tri thức (Biến $K$)</label>
+          <div class="sim-desc">Tổng số bài học bạn muốn đưa vào hệ thống học tập.</div>
+          <div class="sim-slider-row">
+            <input type="range" id="bankK" min="1" max="30" value="10" oninput="runBankCalculator()">
+            <span class="sim-value-badge" id="bankKVal">10 bài</span>
+          </div>
+        </div>
+
+        <div class="sim-control-group">
+          <label class="sim-label">2. Số câu đồng cấu dự phòng mỗi mức độ (Biến $R$)</label>
+          <div class="sim-desc">Khuyến nghị từ 3 đến 4 câu để kiểm tra chéo ăn may.</div>
+          <div class="sim-slider-row">
+            <input type="range" id="bankR" min="1" max="5" value="3" oninput="runBankCalculator()">
+            <span class="sim-value-badge" id="bankRVal">3 câu</span>
+          </div>
+        </div>
+
+        <div class="sim-control-group">
+          <label class="sim-label">3. Số cấp độ khó Bloom (Biến $L$)</label>
+          <div class="sim-desc">Mặc định 3 mức: Dễ, Vừa, Khó.</div>
+          <select class="sim-select" id="bankL" onchange="runBankCalculator()">
+            <option value="3" selected>3 Cấp độ (Dễ - Trung bình - Khó)</option>
+            <option value="2">2 Cấp độ (Cơ bản - Nâng cao)</option>
+            <option value="4">4 Cấp độ (Nhận biết - Thông hiểu - Vận dụng - Vận dụng cao)</option>
+          </select>
+        </div>
+
+        <div class="sim-control-group">
+          <label class="sim-label">4. Hệ số an toàn chống cạn đề (Biến $E$)</label>
+          <div class="sim-desc">Dự phòng cho sinh viên làm lại bài nhiều lần.</div>
+          <select class="sim-select" id="bankE" onchange="runBankCalculator()">
+            <option value="1.2" selected>1.2 (Chuẩn mực NCKH - Tối ưu công sức soạn)</option>
+            <option value="1.5">1.5 (Vận hành thực tế diện rộng - Chống lộ đề cao)</option>
+            <option value="1.0">1.0 (Tối thiểu hóa - Tiết kiệm câu hỏi)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Kết quả dự tính -->
+      <div class="sim-output-box">
+        <div class="sim-status-title">
+          <span>Kết Quả Dự Tính Quy Mô Ngân Hàng Đề:</span>
+          <span id="bankBadge" class="badge-status badge-mastery">ĐẠT CHUẨN NCKH</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 18px 0; text-align: center;">
+          <div style="background: var(--bg-subtle); padding: 12px; border: 1px solid var(--border-color); border-radius: 2px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Số câu cần cho 1 bài học</div>
+            <div id="bankPerLesson" style="font-family: var(--font-mono); font-size: 1.4rem; font-weight: 700; color: var(--accent-academic); margin-top: 4px;">22 câu</div>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 12px; border: 1px solid var(--border-color); border-radius: 2px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Tổng số câu toàn hệ thống</div>
+            <div id="bankTotal" style="font-family: var(--font-mono); font-size: 1.4rem; font-weight: 700; color: var(--accent-gold); margin-top: 4px;">216 câu</div>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 12px; border: 1px solid var(--border-color); border-radius: 2px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Mức độ an toàn vận hành</div>
+            <div id="bankSafety" style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 700; margin-top: 8px; color: var(--text-main);">HOÀN TOÀN ĐỦ DỮ LIỆU</div>
+          </div>
+        </div>
+        <p id="bankExplanation" style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-main); line-height: 1.6;">
+          Quy mô này đảm bảo thuật toán có đủ câu hỏi để phân nhánh cho cả 8 trường hợp biên, hỗ trợ sinh viên làm lại bài tới 3 lần mà không bị lặp câu hỏi cũ.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHƯƠNG 9: HỆ THỐNG GIẢI THUẬT TỐI THƯỢNG KHÉP KÍN -->
+  <section>
+    <h2>Chương 9: Hệ Thống Giải Thuật Tối Thượng Khép Kín (Unified Closed-Loop Diagnostic & Adaptive Architecture) - Bản Chất Sư Phạm Bậc Đại Học, Kiến Trúc Hai Tầng Tất Định & Chu Trình Khảo Thí Thích Ứng Toàn Diện</h2>
+    
+    <p>
+      Các chương từ 1 đến 8 đã giải quyết trọn vẹn bài toán <strong>chẩn đoán thụ động</strong>: khi người học nộp một bài kiểm tra, hệ thống làm thế nào để bóc tách vi hành vi và phân định 8 trường hợp biên nhận thức. Tuy nhiên, một hệ thống giáo dục thích ứng hiện đại (Computerized Adaptive Testing - CAT) không thể chỉ dừng lại ở việc chẩn đoán xong rồi để đó. Khảo thí thông minh đòi hỏi một <strong>vòng lặp phản hồi khép kín toàn diện (Closed Feedback Loop)</strong>: từ khâu sinh bài tập thích ứng, đo lường vi hành vi, chẩn đoán toán học, kích hoạt phản hồi sư phạm, ghi nhận nợ tri thức, cho đến tái sinh bài tập để giải quyết dứt điểm nợ tri thức đó.
+    </p>
+
+    <div class="math-card">
+      <div class="math-card-title">Vòng Tuần Hoàn Khảo Thí Thích Ứng Khép Kín (The Closed Feedback Loop)</div>
+      $$\begin{aligned}
+        \text{Sinh Đề Thích Ứng (ZPD + Nợ)} 
+        &\longrightarrow \text{Thu Thập Vi Hành Vi (RTE + Thao Tác)} \\
+        &\longrightarrow \text{Chẩn Đoán Hai Tầng (Tất Định \& Bằng Chứng)} \\
+        &\longrightarrow \text{Trợ Lý Sư Phạm Nori Đồng Hành} \\
+        &\longrightarrow \text{Ghi Nợ \& Cập Nhật Đồ Thị Neo4j} \\
+        &\longrightarrow \text{Tái Sinh Đề Giải Quyết Nợ Tri Thức}
+      \end{aligned}$$
+    </div>
+
+    <h3>1. Nghịch Lý Khởi Đầu Lạnh (Cold-Start Paradox) & Sự Sụp Đổ Của Các Mô Hình Phỏng Đoán Cảm Tính</h3>
+    <p>
+      Một sai lầm rất phổ biến trong các dự án công nghệ giáo dục là: <em>"Đưa dữ liệu đề bài cho mô hình ngôn ngữ lớn (AI) để nó tự phán đoán độ khó, hoặc chờ hàng trăm sinh viên vào thi rồi dùng thuật toán thống kê tự điều chỉnh tham số."</em>
+    </p>
+    <p>
+      Đây là hai hướng tiếp cận đã bị chứng minh là thất bại trong khoa học khảo thí:
+    </p>
+    <ul>
+      <li>
+        <strong>Sự sụp đổ của dự đoán từ AI:</strong> Mô hình ngôn ngữ lớn (LLM) bản chất là mô hình thống kê sinh từ ngẫu nhiên (stochastic), hoàn toàn không có cơ sở bảo đảm toán học xác định (deterministic guarantees). Cùng một câu hỏi về trị riêng, lần bấm này AI có thể gán độ khó $b_i = 0.2$, lần sau lại gán $b_i = 1.5$. Việc để AI tự ý gắn nhãn bẫy nhận thức cho các phương án sai sẽ đưa ảo giác (hallucination) vào ngay tầng dữ liệu cốt lõi, phá hủy tính chính xác của toàn bộ chuỗi công thức Bayes và IRT phía sau.
+      </li>
+      <li>
+        <strong>Sự bất công của mô hình tự học trực tuyến thuần túy (Pure Online Calibration):</strong> Nếu hệ thống bắt buộc phải chờ có 300 đến 500 sinh viên làm bài rồi mới tính ra được thời gian chuẩn ($T_{\text{expected}}$) và độ khó ($b_i$), thì <strong>toàn bộ những sinh viên làm bài trong giai đoạn đầu sẽ phải nhận các chẩn đoán sai lệch</strong>. Một sinh viên giải bài nghiêm túc nhưng bị hệ thống chưa chuẩn hóa gắn cờ "đoán mò" hoặc "hổng kiến thức" là một sự bất công sư phạm không thể chấp nhận được.
+      </li>
+    </ul>
+
+    <div class="callout callout-info">
+      <div class="callout-title">Nguyên tắc nền tảng: Căn cứ pháp lý sư phạm từ Quy chế Khảo thí Đại học</div>
+      <p style="margin-bottom: 0;">
+        Để hệ thống chạy <strong>chính xác tuyệt đối ngay từ sinh viên đầu tiên</strong>, mọi thuộc tính ban đầu bắt buộc phải dựa trên <strong>Khung Định Mức Khảo Thí Chuẩn Mực của Đề Thi Đại Học</strong> (Curriculum-based Ground Truth). Đề thi trắc nghiệm Đại số Tuyến tính chuẩn của các trường đại học lớn (40 câu trong 60 phút hoặc 50 câu trong 90 phút) luôn có định mức thời gian và ma trận độ khó được Hội đồng Khoa học thẩm định rõ ràng: Nhận biết (30-45s), Thông hiểu (60-90s), Vận dụng (120-150s), và Vận dụng cao (180-240s). Đây là chân lý sư phạm xác thực, loại bỏ hoàn toàn việc đoán mò của AI hay sự cảm tính của người nhập đề.
+      </p>
+    </div>
+
+    <h3>2. Kiến Trúc Hai Tầng: Tầng Tất Định (Deterministic Core) & Tầng Hướng Bằng Chứng (Evidence-Driven)</h3>
+    <p>
+      Để triệt tiêu hoàn toàn rủi ro suy diễn sai lệch, hệ thống vận hành theo cấu trúc phân tầng nghiêm ngặt:
+    </p>
+
+    <div class="table-container">
+      <table class="academic-table">
+        <thead>
+          <tr>
+            <th style="width: 25%;">Tầng Chẩn Đoán</th>
+            <th style="width: 35%;">Cơ Chế Vận Hành Toán Học</th>
+            <th style="width: 40%;">Đảm Bảo Khoa Học</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>TẦNG 1: TẤT ĐỊNH<br>(Deterministic Core)</strong></td>
+            <td>
+              - Đúng/Sai tuyệt đối dựa trên Khóa đáp án chính thức ($0$ hoặc $1$).<br>
+              - Định mức thời gian căn cứ theo Quy chế Khảo thí Đại học.<br>
+              - Nhận diện Đoán mò siêu tốc bất biến: $T_{\text{spent}} < \max(3\text{s}, 0.10 \times T_{\text{standard}})$.<br>
+              - Ghi nợ tri thức xác thực vào bảng <code>knowledge_debts</code> trên đồ thị Neo4j khi làm sai.
+            </td>
+            <td>
+              <strong>Chính xác 100% ngay từ người dùng đầu tiên.</strong> Không phụ thuộc vào tham số ước lượng xác suất, không thể sai lệch dù cơ sở dữ liệu mới tinh hay đã có hàng nghìn sinh viên.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>TẦNG 2: HƯỚNG BẰNG CHỨNG<br>(Evidence-Driven)</strong></td>
+            <td>
+              - <strong>Nguyên tắc Fail-Safe:</strong> Chỉ kích hoạt chẩn đoán ngộ nhận sâu (như Nghĩ quá nhiều sa bẫy biên - EC-3, hay Bất cẩn số học - EC-8) khi câu hỏi đó thuộc danh mục có ghi chú bẫy rõ ràng từ đề thi gốc của trường.<br>
+              - Nếu câu hỏi không có nhãn bẫy, hệ thống chuyển về chế độ mặc định: chỉ ghi nhận làm sai kiến thức nút đó, tuyệt đối không suy diễn cảm tính.
+            </td>
+            <td>
+              <strong>Loại bỏ 100% phán đoán gán ghép.</strong> Chỉ đưa ra nhận định chuyên sâu khi có bằng chứng sư phạm hiển nhiên từ đáp án chính thức của bộ môn.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>3. Bản Chất Bẫy Nhận Thức Bậc Đại Học Trong 78 Bài Học Đại Số Tuyến Tính</h3>
+    <p>
+      Đại số Tuyến tính là môn học về <strong>Cấu trúc không gian, Ánh xạ và Tính bất biến</strong>. Sinh viên đại học không trượt vì các lỗi sơ cấp vụn vặt (như nhầm dấu cộng trừ), mà ngã gục trước các <strong>ngộ nhận cấu trúc định lý (Structural Misconceptions)</strong>.
+    </p>
+    <p>
+      Hệ thống phân loại bẫy nhận thức cho toàn bộ 78 bài học thành <strong>5 Họ Sai Lầm Bản Chất Bậc Đại Học</strong>:
+    </p>
+
+    <div class="edge-box" style="border-top-color: #dc2626;">
+      <div class="edge-box-title">
+        <span>1. Họ Bẫy Cấu Trúc Không Gian & Số Chiều (SUBSPACE_DIM_CONFUSION)</span>
+        <span class="badge-status badge-gap">Lý Thuyết Không Gian</span>
+      </div>
+      <p style="margin-bottom: 8px;">
+        <strong>Bản chất nhận thức:</strong> Lẫn lộn giữa số lượng vector với số chiều không gian; vi phạm Định lý số chiều cơ bản (Rank-Nullity Theorem):
+        $$\dim V = \dim(\operatorname{Ker} f) + \dim(\operatorname{Im} f)$$
+      </p>
+      <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-muted);">
+        <em>Ví dụ điển hình:</em> Cho hệ 4 vector trong không gian $\mathbb{R}^3$, sinh viên vội kết luận hệ độc lập tuyến tính; hoặc nhầm lẫn giữa không gian con bù trực giao $W^\perp$ với phần bù tập hợp $V \setminus W$.
+      </p>
+    </div>
+
+    <div class="edge-box" style="border-top-color: #ea580c;">
+      <div class="edge-box-title">
+        <span>2. Họ Bẫy Suy Biến Phổ & Chéo Hóa (SPECTRAL_DEGENERACY_TRAP)</span>
+        <span class="badge-status badge-gap">Trị Riêng & Chéo Hóa</span>
+      </div>
+      <p style="margin-bottom: 8px;">
+        <strong>Bản chất nhận thức:</strong> Nhầm lẫn giữa tính khả nghịch và tính chéo hóa được; ngộ nhận rằng $\det(A) = 0$ (có trị riêng $\lambda = 0$) thì ma trận không chéo hóa được; lẫn lộn giữa bội đại số (algebraic multiplicity) và bội hình học (geometric multiplicity).
+      </p>
+      <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-muted);">
+        <em>Ví dụ điển hình:</em> Cho ma trận chiếu $P^2 = P$ có $\det(P) = 0$, sinh viên kết luận không chéo hóa được trong khi nó đã ở dạng chéo hóa; quên kiểm tra điều kiện $\dim(E_{\lambda}) = n - \operatorname{rank}(A - \lambda I)$ khi đa thức đặc trưng có nghiệm bội.
+      </p>
+    </div>
+
+    <div class="edge-box" style="border-top-color: #b45309;">
+      <div class="edge-box-title">
+        <span>3. Họ Bẫy Vi Phạm Tính Bất Biến Đại Số (INVARIANT_VIOLATION)</span>
+        <span class="badge-status badge-gap">Toán Tử Tuyến Tính</span>
+      </div>
+      <p style="margin-bottom: 8px;">
+        <strong>Bản chất nhận thức:</strong> Ngộ nhận các đại lượng nội tại thay đổi khi thay đổi cơ sở biểu diễn ma trận (trong khi chúng bất biến); hoặc ngược lại, cho rằng ma trận thay đổi thì các vector không thay đổi.
+      </p>
+      <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-muted);">
+        <em>Ví dụ điển hình:</em> Khi đổi cơ sở của toán tử tuyến tính qua ma trận chuyển cơ sở $P$, sinh viên tưởng rằng Vết (Trace), Định thức (Determinant) hoặc Đa thức đặc trưng bị biến đổi theo, trong khi $\operatorname{tr}(P^{-1}AP) = \operatorname{tr}(A)$ và $\det(P^{-1}AP) = \det(A)$.
+      </p>
+    </div>
+
+    <div class="edge-box" style="border-top-color: #0284c7;">
+      <div class="edge-box-title">
+        <span>4. Họ Bẫy Đảo Chiều Điều Kiện Định Lý (LOGICAL_CONDITION_REVERSAL)</span>
+        <span class="badge-status badge-gap">Logic Định Lý</span>
+      </div>
+      <p style="margin-bottom: 8px;">
+        <strong>Bản chất nhận thức:</strong> Đảo lộn chiều suy luận giữa điều kiện cần và điều kiện đủ; áp dụng sai phạm vi của các định lý lớn (Kronecker-Capelli, Tiêu chuẩn Sylvester, Định lý Cayley-Hamilton).
+      </p>
+      <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-muted);">
+        <em>Ví dụ điển hình:</em> Áp dụng quy tắc xét định thức con chính góc $\Delta_k \ge 0$ của ma trận xác định dương sang cho ma trận nửa xác định dương (sai lầm kinh điển, vì nửa xác định đòi hỏi TẤT CẢ định thức con chính đều phải $\ge 0$).
+      </p>
+    </div>
+
+    <div class="edge-box" style="border-top-color: #4b5563;">
+      <div class="edge-box-title">
+        <span>5. Họ Bẫy Lỗi Quy Trình Biến Đổi Sơ Cấp (ALGORITHMIC_STEP_CORRUPTION)</span>
+        <span class="badge-status badge-gap">Thao Tác Cơ Bắp</span>
+      </div>
+      <p style="margin-bottom: 8px;">
+        <strong>Bản chất nhận thức:</strong> Vi phạm tính tương đương trong các phép biến đổi sơ cấp trên hàng và cột; thực hiện phép biến đổi phá hủy cấu trúc định thức hoặc hạng.
+      </p>
+      <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-muted);">
+        <em>Ví dụ điển hình:</em> Nhân một hàng với số 0; đổi chỗ hai hàng nhưng quên đổi dấu định thức; lấy cột cộng vào hàng khi đang tìm cơ sở của không gian sinh bởi các hàng.
+      </p>
+    </div>
+
+    <h3>4. Giải Quyết Bài Toán "Nhiều Cách Giải & Bài Tập Tổng Hợp Nâng Cao"</h3>
+    <p>
+      Ở các bài toán tổng hợp (như Chéo hóa ma trận, Dạng Jordan, Phân tích SVD), một bài toán có thể giải bằng nhiều cách: biến đổi hàng Gauss, khai triển Laplace, dùng định lý phổ, hay nhận xét trực giác hình học. Một đáp án trắc nghiệm khách quan không thể ép buộc người học phải đi theo bước giải trung gian nào.
+    </p>
+    <p>
+      Khoa học khảo thí quốc tế giải quyết bài toán này bằng <strong>hai kỹ thuật ra đề chuẩn mực</strong>:
+    </p>
+    <ul>
+      <li>
+        <strong>Kỹ thuật 1: Khảo thí qua Tính chất Bất biến (Invariant-based Testing):</strong> Đề bài hỏi trực tiếp về các đại lượng bất biến nội tại của bài toán (như số chiều $\dim(\operatorname{Ker} A)$, tính chéo hóa được, điều kiện tham số $m$). Dù người học giải bằng cách cơ bắp khử Gauss hay nhận xét tính chất đặc biệt, đáp số cuối cùng luôn quy về một chân lý duy nhất.
+      </li>
+      <li>
+        <strong>Kỹ thuật 2: Tổ hợp Mệnh đề Logic (Multi-statement Boolean Verification):</strong> Bài toán đưa ra 3 hoặc 4 khẳng định độc lập $(I), (II), (III), (IV)$. Mỗi phương án lựa chọn sai đại diện chính xác cho một ngộ nhận định lý cụ thể, cô lập hoàn toàn lỗi nhận thức mà không phụ thuộc vào đường đi tính toán.
+      </li>
+    </ul>
+
+    <div class="callout callout-warning">
+      <div class="callout-title">Ví dụ thực tế trích từ Đề thi Đại học: Phân tích bài toán Ma trận Đối xứng cấp 3</div>
+      <p>
+        <strong>Đề bài:</strong> Cho ma trận vuông $A = \begin{pmatrix} 1 & 2 & 2 \\ 2 & 1 & 2 \\ 2 & 2 & 1 \end{pmatrix}$. Xét các phát biểu sau:
+        <br>$(I)$ Ma trận $A$ có một trị riêng là $\lambda = 5$.
+        <br>$(II)$ Ma trận $A$ không thể chéo hóa trực giao vì các phần tử trên đường chéo bằng nhau.
+        <br>$(III)$ Không gian riêng ứng với trị riêng $\lambda = -1$ có số chiều bằng $2$.
+        <br>$(IV)$ Tồn tại ma trận khả nghịch $P$ sao cho $P^{-1} A P$ là ma trận đường chéo.
+        <br>Số lượng khẳng định <strong>đúng</strong> là: 
+        <br><strong>A. 3 khẳng định (I, III, IV)</strong> &nbsp;&nbsp;|&nbsp;&nbsp; 
+        <strong>B. 2 khẳng định (mắc bẫy II hoặc III)</strong> &nbsp;&nbsp;|&nbsp;&nbsp; 
+        <strong>C. 1 khẳng định</strong> &nbsp;&nbsp;|&nbsp;&nbsp; 
+        <strong>D. 4 khẳng định</strong>
+      </p>
+      <p style="margin-bottom: 0;">
+        <strong>Bóc tách sư phạm:</strong>
+        <br>- Nếu chọn <strong>B</strong>: Hệ thống phát hiện ngay học viên mắc bẫy <code>SPECTRAL_DEGENERACY_TRAP</code> (ngộ nhận phát biểu II, quên mất Định lý phổ: mọi ma trận đối xứng thực $A = A^T$ luôn chéo hóa trực giao được).
+        <br>- Nếu chọn <strong>D</strong>: Hệ thống phát hiện học viên mắc bẫy <code>LOGICAL_CONDITION_REVERSAL</code>.
+        <br>$\to$ Nhận diện chính xác 100% lỗ hổng tư duy mà hoàn toàn không cần can thiệp vào cách giải của học viên!
+      </p>
+    </div>
+
+    <h3>5. Mô Hình Thời Gian Định Mức Phân Nhánh Hai Đỉnh (Bimodal Expected Time)</h3>
+    <p>
+      Ở bài toán ma trận đối xứng nêu trên, xuất hiện một hiện tượng khảo thí đặc thù:
+      <br>- <strong>Cách 1 (Insight Path - Nhận diện bản chất):</strong> Nhận thấy tổng mỗi hàng đều bằng $1 + 2 + 2 = 5 \implies A(1,1,1)^T = 5(1,1,1)^T \implies \lambda = 5$. Nhận thấy $A$ đối xứng thực $\implies$ chéo hóa trực giao được ngay. <strong>Thời gian làm bài chỉ mất 25 đến 35 giây.</strong>
+      <br>- <strong>Cách 2 (Procedural Path - Tính toán cơ bắp):</strong> Lập định thức đặc trưng cấp 3 $\det(A - \lambda I) = 0$, khai triển đa thức bậc 3, tìm nghiệm, giải hệ tìm vector riêng. <strong>Thời gian làm bài mất 150 đến 180 giây.</strong>
+    </p>
+    <p>
+      Nếu hệ thống áp dụng một mốc thời gian phẳng lì ($T_{\text{expected}} = 180$s), học viên xuất sắc đi theo <em>Insight Path</em> trong 30 giây sẽ bị thuật toán RTE phạt oan là "đoán mò siêu tốc" ($NT_{10\%} = 18$s) và bị nghi ngờ "ăn may ở câu khó" (EC-1).
+    </p>
+    <p>
+      Để giải quyết triệt để, hệ thống nâng cấp công thức thời gian định mức thành <strong>Mô hình Phân nhánh Hai Đỉnh</strong>:
+    </p>
+    <div class="math-card">
+      <div class="math-card-title">Hàm Thời Gian Định Mức Phân Nhánh (Dual-Path Pacing Model)</div>
+      $$T_{\text{expected}}(i) = \begin{cases} 
+        T_{\text{insight}}(i) & \text{khi câu hỏi có đường tắt bản chất và học viên nhận diện đúng} \\ 
+        T_{\text{procedural}}(i) & \text{định mức biến đổi tuần tự theo chuẩn khảo thí bộ môn} 
+      \end{cases}$$
+      $$\text{Ngưỡng đọc hiểu tối thiểu: } NT(i) = \begin{cases} 
+        \max(3.0\text{s}, \; 0.10 \times T_{\text{insight}}) & \text{nếu câu hỏi có gắn cờ } \text{has\_shortcut} = \text{True} \\ 
+        \max(3.0\text{s}, \; 0.10 \times T_{\text{procedural}}) & \text{câu hỏi tính toán tuần tự thông thường} 
+      \end{cases}$$
+    </div>
+    <p>
+      Nhờ công thức này, học viên giải bài nhanh bằng tư duy bản chất sâu sắc sẽ được hệ thống tôn vinh năng lực thay vì bị phạt oan!
+    </p>
+
+    <h3>6. Thuật Toán Sinh Bài Tập Thích Ứng Toàn Diện (4-Stage Adaptive Quiz Generation Engine)</h3>
+    <p>
+      Để hoàn tất vòng tuần hoàn khép kín, khâu sinh bài tập được nâng cấp từ bốc ngẫu nhiên (random) lên <strong>Thuật toán Thích ứng 4 Bước (4-Stage Adaptive Selector)</strong>:
+    </p>
+
+    <div class="table-container">
+      <table class="academic-table">
+        <thead>
+          <tr>
+            <th style="width: 22%;">Bước Thực Hiện</th>
+            <th style="width: 38%;">Quy Tắc Giải Thuật</th>
+            <th style="width: 40%;">Ý Nghĩa Sư Phạm & Khảo Thí</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>BƯỚC 1<br>Thanh Toán Nợ Tri Thức</strong></td>
+            <td>
+              Truy vấn bảng <code>knowledge_debts</code> tìm các nút tri thức đang nợ (<code>is_cleared = FALSE</code>). Dành riêng <strong>1 đến 2 vị trí câu hỏi đầu tiên</strong> lấy từ các nút nợ này.
+            </td>
+            <td>
+              <strong>Khắc phục dứt điểm lỗ hổng.</strong> Học viên không thể "chạy trốn" kiến thức bị hổng. Nếu làm đúng ở lần này, hệ thống giải phóng cờ nợ (<code>is_cleared = TRUE</code>).
+            </td>
+          </tr>
+          <tr>
+            <td><strong>BƯỚC 2<br>Khớp Năng Lực Thích Ứng (ZPD)</strong></td>
+            <td>
+              Đọc chỉ số năng lực tiềm ẩn $\theta$ từ <code>user_metrics</code> để phân bổ tỷ lệ độ khó theo Vùng phát triển gần nhất (Vygotsky's ZPD):<br>
+              - $\theta \le -0.5$ (Yếu): 60% Dễ, 40% Vừa, 0% Khó.<br>
+              - $-0.5 < \theta \le 0.8$ (Trung bình): 20% Dễ, 60% Vừa, 20% Khó.<br>
+              - $\theta > 0.8$ (Giỏi): 10% Dễ, 40% Vừa, 50% Khó.
+            </td>
+            <td>
+              <strong>Tối đa hóa hàm thông tin Fisher của IRT.</strong> Đề thi luôn vừa sức: người yếu không bị hoảng loạn bỏ cuộc, người giỏi không bị nhàm chán với câu quá dễ.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>BƯỚC 3<br>Cân Bằng Miền Nhận Thức</strong></td>
+            <td>
+              Tự động phân bổ cấu trúc câu hỏi theo tỷ lệ chuẩn mực: <strong>60% Thao tác tính toán (procedural) : 40% Bản chất lý thuyết (conceptual)</strong>.
+            </td>
+            <td>
+              <strong>Phục vụ đối chiếu chẩn đoán EC-2.</strong> Đảm bảo đề thi luôn có đủ cả 2 miền nhận thức để phát hiện chính xác hiện tượng "học vẹt thao tác / rỗng bản chất".
+            </td>
+          </tr>
+          <tr>
+            <td><strong>BƯỚC 4<br>Lọc Chống Lặp Đề</strong></td>
+            <td>
+              Loại trừ các câu hỏi học viên đã làm <strong>ĐÚNG</strong> trong 7 ngày gần nhất. Ưu tiên các câu chưa từng làm (<code>UNSEEN</code>) hoặc câu đã từng làm <strong>SAI</strong> trong quá khứ.
+            </td>
+            <td>
+              <strong>Kỹ thuật lặp lại ngắt quãng (Spaced Repetition).</strong> Mở rộng không gian luyện tập và tạo cơ hội sửa chữa sai lầm cũ.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>7. Phân Định Thuộc Tính Câu Hỏi: Cấu Trúc Sư Phạm Cố Định & Hiệu Chuẩn Tham Số Đo Lường Thực Nghiệm</h3>
+    <p>
+      Trong lý thuyết thiết kế ngân hàng câu hỏi thích ứng (Computerized Adaptive Testing - CAT), một câu hỏi trắc nghiệm không thể bị xem như một khối văn bản đơn thuần. Hệ thống phân định rạch ròi các thuộc tính của từng câu hỏi thành hai nhóm chức năng:
+    </p>
+
+    <div class="table-container">
+      <table class="academic-table">
+        <thead>
+          <tr>
+            <th style="width: 25%;">Nhóm Thuộc Tính</th>
+            <th style="width: 35%;">Các Thuộc Tính Cụ Thể</th>
+            <th style="width: 40%;">Cơ Sở Lý Luận & Vai Trò Đo Lường</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>NHÓM CỐ ĐỊNH<br>(Cấu trúc Sư phạm)</strong></td>
+            <td>
+              - Đề bài, 4 phương án lựa chọn, đáp án đúng (Key).<br>
+              - Hướng dẫn giải từng bước (LaTeX).<br>
+              - Vị trí trên Đồ thị Tri thức (<code>topic_id</code>, <code>lesson_id</code>).<br>
+              - Phân loại nhận thức: Tri thức khái niệm (<code>conceptual</code>) và Tri thức quy trình (<code>procedural</code>).<br>
+              - Bản đồ bẫy sai (<code>distractor_mapping</code>: nhầm dấu <code>SIGN_SLIP</code>, bẫy suy biến <code>DEGENERACY_TRAP</code>, nhầm tính chất <code>PROPERTY_CONFUSION</code>, lệch số chiều <code>DIMENSION_MISMATCH</code>, tính nhẩm sai <code>ARITHMETIC_SLIP</code>).
+            </td>
+            <td>
+              <strong>Bảo toàn tính đúng đắn của tiên đề Toán học.</strong><br>
+              - Phân loại nhận thức dựa trên Thang đo Bloom cải biên cho môn Toán (Anderson & Krathwohl, 2001), phục vụ chẩn đoán hiện tượng học vẹt thao tác.<br>
+              - Bản đồ phương án nhiễu xây dựng theo lý thuyết phân tích phương án sai (Distractor Analysis của Haladyna), làm căn nguyên phát hiện các ngộ nhận tư duy cụ thể.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>NHÓM ĐỘNG<br>(Hiệu chuẩn Thực nghiệm)</strong></td>
+            <td>
+              - Tham số độ khó IRT $b$ (<code>difficulty_index</code>).<br>
+              - Tham số độ phân biệt IRT $a$ (<code>discrimination_index</code>).<br>
+              - Thời gian làm bài định mức $T_{\text{expected}}$ (giây).<br>
+              - Hiệu lực phương án nhiễu (Distractor Efficiency).
+            </td>
+            <td>
+              <strong>Hiệu chuẩn khách quan qua dữ liệu làm bài thực tế (Empirical Item Calibration).</strong><br>
+              - Khởi tạo ban đầu (Priors Cold-start) theo 3 mức thẩm định sư phạm chuẩn: Dễ ($b = -1.0$), Trung bình ($b = 0.0$), Khó ($b = +1.0$), và $a = 1.0$.<br>
+              - Khi kích thước mẫu đạt $N \ge 30$ lượt làm bài hợp lệ, hệ thống tự động cập nhật lại các tham số dựa trên các công thức khảo thí thống kê.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="math-card">
+      <div class="math-card-title">Hệ Thống Công Thức Tự Hiệu Chuẩn Tham Số Câu Hỏi (Empirical Calibration Equations)</div>
+      <p style="margin-bottom: 8px;"><strong>1. Hiệu chuẩn độ khó $b$ qua tỷ lệ trả lời đúng thực tế ($P$):</strong></p>
+      $$b = \ln\left(\frac{1 - P}{P}\right) = \operatorname{logit}(1 - P)$$
+      <p style="margin-top: 14px; margin-bottom: 8px;"><strong>2. Hiệu chuẩn độ phân biệt $a$ qua hệ số tương quan hai dãy điểm ($r_{pbis}$):</strong></p>
+      $$r_{pbis} = \frac{\bar{X}_1 - \bar{X}_0}{s_X} \sqrt{P(1 - P)} \quad \Longrightarrow \quad a = \frac{r_{pbis}}{\sqrt{1 - r_{pbis}^2}}$$
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 4px;">Trong đó $\bar{X}_1$ là điểm trung bình của nhóm làm đúng, $\bar{X}_0$ là điểm trung bình của nhóm làm sai, $s_X$ là độ lệch chuẩn tổng điểm bài thi.</p>
+      <p style="margin-top: 14px; margin-bottom: 8px;"><strong>3. Chuẩn hóa thời gian định mức $T_{\text{expected}}$ qua trung vị thời gian phản hồi:</strong></p>
+      $$T_{\text{expected}} = \operatorname{Median}\left(\{t_k \mid \text{học viên } k \text{ làm đúng và } RTE_k \ge 0.5\}\right)$$
+    </div>
+
+    <h3>8. Cơ Chế Chẩn Đoán Đa Tầng Khi Hành Vi Nằm Ngoài 8 Trường Hợp Nhận Thức Điển Hình</h3>
+    <p>
+      Một nguyên lý tối quan trọng trong đo lường tâm trắc học là: <strong>Hệ thống không được phép ép buộc người học vào một khuôn mẫu nhận thức định sẵn khi dữ liệu chưa hội tụ đủ bằng chứng (Non-pigeonholing Principle)</strong>.
+    </p>
+    <p>
+      Nếu một chuỗi làm bài của sinh viên không thỏa mãn điều kiện logic của bất kỳ trường hợp nào trong 8 trường hợp biên (Edge Cases), hệ thống sẽ vận hành cơ chế chẩn đoán liên tục qua 3 tầng phân tích:
+    </p>
+    <ul>
+      <li>
+        <strong>Tầng 1 - Định lượng thống kê liên tục (Continuous Parametric Tracking):</strong>
+        <br>- Mô hình Vết tri thức Bayes (BKT) vẫn cập nhật xác suất nắm vững khái niệm $P(L_t)$ cho từng nút bài học dựa trên tính đúng/sai thuần túy, không phụ thuộc vào nhãn trường hợp biên.
+        <br>- Chỉ số thống kê độ tương thích người học (Person-Fit Statistic $l_z$) liên tục đo lường mức độ bất thường của toàn bộ chuỗi đáp ứng. Khi $l_z < -1.96$, toán học xác nhận có hiện tượng bất thường thống kê đạt mức ý nghĩa $p < 0.05$, đóng vai trò như một tín hiệu cảnh báo độc lập.
+      </li>
+      <li>
+        <strong>Tầng 2 - Phân tích ngữ cảnh của Tác tử Sư phạm (Contextual Pedagogical Feedback):</strong>
+        <br>Toàn bộ vector vi hành vi chi tiết từng câu hỏi (thời gian thao tác thực tế, số lần thay đổi phương án <code>switch_count</code>, câu hỏi lý thuyết hay tính toán) được truyền trực tiếp vào bộ sinh ngữ cảnh của Tác tử Sư phạm (Nori). Tác tử sẽ đưa ra các phản hồi sư phạm hỗ trợ (Formative Scaffolding Feedback) bám sát các câu làm sai cụ thể thay vì chỉ đưa ra nhận xét theo nhãn đóng khung.
+      </li>
+      <li>
+        <strong>Tầng 3 - Định hướng mở rộng: Phân cụm vector vi hành vi không giám sát (Future Unsupervised Clustering):</strong>
+        <br>Mỗi lượt làm bài được mã hóa thành một vector vi hành vi đa chiều $\mathbf{v} = \left[RTE, \; l_z, \; \Delta P(L), \; \overline{\text{switch}}, \; \text{proc\_score}, \; \text{conc\_score}\right]$. Khi cơ sở dữ liệu tích lũy đủ lớn trên hàng trăm người học, các thuật toán phân cụm (như K-Means hoặc Gaussian Mixture Models) sẽ tự động phát hiện các cụm hình thái nhận thức mới mà các luật tiền định ban đầu chưa bao quát hết.
+      </li>
+    </ul>
+
+    <h3>9. Luận Chứng Về Tính Công Bằng & Khách Quan Trong Đánh Giá Quá Trình</h3>
+    <p>
+      Việc áp dụng cơ chế tự hiệu chuẩn tham số thực nghiệm đặt ra câu hỏi về tính công bằng: <em>"Liệu những người học đầu tiên (khi câu hỏi chưa được hiệu chuẩn) có bị đánh giá bất công so với những người học về sau hay không?"</em>.
+    </p>
+    <p>
+      Khoa học khảo thí hiện đại giải quyết thấu đáo vấn đề này qua 3 luận điểm:
+    </p>
+
+    <div class="callout callout-info">
+      <div class="callout-title">1. Bản chất Đánh giá Quá trình (Formative Assessment) vs Kỳ thi Phân loại Sống còn (High-Stakes Summative Exam)</div>
+      <p style="margin-bottom: 0;">
+        Trong các kỳ thi sống còn (tuyển sinh, tốt nghiệp), điểm số quyết định đỗ hay trượt, do đó sai lệch độ khó của câu hỏi sẽ gây hậu quả trực tiếp. Ngược lại, Vectoria là nền tảng <strong>đánh giá quá trình nhằm mục đích bồi đắp tri thức (Remediation)</strong>. Kết quả đánh giá chỉ dùng để gợi ý bài học cần củng cố và điều hướng lộ trình. Việc được gợi ý ôn tập một mắt xích kiến thức chưa bao giờ là sự trừng phạt, mà là sự trợ giúp sư phạm thiết yếu cho người học.
+      </p>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-title">2. Tính Khách quan: Loại bỏ Định kiến Chủ quan của Người Biên soạn Đề</div>
+      <p style="margin-bottom: 0;">
+        Phương pháp truyền thống, nơi người ra đề tự ấn định độ khó bằng cảm tính cá nhân, mới chính là nguyên nhân gây ra sự bất công lớn nhất (giảng viên đánh giá câu hỏi là dễ nhưng đại đa số sinh viên đều gặp vấp váp). Phương pháp hiệu chuẩn thực nghiệm là quy chuẩn quốc tế được áp dụng tại các kỳ thi chuẩn hóa hàng đầu thế giới (SAT, GRE, PISA), đảm bảo độ khó của câu hỏi phản ánh chính xác thực tế tiếp nhận của cộng đồng người học.
+      </p>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-title">3. Bộ Kiểm Soát Chất Lượng: Ngưỡng Cỡ Mẫu $N \ge 30$, Lọc Rác RTE & Cơ Chế Hồi Tố (Retroactive Recalibration)</div>
+      <p style="margin-bottom: 0;">
+        Để bảo đảm tính ổn định toán học, hệ thống thiết lập 3 hàng rào bảo vệ:
+        <br>- <strong>Ngưỡng kích thước mẫu:</strong> Chỉ kích hoạt hiệu chuẩn khi câu hỏi đạt tối thiểu $N \ge 30$ lượt làm bài nhằm tuân thủ định lý giới hạn trung tâm (Central Limit Theorem).
+        <br>- <strong>Lọc nhiễu đoán mò:</strong> Các lượt làm bài có chỉ số $RTE < 0.30$ (làm bài nhanh dưới ngưỡng đọc hiểu) sẽ bị loại bỏ khỏi tập mẫu, không làm sai lệch độ khó thực của câu hỏi.
+        <br>- <strong>Cơ chế Hồi tố Cập nhật (Retroactive Recalibration):</strong> Khi tham số câu hỏi hội tụ giá trị thực nghiệm chuẩn xác, một tiến trình ngầm có thể tái tính toán lại các chỉ số năng lực của các lượt làm bài trước đó, kết hợp với đặc tính tự điều chỉnh liên tục của mô hình BKT qua các bài học kế tiếp.
+      </p>
+    </div>
+
+    <h3>10. Kết Luận: Chu Trình Khảo Thí & Chẩn Đoán Khép Kín Chuẩn Khoa Học</h3>
+    <p>
+      Bằng việc kết hợp hài hòa giữa cấu trúc sư phạm bất biến của môn Toán Đại số tuyến tính với cơ chế đo lường thích ứng và tự hiệu chuẩn thực nghiệm của lý thuyết khảo thí hiện đại, <strong>hệ thống Vectoria thiết lập một chu trình chẩn đoán khép kín, minh bạch và có khả năng giải trình toán học tuyệt đối</strong>.
+    </p>
+    <p>
+      Mọi kết luận về năng lực, lỗ hổng hay mẫu hành vi của sinh viên đều dựa trên các công thức đo lường chính thống (BKT, IRT 2PL, RTE, Distractor Analysis), loại bỏ hoàn toàn các phỏng đoán ngẫu nhiên của mô hình trí tuệ nhân tạo tạo sinh, bảo đảm tính công bằng, khoa học và bền vững cho nền tảng giáo dục thích ứng bậc đại học.
+    </p>
+  </section>
+
+  <!-- CHƯƠNG 10: DANH MỤC TÀI LIỆU THAM KHẢO CHUẨN APA -->
+  <section>
+    <h2>Chương 10: Danh Mục Tài Liệu Tham Khảo Chuẩn APA (Kèm Mã Định Danh DOI & Đường Dẫn Tải Tệp PDF Thật)</h2>
+    <p>
+      Tất cả các tài liệu dưới đây đều là các công trình nghiên cứu kinh điển đã qua bình duyệt khoa học tại các tạp chí quốc tế hàng đầu, có mã định danh tài liệu số (DOI) vĩnh viễn và đường dẫn tải tệp PDF mở trực tiếp từ các trường đại học lớn:
+    </p>
+
+    <ul class="reference-list">
+      <li class="reference-item">
+        Strang, G. (2016). <em>Introduction to linear algebra</em> (5th ed.). Wellesley-Cambridge Press.
+        <a href="https://math.mit.edu/~gs/linearalgebra/" target="_blank" rel="noopener noreferrer">https://math.mit.edu/~gs/linearalgebra/</a>
+        <a class="doi-tag" href="https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/" target="_blank" rel="noopener noreferrer">[Giáo trình MIT 18.06 OpenCourseWare]</a>
+      </li>
+
+      <li class="reference-item">
+        Axler, S. (2015). <em>Linear algebra done right</em> (3rd ed.). Springer International Publishing.
+        <a href="https://doi.org/10.1007/978-3-319-11080-6" target="_blank" rel="noopener noreferrer">https://doi.org/10.1007/978-3-319-11080-6</a>
+        <a class="doi-tag" href="https://linear.axler.net/" target="_blank" rel="noopener noreferrer">[Trang chủ Học thuật của Giáo sư Sheldon Axler]</a>
+      </li>
+
+      <li class="reference-item">
+        Vygotsky, L. S. (1978). <em>Mind in society: The development of higher psychological processes</em>. Harvard University Press.
+        <a href="https://doi.org/10.2307/j.ctvjf9vz4" target="_blank" rel="noopener noreferrer">https://doi.org/10.2307/j.ctvjf9vz4</a>
+        <a class="doi-tag" href="https://www.jstor.org/stable/j.ctvjf9vz4" target="_blank" rel="noopener noreferrer">[Lý thuyết Vùng phát triển gần nhất ZPD - JSTOR]</a>
+      </li>
+
+      <li class="reference-item">
+        Lord, F. M. (1980). <em>Applications of item response theory to practical testing problems</em>. Routledge.
+        <a href="https://doi.org/10.4324/9780203056615" target="_blank" rel="noopener noreferrer">https://doi.org/10.4324/9780203056615</a>
+      </li>
+
+      <li class="reference-item">
+        Corbett, A. T., & Anderson, J. R. (1994). Knowledge tracing: Modeling the acquisition of procedural knowledge. <em>User Modeling and User-Adapted Interaction</em>, 4(4), 253-278. 
+        <a href="https://doi.org/10.1007/BF01099821" target="_blank" rel="noopener noreferrer">https://doi.org/10.1007/BF01099821</a>
+        <a class="doi-tag" href="https://www.cs.cmu.edu/~act-r/papers/CorbettAnderson_UMUAI_1995.pdf" target="_blank" rel="noopener noreferrer">[Tải PDF tại Đại học Carnegie Mellon]</a>
+      </li>
+
+      <li class="reference-item">
+        Baker, R. S., Corbett, A. T., & Aleven, V. (2008). More accurate student modeling through contextual estimation of slip and guess probabilities. Trong <em>Intelligent Tutoring Systems</em> (tr. 406-415). Springer, Berlin, Heidelberg. 
+        <a href="https://doi.org/10.1007/978-3-540-69132-7_44" target="_blank" rel="noopener noreferrer">https://doi.org/10.1007/978-3-540-69132-7_44</a>
+        <a class="doi-tag" href="https://www.upenn.edu/learninganalytics/ryanbaker/ITS2008-Contextual.pdf" target="_blank" rel="noopener noreferrer">[Tải PDF tại Đại học Pennsylvania]</a>
+      </li>
+
+      <li class="reference-item">
+        Wise, S. L., & Kong, X. (2005). Response time effort: A new approach to assessing extreme rapid guessing on computer-based tests. <em>Applied Measurement in Education</em>, 18(4), 343-360. 
+        <a href="https://doi.org/10.1207/s15324818ame1804_2" target="_blank" rel="noopener noreferrer">https://doi.org/10.1207/s15324818ame1804_2</a>
+        <a class="doi-tag" href="https://files.eric.ed.gov/fulltext/ED486337.pdf" target="_blank" rel="noopener noreferrer">[Tải PDF tại Thư viện Giáo dục ERIC]</a>
+      </li>
+
+      <li class="reference-item">
+        Meijer, R. R., & Sijtsma, K. (2001). Methodology review: Evaluating person fit. <em>Applied Psychological Measurement</em>, 25(2), 107-135. 
+        <a href="https://doi.org/10.1177/01466210122031957" target="_blank" rel="noopener noreferrer">https://doi.org/10.1177/01466210122031957</a>
+      </li>
+
+      <li class="reference-item">
+        van der Linden, W. J. (2007). A hierarchical framework for modeling speed and accuracy on test items. <em>Psychometrika</em>, 72(3), 287-308. 
+        <a href="https://doi.org/10.1007/s11336-006-1478-3" target="_blank" rel="noopener noreferrer">https://doi.org/10.1007/s11336-006-1478-3</a>
+      </li>
+
+      <li class="reference-item">
+        De La Torre, J. (2009). DINA model and parameter estimation: A didactic. <em>Journal of Educational and Behavioral Statistics</em>, 34(1), 115-130. 
+        <a href="https://doi.org/10.3102/1076998607309474" target="_blank" rel="noopener noreferrer">https://doi.org/10.3102/1076998607309474</a>
+      </li>
+
+      <li class="reference-item">
+        Tatsuoka, K. K. (1983). Rule space: An approach for dealing with misconceptions based on item response theory. <em>Journal of Educational Measurement</em>, 20(4), 345-354. 
+        <a href="https://doi.org/10.1111/j.1745-3984.1983.tb00212.x" target="_blank" rel="noopener noreferrer">https://doi.org/10.1111/j.1745-3984.1983.tb00212.x</a>
+      </li>
+
+      <li class="reference-item">
+        Pelánek, R. (2017). Bayesian knowledge tracing, logistic models, and beyond: An overview of learner modeling techniques. <em>User Modeling and User-Adapted Interaction</em>, 27(3), 313-350. 
+        <a href="https://doi.org/10.1007/s11257-017-9193-2" target="_blank" rel="noopener noreferrer">https://doi.org/10.1007/s11257-017-9193-2</a>
+        <a class="doi-tag" href="https://link.springer.com/article/10.1007/s11257-017-9193-2" target="_blank" rel="noopener noreferrer">[Truy cập Bài báo Mở Springer Link]</a>
+      </li>
+
+      <li class="reference-item">
+        Anderson, L. W., & Krathwohl, D. R. (Eds.). (2001). <em>A taxonomy for learning, teaching, and assessing: A revision of Bloom's taxonomy of educational objectives</em>. Allyn & Bacon. Longman.
+        <a href="https://www.uky.edu/~rsand1/china2018/texts/Anderson,%20Lorin%20W.,%20et%20al.%20(2001)%20A%20Taxonomy%20for%20Learning,%20Teaching,%20and%20Assessing%20A%20Revision%20of%20Bloom's%20Taxonomy%20of%20Educational%20Objectives.pdf" target="_blank" rel="noopener noreferrer">https://www.uky.edu/~rsand1/china2018/texts/Anderson-Bloom-Taxonomy-Revision.pdf</a>
+        <a class="doi-tag" href="https://www.uky.edu/~rsand1/china2018/texts/Anderson,%20Lorin%20W.,%20et%20al.%20(2001)%20A%20Taxonomy%20for%20Learning,%20Teaching,%20and%20Assessing%20A%20Revision%20of%20Bloom's%20Taxonomy%20of%20Educational%20Objectives.pdf" target="_blank" rel="noopener noreferrer">[Tải Toàn Văn Sách PDF - Đại Học Kentucky]</a>
+      </li>
+
+      <li class="reference-item">
+        Haladyna, T. M., Downing, S. M., & Rodriguez, M. C. (2002). A review of multiple-choice item-writing guidelines for classroom assessment. <em>Applied Measurement in Education</em>, 15(3), 309-333.
+        <a href="https://doi.org/10.1207/s15324818ame1503_5" target="_blank" rel="noopener noreferrer">https://doi.org/10.1207/s15324818ame1503_5</a>
+        <a class="doi-tag" href="https://conservancy.umn.edu/handle/11299/108392" target="_blank" rel="noopener noreferrer">[Lưu Trữ Mở Đại Học Minnesota]</a>
+      </li>
+
+      <li class="reference-item">
+        Drasgow, F., Levine, M. V., & Williams, E. A. (1985). Appropriateness measurement with polychotomous item response models and standardized indices. <em>British Journal of Mathematical and Statistical Psychology</em>, 38(1), 67-86.
+        <a href="https://doi.org/10.1111/j.2044-8317.1985.tb00817.x" target="_blank" rel="noopener noreferrer">https://doi.org/10.1111/j.2044-8317.1985.tb00817.x</a>
+      </li>
+
+      <li class="reference-item">
+        Birnbaum, A. (1968). Some latent trait models and their use in inferring an examinee's ability. Trong F. M. Lord & M. R. Novick (Eds.), <em>Statistical theories of mental test scores</em> (tr. 395-479). Addison-Wesley.
+        <a href="https://archive.org/details/statisticaltheor0000lord" target="_blank" rel="noopener noreferrer">https://archive.org/details/statisticaltheor0000lord</a>
+        <a class="doi-tag" href="https://archive.org/details/statisticaltheor0000lord" target="_blank" rel="noopener noreferrer">[Kho Lưu Trữ Internet Archive]</a>
+      </li>
+
+      <li class="reference-item">
+        Lord, F. M., & Novick, M. R. (1968). <em>Statistical theories of mental test scores</em>. Addison-Wesley.
+        <a href="https://doi.org/10.1002/j.2333-8504.1968.tb00171.x" target="_blank" rel="noopener noreferrer">https://doi.org/10.1002/j.2333-8504.1968.tb00171.x</a>
+      </li>
+    </ul>
+  </section>
+
+  <footer class="footer-note">
+    Tài liệu kỹ thuật nội bộ: Khung lý luận và giải thuật chẩn đoán lỗ hổng tri thức - Hệ thống học tập thích ứng Vectoria.
+  </footer>
+
+</div>
+
+<!-- Mã Lệnh Xử Lý Mô Phỏng Tương Tác -->
+<script>
+  function toggleTheme() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('vec_theme', isDark ? 'dark' : 'light');
+    updateThemeBtn();
+  }
+
+  function updateThemeBtn() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const btn = document.getElementById('themeBtn');
+    if (btn) {
+      btn.innerText = isDark ? 'Chế độ: Giao diện Tối' : 'Chế độ: Giao diện Sáng';
+    }
+  }
+  updateThemeBtn();
+
+  function runSimulation() {
+    const timeSpent = parseFloat(document.getElementById('simTime').value);
+    const distractor = document.getElementById('simDistractor').value;
+    const priorL = parseFloat(document.getElementById('simPrior').value) / 100;
+    const consistency = document.getElementById('simConsistency').value;
+
+    document.getElementById('simTimeVal').innerText = timeSpent + ' giây';
+    document.getElementById('simPriorVal').innerText = priorL.toFixed(2);
+
+    let pS = 0.10;
+    let pG = 0.25;
+    let statusBadge = '';
+    let badgeClass = '';
+    let actionText = '';
+    let explanation = '';
+
+    // Kiểm tra trường hợp buông xuôi / đánh lụi
+    if (timeSpent < 3) {
+      statusBadge = 'BUÔNG XUÔI / BỎ CUỘC (Disengaged)';
+      badgeClass = 'badge-gap';
+      actionText = 'LOẠI BỎ DỮ LIỆU';
+      explanation = 'Thời gian làm bài dưới 3 giây đối với câu hỏi cần 60 giây chứng tỏ người học bấm bừa do hết giờ hoặc nản chí. Hệ thống loại bỏ lượt làm này, không đưa vào tính toán cập nhật độ hiểu bài để tránh làm sai lệch hồ sơ năng lực.';
+      document.getElementById('simPsVal').innerText = '--';
+      document.getElementById('simPostVal').innerText = priorL.toFixed(3);
+      updateSimUI(statusBadge, badgeClass, actionText, explanation);
+      return;
+    }
+
+    // Kiểm tra trường hợp nghĩ quá nhiều
+    if (timeSpent > 120 && distractor === 'BOUNDARY_CASE') {
+      statusBadge = 'NGHĨ QUÁ NHIỀU (Overthinking)';
+      badgeClass = 'badge-slip';
+      actionText = 'GIẢI TỎA TÂM LÝ';
+      pS = 0.40;
+      const postL = (priorL * pS) / (priorL * pS + (1 - priorL) * (1 - pG));
+      explanation = 'Người học dừng lại rất lâu (hơn 120 giây) và chọn đúng bẫy điều kiện biên (ma trận suy biến). Đây là biểu hiện của người hiểu sâu nhưng suy diễn quá mức. Hệ thống không trừ điểm năng lực nền tảng, gửi thông điệp củng cố tâm lý.';
+      document.getElementById('simPsVal').innerText = pS.toFixed(3);
+      document.getElementById('simPostVal').innerText = postL.toFixed(3);
+      updateSimUI(statusBadge, badgeClass, actionText, explanation);
+      return;
+    }
+
+    // Kiểm tra trường hợp ăn may câu khó
+    if (consistency === 'HIGH_HARD_LOW_EASY') {
+      statusBadge = 'NGHI NGỜ ĂN MAY (Suspected Luck)';
+      badgeClass = 'badge-luck';
+      actionText = 'GỬI CÂU HỎI ĐỒNG CẤU';
+      explanation = 'Người học làm đúng câu độ khó cấp 3 nhưng sai câu cấp 1 sơ đẳng. Thước đo độ bất thường l_z vi phạm dung sai logic. Hệ thống không kết luận vội, mà kích hoạt một câu hỏi đồng cấu (isomorphic) ở bước kế tiếp để triệt tiêu may rủi về dưới 2%.';
+      document.getElementById('simPsVal').innerText = '0.200';
+      document.getElementById('simPostVal').innerText = priorL.toFixed(3);
+      updateSimUI(statusBadge, badgeClass, actionText, explanation);
+      return;
+    }
+
+    // Kiểm tra trường hợp học vẹt thao tác
+    if (distractor === 'CONCEPTUAL_FALLACY' && timeSpent < 25 && priorL > 0.85) {
+      statusBadge = 'HỌC VẸT THAO TÁC (Procedural Trap)';
+      badgeClass = 'badge-procedural';
+      actionText = 'KHÓA LUỒNG & PHỤ ĐẠO';
+      pS = 0.03; // Rất ít khả năng bất cẩn vì đây là lỗi bản chất định lý
+      const postL = (priorL * pS) / (priorL * pS + (1 - priorL) * (1 - pG));
+      explanation = 'Người học có điểm bài tập cũ cao nhưng chọn bẫy sai định lý bản chất rất nhanh. Đây là biểu hiện của việc học vẹt thuật toán tính toán nhưng rỗng kiến thức định lý. Khóa tiến độ và bổ sung Nút Khái niệm trên đồ thị Neo4j.';
+      document.getElementById('simPsVal').innerText = pS.toFixed(3);
+      document.getElementById('simPostVal').innerText = postL.toFixed(3);
+      updateSimUI(statusBadge, badgeClass, actionText, explanation);
+      return;
+    }
+
+    // Tính toán phân định Bất cẩn vs Hổng bản chất thông thường
+    if (distractor === 'ARITHMETIC_SLIP') {
+      pS = timeSpent < 20 ? 0.35 : 0.20;
+    } else if (distractor === 'CONCEPTUAL_FALLACY') {
+      pS = 0.05;
+    } else {
+      pS = 0.10;
+    }
+
+    const postL = (priorL * pS) / (priorL * pS + (1 - priorL) * (1 - pG));
+
+    if (postL >= 0.70) {
+      statusBadge = 'BẤT CẨN (Slip)';
+      badgeClass = 'badge-slip';
+      actionText = 'CẢNH BÁO TỐC ĐỘ';
+      explanation = `Độ hiểu bài sau khi tính lại vẫn đạt mức an toàn (${postL.toFixed(2)}). Hệ thống phân loại đây là sai sót do bất cẩn tính nhẩm hoặc đọc lướt đề, không tạo nợ kiến thức trên đồ thị Neo4j.`;
+    } else {
+      statusBadge = 'HỔNG BẢN CHẤT (Confirmed Gap)';
+      badgeClass = 'badge-gap';
+      actionText = 'TẠO NỢ TRI THỨC';
+      explanation = `Độ hiểu bài tụt xuống dưới ngưỡng an toàn (${postL.toFixed(2)}). Thuật toán Dijkstra sẽ truy vết đồ thị Neo4j để mở nhánh học phụ đạo khắc phục nợ kiến thức cho người học.`;
+    }
+
+    document.getElementById('simPsVal').innerText = pS.toFixed(3);
+    document.getElementById('simPostVal').innerText = postL.toFixed(3);
+    updateSimUI(statusBadge, badgeClass, actionText, explanation);
+  }
+
+  function updateSimUI(badgeText, badgeClass, actionText, explanation) {
+    const badgeEl = document.getElementById('simBadge');
+    badgeEl.className = 'badge-status ' + badgeClass;
+    badgeEl.innerText = badgeText;
+    document.getElementById('simActionVal').innerText = actionText;
+    document.getElementById('simExplanation').innerText = explanation;
+  }
+
+  function runBankCalculator() {
+    const K = parseInt(document.getElementById('bankK').value, 10);
+    const R = parseInt(document.getElementById('bankR').value, 10);
+    const L = parseInt(document.getElementById('bankL').value, 10);
+    const E = parseFloat(document.getElementById('bankE').value);
+
+    document.getElementById('bankKVal').innerText = K + ' bài';
+    document.getElementById('bankRVal').innerText = R + ' câu';
+
+    const D = 2; // 2 chiều nhận thức: Thao tác & Bản chất
+    const perLesson = Math.round(D * L * R * E);
+    const total = perLesson * K;
+
+    document.getElementById('bankPerLesson').innerText = perLesson + ' câu';
+    document.getElementById('bankTotal').innerText = total + ' câu';
+
+    const badgeEl = document.getElementById('bankBadge');
+    const safetyEl = document.getElementById('bankSafety');
+    const expEl = document.getElementById('bankExplanation');
+
+    if (R < 2 || total < 100) {
+      badgeEl.className = 'badge-status badge-gap';
+      badgeEl.innerText = 'NGUY CƠ THIẾU ĐỀ';
+      safetyEl.innerText = 'CÓ THỂ BỊ LẶP ĐỀ';
+      safetyEl.style.color = 'var(--accent-ruby)';
+      expEl.innerText = 'Hệ số dự phòng thấp (R < 2) sẽ khiến thuật toán không đủ câu hỏi để kiểm tra chéo khi sinh viên làm lại bài (Attempt 2) hoặc khi cần xác minh ăn may.';
+    } else if (total >= 100 && total <= 350) {
+      badgeEl.className = 'badge-status badge-mastery';
+      badgeEl.innerText = 'ĐẠT CHUẨN NCKH';
+      safetyEl.innerText = 'HOÀN TOÀN ĐỦ DỮ LIỆU';
+      safetyEl.style.color = 'var(--accent-emerald)';
+      expEl.innerText = `Quy mô ${total} câu hỏi là mức tối ưu tuyệt đối cho đề tài NCKH: Vừa sức cho nhóm tác giả biên soạn, vừa đảm bảo thuật toán phân nhánh trơn tru cho cả 8 trường hợp biên.`;
+    } else {
+      badgeEl.className = 'badge-status badge-luck';
+      badgeEl.innerText = 'CHUẨN VẬN HÀNH THỰC TẾ';
+      safetyEl.innerText = 'AN TOÀN TUYỆT ĐỐI';
+      safetyEl.style.color = 'var(--accent-academic)';
+      expEl.innerText = `Quy mô lớn (${total} câu) đạt tiêu chuẩn của các hệ thống thi trực tuyến quy mô hàng nghìn sinh viên, độ lộ đề được kiểm soát chặt chẽ.`;
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    runSimulation();
+    runBankCalculator();
+  });
+</script>
+
+</body>
+</html>

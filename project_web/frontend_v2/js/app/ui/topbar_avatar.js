@@ -37,10 +37,18 @@ window.TopbarAvatar = {
         
         themeBtn.addEventListener("click", () => {
             if (typeof ThemeManager !== "undefined") {
-                const isDark = ThemeManager.toggle();
-                syncIcon();            } else {
-                document.body.classList.toggle("dark-theme");
-                document.body.classList.toggle("dark");
+                ThemeManager.toggle();
+                syncIcon();
+            } else {
+                const isDark = !document.body.classList.contains("dark-theme");
+                document.body.classList.toggle("dark-theme", isDark);
+                document.body.classList.toggle("dark", isDark);
+                document.documentElement.classList.toggle("dark-theme", isDark);
+                document.documentElement.classList.toggle("dark", isDark);
+                if (window.App) {
+                    App.theme = isDark ? "dark" : "light";
+                    if (typeof App.applyTheme === "function") App.applyTheme();
+                }
                 syncIcon();
             }
         });
@@ -368,7 +376,7 @@ window.TopbarAvatar = {
                 const label = document.getElementById("modalRoomLabel");
                 if(label) label.textContent = window.tr ? window.tr("avatar.enter_new_name", "Nhập tên hiển thị mới:") : "Nhập tên hiển thị mới:";
                 const input = document.getElementById("modalInputRoom");
-                if(input) { input.placeholder = "Ví dụ: Khoa"; input.value = localStorage.getItem("user_name") || ""; }
+                if(input) { input.placeholder = "Tên được công khai với mọi người"; input.value = localStorage.getItem("user_name") || ""; }
             }, 50);
         } else {
             const newName = prompt(window.tr ? window.tr("avatar.enter_new_name", "Nhập tên hiển thị mới:") : "Nhập tên hiển thị mới:", localStorage.getItem("user_name") || "");
@@ -551,7 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div style="width: 56px; height: 56px; background: var(--bg-hover, #f1f5f9); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; color: var(--text-muted, #94a3b8); font-size: 20px;">
                   <i class="ph ph-bell-slash"></i>
                 </div>
-                <h4 style="margin: 0 0 4px 0; font-size: 1rem; color: var(--text-main, #0f172a); font-family: 'Lora', serif;">Chưa có thông báo nào</h4>
+                <h4 style="margin: 0 0 4px 0; font-size: 1rem; color: var(--text-main, #0f172a); font-family: var(--font-ui); font-weight: 600;">Chưa có thông báo nào</h4>
                 <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted, #64748b);">Khi có hoạt động mới, thông báo sẽ hiển thị ở đây.</p>
               </div>
             `;

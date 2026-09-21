@@ -3,6 +3,13 @@
    ========================================================================== */
 
 :root {
+
+  /* FONTS */
+  --font-ui: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-ui);
+  --font: var(--font-ui);
+  --font-academic: 'STIX Two Text', 'Academic Font', 'Times New Roman', Times, serif;
+
   /* TẦNG 1: RADIX CORE COLORS (LIGHT MODE) */
   /* Dải Slate (Trung tính) */
   --slate-1: #fcfcfd;

@@ -23,6 +23,10 @@ def parse_latex_to_sympy(expr_str: str) -> sp.Expr:
     if not expr_str:
         return sp.Integer(0)
         
+    import re
+    expr_str = re.sub(r'√\s*([0-9.]+)', r'sqrt(\1)', expr_str)
+    expr_str = expr_str.replace('√', 'sqrt').replace('π', 'pi')
+        
     try:
         # Thử parse như string bình thường trước (ví dụ: "1/3", "sqrt(2)")
         return sp.sympify(expr_str)

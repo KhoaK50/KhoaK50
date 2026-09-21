@@ -1,7 +1,23 @@
+/* ==========================================================================
+   GLOBAL TYPOGRAPHY (FONT PAIRING)
+   ========================================================================== */
+body {
+    font-family: var(--font-ui) !important;
+}
+
+/* Toàn bộ giao diện người dùng (UI) thống nhất dùng font hiện đại */
+h1, h2, h3, h4, h5, h6, .btn, .vec-nav-link, .vec-dropdown-item, input, button, select, textarea, .toast-item, .search-modal-container, .vec-topbar, .sidebar, .nav-links li, .nav-links a {
+    font-family: var(--font-ui) !important;
+}
+
+/* Chỉ dành riêng cho nội dung bài học học thuật từ Database & Math */
+.academic-font, .math-font, .article-content, .lesson-content, #lesson-body {
+    font-family: var(--font-academic);
+}
+
 html {
   overflow-x: hidden;
 }
-
 
 /* ==========================================================================
    TOPBAR COMPONENT
@@ -20,10 +36,8 @@ html {
   right: 0;
   z-index: 10000;
   box-sizing: border-box;
-  font-family: var(--font-academic);
-  transition: background 0.3s, border-color 0.3s;
+  font-family: var(--font-ui);
 }
-
 
 .vec-topbar-left, .vec-topbar-right {
   display: flex;
@@ -50,6 +64,7 @@ html {
   background: var(--primary-base);
   border-radius: 2px 2px 0 0;
 }
+
 /* =================== CARDS =================== */
 #controls .card {
   position: relative;
@@ -432,9 +447,9 @@ details.calc[open] summary .chev {
   box-shadow: var(--shadow-sm);
 }
 
-/* =================== "Lời giải" giống nút thường (như "Tính cơ sở") =================== */
+/* =================== "Lá»i giáº£i" giá»‘ng nÃºt thÆ°á»ng (nhÆ° "TÃ­nh cÆ¡ sá»Ÿ") =================== */
 .btn-solution {
-  /* giống hệt button base */
+  /* giá»‘ng há»‡t button base */
   font: inherit;
   border: 1px solid var(--border);
   background: var(--card);
@@ -449,7 +464,7 @@ details.calc[open] summary .chev {
 }
 
 .btn-solution:hover {
-  /* nhẹ giống cảm giác nút thường */
+  /* nháº¹ giá»‘ng cáº£m giÃ¡c nÃºt thÆ°á»ng */
   background: color-mix(in oklab, var(--card) 92%, var(--fg) 8%);
   border-color: color-mix(in oklab, var(--border) 70%, var(--fg) 30%);
 }
@@ -497,7 +512,7 @@ details.calc[open] summary .chev {
   box-shadow: 0 0 0 3px rgba(0, 144, 255, 0.25);
 }
 
-/* DARK THEME: đúng selector của bạn */
+/* DARK THEME: Ä‘Ãºng selector cá»§a báº¡n */
 body.dark .basis-anim-controls {
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
 }
@@ -577,11 +592,12 @@ body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb {
     font-size: 18px; /* Match vec-icon-btn size */
     align-items: center;
     justify-content: center;
-    transition: 0.2s;
+    transition: none;
   }
   .vec-sidebar-toggle:hover {
     background: rgba(150,150,150,0.1); /* Match vec-icon-btn hover */
     color: var(--primary-base);
+    transition: background 0.15s ease, color 0.15s ease;
   }
   .vec-brand-group {
     display: flex;
@@ -701,11 +717,12 @@ body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: 0.2s;
+    transition: none;
   }
   .vec-icon-btn:hover {
     background: rgba(150,150,150,0.1);
     color: var(--primary-base);
+    transition: background 0.15s ease, color 0.15s ease;
   }
   .vec-dropdown-container.right-align .vec-dropdown-menu {
     left: auto;
@@ -886,5 +903,5 @@ body.dark-theme .icon-light-mode { display: none !important; }
 
 /* --- TYPOGRAPHY REFACTOR --- */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-academic);
+  font-family: var(--font-ui);
 }

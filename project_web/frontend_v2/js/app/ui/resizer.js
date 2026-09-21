@@ -1,4 +1,4 @@
-﻿document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
     const resizer = document.getElementById('resizer');
     const controls = document.getElementById('controls');
     const appContainer = document.getElementById('app');
@@ -9,7 +9,7 @@
     let willSnapClose = false;
 
     // Default sizes for resetting after snap-close
-    const DEFAULT_DESKTOP_WIDTH = 380;
+    const DEFAULT_DESKTOP_WIDTH = 440;
     const DEFAULT_MOBILE_HEIGHT = '45vh';
 
     const onPointerDown = (e) => {

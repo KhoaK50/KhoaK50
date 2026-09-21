@@ -15,7 +15,7 @@
 }
 
 :root {
-  --font-academic: 'Academic Font', 'Latin Modern Roman', 'Computer Modern Roman', 'CMU Serif', 'Times New Roman', Times, serif;
+  
 }
 
 ﻿/* =================== BASE =================== */
@@ -33,7 +33,7 @@ body {
   margin: 0;
   color: var(--fg);
   background: var(--bg);
-  font-family: var(--font-academic);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;
@@ -71,9 +71,14 @@ body {
 
 
 h1, h2, h3, h4, h5, h6, .card-title, .vec-brand-group {
-  font-family: var(--font-academic);
+  font-family: var(--font-ui);
   letter-spacing: -0.01em;
-  line-height: 1.2;
+  line-height: 1.25;
+}
+
+/* Chỉ dành riêng cho nội dung bài giảng & tài liệu học thuật */
+.article-content, .lesson-content, .academic-font, #lesson-body {
+  font-family: var(--font-academic);
 }
 
 @keyframes ph-spin {

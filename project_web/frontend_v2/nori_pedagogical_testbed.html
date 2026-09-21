@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nori Pedagogical Autopilot Testbed · Trình Diễn Lộ Trình & Kiểm Thử Tích Lũy</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-base: #f1f5f9;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --border-strong: #cbd5e1;
+            --primary-base: #0090ff;
+            --primary-subtle: #edf6ff;
+            --success-base: #30a46c;
+            --success-subtle: #f0fdf4;
+            --danger-base: #e5484d;
+            --danger-subtle: #fef2f2;
+            --warning-base: #d97706;
+            --warning-subtle: #fffbeb;
+            --font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+
+        .dark {
+            --bg-body: #090d16;
+            --bg-card: #111827;
+            --bg-base: #030712;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border: #1f2937;
+            --border-strong: #374151;
+            --primary-base: #3b82f6;
+            --primary-subtle: #1e293b;
+            --success-base: #22c55e;
+            --success-subtle: #064e3b;
+            --danger-base: #ef4444;
+            --danger-subtle: #450a0a;
+            --warning-base: #f59e0b;
+            --warning-subtle: #451a03;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg-body);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            padding: 20px 24px 60px;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .container {
+            max-width: 1480px;
+            margin: 0 auto;
+        }
+
+        /* Anti-Slop Strict Rules: 0px border radius, flat styling, hairline borders */
+        button, input, select {
+            border-radius: 0px !important;
+            font-family: var(--font-ui);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border-strong);
+            background: var(--bg-card);
+            color: var(--text-main);
+            transition: all 0.15s ease;
+        }
+        .btn:hover {
+            border-color: var(--primary-base);
+            color: var(--primary-base);
+        }
+        .btn-primary {
+            background: var(--primary-base);
+            border-color: var(--primary-base);
+            color: #ffffff !important;
+        }
+        .btn-primary:hover {
+            opacity: 0.92;
+        }
+        .btn-danger {
+            background: var(--danger-base);
+            border-color: var(--danger-base);
+            color: #ffffff !important;
+        }
+        .btn-danger:hover {
+            opacity: 0.92;
+        }
+
+        /* Top Toolbar */
+        .top-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 14px 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        /* Two-Column Workspace */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 62% 38%;
+            gap: 20px;
+            align-items: start;
+        }
+        @media (max-width: 1080px) {
+            .workspace-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Stage Cards */
+        .stage-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .stage-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .stage-box-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Timeline 5-Node Nodes */
+        .timeline-nodes-track {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
+        .timeline-node-card {
+            border: 1px solid var(--border);
+            background: var(--bg-body);
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+        .timeline-node-card:hover {
+            border-color: var(--primary-base);
+        }
+        .timeline-node-card.is-active {
+            border-color: var(--primary-base);
+            background: var(--primary-subtle);
+            box-shadow: inset 3px 0 0 var(--primary-base);
+        }
+        .timeline-node-card.is-completed {
+            border-color: var(--success-base);
+            box-shadow: inset 3px 0 0 var(--success-base);
+        }
+        .timeline-node-card.is-locked {
+            opacity: 0.55;
+            cursor: not-allowed;
+            filter: grayscale(0.6);
+        }
+
+        .node-num-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1.5px solid var(--border-strong);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .timeline-node-card.is-active .node-num-circle {
+            border-color: var(--primary-base);
+            color: var(--primary-base);
+            background: #ffffff;
+        }
+        .timeline-node-card.is-completed .node-num-circle {
+            border-color: var(--success-base);
+            background: var(--success-base);
+            color: #ffffff;
+        }
+
+        /* Quiz Stage */
+        .quiz-stage-container {
+            border: 1px solid var(--border-strong);
+            background: var(--bg-card);
+            padding: 18px 20px;
+        }
+        .quiz-question-box {
+            font-size: 14.5px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            font-weight: 500;
+            color: var(--text-main);
+            min-height: 48px;
+        }
+        .testbed-option-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid var(--border);
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            background: var(--bg-body);
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+        .testbed-option-row:hover {
+            border-color: var(--primary-base);
+            background: var(--primary-subtle);
+        }
+        .testbed-option-row.is-selected {
+            border-color: var(--primary-base);
+            background: var(--primary-subtle);
+            font-weight: 600;
+        }
+        .testbed-option-row.is-correct-reveal {
+            border-color: var(--success-base);
+            background: var(--success-subtle);
+        }
+        .testbed-option-row.is-wrong-reveal {
+            border-color: var(--danger-base);
+            background: var(--danger-subtle);
+        }
+
+        .opt-key-badge {
+            width: 24px;
+            height: 24px;
+            border: 1px solid var(--border-strong);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 11.5px;
+            background: var(--bg-card);
+            flex-shrink: 0;
+        }
+        .testbed-option-row.is-selected .opt-key-badge {
+            background: var(--primary-base);
+            color: #ffffff;
+            border-color: var(--primary-base);
+        }
+
+        /* Nori Mentor Card */
+        .nori-mentor-card {
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        @media (max-width: 768px) {
+            .nori-mentor-card {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+        }
+        .mentor-avatar-box {
+            width: 140px;
+            height: 140px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-body);
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        .mentor-speech-bubble {
+            flex: 1;
+        }
+        .speech-text-stream {
+            font-size: 13.5px;
+            line-height: 1.65;
+            color: var(--text-main);
+            min-height: 60px;
+            margin-bottom: 12px;
+            font-family: var(--font-ui);
+        }
+        .typewriter-caret {
+            display: inline-block;
+            width: 2px;
+            height: 14px;
+            background: var(--primary-base);
+            margin-left: 2px;
+            vertical-align: middle;
+            animation: caretBlink 0.8s infinite;
+        }
+        @keyframes caretBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Right Inspector Tabs */
+        .inspector-tabs-header {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-body);
+            overflow-x: auto;
+        }
+        .inspector-tab-btn {
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .inspector-tab-btn.is-active {
+            color: var(--primary-base);
+            border-bottom-color: var(--primary-base);
+            background: var(--bg-card);
+        }
+        .inspector-body {
+            padding: 16px;
+            background: var(--bg-card);
+            min-height: 540px;
+        }
+        .json-code-box {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--text-main);
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            padding: 14px;
+            overflow: auto;
+            max-height: 480px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* Bug Hunter Report Card */
+        .bug-report-box {
+            border: 1px solid var(--border);
+            padding: 16px;
+            margin-top: 12px;
+            background: var(--bg-body);
+        }
+        .bug-badge-pass {
+            background: var(--success-subtle);
+            border: 1px solid var(--success-base);
+            color: var(--success-base);
+            padding: 6px 12px;
+            font-weight: 700;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .bug-badge-fail {
+            background: var(--danger-subtle);
+            border: 1px solid var(--danger-base);
+            color: var(--danger-base);
+            padding: 6px 12px;
+            font-weight: 700;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Nori Keyframes */
+        @keyframes noriBreathe {
+            0%, 100% { transform: translateY(0px) scale(1, 1); }
+            50% { transform: translateY(-1.5px) scale(1.02, 0.98); }
+        }
+        @keyframes noriJoyBounce {
+            0% { transform: translateY(0) scale(1, 1); }
+            15% { transform: translateY(3px) scale(1.08, 0.92); }
+            35% { transform: translateY(-18px) scale(0.92, 1.12); }
+            55% { transform: translateY(0) scale(1.05, 0.95); }
+            70% { transform: translateY(-8px) scale(0.96, 1.05); }
+            85% { transform: translateY(0) scale(1.02, 0.98); }
+        }
+        @keyframes mathWaveBar {
+            0%, 100% { transform: scaleY(0.4); }
+            50% { transform: scaleY(1.2); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Top Header -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 14px; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--primary-base); background: var(--primary-subtle); border: 1px solid var(--primary-base); padding: 2px 8px; margin-bottom: 6px;">
+                    Vectoria Pedagogical Diagnostic & Full-Journey Autopilot Testbed
+                </div>
+                <h1 style="font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">
+                    Nori · Kiểm Thử Toàn Trình Lộ Trình Học Tập & Bắt Bug Tích Lũy
+                </h1>
+                <p style="font-size: 12.5px; color: var(--text-muted);">
+                    Mô phỏng thao tác học viên tự nhiên như người (Bézier Curves, Fitts's Law, Micro-hesitations), tự động duyệt qua 5 chặng lộ trình, cập nhật BKT mastery và đối soát JSON nhiều lượt.
+                </p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button class="btn" onclick="toggleTheme()">
+                    <i class="ph ph-sun-dim"></i> Giao diện Sáng/Tối
+                </button>
+            </div>
+        </div>
+
+        <!-- Autopilot Controls Toolbar -->
+        <div class="top-toolbar">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);">
+                    Kịch bản Hành vi:
+                </span>
+                <select id="select-persona-profile" onchange="changePersona(this.value)" style="padding: 7px 12px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--border-strong); background: var(--bg-body); color: var(--text-main);">
+                    <option value="SPAM_RUSHER">⚡ 1. Kẻ vội vàng (Spam Rusher - Dưới 1.5s/câu, đoán bừa toàn bài)</option>
+                    <option value="TAIL_FATIGUE">📉 2. Đuối sức cuối bài (Tail Fatigue - Đầu 40s, câu cuối vội < 2s)</option>
+                    <option value="LUCKY_GUESSER">🎲 3. Đoán mò siêu tốc (Lucky Guesser - 1.2s/câu nhưng 10/10 điểm)</option>
+                    <option value="OVERTHINKER">🤔 4. Do dự phân vân (Overthinker - Ngẫm lâu, đổi đáp án 3 lần)</option>
+                    <option value="CARELESS_SLIP">🍌 5. Trượt vỏ chuối (Careless Slip - Hiểu bài nhưng sai dấu số học)</option>
+                    <option value="AUTHENTIC_MASTER">🏆 6. Làm chủ thực sự (Authentic Master - Chuẩn mực 10/10 điểm)</option>
+                    <option value="FULL_EVOLUTION">🚀 7. Tiến hóa Lộ trình (Full 5-Node Journey - Bỡ ngỡ tới Làm chủ)</option>
+                </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <button id="btn-play-autopilot" class="btn btn-primary" onclick="toggleAutopilotPlay()">
+                    <i class="ph ph-play"></i> Bắt đầu Autopilot
+                </button>
+                <button id="btn-reset-tabula" class="btn btn-danger" onclick="executeResetTabulaRasa()">
+                    <i class="ph ph-arrow-counter-clockwise"></i> Reset về Day 1 (Tabula Rasa)
+                </button>
+                <div style="display: flex; border: 1px solid var(--border-strong); margin-left: 6px;">
+                    <button id="btn-speed-05" class="btn" style="padding: 6px 10px; font-size: 11.5px;" onclick="setAutopilotSpeed(0.5)">0.5x</button>
+                    <button id="btn-speed-1" class="btn" style="padding: 6px 10px; font-size: 11.5px; background: var(--primary-base); color: #fff; border-color: var(--primary-base);" onclick="setAutopilotSpeed(1)">1.0x</button>
+                    <button id="btn-speed-2" class="btn" style="padding: 6px 10px; font-size: 11.5px;" onclick="setAutopilotSpeed(2)">2.0x</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="workspace-grid">
+            <!-- LEFT COLUMN: INTERACTIVE JOURNEY STAGE -->
+            <div>
+                <!-- STAGE 1: LEARNING PATH TIMELINE -->
+                <div class="stage-box">
+                    <div class="stage-box-header">
+                        <div class="stage-box-title">
+                            <i class="ph ph-path" style="color: var(--primary-base); font-size: 16px;"></i>
+                            Lộ Trình Thực Tế (l1, l2, l3 & Bài Thi Tổng Hợp 15 Câu)
+                        </div>
+                        <span id="journey-progress-badge" style="font-size: 11.5px; font-weight: 700; color: var(--primary-base); background: var(--primary-subtle); border: 1px solid var(--primary-base); padding: 2px 8px;">
+                            Chặng 1: Khái niệm vector (l1)
+                        </span>
+                    </div>
+
+                    <div id="timeline-track-container" class="timeline-nodes-track">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- STAGE 2: SIMULATED QUIZ STAGE -->
+                <div class="stage-box">
+                    <div class="stage-box-header">
+                        <div class="stage-box-title">
+                            <i class="ph ph-exam" style="color: var(--warning-base); font-size: 16px;"></i>
+                            Phòng Làm Bài Trắc Nghiệm Trực Quan
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--text-muted);">
+                            <span>Thời gian câu: <strong id="testbed-q-timer" style="color: var(--text-main);">0.0s</strong></span>
+                            <span>Số lần đổi phương án: <strong id="testbed-q-switches" style="color: var(--text-main);">0</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="quiz-stage-container">
+                        <div id="testbed-q-counter" style="font-size: 11.5px; font-weight: 700; color: var(--primary-base); text-transform: uppercase; margin-bottom: 6px;">
+                            Câu hỏi 1 / 3
+                        </div>
+                        <div id="testbed-q-text" class="quiz-question-box">
+                            Đang tải câu hỏi kiểm thử...
+                        </div>
+
+                        <div id="testbed-options-container">
+                            <!-- Populated dynamically -->
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px;">
+                            <button id="testbed-submit-quiz-btn" class="btn btn-primary" style="padding: 9px 18px;">
+                                <i class="ph ph-check-circle"></i> Xác nhận & Nộp bài Chặng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STAGE 3: NORI PEDAGOGICAL MENTOR CARD -->
+                <div class="stage-box">
+                    <div class="stage-box-header">
+                        <div class="stage-box-title">
+                            <i class="ph ph-sparkle" style="color: #c026d3; font-size: 16px;"></i>
+                            Thẻ Bạn Đồng Hành Nori (Phản Hồi Sư Phạm & Biểu Cảm Chibi)
+                        </div>
+                        <span id="mentor-emotion-badge" style="font-size: 11.5px; font-weight: 700; color: var(--warning-base); background: var(--warning-subtle); border: 1px solid var(--warning-base); padding: 2px 8px;">
+                            Trầm ngâm (Cấp 2)
+                        </span>
+                    </div>
+
+                    <div class="nori-mentor-card">
+                        <div class="mentor-avatar-box" id="testbed-avatar-mount">
+                            <!-- Nori Chibi Avatar SVG injected here -->
+                        </div>
+                        <div class="mentor-speech-bubble">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                <span style="font-weight: 700; font-size: 13px; color: var(--text-main);">
+                                    Nori · Bạn cùng bàn
+                                </span>
+                                <span id="mentor-progression-tags" style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">
+                                    [thoughtful]
+                                </span>
+                            </div>
+                            <div class="speech-text-stream" id="testbed-speech-box">
+                                Chào bạn! Tớ là Nori. Bấm [▶ Bắt đầu Autopilot] để xem tớ quan sát và đồng hành cùng bạn suốt lộ trình học tập nhé!
+                                <span class="typewriter-caret"></span>
+                            </div>
+
+                            <!-- Pacing Bar Gauge -->
+                            <div style="background: var(--bg-body); border: 1px solid var(--border); padding: 8px 12px; margin-bottom: 10px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 4px;">
+                                    <span id="pacing-label" style="font-weight: 600;">Nhịp độ tư duy</span>
+                                    <span id="pacing-val-text" style="color: var(--text-muted);">Trung bình: 0.0s / câu (Ngưỡng chuẩn: 45.0s)</span>
+                                </div>
+                                <div style="height: 6px; background: var(--border); width: 100%; position: relative;">
+                                    <div id="pacing-fill-bar" style="height: 100%; width: 0%; background: var(--primary-base); transition: width 0.4s ease;"></div>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <div id="mentor-summary-pill" style="font-size: 11.5px; background: var(--bg-body); border: 1px solid var(--border); padding: 4px 8px; color: var(--text-muted);">
+                                    Điểm mấu chốt: Sẵn sàng khởi động bài thi chẩn đoán.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: ACCUMULATED JSON INSPECTOR & BUG HUNTER -->
+            <div>
+                <div class="stage-box" style="padding: 0; overflow: hidden;">
+                    <div class="inspector-tabs-header">
+                        <button class="inspector-tab-btn is-active" onclick="switchInspectorTab('session')">
+                            <i class="ph ph-brackets-curly"></i> Session JSON
+                        </button>
+                        <button class="inspector-tab-btn" onclick="switchInspectorTab('telemetry')">
+                            <i class="ph ph-chart-line-up"></i> Telemetry & BKT
+                        </button>
+                        <button class="inspector-tab-btn" onclick="switchInspectorTab('speech')">
+                            <i class="ph ph-chat-teardrop-text"></i> Nori Soul & Lời Thoại
+                        </button>
+                        <button class="inspector-tab-btn" onclick="switchInspectorTab('bughunter')">
+                            <i class="ph ph-bug"></i> 🐞 1-Click Bug Hunter
+                        </button>
+                    </div>
+
+                    <div class="inspector-body">
+                        <!-- TAB 1: SESSION JSON -->
+                        <div id="tab-pane-session">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-size: 12px; font-weight: 600; color: var(--text-muted);">
+                                    Dữ liệu JSON Tích lũy (SessionStorage Sync):
+                                </span>
+                                <div style="display: flex; gap: 6px;">
+                                    <button class="btn" style="padding: 4px 8px; font-size: 11.5px;" onclick="copyJSONInspector()">
+                                        <i class="ph ph-copy"></i> Sao chép
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="json-display-box" class="json-code-box">
+// Chưa có dữ liệu phiên. Hãy bấm [▶ Bắt đầu Autopilot] để bắt đầu ghi nhận.
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: TELEMETRY & BKT -->
+                        <div id="tab-pane-telemetry" style="display: none;">
+                            <div style="font-size: 12.5px; font-weight: 700; margin-bottom: 10px;">
+                                Ma Trận BKT & Dữ Liệu Thời Gian Từng Câu:
+                            </div>
+                            <div id="telemetry-table-container">
+                                <div style="font-size: 12px; color: var(--text-muted); padding: 14px 0;">
+                                    Chưa có dữ liệu chẩn đoán.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: NORI SOUL & DIALOGUE -->
+                        <div id="tab-pane-speech" style="display: none;">
+                            <div style="font-size: 12.5px; font-weight: 700; margin-bottom: 10px;">
+                                Phân Tích Giọng Thoại & Biểu Cảm Đa Tầng:
+                            </div>
+                            <div id="nori-soul-container">
+                                <div style="font-size: 12px; color: var(--text-muted); padding: 14px 0;">
+                                    Chưa ghi nhận lời thoại nào từ Nori.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: 1-CLICK BUG HUNTER -->
+                        <div id="tab-pane-bughunter" style="display: none;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div style="font-size: 13px; font-weight: 700;">
+                                    Kiểm Tra Bug Ẩn & Chuẩn Sư Phạm Tự Động
+                                </div>
+                                <button class="btn btn-primary" style="padding: 5px 10px; font-size: 11.5px;" onclick="runInstantBugHunter()">
+                                    <i class="ph ph-magnifying-glass"></i> Quét Lại Ngay
+                                </button>
+                            </div>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                                Tự động rà soát toàn bộ chuỗi phiên tích lũy: kiểm tra rò rỉ biến nội bộ (l_z, theta, BKT, RTE), vi phạm dấu gạch ngang dài (em-dash), từ ngữ sáo rỗng (A.I Slop) và lỗi schema null/undefined.
+                            </p>
+                            <div id="bughunter-results-box">
+                                <div class="bug-report-box">
+                                    <div style="font-size: 12px; color: var(--text-muted);">
+                                        Nhấn [Quét Lại Ngay] hoặc chạy Autopilot để nhận báo cáo kiểm thử.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/app/simulation/nori_avatar_renderer.js"></script>
+    <script src="js/app/simulation/journey_autopilot_engine.js"></script>
+    <script>
+        // App State
+        let engine = null;
+        let activeTab = 'session';
+        let currentSelectedOptionKey = null;
+
+        function initTestbed() {
+            if (typeof window.JourneyAutopilotEngine !== 'function') {
+                console.error('JourneyAutopilotEngine not loaded!');
+                return;
+            }
+
+            engine = new window.JourneyAutopilotEngine({
+                speedMultiplier: 1,
+                onStateChange: handleStateChange,
+                onNodeChange: handleNodeChange,
+                onQuestionChange: handleQuestionChange,
+                onMentorSpeech: handleMentorSpeech,
+                onAuditUpdate: handleAuditUpdate
+            });
+
+            renderTimelineNodes();
+            renderQuestion(window.JOURNEY_NODES[0].questions[0], 0);
+            updateAvatar('thoughtful_2', false);
+
+            if (window.renderMathInElement) {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '\\(', right: '\\)', display: false }
+                    ]
+                });
+            }
+        }
+
+        function renderTimelineNodes() {
+            const container = document.getElementById('timeline-track-container');
+            if (!container || !engine) return;
+
+            let html = '';
+            engine.nodes.forEach((n, idx) => {
+                const state = engine.nodeStates[idx];
+                const isActive = idx === engine.activeNodeIndex && engine.isPlaying;
+                const isCompleted = state.isCompleted;
+                const isLocked = !state.isUnlocked;
+
+                let cls = 'timeline-node-card';
+                if (isActive) cls += ' is-active';
+                if (isCompleted) cls += ' is-completed';
+                if (isLocked) cls += ' is-locked';
+
+                const scoreBadge = state.score !== null ? `<span style="font-weight: 700; font-size: 12px; color: var(--success-base);">${state.score.toFixed(1)}/10</span>` : '';
+                const bktPercent = Math.round(state.mastery * 100);
+
+                html += `
+                    <div id="timeline-node-card-${idx}" class="${cls}" onclick="onUserClickNode(${idx})">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="node-num-circle">
+                                ${isCompleted ? '✓' : n.num}
+                            </div>
+                            <div>
+                                <div style="font-weight: 700; font-size: 13px; color: var(--text-main);">
+                                    Chặng ${n.num}: ${n.title}
+                                </div>
+                                <div style="font-size: 11.5px; color: var(--text-muted);">
+                                    ${n.subtitle}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div style="text-align: right;">
+                                <div style="font-size: 11px; color: var(--text-muted);">BKT Mastery: <strong>${bktPercent}%</strong></div>
+                                <div style="width: 80px; height: 5px; background: var(--border); margin-top: 3px;">
+                                    <div style="width: ${bktPercent}%; height: 100%; background: ${isCompleted ? 'var(--success-base)' : 'var(--primary-base)'};"></div>
+                                </div>
+                            </div>
+                            ${scoreBadge}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderQuestion(q, qIdx) {
+            const counterEl = document.getElementById('testbed-q-counter');
+            const textEl = document.getElementById('testbed-q-text');
+            const optsEl = document.getElementById('testbed-options-container');
+            if (!q) return;
+
+            if (counterEl) counterEl.textContent = `Câu hỏi ${qIdx + 1} / 3`;
+            if (textEl) textEl.innerHTML = q.text;
+
+            let html = '';
+            q.options.forEach(opt => {
+                html += `
+                    <div id="testbed-opt-${opt.key}" class="testbed-option-row" onclick="selectOption('${opt.key}')">
+                        <div class="opt-key-badge">${opt.key}</div>
+                        <div style="font-size: 13.5px; color: var(--text-main); flex: 1;">${opt.text}</div>
+                    </div>
+                `;
+            });
+            if (optsEl) optsEl.innerHTML = html;
+
+            currentSelectedOptionKey = null;
+
+            if (window.renderMathInElement) {
+                renderMathInElement(textEl, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '\\(', right: '\\)', display: false }
+                    ]
+                });
+                renderMathInElement(optsEl, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '\\(', right: '\\)', display: false }
+                    ]
+                });
+            }
+        }
+
+        function selectOption(key) {
+            currentSelectedOptionKey = key;
+            document.querySelectorAll('.testbed-option-row').forEach(el => el.classList.remove('is-selected'));
+            const optEl = document.getElementById(`testbed-opt-${key}`);
+            if (optEl) optEl.classList.add('is-selected');
+        }
+
+        function updateAvatar(mood, isTalking) {
+            const mount = document.getElementById('testbed-avatar-mount');
+            if (mount && typeof window.renderMentorAvatarHTML === 'function') {
+                mount.innerHTML = window.renderMentorAvatarHTML(mood, isTalking);
+            }
+        }
+
+        // Engine Callbacks
+        function handleStateChange(state) {
+            renderTimelineNodes();
+
+            const playBtn = document.getElementById('btn-play-autopilot');
+            if (playBtn) {
+                if (state.isPlaying) {
+                    playBtn.innerHTML = '<i class="ph ph-pause"></i> Tạm dừng';
+                    playBtn.classList.remove('btn-primary');
+                    playBtn.style.background = 'var(--warning-base)';
+                    playBtn.style.borderColor = 'var(--warning-base)';
+                } else {
+                    playBtn.innerHTML = '<i class="ph ph-play"></i> Bắt đầu Autopilot';
+                    playBtn.classList.add('btn-primary');
+                    playBtn.style.background = '';
+                    playBtn.style.borderColor = '';
+                }
+            }
+
+            const progBadge = document.getElementById('journey-progress-badge');
+            if (progBadge && engine.nodes[state.activeNodeIndex]) {
+                const cur = engine.nodes[state.activeNodeIndex];
+                progBadge.textContent = `Chặng ${cur.num}/${engine.nodes.length}: ${cur.title}`;
+            }
+
+            updateJSONInspector();
+            updateTelemetryTable();
+            updateNoriSoulTab();
+        }
+
+        function handleNodeChange(node, nodeIdx) {
+            renderTimelineNodes();
+        }
+
+        function handleQuestionChange(question, qIdx) {
+            renderQuestion(question, qIdx);
+            const timerEl = document.getElementById('testbed-q-timer');
+            if (timerEl) timerEl.textContent = 'Đang đọc đề...';
+        }
+
+        function handleMentorSpeech(sessionData, streamState) {
+            const box = document.getElementById('testbed-speech-box');
+            if (box) {
+                box.innerHTML = streamState.currentText + (streamState.isComplete ? '' : '<span class="typewriter-caret"></span>');
+            }
+
+            const progEl = document.getElementById('mentor-progression-tags');
+            if (progEl && sessionData.mentor_speech?.emotion_progression) {
+                progEl.textContent = '[' + sessionData.mentor_speech.emotion_progression.join(' -> ') + ']';
+            }
+
+            const badge = document.getElementById('mentor-emotion-badge');
+            if (badge) {
+                badge.textContent = streamState.currentMood;
+            }
+
+            updateAvatar(streamState.currentMood, !streamState.isComplete);
+
+            // Update summary pill & action
+            const summaryPill = document.getElementById('mentor-summary-pill');
+            if (summaryPill && sessionData.mentor_speech?.summary_reason) {
+                summaryPill.textContent = 'Điểm mấu chốt: ' + sessionData.mentor_speech.summary_reason;
+            }
+
+            // Update Pacing Bar
+            const telemetry = sessionData.telemetry || {};
+            const avgTime = Number(telemetry.time_per_question_avg || 0);
+            const pacingBar = document.getElementById('pacing-fill-bar');
+            const pacingValText = document.getElementById('pacing-val-text');
+            if (pacingBar && pacingValText) {
+                const pct = Math.min(100, Math.max(8, Math.round((avgTime / 45.0) * 100)));
+                pacingBar.style.width = pct + '%';
+                pacingBar.style.background = avgTime < 2 ? 'var(--danger-base)' : 'var(--primary-base)';
+                pacingValText.textContent = `Trung bình: ${avgTime.toFixed(1)}s / câu (Ngưỡng chuẩn: 45.0s)`;
+            }
+        }
+
+        function handleAuditUpdate(auditReport) {
+            const resultsBox = document.getElementById('bughunter-results-box');
+            if (!resultsBox) return;
+
+            if (auditReport.status === 'IDLE') {
+                resultsBox.innerHTML = `
+                    <div class="bug-report-box">
+                        <div style="font-size: 12px; color: var(--text-muted);">${auditReport.details}</div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (auditReport.status === 'PASSED') {
+                resultsBox.innerHTML = `
+                    <div class="bug-badge-pass" style="margin-bottom: 12px;">
+                        ✓ 0 BUGS FOUND · TOÀN BỘ ${auditReport.totalSessions} PHIÊN ĐỀU ĐẠT CHUẨN
+                    </div>
+                    <div class="bug-report-box" style="border-color: var(--success-base);">
+                        <div style="font-size: 12.5px; color: var(--text-main); font-weight: 600; margin-bottom: 6px;">
+                            Kết quả kiểm thử Sư phạm & Tích lũy:
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+                            ${auditReport.details}
+                        </div>
+                    </div>
+                `;
+            } else {
+                let issuesHtml = auditReport.issues.map(iss => `
+                    <li style="margin-bottom: 6px; font-size: 12px;">
+                        <strong style="color: var(--danger-base);">[${iss.severity}]</strong>
+                        Chặng ${iss.sessionIndex} (${iss.quizId}): ${iss.message}
+                    </li>
+                `).join('');
+
+                resultsBox.innerHTML = `
+                    <div class="bug-badge-fail" style="margin-bottom: 12px;">
+                        ✕ PHÁT HIỆN ${auditReport.issuesCount} VẤN ĐỀ TRONG DỮ LIỆU TÍCH LŨY
+                    </div>
+                    <div class="bug-report-box" style="border-color: var(--danger-base);">
+                        <ul style="padding-left: 18px; color: var(--text-main);">
+                            ${issuesHtml}
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        function updateJSONInspector() {
+            const display = document.getElementById('json-display-box');
+            if (!display || !engine) return;
+
+            if (engine.accumulatedSessions.length === 0) {
+                display.textContent = '// Dữ liệu Tabula Rasa (Sạch sẽ). Bấm [▶ Bắt đầu Autopilot] để tích lũy dữ liệu.';
+                return;
+            }
+
+            display.textContent = JSON.stringify(engine.accumulatedSessions, null, 2);
+        }
+
+        function updateTelemetryTable() {
+            const container = document.getElementById('telemetry-table-container');
+            if (!container || !engine) return;
+
+            if (engine.accumulatedSessions.length === 0) {
+                container.innerHTML = '<div style="font-size: 12px; color: var(--text-muted); padding: 14px 0;">Chưa có dữ liệu chẩn đoán.</div>';
+                return;
+            }
+
+            let rowsHtml = engine.accumulatedSessions.map((sess, idx) => {
+                const cases = (sess.detected_cases || []).map(c => c.code).join(', ') || 'Không có';
+                const avgT = sess.telemetry?.time_per_question_avg ? sess.telemetry.time_per_question_avg.toFixed(1) + 's' : '0s';
+                const bkt = (sess.bkt_mastery * 100).toFixed(0) + '%';
+                return `
+                    <tr style="border-bottom: 1px solid var(--border); font-size: 12px;">
+                        <td style="padding: 8px 6px; font-weight: 600;">Chặng ${idx + 1}</td>
+                        <td style="padding: 8px 6px;">${sess.score.toFixed(1)}/10</td>
+                        <td style="padding: 8px 6px;">${avgT}</td>
+                        <td style="padding: 8px 6px; font-family: var(--font-mono); font-size: 11px;">${cases}</td>
+                        <td style="padding: 8px 6px; font-weight: 600; color: var(--primary-base);">${bkt}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border); font-size: 11px; text-transform: uppercase; color: var(--text-muted);">
+                            <th style="padding: 6px;">Chặng</th>
+                            <th style="padding: 6px;">Điểm</th>
+                            <th style="padding: 6px;">TG/câu</th>
+                            <th style="padding: 6px;">Mã Edge Case</th>
+                            <th style="padding: 6px;">BKT Mastery</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+            `;
+        }
+
+        function updateNoriSoulTab() {
+            const container = document.getElementById('nori-soul-container');
+            if (!container || !engine) return;
+
+            if (engine.accumulatedSessions.length === 0) {
+                container.innerHTML = '<div style="font-size: 12px; color: var(--text-muted); padding: 14px 0;">Chưa ghi nhận lời thoại nào từ Nori.</div>';
+                return;
+            }
+
+            let html = engine.accumulatedSessions.map((sess, idx) => {
+                const sp = sess.mentor_speech || {};
+                return `
+                    <div style="border: 1px solid var(--border); padding: 12px; margin-bottom: 10px; background: var(--bg-body);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <strong style="font-size: 12px; color: var(--text-main);">Chặng ${idx + 1}: ${sess.quiz_title}</strong>
+                            <span style="font-size: 11px; font-family: var(--font-mono); color: var(--primary-base);">[${sp.avatar_mood}]</span>
+                        </div>
+                        <div style="font-size: 12.5px; line-height: 1.5; color: var(--text-main); margin-bottom: 6px;">
+                            "${sp.text || ''}"
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-muted);">
+                            Chuỗi cảm xúc: <code>${(sp.emotion_progression || []).join(' -> ')}</code>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        // Toolbar UI Interactions
+        function toggleAutopilotPlay() {
+            if (!engine) return;
+            if (engine.isPlaying) {
+                engine.pauseJourney();
+            } else {
+                engine.playJourney();
+            }
+        }
+
+        function executeResetTabulaRasa() {
+            if (!engine) return;
+            engine.resetAll();
+            renderQuestion(window.JOURNEY_NODES[0].questions[0], 0);
+            updateAvatar('thoughtful_2', false);
+            const speechBox = document.getElementById('testbed-speech-box');
+            if (speechBox) {
+                speechBox.innerHTML = 'Đã hoàn tất reset về Day 1 (Tabula Rasa)! Lịch sử phiên và bộ nhớ đã xóa sạch. Hãy chọn kịch bản mới và bấm Bắt đầu Autopilot để kiểm thử tiếp nha.';
+            }
+        }
+
+        function changePersona(personaKey) {
+            if (engine) engine.setPersona(personaKey);
+        }
+
+        function setAutopilotSpeed(speed) {
+            if (!engine) return;
+            engine.setSpeed(speed);
+            ['05', '1', '2'].forEach(id => {
+                const btn = document.getElementById(`btn-speed-${id}`);
+                if (btn) {
+                    btn.style.background = '';
+                    btn.style.color = '';
+                    btn.style.borderColor = '';
+                }
+            });
+            const activeId = speed === 0.5 ? '05' : (speed === 2 ? '2' : '1');
+            const activeBtn = document.getElementById(`btn-speed-${activeId}`);
+            if (activeBtn) {
+                activeBtn.style.background = 'var(--primary-base)';
+                activeBtn.style.color = '#fff';
+                activeBtn.style.borderColor = 'var(--primary-base)';
+            }
+        }
+
+        function onUserClickNode(nodeIdx) {
+            if (!engine) return;
+            engine.activeNodeIndex = nodeIdx;
+            const node = engine.nodes[nodeIdx];
+            renderQuestion(node.questions[0], 0);
+            renderTimelineNodes();
+        }
+
+        function switchInspectorTab(tabId) {
+            activeTab = tabId;
+            document.querySelectorAll('.inspector-tab-btn').forEach(btn => btn.classList.remove('is-active'));
+            ['session', 'telemetry', 'speech', 'bughunter'].forEach(t => {
+                const pane = document.getElementById(`tab-pane-${t}`);
+                if (pane) pane.style.display = t === tabId ? 'block' : 'none';
+            });
+            const activeBtn = Array.from(document.querySelectorAll('.inspector-tab-btn')).find(b => b.getAttribute('onclick')?.includes(tabId));
+            if (activeBtn) activeBtn.classList.add('is-active');
+
+            if (tabId === 'bughunter' && engine) {
+                runInstantBugHunter();
+            }
+        }
+
+        function runInstantBugHunter() {
+            if (!engine) return;
+            const report = engine.runBugHunterAudit();
+            handleAuditUpdate(report);
+        }
+
+        function copyJSONInspector() {
+            const display = document.getElementById('json-display-box');
+            if (display && display.textContent) {
+                navigator.clipboard.writeText(display.textContent).then(() => {
+                    alert('Đã sao chép toàn bộ JSON vào Clipboard!');
+                });
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+        }
+
+        window.addEventListener('DOMContentLoaded', initTestbed);
+    </script>
+</body>
+</html>

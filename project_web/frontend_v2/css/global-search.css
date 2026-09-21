@@ -44,16 +44,16 @@
 
 /* Hierarchical Layout */
 .index-chapter { margin-bottom: 24px; }
-.index-chapter .chapter-title { font-size: 17px; color: var(--text-main); font-weight: 700; cursor: pointer; text-decoration: none !important; display: block; margin-bottom: 8px; font-family: var(--font-academic); letter-spacing: 0; }
+.index-chapter .chapter-title { font-size: 17px; color: var(--text-main); font-weight: 700; cursor: pointer; text-decoration: none !important; display: block; margin-bottom: 8px; font-family: var(--font-ui); letter-spacing: 0; }
 .index-chapter .chapter-title:hover { color: var(--primary-base); }
 .lesson-group { padding-left: 14px; margin-bottom: 12px; margin-left: 6px; border-left: 1px solid var(--border-subtle); }
-.lesson-group .lesson-name { font-size: 16px; color: var(--text-main); font-weight: 700; margin-bottom: 8px; cursor: pointer; text-decoration: none !important; display: inline-block; font-family: var(--font-academic); }
+.lesson-group .lesson-name { font-size: 16px; color: var(--text-main); font-weight: 700; margin-bottom: 8px; cursor: pointer; text-decoration: none !important; display: inline-block; font-family: var(--font-ui); }
 .lesson-group .lesson-name:hover { color: var(--primary-base); }
 
 
 .search-result-item { padding-left: 14px; margin-bottom: 8px; margin-left: 6px; border-left: 1px solid var(--border-subtle); text-decoration: none !important; display: block; }
 
-.search-result-item .result-title { font-size: 15px; font-weight: 700; color: var(--text-main); text-decoration: none !important; display: block; padding: 6px 0px; border-radius: 4px; transition: color 0.15s; font-family: var(--font-academic); }
+.search-result-item .result-title { font-size: 15px; font-weight: 700; color: var(--text-main); text-decoration: none !important; display: block; padding: 6px 0px; border-radius: 4px; transition: color 0.15s; font-family: var(--font-ui); }
 
 
 .search-result-item .result-title i { font-size: 16px; color: var(--text-muted); }

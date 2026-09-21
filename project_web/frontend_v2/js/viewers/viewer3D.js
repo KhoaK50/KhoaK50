@@ -1,4 +1,4 @@
-﻿// ===================== viewer3D.js (FULL FINAL - FIXED FLASH & GHOST) =====================
+// ===================== viewer3D.js (FULL FINAL - FIXED FLASH & GHOST) =====================
 (function () {
   window.Vec3D = window.Vec3D || {};
 
@@ -122,7 +122,8 @@
 
     // 3. Scene & Camera
     Vec3D._scene = new THREE.Scene();
-    Vec3D._scene.background = new THREE.Color(App.getCSS?.("--bg") || "#ffffff");
+    const defaultBg = (window.App && App.theme === "dark") ? "#111113" : "#ffffff";
+    Vec3D._scene.background = new THREE.Color(App.getCSS?.("--bg") || defaultBg);
 
     Vec3D._camera = new THREE.PerspectiveCamera(Vec3D.DEFAULT_FOV, Math.max(1e-6, (rect.width || 760) / (rect.height || 760)), 0.1, 1e12);
     Vec3D._camera.position.set(10, 10, 10);
@@ -138,6 +139,9 @@
     Vec3D._controls.enableDamping = true;
     Vec3D._controls.dampingFactor = 0.07;
     Vec3D._controls.rotateSpeed = 0.6;
+    Vec3D._controls.addEventListener("start", () => {
+      Vec3D._userControlledCamera = true;
+    });
     
     // [FIX QUAN TRỌNG 2]: Trả lại quyền Kéo (Pan) Đồ thị cho Chuột Phải
     Vec3D._controls.enablePan = true; 
@@ -249,6 +253,11 @@
 
               if (hitId && !(window.App && App.isAnimating)) {
                   Vec3D.S3D.draggedVectorId = hitId;
+                  if (window.App && App.History && typeof App.History.snapshot === "function") {
+                    Vec3D.S3D._dragPreState = App.History.snapshot(`Di chuyển vector #${hitId}`);
+                    const hitV = App.vectorList.find((v) => v.id === hitId);
+                    Vec3D.S3D._dragStartVec = hitV ? [...hitV.vec] : null;
+                  }
                   Vec3D._controls.enabled = false; 
 
                   const tipWorld = group.userData.tipLocal.clone().add(Vec3D.S3D.offset);
@@ -399,8 +408,26 @@
           if (draggedVec) {
               draggedVec.vec = draggedVec.vec.map(val => Number(Number(val).toFixed(2)));
               draggedVec.latex = `[${draggedVec.vec.join(", ")}]`;
+
+              // [HOÀN TÁC THÔNG MINH]: Chỉ lưu nếu vector có thay đổi vị trí thực tế
+              if (
+                Vec3D.S3D._dragPreState &&
+                Vec3D.S3D._dragStartVec &&
+                window.App &&
+                App.History &&
+                typeof App.History.record === "function"
+              ) {
+                const moved = draggedVec.vec.some(
+                  (val, i) => Math.abs(val - (Vec3D.S3D._dragStartVec[i] || 0)) > 0.001
+                );
+                if (moved) {
+                  App.History.record(`Di chuyển vector #${draggedVec.id}`, Vec3D.S3D._dragPreState);
+                }
+              }
           }
 
+          Vec3D.S3D._dragPreState = null;
+          Vec3D.S3D._dragStartVec = null;
           Vec3D.S3D.draggedVectorId = null;
           Vec3D._controls.enabled = true; // Mở lại OrbitControls
           renderDom.style.cursor = "default";
@@ -639,6 +666,8 @@
 
   Vec3D.show3D = function () {
     if (!Vec3D._scene) Vec3D.init3D();
+    const defaultBg = (window.App && App.theme === "dark") ? "#111113" : "#ffffff";
+    if (Vec3D._scene) Vec3D._scene.background = new THREE.Color(App.getCSS?.("--bg") || defaultBg);
 
     const c2d = document.getElementById("canvas2d");
     if (c2d) c2d.style.display = "none";
@@ -723,11 +752,14 @@
     } else {
       const keepVectors = Vec3D._vectorsGroup || new THREE.Group();
       const keepAngles = Vec3D._angleLayer || new THREE.Group();
+      const keepTransform = Vec3D._transformGroup || null;
       keepVectors.parent && keepVectors.parent.remove(keepVectors);
       keepAngles.parent && keepAngles.parent.remove(keepAngles);
+      if (keepTransform && keepTransform.parent) keepTransform.parent.remove(keepTransform);
       Vec3D._mathGroup.clear();
       Vec3D._vectorsGroup = keepVectors;
       Vec3D._angleLayer = keepAngles;
+      if (keepTransform) Vec3D._transformGroup = keepTransform;
     }
     if (!Vec3D._vectorsGroup) Vec3D._vectorsGroup = new THREE.Group();
     if (!Vec3D._angleLayer) Vec3D._angleLayer = new THREE.Group();
@@ -768,6 +800,7 @@
     Vec3D._mathGroup.add(Vec3D._axesGroup);
     Vec3D._mathGroup.add(Vec3D._vectorsGroup);
     Vec3D._mathGroup.add(Vec3D._angleLayer);
+    if (Vec3D._transformGroup) Vec3D._mathGroup.add(Vec3D._transformGroup);
     Vec3D._mathGroup.position.copy(Vec3D.S3D.offset);
   };
 
@@ -826,7 +859,10 @@
     const pxPerMath = pxPerWorld * u;
     Vec3D._pxPerWorld = pxPerWorld;
 
-    if (Math.abs(u - (Vec3D._lastUForVectors || 0)) > 1e-6) {
+    const uChanged = Math.abs(u - (Vec3D._lastUForVectors || 0)) > 1e-6;
+    const distChanged = Vec3D._lastDistForVectors !== undefined && Math.abs(dist - Vec3D._lastDistForVectors) > 0.1;
+
+    if (uChanged || distChanged) {
       Vec3D.draw3DAllVectors({
         frame: false,
       });
@@ -838,6 +874,7 @@
         
       }
       Vec3D._lastUForVectors = u;
+      Vec3D._lastDistForVectors = dist;
     }
 
     const targetPx = 80;
@@ -1091,6 +1128,11 @@
     list.sort((a, b) => (a.focus ? 1 : 0) - (b.focus ? 1 : 0));
 
     for (const it of list) {
+      if (window.App?.LinearTransform?.isActive?.() && window.App.LinearTransform.dim === 3) {
+        if (window.App.LinearTransform.isVectorSelected(it.id)) {
+          continue; // Bỏ qua vector đang được mô phỏng biến đổi vì _transformGroup quản lý render Live & Ghost
+        }
+      }
       const v = toVec3(it.vec);
       let aItem =
         typeof it.alpha === "number" ? Math.max(0, Math.min(1, it.alpha)) : 1;
@@ -1103,23 +1145,33 @@
       const len = Math.max(tipLocal.length(), 1e-9);
       const dirLocal = len > 1e-9 ? tipLocal.clone().normalize() : new THREE.Vector3(1, 0, 0);
 
-      // --- CHÌA KHÓA LUẬT XA GẦN BÊN 3D (CHỐNG BÉO PHÌ ỐNG CỐNG) ---
-      // Lấy khoảng cách từ Camera đến vật thể để làm hệ quy chiếu tuyệt đối
-      const camDist = Vec3D._camera ? Vec3D._camera.position.distanceTo(tipLocal) : 20;
-      
-      // 1. Thân vector (Shaft): 
-      // Dùng camDist để giữ độ dày không đổi trên màn hình (như 2D). 
-      // Giới hạn max là 0.08 (không bao giờ mập như ống cống) và min là 0.015.
-      const mathLen = Math.hypot(v[0], v[1], v[2]);
-      const lengthFactor = Math.max(1, Math.min(mathLen * 0.2, 2.0)); // Vector dài thì thân mập ra tí
-      const DYN_SHAFT_R = Math.max(0.015, Math.min(0.08, 0.003 * camDist * lengthFactor));
+      // --- TỶ LỆ HÌNH HỌC VECTOR 3D CHUẨN GEOGEBRA & DESMOS (SCREEN-SPACE AESTHETIC) ---
+      // Quy đổi kích thước pixel trên màn hình sang tọa độ 3D theo khoảng cách camera
+      const vFOV = ((Vec3D._camera ? Vec3D._camera.fov : Vec3D.DEFAULT_FOV || 24) * Math.PI) / 180;
+      const screenH = Math.max(1, Vec3D._renderer?.domElement?.clientHeight || 760);
+      const midLocal = tipLocal.clone().multiplyScalar(0.5);
+      const camDist = Vec3D._camera ? Vec3D._camera.position.distanceTo(midLocal) : 25;
+      const worldPerPx = (2 * Math.tan(vFOV / 2) * camDist) / screenH;
 
-      // 2. Mũi tên (Head): 
-      // Cao mặc định gấp 10 lần thân. 
-      // Bị kẹp bởi 2 điều kiện: Không bự quá 30% chiều dài vector, và không được dài hơn 1.5 đơn vị ảo.
-      const DYN_HEAD_H = Math.min(Math.min(DYN_SHAFT_R * 10, 1.5), len * 0.3);
-      const DYN_HEAD_R = DYN_HEAD_H * 0.35; // Tỷ lệ đầu nhọn đẹp chuẩn
+      // Kích thước chuẩn trên màn hình:
+      // - Thân vector: bán kính 2.0px (~4.0px đường kính, thanh mảnh, sắc nét như tài liệu toán học)
+      // - Mũi tên: dài 15px, bán kính đáy 4.5px (tỷ lệ thon nhọn khí động học, ~2.25x bán kính thân)
+      let idealHeadH = 15.0 * worldPerPx;
+      let idealHeadR = 4.5 * worldPerPx;
+      let idealShaftR = 2.0 * worldPerPx;
 
+      // Xử lý vector ngắn hoặc khi zoom out xa:
+      // Mũi tên chiếm tối đa 28% chiều dài vector để không nuốt chửng thân
+      if (idealHeadH > len * 0.28) {
+        const scale = (len * 0.28) / idealHeadH;
+        idealHeadH = len * 0.28;
+        idealHeadR *= scale;
+        idealShaftR = Math.min(idealShaftR, idealHeadR * 0.44);
+      }
+
+      const DYN_HEAD_H = idealHeadH;
+      const DYN_HEAD_R = idealHeadR;
+      const DYN_SHAFT_R = Math.min(idealShaftR, DYN_HEAD_R * 0.44);
       const shaftLen = Math.max(len - DYN_HEAD_H, 1e-6);
       const color = new THREE.Color(it.colorHex || it.colorCss || "#ffffff");
 
@@ -1137,10 +1189,15 @@
           side: THREE.FrontSide,
         });
 
+        const haloR = 2.5 * worldPerPx;
+        const pulseShaftR = DYN_SHAFT_R + haloR;
+        const pulseHeadR = DYN_HEAD_R + haloR;
+        const pulseHeadH = DYN_HEAD_H + haloR * 1.5;
+
         const pulseShaft = new THREE.Mesh(
           new THREE.CylinderGeometry(
-            DYN_SHAFT_R + 0.05 * u, // Kẹp thêm *u để viền Glow cũng xa gần chuẩn
-            DYN_SHAFT_R + 0.05 * u,
+            pulseShaftR,
+            pulseShaftR,
             shaftLen,
             12, 1, true
           ),
@@ -1153,14 +1210,14 @@
 
         const pulseHead = new THREE.Mesh(
           new THREE.ConeGeometry(
-            DYN_HEAD_R + 0.08 * u,
-            DYN_HEAD_H + 0.1 * u,
+            pulseHeadR,
+            pulseHeadH,
             12
           ),
           pulseMat,
         );
         pulseHead.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
-        pulseHead.position.copy(tipLocal.clone().addScaledVector(dirLocal, -(DYN_HEAD_H + 0.1 * u) / 2));
+        pulseHead.position.copy(tipLocal.clone().addScaledVector(dirLocal, -pulseHeadH / 2));
         pulseHead.userData.isFocusPulse = true;
         group.add(pulseHead);
       }
@@ -1255,7 +1312,7 @@
         : `[${App.currentVector.join(",")}]`;
       App.coordOut?.(txt + (App.currentVector.length > 3 ? " (Chiếu 3D)" : ""));
     } else {
-      App.coordOut?.("—");
+      App.coordOut?.("-");
     }
 
     const normalizeGhost = App.tempGhosts?.find((g) => g.isNormalize);
@@ -1431,6 +1488,603 @@
     }
   };
 
+  // =========================================================================
+  // 3D LINEAR TRANSFORMATION SIMULATION ENGINE
+  // =========================================================================
+  Vec3D._transformGroup = null;
+
+  Vec3D.initTransformGroup = function () {
+    if (Vec3D.clearTransformGroup) Vec3D.clearTransformGroup();
+    if (!Vec3D._scene) Vec3D.init3D();
+    if (!Vec3D._mathGroup) Vec3D.update3DHelpersBase();
+
+    const group = new THREE.Group();
+    group.name = "linearTransformGroup3D";
+    Vec3D._transformGroup = group;
+    Vec3D._mathGroup.add(group);
+
+    // Cụm các nhóm con: khối hộp định thức, vector cơ sở, vector theo dõi
+    const parallelepipedGroup = new THREE.Group();
+    parallelepipedGroup.name = "ltParallelepiped";
+    group.add(parallelepipedGroup);
+
+    const basisGroup = new THREE.Group();
+    basisGroup.name = "ltBasis";
+    group.add(basisGroup);
+
+    const targetsGroup = new THREE.Group();
+    targetsGroup.name = "ltTargets";
+    group.add(targetsGroup);
+
+    // 1. Khối hộp định thức 3D (Parallelepiped)
+    // 12 tam giác * 3 đỉnh * 3 tọa độ = 108 floats
+    const facePositions = new Float32Array(108);
+    const boxFaceGeo = new THREE.BufferGeometry();
+    boxFaceGeo.setAttribute("position", new THREE.BufferAttribute(facePositions, 3));
+    const boxFaceMat = new THREE.MeshBasicMaterial({
+      color: 0x8b5cf6,
+      transparent: true,
+      opacity: 0.18,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    const boxFaceMesh = new THREE.Mesh(boxFaceGeo, boxFaceMat);
+    parallelepipedGroup.add(boxFaceMesh);
+
+    // 12 cạnh viền * 2 đầu mút * 3 tọa độ = 72 floats
+    const edgePositions = new Float32Array(72);
+    const boxEdgeGeo = new THREE.BufferGeometry();
+    boxEdgeGeo.setAttribute("position", new THREE.BufferAttribute(edgePositions, 3));
+    const boxEdgeMat = new THREE.LineBasicMaterial({
+      color: 0x8b5cf6,
+      transparent: true,
+      opacity: 0.75,
+    });
+    const boxEdgeMesh = new THREE.LineSegments(boxEdgeGeo, boxEdgeMat);
+    parallelepipedGroup.add(boxEdgeMesh);
+
+    // 1b. Tấm phẳng không gian con 2D (Subspace 2D Sheet) cho các biến đổi 2D nâng lên 3D
+    const subspaceGroup = new THREE.Group();
+    subspaceGroup.name = "ltSubspace2D";
+    subspaceGroup.visible = false;
+    group.add(subspaceGroup);
+
+    // 2 tam giác = 6 đỉnh = 18 floats
+    const subspaceFacePositions = new Float32Array(18);
+    const subspaceFaceGeo = new THREE.BufferGeometry();
+    subspaceFaceGeo.setAttribute("position", new THREE.BufferAttribute(subspaceFacePositions, 3));
+    const subspaceFaceMat = new THREE.MeshBasicMaterial({
+      color: 0x06b6d4,
+      transparent: true,
+      opacity: 0.28,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    const subspaceFaceMesh = new THREE.Mesh(subspaceFaceGeo, subspaceFaceMat);
+    subspaceGroup.add(subspaceFaceMesh);
+
+    // 4 cạnh viền = 8 đỉnh = 24 floats
+    const subspaceEdgePositions = new Float32Array(24);
+    const subspaceEdgeGeo = new THREE.BufferGeometry();
+    subspaceEdgeGeo.setAttribute("position", new THREE.BufferAttribute(subspaceEdgePositions, 3));
+    const subspaceEdgeMat = new THREE.LineBasicMaterial({
+      color: 0x06b6d4,
+      transparent: true,
+      opacity: 0.9,
+    });
+    const subspaceEdgeMesh = new THREE.LineSegments(subspaceEdgeGeo, subspaceEdgeMat);
+    subspaceGroup.add(subspaceEdgeMesh);
+
+    // 1c. Trục đối xứng không gian chính x = y = z cho Transpose
+    const diagGroup = new THREE.Group();
+    diagGroup.name = "ltDiag3D";
+    diagGroup.visible = false;
+    group.add(diagGroup);
+
+    const diagPositions = new Float32Array(6);
+    const diagGeo = new THREE.BufferGeometry();
+    diagGeo.setAttribute("position", new THREE.BufferAttribute(diagPositions, 3));
+    const diagMat = new THREE.LineBasicMaterial({
+      color: 0xf59e0b,
+      transparent: true,
+      opacity: 0.8,
+    });
+    const diagMesh = new THREE.Line(diagGeo, diagMat);
+    diagGroup.add(diagMesh);
+
+    // 2. Cấu trúc dựng Vector 3D (Thân trụ + Mũi nón + Nhãn CSS2D)
+    const createVecMeshStructure = (parentGroup, colorHex, labelText, isGhost = false, isUserLive = false) => {
+      const vGroup = new THREE.Group();
+      const isTransparent = isGhost;
+      const opacity = isGhost ? 0.35 : 1.0;
+
+      const mat = new THREE.MeshBasicMaterial({
+        color: colorHex,
+        transparent: isTransparent,
+        opacity: opacity,
+        depthWrite: !isTransparent,
+      });
+
+      const shaftGeo = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true);
+      const headGeo = new THREE.ConeGeometry(1, 1, 20);
+
+      const shaft = new THREE.Mesh(shaftGeo, mat);
+      const head = new THREE.Mesh(headGeo, mat);
+      vGroup.add(shaft);
+      vGroup.add(head);
+
+      // Thêm viền phát sáng tương phản (halo) cho Vector người dùng để không bao giờ bị chìm/trùng màu
+      let haloShaft = null;
+      let haloHead = null;
+      if (isUserLive) {
+        const haloMat = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.28,
+          depthWrite: false,
+        });
+        haloShaft = new THREE.Mesh(shaftGeo, haloMat);
+        haloHead = new THREE.Mesh(headGeo, haloMat);
+        haloShaft.renderOrder = -1;
+        haloHead.renderOrder = -1;
+        vGroup.add(haloShaft);
+        vGroup.add(haloHead);
+      }
+
+      let labelObj = null;
+      if (labelText) {
+        const div = document.createElement("div");
+        div.className = "tip-label";
+        div.style.padding = isUserLive ? "3px 8px" : "2px 6px";
+        div.style.fontSize = isUserLive ? "12px" : "11px";
+        div.style.fontWeight = "700";
+        const isDark = document.body.classList.contains("dark-theme") || document.body.classList.contains("dark") || (window.App && App.theme === "dark");
+        div.style.color = isDark ? "#ffffff" : "#111113";
+        div.style.background = isDark ? "rgba(24, 25, 27, 0.92)" : "rgba(255, 255, 255, 0.95)";
+        div.style.border = isUserLive ? `1.5px solid ${new THREE.Color(colorHex).getStyle()}` : `1px solid ${new THREE.Color(colorHex).getStyle()}`;
+        if (isUserLive) {
+          div.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)";
+        }
+        const cleanText = (labelText || "").replace(/[\u20D7\u20D6\u20D0\u20D1⃗]/g, "").trim();
+        if (cleanText === "i" || cleanText === "j" || cleanText === "k" || cleanText === "v" || labelText.includes("\u20d7")) {
+          div.innerHTML = `<span style="display:inline-flex; flex-direction:column; align-items:center; line-height:1; vertical-align:middle;"><span style="font-size:8px; line-height:0.7; transform:scaleX(0.85); font-weight:normal;">&rarr;</span><span style="font-style:italic; font-size:11px; line-height:1;">${cleanText}</span></span>`;
+        } else {
+          div.textContent = cleanText;
+        }
+
+        labelObj = new THREE.CSS2DObject(div);
+        vGroup.add(labelObj);
+      }
+
+      parentGroup.add(vGroup);
+
+      return {
+        group: vGroup,
+        shaft: shaft,
+        head: head,
+        haloShaft: haloShaft,
+        haloHead: haloHead,
+        mat: mat,
+        labelObj: labelObj,
+        colorHex: colorHex,
+        isUserLive: isUserLive,
+      };
+    };
+
+    // Vector cơ sở i, j, k (Mũi tên định hình khối hộp không gian)
+    const basisI = createVecMeshStructure(basisGroup, 0xe5484d, "i");
+    const basisJ = createVecMeshStructure(basisGroup, 0x10b981, "j");
+    const basisK = createVecMeshStructure(basisGroup, 0x8b5cf6, "k");
+
+    // Vector mục tiêu theo dõi (Ghost + Live có halo + Quỹ đạo nét đứt)
+    const targetStructures = [];
+    const targetVectors = (window.App?.LinearTransform?.targetVectors) || [];
+
+    targetVectors.forEach((tv) => {
+      const colorHex = new THREE.Color(tv.color || "#0090ff").getHex();
+      const name = tv.name || "v";
+
+      // Ghost vector mờ tại vị trí gốc v0
+      const ghost = createVecMeshStructure(targetsGroup, 0x888888, `${name}(0)`, true);
+
+      // Live vector động nổi bật với viền tương phản
+      const live = createVecMeshStructure(targetsGroup, colorHex, `${name}(t)`, false, true);
+
+      // Quỹ đạo Trajectory Line (30 bước)
+      const trajSteps = 30;
+      const trajPositions = new Float32Array((trajSteps + 1) * 3);
+      const trajGeo = new THREE.BufferGeometry();
+      trajGeo.setAttribute("position", new THREE.BufferAttribute(trajPositions, 3));
+      const trajMat = new THREE.LineBasicMaterial({
+        color: colorHex,
+        transparent: true,
+        opacity: 0.6,
+      });
+      const trajLine = new THREE.Line(trajGeo, trajMat);
+      targetsGroup.add(trajLine);
+
+      targetStructures.push({
+        id: tv.id,
+        name: name,
+        v0: [Number(tv.vec[0]) || 0, Number(tv.vec[1]) || 0, Number(tv.vec[2]) || 0],
+        colorHex: colorHex,
+        ghost: ghost,
+        live: live,
+        trajPositions: trajPositions,
+        trajGeo: trajGeo,
+        trajLine: trajLine,
+      });
+    });
+
+    group.userData = {
+      facePositions: facePositions,
+      boxFaceGeo: boxFaceGeo,
+      boxFaceMat: boxFaceMat,
+      edgePositions: edgePositions,
+      boxEdgeGeo: boxEdgeGeo,
+      boxEdgeMat: boxEdgeMat,
+      subspaceGroup: subspaceGroup,
+      subspaceFacePositions: subspaceFacePositions,
+      subspaceFaceGeo: subspaceFaceGeo,
+      subspaceFaceMat: subspaceFaceMat,
+      subspaceEdgePositions: subspaceEdgePositions,
+      subspaceEdgeGeo: subspaceEdgeGeo,
+      subspaceEdgeMat: subspaceEdgeMat,
+      diagGroup: diagGroup,
+      diagPositions: diagPositions,
+      diagGeo: diagGeo,
+      parallelepipedGroup: parallelepipedGroup,
+      basisGroup: basisGroup,
+      targetsGroup: targetsGroup,
+      basisI: basisI,
+      basisJ: basisJ,
+      basisK: basisK,
+      targetStructures: targetStructures,
+    };
+  };
+
+  Vec3D.clearTransformGroup = function () {
+    if (!Vec3D._transformGroup) return;
+    Vec3D._transformGroup.traverse((obj) => {
+      if (obj.isCSS2DObject && obj.element) obj.element.remove();
+      if (obj.geometry) obj.geometry.dispose?.();
+      if (Array.isArray(obj.material)) {
+        obj.material.forEach((m) => m?.dispose?.());
+      } else {
+        obj.material?.dispose?.();
+      }
+    });
+    if (Vec3D._transformGroup.parent) {
+      Vec3D._transformGroup.parent.remove(Vec3D._transformGroup);
+    }
+    Vec3D._transformGroup = null;
+  };
+
+  // Điều khiển hiển thị các lớp đồ họa biến đổi
+  Vec3D.setTransformLayers = function (opts = {}) {
+    if (!Vec3D._transformGroup || !Vec3D._transformGroup.userData) return;
+    const data = Vec3D._transformGroup.userData;
+    if (typeof opts.showVolume === "boolean") {
+      if (data.parallelepipedGroup) data.parallelepipedGroup.visible = opts.showVolume;
+    }
+    if (typeof opts.showBasis === "boolean") {
+      if (data.basisGroup) data.basisGroup.visible = opts.showBasis;
+    }
+    if (typeof opts.showTraj === "boolean") {
+      if (data.targetStructures) {
+        data.targetStructures.forEach((ts) => {
+          if (ts.ghost?.group) ts.ghost.group.visible = opts.showTraj;
+          if (ts.trajLine) ts.trajLine.visible = opts.showTraj;
+        });
+      }
+    }
+    Vec3D.renderOnce();
+  };
+
+  Vec3D.updateTransform3D = function (t, M) {
+    if (!Vec3D._transformGroup || !Vec3D._transformGroup.userData) return;
+
+    const data = Vec3D._transformGroup.userData;
+    const u = Math.max(1e-12, Vec3D.S3D.unitsPerWorld);
+
+    // Kích thước chuẩn tỷ lệ phối cảnh theo camera
+    const vFOV = ((Vec3D._camera ? Vec3D._camera.fov : Vec3D.DEFAULT_FOV || 24) * Math.PI) / 180;
+    const screenH = Math.max(1, Vec3D._renderer?.domElement?.clientHeight || 760);
+    const camDist = Vec3D._camera ? Vec3D._camera.position.distanceTo(new THREE.Vector3(0, 0, 0)) : 25;
+    const worldPerPx = (2 * Math.tan(vFOV / 2) * camDist) / screenH;
+
+    const UP = new THREE.Vector3(0, 1, 0);
+
+    // Cập nhật vị trí và kích thước vector
+    const positionVecMesh = (vecStruct, mathVec, isGhost = false) => {
+      const tipLocal = new THREE.Vector3(mathVec[0] * u, mathVec[1] * u, mathVec[2] * u);
+      const len = Math.max(tipLocal.length(), 1e-9);
+      const dirLocal = len > 1e-9 ? tipLocal.clone().normalize() : new THREE.Vector3(1, 0, 0);
+
+      const isUserLive = vecStruct.isUserLive;
+      let idealHeadH = (isUserLive ? 16.5 : 12.0) * worldPerPx;
+      let idealHeadR = (isUserLive ? 5.2 : 3.6) * worldPerPx;
+      let idealShaftR = (isGhost ? 1.2 : isUserLive ? 2.5 : 1.6) * worldPerPx;
+
+      if (idealHeadH > len * 0.35) {
+        const scale = (len * 0.35) / idealHeadH;
+        idealHeadH = len * 0.35;
+        idealHeadR *= scale;
+        idealShaftR = Math.min(idealShaftR, idealHeadR * 0.44);
+      }
+
+      const shaftLen = Math.max(len - idealHeadH, 1e-6);
+
+      // Thân trụ
+      vecStruct.shaft.scale.set(idealShaftR, shaftLen, idealShaftR);
+      vecStruct.shaft.quaternion.setFromUnitVectors(UP, dirLocal);
+      vecStruct.shaft.position.copy(dirLocal).multiplyScalar(shaftLen / 2);
+
+      // Mũi nón
+      vecStruct.head.scale.set(idealHeadR, idealHeadH, idealHeadR);
+      vecStruct.head.quaternion.setFromUnitVectors(UP, dirLocal);
+      vecStruct.head.position.copy(tipLocal).addScaledVector(dirLocal, -idealHeadH / 2);
+
+      // Halo viền tương phản (nếu là user live vector)
+      if (vecStruct.haloShaft && vecStruct.haloHead) {
+        const haloExtra = 1.4 * worldPerPx;
+        vecStruct.haloShaft.scale.set(idealShaftR + haloExtra, shaftLen, idealShaftR + haloExtra);
+        vecStruct.haloShaft.quaternion.copy(vecStruct.shaft.quaternion);
+        vecStruct.haloShaft.position.copy(vecStruct.shaft.position);
+
+        vecStruct.haloHead.scale.set(idealHeadR + haloExtra, idealHeadH + haloExtra, idealHeadR + haloExtra);
+        vecStruct.haloHead.quaternion.copy(vecStruct.head.quaternion);
+        vecStruct.haloHead.position.copy(vecStruct.head.position);
+      }
+
+      // Nhãn
+      if (vecStruct.labelObj) {
+        const labelOffset = dirLocal.clone().multiplyScalar(idealHeadH + 0.3 * u);
+        vecStruct.labelObj.position.copy(tipLocal).add(labelOffset);
+      }
+    };
+
+    // Chế độ mô phỏng đa chiều
+    const ltMode = window.App?.LinearTransform?.mode;
+    const ltRank = window.App?.LinearTransform?.rank;
+    const isEmbed2Dto3D = (ltMode === "embed_2d_to_3d") || (ltMode === "cross_compound_2d_3d_2d" && t <= 0.5);
+    const isCrossEnd2D = (ltMode === "cross_compound_2d_3d_2d" && t > 0.5);
+    const isCross3Dto2D = (ltMode === "cross_compound_3d_2d_3d" && t <= 0.5);
+    const isProject3Dto2D = (ltMode === "project_3d_to_2d");
+    const isRank2 = (ltMode === "rank" && ltRank === 2);
+    const isRank1 = (ltMode === "rank" && ltRank === 1);
+    const isTranspose = (ltMode === "transpose");
+
+    // 1. Cột ma trận M (Vector cơ sở biến dạng)
+    const vI = [M[0][0], M[1][0], M[2][0]];
+    const vJ = [M[0][1], M[1][1], M[2][1]];
+    const vK = [M[0][2], M[1][2], M[2][2]];
+
+    positionVecMesh(data.basisI, vI);
+    positionVecMesh(data.basisJ, vJ);
+    if (!isEmbed2Dto3D && !isCrossEnd2D) {
+      positionVecMesh(data.basisK, vK);
+    }
+
+    // Cập nhật nhãn vector cơ sở theo ký hiệu toán học chuẩn (i, j, k hoặc i', j', k')
+    const primeSuffix = (t > 0.1) ? "'" : "";
+    if (data.basisI?.labelObj?.element) {
+      data.basisI.labelObj.element.innerHTML = `<span style="display:inline-flex; flex-direction:column; align-items:center; line-height:1; vertical-align:middle;"><span style="font-size:8px; line-height:0.7; transform:scaleX(0.85); font-weight:normal;">&rarr;</span><span style="font-style:italic; font-size:11px; line-height:1;">i${primeSuffix}</span></span>`;
+    }
+    if (data.basisJ?.labelObj?.element) {
+      data.basisJ.labelObj.element.innerHTML = `<span style="display:inline-flex; flex-direction:column; align-items:center; line-height:1; vertical-align:middle;"><span style="font-size:8px; line-height:0.7; transform:scaleX(0.85); font-weight:normal;">&rarr;</span><span style="font-style:italic; font-size:11px; line-height:1;">j${primeSuffix}</span></span>`;
+    }
+    if (data.basisK?.labelObj?.element) {
+      data.basisK.labelObj.element.innerHTML = `<span style="display:inline-flex; flex-direction:column; align-items:center; line-height:1; vertical-align:middle;"><span style="font-size:8px; line-height:0.7; transform:scaleX(0.85); font-weight:normal;">&rarr;</span><span style="font-style:italic; font-size:11px; line-height:1;">k${primeSuffix}</span></span>`;
+    }
+
+    // 2. 8 Đỉnh của Khối hộp định thức 3D (Parallelepiped)
+    const p0 = [0, 0, 0];
+    const p1 = [vI[0] * u, vI[1] * u, vI[2] * u];
+    const p2 = [vJ[0] * u, vJ[1] * u, vJ[2] * u];
+    const p3 = [(vI[0] + vJ[0]) * u, (vI[1] + vJ[1]) * u, (vI[2] + vJ[2]) * u];
+    const p4 = [vK[0] * u, vK[1] * u, vK[2] * u];
+    const p5 = [(vI[0] + vK[0]) * u, (vI[1] + vK[1]) * u, (vI[2] + vK[2]) * u];
+    const p6 = [(vJ[0] + vK[0]) * u, (vJ[1] + vK[1]) * u, (vJ[2] + vK[2]) * u];
+    const p7 = [(vI[0] + vJ[0] + vK[0]) * u, (vI[1] + vJ[1] + vK[1]) * u, (vI[2] + vJ[2] + vK[2]) * u];
+
+    // 6 Mặt (12 Tam giác)
+    const triangles = [
+      p0, p1, p3,   p0, p3, p2, // Bottom
+      p4, p6, p7,   p4, p7, p5, // Top
+      p0, p4, p5,   p0, p5, p1, // Front
+      p2, p3, p7,   p2, p7, p6, // Back
+      p0, p2, p6,   p0, p6, p4, // Left
+      p1, p5, p7,   p1, p7, p3, // Right
+    ];
+
+    const fArr = data.facePositions;
+    let fi = 0;
+    for (let i = 0; i < triangles.length; i++) {
+      fArr[fi++] = triangles[i][0];
+      fArr[fi++] = triangles[i][1];
+      fArr[fi++] = triangles[i][2];
+    }
+    data.boxFaceGeo.attributes.position.needsUpdate = true;
+
+    // 12 Cạnh viền
+    const edges = [
+      p0, p1,  p1, p3,  p3, p2,  p2, p0, // Bottom
+      p4, p5,  p5, p7,  p7, p6,  p6, p4, // Top
+      p0, p4,  p1, p5,  p2, p6,  p3, p7, // Trụ đứng
+    ];
+    const eArr = data.edgePositions;
+    let ei = 0;
+    for (let i = 0; i < edges.length; i++) {
+      eArr[ei++] = edges[i][0];
+      eArr[ei++] = edges[i][1];
+      eArr[ei++] = edges[i][2];
+    }
+    data.boxEdgeGeo.attributes.position.needsUpdate = true;
+
+    // Cập nhật Tấm phẳng không gian con 2D (Subspace 2D sheet)
+    let subV1 = vI;
+    let subV2 = vJ;
+    if (isRank2) {
+      // Tìm 2 cột độc lập tuyến tính để căng mặt phẳng ảnh Im(A)
+      const crossIJ = [vI[1] * vJ[2] - vI[2] * vJ[1], vI[2] * vJ[0] - vI[0] * vJ[2], vI[0] * vJ[1] - vI[1] * vJ[0]];
+      const lenIJ = Math.hypot(crossIJ[0], crossIJ[1], crossIJ[2]);
+      if (lenIJ > 1e-4) {
+        subV1 = vI;
+        subV2 = vJ;
+      } else {
+        const crossIK = [vI[1] * vK[2] - vI[2] * vK[1], vI[2] * vK[0] - vI[0] * vK[2], vI[0] * vK[1] - vI[1] * vK[0]];
+        const lenIK = Math.hypot(crossIK[0], crossIK[1], crossIK[2]);
+        if (lenIK > 1e-4) {
+          subV1 = vI;
+          subV2 = vK;
+        } else {
+          subV1 = vJ;
+          subV2 = vK;
+        }
+      }
+    }
+
+    const sp0 = [0, 0, 0];
+    const sp1 = [subV1[0] * u, subV1[1] * u, subV1[2] * u];
+    const sp2 = [subV2[0] * u, subV2[1] * u, subV2[2] * u];
+    const sp3 = [(subV1[0] + subV2[0]) * u, (subV1[1] + subV2[1]) * u, (subV1[2] + subV2[2]) * u];
+
+    const subTriangles = [
+      sp0, sp1, sp3,
+      sp0, sp3, sp2,
+    ];
+    const subFArr = data.subspaceFacePositions;
+    if (subFArr && data.subspaceFaceGeo) {
+      let sfi = 0;
+      for (let i = 0; i < subTriangles.length; i++) {
+        subFArr[sfi++] = subTriangles[i][0];
+        subFArr[sfi++] = subTriangles[i][1];
+        subFArr[sfi++] = subTriangles[i][2];
+      }
+      data.subspaceFaceGeo.attributes.position.needsUpdate = true;
+    }
+
+    const subEdges = [
+      sp0, sp1,  sp1, sp3,  sp3, sp2,  sp2, sp0,
+    ];
+    const subEArr = data.subspaceEdgePositions;
+    if (subEArr && data.subspaceEdgeGeo) {
+      let sei = 0;
+      for (let i = 0; i < subEdges.length; i++) {
+        subEArr[sei++] = subEdges[i][0];
+        subEArr[sei++] = subEdges[i][1];
+        subEArr[sei++] = subEdges[i][2];
+      }
+      data.subspaceEdgeGeo.attributes.position.needsUpdate = true;
+    }
+
+    // Điều khiển hiển thị giữa khối hộp 3D và tấm phẳng 2D tùy theo chế độ
+    if (data.subspaceGroup) {
+      if (isEmbed2Dto3D || isCrossEnd2D || isProject3Dto2D || isCross3Dto2D || isRank2) {
+        data.subspaceGroup.visible = true;
+      } else {
+        data.subspaceGroup.visible = false;
+      }
+    }
+
+    if (isRank2 && data.subspaceFaceMat && data.subspaceEdgeMat) {
+      data.subspaceFaceMat.color.setHex(0xf59e0b);
+      data.subspaceFaceMat.opacity = 0.32;
+      data.subspaceEdgeMat.color.setHex(0xf59e0b);
+      data.subspaceEdgeMat.opacity = 0.95;
+    } else if (data.subspaceFaceMat && data.subspaceEdgeMat) {
+      data.subspaceFaceMat.color.setHex(0x06b6d4);
+      data.subspaceFaceMat.opacity = 0.28;
+      data.subspaceEdgeMat.color.setHex(0x06b6d4);
+      data.subspaceEdgeMat.opacity = 0.9;
+    }
+
+    // Không hiển thị trục đối xứng gây rối mắt cho Transpose
+    if (data.diagGroup) {
+      data.diagGroup.visible = false;
+    }
+
+    if (isEmbed2Dto3D || isCrossEnd2D || isRank2 || isRank1) {
+      if (data.parallelepipedGroup) data.parallelepipedGroup.visible = false;
+      if (isEmbed2Dto3D || isCrossEnd2D) {
+        if (data.basisK) {
+          data.basisK.group.visible = false;
+          if (data.basisK.shaft) data.basisK.shaft.visible = false;
+          if (data.basisK.head) data.basisK.head.visible = false;
+          if (data.basisK.labelObj) {
+            data.basisK.labelObj.visible = false;
+            if (data.basisK.labelObj.element) data.basisK.labelObj.element.style.display = "none";
+          }
+        }
+      }
+    } else {
+      if (data.parallelepipedGroup) data.parallelepipedGroup.visible = true;
+      if (data.basisK) {
+        data.basisK.group.visible = true;
+        if (data.basisK.shaft) data.basisK.shaft.visible = true;
+        if (data.basisK.head) data.basisK.head.visible = true;
+        if (data.basisK.labelObj) {
+          data.basisK.labelObj.visible = true;
+          if (data.basisK.labelObj.element) data.basisK.labelObj.element.style.display = "";
+        }
+      }
+    }
+
+    // Màu sắc và độ trong suốt theo định thức (det)
+    const det = window.App?.LinearTransform?.getDet?.(M) ?? 1;
+    if (Math.abs(det) < 0.001) {
+      data.boxFaceMat.opacity = 0.04;
+      data.boxEdgeMat.color.setHex(0xe5484d);
+      data.boxEdgeMat.opacity = 0.85;
+    } else if (det < 0) {
+      data.boxFaceMat.color.setHex(0xf59e0b);
+      data.boxEdgeMat.color.setHex(0xf59e0b);
+      data.boxFaceMat.opacity = 0.20;
+      data.boxEdgeMat.opacity = 0.8;
+    } else {
+      data.boxFaceMat.color.setHex(0x8b5cf6);
+      data.boxEdgeMat.color.setHex(0x8b5cf6);
+      data.boxFaceMat.opacity = 0.18;
+      data.boxEdgeMat.opacity = 0.75;
+    }
+
+    // 3. Cập nhật các Vector theo dõi
+    if (data.targetStructures && data.targetStructures.length > 0) {
+      const lt = window.App?.LinearTransform;
+      data.targetStructures.forEach((ts) => {
+        // Ghost Vector tại vị trí gốc v0
+        positionVecMesh(ts.ghost, ts.v0, true);
+
+        // Live Vector vt = M * v0
+        const vt = lt ? lt.mulVec(M, ts.v0) : ts.v0;
+        positionVecMesh(ts.live, vt, false);
+
+        // Cập nhật text nhãn trực tiếp
+        if (ts.live.labelObj && ts.live.labelObj.element) {
+          const fmt = lt?.fmt || ((n) => Number(n).toFixed(2));
+          ts.live.labelObj.element.textContent = `${ts.name}(t) = [${fmt(vt[0])}, ${fmt(vt[1])}, ${fmt(vt[2])}]`;
+        }
+
+        // Cập nhật đường quỹ đạo nối từ tau = 0 đến tau = t (Đoạn thẳng toán học chính xác)
+        const steps = 30;
+        const trajArr = ts.trajPositions;
+        const x0 = ts.v0[0] * u, y0 = ts.v0[1] * u, z0 = ts.v0[2] * u;
+        const dx = (vt[0] - ts.v0[0]) * u;
+        const dy = (vt[1] - ts.v0[1]) * u;
+        const dz = (vt[2] - ts.v0[2]) * u;
+        let ti = 0;
+        for (let s = 0; s <= steps; s++) {
+          const frac = s / steps;
+          trajArr[ti++] = x0 + dx * frac;
+          trajArr[ti++] = y0 + dy * frac;
+          trajArr[ti++] = z0 + dz * frac;
+        }
+        ts.trajGeo.attributes.position.needsUpdate = true;
+      });
+    }
+  };
+
   // --- UTILS ---
   Vec3D.hardRefresh3D = function (frameFirst = false) {
     if (App.mode !== "3D") return;
@@ -1506,8 +2160,19 @@
       Vec3D._mathGroup.add(Vec3D._unitSphereMesh);
     }
     const u = Vec3D.S3D.unitsPerWorld;
-    Vec3D._unitSphereMesh.scale.setScalar(u); // Tỉ lệ theo zoom
-    Vec3D._unitSphereMesh.material.opacity = alpha;
     Vec3D._unitSphereMesh.visible = alpha > 0.01;
+  };
+
+  Vec3D.setPerspectiveView = function () {
+    if (!Vec3D._camera || !Vec3D._controls) return;
+    if (Vec3D._resetAnimId) {
+      cancelAnimationFrame(Vec3D._resetAnimId);
+      Vec3D._resetAnimId = null;
+    }
+    Vec3D._camera.position.set(18, 16, 14);
+    Vec3D._camera.up.set(0, 0, 1);
+    Vec3D._controls.target.set(0, 0, 0);
+    Vec3D._camera.lookAt(0, 0, 0);
+    Vec3D._controls.update();
   };
 })();

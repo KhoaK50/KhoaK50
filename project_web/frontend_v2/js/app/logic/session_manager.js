@@ -91,12 +91,11 @@
     restoreSession(session) {
       // Restore basic states
       if (session.mode && window.App.mode !== session.mode) {
-        window.App.mode = session.mode;
-        // Trigger UI button if needed
-        const btn2D = document.getElementById("btn2D");
-        const btn3D = document.getElementById("btn3D");
-        if (session.mode === "2D" && btn2D) btn2D.click();
-        if (session.mode === "3D" && btn3D) btn3D.click();
+        if (typeof window.App.toggleMode === "function") {
+          window.App.toggleMode();
+        } else {
+          window.App.mode = session.mode;
+        }
       }
       
       if (session.nextId) window.App.nextId = session.nextId;

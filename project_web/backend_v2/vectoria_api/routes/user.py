@@ -43,10 +43,357 @@ def get_modern_email(title, greeting, paragraphs, btn_text=None, btn_link=None, 
         {sub_html}
         <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;">
         <p style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">{footer_text}</p>
-        <p style="color: #94a3b8; font-size: 12px; margin: 0;">&copy; 2026 <span translate="no" class="notranslate">Vectoria</span> &mdash; vectoria.io.vn</p>
+        <p style="color: #94a3b8; font-size: 12px; margin: 0;">&copy; 2026 <span translate="no" class="notranslate">Vectoria</span> - vectoria.io.vn</p>
       </td>
     </tr>
   </table>
+</body>
+</html>"""
+
+
+def get_friendly_device(ua_string, lang='vi'):
+    """Trích xuất tên thiết bị, hệ điều hành và trình duyệt theo chuẩn nhận diện."""
+    if not ua_string or ua_string == "Unknown Device":
+        return "Thiết bị không xác định" if lang == 'vi' else "Unrecognized Device"
+    try:
+        from user_agents import parse
+        ua = parse(ua_string)
+        device_part = f"{ua.device.family} - " if ua.device.family and ua.device.family != "Other" else ""
+        os_part = ua.os.family if ua.os.family else ("Hệ điều hành khác" if lang == 'vi' else "Other OS")
+        browser_part = f"{ua.browser.family}" if ua.browser.family else ("Trình duyệt khác" if lang == 'vi' else "Other Browser")
+        return f"{device_part}{os_part} ({browser_part})"
+    except Exception:
+        return "Thiết bị không xác định" if lang == 'vi' else "Unrecognized Device"
+
+
+def get_security_alert_email(display_name, friendly_device, client_ip, login_time, confirm_link, secure_link, lang='vi'):
+    """Email cảnh báo bảo mật chuẩn Enterprise Formality, đối soát 2 luồng Xác nhận / Khóa tài khoản."""
+    if lang == 'en':
+        title = "Security Alert: New Sign-in Detected"
+        greeting = f"Dear {display_name},"
+        lead_paragraph = (
+            "The Vectoria Security System detected a new sign-in to your account from a device or environment "
+            "that has not been recognized previously."
+        )
+        box_title = "Sign-in Session Details"
+        lbl_time = "Timestamp"
+        lbl_device = "Device & Browser"
+        lbl_ip = "IP Address"
+        lbl_status = "Status"
+        val_status = "Unverified Device"
+
+        owner_heading = "If this sign-in was made by you:"
+        owner_desc = (
+            "Click the confirmation button below to trust this device. Once verified, future sign-ins "
+            "from this device will proceed without generating security alerts."
+        )
+        owner_btn = "Confirm This Device"
+        fallback_confirm = "If the button above does not work, copy and paste this verification URL into your browser:"
+
+        intruder_heading = "If you did NOT initiate this sign-in:"
+        intruder_desc = (
+            "Your account credentials may have been compromised. Immediately secure your account to terminate "
+            "all active sessions and initiate an emergency password reset."
+        )
+        intruder_btn = "Lock Account & Reset Password Immediately"
+        fallback_secure = "Direct security link:"
+
+        footer_automated = "This is an automated security notification from the Vectoria Identity System."
+        footer_warning = "For your protection, never forward or share this email with anyone."
+        footer_copy = "&copy; 2026 Vectoria - vectoria.io.vn"
+    else:
+        title = "Cảnh báo an ninh: Phát hiện đăng nhập từ thiết bị mới"
+        greeting = f"Kính gửi Quý người dùng {display_name},"
+        lead_paragraph = (
+            "Hệ thống an ninh Vectoria ghi nhận một phiên đăng nhập mới vào tài khoản của bạn từ một thiết bị hoặc "
+            "môi trường duyệt web chưa từng được xác nhận trước đây."
+        )
+        box_title = "Thông tin chi tiết phiên đăng nhập"
+        lbl_time = "Thời gian ghi nhận"
+        lbl_device = "Thiết bị và Trình duyệt"
+        lbl_ip = "Địa chỉ IP"
+        lbl_status = "Trạng thái"
+        val_status = "Chưa xác minh tin cậy"
+
+        owner_heading = "Trường hợp đây là phiên đăng nhập của bạn:"
+        owner_desc = (
+            "Vui lòng nhấn nút xác nhận bên dưới để ghi nhận thiết bị này vào danh sách an toàn. Sau khi xác nhận, "
+            "các lần đăng nhập tiếp theo trên thiết bị này sẽ diễn ra bình thường và không kích hoạt cảnh báo."
+        )
+        owner_btn = "Xác nhận thiết bị này"
+        fallback_confirm = "Nếu nút bấm trên không phản hồi, bạn có thể sao chép liên kết xác thực sau vào trình duyệt:"
+
+        intruder_heading = "Trường hợp bạn KHÔNG thực hiện đăng nhập này:"
+        intruder_desc = (
+            "Thông tin tài khoản của bạn có nguy cơ đã bị lộ. Vui lòng bấm vào nút bảo vệ khẩn cấp bên dưới để khóa "
+            "tài khoản, thu hồi toàn bộ phiên truy cập hiện hữu và đặt lại mật khẩu ngay lập tức."
+        )
+        intruder_btn = "Khóa tài khoản và Đổi mật khẩu ngay"
+        fallback_secure = "Liên kết bảo vệ tài khoản khẩn cấp:"
+
+        footer_automated = "Thông báo an ninh tự động từ Hệ thống Nhận diện và Xác thực Vectoria."
+        footer_warning = "Nhằm bảo đảm an toàn thông tin, tuyệt đối không chuyển tiếp email này cho người khác."
+        footer_copy = "&copy; 2026 Vectoria - vectoria.io.vn"
+
+    return f"""<!DOCTYPE html>
+<html lang="{lang}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title}</title>
+</head>
+<body style="margin: 0; padding: 32px 16px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 620px; margin: 0 auto; background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+    <tr>
+      <td style="padding: 32px 36px; border-bottom: 2px solid #0090ff;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="font-size: 16px; font-weight: 800; letter-spacing: 0.5px; color: #0090ff; text-transform: uppercase;">
+              <span translate="no" class="notranslate">VECTORIA</span> <span style="color: #64748b; font-weight: 600; font-size: 13px; letter-spacing: 0;">SECURITY</span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 36px 36px 28px 36px;">
+        <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; line-height: 1.4; color: #0f172a; letter-spacing: -0.2px;">
+          {title}
+        </h1>
+        <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #334155;">
+          {greeting}
+        </p>
+        <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: #475569;">
+          {lead_paragraph}
+        </p>
+
+        <!-- Session Details Box -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 28px 0; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
+          <tr>
+            <td style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; font-size: 13px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.5px;">
+              {box_title}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 16px 20px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="38%" style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 500;">{lbl_time}:</td>
+                  <td width="62%" style="padding: 6px 0; font-size: 13px; color: #0f172a; font-weight: 600;">{login_time}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 500;">{lbl_device}:</td>
+                  <td style="padding: 6px 0; font-size: 13px; color: #0f172a; font-weight: 600;">{friendly_device}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 500;">{lbl_ip}:</td>
+                  <td style="padding: 6px 0; font-size: 13px; color: #0f172a; font-weight: 600; font-family: monospace;">{client_ip}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 500;">{lbl_status}:</td>
+                  <td style="padding: 6px 0; font-size: 13px; color: #d97706; font-weight: 600;">{val_status}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Option 1: Owner Confirmation -->
+        <div style="margin: 0 0 28px 0; padding: 20px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 4px;">
+          <h2 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 700; color: #0f172a;">
+            {owner_heading}
+          </h2>
+          <p style="margin: 0 0 16px 0; font-size: 13px; line-height: 1.5; color: #475569;">
+            {owner_desc}
+          </p>
+          <div style="margin: 0 0 12px 0;">
+            <a href="{confirm_link}" style="display: inline-block; padding: 10px 22px; background-color: #0090ff; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 14px;">
+              {owner_btn}
+            </a>
+          </div>
+          <p style="margin: 0; font-size: 12px; line-height: 1.4; color: #64748b;">
+            {fallback_confirm}<br>
+            <a href="{confirm_link}" style="color: #0090ff; word-break: break-all; text-decoration: underline;">{confirm_link}</a>
+          </p>
+        </div>
+
+        <!-- Option 2: Intruder Alert & Lockdown -->
+        <div style="margin: 0 0 28px 0; padding: 20px; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 4px;">
+          <h2 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 700; color: #991b1b;">
+            {intruder_heading}
+          </h2>
+          <p style="margin: 0 0 16px 0; font-size: 13px; line-height: 1.5; color: #7f1d1d;">
+            {intruder_desc}
+          </p>
+          <div style="margin: 0 0 12px 0;">
+            <a href="{secure_link}" style="display: inline-block; padding: 10px 22px; background-color: #dc2626; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 14px;">
+              {intruder_btn}
+            </a>
+          </div>
+          <p style="margin: 0; font-size: 12px; line-height: 1.4; color: #991b1b;">
+            {fallback_secure}<br>
+            <a href="{secure_link}" style="color: #b91c1c; word-break: break-all; text-decoration: underline;">{secure_link}</a>
+          </p>
+        </div>
+
+        <!-- System Footer -->
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 12px;">
+          <p style="margin: 0 0 6px 0; font-size: 12px; line-height: 1.5; color: #64748b;">
+            {footer_automated}
+          </p>
+          <p style="margin: 0 0 12px 0; font-size: 12px; line-height: 1.5; color: #94a3b8;">
+            {footer_warning}
+          </p>
+          <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+            {footer_copy}
+          </p>
+        </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+
+def get_device_confirmation_page(status, friendly_device=None, frontend_url="https://vectoria.io.vn", lang='vi'):
+    """Trang phản hồi HTML chuyên nghiệp cho liên kết xác nhận thiết bị và bảo vệ tài khoản."""
+    if status == "success":
+        badge_color = "#16a34a"
+        badge_bg = "#f0fdf4"
+        badge_border = "#bbf7d0"
+        title = "Xác nhận thiết bị thành công" if lang == 'vi' else "Device Verified Successfully"
+        desc = (
+            f"Thiết bị <strong>{friendly_device or 'mới'}</strong> đã được ghi nhận vào danh sách thiết bị tin cậy "
+            f"của tài khoản. Từ các phiên đăng nhập tiếp theo trên thiết bị này, bạn sẽ không nhận cảnh báo bảo mật nữa."
+            if lang == 'vi' else
+            f"The device <strong>{friendly_device or 'new'}</strong> has been registered to your trusted device list. "
+            f"Subsequent sign-ins from this device will proceed without triggering security alerts."
+        )
+        btn_text = "Tiếp tục vào Vectoria" if lang == 'vi' else "Continue to Vectoria"
+        btn_link = frontend_url
+    elif status == "expired":
+        badge_color = "#d97706"
+        badge_bg = "#fffbeb"
+        badge_border = "#fde68a"
+        title = "Liên kết xác nhận đã hết hạn" if lang == 'vi' else "Verification Link Expired"
+        desc = (
+            "Liên kết xác nhận thiết bị này đã vượt quá thời hạn hiệu lực (7 ngày). "
+            "Nếu bạn tiếp tục đăng nhập trên thiết bị đó, hệ thống sẽ tự động gửi một email xác nhận mới."
+            if lang == 'vi' else
+            "This verification link has expired (valid for 7 days). "
+            "If you sign in again from that device, a new verification email will be generated automatically."
+        )
+        btn_text = "Đến trang Đăng nhập" if lang == 'vi' else "Go to Sign In"
+        btn_link = f"{frontend_url}/login.html"
+    else:
+        badge_color = "#dc2626"
+        badge_bg = "#fef2f2"
+        badge_border = "#fecaca"
+        title = "Mã xác nhận không hợp lệ" if lang == 'vi' else "Invalid Verification Code"
+        desc = (
+            "Mã xác thực không đúng hoặc đường dẫn đã bị chỉnh sửa. Vui lòng kiểm tra lại liên kết trong thư điện tử của bạn."
+            if lang == 'vi' else
+            "The verification token is invalid or corrupted. Please verify the URL provided in your email."
+        )
+        btn_text = "Về trang chủ" if lang == 'vi' else "Return to Homepage"
+        btn_link = frontend_url
+
+    return f"""<!DOCTYPE html>
+<html lang="{lang}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title} - Vectoria</title>
+  <style>
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }}
+    .card {{
+      background: #ffffff;
+      width: 100%;
+      max-width: 520px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      padding: 36px 32px;
+      text-align: center;
+    }}
+    .brand {{
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #0090ff;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }}
+    .badge {{
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background-color: {badge_bg};
+      color: {badge_color};
+      border: 1px solid {badge_border};
+      margin-bottom: 20px;
+    }}
+    h1 {{
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }}
+    p {{
+      font-size: 14px;
+      line-height: 1.6;
+      color: #475569;
+      margin-bottom: 28px;
+    }}
+    .btn {{
+      display: inline-block;
+      padding: 12px 28px;
+      background-color: #0090ff;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: background-color 0.15s ease;
+    }}
+    .btn:hover {{
+      background-color: #007ae5;
+    }}
+    .footer {{
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid #f1f5f9;
+      font-size: 12px;
+      color: #94a3b8;
+    }}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand"><span translate="no" class="notranslate">VECTORIA</span> SECURITY</div>
+    <div class="badge">{status.upper()}</div>
+    <h1>{title}</h1>
+    <p>{desc}</p>
+    <a href="{btn_link}" class="btn">{btn_text}</a>
+    <div class="footer">
+      &copy; 2026 Vectoria - vectoria.io.vn
+    </div>
+  </div>
 </body>
 </html>"""
 
@@ -136,8 +483,10 @@ def init_user_db():
         c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INT DEFAULT 1;")
         c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS language_pref VARCHAR(10) DEFAULT 'vi';")
         
-        # Thêm cột is_trusted cho thiết bị
+        # Thêm cột is_trusted và friendly_device cho thiết bị
         c.execute("ALTER TABLE loginhistory ADD COLUMN IF NOT EXISTS is_trusted BOOLEAN DEFAULT TRUE;")
+        c.execute("ALTER TABLE loginhistory ADD COLUMN IF NOT EXISTS friendly_device VARCHAR(150);")
+        c.execute("ALTER TABLE loginhistory ALTER COLUMN device_info TYPE TEXT;")
 
         # 2. Bảng Lịch sử đăng nhập 
         c.execute('''
@@ -145,7 +494,9 @@ def init_user_db():
                 user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 login_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 ip_address VARCHAR(45),
-                device_info VARCHAR(255),
+                device_info TEXT,
+                friendly_device VARCHAR(150),
+                is_trusted BOOLEAN DEFAULT TRUE,
                 PRIMARY KEY (user_id, login_at)
             )
         ''')
@@ -212,6 +563,115 @@ def send_auth_email(to_email, subject, html_content):
         print(f">> [Email Error] Không thể kết nối tới Resend: {e}")
 
 
+def process_device_login(c, user_id, display_name, email, language, request):
+    """
+    Xử lý kiểm tra và ghi nhận thiết bị đăng nhập theo chuẩn an ninh Enterprise.
+    Tuân thủ 5 trạng thái logic:
+    1. Chưa có tài khoản / Đăng nhập lần đầu: Tự động tin cậy thiết bị, không cảnh báo.
+    2. Đăng nhập cùng thiết bị ban đầu: Thiết bị đã tin cậy, không cảnh báo.
+    3. Đăng nhập thiết bị KHÁC (chưa tin cậy): Ghi nhận chưa tin cậy, gửi email cảnh báo với 2 lựa chọn.
+    4. Xác nhận từ email cảnh báo: Cập nhật thiết bị thành tin cậy, không cảnh báo ở các lần sau.
+    5. Đăng nhập thiết bị lạ tiếp theo: Tiếp tục gửi cảnh báo.
+    """
+    # 1. Trích xuất IP thực tế (xử lý proxy Cloudflare / Render)
+    client_ip = (
+        request.headers.get("CF-Connecting-IP")
+        or (request.headers.get("X-Forwarded-For", "").split(",")[0].strip() if request.headers.get("X-Forwarded-For") else None)
+        or request.remote_addr
+        or "127.0.0.1"
+    )
+
+    # 2. Trích xuất và định danh thiết bị
+    raw_user_agent = request.headers.get('User-Agent', 'Unknown Device')
+    friendly_device = get_friendly_device(raw_user_agent, language)
+
+    # 3. Kiểm tra số lần đăng nhập tin cậy của tài khoản
+    c.execute("SELECT COUNT(*) FROM loginhistory WHERE user_id = %s AND is_trusted = TRUE", (user_id,))
+    total_trusted_logins = c.fetchone()[0]
+
+    # 4. Kiểm tra thiết bị hiện tại đã từng được tin cậy chưa (khớp theo user-agent hoặc friendly_device)
+    c.execute("""
+        SELECT 1 FROM loginhistory 
+        WHERE user_id = %s 
+          AND is_trusted = TRUE 
+          AND (device_info = %s OR (friendly_device IS NOT NULL AND friendly_device = %s))
+        LIMIT 1
+    """, (user_id, raw_user_agent, friendly_device))
+    is_already_trusted = c.fetchone() is not None
+
+    if total_trusted_logins == 0:
+        # Lần đầu tiên đăng nhập sau khi tạo tài khoản: Tự động tin cậy thiết bị ban đầu
+        is_trusted_now = True
+        is_new_device = False
+    elif is_already_trusted:
+        # Thiết bị đã được tin cậy từ trước (thiết bị ban đầu hoặc đã qua xác nhận)
+        is_trusted_now = True
+        is_new_device = False
+    else:
+        # Thiết bị mới / lạ: Chưa tin cậy, kích hoạt cảnh báo an ninh
+        is_trusted_now = False
+        is_new_device = True
+
+    # 5. Ghi nhận nhật ký đăng nhập
+    c.execute("""
+        INSERT INTO loginhistory (user_id, ip_address, device_info, friendly_device, is_trusted) 
+        VALUES (%s, %s, %s, %s, %s)
+    """, (user_id, client_ip, raw_user_agent, friendly_device, is_trusted_now))
+
+    # 6. Nếu phát hiện thiết bị lạ: Gửi email cảnh báo bảo mật chuẩn Enterprise
+    if is_new_device:
+        # Mã khẩn cấp khóa tài khoản và đổi mật khẩu (hạn 24 giờ)
+        secure_token = secrets.token_hex(20)
+        c.execute("""
+            INSERT INTO passwordresets (user_id, token, expires_at) 
+            VALUES (%s, %s, CURRENT_TIMESTAMP + INTERVAL '24 hours')
+        """, (user_id, secure_token))
+
+        # Mã JWT xác nhận thiết bị tin cậy (hạn 7 ngày)
+        from vectoria_api.config import JWT_SECRET_KEY as SECRET_KEY
+        confirm_token = jwt.encode(
+            {
+                "user_id": user_id, 
+                "device_info": raw_user_agent, 
+                "friendly_device": friendly_device,
+                "action": "confirm_device", 
+                "exp": datetime.now(timezone.utc) + timedelta(days=7)
+            },
+            SECRET_KEY, 
+            algorithm="HS256"
+        )
+
+        # Xác định API Base động an toàn (ưu tiên request.host_url khi chạy dev/prod)
+        api_base = os.getenv("API_BASE")
+        if not api_base:
+            api_base = request.host_url.rstrip("/")
+
+        confirm_link = f"{api_base}/api/confirm-device?token={confirm_token}"
+        secure_link = f"{api_base}/api/secure-account?token={secure_token}"
+
+        from datetime import timezone as dt_timezone
+        tz_vn = dt_timezone(timedelta(hours=7))
+        current_time_str = datetime.now(tz_vn).strftime("%H:%M:%S (UTC+7), %d/%m/%Y")
+
+        subject = (
+            "[Vectoria] Security Alert: New sign-in detected"
+            if language == 'en' else
+            "[Vectoria] Cảnh báo an ninh: Phát hiện đăng nhập từ thiết bị mới"
+        )
+
+        email_content = get_security_alert_email(
+            display_name=display_name,
+            friendly_device=friendly_device,
+            client_ip=client_ip,
+            login_time=current_time_str,
+            confirm_link=confirm_link,
+            secure_link=secure_link,
+            lang=language
+        )
+
+        send_auth_email(email, subject, email_content)
+
+
 # --- API ĐĂNG KÝ TÀI KHOẢN ---
 @user_bp.route("/api/register", methods=["POST"])
 def register():
@@ -269,7 +729,7 @@ def register():
                 fallback_link=activation_link,
                 lang="en"
             )
-            send_auth_email(email, "Verify your Vectoria account", email_content)
+            send_auth_email(email, "[Vectoria] Verify your account", email_content)
         else:
             email_content = get_modern_email(
                 title="Xác thực tài khoản",
@@ -280,7 +740,7 @@ def register():
                 fallback_link=activation_link,
                 lang="vi"
             )
-            send_auth_email(email, "Xác thực tài khoản — Vectoria", email_content)
+            send_auth_email(email, "[Vectoria] Xác thực tài khoản", email_content)
 
         return jsonify({"status": "success", "message": tr_msg("Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.")}), 201
     
@@ -376,79 +836,8 @@ def login():
                     "message": "Tài khoản này hiện đang bị khóa hoặc bị cấm truy cập!"
                 }), 403
 
-            ip_address = request.remote_addr
-            device_info = request.headers.get('User-Agent', 'Unknown Device')
-
-            friendly_device = device_info
-            try:
-                from user_agents import parse
-                ua = parse(device_info)
-                device_str = f"{ua.device.family} - " if ua.device.family and ua.device.family != 'Other' else ""
-                friendly_device = f"{device_str}{ua.os.family} ({ua.browser.family})"
-            except:
-                pass
-
-            # Check total trusted logins to see if this is the first login ever
-            c.execute("SELECT COUNT(*) FROM loginhistory WHERE user_id = %s AND is_trusted = TRUE", (user_id,))
-            total_trusted_logins = c.fetchone()[0]
-
-            # Check if this specific device is already trusted
-            c.execute("SELECT 1 FROM loginhistory WHERE user_id = %s AND device_info = %s AND is_trusted = TRUE", (user_id, device_info))
-            is_new_device = not c.fetchone()
-
-            is_trusted_now = True if total_trusted_logins == 0 else (not is_new_device)
-
-            c.execute(
-                "INSERT INTO loginhistory (user_id, ip_address, device_info, is_trusted) VALUES (%s, %s, %s, %s)",
-                (user_id, ip_address, device_info, is_trusted_now)
-            )
-
-            if is_new_device and total_trusted_logins > 0:
-                # Generate a secure token to lock the account and reset password
-                secure_token = secrets.token_hex(20)
-                c.execute(
-                    "INSERT INTO passwordresets (user_id, token, expires_at) VALUES (%s, %s, CURRENT_TIMESTAMP + INTERVAL '1 hour')",
-                    (user_id, secure_token)
-                )
-                
-                from vectoria_api.config import JWT_SECRET_KEY as SECRET_KEY
-                confirm_token = jwt.encode(
-                    {"user_id": user_id, "device_info": device_info, "action": "confirm_device", "exp": datetime.now(timezone.utc) + timedelta(days=7)},
-                    SECRET_KEY, 
-                    algorithm="HS256"
-                )
-
-                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                user_agent = friendly_device
-                API_BASE = os.getenv("API_BASE", "https://visualization-rr5v.onrender.com")
-                secure_link = f"{API_BASE}/api/secure-account?token={secure_token}"
-                confirm_link = f"{API_BASE}/api/confirm-device?token={confirm_token}"
-
-                if language == 'en':
-                    email_content = get_modern_email(
-                title="New login detected",
-                greeting=f"Hi {display_name},",
-                paragraphs=["We detected a new login to your Vectoria account from an unrecognized device."],
-                sub_text=f"<b>Time:</b> {current_time}<br><b>Device IP:</b> {ip_address}<br><b>User Agent:</b> {user_agent}",
-                btn_text="Yes, it was me",
-                btn_link=confirm_link,
-                fallback_link=confirm_link,
-                lang="en"
-            )
-                    send_auth_email(email, "Security alert — Vectoria", email_content)
-                else:
-                    email_content = get_modern_email(
-                title="Phát hiện đăng nhập mới",
-                greeting=f"Chào bạn, {display_name},",
-                paragraphs=["Chúng tôi phát hiện một lượt đăng nhập mới vào tài khoản Vectoria của bạn từ một thiết bị lạ."],
-                sub_text=f"<b>Thời gian:</b> {current_time}<br><b>Địa chỉ IP:</b> {ip_address}<br><b>Thiết bị:</b> {user_agent}",
-                btn_text="Vâng, đó là tôi",
-                btn_link=confirm_link,
-                fallback_link=confirm_link,
-                lang="vi"
-            )
-                    send_auth_email(email, "Cảnh báo bảo mật — Vectoria", email_content)
-            
+            # Xử lý kiểm tra và ghi nhận thiết bị đăng nhập theo chuẩn an ninh Enterprise
+            process_device_login(c, user_id, display_name, user[2], user_lang, request)
             conn.commit()
 
             # Trả về token JWT thực sự
@@ -527,7 +916,7 @@ def forgot_password():
                 fallback_link=reset_link,
                 lang="en"
             )
-            send_auth_email(email, "Reset your password — Vectoria", email_content)
+            send_auth_email(email, "[Vectoria] Reset your password", email_content)
         else:
             email_content = get_modern_email(
                 title="Đặt lại mật khẩu",
@@ -538,7 +927,7 @@ def forgot_password():
                 fallback_link=reset_link,
                 lang="vi"
             )
-            send_auth_email(email, "Đặt lại mật khẩu — Vectoria", email_content)
+            send_auth_email(email, "[Vectoria] Đặt lại mật khẩu", email_content)
 
         return jsonify({"status": "success", "message": tr_msg("Nếu email tồn tại, thư khôi phục đã được gửi.")}), 200
     except Exception as e:
@@ -596,31 +985,38 @@ def reset_password():
 @user_bp.route("/api/confirm-device", methods=["GET"])
 def confirm_device():
     token = request.args.get("token")
+    lang = request.args.get("lang", "vi")
     if not token:
-        return "Thiếu mã xác nhận (Missing token)", 400
+        return get_device_confirmation_page("invalid", None, FRONTEND_URL, lang), 400
 
     try:
         from vectoria_api.config import JWT_SECRET_KEY as SECRET_KEY
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         
         if payload.get("action") != "confirm_device":
-            return "Mã xác nhận không hợp lệ", 400
+            return get_device_confirmation_page("invalid", None, FRONTEND_URL, lang), 400
             
         user_id = payload.get("user_id")
         device_info = payload.get("device_info")
+        friendly_device = payload.get("friendly_device")
 
         conn = get_db_connection()
         c = conn.cursor()
 
         # Cập nhật thiết bị thành is_trusted
-        c.execute("UPDATE loginhistory SET is_trusted = TRUE WHERE user_id = %s AND device_info = %s", (user_id, device_info))
+        c.execute("""
+            UPDATE loginhistory 
+            SET is_trusted = TRUE 
+            WHERE user_id = %s 
+              AND (device_info = %s OR (friendly_device IS NOT NULL AND friendly_device = %s))
+        """, (user_id, device_info, friendly_device))
         conn.commit()
         
-        return "Xác nhận thiết bị thành công! Từ nay bạn sẽ không nhận được cảnh báo bảo mật khi đăng nhập trên thiết bị này nữa."
+        return get_device_confirmation_page("success", friendly_device, FRONTEND_URL, lang)
     except jwt.ExpiredSignatureError:
-        return "Mã xác nhận đã hết hạn (Token expired)", 400
+        return get_device_confirmation_page("expired", None, FRONTEND_URL, lang), 400
     except jwt.InvalidTokenError:
-        return "Mã xác nhận không hợp lệ (Invalid token)", 400
+        return get_device_confirmation_page("invalid", None, FRONTEND_URL, lang), 400
     except Exception as e:
         return f"System Error: {str(e)}", 500
     finally:
@@ -631,8 +1027,9 @@ def confirm_device():
 @user_bp.route("/api/secure-account", methods=["GET"])
 def secure_account():
     token = request.args.get("token")
+    lang = request.args.get("lang", "vi")
     if not token:
-        return "Thiếu mã bảo vệ (Missing token)", 400
+        return get_device_confirmation_page("invalid", None, FRONTEND_URL, lang), 400
 
     try:
         conn = get_db_connection()
@@ -646,7 +1043,7 @@ def secure_account():
         result = c.fetchone()
 
         if not result:
-            return "Đường dẫn bảo vệ tài khoản không hợp lệ hoặc đã hết hạn (Link invalid or expired)", 400
+            return get_device_confirmation_page("expired", None, FRONTEND_URL, lang), 400
 
         user_id = result[0]
 
@@ -655,7 +1052,7 @@ def secure_account():
         conn.commit()
         
         # Chuyển hướng người dùng đến giao diện đặt lại mật khẩu của frontend
-        return redirect(f"{FRONTEND_URL}/login.html?reset_token={token}")
+        return redirect(f"{FRONTEND_URL}/login.html?reset_token={token}&account_secured=1")
     except Exception as e:
         return f"System Error: {str(e)}", 500
     finally:
@@ -731,79 +1128,8 @@ def google_login():
             token_version = 1
             user_lang = language
 
-        ip_address = request.remote_addr
-        device_info = request.headers.get('User-Agent', 'Unknown Device')
-        
-        friendly_device = device_info
-        try:
-            from user_agents import parse
-            ua = parse(device_info)
-            device_str = f"{ua.device.family} - " if ua.device.family and ua.device.family != 'Other' else ""
-            friendly_device = f"{device_str}{ua.os.family} ({ua.browser.family})"
-        except:
-            pass
-            
-        # Check total trusted logins to see if this is the first login ever
-        c.execute("SELECT COUNT(*) FROM loginhistory WHERE user_id = %s AND is_trusted = TRUE", (user_id,))
-        total_trusted_logins = c.fetchone()[0]
-
-        # Check if this specific device is already trusted
-        c.execute("SELECT 1 FROM loginhistory WHERE user_id = %s AND device_info = %s AND is_trusted = TRUE", (user_id, device_info))
-        is_new_device = not c.fetchone()
-
-        is_trusted_now = True if total_trusted_logins == 0 else (not is_new_device)
-
-        c.execute(
-            "INSERT INTO loginhistory (user_id, ip_address, device_info, is_trusted) VALUES (%s, %s, %s, %s)",
-            (user_id, ip_address, device_info, is_trusted_now)
-        )
-        
-        if is_new_device and total_trusted_logins > 0:
-            # Generate a secure token to lock the account and reset password
-            secure_token = secrets.token_hex(20)
-            c.execute(
-                "INSERT INTO passwordresets (user_id, token, expires_at) VALUES (%s, %s, CURRENT_TIMESTAMP + INTERVAL '1 hour')",
-                (user_id, secure_token)
-            )
-            
-            from vectoria_api.config import JWT_SECRET_KEY as SECRET_KEY
-            confirm_token = jwt.encode(
-                {"user_id": user_id, "device_info": device_info, "action": "confirm_device", "exp": datetime.now(timezone.utc) + timedelta(days=7)},
-                SECRET_KEY, 
-                algorithm="HS256"
-            )
-
-            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            user_agent = friendly_device
-            API_BASE = os.getenv("API_BASE", "https://visualization-rr5v.onrender.com")
-            secure_link = f"{API_BASE}/api/secure-account?token={secure_token}"
-            confirm_link = f"{API_BASE}/api/confirm-device?token={confirm_token}"
-
-            if language == 'en':
-                email_content = get_modern_email(
-                title="New Google login detected",
-                greeting=f"Hi {display_name},",
-                paragraphs=["We detected a login to your Vectoria account using Google from an unrecognized device."],
-                sub_text=f"<b>Time:</b> {current_time}<br><b>Device IP:</b> {ip_address}<br><b>User Agent:</b> {user_agent}",
-                btn_text="Yes, it was me",
-                btn_link=confirm_link,
-                fallback_link=confirm_link,
-                lang="en"
-            )
-                send_auth_email(email, "Security alert — Vectoria", email_content)
-            else:
-                email_content = get_modern_email(
-                title="Phát hiện đăng nhập Google mới",
-                greeting=f"Chào bạn, {display_name},",
-                paragraphs=["Chúng tôi phát hiện một lượt đăng nhập vào tài khoản Vectoria của bạn bằng Google từ một thiết bị lạ."],
-                sub_text=f"<b>Thời gian:</b> {current_time}<br><b>Địa chỉ IP:</b> {ip_address}<br><b>Thiết bị:</b> {user_agent}",
-                btn_text="Vâng, đó là tôi",
-                btn_link=confirm_link,
-                fallback_link=confirm_link,
-                lang="vi"
-            )
-                send_auth_email(email, "Cảnh báo bảo mật — Vectoria", email_content)
-        
+        # Xử lý kiểm tra và ghi nhận thiết bị đăng nhập theo chuẩn an ninh Enterprise
+        process_device_login(c, user_id, display_name, email, user_lang, request)
         conn.commit()
 
         from vectoria_api.config import JWT_SECRET_KEY as SECRET_KEY

@@ -51,7 +51,7 @@
           display: block; margin: 30px auto 0; padding: 10px 20px;
           background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444;
           color: #dc2626; border-radius: 8px; font-size: 14px; font-weight: 600;
-          cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
+          cursor: pointer; transition: all 0.2s; font-family: var(--font-ui);
         `;
         btnClear.onmouseover = () => {
           btnClear.style.background = '#ef4444';
@@ -73,7 +73,7 @@
           box.style.cssText = `
             background: var(--bg-card, #fff); padding: 24px; border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 400px; width: 90%;
-            font-family: 'Inter', sans-serif; text-align: center;
+            font-family: var(--font-ui); text-align: center;
           `;
           box.innerHTML = `
             <div style="font-size: 48px; color: #ef4444; margin-bottom: 16px;"><i class="ph ph-warning"></i></div>
@@ -125,7 +125,7 @@
       const logArea = document.getElementById('paperLogArea');
       if (logArea) {
         logArea.innerHTML = `
-          <div style="text-align: center; color: var(--text-muted); margin-top: 100px; font-style: italic; font-family: 'Inter', sans-serif;" id="paperPlaceholder">
+          <div style="text-align: center; color: var(--text-muted); margin-top: 100px; font-style: italic; font-family: var(--font-ui);" id="paperPlaceholder">
             <i class="ph ph-pen-nib" style="font-size: 32px; margin-bottom: 15px; opacity: 0.5;"></i><br>
             Các thao tác toán học bạn thực hiện trên thanh công cụ sẽ được ghi chép tự động tại đây...
           </div>
@@ -218,8 +218,9 @@
         
         // Ensure 3D is active if needed by animation (most work better in 3D)
         if (window.App.mode === "2D") {
-           const btn3D = document.getElementById("btn3D");
-           if (btn3D) btn3D.click();
+           if (typeof window.App.toggleMode === "function") {
+             window.App.toggleMode();
+           }
         }
 
         // Trigger animation
@@ -333,11 +334,11 @@
       // Xây dựng nội dung
       let innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-strong); padding-bottom: 10px; margin-bottom: 16px;">
-          <div style="font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--primary-base, #2563eb);">
+          <div style="font-family: var(--font-ui); font-size: 14px; font-weight: 600; color: var(--primary-base, #2563eb);">
             ${log.title}
           </div>
           <div style="display: flex; align-items: center; gap: 12px;">
-            <span style="font-family: 'Inter', sans-serif; font-size: 12px; color: var(--muted);">${log.time}</span>
+            <span style="font-family: var(--font-ui); font-size: 12px; color: var(--muted);">${log.time}</span>
             <button class="btn-del-log" onclick="window.App.PaperLogger.deleteLog(${log.id})" style="background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding: 4px;" title="Xoá log này">
               <i class="ph ph-x"></i>
             </button>
@@ -350,7 +351,7 @@
 
       if (log.detailsHtml) {
         innerHTML += `
-          <div style="font-family: 'Inter', sans-serif; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 10px;">
+          <div style="font-family: var(--font-ui); background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 10px;">
             <div style="padding: 16px; font-size: 14px; line-height: 1.6; color: var(--text-main); overflow-x: auto;">
               ${log.detailsHtml}
             </div>
@@ -361,7 +362,7 @@
         if (log.solutionPack) {
           // Render a button to open the solution panel
           innerHTML += `
-            <button class="btn-open-solution-log" onclick='window.App.PaperLogger.openSolution(${log.id})' style="margin-top: 12px; padding: 10px 16px; background: rgba(37, 99, 235, 0.1); color: var(--primary-base); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
+            <button class="btn-open-solution-log" onclick='window.App.PaperLogger.openSolution(${log.id})' style="margin-top: 12px; padding: 10px 16px; background: rgba(37, 99, 235, 0.1); color: var(--primary-base); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: 6px; cursor: pointer; font-family: var(--font-ui); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
               <i class="ph ph-invoice"></i> Xem Lời giải chi tiết
             </button>
           `;
@@ -370,7 +371,7 @@
         if (log.animationData) {
           // Render a button to play animation
           innerHTML += `
-            <button class="btn-play-animation-log" onclick='window.App.PaperLogger.playAnimation(${log.id})' style="margin-top: 12px; padding: 10px 16px; background: rgba(16, 185, 129, 0.1); color: var(--success-base, #10b981); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; margin-left: 10px;">
+            <button class="btn-play-animation-log" onclick='window.App.PaperLogger.playAnimation(${log.id})' style="margin-top: 12px; padding: 10px 16px; background: rgba(16, 185, 129, 0.1); color: var(--success-base, #10b981); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; cursor: pointer; font-family: var(--font-ui); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; margin-left: 10px;">
               <i class="ph ph-play"></i> Khảo sát Đồ thị
             </button>
           `;

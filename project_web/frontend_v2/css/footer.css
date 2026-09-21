@@ -4,7 +4,7 @@
   border-top: 1px solid var(--border);
   padding: 40px 0 15px 0;
   margin-top: 60px; /* Đẩy footer cách xa nội dung grid một chút cho thoáng */
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-ui, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   width: 100%;
   box-sizing: border-box;
   transition:
@@ -22,7 +22,7 @@ body.dark .vectoria-footer {
   margin: 0 auto;
   padding: 0 20px;
   display: grid;
-  grid-template-columns: 2fr 1fr; /* 2 cột */
+  grid-template-columns: 2fr 1fr 1fr; /* 3 cột */
   gap: 40px;
 }
 

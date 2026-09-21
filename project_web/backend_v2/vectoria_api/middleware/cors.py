@@ -18,10 +18,11 @@ def attach_cors_middleware(app):
 
 def _corsify(resp):
     origin = request.headers.get("Origin", "")
-    if origin in ALLOWED_ORIGINS:
+    if origin in ALLOWED_ORIGINS or origin.endswith("vectoria.io.vn"):
         resp.headers["Access-Control-Allow-Origin"] = origin
         resp.headers["Vary"] = "Origin"
-        resp.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
-        resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        resp.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization,X-Requested-With,Accept"
         resp.headers["Access-Control-Max-Age"] = "3600"
+        resp.headers["Access-Control-Allow-Credentials"] = "true"
     return resp

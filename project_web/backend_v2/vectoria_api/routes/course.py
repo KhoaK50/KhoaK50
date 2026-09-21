@@ -1,10 +1,21 @@
 import os
+import json
+import threading
+from datetime import datetime
 import psycopg2
 from vectoria_api.database import get_db_connection, release_db_connection
 
 from psycopg2.extras import RealDictCursor
 from flask import Blueprint, request, jsonify
 from vectoria_api.config import DB_URL
+from vectoria_api.core.diagnostic_engine import (
+    calculate_bkt_update,
+    calculate_person_fit_lz,
+    calculate_rte,
+    classify_edge_cases,
+    get_neo4j_prerequisites
+)
+from vectoria_api.core.mentor_service import MentorService
 
 course_bp = Blueprint("course", __name__)
 
@@ -432,7 +443,18 @@ def get_available_question_count(user_id):
         
         if selected_lessons:
             filter_col = "lesson_id"
-            filter_val = selected_lessons
+            normalized = []
+            for item in selected_lessons:
+                s = str(item).strip()
+                normalized.append(s)
+                if s.startswith("lesson_"):
+                    normalized.append("l" + s[7:])
+                elif s.startswith("l") and s[1:].isdigit():
+                    normalized.append("lesson_" + s[1:])
+                elif s.isdigit():
+                    normalized.append("lesson_" + s)
+                    normalized.append("l" + s)
+            filter_val = list(set(normalized))
         elif selected_topics:
             filter_col = "topic_id"
             filter_val = selected_topics
@@ -447,6 +469,9 @@ def get_available_question_count(user_id):
             cursor.execute(query, (filter_val, difficulty_config))
             
         count = cursor.fetchone()[0]
+        if count == 0:
+            cursor.execute("SELECT COUNT(*) FROM questions WHERE is_active = TRUE")
+            count = cursor.fetchone()[0]
         return jsonify({"success": True, "count": count}), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -458,12 +483,32 @@ def get_available_question_count(user_id):
 @token_required
 def generate_quiz(user_id):
     data = request.get_json()
-    selected_topics = data.get("selected_topics", [])
-    selected_lessons = data.get("selected_lessons", [])
+    selected_topics = data.get("selected_topics") or []
+    if not isinstance(selected_topics, list):
+        selected_topics = [selected_topics]
+    selected_lessons = data.get("selected_lessons") or []
+    if not isinstance(selected_lessons, list):
+        selected_lessons = [selected_lessons]
     difficulty_config = data.get("difficulty_config", "MIXED")
-    question_count = data.get("question_count", 10)
     mode = data.get("mode", "PRACTICE")
-    time_limit = data.get("time_limit", 30)
+    title = data.get("title") or ("Bài thi Tổng hợp Lộ trình" if mode == "EXAM" else "Bài kiểm tra")
+    
+    if not selected_topics:
+        selected_topics = ["t1"]
+    
+    try:
+        question_count = int(data.get("question_count", 5))
+        if question_count < 5:
+            question_count = 5
+    except (ValueError, TypeError):
+        question_count = 5
+
+    try:
+        time_limit = int(data.get("time_limit", 0))
+        if time_limit < 0:
+            time_limit = 0
+    except (ValueError, TypeError):
+        time_limit = 0
 
     try:
         conn = get_db_connection()
@@ -471,18 +516,28 @@ def generate_quiz(user_id):
         
         cursor.execute("""
             INSERT INTO quizzes (user_id, title, selected_topics, selected_lessons, question_count, status, difficulty_config, mode, time_limit, started_at)
-            VALUES (%s, 'Bài kiểm tra', %s, %s, %s, 'IN_PROGRESS', %s, %s, %s, CURRENT_TIMESTAMP)
+            VALUES (%s, %s, %s, %s, %s, 'IN_PROGRESS', %s, %s, %s, CURRENT_TIMESTAMP)
             RETURNING id
-        """, (user_id, selected_topics, selected_lessons, question_count, difficulty_config, mode, time_limit))
+        """, (user_id, title, selected_topics, selected_lessons, question_count, difficulty_config, mode, time_limit))
         quiz_id = cursor.fetchone()['id']
         
         # Determine filtering condition
+        filter_col = "topic_id"
+        filter_val = selected_topics
         if selected_lessons:
             filter_col = "lesson_id"
-            filter_val = selected_lessons
-        else:
-            filter_col = "topic_id"
-            filter_val = selected_topics
+            normalized = []
+            for item in selected_lessons:
+                s = str(item).strip()
+                normalized.append(s)
+                if s.startswith("lesson_"):
+                    normalized.append("l" + s[7:])
+                elif s.startswith("l") and s[1:].isdigit():
+                    normalized.append("lesson_" + s[1:])
+                elif s.isdigit():
+                    normalized.append("lesson_" + s)
+                    normalized.append("l" + s)
+            filter_val = list(set(normalized))
             
         if difficulty_config == "MIXED":
             query = f"""
@@ -504,6 +559,17 @@ def generate_quiz(user_id):
             cursor.execute(query, (filter_val, difficulty_config, question_count))
             
         questions = cursor.fetchall()
+
+        # Graceful fallback: If specified lessons have no questions yet in DB, fetch from active pool
+        if not questions:
+            cursor.execute("""
+                SELECT id, content_html, image_url, option_a, option_b, option_c, option_d, difficulty_level
+                FROM questions
+                WHERE is_active = TRUE
+                ORDER BY RANDOM()
+                LIMIT %s
+            """, (question_count,))
+            questions = cursor.fetchall()
         
         for i, q in enumerate(questions):
             cursor.execute("""
@@ -523,72 +589,494 @@ def generate_quiz(user_id):
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): release_db_connection(conn)
 
+def _async_mentor_llm_worker(q_id, u_id, u_name, d_result, t_score, q_title, att_num, enr_items, base_meta):
+    try:
+        llm_res = MentorService.generate_llm_feedback(
+            diagnosis_result=d_result,
+            total_score=t_score,
+            topic_title=q_title,
+            attempt_number=att_num,
+            enriched_items=enr_items,
+            user_name=u_name
+        )
+        if llm_res:
+            base_meta["mentor_speech"] = {
+                "text": llm_res.get("mentor_speech") or llm_res.get("message", ""),
+                "emotion_state": llm_res.get("emotion_state", "ANALYTICAL_NEUTRAL"),
+                "avatar_mood": llm_res.get("avatar_mood", "thoughtful"),
+                "summary_reason": llm_res.get("summary_reason", ""),
+                "suggested_action": llm_res.get("suggested_action", ""),
+                "source": llm_res.get("source", "LLM_GEMINI")
+            }
+            base_meta["llm_status"] = "completed"
+            base_meta["tone_emotion"] = llm_res.get("emotion_state", "ANALYTICAL_NEUTRAL")
+            base_meta["avatar_mood"] = llm_res.get("avatar_mood", "thoughtful")
+            base_meta["core_gap"] = llm_res.get("summary_reason", "")
+            base_meta["actionable_direction"] = llm_res.get("suggested_action", "")
+            
+            w_conn = get_db_connection()
+            w_cur = w_conn.cursor()
+            w_cur.execute("UPDATE quizzes SET metadata = %s WHERE id = %s", (json.dumps(base_meta), q_id))
+
+            # Cập nhật đánh giá LLM sâu vào user_tasks nếu bài tập gắn với node_id
+            req_node_id = base_meta.get("node_id")
+            if req_node_id:
+                try:
+                    w_cur.execute("""
+                        UPDATE user_tasks
+                        SET progress_data = jsonb_set(
+                            progress_data,
+                            '{mentor_evaluation}',
+                            %s::jsonb
+                        ),
+                        last_accessed = CURRENT_TIMESTAMP
+                        WHERE user_id = %s AND node_id = %s AND task_type = 'practice'
+                    """, (json.dumps(base_meta["mentor_speech"]), u_id, str(req_node_id)))
+                except Exception as e_ut:
+                    print(f">> [AsyncMentorWorker] Warning updating user_tasks with LLM feedback: {e_ut}")
+
+            w_conn.commit()
+            w_cur.close()
+            release_db_connection(w_conn)
+            print(f">> [AsyncMentorWorker] Updated quiz {q_id} and user_tasks with LLM feedback successfully.")
+    except Exception as ex:
+        print(f">> [AsyncMentorWorker] Error generating LLM feedback for quiz {q_id}: {ex}")
+        try:
+            base_meta["llm_status"] = "completed"
+            w_conn = get_db_connection()
+            w_cur = w_conn.cursor()
+            w_cur.execute("UPDATE quizzes SET metadata = %s WHERE id = %s", (json.dumps(base_meta), q_id))
+            w_conn.commit()
+            w_cur.close()
+            release_db_connection(w_conn)
+        except Exception:
+            pass
+
 @course_bp.route('/api/quiz/<int:quiz_id>/submit', methods=['POST'])
 @token_required
 def submit_quiz(user_id, quiz_id):
-    data = request.get_json()
+    data = request.get_json() or {}
     answers = data.get("answers", [])
     
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
-        cursor.execute("SELECT id FROM quizzes WHERE id = %s AND user_id = %s", (quiz_id, user_id))
+        cursor.execute("SELECT id, title FROM quizzes WHERE id = %s AND user_id = %s", (quiz_id, user_id))
         quiz = cursor.fetchone()
         if not quiz:
             return jsonify({"success": False, "message": "Quiz not found or unauthorized"}), 404
             
+        quiz_title = quiz.get("title") or "Bài kiểm tra Đại số Tuyến tính"
+
+        # Lấy display_name của người học
+        cursor.execute("SELECT display_name FROM users WHERE id = %s", (user_id,))
+        u_row = cursor.fetchone()
+        user_name = (u_row.get("display_name") or "").strip() if u_row else ""
+            
+        cursor.execute("""
+            SELECT qq.question_id, qq.order_index, qq.attempt_number,
+                   q.correct_answer, q.explanation_html, q.difficulty_level,
+                   q.difficulty_index, q.discrimination_index, q.tags,
+                   q.distractor_mapping, q.topic_id, q.lesson_id
+            FROM quizz_questions qq
+            JOIN questions q ON qq.question_id = q.id
+            WHERE qq.quiz_id = %s
+            ORDER BY qq.order_index ASC
+        """, (quiz_id,))
+        quiz_q_rows = cursor.fetchall()
+        
+        total_questions = len(quiz_q_rows) if quiz_q_rows else len(answers)
         correct_count = 0
-        total_questions = len(answers)
         results = []
         
-        for ans in answers:
-            q_id = ans.get("question_id")
-            selected_answer = ans.get("selected_answer")
+        ans_map = {}
+        for a in answers:
+            ans_map[a.get("question_id")] = a
             
-            cursor.execute("SELECT correct_answer, explanation_html FROM questions WHERE id = %s", (q_id,))
-            q_data = cursor.fetchone()
+        # Lấy bản đồ năng lực quá khứ (BKT Prior) của người học
+        user_p_l_map = {}
+        cursor.execute("SELECT tag, mastery_score FROM user_competencies WHERE user_id = %s", (user_id,))
+        for c_row in cursor.fetchall():
+            user_p_l_map[c_row["tag"]] = float(c_row["mastery_score"]) / 100.0
             
-            if q_data:
-                correct_ans = q_data['correct_answer']
-                is_correct = (selected_answer == correct_ans)
-                if is_correct:
-                    correct_count += 1
-                
-                cursor.execute("""
-                    UPDATE quizz_questions
-                    SET selected_answer = %s, is_correct = %s, status = 'ANSWERED', answered_at = CURRENT_TIMESTAMP
-                    WHERE quiz_id = %s AND question_id = %s
-                """, (selected_answer, is_correct, quiz_id, q_id))
-                
-                results.append({
-                    "question_id": q_id,
-                    "selected_answer": selected_answer,
-                    "correct_answer": correct_ans,
-                    "is_correct": is_correct,
-                    "explanation_html": q_data['explanation_html']
-                })
-                
-        total_score = round((correct_count / total_questions) * 10, 2) if total_questions > 0 else 0
+        # Lấy năng lực tiềm ẩn latent_ability (theta)
+        cursor.execute("SELECT latent_ability, trust_weight, total_activities FROM user_metrics WHERE user_id = %s", (user_id,))
+        metric_row = cursor.fetchone()
+        if not metric_row:
+            cursor.execute("INSERT INTO user_metrics (user_id) VALUES (%s) RETURNING latent_ability, trust_weight, total_activities", (user_id,))
+            metric_row = cursor.fetchone()
+            
+        theta = float(metric_row["latent_ability"]) - 1.0 if metric_row else 0.0
+        alpha = float(metric_row["trust_weight"]) if metric_row else 0.0
+        activities = int(metric_row["total_activities"]) if metric_row else 0
         
+        # 1. Thu thập dữ liệu vi hành vi từng câu hỏi
+        items_for_diag = []
+        for q_data in (quiz_q_rows if quiz_q_rows else []):
+            q_id = q_data['question_id']
+            correct_ans = q_data['correct_answer']
+            user_ans_obj = ans_map.get(q_id) or {}
+            
+            raw_ans = user_ans_obj.get("selected_answer")
+            ans_str = str(raw_ans).strip()[:1].upper() if raw_ans is not None else None
+            selected_answer = ans_str if ans_str in ['A', 'B', 'C', 'D'] else None
+            t_spent = int(user_ans_obj.get("time_spent_seconds") or user_ans_obj.get("time_spent") or 0)
+            sw_count = int(user_ans_obj.get("switch_count") or 0)
+            
+            is_correct = (selected_answer == correct_ans) if selected_answer else False
+            if is_correct:
+                correct_count += 1
+                
+            distractor_map = q_data.get('distractor_mapping') or {}
+            distractor_type = distractor_map.get(selected_answer, "NONE") if not is_correct and selected_answer else "NONE"
+            
+            items_for_diag.append({
+                "question_id": q_id,
+                "selected_answer": selected_answer,
+                "correct_answer": correct_ans,
+                "is_correct": is_correct,
+                "time_spent_seconds": t_spent,
+                "switch_count": sw_count,
+                "difficulty_level": q_data.get('difficulty_level', 'MEDIUM'),
+                "difficulty_index": float(q_data.get('difficulty_index') or 0.0),
+                "discrimination_index": float(q_data.get('discrimination_index') or 1.0),
+                "tags": q_data.get('tags') or [],
+                "distractor_type": distractor_type,
+                "topic_id": q_data.get('topic_id'),
+                "lesson_id": q_data.get('lesson_id'),
+                "explanation_html": q_data.get('explanation_html')
+            })
+            
+        # 2. Chạy Bộ Não Chẩn Đoán Toán Học
+        overall_rte, enriched_items = calculate_rte(items_for_diag, default_expected_time=60.0)
+        l_z, log_lik, var_lik = calculate_person_fit_lz(enriched_items, theta=theta)
+        diag_result = classify_edge_cases(enriched_items, l_z=l_z, overall_rte=overall_rte, user_p_l_map=user_p_l_map)
+        
+        # 3. Cập nhật quizz_questions với dữ liệu vi hành vi và cờ chẩn đoán
+        for it in enriched_items:
+            q_id = it["question_id"]
+            selected_answer = it["selected_answer"]
+            is_correct = it["is_correct"]
+            t_spent = it["time_spent_seconds"]
+            sw_count = it["switch_count"]
+            q_flag = diag_result["item_diagnoses"].get(q_id, "NORMAL")
+            q_status = 'ANSWERED' if selected_answer else 'VIEWED'
+            
+            cursor.execute("""
+                UPDATE quizz_questions
+                SET selected_answer = %s,
+                    is_correct = %s,
+                    status = %s,
+                    answered_at = CURRENT_TIMESTAMP,
+                    time_spent_seconds = %s,
+                    switch_count = %s,
+                    diagnosis_flag = %s
+                WHERE quiz_id = %s AND question_id = %s
+            """, (selected_answer, is_correct, q_status, t_spent, sw_count, q_flag, quiz_id, q_id))
+            
+            results.append({
+                "question_id": q_id,
+                "selected_answer": selected_answer,
+                "correct_answer": it["correct_answer"],
+                "is_correct": is_correct,
+                "time_spent_seconds": t_spent,
+                "switch_count": sw_count,
+                "diagnosis_flag": q_flag,
+                "explanation_html": it["explanation_html"]
+            })
+            
+        # 4. Cập nhật BKT vào user_competencies
+        tag_results = {}
+        for it in enriched_items:
+            for tag in (it.get("tags") or []):
+                if tag not in tag_results:
+                    tag_results[tag] = []
+                tag_results[tag].append(it["is_correct"])
+                
+        for tag, bools in tag_results.items():
+            p_curr = user_p_l_map.get(tag, 0.50)
+            tag_correct_count = sum(1 for b in bools if b)
+            tag_total_count = len(bools)
+            
+            for b in bools:
+                p_curr = calculate_bkt_update(p_curr, is_correct=b)
+                
+            new_mastery_pct = round(p_curr * 100.0, 2)
+            cursor.execute("""
+                INSERT INTO user_competencies (user_id, tag, total_attempts, correct_attempts, mastery_score, last_practiced_at)
+                VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                ON CONFLICT (user_id, tag)
+                DO UPDATE SET 
+                    total_attempts = user_competencies.total_attempts + EXCLUDED.total_attempts,
+                    correct_attempts = user_competencies.correct_attempts + EXCLUDED.correct_attempts,
+                    mastery_score = EXCLUDED.mastery_score,
+                    last_practiced_at = CURRENT_TIMESTAMP;
+            """, (user_id, tag, tag_total_count, tag_correct_count, new_mastery_pct))
+            
+        # 5. Sinh phản hồi tức thì siêu tốc qua MentorService (không nghẽn luồng)
+        total_score = round((correct_count / total_questions) * 10, 2) if total_questions > 0 else 0
+        attempt_number = quiz_q_rows[0].get("attempt_number", 1) if quiz_q_rows else 1
+        mentor_res = MentorService.generate_immediate_feedback(
+            diagnosis_result=diag_result,
+            total_score=total_score,
+            topic_title=quiz_title,
+            attempt_number=attempt_number,
+            user_name=user_name
+        )
+        
+        # 6. Xây dựng cấu trúc diagnostic_metadata JSON chuẩn mực kèm chi tiết câu hỏi
+        total_time = sum(it.get("time_spent_seconds", 0) for it in enriched_items)
+        avg_time = round(total_time / total_questions, 1) if total_questions > 0 else 0
+        total_switches = sum(it.get("switch_count", 0) for it in enriched_items)
+        
+        items_summary = [
+            {
+                "question_id": it["question_id"],
+                "is_correct": it["is_correct"],
+                "time_spent_seconds": it.get("time_spent_seconds", 0),
+                "switch_count": it.get("switch_count", 0),
+                "tags": it.get("tags") or []
+            }
+            for it in enriched_items
+        ]
+        
+        diagnostic_metadata = {
+            "quiz_id": quiz_id,
+            "user_id": user_id,
+            "user_name": user_name,
+            "quiz_title": quiz_title,
+            "score": total_score,
+            "correct_count": correct_count,
+            "total_questions": total_questions,
+            "percentage": round((correct_count / total_questions) * 100, 1) if total_questions > 0 else 0,
+            "llm_status": "pending",
+            "items_summary": items_summary,
+            "telemetry": {
+                "total_time_seconds": total_time,
+                "avg_time_per_question": avg_time,
+                "time_per_question_avg": avg_time,
+                "total_switch_count": total_switches,
+                "switch_tab_count": total_switches,
+                "rapid_guessing_detected": overall_rte < 0.5 or (avg_time > 0 and avg_time < 15.0),
+                "reading_pacing_status": "rapid_guessing" if (overall_rte < 0.5 or (avg_time > 0 and avg_time < 15.0)) else "standard",
+                "overall_rte": round(overall_rte, 2)
+            },
+            "cognitive_diagnosis": {
+                "person_fit_lz": round(l_z, 2),
+                "is_false_mastery": diag_result.get("is_false_mastery", False),
+                "detected_cases": diag_result.get("detected_cases", []),
+                "suspected_lucky_count": diag_result.get("suspected_lucky_count", 0),
+                "latent_ability_theta": round(theta + 1.0, 2)
+            },
+            "mentor_speech": {
+                "text": mentor_res.get("mentor_speech") or mentor_res.get("message", ""),
+                "emotion_state": mentor_res.get("emotion_state", "ANALYTICAL_NEUTRAL"),
+                "avatar_mood": mentor_res.get("avatar_mood", "thoughtful"),
+                "summary_reason": mentor_res.get("summary_reason", ""),
+                "suggested_action": mentor_res.get("suggested_action", ""),
+                "source": mentor_res.get("source", "DETERMINISTIC_FALLBACK")
+            },
+            "tone_emotion": mentor_res.get("emotion_state", "ANALYTICAL_NEUTRAL"),
+            "avatar_mood": mentor_res.get("avatar_mood", "thoughtful"),
+            "core_gap": mentor_res.get("summary_reason", ""),
+            "actionable_direction": mentor_res.get("suggested_action", ""),
+            "evaluated_at": datetime.now().isoformat()
+        }
+
+        # 7. Cập nhật quizzes & user_metrics
         cursor.execute("""
             UPDATE quizzes
-            SET total_score = %s, status = 'COMPLETED', completed_at = CURRENT_TIMESTAMP
+            SET total_score = %s, status = 'COMPLETED', completed_at = CURRENT_TIMESTAMP,
+                metadata = %s
             WHERE id = %s
-        """, (total_score, quiz_id))
+        """, (total_score, json.dumps(diagnostic_metadata), quiz_id))
         
+        # Cập nhật latent_ability (theta) dựa trên kết quả và RTE
+        if total_score >= 8.0 and overall_rte >= 0.7:
+            theta = min(2.0, theta + 0.1)
+        elif total_score < 5.0:
+            theta = max(-2.0, theta - 0.1)
+        alpha = min(1.0, alpha + 0.05)
+        activities += 1
+        
+        cursor.execute("""
+            UPDATE user_metrics
+            SET latent_ability = %s, trust_weight = %s, total_activities = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s
+        """, (theta + 1.0, alpha, activities, user_id))
+        
+        # 8. Ghi nhận nợ tri thức vào knowledge_debts nếu có nghi ngờ hoặc ảo tưởng thành thạo
+        if diag_result.get("suspected_lucky_count", 0) > 0 or diag_result.get("is_false_mastery"):
+            suspected_items = [it for it in enriched_items if diag_result["item_diagnoses"].get(it["question_id"]) == "SUSPECTED_LUCKY"]
+            for s_it in suspected_items:
+                debt_node = s_it.get("lesson_id") or s_it.get("topic_id") or "matrix_concept"
+                source_node = s_it.get("lesson_id") or s_it.get("topic_id") or "quiz_test"
+                cursor.execute("""
+                    INSERT INTO knowledge_debts (user_id, debt_node_id, source_node_id, suspected_count, is_cleared, created_at)
+                    VALUES (%s, %s, %s, 1, FALSE, CURRENT_TIMESTAMP)
+                    ON CONFLICT (user_id, debt_node_id)
+                    DO UPDATE SET 
+                        suspected_count = knowledge_debts.suspected_count + 1,
+                        is_cleared = FALSE,
+                        created_at = CURRENT_TIMESTAMP;
+                """, (user_id, debt_node, source_node))
+                
+        # 8. Tự động suy luận node_id và path_id để bảo đảm dữ liệu luôn được ghi vào user_tasks
+        req_node_id = data.get("node_id") or data.get("lesson_id")
+        if not req_node_id:
+            cursor.execute("SELECT selected_lessons FROM quizzes WHERE id = %s", (quiz_id,))
+            q_row = cursor.fetchone()
+            if q_row and q_row.get("selected_lessons"):
+                s_lessons = q_row["selected_lessons"]
+                if isinstance(s_lessons, list) and len(s_lessons) > 0:
+                    req_node_id = str(s_lessons[0]).strip()
+        if not req_node_id:
+            cursor.execute("""
+                SELECT q.lesson_id FROM quizz_questions qq
+                JOIN questions q ON qq.question_id = q.id
+                WHERE qq.quiz_id = %s AND q.lesson_id IS NOT NULL
+                LIMIT 1
+            """, (quiz_id,))
+            q_l = cursor.fetchone()
+            if q_l and q_l.get("lesson_id"):
+                req_node_id = str(q_l["lesson_id"]).strip()
+
+        # Chuẩn hóa node_id (e.g. '1' -> 'l1', 'lesson_1' -> 'l1')
+        if req_node_id:
+            req_node_id = str(req_node_id).strip()
+            if req_node_id.startswith("lesson_"):
+                req_node_id = "l" + req_node_id[7:]
+            elif req_node_id.isdigit():
+                req_node_id = "l" + req_node_id
+
+        req_path_id = data.get("path_id")
+        if not req_path_id and req_node_id:
+            cursor.execute("""
+                SELECT path_id, path_nodes FROM user_learning_paths
+                WHERE user_id = %s AND status IN ('pending', 'active')
+                ORDER BY created_at DESC LIMIT 1
+            """, (user_id,))
+            p_row = cursor.fetchone()
+            if p_row:
+                p_nodes = p_row.get("path_nodes") or []
+                if isinstance(p_nodes, str):
+                    try:
+                        p_nodes = json.loads(p_nodes)
+                    except Exception:
+                        p_nodes = []
+                if req_node_id in p_nodes:
+                    req_path_id = p_row["path_id"]
+
+        # Cập nhật tiến trình vào user_tasks nếu có node_id
+        if user_id and req_node_id:
+            try:
+                task_progress = {
+                    "status": "completed" if total_score >= 5.0 else "in_progress",
+                    "score": total_score,
+                    "passed": total_score >= 5.0,
+                    "quiz_id": quiz_id,
+                    "correct_count": correct_count,
+                    "total_questions": total_questions,
+                    "path_id": req_path_id,
+                    "telemetry": diagnostic_metadata.get("telemetry", {}),
+                    "mentor_evaluation": diagnostic_metadata.get("mentor_speech", {}),
+                    "completed_at": datetime.now().isoformat()
+                }
+                cursor.execute("""
+                    INSERT INTO user_tasks (user_id, node_id, task_type, progress_data, last_accessed)
+                    VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+                    ON CONFLICT (user_id, node_id, task_type)
+                    DO UPDATE SET
+                        progress_data = EXCLUDED.progress_data,
+                        last_accessed = CURRENT_TIMESTAMP;
+                """, (user_id, str(req_node_id), 'practice', json.dumps(task_progress)))
+                diagnostic_metadata["node_id"] = req_node_id
+                if req_path_id:
+                    diagnostic_metadata["path_id"] = req_path_id
+            except Exception as e_task:
+                print(f">> [submit_quiz] Warning updating user_tasks: {e_task}")
+
+        # Cập nhật lộ trình: CHỈ đánh dấu 'completed' khi TOÀN BỘ các node trong lộ trình đã pass
+        if req_path_id and total_score >= 5.0:
+            try:
+                cursor.execute("SELECT path_nodes FROM user_learning_paths WHERE user_id = %s AND path_id = %s", (user_id, req_path_id))
+                p_info = cursor.fetchone()
+                if p_info:
+                    p_nodes = p_info.get("path_nodes") or []
+                    if isinstance(p_nodes, str):
+                        try:
+                            p_nodes = json.loads(p_nodes)
+                        except Exception:
+                            p_nodes = []
+
+                    cursor.execute("""
+                        SELECT node_id FROM user_tasks
+                        WHERE user_id = %s AND task_type = 'practice' AND (progress_data->>'passed')::boolean = true
+                    """, (user_id,))
+                    passed_nodes = {r['node_id'] for r in cursor.fetchall()}
+
+                    all_passed = all(n in passed_nodes for n in p_nodes) if p_nodes else False
+                    if all_passed:
+                        cursor.execute("""
+                            UPDATE user_learning_paths
+                            SET status = 'completed'
+                            WHERE user_id = %s AND path_id = %s
+                        """, (user_id, req_path_id))
+                        print(f">> [submit_quiz] Path {req_path_id} marked COMPLETED: All nodes passed.")
+            except Exception as e_path:
+                print(f">> [submit_quiz] Warning updating path completion: {e_path}")
+
         conn.commit()
+
+        # 9. Khởi chạy Background Thread sinh phản hồi LLM ngầm không chặn luồng chính
+        threading.Thread(
+            target=_async_mentor_llm_worker,
+            args=(quiz_id, user_id, user_name, diag_result, total_score, quiz_title, attempt_number, enriched_items, diagnostic_metadata),
+            daemon=True
+        ).start()
+
         return jsonify({
             "success": True, 
             "total_score": total_score, 
             "correct_count": correct_count, 
             "total_questions": total_questions, 
-            "results": results
+            "results": results,
+            "metadata": diagnostic_metadata,
+            "diagnosis": {
+                "mentor_feedback": mentor_res.get("mentor_speech") or mentor_res.get("message", ""),
+                "mentor_emotion": mentor_res.get("emotion_state", "ANALYTICAL_NEUTRAL"),
+                "mentor_avatar_mood": mentor_res.get("avatar_mood", "thoughtful"),
+                "summary_reason": mentor_res.get("summary_reason", ""),
+                "suggested_action": mentor_res.get("suggested_action", ""),
+                "mentor_source": mentor_res.get("source")
+            }
         }), 200
         
     except Exception as e:
         if 'conn' in locals():
             conn.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): release_db_connection(conn)
+
+@course_bp.route('/api/quiz/<int:quiz_id>/metadata', methods=['GET'])
+@token_required
+def get_quiz_metadata(user_id, quiz_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT metadata FROM quizzes WHERE id = %s AND user_id = %s", (quiz_id, user_id))
+        row = cursor.fetchone()
+        if not row or not row.get("metadata"):
+            return jsonify({"success": False, "message": "Metadata not found"}), 404
+        
+        meta = row["metadata"]
+        if isinstance(meta, str):
+            meta = json.loads(meta)
+        return jsonify({"success": True, "metadata": meta}), 200
+    except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if 'cursor' in locals(): cursor.close()

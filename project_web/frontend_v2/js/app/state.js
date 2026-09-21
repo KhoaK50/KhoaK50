@@ -6,7 +6,11 @@
   App.autoMode = true;
   App.currentVector = [1, 2];
   App.firstDrawForVector = true;
-  App.theme = "light";
+  App.theme =
+    typeof localStorage !== "undefined" &&
+    localStorage.getItem("vec_theme") === "dark"
+      ? "dark"
+      : "light";
 
   // Angle visualization state
   App.currentAngleVisual2D = null; // { a:[x,y], b:[x,y], deg }

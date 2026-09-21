@@ -1,4 +1,4 @@
-﻿/* =================== TOPBAR =================== */
+/* =================== TOPBAR =================== */
 #topbar {
   position: fixed;
   inset: 0 0 auto 0;
@@ -150,7 +150,7 @@
 }
 
 :root {
-  --sidebar-width: 380px;
+  --sidebar-width: 440px;
 }
 
 /* =================== RESPONSIVE =================== */
