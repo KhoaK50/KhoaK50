@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { BookOpen, Edit, Save, ArrowLeft, Upload, Code } from 'lucide-react';
+import { BookOpen, Save, ArrowLeft, Upload, Code } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 export default function Courses() {
   const [viewMode, setViewMode] = useState('list');
@@ -44,7 +45,7 @@ export default function Courses() {
 
   const fetchLessons = () => {
     setIsLoading(true);
-    fetch((import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000') + '/api/admin/lessons', {
+    fetch(`${API_BASE_URL}/api/admin/lessons`, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAuth')}` }
     })
     .then(res => res.json())
@@ -76,7 +77,7 @@ export default function Courses() {
   const handleSaveEdit = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/admin/lesson/${currentLesson.topic_id}/${currentLesson.order_index}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/lesson/${currentLesson.topic_id}/${currentLesson.order_index}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAuth')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_html: markdown, difficulty_level: newBloomLevel, estimated_time: newTimeSpent, lang: language, title: newTitle })
@@ -93,7 +94,7 @@ export default function Courses() {
     if (!newTopicId || !newTitle || !newSectionId) return alert("Vui lòng nhập đủ thông tin!");
     setIsSaving(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/admin/lesson`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/lesson`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminAuth')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -114,70 +115,326 @@ export default function Courses() {
     const file = e.target.files[0];
     if (!file) return;
     
-    if (file.name.endsWith('.zip')) {
+    if (file.name.toLowerCase().endsWith('.zip')) {
       try {
         const JSZip = (await import('jszip')).default;
         const zip = await JSZip.loadAsync(file);
         let texContent = null;
         let mainTexPath = null;
         
-        // Find main.tex or the first .tex file
-        for (const [path, zipEntry] of Object.entries(zip.files)) {
-          if (!zipEntry.dir && path.endsWith('.tex')) {
-            if (path.includes('main.tex') || !mainTexPath) {
-              mainTexPath = path;
-              if (path.includes('main.tex')) break; // Prioritize main.tex
+        // Helper: Chuẩn hóa đường dẫn tương đối (xử lý . và ..)
+        const normalizePath = (p) => {
+          if (!p) return '';
+          const parts = p.replace(/\\/g, '/').split('/');
+          const stack = [];
+          for (const part of parts) {
+            if (!part || part === '.') continue;
+            if (part === '..') {
+              if (stack.length > 0) stack.pop();
+            } else {
+              stack.push(part);
             }
+          }
+          return stack.join('/');
+        };
+
+        // Helper: Xóa comment LaTeX an toàn (bảo toàn % trong URL và \% trong toán học)
+        const stripLatexComments = (text) => {
+          if (!text) return '';
+          return text.split('\n').map(line => {
+            let inUrl = false;
+            let urlDepth = 0;
+            for (let i = 0; i < line.length; i++) {
+              if (line.substr(i, 5) === '\\url{' || line.substr(i, 6) === '\\href{') {
+                inUrl = true;
+                urlDepth = 1;
+                i += line.substr(i, 5) === '\\url{' ? 4 : 5;
+                continue;
+              }
+              if (inUrl) {
+                if (line[i] === '{') urlDepth++;
+                else if (line[i] === '}') {
+                  urlDepth--;
+                  if (urlDepth <= 0) inUrl = false;
+                }
+                continue;
+              }
+              if (line[i] === '%') {
+                let backslashes = 0;
+                let j = i - 1;
+                while (j >= 0 && line[j] === '\\') {
+                  backslashes++;
+                  j--;
+                }
+                if (backslashes % 2 === 0) {
+                  return line.substring(0, i);
+                }
+              }
+            }
+            return line;
+          }).join('\n');
+        };
+
+        // Helper: Kiểm tra file cấu hình style/macro
+        const isStyleOrMacro = (pathStr) => {
+          if (!pathStr) return false;
+          const norm = pathStr.toLowerCase().replace(/\\/g, '/');
+          const base = norm.split('/').pop().replace(/\.tex$/, '');
+          return norm.endsWith('.sty') || norm.endsWith('.cls') ||
+                 base === 'setup' || base === 'macros' || base === 'config' || base === 'style' ||
+                 base === 'preamble' || base === 'packages' || base === 'settings' ||
+                 norm.includes('/setup.') || norm.includes('/macros.') || norm.includes('/config.');
+        };
+
+        // 1. Tìm file gốc (main.tex hoặc root tex có chứa documentclass)
+        const texCandidates = [];
+        for (const [p, zipEntry] of Object.entries(zip.files)) {
+          if (zipEntry.dir) continue;
+          const lower = p.toLowerCase().replace(/\\/g, '/');
+          if (lower.includes('__macosx') || lower.split('/').pop().startsWith('.')) continue;
+          if (lower.endsWith('.tex')) {
+            texCandidates.push(p);
           }
         }
 
-        if (mainTexPath) {
+        if (texCandidates.length > 0) {
+          // Xếp hạng ứng viên file TeX gốc
+          let bestCandidate = null;
+          let bestScore = -1;
+
+          for (const cand of texCandidates) {
+            const lower = cand.toLowerCase().replace(/\\/g, '/');
+            const baseName = lower.split('/').pop();
+            let score = 0;
+            if (isStyleOrMacro(cand)) score -= 1000;
+
+            if (baseName === 'main.tex') score += 100;
+            else if (baseName === 'root.tex' || baseName === 'book.tex' || baseName === 'document.tex' || baseName === 'index.tex') score += 60;
+            if (!cand.replace(/\\/g, '/').includes('/')) score += 15; // ưu tiên file ở thư mục gốc zip
+
+            const snippet = await zip.files[cand].async('string');
+            if (snippet.includes('\\documentclass') && !snippet.includes('documentclass[main.tex]{subfiles}')) score += 50;
+            if (snippet.includes('\\begin{document}')) score += 30;
+            if (/\\(?:input|include|subfile)\s*\{/.test(snippet)) score += 20;
+
+            if (score > bestScore) {
+              bestScore = score;
+              bestCandidate = cand;
+            }
+          }
+
+          mainTexPath = bestCandidate || texCandidates[0];
           texContent = await zip.files[mainTexPath].async('string');
           
-          // Helper để đệ quy nạp các file được \input{} hoặc \include{}
-          const resolveLatexImports = async (content) => {
-            // Xóa comment trước khi tìm \input để không load các file bị % comment out
-            content = content.replace(/(^|[^\\])%.*$/gm, '$1');
+          // 2. Trích xuất toàn bộ ảnh từ ZIP thành Base64 Data URLs
+          const imageMap = new Map();
+          for (const [p, entry] of Object.entries(zip.files)) {
+            if (entry.dir) continue;
+            const lowerPath = p.toLowerCase().replace(/\\/g, '/');
+            if (lowerPath.includes('__macosx') || lowerPath.split('/').pop().startsWith('.')) continue;
 
-            const regex = /\\(?:input|include)\{([^}]+)\}/g;
+            let mime = null;
+            if (lowerPath.endsWith('.png')) mime = 'image/png';
+            else if (lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg')) mime = 'image/jpeg';
+            else if (lowerPath.endsWith('.svg')) mime = 'image/svg+xml';
+            else if (lowerPath.endsWith('.webp')) mime = 'image/webp';
+            else if (lowerPath.endsWith('.gif')) mime = 'image/gif';
+
+            if (mime) {
+              const base64 = await entry.async('base64');
+              const dataUrl = `data:${mime};base64,${base64}`;
+
+              const norm = normalizePath(lowerPath);
+              imageMap.set(norm, dataUrl);
+              imageMap.set(lowerPath, dataUrl);
+              imageMap.set(lowerPath.replace(/^\.?\//, ''), dataUrl);
+
+              const fileName = lowerPath.split('/').pop();
+              if (fileName) {
+                if (!imageMap.has(fileName)) imageMap.set(fileName, dataUrl);
+                const dotIdx = fileName.lastIndexOf('.');
+                if (dotIdx !== -1) {
+                  const noExt = fileName.substring(0, dotIdx);
+                  if (!imageMap.has(noExt)) imageMap.set(noExt, dataUrl);
+                }
+              }
+            }
+          }
+
+          const resolveImageDataUrl = (rawImgPath, currentDir = '') => {
+            if (!rawImgPath) return null;
+            const p = rawImgPath.trim();
+            if (p.startsWith('data:') || p.startsWith('http://') || p.startsWith('https://')) {
+              return p;
+            }
+            const lower = p.toLowerCase().replace(/\\/g, '/');
+            const cleanNoLeading = lower.replace(/^\.?\//, '');
+            const relativeWithDir = currentDir ? normalizePath(`${currentDir}/${cleanNoLeading}`) : cleanNoLeading;
+
+            const extensions = ['', '.png', '.jpg', '.jpeg', '.svg', '.webp', '.gif'];
+            
+            // 1. Thử relative với thư mục của subfile hiện tại
+            for (const ext of extensions) {
+              const candidate = relativeWithDir + ext;
+              if (imageMap.has(candidate)) return imageMap.get(candidate);
+            }
+
+            // 2. Thử đường dẫn trực tiếp
+            for (const ext of extensions) {
+              if (imageMap.has(lower + ext)) return imageMap.get(lower + ext);
+              if (imageMap.has(cleanNoLeading + ext)) return imageMap.get(cleanNoLeading + ext);
+            }
+
+            // 3. Khớp tiền tố hoặc hậu tố đường dẫn
+            for (const [key, url] of imageMap.entries()) {
+              if (key.endsWith('/' + cleanNoLeading) || cleanNoLeading.endsWith('/' + key)) {
+                return url;
+              }
+            }
+
+            // 4. Khớp theo tên file (basename)
+            const baseName = lower.split('/').pop().replace(/\.[a-z0-9]+$/i, '');
+            const baseWithExt = lower.split('/').pop();
+            if (imageMap.has(baseWithExt)) return imageMap.get(baseWithExt);
+            if (imageMap.has(baseName)) return imageMap.get(baseName);
+            for (const ext of extensions) {
+              if (ext && imageMap.has(baseName + ext)) return imageMap.get(baseName + ext);
+            }
+
+            return null;
+          };
+
+          // 3. Helper đệ quy nạp các file \input{}, \include{}, \subfile{}
+          const resolveLatexImports = async (content, currentDir = '', visited = new Set()) => {
+            content = stripLatexComments(content);
+
+            const regex = /\\(?:input|include|subfile)\s*\{([^}]+)\}/g;
             let result = content;
             let matches = [];
             let match;
             while ((match = regex.exec(content)) !== null) {
               matches.push(match);
             }
-            
+
             for (const m of matches) {
               const fullMatch = m[0];
-              let filePath = m[1];
-              if (!filePath.endsWith('.tex')) filePath += '.tex';
-              
-              // Tìm file trong zip (chấp nhận sai khác về đường dẫn tương đối)
-              let zipEntry = zip.file(filePath);
-              if (!zipEntry) {
-                 const lowerFilePath = filePath.toLowerCase().replace(/\\/g, '/');
-                 for (const [p, entry] of Object.entries(zip.files)) {
-                    if (!entry.dir && p.toLowerCase().endsWith(lowerFilePath)) {
-                       zipEntry = entry; break;
-                    }
-                 }
+              let rawPath = m[1].trim().replace(/^["']|["']$/g, '');
+
+              if (isStyleOrMacro(rawPath)) {
+                result = result.replaceAll(fullMatch, () => '');
+                continue;
               }
-              
+
+              let filePath = rawPath.replace(/\\/g, '/');
+              if (!filePath.endsWith('.tex') && !filePath.includes('.')) {
+                filePath += '.tex';
+              }
+
+              let zipEntry = null;
+              let candidatePath = currentDir ? normalizePath(`${currentDir}/${filePath}`) : filePath;
+              candidatePath = candidatePath.replace(/\\/g, '/');
+              zipEntry = zip.file(candidatePath);
+
+              if (!zipEntry) {
+                zipEntry = zip.file(filePath);
+              }
+
+              if (!zipEntry) {
+                const lowerCandidate = candidatePath.toLowerCase().replace(/^\.?\//, '');
+                const lowerFilePath = filePath.toLowerCase().replace(/\\/g, '/').replace(/^\.?\//, '');
+                for (const [entryPath, entry] of Object.entries(zip.files)) {
+                  if (entry.dir) continue;
+                  const normP = entryPath.toLowerCase().replace(/\\/g, '/').replace(/^\.?\//, '');
+                  if (normP === lowerCandidate || normP.endsWith('/' + lowerCandidate) || normP === lowerFilePath) {
+                    zipEntry = entry;
+                    break;
+                  }
+                }
+              }
+
+              if (!zipEntry) {
+                // Chỉ tìm kiếm fallback theo baseName nếu filePath KHÔNG chứa thư mục (tránh C1/LT.tex khớp nhầm C2/LT.tex)
+                if (!filePath.includes('/') && !filePath.includes('\\')) {
+                  const baseName = filePath.toLowerCase();
+                  for (const [entryPath, entry] of Object.entries(zip.files)) {
+                    if (entry.dir) continue;
+                    const pBase = entryPath.split(/[/\\]/).pop().toLowerCase();
+                    if (pBase === baseName) {
+                      zipEntry = entry;
+                      break;
+                    }
+                  }
+                }
+              }
+
               if (zipEntry) {
-                const subContent = await zipEntry.async('string');
-                const resolvedSub = await resolveLatexImports(subContent);
-                result = result.replace(fullMatch, resolvedSub);
+                if (visited.has(zipEntry.name)) {
+                  result = result.replaceAll(fullMatch, () => `% [Bỏ qua import vòng lặp: ${zipEntry.name}]\n`);
+                  continue;
+                }
+                const nextVisited = new Set(visited);
+                nextVisited.add(zipEntry.name);
+
+                const normEntryName = zipEntry.name.replace(/\\/g, '/');
+                const subDir = normEntryName.includes('/') 
+                  ? normEntryName.substring(0, normEntryName.lastIndexOf('/')) 
+                  : '';
+
+                let subContent = await zipEntry.async('string');
+                subContent = stripLatexComments(subContent);
+
+                // Bóc tách preamble: tìm từ \begin{document} đầu tiên đến \end{document} cuối cùng
+                const docStartMatch = subContent.match(/\\begin\s*\{document\}/);
+                const docEndMatch = [...subContent.matchAll(/\\end\s*\{document\}/g)].pop();
+                if (docStartMatch && docEndMatch && docEndMatch.index > docStartMatch.index) {
+                  subContent = subContent.substring(docStartMatch.index + docStartMatch[0].length, docEndMatch.index);
+                } else if (docStartMatch) {
+                  subContent = subContent.substring(docStartMatch.index + docStartMatch[0].length);
+                } else {
+                  subContent = subContent.replace(/\\documentclass(?:\[[\s\S]*?\])?\{[\s\S]*?\}/g, '');
+                  subContent = subContent.replace(/\\usepackage(?:\[[\s\S]*?\])?\{[\s\S]*?\}/g, '');
+                }
+                subContent = subContent.replace(/\\begin\s*\{document\}/g, '');
+                subContent = subContent.replace(/\\end\s*\{document\}/g, '');
+
+                // Chuyển đổi \includegraphics ngay trong ngữ cảnh subDir của subfile
+                subContent = subContent.replace(/\\includegraphics\s*(?:\[([\s\S]*?)\])?\s*\{([^}]+)\}/g, (imgMatch, opt, imgPath) => {
+                  const dataUrl = resolveImageDataUrl(imgPath, subDir);
+                  if (dataUrl) {
+                    return opt ? `\\includegraphics[${opt}]{${dataUrl}}` : `\\includegraphics{${dataUrl}}`;
+                  }
+                  return imgMatch;
+                });
+
+                const resolvedSub = await resolveLatexImports(subContent, subDir, nextVisited);
+
+                // Dùng replacer callback () => resolvedSub để $ trong công thức toán không bị mangled
+                result = result.replaceAll(fullMatch, () => (resolvedSub !== undefined ? resolvedSub : ''));
               } else {
-                result = result.replace(fullMatch, `% [CẢNH BÁO: Không tìm thấy file ${filePath} trong ZIP]\n`);
+                result = result.replaceAll(fullMatch, () => `% [CẢNH BÁO: Không tìm thấy file ${filePath} trong ZIP]\n`);
               }
             }
             return result;
           };
-          
-          texContent = await resolveLatexImports(texContent);
-          
+
+          const normMainTex = mainTexPath.replace(/\\/g, '/');
+          const mainDir = normMainTex.includes('/') 
+            ? normMainTex.substring(0, normMainTex.lastIndexOf('/')) 
+            : '';
+
+          texContent = await resolveLatexImports(texContent, mainDir);
+
+          // Ánh xạ các \includegraphics còn lại ở file root
+          texContent = texContent.replace(/\\includegraphics\s*(?:\[([\s\S]*?)\])?\s*\{([^}]+)\}/g, (match, opt, imgPath) => {
+            const dataUrl = resolveImageDataUrl(imgPath, mainDir);
+            if (dataUrl) {
+              return opt ? `\\includegraphics[${opt}]{${dataUrl}}` : `\\includegraphics{${dataUrl}}`;
+            }
+            return match;
+          });
+
           setMarkdown(texContent);
-          alert(`Đã giải nén, gộp file tự động và nạp: ${mainTexPath}`);
+          alert(`Đã giải nén, gộp file tự động và nạp: ${mainTexPath} (${imageMap.size} ảnh đã được nhúng)`);
         } else {
           alert('Không tìm thấy file .tex nào trong thư mục ZIP!');
         }

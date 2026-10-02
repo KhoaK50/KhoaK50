@@ -178,10 +178,42 @@ body.dark-theme .lib-side{background:var(--s2)}
 /*    MAIN CONTENT    */
 .lib-main{flex:1;display:flex;flex-direction:column;overflow-y:auto;background:var(--s1)}
 
-/* Breadcrumbs */
-.bc{display:flex;align-items:center;gap:8px;font:500 .84rem/1.4 var(--font);color:var(--s9);margin-bottom:22px; flex-wrap:wrap;}
-.bc a{color:var(--s11);text-decoration:none;cursor:pointer}.bc a:hover{color:var(--s12);text-decoration:underline}
-.bc i{font-size:.6rem;color:var(--s6)}.bc .bc-cur{color:var(--s12);font-weight:600}
+/* Breadcrumbs - Chuan Modern UI dong bo he thong */
+.bc {
+  display: flex;
+  align-items: center;
+  gap: 6px 8px;
+  font: 500 0.82rem/1.5 var(--font-modern-ui);
+  color: var(--s9);
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  letter-spacing: -0.01em;
+}
+.bc a {
+  color: var(--s11);
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s ease;
+  border-radius: 4px;
+}
+.bc a:hover {
+  color: var(--b9);
+  text-decoration: none;
+}
+.bc i.bc-sep {
+  font-size: 0.72rem;
+  color: var(--s7);
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+}
+.bc .bc-cur {
+  color: var(--s12);
+  font-weight: 600;
+}
 
 /* Views */
 .view{display:none;animation:fadeUp .25s ease;flex-direction:column;flex:1}
@@ -561,11 +593,12 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
     <div id="side-topics-list"></div>
   </div>
   <div class="lib-main" id="lib-main" style="flex:1; overflow-y:auto; position:relative;">
-    <div id="drill-down-root" style="padding: 30px 40px; max-width: 1240px; margin: 0 auto; width: 100%;">
+    <div id="drill-down-root" style="padding: 30px 40px; max-width: 1240px; margin: 0 auto; width: 100%; box-sizing: border-box;">
       <div id="dd-breadcrumb" class="bc" style="padding-top: 8px;"></div>
       <div id="dd-content"></div>
     </div>
-        <div id="dd-graph-view" style="display:none; width:100%; height:100%; flex-direction:column; padding: 24px 32px; max-width: 1400px; margin: 0 auto;">
+    <div id="dd-graph-view" style="display:none; width:100%; flex-direction:column; padding: 30px 40px; max-width: 1240px; margin: 0 auto; box-sizing: border-box;">
+      <div id="graph-bc" class="bc" style="padding-top: 8px;"></div>
       <style>
         .lg-item { transition: all 0.2s; }
         .lg-item.hl { background: rgba(59,130,246,0.1) !important; border-color: #3b82f6 !important; }
@@ -582,13 +615,10 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
           overflow: visible; /* Prevent clipping dropdowns */
         }
         svg text { font-family: var(--font-academic) !important; }
-</style>
+      </style>
 
       <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; border-bottom: 1px solid var(--s3); padding-bottom: 16px;">
-        <div>
-          <div id="graph-bc" class="bc" style="margin-bottom: 8px;"></div>
-          <h1 class="view-title" style="font-size:1.8rem; font-weight:800; color:var(--s12); margin:0; font-family:var(--font-academic);" data-i18n="knowledge.title">Không gian Tri thức</h1>
-        </div>
+        <h1 class="view-title" style="font-size:1.8rem; font-weight:800; color:var(--s12); margin:0; font-family:var(--font-academic);" data-i18n="knowledge.title">Không gian Tri thức</h1>
         <button onclick="var el = document.getElementById('pf-container'); el.classList.toggle('open');" class="btn pf-header-btn" style="padding: 10px 16px; border-radius: 8px; border: 1px solid var(--s4); background: var(--s2); font-weight: 600; cursor: pointer; color: var(--s11); transition: 0.2s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'" data-i18n="knowledge.tool_pathfinding"><i class="ph ph-map-trifold"></i> Công cụ Tìm lộ trình</button>
       </div>
 
@@ -651,10 +681,54 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
   var s = document.createElement('style');
   s.textContent = '.lib-side { display:none !important; } #floatingHamburger { display:none !important; } #mob-toggle { display:none !important; } @media(max-width:768px){ #drill-down-root { padding:16px !important; } }';
   document.head.appendChild(s);
+
+  window.App = window.App || {};
+  var _localApi = 'http://127.0.0.1:5000';
+  var _prodApi = 'https://visualization-rr5v.onrender.com';
+  window.App.LOCAL_API = _localApi;
+  window.App.PROD_API = _prodApi;
+  window.App.API_BASE = (location.hostname === '127.0.0.1' || location.hostname === 'localhost') ? _localApi : _prodApi;
+
+  // Smart fetch: Tu dong fallback sang Render khi backend local khong chay, va tu dong don dep phien khi gap loi 401
+  window.App.fetchApi = function(endpoint, options) {
+    options = options || {};
+    var primary = (window.App && window.App.API_BASE) || _localApi;
+    var fallback = (window.App && window.App.PROD_API) || _prodApi;
+    
+    var apiPath = endpoint;
+    if (apiPath.startsWith(primary)) {
+      apiPath = apiPath.substring(primary.length);
+    } else if (apiPath.startsWith(_localApi)) {
+      apiPath = apiPath.substring(_localApi.length);
+    } else if (apiPath.startsWith(_prodApi)) {
+      apiPath = apiPath.substring(_prodApi.length);
+    }
+    var url = apiPath.startsWith('http') ? apiPath : (primary + apiPath);
+
+    return fetch(url, options)
+      .then(function(res) {
+        if (res.status === 401) {
+          if (window.AuthGuard && window.AuthGuard.clearSession) window.AuthGuard.clearSession();
+          if (window.TopbarAvatar && window.TopbarAvatar.updateUI) window.TopbarAvatar.updateUI();
+        }
+        return res;
+      })
+      .catch(function(err) {
+        if (!apiPath.startsWith('http') && primary !== fallback) {
+          return fetch(fallback + apiPath, options).then(function(res) {
+            if (res.status === 401) {
+              if (window.AuthGuard && window.AuthGuard.clearSession) window.AuthGuard.clearSession();
+              if (window.TopbarAvatar && window.TopbarAvatar.updateUI) window.TopbarAvatar.updateUI();
+            }
+            return res;
+          });
+        }
+        throw err;
+      });
+  };
 })();
+
 function tr(key, def) {
-window.App = window.App || {};
-window.App.API_BASE = "http://127.0.0.1:5000";
   var keys = key.split('.');
   var val = (typeof i18nConfig !== 'undefined' && i18nConfig.translations) ? i18nConfig.translations[i18nConfig.currentLocale] : null;
   for (var i=0; i<keys.length; i++) {
@@ -812,12 +886,25 @@ function refreshComboboxes() {
   cbAvoid.value = valA; cbAvoid.updateTriggerText();
 }
 
+function formatBreadcrumbTitle(rawStr) {
+  if (!rawStr) return '';
+  var trimmed = rawStr.trim();
+  // Neu chuoi la chu in hoa toan bo (vi du: "KIEN THUC CHUAN BI")
+  var lettersOnly = trimmed.replace(/[^a-zA-ZÀ-ỹ]/g, '');
+  if (lettersOnly.length > 3 && lettersOnly === lettersOnly.toUpperCase()) {
+    // Chuyen sang dang Viet hoa chu cai dau moi tu
+    return trimmed.toLowerCase().replace(/(?:^|\s|\/|-)\S/g, function(char) {
+      return char.toUpperCase();
+    });
+  }
+  return trimmed;
+}
+
 var AppState = { path: [{ type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') }] };
 
 function renderBreadcrumb() {
-  var bc = document.getElementById('dd-breadcrumb');
-  if (!bc) return;
-  bc.innerHTML = '';
+  var bcs = [document.getElementById('dd-breadcrumb'), document.getElementById('graph-bc')].filter(Boolean);
+  if (bcs.length === 0) return;
   
   // Deduplicate consecutive nodes with identical type and id
   var cleanPath = [];
@@ -829,40 +916,75 @@ function renderBreadcrumb() {
   }
   AppState.path = cleanPath;
 
-  for (var i = 0; i < AppState.path.length; i++) {
-    var node = AppState.path[i];
-    var isLast = (i === AppState.path.length - 1);
-    var span = document.createElement('span');
-    if (node.id === 'root') {
-      span.setAttribute('data-i18n', 'knowledge.breadcrumb');
-      span.textContent = tr('knowledge.breadcrumb', node.title);
-    } else if (node.type === 'quiz' || node.type === 'quiz-room') {
-      span.textContent = node.title || 'Bài tập';
-    } else if (node.type === 'learning-path') {
-      span.textContent = tr('knowledge.learning_path', 'Lộ trình học tập');
-    } else {
-      span.textContent = tr('library_terms.' + node.id, node.title);
+  bcs.forEach(function(bc) {
+    bc.innerHTML = '';
+    
+    // 1. Tang Thu vien (Root) - Luon la diem bat dau cua breadcrumb
+    var isRootOnly = (cleanPath.length <= 1);
+    if (isRootOnly) {
+      var rootSpan = document.createElement('span');
+      rootSpan.className = 'bc-cur';
+      rootSpan.setAttribute('data-i18n', 'knowledge.library');
+      rootSpan.textContent = tr('knowledge.library', 'Thư viện');
+      bc.appendChild(rootSpan);
+      return;
     }
-    if (isLast) {
-      span.className = 'bc-cur';
-    } else {
-      span.className = 'bc-link';
-      span.style.cursor = 'pointer';
-      (function(idx) {
-        span.onclick = function() { navigateBackTo(idx); };
-      })(i);
-      var a = document.createElement('a');
-      a.appendChild(span);
-      bc.appendChild(a);
-      var chevron = document.createElement('i');
-      chevron.className = 'ph ph-caret-right';
-      chevron.style.fontSize = '0.6rem';
-      chevron.style.color = 'var(--s6)';
-      bc.appendChild(chevron);
-      continue;
+
+    var rootLink = document.createElement('a');
+    rootLink.className = 'bc-link';
+    rootLink.style.cursor = 'pointer';
+    rootLink.onclick = function() { navigateBackTo(0); };
+    var rootLinkText = document.createElement('span');
+    rootLinkText.setAttribute('data-i18n', 'knowledge.library');
+    rootLinkText.textContent = tr('knowledge.library', 'Thư viện');
+    rootLink.appendChild(rootLinkText);
+    bc.appendChild(rootLink);
+
+    var sepRoot = document.createElement('i');
+    sepRoot.className = 'ph ph-caret-right bc-sep';
+    bc.appendChild(sepRoot);
+
+    // 2. Cac tang tiep theo - tien vao muc nao thi moi hien thi len muc do
+    for (var i = 1; i < cleanPath.length; i++) {
+      var node = cleanPath[i];
+      var isLast = (i === cleanPath.length - 1);
+      
+      var rawTitle = '';
+      if (node.type === 'quiz' || node.type === 'quiz-room') {
+        rawTitle = node.title || 'Bài tập';
+      } else if (node.type === 'learning-path') {
+        rawTitle = tr('knowledge.learning_path', 'Lộ trình học tập');
+      } else if (node.type === 'graph') {
+        rawTitle = tr('knowledge.title', 'Không gian Tri thức');
+      } else {
+        rawTitle = tr('library_terms.' + node.id, node.title || '');
+      }
+
+      var displayTitle = formatBreadcrumbTitle(rawTitle);
+
+      if (isLast) {
+        var curSpan = document.createElement('span');
+        curSpan.className = 'bc-cur';
+        curSpan.textContent = displayTitle;
+        bc.appendChild(curSpan);
+      } else {
+        var a = document.createElement('a');
+        a.className = 'bc-link';
+        a.style.cursor = 'pointer';
+        (function(idx) {
+          a.onclick = function() { navigateBackTo(idx); };
+        })(i);
+        var span = document.createElement('span');
+        span.textContent = displayTitle;
+        a.appendChild(span);
+        bc.appendChild(a);
+
+        var chevron = document.createElement('i');
+        chevron.className = 'ph ph-caret-right bc-sep';
+        bc.appendChild(chevron);
+      }
     }
-    bc.appendChild(span);
-  }
+  });
 }
 
 function updateUrl(node) {
@@ -907,12 +1029,8 @@ function navigateTo(type, id, title, data) {
       { type:type, id:id, title:title, data:data }
     ];
   } else if (type === 'quiz') {
-    var fromLp = (data && data.from === 'learning-path') || 
-                 AppState.path.some(function(p) { return p.type === 'learning-path'; }) || 
-                 Boolean(window._autoPracticePathId) || 
-                 Boolean(window._autoFinalExamPathId) || 
-                 Boolean(sessionStorage.getItem('auto_practice_path_id'));
-    var lpId = (data && data.path_id) || window._autoPracticePathId || window._autoFinalExamPathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id');
+    var fromLp = Boolean(data && data.from === 'learning-path');
+    var lpId = (data && data.path_id) || window._autoPracticePathId || window._autoFinalExamPathId;
 
     if (fromLp && lpId) {
       AppState.path = [
@@ -921,9 +1039,20 @@ function navigateTo(type, id, title, data) {
         { type:'quiz', id:'quiz', title:title, data:data }
       ];
     } else {
+      // Kho bài tập tự tạo độc lập: Xóa bỏ triệt để các biến session / in-memory cũ của Lộ trình học tập
+      window._autoPracticeLessonId = null;
+      window._activePracticeLessonId = null;
+      window._autoPracticePathId = null;
+      window._autoPracticeNodeIdx = null;
+      window._autoFinalExam = null;
+      window._autoFinalExamPathId = null;
+      sessionStorage.removeItem('auto_practice_lesson_id');
+      sessionStorage.removeItem('auto_practice_path_id');
+      sessionStorage.removeItem('auto_practice_node_idx');
+
       AppState.path = [
         { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') },
-        { type:'quiz', id:'quiz', title:title, data:data }
+        { type:'quiz', id:'quiz', title:title || ('Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập'), data:data }
       ];
     }
   } else if (type === 'quiz-room') {
@@ -1004,6 +1133,7 @@ function renderCurrentView() {
     if (cur.type === 'root') sideItems[0].classList.add('active');
     else if (cur.type === 'graph') sideItems[1].classList.add('active');
     else if (cur.type === 'learning-path') sideItems[2].classList.add('active');
+    else if (cur.type === 'quiz' && sideItems[3]) sideItems[3].classList.add('active');
   }
 
   if (cur.type === 'root') renderRoot(cnt);
@@ -1203,7 +1333,11 @@ function renderLearningPathWorkspace(c) {
   var headers = {};
   if (token) headers['Authorization'] = 'Bearer ' + token;
 
-  fetch(API + '/api/path/list' + (userId ? '?user_id=' + encodeURIComponent(userId) : ''), { headers: headers })
+  var fetchPathsPromise = window.App?.fetchApi
+    ? window.App.fetchApi('/api/path/list' + (userId ? '?user_id=' + encodeURIComponent(userId) : ''), { headers: headers })
+    : fetch(API + '/api/path/list' + (userId ? '?user_id=' + encodeURIComponent(userId) : ''), { headers: headers });
+
+  fetchPathsPromise
     .then(function(res) { return res.json(); })
     .then(function(data) {
       var paths = (data && data.paths) || [];
@@ -1267,7 +1401,11 @@ window.showPathCatalogInWorkspace = function() {
 
   workspaceContainer.innerHTML = '<div style="padding: 32px 0; color: var(--s9); font-size: 14px; display:flex; align-items:center; gap:10px;"><i class="ph ph-spinner ph-spin" style="font-size:20px;"></i> Đang tải...</div>';
 
-  fetch(API + '/api/path/list' + (userId ? '?user_id=' + encodeURIComponent(userId) : ''), { headers: headers })
+  var fetchCatalogPromise = window.App?.fetchApi
+    ? window.App.fetchApi('/api/path/list' + (userId ? '?user_id=' + encodeURIComponent(userId) : ''), { headers: headers })
+    : fetch(API + '/api/path/list' + (userId ? '?user_id=' + encodeURIComponent(userId) : ''), { headers: headers });
+
+  fetchCatalogPromise
     .then(function(res) { return res.json(); })
     .then(function(data) {
       var paths = (data && data.paths) || [];
@@ -1582,7 +1720,11 @@ function renderLesson(c, lesson) {
   // Check if already bookmarked
   var _bmToken = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
   if (_bmToken) {
-    fetch(App.API_BASE + '/api/bookmarks', { headers: { 'Authorization': 'Bearer ' + _bmToken } })
+    var fetchBmPromise = window.App?.fetchApi 
+      ? window.App.fetchApi('/api/bookmarks', { headers: { 'Authorization': 'Bearer ' + _bmToken } })
+      : fetch(App.API_BASE + '/api/bookmarks', { headers: { 'Authorization': 'Bearer ' + _bmToken } });
+
+    fetchBmPromise
       .then(function(r){ return r.json(); })
       .then(function(d){
         if (d.success && d.bookmarks) {
@@ -1636,11 +1778,19 @@ function renderLesson(c, lesson) {
       self.dataset.saved = '0';
     }
 
-    fetch(App.API_BASE + '/api/bookmarks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ lesson_id: currentTopicId + '-' + lesson.num, action: action, note: note })
-    })
+    var saveBmPromise = window.App?.fetchApi
+      ? window.App.fetchApi('/api/bookmarks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ lesson_id: currentTopicId + '-' + lesson.num, action: action, note: note })
+        })
+      : fetch(App.API_BASE + '/api/bookmarks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ lesson_id: currentTopicId + '-' + lesson.num, action: action, note: note })
+        });
+
+    saveBmPromise
     .then(function(r){ return r.json(); })
     .then(function(d){
       self.style.pointerEvents = 'auto';
@@ -1674,155 +1824,1243 @@ function renderLesson(c, lesson) {
   body.style.cssText = "font-family:var(--font-academic); font-size:1.15rem; line-height:1.8; color:var(--s12); margin-bottom:50px; min-height:40vh; text-align:left; max-width:1100px; margin-left:auto; margin-right:auto; padding: 0 16px;";
 
   var content = lesson.contentHTML || '';
-  content = content.replace(/<h2>.*?<\/h2>/, '<h2>' + tr('library_terms.' + lesson.id, lesson.title) + '</h2>');
+  if (lesson.title) {
+    content = content.replace(/<h2>.*?<\/h2>/, '<h2>' + tr('library_terms.' + lesson.id, lesson.title) + '</h2>');
+  }
   content = content.replace('Nội dung chi tiết sẽ được bổ sung từ Backend.', tr('knowledge.backend_placeholder', 'Đang tải dữ liệu từ server...'));
   // Hàm parse LaTeX thô thành HTML + KaTeX
   function parseLatexToHTML(texString) {
-    if (!texString || typeof texString !== 'string') return '';
+    if (!texString || typeof texString !== 'string' || !texString.trim()) return '';
     
     // Fallback: nếu dữ liệu cũ là JSON của BlockNote
-    if (texString.trim().startsWith('[') || texString.trim().startsWith('{')) {
-      return '<div style="padding: 20px; background: var(--s2); border: 1px solid var(--s3); border-radius: 8px; color: var(--orange);">Vui lòng ' + tr('knowledge.updated', 'Cập nhật') + ' lại ' + tr('knowledge.lessons_count', 'Số bài học') + ' này bằng mã LaTeX.</div>';
+    const trimmedTex = texString.trim();
+    if (trimmedTex.startsWith('[') || trimmedTex.startsWith('{"type"')) {
+      try {
+        const parsedJson = JSON.parse(trimmedTex);
+        if (Array.isArray(parsedJson) && parsedJson.length > 0 && parsedJson[0].type) {
+          return '<div style="padding: 20px; background: var(--s2); border: 1px solid var(--s3); border-radius: 2px; color: var(--amber);">Vui lòng ' + tr('knowledge.updated', 'Cập nhật') + ' lại ' + tr('knowledge.lessons_count', 'Số bài học') + ' này bằng mã LaTeX.</div>';
+        }
+      } catch (e) {
+        // Không phải JSON hợp lệ -> Tiếp tục xử lý như LaTeX
+      }
     }
 
     let html = texString;
 
-    // 1. Dọn dẹp comment (loại bỏ các dòng bắt đầu bằng % hoặc phần sau dấu %)
-    // Nhưng bỏ qua \% (ký tự % thực sự trong toán học)
-    html = html.replace(/(^|[^\\])%.*$/gm, '$1');
+    // Helper: Trích xuất nội dung trong cặp ngoặc nhọn cân bằng {...}
+    function extractBalancedBraces(str, openBraceIndex) {
+      if (str[openBraceIndex] !== '{') return null;
+      let depth = 0;
+      for (let i = openBraceIndex; i < str.length; i++) {
+        if (str[i] === '\\') {
+          let backslashCount = 0;
+          while (i < str.length && str[i] === '\\') {
+            backslashCount++;
+            i++;
+          }
+          if (backslashCount % 2 !== 0) {
+            continue; // Số lẻ backslash thì ký tự tiếp theo bị escape
+          }
+          if (i >= str.length) break;
+        }
+        if (str[i] === '{') depth++;
+        else if (str[i] === '}') {
+          depth--;
+          if (depth === 0) return { content: str.substring(openBraceIndex + 1, i), endIndex: i };
+        }
+      }
+      return null;
+    }
 
-    // 2. Trích xuất phần thân trong \begin{document} ... \end{document}
-    const bodyMatch = html.match(/\\begin\{document\}([\s\S]*?)\\end\{document\}/);
-    if (bodyMatch) {
-      html = bodyMatch[1];
+    // Helper: Trích xuất nội dung trong cặp ngoặc vuông cân bằng [...]
+    function extractBalancedBrackets(str, openBracketIndex) {
+      if (str[openBracketIndex] !== '[') return null;
+      let depth = 0;
+      for (let i = openBracketIndex; i < str.length; i++) {
+        if (str[i] === '\\') {
+          let backslashCount = 0;
+          while (i < str.length && str[i] === '\\') {
+            backslashCount++;
+            i++;
+          }
+          if (backslashCount % 2 !== 0) {
+            continue;
+          }
+          if (i >= str.length) break;
+        }
+        if (str[i] === '[') depth++;
+        else if (str[i] === ']') {
+          depth--;
+          if (depth === 0) return { content: str.substring(openBracketIndex + 1, i), endIndex: i };
+        }
+      }
+      return null;
+    }
+
+    // Helper: Thay thế lệnh 1 tham số có ngoặc cân bằng (như \section{...}, \textbf{...}, \caption{...})
+    // Hỗ trợ cả tùy chọn [opt] đứng trước {arg} như \section[opt]{title}
+    function replaceCommandWithBraces(text, commandName, replaceFn) {
+      let result = '';
+      let lastIndex = 0;
+      const regex = new RegExp('\\\\' + commandName + '\\*?(?:\\s*\\[[^\\]]*\\])?\\s*\\{', 'g');
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        const braceIndex = text.indexOf('{', match.index);
+        const extracted = extractBalancedBraces(text, braceIndex);
+        if (!extracted) continue;
+        result += text.substring(lastIndex, match.index);
+        const rep = replaceFn(extracted.content);
+        result += (rep !== undefined ? rep : '');
+        lastIndex = extracted.endIndex + 1;
+        regex.lastIndex = lastIndex;
+      }
+      result += text.substring(lastIndex);
+      return result;
+    }
+
+    // Helper: Thay thế lệnh 2 tham số có ngoặc cân bằng (\textcolor{color}{text}, \href{url}{text})
+    function replaceTwoArgCommandWithBraces(text, commandName, replaceFn) {
+      let result = '';
+      let lastIndex = 0;
+      const regex = new RegExp('\\\\' + commandName + '\\*?\\s*\\{', 'g');
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        const braceIndex1 = text.indexOf('{', match.index);
+        const arg1 = extractBalancedBraces(text, braceIndex1);
+        if (!arg1) continue;
+        const afterArg1 = text.substring(arg1.endIndex + 1);
+        const match2 = /^\s*\{/.exec(afterArg1);
+        if (!match2) continue;
+        const braceIndex2 = arg1.endIndex + 1 + match2.index + match2[0].indexOf('{');
+        const arg2 = extractBalancedBraces(text, braceIndex2);
+        if (!arg2) continue;
+
+        result += text.substring(lastIndex, match.index);
+        const rep = replaceFn(arg1.content, arg2.content);
+        result += (rep !== undefined ? rep : '');
+        lastIndex = arg2.endIndex + 1;
+        regex.lastIndex = lastIndex;
+      }
+      result += text.substring(lastIndex);
+      return result;
+    }
+
+    // Helper: Xóa comment LaTeX an toàn (bảo toàn % trong URL và \% trong toán học)
+    function stripLatexComments(text) {
+      return text.split('\n').map(function(line) {
+        let inUrl = false;
+        let urlDepth = 0;
+        for (let i = 0; i < line.length; i++) {
+          if (line.substr(i, 5) === '\\url{' || line.substr(i, 6) === '\\href{') {
+            inUrl = true;
+            urlDepth = 1;
+            i += line.substr(i, 5) === '\\url{' ? 4 : 5;
+            continue;
+          }
+          if (inUrl) {
+            if (line[i] === '{') urlDepth++;
+            else if (line[i] === '}') {
+              urlDepth--;
+              if (urlDepth <= 0) inUrl = false;
+            }
+            continue;
+          }
+          if (line[i] === '%') {
+            let backslashes = 0;
+            let j = i - 1;
+            while (j >= 0 && line[j] === '\\') {
+              backslashes++;
+              j--;
+            }
+            if (backslashes % 2 === 0) {
+              return line.substring(0, i);
+            }
+          }
+        }
+        return line;
+      }).join('\n');
+    }
+
+    // 1. Dọn dẹp comment bảo toàn URL và ký hiệu \%
+    html = stripLatexComments(html);
+
+    // Bảo vệ \$ (escaped dollar) để không bị nhầm là mở đầu công thức toán
+    function protectEscapedDollars(str) {
+      let res = '';
+      for (let i = 0; i < str.length; i++) {
+        if (str[i] === '\\' && i + 1 < str.length && str[i + 1] === '$') {
+          let backslashes = 0;
+          let j = i;
+          while (j >= 0 && str[j] === '\\') {
+            backslashes++;
+            j--;
+          }
+          if (backslashes % 2 !== 0) {
+            res += '___KATEX_LITERAL_DOLLAR___';
+            i++; // Bỏ qua ký tự $ kế tiếp
+            continue;
+          }
+        }
+        res += str[i];
+      }
+      return res;
+    }
+    html = protectEscapedDollars(html);
+
+    // Trích xuất tiêu đề / tác giả / ngày tháng từ toàn bộ văn bản (kể cả preamble trước \begin{document})
+    let docTitle = '';
+    let docAuthor = '';
+    let docDate = '';
+    html = replaceCommandWithBraces(html, 'title', function(c) { docTitle = c.trim(); return ''; });
+    html = replaceCommandWithBraces(html, 'author', function(c) { docAuthor = c.trim(); return ''; });
+    html = replaceCommandWithBraces(html, 'date', function(c) { docDate = c.trim(); return ''; });
+
+    // 2. Trích xuất thân tài liệu từ \begin{document} đến \end{document}
+    const matchDocStart = html.match(/\\begin\s*\{document\}/);
+    const firstDocStart = matchDocStart ? matchDocStart.index + matchDocStart[0].length : -1;
+    const matchDocEnd = [...html.matchAll(/\\end\s*\{document\}/g)].pop();
+    const lastDocEnd = matchDocEnd ? matchDocEnd.index : -1;
+    if (firstDocStart !== -1 && lastDocEnd !== -1 && lastDocEnd > firstDocStart) {
+      html = html.substring(firstDocStart, lastDocEnd);
+    } else if (firstDocStart !== -1) {
+      html = html.substring(firstDocStart);
     } else {
-      // Nếu không có \begin{document}, lấy hết ngoại trừ preambles
       if (html.includes('\\documentclass')) {
-        let idx = html.search(/\\(section|chapter|textbf|textit|begin)/);
+        let idx = html.search(/\\(chapter|section|subsection|textbf|textit|title|author|begin\{[a-zA-Z*]+)/);
         if (idx !== -1) html = html.substring(idx);
       }
     }
+    html = html.replace(/\\begin\s*\{document\}/g, '').replace(/\\end\s*\{document\}/g, '');
 
-    // Chống XSS cơ bản (Escape các thẻ HTML có sẵn)
+    // 3. BẢO VỆ TOÁN HỌC: Trích xuất và thay thế toán học bằng Token bảo vệ
+    // Ngăn chặn xung đột giữa cú pháp toán học (<, >, &, \\, _, *) với HTML/DOM
+    const mathTokens = new Map();
+    let mathCounter = 0;
+
+    function storeMath(code, isDisplay) {
+      let cleanCode = code.replace(/\\label\{[^}]*\}/g, '');
+      cleanCode = cleanCode.replace(/\\label\b[0-9.]+/g, '');
+      const token = '___KATEX_MATH_' + (isDisplay ? 'DISP' : 'INLN') + '_' + (mathCounter++) + '___';
+      mathTokens.set(token, { code: cleanCode, isDisplay: isDisplay });
+      return token;
+    }
+
+    // Display math: $$...$$
+    html = html.replace(/\$\$([\s\S]+?)\$\$/g, function(m, code) { return storeMath(code, true); });
+    // Display math: \[...\] (dùng negative lookbehind để không nuốt nhầm dấu ngắt dòng \\[0.7cm])
+    html = html.replace(/(?<!\\)\\\[([\s\S]+?)(?<!\\)\\\]/g, function(m, code) { return storeMath(code, true); });
+
+    // Các môi trường toán học khối: equation, align, gather, multline, eqnarray, flalign, alignat, split
+    const mathEnvs = ['equation\\*?', 'align\\*?', 'gather\\*?', 'multline\\*?', 'aligned', 'eqnarray\\*?', 'flalign\\*?', 'alignat\\*?', 'split'];
+    mathEnvs.forEach(function(envPattern) {
+      const envRegex = new RegExp('\\\\begin\\{(' + envPattern + ')\\}([\\s\\S]*?)\\\\end\\{\\1\\}', 'g');
+      html = html.replace(envRegex, function(m, envName, code) {
+        if (envName.startsWith('align') || envName.startsWith('flalign') || envName.startsWith('alignat') || envName.startsWith('eqnarray') || envName.startsWith('split')) {
+          return storeMath('\\begin{aligned}' + code + '\\end{aligned}', true);
+        }
+        if (envName.startsWith('gather') || envName.startsWith('multline')) {
+          return storeMath('\\begin{gathered}' + code + '\\end{gathered}', true);
+        }
+        return storeMath(code, true);
+      });
+    });
+
+    // Inline math: \(...\) (dùng negative lookbehind bảo vệ)
+    html = html.replace(/(?<!\\)\\\(([\s\S]*?)(?<!\\)\\\)/g, function(m, code) { return storeMath(code, false); });
+    // Inline math: $...$ (hỗ trợ nhiều dòng trong cùng một đoạn văn, không cắt ngang đoạn rỗng)
+    html = html.replace(/\$((?:[^\$\n]|\n(?!\s*\n))+?)\$/g, function(m, code) { return storeMath(code, false); });
+
+    // Môi trường ma trận độc lập (chỉ bắt các ma trận đứng độc lập NGOÀI dấu $...$ nếu có)
+    const matrixEnvs = ['pmatrix', 'bmatrix', 'vmatrix', 'Vmatrix', 'matrix', 'cases'];
+    matrixEnvs.forEach(function(env) {
+      const matRegex = new RegExp('\\\\begin\\{(' + env + ')\\}([\\s\\S]*?)\\\\end\\{\\1\\}', 'g');
+      html = html.replace(matRegex, function(m) { return storeMath(m, true); });
+    });
+
+    // 4. Dọn dẹp macro nội bộ TeX, khai báo gói lệnh và cấu hình trang
+    html = html.replace(/\\let\s*\\[a-zA-Z@]+\s*(?:=\s*)?\\?undefined/g, '');
+    html = html.replace(/\\?undefined\b/g, '');
+    html = html.replace(/\\makeatletter/g, '');
+    html = html.replace(/\\makeatother/g, '');
+    html = html.replace(/\\@ifundefined\{[^}]*\}\{[^}]*\}\{[^}]*\}/g, '');
+    html = html.replace(/\\RequirePackage(?:\[[^\]]*\])?\{[^}]*\}/g, '');
+    html = html.replace(/\\usepackage(?:\[[^\]]*\])?\{[^}]*\}/g, '');
+    html = html.replace(/\\documentclass(?:\[[^\]]*\])?\{[^}]*\}/g, '');
+    html = html.replace(/\\hypersetup\{[^}]*\}/g, '');
+    html = html.replace(/\\pagestyle\{[^}]*\}/g, '');
+    html = html.replace(/\\thispagestyle\{[^}]*\}/g, '');
+    html = html.replace(/\\pagenumbering\{[^}]*\}/g, '');
+    html = html.replace(/\\fancypagestyle\{[^}]*\}\{[^}]*\}/g, '');
+    html = html.replace(/\\fancyhf\{[^}]*\}/g, '');
+    html = html.replace(/\\fancyhead(?:\[[^\]]*\])?\{[^}]*\}/g, '');
+    html = html.replace(/\\fancyfoot(?:\[[^\]]*\])?\{[^}]*\}/g, '');
+    html = html.replace(/\\frontmatter\b/g, '');
+    html = html.replace(/\\mainmatter\b/g, '');
+    html = html.replace(/\\backmatter\b/g, '');
+    html = html.replace(/\\graphicspath\{[^}]*\}/g, '');
+    html = html.replace(/\\geometry\{[^}]*\}/g, '');
+    html = html.replace(/\\setlength\{[^}]*\}\{[^}]*\}/g, '');
+    html = html.replace(/\\linespread\{[^}]*\}/g, '');
+    html = html.replace(/\\renewcommand\{[^}]*\}\{[^}]*\}/g, '');
+    html = html.replace(/\\newcommand\{[^}]*\}(?:\[[^\]]*\])?\{[^}]*\}/g, '');
+    html = html.replace(/\\newcounter\{[^}]*\}/g, '');
+    html = html.replace(/\\setcounter\{[^}]*\}\{[^}]*\}/g, '');
+    html = html.replace(/\\stepcounter\{[^}]*\}/g, '');
+    html = html.replace(/\\addtocounter\{[^}]*\}\{[^}]*\}/g, '');
+    html = html.replace(/\\numberwithin\{[^}]*\}\{[^}]*\}/g, '');
+    html = html.replace(/\\newtheorem\{[^}]*\}(?:\[[^\]]*\])?(?:\[[^\]]*\])?\{[^}]*\}(?:\[[^\]]*\])?/g, '');
+    html = html.replace(/\\theoremstyle\{[^}]*\}/g, '');
+    html = html.replace(/\\tcolorboxenvironment\{[^}]*\}\{[^}]*\}/g, '');
+    html = html.replace(/\\tcbuselibrary\{[^}]*\}/g, '');
+    html = html.replace(/\\usetikzlibrary\{[^}]*\}/g, '');
+    html = html.replace(/\\definecolor\{[^}]*\}\{[^}]*\}\{[^}]*\}/g, '');
+    html = html.replace(/\\colorlet\{[^}]*\}\{[^}]*\}/g, '');
+    html = html.replace(/\\hyphenation\{[^}]*\}/g, '');
+    html = html.replace(/\\vfill\b/g, '');
+    html = html.replace(/\\hfill\b/g, '');
+    html = html.replace(/\\noindent\b/g, '');
+    html = html.replace(/\\centering\b/g, '');
+    html = html.replace(/\\raggedright\b/g, '');
+    html = html.replace(/\\raggedleft\b/g, '');
+    html = html.replace(/\\par\b/g, '\n\n');
+
+    // Chuyển \today thành định dạng thời gian học thuật tiếng Việt
+    html = html.replace(/\\today\b/g, function() {
+      const now = new Date();
+      return 'Tháng ' + (now.getMonth() + 1) + ' năm ' + now.getFullYear();
+    });
+
+    // ESCAPE HTML THÔ TRƯỚC KHI SINH RA BẤT KỲ THẺ HTML NÀO
     html = html.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    // 2. Lệnh ảnh \includegraphics{URL} hoặc \includegraphics[...]{URL}
-    html = html.replace(/\\includegraphics(?:\[.*?\])?\{(.*?)\}/g, '<div style="text-align: center; margin: 24px 0;"><img src="$1" style="max-width: 100%; border-radius: 8px; box-shadow: var(--shadow);" /></div>');
+    // Xử lý các ký tự thoát hiểm LaTeX trong chế độ văn bản (ngoài các công thức toán đã được lưu trong mathTokens)
+    html = html.replace(/\\%/g, '%');
+    html = html.replace(/\\_/g, '_');
+    html = html.replace(/\\&/g, '&amp;');
+    html = html.replace(/(?:\\~|~)/g, '&nbsp;');
+    html = html.replace(/\\textless\b/g, '&lt;');
+    html = html.replace(/\\textgreater\b/g, '&gt;');
+    html = html.replace(/\\textasciitilde\b/g, '~');
+    html = html.replace(/\\textasciicircum\b/g, '^');
 
-    // 3. Danh sách (itemize, enumerate)
-    html = html.replace(/\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/g, function(match, content) {
-      const items = content.replace(/\\item(?:\[.*?\])?\s+(.*?)(?=\\item|$)/gs, '<li style="margin-bottom: 8px;">$1</li>');
-      return '<ul style="margin-bottom: 20px; padding-left: 24px;">' + items + '</ul>';
+    // Chuyển chuỗi gạch ngang trang trí \textbf{--------} thành đường phân cách thanh mảnh
+    html = html.replace(/\\textbf\{\s*-{4,}\s*\}/g, '<hr class="latex-divider" style="width: 140px; margin: 14px auto; border: none; border-top: 1.5px solid var(--s6);" />');
+    html = html.replace(/(?:^|\n)\s*-{8,}\s*(?:\n|$)/g, '\n<hr class="latex-divider" style="width: 140px; margin: 14px auto; border: none; border-top: 1.5px solid var(--s6);" />\n');
+
+    // Chuyển lệnh font nguyên thủy TeX: {\bf ...}, {\it ...}, {\rm ...}, {\em ...}
+    let prevPrimitive;
+    do {
+      prevPrimitive = html;
+      html = html.replace(/\{\\bf\s+([^}]*)\}/g, '<strong>$1</strong>');
+      html = html.replace(/\{\\it\s+([^}]*)\}/g, '<em>$1</em>');
+      html = html.replace(/\{\\em\s+([^}]*)\}/g, '<em>$1</em>');
+    } while (prevPrimitive !== html);
+
+    // Font size environments (\begin{huge}...\end{huge}, \begin{Large}...\end{Large}, v.v.)
+    const fontEnvs = [
+      { env: 'Huge', size: '2.2rem', weight: '800', line: '1.3' },
+      { env: 'huge', size: '1.8rem', weight: '700', line: '1.3' },
+      { env: 'LARGE', size: '1.5rem', weight: '700', line: '1.4' },
+      { env: 'Large', size: '1.3rem', weight: '600', line: '1.4' },
+      { env: 'large', size: '1.15rem', weight: '500', line: '1.5' }
+    ];
+    fontEnvs.forEach(function(fe) {
+      const feRegex = new RegExp('\\\\begin\\{' + fe.env + '\\*?\\}([\\s\\S]*?)\\\\end\\{' + fe.env + '\\*?\\}', 'g');
+      html = html.replace(feRegex, function(m, body) {
+        return '<div style="font-size: ' + fe.size + '; font-weight: ' + fe.weight + '; line-height: ' + fe.line + '; margin: 8px 0;">' + body.trim() + '</div>';
+      });
     });
-    html = html.replace(/\\begin\{enumerate\}([\s\S]*?)\\end\{enumerate\}/g, function(match, content) {
-      const items = content.replace(/\\item(?:\[.*?\])?\s+(.*?)(?=\\item|$)/gs, '<li style="margin-bottom: 8px;">$1</li>');
-      return '<ol style="margin-bottom: 20px; padding-left: 24px;">' + items + '</ol>';
+    html = html.replace(/\\(?:begin|end)\{(?:Huge|huge|LARGE|Large|large|normalsize|small|footnotesize|tiny)\*?\}/g, '');
+
+    // 5. Title / Author / Date / Maketitle
+    const makeTitleHtml = docTitle ? (
+      '<div class="latex-titlepage" style="margin-bottom: 36px;">' +
+        '<h1 style="font-size: 2.2rem; font-weight: 800; color: var(--s12); text-transform: uppercase; margin-bottom: 12px;">' + docTitle + '</h1>' +
+        (docAuthor ? '<h2 style="font-size: 1.3rem; font-weight: 600; color: var(--s11); margin-bottom: 8px;">' + docAuthor + '</h2>' : '') +
+        (docDate ? '<h3 style="font-size: 1rem; font-weight: 500; color: var(--s9);">' + docDate + '</h3>' : '') +
+      '</div>'
+    ) : '';
+    if (html.includes('\\maketitle')) {
+      html = html.replace(/\\maketitle\b/g, makeTitleHtml);
+    } else if (docTitle && !html.includes('\\begin{titlepage}') && !html.includes('latex-titlepage')) {
+      html = makeTitleHtml + html;
+    }
+
+    // 6. Hàm thay thế môi trường lồng nhau từ trong ra ngoài (hỗ trợ cả [opt] và {arg})
+    function replaceEnvironment(text, envName, renderFn) {
+      let iterations = 0;
+      while (iterations < 10) {
+        if (!text.includes('\\begin{' + envName + '}')) break;
+        const innerRegex = new RegExp(
+          '\\\\begin\\{' + envName + '\\}(?:\\s*\\[([\\s\\S]*?)\\])?(?:\\s*\\{([\\s\\S]*?)\\})?((?:(?!\\\\begin\\{' + envName + '\\})[\\s\\S])*?)\\\\end\\{' + envName + '\\}',
+          'g'
+        );
+        let changed = false;
+        text = text.replace(innerRegex, function(match, optBracket, optBrace, body) {
+          changed = true;
+          return renderFn(optBracket || '', optBrace || '', body);
+        });
+        if (!changed) break;
+        iterations++;
+      }
+      return text;
+    }
+
+    // 7. Xử lý danh sách (itemize, enumerate) hỗ trợ lồng nhau và tiền tố văn bản
+    function renderListItems(content) {
+      const itemRegex = /\\item(?:\s*\[([^\]]*)\])?\s*/g;
+      let items = [];
+      let match;
+      let lastIndex = -1;
+      let lastLabel = null;
+      let prefixText = '';
+
+      const firstMatch = itemRegex.exec(content);
+      if (firstMatch) {
+        prefixText = content.substring(0, firstMatch.index).trim();
+        lastIndex = firstMatch.index + firstMatch[0].length;
+        lastLabel = firstMatch[1] || null;
+
+        while ((match = itemRegex.exec(content)) !== null) {
+          items.push({
+            label: lastLabel,
+            text: content.substring(lastIndex, match.index).trim()
+          });
+          lastIndex = match.index + match[0].length;
+          lastLabel = match[1] || null;
+        }
+        items.push({
+          label: lastLabel,
+          text: content.substring(lastIndex).trim()
+        });
+      }
+
+      if (items.length === 0) {
+        return '<li style="margin-bottom: 8px;">' + content.trim() + '</li>';
+      }
+
+      const listHtml = items.map(function(it) {
+        if (it.label) {
+          return '<li style="margin-bottom: 8px; list-style-type: none;"><strong>' + it.label + '</strong> ' + it.text + '</li>';
+        }
+        return '<li style="margin-bottom: 8px;">' + it.text + '</li>';
+      }).join('');
+
+      return (prefixText ? '<p style="margin-bottom: 8px;">' + prefixText + '</p>' : '') + listHtml;
+    }
+
+    html = replaceEnvironment(html, 'itemize', function(opt1, opt2, body) {
+      return '<ul class="latex-list latex-itemize" style="margin-bottom: 20px; padding-left: 24px;">' + renderListItems(body) + '</ul>';
     });
 
-    // 3.5. Môi trường tùy chỉnh (btmau, sol, vd, bt, note, multicols, center, tcolorbox)
-    html = html.replace(/\\begin\{btmau\}([\s\S]*?)\\end\{btmau\}/g, '<div style="margin: 20px 0;">$1</div>');
-    html = html.replace(/\\begin\{sol\}([\s\S]*?)\\end\{sol\}/g, '<div style="margin: 12px 0;">$1</div>');
-    html = html.replace(/\\begin\{vd\}([\s\S]*?)\\end\{vd\}/g, '<div style="margin: 16px 0;">$1</div>');
-    html = html.replace(/\\begin\{bt\}([\s\S]*?)\\end\{bt\}/g, '<div style="margin: 20px 0;">$1</div>');
-    html = html.replace(/\\begin\{note\}([\s\S]*?)\\end\{note\}/g, '<div style="margin: 16px 0; font-style: italic;">$1</div>');
-    html = html.replace(/\\begin\{multicols\}\{([0-9]+)\}([\s\S]*?)\\end\{multicols\}/g, '<div class="latex-multicols cols-$1">$2</div>');
-    html = html.replace(/\\begin\{center\}([\s\S]*?)\\end\{center\}/g, '<div style="text-align: center; margin: 16px 0; width: 100%;">$1</div>');
-    html = html.replace(/\\begin\{tcolorbox\}(?:\[.*?\])?([\s\S]*?)\\end\{tcolorbox\}/g, '<div style="border: 2px solid #8e1728; border-radius: 8px; padding: 24px; margin: 32px 0;">$1</div>');
-
-    // Mảng các lệnh lẻ (textcolor, item, noindent)
-    html = html.replace(/\\textcolor\{([^}]+)\}\{([^}]+)\}/g, function(match, color, text) {
-      if (color === 'deepred') color = '#8e1728';
-      return '<span style="color: ' + color + ';">' + text + '</span>';
-    });
-    html = html.replace(/\\item\[(.*?)\]/g, '<div style="break-inside: avoid-column; margin-top: 12px;"><b>$1</b> </div>'); // Xử lý item lẻ trong multicols
-    html = html.replace(/\\noindent/g, '');
-
-    // 4. Headings
-    html = html.replace(/\\chapter\*?\{(.*?)\}/g, '<h1 style="text-align: center; margin-top: 2em; margin-bottom: 1em; font-size: 2rem; font-weight: bold; color: var(--s12); text-transform: uppercase;">$1</h1>');
-    html = html.replace(/\\section\*?\{(.*?)\}/g, '<h2 style="margin-top: 1.8em; margin-bottom: 0.8em; font-size: 1.5rem; color: var(--s12); width: 100%;">$1</h2>');
-    html = html.replace(/\\subsection\*?\{(.*?)\}/g, '<h3 style="margin-top: 1.5em; margin-bottom: 0.8em; font-size: 1.3rem; color: var(--s12); width: 100%;">$1</h3>');
-    html = html.replace(/\\subsubsection\*?\{(.*?)\}/g, '<h4 style="margin-top: 1.2em; margin-bottom: 0.8em; font-size: 1.1rem; color: var(--s12); width: 100%;">$1</h4>');
-
-    // 5. In đậm, in nghiêng, gạch chân
-    html = html.replace(/\\textbf\{(.*?)\}/g, '<strong style="font-weight: 700;">$1</strong>');
-    html = html.replace(/\\textit\{(.*?)\}/g, '<em>$1</em>');
-    html = html.replace(/\\underline\{(.*?)\}/g, '<u>$1</u>');
-
-    // 6. Xử lý Toán học (KaTeX)
-    // Cần unescape &lt; và &gt; thành < và > trước khi đưa vào KaTeX
-    const unescapeMath = (str) => str.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-
-    // Display math: $$...$$ or \[...\] or \begin{equation}...\end{equation}
-    html = html.replace(/\$\$([\s\S]+?)\$\$/g, function(match, math) {
-      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, strict: "ignore", displayMode: true }); }
-      catch (e) { return match; }
-    });
-    html = html.replace(/\\\[([\s\S]+?)\\\]/g, function(match, math) {
-      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, strict: "ignore", displayMode: true }); }
-      catch (e) { return match; }
-    });
-    html = html.replace(/\\begin\{equation\}([\s\S]*?)\\end\{equation\}/g, function(match, math) {
-      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, strict: "ignore", displayMode: true }); }
-      catch (e) { return match; }
-    });
-    html = html.replace(/\\begin\{align\}([\s\S]*?)\\end\{align\}/g, function(match, math) {
-      try { return katex.renderToString('\\begin{aligned}' + unescapeMath(math) + '\\end{aligned}', { throwOnError: false, strict: "ignore", displayMode: true }); }
-      catch (e) { return match; }
-    });
-    
-    // Inline math: $...$ or \(...\)
-    html = html.replace(/\$([^\$]+?)\$/g, function(match, math) {
-      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, strict: "ignore", displayMode: false }); }
-      catch (e) { return match; }
-    });
-    html = html.replace(/\\\(([\s\S]*?)\\\)/g, function(match, math) {
-      try { return katex.renderToString(unescapeMath(math), { throwOnError: false, strict: "ignore", displayMode: false }); }
-      catch (e) { return match; }
+    html = replaceEnvironment(html, 'enumerate', function(opt1, opt2, body) {
+      return '<ol class="latex-list latex-enumerate" style="margin-bottom: 20px; padding-left: 24px;">' + renderListItems(body) + '</ol>';
     });
 
-    // Standalone environments (in case user forgot math delimiters)
-    html = html.replace(/\\begin\{cases\}([\s\S]*?)\\end\{cases\}/g, function(match) {
-      try { return katex.renderToString(unescapeMath(match), { throwOnError: false, strict: "ignore", displayMode: true }); } catch (e) { return match; }
-    });
-    html = html.replace(/\\begin\{pmatrix\}([\s\S]*?)\\end\{pmatrix\}/g, function(match) {
-      try { return katex.renderToString(unescapeMath(match), { throwOnError: false, strict: "ignore", displayMode: true }); } catch (e) { return match; }
-    });
-    html = html.replace(/\\begin\{vmatrix\}([\s\S]*?)\\end\{vmatrix\}/g, function(match) {
-      try { return katex.renderToString(unescapeMath(match), { throwOnError: false, strict: "ignore", displayMode: true }); } catch (e) { return match; }
+    // 8. Titlepage, Figure, Tabular, Table
+    html = replaceEnvironment(html, 'titlepage', function(opt1, opt2, body) {
+      return '<div class="latex-titlepage">' + body.trim() + '</div>';
     });
 
-    // 6.5. Xử lý các lệnh khoảng trắng/xuống dòng (sau KaTeX)
+    html = replaceEnvironment(html, 'figure', function(opt1, opt2, body) {
+      let captionText = '';
+      let clean = replaceCommandWithBraces(body, 'caption', function(cap) {
+        captionText = cap.trim();
+        return '';
+      });
+      clean = clean.replace(/\\label\{[^}]*\}/g, '');
+      clean = clean.replace(/\\centering\b/g, '');
+      const figCap = captionText ? '<figcaption class="latex-caption">' + captionText + '</figcaption>' : '';
+      return '<figure class="latex-figure">' + clean.trim() + figCap + '</figure>';
+    });
+
+    html = replaceEnvironment(html, 'tabular', function(optBracket, optBrace, body) {
+      let cleanBody = body;
+      const firstBrace = cleanBody.indexOf('{');
+      if (firstBrace !== -1 && firstBrace < 15) {
+        const extracted = extractBalancedBraces(cleanBody, firstBrace);
+        if (extracted) {
+          cleanBody = cleanBody.substring(extracted.endIndex + 1);
+        }
+      }
+
+      const hasHline = cleanBody.includes('\\hline');
+      // Nuốt gọn dấu xuống dòng \\ kèm khoảng cách tùy chọn như \\[0.2cm]
+      cleanBody = cleanBody.replace(/\\\\(?:\s*\[[^\]]*\])?/g, '___TABULAR_ROW_BREAK___');
+
+      const rawRows = cleanBody.split('___TABULAR_ROW_BREAK___')
+        .map(function(r) { return r.trim(); })
+        .filter(function(r) { return r && r !== '\\hline'; });
+
+      let tableHtml = '<div style="overflow-x: auto; margin: ' + (hasHline ? '20px 0;' : '12px auto;') + ' width: 100%;">' +
+        '<table class="latex-table' + (hasHline ? '' : ' latex-table-borderless') + '" style="border-collapse: collapse; margin: 0 auto; ' +
+        (hasHline ? 'border: 1px solid var(--s4); min-width: 50%;' : 'border: none; max-width: 600px;') + ' font-size: 1rem;">';
+
+      rawRows.forEach(function(row, rowIndex) {
+        let cleanRow = row.replace(/\\hline/g, '').trim();
+        cleanRow = cleanRow.replace(/^\[[0-9.]+\s*(?:cm|pt|mm|em|ex|in)\]\s*/, '').trim();
+        if (!cleanRow) return;
+
+        cleanRow = cleanRow.replace(/&lt;/g, '___HTML_LT___')
+                           .replace(/&gt;/g, '___HTML_GT___')
+                           .replace(/&amp;/g, '___HTML_AMP___')
+                           .replace(/&nbsp;/g, '___HTML_NBSP___');
+
+        const cells = cleanRow.split('&').map(function(c) {
+          let cellText = c.trim();
+          cellText = cellText.replace(/^\[[0-9.]+\s*(?:cm|pt|mm|em|ex|in)\]\s*/, '').trim();
+          cellText = cellText.replace(/\{\\bf\s+([^}]*)\}/g, '<strong>$1</strong>');
+          cellText = cellText.replace(/\\textbf\{([^}]*)\}/g, '<strong>$1</strong>');
+          cellText = cellText.replace(/___HTML_LT___/g, '&lt;')
+                             .replace(/___HTML_GT___/g, '&gt;')
+                             .replace(/___HTML_AMP___/g, '&amp;')
+                             .replace(/___HTML_NBSP___/g, '&nbsp;');
+          return cellText;
+        });
+
+        tableHtml += '<tr>';
+        cells.forEach(function(cell, colIndex) {
+          if (hasHline) {
+            const tag = rowIndex === 0 ? 'th' : 'td';
+            tableHtml += '<' + tag + ' style="border: 1px solid var(--s4); padding: 8px 14px; text-align: center; background: ' + (rowIndex === 0 ? 'var(--s2)' : 'transparent') + ';">' + cell + '</' + tag + '>';
+          } else {
+            const isLabelCol = colIndex === 0;
+            tableHtml += '<td style="border: none; padding: 6px 14px; text-align: left; vertical-align: top; ' + (isLabelCol ? 'font-weight: 600; white-space: nowrap; color: var(--s12);' : 'color: var(--s11);') + '">' + cell + '</td>';
+          }
+        });
+        tableHtml += '</tr>';
+      });
+      tableHtml += '</table></div>';
+      return tableHtml;
+    });
+
+    html = replaceEnvironment(html, 'table', function(opt1, opt2, body) {
+      return '<div class="latex-table-container" style="text-align: center; margin: 24px 0;">' + body.trim() + '</div>';
+    });
+
+    // 9. Các khối học thuật (dn, dl, tc, vd, hq, nx, bt, btmau, sol, note + aliases)
+    const boxConfigs = {
+      dn: { label: 'Định nghĩa', cls: 'latex-box-dn' },
+      definition: { label: 'Định nghĩa', cls: 'latex-box-dn' },
+      dinhnghia: { label: 'Định nghĩa', cls: 'latex-box-dn' },
+      dl: { label: 'Định lý', cls: 'latex-box-dl' },
+      theorem: { label: 'Định lý', cls: 'latex-box-dl' },
+      dinhly: { label: 'Định lý', cls: 'latex-box-dl' },
+      lemma: { label: 'Bổ đề', cls: 'latex-box-dl' },
+      bode: { label: 'Bổ đề', cls: 'latex-box-dl' },
+      tc: { label: 'Tính chất', cls: 'latex-box-tc' },
+      property: { label: 'Tính chất', cls: 'latex-box-tc' },
+      properties: { label: 'Tính chất', cls: 'latex-box-tc' },
+      tinhchat: { label: 'Tính chất', cls: 'latex-box-tc' },
+      proposition: { label: 'Mệnh đề', cls: 'latex-box-tc' },
+      menhde: { label: 'Mệnh đề', cls: 'latex-box-tc' },
+      vd: { label: 'Ví dụ', cls: 'latex-box-vd' },
+      example: { label: 'Ví dụ', cls: 'latex-box-vd' },
+      vidu: { label: 'Ví dụ', cls: 'latex-box-vd' },
+      hq: { label: 'Hệ quả', cls: 'latex-box-hq' },
+      corollary: { label: 'Hệ quả', cls: 'latex-box-hq' },
+      hequa: { label: 'Hệ quả', cls: 'latex-box-hq' },
+      nx: { label: 'Nhận xét', cls: 'latex-box-nx' },
+      remark: { label: 'Nhận xét', cls: 'latex-box-nx' },
+      nhanxet: { label: 'Nhận xét', cls: 'latex-box-nx' },
+      bt: { label: 'Bài tập', cls: 'latex-box-bt' },
+      exercise: { label: 'Bài tập', cls: 'latex-box-bt' },
+      baitap: { label: 'Bài tập', cls: 'latex-box-bt' },
+      btmau: { label: 'Bài tập mẫu', cls: 'latex-box-btmau' },
+      sol: { label: 'Lời giải', cls: 'latex-box-sol' },
+      solution: { label: 'Lời giải', cls: 'latex-box-sol' },
+      loigiai: { label: 'Lời giải', cls: 'latex-box-sol' },
+      note: { label: 'Ghi chú', cls: 'latex-box-note' },
+      ghichu: { label: 'Ghi chú', cls: 'latex-box-note' }
+    };
+
+    function formatInnerParagraphs(bodyText) {
+      return bodyText.split(/\n\s*\n/).map(function(p) {
+        const trimmed = p.trim();
+        if (!trimmed) return '';
+        if (trimmed.startsWith('<div') || trimmed.startsWith('<ul') || trimmed.startsWith('<ol') || 
+            trimmed.startsWith('<figure') || trimmed.startsWith('<table') || trimmed.startsWith('<p') || 
+            trimmed.startsWith('<h') || trimmed.startsWith('<hr') || trimmed.startsWith('___KATEX_MATH_DISP_')) {
+          return trimmed;
+        }
+        return '<p style="margin-bottom: 12px;">' + trimmed.replace(/\n/g, ' ') + '</p>';
+      }).join('\n');
+    }
+
+    html = replaceEnvironment(html, 'proof', function(optBracket, optBrace, body) {
+      const title = (optBracket || optBrace || '').trim();
+      const titleStr = title ? ' (' + title + ')' : '';
+      const labelPrefix = '<em>Chứng minh' + titleStr + '.</em> ';
+      let formattedBody = formatInnerParagraphs(body.trim());
+      const pMatch = formattedBody.match(/^<p[^>]*>/);
+      if (pMatch) {
+        formattedBody = pMatch[0] + labelPrefix + formattedBody.slice(pMatch[0].length);
+      } else {
+        formattedBody = '<p style="margin-bottom: 12px;">' + labelPrefix + '</p>' + formattedBody;
+      }
+      const tombstoneHtml = ' <span class="latex-tombstone">&#9632;</span>';
+      if (/<\/p>\s*$/.test(formattedBody)) {
+        formattedBody = formattedBody.replace(/<\/p>\s*$/, tombstoneHtml + '</p>');
+      } else {
+        formattedBody += tombstoneHtml;
+      }
+      return '<div class="latex-proof">' +
+               '<div class="latex-proof-body">' + formattedBody + '</div>' +
+             '</div>';
+    });
+
+    html = replaceEnvironment(html, 'tcolorbox', function(optBracket, optBrace, body) {
+      let title = '';
+      const opt = optBracket || optBrace || '';
+      if (opt) {
+        const m = opt.match(/title\s*=\s*(?:\{([^}]*)\}|([^,\]]+))/);
+        if (m) title = m[1] || m[2];
+      }
+      const headerHtml = title ? '<div class="latex-tcolorbox-header"><strong>' + title.trim() + '</strong></div>' : '';
+      const formattedBody = formatInnerParagraphs(body.trim());
+      return '<div class="latex-tcolorbox">' + headerHtml + '<div class="latex-tcolorbox-content">' + formattedBody + '</div></div>';
+    });
+
+    html = replaceEnvironment(html, 'multicols', function(optBracket, optBrace, body) {
+      const cols = parseInt(optBracket || optBrace, 10) || 2;
+      return '<div class="latex-multicols cols-' + cols + '">' + body.trim() + '</div>';
+    });
+
+    html = replaceEnvironment(html, 'center', function(opt1, opt2, body) { return '<div style="text-align: center; margin: 16px 0; width: 100%;">' + body.trim() + '</div>'; });
+    html = replaceEnvironment(html, 'flushleft', function(opt1, opt2, body) { return '<div style="text-align: left; margin: 16px 0; width: 100%;">' + body.trim() + '</div>'; });
+    html = replaceEnvironment(html, 'flushright', function(opt1, opt2, body) { return '<div style="text-align: right; margin: 16px 0; width: 100%;">' + body.trim() + '</div>'; });
+
+    // 10. \includegraphics với nhận diện scale và width thông minh
+    html = html.replace(/\\includegraphics\s*(?:\[(.*?)\])?\s*\{([^}]+)\}/g, function(match, opt, src) {
+      const cleanSrc = src.trim();
+      const optStr = opt || '';
+      
+      let scaleVal = null;
+      const scaleMatch = optStr.match(/scale\s*=\s*([0-9.]+)/i);
+      if (scaleMatch) {
+        scaleVal = parseFloat(scaleMatch[1]);
+      }
+
+      let customWidthStyle = '';
+      const widthMatch = optStr.match(/width\s*=\s*([0-9.]+)\s*\\(linewidth|textwidth)/i);
+      if (widthMatch) {
+        const pct = Math.round(parseFloat(widthMatch[1]) * 100);
+        customWidthStyle = 'max-width: ' + pct + '%; width: 100%;';
+      } else if (optStr.match(/width\s*=\s*([0-9.]+\s*(?:cm|pt|mm|in|px))/i)) {
+        const wMatch = optStr.match(/width\s*=\s*([0-9.]+\s*(?:cm|pt|mm|in|px))/i);
+        customWidthStyle = 'max-width: ' + wMatch[1] + ';';
+      }
+
+      let imgStyle = 'height: auto; display: block; margin: 0 auto; object-fit: contain;';
+      if (scaleVal) {
+        if (scaleVal <= 0.45) {
+          // Logo trường hoặc hình thu nhỏ (scale=0.35)
+          imgStyle += ' max-width: 200px; max-height: 180px;';
+        } else if (scaleVal <= 0.75) {
+          imgStyle += ' max-width: 420px; max-height: 360px;';
+        } else {
+          imgStyle += ' max-width: 650px; max-height: 520px;';
+        }
+      } else if (customWidthStyle) {
+        imgStyle += ' ' + customWidthStyle;
+      } else {
+        imgStyle += ' max-width: min(100%, 650px); max-height: 480px;';
+      }
+      imgStyle += ' border: none; border-radius: 2px;';
+
+      return '<div class="latex-figure" style="text-align: center; margin: 20px auto; width: 100%;">' +
+               '<img src="' + cleanSrc + '" alt="Hình minh họa" style="' + imgStyle + '" />' +
+             '</div>';
+    });
+
+    // \textcolor
+    function mapLatexColor(c) {
+      const col = c.trim().toLowerCase();
+      if (col === 'deepred') return '#8e1728';
+      if (col === 'blue') return 'var(--blue-11, #0284c7)';
+      if (col === 'red') return 'var(--red, #dc2626)';
+      if (col === 'magenta') return '#d11270';
+      if (col === 'green') return '#16a34a';
+      if (col === 'gray' || col === 'grey') return 'var(--s9, #6b7280)';
+      return col;
+    }
+    let prevColor;
+    do {
+      prevColor = html;
+      html = replaceTwoArgCommandWithBraces(html, 'textcolor', function(color, text) {
+        return '<span style="color: ' + mapLatexColor(color) + ';">' + text + '</span>';
+      });
+    } while (prevColor !== html);
+
+    // XỬ LÝ TUẦN TỰ HEADINGS VÀ TẠO MỤC LỤC CHUẨN OVERLEAF
+    const headingRegex = /\\(chapter|section|subsection|subsubsection)\*?(?:\s*\[[^\]]*\])?\s*\{/g;
+    let hm;
+    const headingList = [];
+    while ((hm = headingRegex.exec(html)) !== null) {
+      const braceIdx = html.indexOf('{', hm.index);
+      const extracted = extractBalancedBraces(html, braceIdx);
+      if (!extracted) continue;
+      headingList.push({
+        type: hm[1],
+        startIndex: hm.index,
+        endIndex: extracted.endIndex,
+        title: extracted.content.trim()
+      });
+      headingRegex.lastIndex = extracted.endIndex + 1;
+    }
+
+    // Đánh số tuần tự chính xác
+    let chap = 0, sec = 0, subsec = 0, subsubsec = 0;
+    const tocItems = [];
+    for (const h of headingList) {
+      if (h.type === 'chapter') {
+        chap++; sec = 0; subsec = 0; subsubsec = 0;
+        h.numStr = 'Chương ' + chap + ': ';
+        h.tocNum = chap + ' ';
+        h.id = 'chapter-' + chap;
+        tocItems.push({ type: 'chapter', num: h.tocNum, title: h.title, id: h.id });
+      } else if (h.type === 'section') {
+        sec++; subsec = 0; subsubsec = 0;
+        h.numStr = (chap ? chap + '.' + sec : sec) + ' ';
+        h.tocNum = h.numStr;
+        h.id = 'section-' + (chap ? chap + '-' : '') + sec;
+        tocItems.push({ type: 'section', num: h.tocNum, title: h.title, id: h.id });
+      } else if (h.type === 'subsection') {
+        subsec++; subsubsec = 0;
+        h.numStr = (chap ? chap + '.' + sec + '.' + subsec : sec + '.' + subsec) + ' ';
+        h.tocNum = h.numStr;
+        h.id = 'subsec-' + (chap ? chap + '-' : '') + sec + '-' + subsec;
+        tocItems.push({ type: 'subsection', num: h.tocNum, title: h.title, id: h.id });
+      } else if (h.type === 'subsubsection') {
+        subsubsec++;
+        h.numStr = (chap ? chap + '.' + sec + '.' + subsec + '.' + subsubsec : sec + '.' + subsec + '.' + subsubsec) + ' ';
+        h.tocNum = h.numStr;
+        h.id = 'subsubsec-' + (chap ? chap + '-' : '') + sec + '-' + subsec + '-' + subsubsec;
+      }
+    }
+
+    // Thay thế các headings từ cuối lên đầu để giữ nguyên vị trí index
+    for (let i = headingList.length - 1; i >= 0; i--) {
+      const h = headingList[i];
+      let repTag = '';
+      const hasPrefix = /^(?:chương|chapter)\b/i.test(h.title) || /^[0-9]+(\.[0-9]+)+\s*/.test(h.title);
+      const displayNum = hasPrefix ? '' : h.numStr;
+      if (h.type === 'chapter') {
+        repTag = '<h1 class="latex-chapter" id="' + h.id + '" style="text-align: center; margin-top: 2.5em; margin-bottom: 1.2em; font-size: 2.1rem; font-weight: 800; color: var(--s12); text-transform: uppercase;">' + displayNum + h.title + '</h1>';
+      } else if (h.type === 'section') {
+        repTag = '<h2 class="latex-section" id="' + h.id + '" style="margin-top: 2em; margin-bottom: 0.8em; font-size: 1.5rem; font-weight: 700; color: var(--s12); width: 100%; border-bottom: 1px solid var(--s3); padding-bottom: 6px;">' + displayNum + h.title + '</h2>';
+      } else if (h.type === 'subsection') {
+        repTag = '<h3 class="latex-subsection" id="' + h.id + '" style="margin-top: 1.6em; margin-bottom: 0.8em; font-size: 1.28rem; font-weight: 600; color: var(--s12); width: 100%;">' + displayNum + h.title + '</h3>';
+      } else if (h.type === 'subsubsection') {
+        repTag = '<h4 class="latex-subsubsection" id="' + h.id + '" style="margin-top: 1.3em; margin-bottom: 0.6em; font-size: 1.1rem; font-weight: 600; color: var(--s12); width: 100%;">' + displayNum + h.title + '</h4>';
+      }
+      html = html.substring(0, h.startIndex) + repTag + html.substring(h.endIndex + 1);
+    }
+
+    // Tạo khối Mục lục nếu trong văn bản có \tableofcontents
+    let tocHtml = '';
+    if (html.includes('\\tableofcontents')) {
+      tocHtml = '<div class="latex-toc" style="margin: 32px 0 48px; padding: 0; background: transparent; border: none;">' +
+        '<h2 style="color: #d11270; font-size: 1.8rem; font-weight: 700; margin-bottom: 24px; text-align: left;">Mục lục</h2>' +
+        '<div style="display: flex; flex-direction: column; gap: 10px;">';
+      for (const item of tocItems) {
+        if (item.type === 'chapter') {
+          tocHtml += '<div style="font-weight: 700; font-size: 1.1rem; color: #d11270; margin-top: 10px;">' +
+            '<a href="#' + item.id + '" style="color: #d11270; text-decoration: none;">' + item.num + item.title + '</a></div>';
+        } else if (item.type === 'section') {
+          tocHtml += '<div style="padding-left: 18px; font-weight: 600; font-size: 1rem;">' +
+            '<a href="#' + item.id + '" style="color: #d11270; text-decoration: none;">' + item.num + item.title + '</a></div>';
+        } else if (item.type === 'subsection') {
+          tocHtml += '<div style="padding-left: 36px; font-size: 0.95rem; color: var(--s11);">' +
+            '<a href="#' + item.id + '" style="color: #d11270; text-decoration: none;">' + item.num + item.title + '</a></div>';
+        }
+      }
+      tocHtml += '</div></div>';
+    }
+
+    html = html.replace(/\\begingroup[\s\S]*?\\tableofcontents[\s\S]*?\\endgroup/g, tocHtml);
+    html = html.replace(/\\tableofcontents\b/g, tocHtml);
+    html = html.replace(/\\begingroup\b/g, '');
+    html = html.replace(/\\endgroup\b/g, '');
+    html = html.replace(/\\color\{[^}]*\}/g, '');
+
+    function renderAcademicBox(envKey, title, b, chapNum, counters) {
+      let prefix = '';
+      let cls = 'latex-box-generic';
+      const optTitle = title && title.trim() ? ' (' + title.trim() + ')' : '';
+
+      if (envKey === 'dn' || envKey === 'definition' || envKey === 'dinhnghia') {
+        counters.dn = (counters.dn || 0) + 1;
+        const numPrefix = chapNum ? (' ' + chapNum + '.' + counters.dn) : '';
+        prefix = 'Định nghĩa' + numPrefix + optTitle + '.';
+        cls = 'latex-box-dn';
+      } else if (envKey === 'vd' || envKey === 'example' || envKey === 'vidu') {
+        counters.vd = (counters.vd || 0) + 1;
+        const numPrefix = chapNum ? (' ' + chapNum + '.' + counters.vd) : '';
+        prefix = 'Ví dụ' + numPrefix + optTitle + '.';
+        cls = 'latex-box-vd';
+      } else if (envKey === 'dl' || envKey === 'theorem' || envKey === 'dinhly' || envKey === 'lemma' || envKey === 'bode') {
+        counters.dl = (counters.dl || 0) + 1;
+        const numPrefix = chapNum ? (' ' + chapNum + '.' + counters.dl) : '';
+        prefix = (envKey.includes('lemma') || envKey.includes('bode') ? 'Bổ đề' : 'Định lý') + numPrefix + optTitle + '.';
+        cls = 'latex-box-dl';
+      } else if (envKey === 'tc' || envKey.startsWith('prop') || envKey === 'tinhchat' || envKey === 'menhde') {
+        counters.tc = (counters.tc || 0) + 1;
+        const numPrefix = chapNum ? (' ' + chapNum + '.' + counters.tc) : '';
+        prefix = (envKey.includes('prop') || envKey.includes('menhde') ? 'Mệnh đề' : 'Tính chất') + numPrefix + optTitle + '.';
+        cls = 'latex-box-tc';
+      } else if (envKey === 'hq' || envKey === 'corollary' || envKey === 'hequa') {
+        counters.hq = (counters.hq || 0) + 1;
+        const numPrefix = chapNum ? (' ' + chapNum + '.' + counters.hq) : '';
+        prefix = 'Hệ quả' + numPrefix + optTitle + '.';
+        cls = 'latex-box-hq';
+      } else if (envKey === 'nx' || envKey === 'remark' || envKey === 'nhanxet') {
+        counters.nx = (counters.nx || 0) + 1;
+        const numPrefix = chapNum ? (' ' + chapNum + '.' + counters.nx) : '';
+        prefix = 'Nhận xét' + numPrefix + optTitle + '.';
+        cls = 'latex-box-nx';
+      } else if (envKey === 'bt' || envKey === 'exercise' || envKey === 'baitap' || envKey === 'btmau') {
+        counters.bt = (counters.bt || 0) + 1;
+        const numPrefix = chapNum ? (' ' + chapNum + '.' + counters.bt) : '';
+        prefix = (envKey === 'btmau' ? 'Bài tập mẫu' : 'Bài tập') + numPrefix + optTitle + '.';
+        cls = 'latex-box-bt';
+      } else {
+        const conf = boxConfigs[envKey] || { label: envKey.charAt(0).toUpperCase() + envKey.slice(1), cls: 'latex-box-generic' };
+        prefix = conf.label + optTitle + '.';
+        cls = conf.cls;
+      }
+
+      let formattedBody = formatInnerParagraphs(b.trim());
+      const labelHtml = '<strong>' + prefix + '</strong> ';
+
+      const pMatch = formattedBody.match(/^<p[^>]*>/);
+      if (pMatch) {
+        formattedBody = pMatch[0] + labelHtml + formattedBody.slice(pMatch[0].length);
+      } else {
+        formattedBody = '<p style="margin-bottom: 12px;">' + labelHtml + '</p>' + formattedBody;
+      }
+
+      return '<div class="latex-box ' + cls + '">' +
+               '<div class="latex-box-content">' + formattedBody + '</div>' +
+             '</div>';
+    }
+
+    const chRegex = /<h1[^>]*id="chapter-([0-9]+)"[^>]*>/g;
+    let cm;
+    const chIndices = [];
+    while ((cm = chRegex.exec(html)) !== null) {
+      chIndices.push({ index: cm.index, chapNum: parseInt(cm[1], 10) });
+    }
+
+    if (chIndices.length === 0) {
+      let detectedChap = null;
+      const chapMatch = html.match(/(?:chương|chuong|chapter)\s*([0-9]+)/i);
+      if (chapMatch) detectedChap = parseInt(chapMatch[1], 10);
+
+      const counters = {};
+      Object.keys(boxConfigs).forEach(function(envKey) {
+        html = replaceEnvironment(html, envKey, function(optBracket, optBrace, body) {
+          return renderAcademicBox(envKey, optBracket || optBrace, body, detectedChap, counters);
+        });
+      });
+    } else {
+      let finalReplaced = '';
+      let preChap = html.substring(0, chIndices[0].index);
+      const preCounters = {};
+      Object.keys(boxConfigs).forEach(function(envKey) {
+        preChap = replaceEnvironment(preChap, envKey, function(optBracket, optBrace, body) {
+          return renderAcademicBox(envKey, optBracket || optBrace, body, null, preCounters);
+        });
+      });
+      finalReplaced += preChap;
+
+      for (let ci = 0; ci < chIndices.length; ci++) {
+        const cNum = chIndices[ci].chapNum;
+        const start = chIndices[ci].index;
+        const end = (ci + 1 < chIndices.length) ? chIndices[ci + 1].index : html.length;
+        let cBody = html.substring(start, end);
+        const cCounters = {};
+        Object.keys(boxConfigs).forEach(function(envKey) {
+          cBody = replaceEnvironment(cBody, envKey, function(optBracket, optBrace, body) {
+            return renderAcademicBox(envKey, optBracket || optBrace, body, cNum, cCounters);
+          });
+        });
+        finalReplaced += cBody;
+      }
+      html = finalReplaced;
+    }
+
+    html = replaceCommandWithBraces(html, 'textbf', function(c) { return '<strong style="font-weight: 700;">' + c + '</strong>'; });
+    html = replaceCommandWithBraces(html, 'textit', function(c) { return '<em>' + c + '</em>'; });
+    html = replaceCommandWithBraces(html, 'underline', function(c) { return '<u>' + c + '</u>'; });
+    html = replaceCommandWithBraces(html, 'emph', function(c) { return '<em>' + c + '</em>'; });
+    html = replaceCommandWithBraces(html, 'texttt', function(c) { return '<code style="font-family: monospace; background: var(--s2); padding: 2px 6px; border-radius: 2px; border: 1px solid var(--s3); font-size: 0.9em;">' + c + '</code>'; });
+    html = replaceCommandWithBraces(html, 'textsc', function(c) { return '<span style="font-variant: small-caps;">' + c + '</span>'; });
+
+    // Font size commands
+    const fontSizes = [
+      { name: 'Huge', size: '2.2rem', weight: '800', line: '1.3' },
+      { name: 'huge', size: '1.8rem', weight: '700', line: '1.3' },
+      { name: 'LARGE', size: '1.5rem', weight: '700', line: '1.4' },
+      { name: 'Large', size: '1.3rem', weight: '600', line: '1.4' },
+      { name: 'large', size: '1.15rem', weight: '500', line: '1.5' }
+    ];
+
+    fontSizes.forEach(function(fs) {
+      // 1. Dạng lệnh tham số \Huge{...}
+      html = replaceCommandWithBraces(html, fs.name, function(c) {
+        return '<span style="font-size: ' + fs.size + '; font-weight: ' + fs.weight + '; line-height: ' + fs.line + ';">' + c + '</span>';
+      });
+
+      // 2. Dạng nhóm ngoặc nhọn {\Huge ...} với balanced braces
+      let idx = 0;
+      const groupToken = '{\\' + fs.name;
+      while ((idx = html.indexOf(groupToken, idx)) !== -1) {
+        const extracted = extractBalancedBraces(html, idx);
+        if (!extracted) { idx += groupToken.length; continue; }
+        const innerContent = extracted.content.replace(new RegExp('^\\\\' + fs.name + '\\s*'), '');
+        const replacement = '<span style="font-size: ' + fs.size + '; font-weight: ' + fs.weight + '; line-height: ' + fs.line + ';">' + innerContent + '</span>';
+        html = html.substring(0, idx) + replacement + html.substring(extracted.endIndex + 1);
+        idx += replacement.length;
+      }
+
+      // 3. Dạng độc lập \Huge nằm trong thẻ hoặc dòng
+      const standaloneRegex = new RegExp('\\\\' + fs.name + '\\s+([^<\\n\\r]+)', 'g');
+      html = html.replace(standaloneRegex, '<span style="font-size: ' + fs.size + '; font-weight: ' + fs.weight + '; line-height: ' + fs.line + ';">$1</span>');
+    });
+
+    html = html.replace(/\\(?:Huge|huge|LARGE|Large|large|normalsize|small|footnotesize|tiny)\b/g, '');
+
+    html = replaceTwoArgCommandWithBraces(html, 'href', function(u, t) { return '<a href="' + u + '" target="_blank" rel="noopener noreferrer" style="color: var(--b9); text-decoration: underline;">' + t + '</a>'; });
+    html = replaceCommandWithBraces(html, 'url', function(u) { return '<a href="' + u + '" target="_blank" rel="noopener noreferrer" style="color: var(--b9); text-decoration: underline;">' + u + '</a>'; });
+    html = replaceCommandWithBraces(html, 'eqref', function(id) { return '(' + id + ')'; });
+    html = replaceCommandWithBraces(html, 'ref', function(id) { return id; });
+    html = replaceCommandWithBraces(html, 'label', function() { return ''; });
+    html = replaceCommandWithBraces(html, 'footnote', function(fn) { return '<sup class="latex-footnote" title="' + fn + '" style="color: var(--b9); cursor: help;">[*]</sup>'; });
+
+    // Spacing & Symbols
+    html = html.replace(/\\(?:qed|qedsymbol)\b/g, '<span class="latex-tombstone">&#9632;</span>');
     html = html.replace(/\\break/g, '<br/>');
-    html = html.replace(/\\\\/g, '<br/>');
-    html = html.replace(/\\newpage/g, '<hr style="margin: 40px 0; border: none; border-top: 2px dashed var(--s4);"/>');
-    html = html.replace(/\\vspace\{([^}]+)\}/g, '<div style="height: $1;"></div>');
-    html = html.replace(/\\quad/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+    html = html.replace(/\\\\(?:\[[^\]]*\])?/g, '<br/>');
+    html = html.replace(/\\(?:newpage|clearpage|cleardoublepage|pagebreak)/g, '<hr class="latex-pagebreak" style="margin: 40px 0; border: none; border-top: 1px dashed var(--s4);"/>');
+    html = replaceCommandWithBraces(html, 'vspace', function(h) { return '<div style="height: ' + h + ';"></div>'; });
+    html = replaceCommandWithBraces(html, 'hspace', function() { return '&nbsp;&nbsp;'; });
+    html = html.replace(/\\bigskip\b/g, '<div style="height: 24px;"></div>');
+    html = html.replace(/\\medskip\b/g, '<div style="height: 16px;"></div>');
+    html = html.replace(/\\smallskip\b/g, '<div style="height: 8px;"></div>');
+    html = html.replace(/\\qquad\b/g, '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
+    html = html.replace(/\\quad\b/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
 
-    // 7. Xử lý khoảng trống thành thẻ <p>
-    html = html.split(/\n\s*\n/).map(p => {
-       if(p.trim() === '') return '';
-       // Nếu bắt đầu bằng thẻ block (h2, h3, ul, ol, div) thì không bọc p
-       if(p.startsWith('<h') || p.startsWith('<ul') || p.startsWith('<ol') || p.startsWith('<div')) return p;
-       // Nếu là display math (được KaTeX render thành span class="katex-display")
-       if(p.startsWith('<span class="katex-display"')) return p;
-       return '<p style="margin-bottom: 16px;">' + p.replace(/\n/g, ' ') + '</p>';
+    // 12. Phân đoạn văn bản ngoài các khối HTML
+    html = html.split(/\n\s*\n/).map(function(p) {
+      const trimmed = p.trim();
+      if (!trimmed) return '';
+      if (trimmed.startsWith('<h') || trimmed.startsWith('<ul') || trimmed.startsWith('<ol') || 
+          trimmed.startsWith('<div') || trimmed.startsWith('<figure') || trimmed.startsWith('<table') || 
+          trimmed.startsWith('<hr') || trimmed.startsWith('___KATEX_MATH_DISP_')) {
+        return trimmed;
+      }
+      return '<p style="margin-bottom: 16px;">' + trimmed.replace(/\n/g, ' ') + '</p>';
     }).join('\n');
+
+    // 13. KaTeX render các Token toán học đã được bảo vệ
+    mathTokens.forEach(function(entry, token) {
+      let rendered = '';
+      try {
+        if (typeof katex !== 'undefined' && katex.renderToString) {
+          // Phòng vệ đa lớp: giải phóng bất kỳ token toán học nào bị lồng vô tình trong code
+          let cleanCode = entry.code;
+          let prevCode;
+          do {
+            prevCode = cleanCode;
+            mathTokens.forEach(function(subEntry, subToken) {
+              if (cleanCode.includes(subToken)) {
+                cleanCode = cleanCode.replaceAll(subToken, subEntry.code);
+              }
+            });
+          } while (cleanCode !== prevCode);
+
+          rendered = katex.renderToString(cleanCode, {
+            throwOnError: false,
+            strict: 'ignore',
+            displayMode: entry.isDisplay
+          });
+          if (entry.isDisplay) {
+            rendered = '<div class="katex-display-wrapper" style="overflow-x: auto; padding: 6px 0;">' + rendered + '</div>';
+          }
+        } else {
+          rendered = entry.isDisplay ? '$$' + entry.code + '$$' : '$' + entry.code + '$';
+        }
+      } catch (e) {
+        rendered = '<code class="katex-error" style="color: var(--red);">' + entry.code + '</code>';
+      }
+      html = html.replaceAll(token, function() { return rendered; });
+    });
+
+    // Phục hồi ký hiệu dollar thoát hiểm \$
+    html = html.replaceAll('___KATEX_LITERAL_DOLLAR___', '$');
 
     const responsiveStyle = `
       <style>
-        .latex-multicols { column-gap: 32px; margin: 20px 0; width: 100%; text-align: left; }
+        .latex-box {
+          margin: 18px 0;
+          text-align: left;
+          line-height: 1.8;
+          font-family: var(--font-academic);
+        }
+        /* Môi trường đoạn văn học thuật thuần túy (Định nghĩa, Định lý, Tính chất, Hệ quả) */
+        .latex-box-dn,
+        .latex-box-dl,
+        .latex-box-tc,
+        .latex-box-hq,
+        .latex-box-nx,
+        .latex-box-note,
+        .latex-box-sol,
+        .latex-box-generic {
+          border: none;
+          background: transparent;
+          padding: 0;
+          border-radius: 0;
+        }
+        /* Định nghĩa, Định lý, Tính chất, Hệ quả: Kiểu plain LaTeX (chữ nghiêng học thuật, tiêu đề đậm đứng) */
+        .latex-box-dn .latex-box-content,
+        .latex-box-dl .latex-box-content,
+        .latex-box-tc .latex-box-content,
+        .latex-box-hq .latex-box-content {
+          font-style: italic;
+        }
+        .latex-box-dn .latex-box-content strong,
+        .latex-box-dl .latex-box-content strong,
+        .latex-box-tc .latex-box-content strong,
+        .latex-box-hq .latex-box-content strong,
+        .latex-box-dn .latex-box-content .katex,
+        .latex-box-dl .latex-box-content .katex,
+        .latex-box-tc .latex-box-content .katex,
+        .latex-box-hq .latex-box-content .katex {
+          font-style: normal;
+        }
+        /* Môi trường thẻ khung phẳng học thuật (Ví dụ, Bài tập, tcolorbox) */
+        .latex-box-vd {
+          border: 1px solid var(--s4);
+          background: var(--s1);
+          border-radius: 2px;
+          padding: 16px 20px;
+          margin: 20px 0;
+        }
+        .latex-box-vd strong {
+          color: #0284c7;
+          font-weight: 700;
+        }
+        :root.dark .latex-box-vd strong {
+          color: #38bdf8;
+        }
+
+        .latex-box-bt,
+        .latex-box-btmau,
+        .latex-tcolorbox {
+          border: 1px solid var(--s4);
+          background: var(--s1);
+          border-radius: 2px;
+          padding: 16px 20px;
+          margin: 20px 0;
+        }
+        .latex-box-content {
+          font-family: var(--font-academic);
+          font-size: 1.12rem;
+          color: var(--s12);
+          line-height: 1.8;
+        }
+        .latex-box-content > p:last-child {
+          margin-bottom: 0;
+        }
+        .latex-proof {
+          margin: 18px 0;
+          padding: 0;
+          border: none;
+          background: transparent;
+          line-height: 1.8;
+        }
+        .latex-proof::after {
+          content: "";
+          display: table;
+          clear: both;
+        }
+        .latex-proof-body {
+          font-family: var(--font-academic);
+          font-size: 1.12rem;
+          color: var(--s12);
+        }
+        .latex-tombstone {
+          float: right;
+          font-size: 0.9rem;
+          color: var(--s9);
+        }
+
+        .latex-tcolorbox-header {
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: var(--s12);
+          margin-bottom: 10px;
+          padding-bottom: 6px;
+          border-bottom: 1px solid var(--s3);
+        }
+        .latex-tcolorbox-content {
+          font-family: var(--font-academic);
+          color: var(--s12);
+          font-size: 1.12rem;
+        }
+
+        .latex-titlepage {
+          text-align: center;
+          margin: 24px auto 44px;
+          padding: 24px 0 40px;
+          background: transparent;
+          border: none;
+          border-radius: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          max-width: 800px;
+        }
+        .latex-toc {
+          margin: 32px 0 48px;
+          padding: 0;
+          background: transparent;
+          border: none;
+        }
+        .latex-titlepage img {
+          max-width: 200px !important;
+          max-height: 180px !important;
+          object-fit: contain;
+          margin: 16px auto !important;
+          border: none !important;
+          border-radius: 2px;
+        }
+        .latex-titlepage h1 {
+          font-size: 2.2rem;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          color: var(--s12);
+          margin: 16px 0;
+        }
+        .latex-titlepage h2 {
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: var(--s11);
+          margin: 8px 0;
+        }
+        .latex-titlepage h3 {
+          font-size: 1.2rem;
+          font-weight: 500;
+          color: var(--s9);
+          margin: 4px 0;
+        }
+
+        .latex-table-borderless,
+        .latex-table-borderless td,
+        .latex-table-borderless tr {
+          border: none !important;
+        }
+
+        .latex-figure {
+          margin: 24px auto;
+          text-align: center;
+          max-width: 100%;
+        }
+        .latex-figure img {
+          max-width: min(100%, 650px);
+          max-height: 480px;
+          height: auto;
+          border-radius: 2px;
+          border: none;
+          display: block;
+          margin: 0 auto;
+          object-fit: contain;
+        }
+        .latex-caption {
+          margin-top: 10px;
+          font-size: 0.95rem;
+          color: var(--s11);
+          font-style: italic;
+          text-align: center;
+        }
+
+        .latex-list {
+          margin-bottom: 20px;
+          padding-left: 28px;
+          line-height: 1.8;
+        }
+        .latex-list li {
+          margin-bottom: 8px;
+        }
+
+        .latex-multicols {
+          column-gap: 32px;
+          margin: 20px 0;
+          width: 100%;
+          text-align: left;
+        }
         .latex-multicols.cols-2 { column-count: 2; }
         .latex-multicols.cols-3 { column-count: 3; }
         .latex-multicols.cols-4 { column-count: 4; }
-        .katex-display { overflow-x: auto; overflow-y: hidden; }
+
+        .katex-display-wrapper {
+          overflow-x: auto;
+          overflow-y: hidden;
+          padding: 8px 0;
+          margin: 16px 0;
+        }
+
         @media (max-width: 768px) {
-          .latex-multicols { column-count: 1 !important; }
+          .latex-box {
+            padding: 12px 14px;
+            margin: 18px 0;
+          }
+          .latex-titlepage {
+            padding: 24px 14px;
+            margin: 16px 0;
+          }
+          .latex-titlepage h1 {
+            font-size: 1.6rem;
+          }
+          .latex-titlepage h2 {
+            font-size: 1.25rem;
+          }
+          .latex-multicols {
+            column-count: 1 !important;
+          }
+          .latex-list {
+            padding-left: 20px;
+          }
         }
         svg text { font-family: var(--font-academic) !important; }
-</style>
+      </style>
     `;
     return responsiveStyle + html;
   }
+
+
+  function formatLessonBody(contentStr) {
+    if (!contentStr || typeof contentStr !== 'string') {
+      return '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>';
+    }
+    var trimmed = contentStr.trim();
+    if (trimmed.length < 50) {
+      return '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>';
+    }
+    // Kiem tra neu noi dung da la khoi HTML hop le va khong phai file LaTeX nguyen ban
+    var isPreformattedHtml = /^\s*<[a-z][\s\S]*>/i.test(trimmed) && 
+                             !trimmed.includes('\\documentclass') && 
+                             !trimmed.includes('\\begin{document}');
+    if (isPreformattedHtml) {
+      return trimmed;
+    }
+    return parseLatexToHTML(trimmed);
+  }
+
   // THỰC CHIẾN: Fetch dữ liệu thật từ Database
   const skeletonHtml = `
     <style>
@@ -1851,13 +3089,15 @@ function renderLesson(c, lesson) {
   body.innerHTML = skeletonHtml;
   c.appendChild(body);
 
-
-
   var currentTopicId = 't1';
   var tNode = AppState.path.find(n => n.type === 'topic');
   if (tNode) currentTopicId = tNode.id;
 
-  fetch(App.API_BASE + '/api/course/topic/' + currentTopicId + '/lesson/' + lesson.num + '?lang=' + (window.i18nConfig ? window.i18nConfig.currentLocale : 'vi'))
+  var fetchLessonPromise = window.App?.fetchApi 
+    ? window.App.fetchApi('/api/course/topic/' + currentTopicId + '/lesson/' + lesson.num + '?lang=' + (window.i18nConfig ? window.i18nConfig.currentLocale : 'vi'))
+    : fetch(App.API_BASE + '/api/course/topic/' + currentTopicId + '/lesson/' + lesson.num + '?lang=' + (window.i18nConfig ? window.i18nConfig.currentLocale : 'vi'));
+
+  fetchLessonPromise
     .then(res => {
       if (!res.ok) throw new Error('Not found');
       return res.json();
@@ -1865,10 +3105,10 @@ function renderLesson(c, lesson) {
     .then(data => {
       if (data && data.lesson) {
         if (data.lesson.content_html) {
-          body.innerHTML = parseLatexToHTML(data.lesson.content_html);
+          body.innerHTML = formatLessonBody(data.lesson.content_html);
         } else {
           var fallback = lesson.contentHTML || lesson.abstract || '';
-      body.innerHTML = fallback.length < 200 ? '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>' : parseLatexToHTML(fallback);
+          body.innerHTML = formatLessonBody(fallback);
         }
         // Trigger highlight after real content is loaded using task queue
         var taskStr = sessionStorage.getItem('vecHighlightTask');
@@ -1890,7 +3130,6 @@ function renderLesson(c, lesson) {
         var realViews = data.lesson.total_views || 0;
         if (viewCountEl) viewCountEl.textContent = realViews;
         
-        // ' + tr('knowledge.updated', 'Cập nhật') + ' ngay lập tức vào bộ nhớ (AppState reference) để khi quay lại Lưới (Grid) nó khớp số với API
         lesson.total_views = realViews;
 
         if (data.lesson.updated_at) {
@@ -1912,19 +3151,19 @@ function renderLesson(c, lesson) {
             var currentViews = parseInt(document.getElementById('lesson-view-count').textContent) || 0;
             var nextViews = currentViews + 1;
             document.getElementById('lesson-view-count').textContent = nextViews;
-            lesson.total_views = nextViews; // ' + tr('knowledge.updated', 'Cập nhật') + ' lần nữa sau khi nảy số
+            lesson.total_views = nextViews;
             
             sessionStorage.setItem(cooldownKey, now.toString());
-            fetch(App.API_BASE + '/api/course/topic/' + currentTopicId + '/lesson/' + lesson.num + '/view', {
-              method: 'POST'
-            }).catch(function(e) { console.error('View tracking err', e); });
+            var sendView = window.App?.fetchApi 
+              ? window.App.fetchApi('/api/course/topic/' + currentTopicId + '/lesson/' + lesson.num + '/view', { method: 'POST' })
+              : fetch(App.API_BASE + '/api/course/topic/' + currentTopicId + '/lesson/' + lesson.num + '/view', { method: 'POST' });
+            sendView.catch(function(e) { console.error('View tracking err', e); });
           }
         }, 30000);
 
       } else {
         var fallback = lesson.contentHTML || lesson.abstract || '';
-      body.innerHTML = fallback.length < 200 ? '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>' : parseLatexToHTML(fallback);
-        // Trigger highlight for fallback content too
+        body.innerHTML = formatLessonBody(fallback);
         var taskStr = sessionStorage.getItem('vecHighlightTask');
         if (taskStr) {
           sessionStorage.removeItem('vecHighlightTask');
@@ -1942,7 +3181,7 @@ function renderLesson(c, lesson) {
     .catch(err => {
       console.error("Lỗi fetch DB, dùng content mặc định:", err);
       var fallback = lesson.contentHTML || lesson.abstract || '';
-      body.innerHTML = fallback.length < 200 ? '<p>' + tr('knowledge.empty_lesson', 'Bài học này chưa có nội dung.') + '</p>' : parseLatexToHTML(fallback);
+      body.innerHTML = formatLessonBody(fallback);
       // Trigger highlight for fallback content too
       var taskStr = sessionStorage.getItem('vecHighlightTask');
       if (taskStr) {
@@ -2166,11 +3405,19 @@ function renderLesson(c, lesson) {
     };
     if (_replyParentId) bodyPayload.parent_id = _replyParentId;
     
-    fetch(App.API_BASE + '/api/comment', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify(bodyPayload)
-    })
+    var sendCommentPromise = window.App?.fetchApi
+      ? window.App.fetchApi('/api/comment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify(bodyPayload)
+        })
+      : fetch(App.API_BASE + '/api/comment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify(bodyPayload)
+        });
+
+    sendCommentPromise
     .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.success) {
@@ -2267,9 +3514,15 @@ function renderLesson(c, lesson) {
     var tNode = AppState.path.find(n => n.type === 'topic');
     if (tNode) currentTopicId = tNode.id;
     
-    fetch(App.API_BASE + '/api/comment/topic/' + currentTopicId + '/lesson/' + lesson.num + '?sort=' + (document.getElementById('comment-sort-select') ? document.getElementById('comment-sort-select').value : 'latest'), {
-      headers: { 'Authorization': 'Bearer ' + (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token')) }
-    })
+    var fetchCommentsPromise = window.App?.fetchApi
+      ? window.App.fetchApi('/api/comment/topic/' + currentTopicId + '/lesson/' + lesson.num + '?sort=' + (document.getElementById('comment-sort-select') ? document.getElementById('comment-sort-select').value : 'latest'), {
+          headers: { 'Authorization': 'Bearer ' + (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token')) }
+        })
+      : fetch(App.API_BASE + '/api/comment/topic/' + currentTopicId + '/lesson/' + lesson.num + '?sort=' + (document.getElementById('comment-sort-select') ? document.getElementById('comment-sort-select').value : 'latest'), {
+          headers: { 'Authorization': 'Bearer ' + (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token')) }
+        });
+
+    fetchCommentsPromise
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.success) {
@@ -2443,11 +3696,19 @@ function renderLesson(c, lesson) {
       countSpan.textContent = currentCount + 1;
     }
 
-    fetch(App.API_BASE + '/api/comment/upvote', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token')) },
-      body: JSON.stringify({ comment_id: parseInt(commentId) })
-    })
+    var upvotePromise = window.App?.fetchApi
+      ? window.App.fetchApi('/api/comment/upvote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token')) },
+          body: JSON.stringify({ comment_id: parseInt(commentId) })
+        })
+      : fetch(App.API_BASE + '/api/comment/upvote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token')) },
+          body: JSON.stringify({ comment_id: parseInt(commentId) })
+        });
+
+    upvotePromise
     .then(r => r.json())
     .then(data => {
       if(data.success) {
@@ -2894,20 +4155,24 @@ function renderQuizSetup(c) {
 
   // --- Nút điều hướng & Xác nhận (Step 2) ---
   var btnContainer = document.createElement('div');
-  btnContainer.style.cssText = 'display: flex; flex-direction: row; gap: 16px; margin-top: 24px; align-items: center; justify-content: flex-start; width: 100%;';
+  btnContainer.style.cssText = 'display: flex; flex-direction: row; gap: 14px; margin-top: 24px; align-items: center; justify-content: center; width: 100%;';
   
   var finalContainer = document.createElement('div');
-  finalContainer.style.cssText = 'display: none; flex-direction: row; gap: 40px; align-items: center; justify-content: space-between; margin-bottom: 24px; width: 100%; flex-wrap: wrap;';
+  finalContainer.style.cssText = 'display: none; flex-direction: row; gap: 40px; align-items: center; justify-content: space-between; margin-bottom: 28px; width: 100%; flex-wrap: wrap;';
   
   var summaryPanel = document.createElement('div');
-  summaryPanel.style.cssText = 'flex: 1; min-width: 300px; max-width: 450px; padding:32px 24px; border-radius:12px; background:var(--s2); color:var(--s11); font-size:0.95rem; line-height:1.8; border: 1px dashed var(--b9);';
+  summaryPanel.style.cssText = 'flex: 1; min-width: 300px; max-width: 460px; padding: 32px 24px; border-radius: 12px; background: var(--s2); color: var(--s11); font-size: 0.95rem; line-height: 1.8; border: 1px dashed var(--b9); box-sizing: border-box;';
   
+  var illustrationWrap = document.createElement('div');
+  illustrationWrap.style.cssText = 'flex: 1; min-width: 260px; max-width: 420px; display: flex; align-items: center; justify-content: center; background: #ffffff; border-radius: 12px; border: 1px solid var(--s3); padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); box-sizing: border-box;';
   var illustration = document.createElement('img');
   illustration.src = 'assets/quiz_illustration.jpg';
-  illustration.style.cssText = 'flex: 1; min-width: 250px; max-width: 400px; border-radius: 12px; object-fit: contain; mix-blend-mode: multiply;';
-  
+  illustration.alt = 'Minh họa thiết lập bài kiểm tra';
+  illustration.style.cssText = 'width: 100%; max-width: 380px; height: auto; object-fit: contain; border-radius: 6px;';
+  illustrationWrap.appendChild(illustration);
+
   finalContainer.appendChild(summaryPanel);
-  finalContainer.appendChild(illustration);
+  finalContainer.appendChild(illustrationWrap);
   
   step2Container.appendChild(finalContainer);
   step2Container.appendChild(btnContainer);
@@ -2918,11 +4183,11 @@ function renderQuizSetup(c) {
   
   var editBtn = document.createElement('button');
   editBtn.textContent = 'Chỉnh sửa lại';
-  editBtn.style.cssText = 'padding:12px 24px; border-radius:var(--radius); border:1px solid var(--s4); background:transparent; color:var(--s11); font-size:1rem; font-family:inherit; font-weight:600; cursor:pointer; display:none; flex: 0 0 auto; margin: 0;';
+  editBtn.style.cssText = 'padding:10px 24px; border-radius:var(--radius); border:1px solid var(--s4); background:transparent; color:var(--s11); font-size:0.95rem; font-family:inherit; font-weight:600; cursor:pointer; display:none; flex: 0 0 auto; margin: 0;';
 
   var startBtn = document.createElement('button');
   startBtn.textContent = 'Bắt đầu làm bài';
-  startBtn.style.cssText = 'padding:12px 32px; border-radius:var(--radius); border:none; background:var(--green-600, #16a34a); color:#fff; font-size:1rem; font-family:inherit; font-weight:600; cursor:pointer; display:none; flex: 0 0 auto; margin: 0; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);';
+  startBtn.style.cssText = 'padding:10px 32px; border-radius:var(--radius); border:none; background:var(--green-600, #16a34a); color:#fff; font-size:0.95rem; font-family:inherit; font-weight:600; cursor:pointer; display:none; flex: 0 0 auto; margin: 0;';
   
   btnContainer.appendChild(editBtn);
   btnContainer.appendChild(startBtn);
@@ -2931,13 +4196,12 @@ function renderQuizSetup(c) {
   var sectionsToHide = [topicLabel, desc, hr, treeContainer, scopeBtnContainer, diffLabel, diffGrid, countLabel, countGrid, timeLabel, timeGrid, modeLabel, modeGrid];
   if (typeof h !== 'undefined') sectionsToHide.push(h);
 
-  var isAutoFromTimeline = !!(window._autoFinalExam || window._autoPracticeLessonId || sessionStorage.getItem('auto_practice_lesson_id'));
+  var currentView = AppState.path[AppState.path.length - 1];
+  var isAutoFromTimeline = Boolean(currentView && currentView.data && currentView.data.from === 'learning-path');
   if (isAutoFromTimeline) {
     sectionsToHide.forEach(function(el) { if (el) el.style.display = 'none'; });
     confirmBtn.style.display = 'none';
   }
-
-  
 
   confirmBtn.onclick = function() {
     var topics = Object.keys(selectedTopics);
@@ -2988,9 +4252,11 @@ function renderQuizSetup(c) {
       return;
     }
 
-    // Retrieve learning path progress metadata without wiping early
-    var pId = window._autoPracticePathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id');
-    var pLessonId = window._activePracticeLessonId || window._autoPracticeLessonId || sessionStorage.getItem('auto_practice_lesson_id');
+    var currentView = AppState.path[AppState.path.length - 1];
+    var isFromLp = Boolean(currentView && currentView.data && currentView.data.from === 'learning-path');
+    var isFinalFromLp = Boolean(isFromLp && currentView.data && currentView.data.is_final);
+    var pId = isFromLp ? ((currentView.data && currentView.data.path_id) || window._autoPracticePathId || window._autoFinalExamPathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id')) : null;
+    var pLessonId = isFromLp ? ((currentView.data && currentView.data.lesson_id) || window._activePracticeLessonId || window._autoPracticeLessonId || sessionStorage.getItem('auto_practice_lesson_id')) : null;
 
     startBtn.disabled = true;
     startBtn.textContent = 'Đang tạo đề...';
@@ -3019,8 +4285,10 @@ function renderQuizSetup(c) {
           questions: data.questions,
           mode: selectedMode.value,
           time_limit: parseInt(timeInput.value) || 0,
+          from: isFromLp ? 'learning-path' : 'custom',
           node_id: pLessonId,
-          path_id: pId
+          path_id: pId,
+          is_final: isFinalFromLp
         });
       } else {
         console.warn('Backend returned no questions. Mocking quiz room for testing purposes.');
@@ -3032,8 +4300,10 @@ function renderQuizSetup(c) {
             ],
             mode: selectedMode.value,
             time_limit: parseInt(timeInput.value) || 0,
+            from: isFromLp ? 'learning-path' : 'custom',
             node_id: pLessonId,
-            path_id: pId
+            path_id: pId,
+            is_final: isFinalFromLp
         });
       }
     })
@@ -3046,121 +4316,120 @@ function renderQuizSetup(c) {
           ],
           mode: selectedMode.value,
           time_limit: parseInt(timeInput.value) || 0,
+          from: isFromLp ? 'learning-path' : 'custom',
           node_id: pLessonId,
-          path_id: pId
+          path_id: pId,
+          is_final: isFinalFromLp
       });
     });
   };
 
-  // Auto-config logic for Final Exam (Comprehensive Exam)
-  if (window._autoFinalExam) {
-    selectedLessons = { 'l1': true, 'l2': true, 'l3': true };
-    selectedTopics = { 't1': true };
+  // Auto-config logic ONLY when in Learning Path flow
+  if (isAutoFromTimeline) {
+    var isFinalExamFromLp = Boolean((currentView.data && currentView.data.is_final) || window._autoFinalExam);
+    var autoLessonId = (currentView.data && currentView.data.lesson_id) || window._autoPracticeLessonId;
 
-    window.countInput.value = 5;
-    timeInput.value = 15; // 15 phút
-    selectedMode.value = 'EXAM';
-    if (typeof selectedDiff !== 'undefined') selectedDiff.value = 'MIXED';
+    if (isFinalExamFromLp) {
+      selectedLessons = { 'l1': true, 'l2': true, 'l3': true };
+      selectedTopics = { 't1': true };
 
-    var autoConfirmedFinal = false;
-    function triggerAutoConfirmFinal() {
-      if (autoConfirmedFinal) return;
-      autoConfirmedFinal = true;
-      confirmBtn.click();
+      window.countInput.value = 5;
+      timeInput.value = 15; // 15 phút
+      selectedMode.value = 'EXAM';
+      if (typeof selectedDiff !== 'undefined') selectedDiff.value = 'MIXED';
 
-      editBtn.style.pointerEvents = 'none';
-      editBtn.style.opacity = '0.5';
-      editBtn.style.cursor = 'not-allowed';
-      editBtn.title = 'Hệ thống tự động thiết lập cho Bài thi Tổng hợp';
+      var autoConfirmedFinal = false;
+      function triggerAutoConfirmFinal() {
+        if (autoConfirmedFinal) return;
+        autoConfirmedFinal = true;
+        confirmBtn.click();
 
-      window._autoFinalExam = null;
-    }
+        editBtn.style.pointerEvents = 'none';
+        editBtn.style.opacity = '0.5';
+        editBtn.style.cursor = 'not-allowed';
+        editBtn.title = 'Hệ thống tự động thiết lập cho Bài thi Tổng hợp';
 
-    // Trigger immediately to eliminate screen flicker
-    triggerAutoConfirmFinal();
-
-    fetchMaxQuestions(function(maxQ) {
-      if (window.countSuffix) {
-        window.countSuffix.textContent = 'câu hỏi (Tối đa ' + maxQ + ' câu thỏa mãn)';
+        window._autoFinalExam = null;
       }
-      if (window.countInput) {
-        window.countInput.max = maxQ;
-        if (maxQ > 0 && maxQ < 5) {
-          window.countInput.value = maxQ;
+
+      triggerAutoConfirmFinal();
+
+      fetchMaxQuestions(function(maxQ) {
+        if (window.countSuffix) {
+          window.countSuffix.textContent = 'câu hỏi (Tối đa ' + maxQ + ' câu thỏa mãn)';
         }
-      }
-      var countEl = summaryPanel.querySelector('#quiz-summary-count-num');
-      if (countEl) countEl.textContent = window.countInput.value;
-      var suffixEl = summaryPanel.querySelector('#quiz-summary-count-suffix');
-      if (suffixEl && window.countSuffix) suffixEl.textContent = window.countSuffix.textContent;
-    });
-  }
+        if (window.countInput) {
+          window.countInput.max = maxQ;
+          if (maxQ > 0 && maxQ < 5) {
+            window.countInput.value = maxQ;
+          }
+        }
+        var countEl = summaryPanel.querySelector('#quiz-summary-count-num');
+        if (countEl) countEl.textContent = window.countInput.value;
+        var suffixEl = summaryPanel.querySelector('#quiz-summary-count-suffix');
+        if (suffixEl && window.countSuffix) suffixEl.textContent = window.countSuffix.textContent;
+      });
+    } else if (autoLessonId) {
+      window._activePracticeLessonId = autoLessonId;
+      selectedLessons = {};
+      var rawLId = autoLessonId.trim();
+      selectedLessons[rawLId] = true;
 
-  // Auto-config logic for Learning Path Task 2
-  var autoLessonId = window._autoPracticeLessonId || sessionStorage.getItem('auto_practice_lesson_id');
-  if (autoLessonId) {
-    window._activePracticeLessonId = autoLessonId;
-    selectedLessons = {};
-    var rawLId = autoLessonId.trim();
-    selectedLessons[rawLId] = true;
-
-    // Find topic implicitly to satisfy validation if any
-    var tId = null;
-    if (typeof MOCK_LIBRARY_DATA !== 'undefined' && MOCK_LIBRARY_DATA.topics) {
-      for (let t of MOCK_LIBRARY_DATA.topics) {
-        for (let s of t.sections) {
-          for (let l of s.lessons) {
-            if (l.id === rawLId) {
-              tId = t.id;
-              break;
+      // Find topic implicitly to satisfy validation if any
+      var tId = null;
+      if (typeof MOCK_LIBRARY_DATA !== 'undefined' && MOCK_LIBRARY_DATA.topics) {
+        for (let t of MOCK_LIBRARY_DATA.topics) {
+          for (let s of t.sections) {
+            for (let l of s.lessons) {
+              if (l.id === rawLId) {
+                tId = t.id;
+                break;
+              }
             }
           }
         }
       }
-    }
-    selectedTopics = {};
-    if (tId) selectedTopics[tId] = true;
+      selectedTopics = {};
+      if (tId) selectedTopics[tId] = true;
 
-    window.countInput.value = 5; // Gom random 5 câu hỏi
-    timeInput.value = 0; // Không giới hạn
-    selectedMode.value = 'PRACTICE';
-    if (typeof selectedDiff !== 'undefined') selectedDiff.value = 'MIXED'; // Tổng hợp
+      window.countInput.value = 5; // Gom random 5 câu hỏi
+      timeInput.value = 0; // Không giới hạn
+      selectedMode.value = 'PRACTICE';
+      if (typeof selectedDiff !== 'undefined') selectedDiff.value = 'MIXED'; // Tổng hợp
 
-    var autoConfirmed = false;
-    function triggerAutoConfirm() {
-      if (autoConfirmed) return;
-      autoConfirmed = true;
-      confirmBtn.click();
-      
-      // Disable Edit button
-      editBtn.style.pointerEvents = 'none';
-      editBtn.style.opacity = '0.5';
-      editBtn.style.cursor = 'not-allowed';
-      editBtn.title = 'Hệ thống tự động thiết lập cho Lộ trình học tập';
-      
-      // Keep activePracticeLessonId intact for submission
-      window._activePracticeLessonId = rawLId;
-      sessionStorage.setItem('auto_practice_lesson_id', rawLId);
-    }
-
-    // Trigger immediately to eliminate screen flicker
-    triggerAutoConfirm();
-
-    fetchMaxQuestions(function(maxQ) {
-      if (window.countSuffix) {
-        window.countSuffix.textContent = 'câu hỏi (Tối đa ' + maxQ + ' câu thỏa mãn)';
+      var autoConfirmed = false;
+      function triggerAutoConfirm() {
+        if (autoConfirmed) return;
+        autoConfirmed = true;
+        confirmBtn.click();
+        
+        // Disable Edit button
+        editBtn.style.pointerEvents = 'none';
+        editBtn.style.opacity = '0.5';
+        editBtn.style.cursor = 'not-allowed';
+        editBtn.title = 'Hệ thống tự động thiết lập cho Lộ trình học tập';
+        
+        window._activePracticeLessonId = rawLId;
       }
-      if (window.countInput) {
-        window.countInput.max = maxQ;
-        if (maxQ > 0 && maxQ < 5) {
-          window.countInput.value = maxQ;
+
+      triggerAutoConfirm();
+
+      fetchMaxQuestions(function(maxQ) {
+        if (window.countSuffix) {
+          window.countSuffix.textContent = 'câu hỏi (Tối đa ' + maxQ + ' câu thỏa mãn)';
         }
-      }
-      var countEl = summaryPanel.querySelector('#quiz-summary-count-num');
-      if (countEl) countEl.textContent = window.countInput.value;
-      var suffixEl = summaryPanel.querySelector('#quiz-summary-count-suffix');
-      if (suffixEl && window.countSuffix) suffixEl.textContent = window.countSuffix.textContent;
-    });
+        if (window.countInput) {
+          window.countInput.max = maxQ;
+          if (maxQ > 0 && maxQ < 5) {
+            window.countInput.value = maxQ;
+          }
+        }
+        var countEl = summaryPanel.querySelector('#quiz-summary-count-num');
+        if (countEl) countEl.textContent = window.countInput.value;
+        var suffixEl = summaryPanel.querySelector('#quiz-summary-count-suffix');
+        if (suffixEl && window.countSuffix) suffixEl.textContent = window.countSuffix.textContent;
+      });
+    }
   }
 }
 
@@ -3751,9 +5020,10 @@ function renderQuizRoom(c, quizData) {
       } catch (e) {}
     }
 
-    // 2c. Tiến trình lộ trình: CHỈ thăng cấp node nếu học viên đạt điểm đạt (>= 5.0)
-    var pId = (quizData && quizData.path_id) || window._autoPracticePathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id');
-    if (totalScore >= 5.0 && pId) {
+    // 2c. Tiến trình lộ trình: CHỈ thăng cấp node nếu học viên đạt điểm đạt (>= 5.0) VÀ là bài tập thuộc lộ trình
+    var isFromLp = Boolean(quizData && quizData.from === 'learning-path');
+    var pId = isFromLp ? ((quizData && quizData.path_id) || window._autoPracticePathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id')) : null;
+    if (isFromLp && totalScore >= 5.0 && pId) {
       var pKey = 'path_progress_' + pId;
       var curProg = JSON.parse(localStorage.getItem(pKey) || '{"nodeIndex":0,"taskLevel":0}');
       var finishedNodeIdx = (window._autoPracticeNodeIdx !== null && window._autoPracticeNodeIdx !== undefined) 
@@ -3768,20 +5038,33 @@ function renderQuizRoom(c, quizData) {
 
     // 3. Update Bottom Nav Submit Button
     submitBtn.disabled = false;
-    submitBtn.textContent = pId ? 'Quay lại Lộ trình học tập' : 'Quay lại Kho Bài tập';
+    submitBtn.textContent = isFromLp ? 'Quay lại Lộ trình học tập' : 'Quay lại Kho Bài tập';
     submitBtn.style.opacity = '1';
     submitBtn.style.background = 'transparent';
     submitBtn.style.color = 'var(--text-main)';
     submitBtn.style.border = '1px solid var(--border-strong, var(--s4))';
     submitBtn.onclick = function() {
-      if (pId) {
+      if (isFromLp && pId) {
+        window._autoPracticeLessonId = null;
+        window._activePracticeLessonId = null;
+        window._autoPracticePathId = null;
+        window._autoPracticeNodeIdx = null;
+        window._autoFinalExam = null;
+        window._autoFinalExamPathId = null;
+        sessionStorage.removeItem('auto_practice_lesson_id');
+        sessionStorage.removeItem('auto_practice_path_id');
+        sessionStorage.removeItem('auto_practice_node_idx');
+
         AppState.path = [
           { type: 'root', id: 'root', title: tr('knowledge.library', 'Thư viện') },
           { type: 'learning-path', id: 'learning-path', title: 'Lộ trình học tập', data: { path_id: pId } }
         ];
         renderCurrentView();
       } else {
-        AppState.path = AppState.path.filter(function(p) { return p.type !== 'quiz-room'; });
+        AppState.path = [
+          { type: 'root', id: 'root', title: tr('knowledge.library', 'Thư viện') },
+          { type: 'quiz', id: 'quiz', title: 'Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập', data: null }
+        ];
         renderCurrentView();
       }
     };
@@ -3819,12 +5102,15 @@ function renderQuizRoom(c, quizData) {
       });
     }
 
-    var practiceNodeId = (quizData && quizData.node_id) || window._activePracticeLessonId || window._autoPracticeLessonId || sessionStorage.getItem('auto_practice_lesson_id') || null;
-    var currentPathId = (quizData && quizData.path_id) || window._autoPracticePathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id') || null;
+    var isFromLp = Boolean(quizData && quizData.from === 'learning-path');
+    var practiceNodeId = isFromLp ? ((quizData && quizData.node_id) || window._activePracticeLessonId || window._autoPracticeLessonId || sessionStorage.getItem('auto_practice_lesson_id') || null) : null;
+    var currentPathId = isFromLp ? ((quizData && quizData.path_id) || window._autoPracticePathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id') || null) : null;
+    var isFinalExam = Boolean(isFromLp && ((quizData && quizData.is_final) || window._autoFinalExam));
     var submitPayload = {
       answers: answerList,
       path_id: currentPathId,
-      node_id: practiceNodeId
+      node_id: practiceNodeId,
+      is_final: isFinalExam
     };
 
     var token = (window.AuthGuard && window.AuthGuard.getToken ? window.AuthGuard.getToken() : localStorage.getItem('user_token'));
@@ -3891,15 +5177,18 @@ function renderQuizRoom(c, quizData) {
           for (var qid in answers) {
             answerList.push({ question_id: parseInt(qid), selected_answer: answers[qid] });
           }
-          var practiceNodeId = (quizData && quizData.node_id) || window._activePracticeLessonId || window._autoPracticeLessonId || sessionStorage.getItem('auto_practice_lesson_id') || null;
-          var currentPathId = (quizData && quizData.path_id) || window._autoPracticePathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id') || null;
+          var isFromLp = Boolean(quizData && quizData.from === 'learning-path');
+          var practiceNodeId = isFromLp ? ((quizData && quizData.node_id) || window._activePracticeLessonId || window._autoPracticeLessonId || sessionStorage.getItem('auto_practice_lesson_id') || null) : null;
+          var currentPathId = isFromLp ? ((quizData && quizData.path_id) || window._autoPracticePathId || sessionStorage.getItem('auto_practice_path_id') || localStorage.getItem('committed_path_id') || null) : null;
+          var isFinalExam = Boolean(isFromLp && ((quizData && quizData.is_final) || window._autoFinalExam));
           fetch(App.API_BASE + '/api/quiz/' + quizId + '/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
             body: JSON.stringify({ 
               answers: answerList,
               path_id: currentPathId,
-              node_id: practiceNodeId
+              node_id: practiceNodeId,
+              is_final: isFinalExam
             })
           }).catch(function(err){ console.error(err); });
         }
@@ -3935,11 +5224,7 @@ function initGraph() {
   // Render graph breadcrumb
   var gbc = document.getElementById('graph-bc');
   if (gbc) {
-    gbc.innerHTML = `
-      <a class="bc-link" style="cursor:pointer;" onclick="navigateBackTo(0)">${tr('knowledge.library', 'Thư viện')}</a>
-      <i class="ph ph-caret-right" style="font-size:0.6rem; color:var(--s6); margin:0 8px;"></i>
-      <span class="bc-cur">${tr('knowledge.title', 'Không gian Tri thức')}</span>
-    `;
+    renderBreadcrumb();
   }
   // If diagram not rendered yet, render it
   if (!canvas.querySelector('svg')) {
@@ -5088,6 +6373,7 @@ if (document.getElementById('cb-start')) {
     html += '<div class="side-item active" onclick="AppState.path=[{type:\'root\',id:\'root\',title:tr(\'knowledge.library\',\'Thư viện\')}]; renderCurrentView(); document.querySelectorAll(\'.side-item\').forEach(i=>i.classList.remove(\'active\')); this.classList.add(\'active\');"><i class="ph ph-compass" style="margin-right: 8px;"></i>' + tr('knowledge.explore_library', 'Khám phá Thư viện') + '</div>';
     html += '<div class="side-item" onclick="navigateTo(\'graph\',\'graph\',tr(\'knowledge.title\',\'Không gian Tri thức\'),null); document.querySelectorAll(\'.side-item\').forEach(i=>i.classList.remove(\'active\')); this.classList.add(\'active\');"><i class="ph ph-tree-structure" style="margin-right: 8px;"></i>' + tr('knowledge.title', 'Không gian Tri thức') + '</div>';
     html += '<div class="side-item" onclick="navigateTo(\'learning-path\',\'learning-path\',tr(\'knowledge.learning_path\',\'Lộ trình học tập\'),null); document.querySelectorAll(\'.side-item\').forEach(i=>i.classList.remove(\'active\')); this.classList.add(\'active\');"><i class="ph ph-path" style="margin-right: 8px;"></i>' + tr('knowledge.learning_path', 'Lộ trình học tập') + '</div>';
+    html += '<div class="side-item" onclick="navigateTo(\'quiz\',\'quiz\',\'Kho \' + tr(\'knowledge.lesson_prefix\',\'Bài\') + \' tập\',null); document.querySelectorAll(\'.side-item\').forEach(i=>i.classList.remove(\'active\')); this.classList.add(\'active\');"><i class="ph ph-git-branch" style="margin-right: 8px;"></i>' + tr('knowledge.tool_quiz_title', 'Kho ' + tr('knowledge.lesson_prefix', 'Bài') + ' tập') + '</div>';
     
     html += '<div class="side-label" style="padding: 16px 16px 8px; font-weight: 700; font-size: 0.72rem; color: var(--s9); text-transform: uppercase; letter-spacing: 0.5px;">' + tr('knowledge.topics', 'Chủ đề') + '</div>';
 

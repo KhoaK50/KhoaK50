@@ -151,7 +151,7 @@
 
       for (let i = App.vectorList.length - 1; i >= 0; i--) {
         const v = App.vectorList[i];
-        if (v.visible === false) continue;
+        if (v.visible === false || v.isImageMesh || !v.vec) continue;
         
         const vx = Number(v.vec[0] || 0);
         const vy = Number(v.vec[1] || 0);
@@ -612,7 +612,14 @@
         ctx2d.fillText("0", cx - 6, cy + 4);
     }
 
-    return { cx, cy, px, stepUnit };
+    return {
+      cx,
+      cy,
+      px,
+      stepUnit,
+      originPx: { x: cx, y: cy },
+      pixelsPerUnit: px
+    };
   };
 
   // --- [NEON PULSE EFFECT & TỈ LỆ MŨI TÊN CHUẨN TOÁN HỌC] ---
@@ -720,8 +727,239 @@
     ctx2d.restore();
   }
 
-  
-  // --- VÒNG LẶP VẼ CHÍNH ---
+  // Vẽ vệt quỹ đạo đường cong vector tham số thích ứng toàn màn hình Canvas
+  // Vẽ vệt quỹ đạo đường cong vector tham số thích ứng toàn màn hình Canvas
+  function drawParametricTrajectory2D(ctx, it, gridInfo, baseAlpha) {
+    if (!gridInfo || typeof it.fn !== "function") return;
+    const { cx, cy, px } = gridInfo;
+    const color = it.colorCss || "#0090ff";
+    const alpha = (typeof baseAlpha === "number" ? baseAlpha : 1) * 0.8;
+
+    const exprText = (it.rawExprs || []).join(" ") + " " + (it.latex || "");
+    const isTrig = /sin|cos/i.test(exprText);
+
+    // Xác định các biến đang chạy hoạt ảnh
+    const activeVars = (Array.isArray(it.activeAnimVars) && it.activeAnimVars.length > 0)
+      ? it.activeAnimVars
+      : [it.paramVar || (it.vars && it.vars[0]) || "t"];
+
+    const margin = 300;
+    const minX = -margin;
+    const maxX = ctx.canvas.width + margin;
+    const minY = -margin;
+    const maxY = ctx.canvas.height + margin;
+
+    // Vẽ từng đường tọa độ tham số tương ứng với các biến đang hoạt động
+    activeVars.forEach((curVar) => {
+      let tMin, tMax, numSamples;
+      if (it.paramInfinity) {
+        if (isTrig) {
+          tMin = -Math.PI * 4;
+          tMax = Math.PI * 4;
+          numSamples = 240;
+        } else {
+          const wSpan = Math.max(Math.abs(cx / px), Math.abs((ctx.canvas.width - cx) / px), 10);
+          const hSpan = Math.max(Math.abs(cy / px), Math.abs((ctx.canvas.height - cy) / px), 10);
+          const span = Math.max(wSpan, hSpan);
+          const tBound = Math.min(span * 1.3, 40);
+          tMin = -tBound;
+          tMax = tBound;
+          numSamples = 280;
+        }
+      } else {
+        const rObj = it.varRanges?.[curVar];
+        tMin = Number(rObj?.min ?? (curVar === it.paramVar ? it.paramMin : -10.0) ?? -10.0);
+        tMax = Number(rObj?.max ?? (curVar === it.paramVar ? it.paramMax : 10.0) ?? 10.0);
+        if (tMax <= tMin) tMax = tMin + 1.0;
+        numSamples = Math.min(600, Math.max(120, Math.round((tMax - tMin) * 35)));
+      }
+
+      const path = new Path2D();
+      let started = false;
+      const dt = (tMax - tMin) / numSamples;
+      const scope = Object.assign({}, it.scopeValues);
+
+      for (let i = 0; i <= numSamples; i++) {
+        const tVal = tMin + i * dt;
+        scope[curVar] = tVal;
+        try {
+          const pt = it.fn.call(it, scope);
+          if (Array.isArray(pt) && isFinite(pt[0]) && isFinite(pt[1])) {
+            const sx = cx + pt[0] * px;
+            const sy = cy - pt[1] * px;
+            if (sx >= minX && sx <= maxX && sy >= minY && sy <= maxY) {
+              if (!started) {
+                path.moveTo(sx, sy);
+                started = true;
+              } else {
+                path.lineTo(sx, sy);
+              }
+              continue;
+            }
+          }
+        } catch (e) {}
+        started = false;
+      }
+
+      ctx.save();
+      // 1. Vệt sáng neon mờ phía dưới
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = alpha * 0.22;
+      ctx.lineWidth = 5.0;
+      ctx.setLineDash([]);
+      ctx.stroke(path);
+
+      // 2. Đường nét đứt toán học chính xác
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([6, 4]);
+      ctx.stroke(path);
+      ctx.restore();
+    });
+  }
+
+  // Vẽ vùng diện tích 2D khi vector có từ 2 biến trở lên
+  function drawParametricArea2D(ctx, it, gridInfo, baseAlpha) {
+    if (!gridInfo || !it.vars || it.vars.length < 2 || !it.showAreaFill) return;
+    const { cx, cy, px } = gridInfo;
+    const color = it.surfaceColor || it.colorCss || "#0090ff";
+    const alpha = typeof baseAlpha === "number" ? baseAlpha : 1;
+
+    const isInteracting = it.isAnimating || (window.App && window.App._isDraggingSlider);
+    const N = isInteracting ? 40 : 64;
+    const M = isInteracting ? 10 : 16;
+    const v0 = it.vars[0];
+    const v1 = it.vars[1];
+
+    let uMin, uMax, vMin, vMax;
+    if (it.paramInfinity) {
+      const wSpan = Math.max(Math.abs(cx / px), Math.abs((ctx.canvas.width - cx) / px), 10);
+      const hSpan = Math.max(Math.abs(cy / px), Math.abs((ctx.canvas.height - cy) / px), 10);
+      const bound = Math.max(wSpan, hSpan) * 1.35;
+      uMin = -bound;
+      uMax = bound;
+      vMin = -bound;
+      vMax = bound;
+    } else {
+      uMin = Number(it.varRanges?.[v0]?.min ?? it.paramMin ?? -5.0);
+      uMax = Number(it.varRanges?.[v0]?.max ?? it.paramMax ?? 5.0);
+      vMin = Number(it.varRanges?.[v1]?.min ?? it.surfaceMin ?? -5.0);
+      vMax = Number(it.varRanges?.[v1]?.max ?? it.surfaceMax ?? 5.0);
+    }
+
+    const du = (uMax - uMin) / N;
+    const dv = (vMax - vMin) / M;
+    const baseScope = Object.assign({}, it.scopeValues);
+    const evalFn = (u, v) => {
+      baseScope[v0] = u;
+      baseScope[v1] = v;
+      return it.fn.call(it, baseScope);
+    };
+
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+      pts[i] = [];
+      const u = uMin + i * du;
+      for (let j = 0; j <= M; j++) {
+        const v = vMin + j * dv;
+        try {
+          const pt = evalFn(u, v);
+          if (Array.isArray(pt) && isFinite(pt[0]) && isFinite(pt[1])) {
+            pts[i][j] = [cx + pt[0] * px, cy - pt[1] * px];
+          } else {
+            pts[i][j] = null;
+          }
+        } catch (e) {
+          pts[i][j] = null;
+        }
+      }
+    }
+
+    ctx.save();
+
+    // 1. Tô màu nền vùng diện tích theo độ mờ tùy chỉnh (phẳng mịn, không lằn kẻ đan xen)
+    const sOpacity = typeof it.surfaceOpacity === "number" ? it.surfaceOpacity : 0.25;
+    ctx.fillStyle = color;
+    ctx.globalAlpha = alpha * sOpacity;
+    for (let i = 0; i < N; i++) {
+      for (let j = 0; j < M; j++) {
+        const p00 = pts[i][j];
+        const p10 = pts[i + 1][j];
+        const p11 = pts[i + 1][j + 1];
+        const p01 = pts[i][j + 1];
+        if (p00 && p10 && p11 && p01) {
+          ctx.beginPath();
+          ctx.moveTo(p00[0], p00[1]);
+          ctx.lineTo(p10[0], p10[1]);
+          ctx.lineTo(p11[0], p11[1]);
+          ctx.lineTo(p01[0], p01[1]);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+    }
+
+    ctx.restore();
+  }
+
+  // --- KẾT XUẤT LƯỚI VECTOR TRANH THÍCH ỨNG 2D (ADAPTIVE DELAUNAY MESH) ---
+  function drawImageMesh2D(ctx, it, gridInfo) {
+    if (!it.worldPoints || !it.triangles || !gridInfo) return;
+    const { cx, cy, px } = gridInfo;
+    const pts = it.worldPoints;
+    const tris = it.triangles;
+    const cols = it.triangleColors || [];
+    const showWireframe = !!it.showWireframe;
+    const alpha = typeof it.alpha === "number" ? Math.max(0, Math.min(1, it.alpha)) : 1.0;
+    const isDark = (window.App && App.theme === "dark");
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    const numTriangles = Math.floor(tris.length / 3);
+    for (let t = 0; t < numTriangles; t++) {
+      const i0 = tris[t * 3];
+      const i1 = tris[t * 3 + 1];
+      const i2 = tris[t * 3 + 2];
+
+      const p0 = pts[i0];
+      const p1 = pts[i1];
+      const p2 = pts[i2];
+      if (!p0 || !p1 || !p2) continue;
+
+      const x0 = cx + p0[0] * px;
+      const y0 = cy - p0[1] * px;
+      const x1 = cx + p1[0] * px;
+      const y1 = cy - p1[1] * px;
+      const x2 = cx + p2[0] * px;
+      const y2 = cy - p2[1] * px;
+
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.closePath();
+
+      ctx.fillStyle = cols[t] || "#888888";
+      ctx.fill();
+
+      if (showWireframe) {
+        ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.25)";
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      } else {
+        // Nối liền các mép tam giác khử khe hở răng cưa
+        ctx.strokeStyle = cols[t] || "#888888";
+        ctx.lineWidth = 0.35;
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  }
+
+  // Vòng lặp vẽ chính
   Vec2D.draw2DAllVectors = function () {
     const App = window.App || {};
     if (Vec2D._animLoopId) {
@@ -761,6 +999,12 @@
     list.sort((a, b) => (a.focus ? 1 : 0) - (b.focus ? 1 : 0)); // Focus vẽ sau
 
     for (const it of list) {
+      // Nếu là tranh lưới vector
+      if (it.isImageMesh) {
+        drawImageMesh2D(ctx2d, it, Vec2D.gridInfo2D);
+        continue;
+      }
+
       // Nếu LinearTransform đang chạy và có danh sách targetVectors:
       if (isLT && App.LinearTransform.hasTargetVectors?.()) {
         if (App.LinearTransform.isVectorSelected?.(it.id)) {
@@ -776,14 +1020,27 @@
         // Vector không tham gia biến đổi: giữ nguyên vị trí ban đầu và làm mờ 0.25 để đối chiếu không gian
         alpha *= 0.25;
       }
-      draw2DVectorSingle(
-        v2,
-        it.colorCss,
-        !!it.focus,
-        alpha,
-        pulseFactor,
-        [0, 0],
-      );
+
+      // Vẽ vùng diện tích 2D nếu vector có từ 2 biến trở lên (chỉ bật khi người dùng chọn hiển thị)
+      if (it.isParametric && it.vars && it.vars.length >= 2 && !!it.showAreaFill) {
+        drawParametricArea2D(ctx2d, it, Vec2D.gridInfo2D, alpha);
+      }
+
+      // Vẽ vệt quỹ đạo đường cong cho vector tham số
+      if (it.isParametric && typeof it.fn === "function" && it.showTrajectory !== false) {
+        drawParametricTrajectory2D(ctx2d, it, Vec2D.gridInfo2D, alpha);
+      }
+
+      if (it.showArrow !== false) {
+        draw2DVectorSingle(
+          v2,
+          it.colorCss,
+          !!it.focus,
+          alpha,
+          pulseFactor,
+          [0, 0],
+        );
+      }
     }
     if (App.tempGhosts && Array.isArray(App.tempGhosts)) {
       for (const g of App.tempGhosts) {
@@ -829,6 +1086,15 @@
             g.isDashed      // [THÊM] Truyền cờ nét đứt
           );
         }
+      }
+    }
+
+    // Custom drawing hook for topic modules (e.g. Conic curves, parabolas, parametric traces)
+    if (typeof App.custom2DDrawHook === "function" && Vec2D.gridInfo2D) {
+      try {
+        App.custom2DDrawHook(ctx2d, Vec2D.gridInfo2D, getLogicalSize());
+      } catch (err) {
+        console.error("Error in custom2DDrawHook:", err);
       }
     }
 

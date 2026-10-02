@@ -593,4 +593,1396 @@ body.dark-theme .hud-dropdown-menu {
   padding: 8px 10px;
 }
 
+/* =========================================================================
+   1. LIVE KATEX PREVIEW BOX (GEOGEBRA & DESMOS HYBRID INPUT)
+   ========================================================================= */
+.vec-preview-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: var(--bg-hover, #f4f6f8);
+  border: 1px solid var(--border-subtle, #e6e8eb);
+  border-radius: 2px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vec-preview-box.is-zoomed {
+  padding: 12px 14px;
+  background: var(--bg-card, #ffffff);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+:root.dark .vec-preview-box,
+body.dark .vec-preview-box,
+body.dark-theme .vec-preview-box {
+  background: var(--slate-2, #18191b);
+  border-color: var(--border-subtle, #2b3036);
+}
+
+:root.dark .vec-preview-box.is-zoomed,
+body.dark .vec-preview-box.is-zoomed,
+body.dark-theme .vec-preview-box.is-zoomed {
+  background: var(--slate-3, #212225);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.vec-preview-label {
+  color: var(--muted, #687076);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+
+:root.dark .vec-preview-label,
+body.dark .vec-preview-label,
+body.dark-theme .vec-preview-label {
+  color: var(--muted, #9ba1a6);
+}
+
+.vec-preview-katex {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  color: var(--fg, #11181c);
+  font-size: 14.5px;
+  line-height: 1.4;
+}
+
+.vec-preview-box.is-zoomed .vec-preview-katex {
+  font-size: 20px;
+}
+
+:root.dark .vec-preview-katex,
+body.dark .vec-preview-katex,
+body.dark-theme .vec-preview-katex {
+  color: #ffffff;
+}
+
+/* Nút kính lúp phóng to xem chi tiết công thức */
+.vec-preview-zoom-btn {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  border-radius: 2px;
+  color: var(--muted, #687076);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.vec-preview-zoom-btn:hover {
+  border-color: var(--primary-base, #0090ff);
+  color: var(--primary-base, #0090ff);
+}
+
+:root.dark .vec-preview-zoom-btn,
+body.dark .vec-preview-zoom-btn,
+body.dark-theme .vec-preview-zoom-btn {
+  border-color: var(--border-subtle, #2b3036);
+  color: var(--muted, #9ba1a6);
+}
+
+/* KHÓA SÀN KÍCH THƯỚC TỐI THIỂU CHO SỐ MŨ LỒNG NHAU (CHỐNG BIẾN THÀNH CHẤM LI TI) */
+.vec-preview-katex .katex .scriptscriptstyle,
+.vec-item-wrapper .katex .scriptscriptstyle,
+.vec-preview-katex .katex .sizing.reset-size1.size1,
+.vec-item-wrapper .katex .sizing.reset-size1.size1 {
+  font-size: max(9.5px, 0.75em) !important;
+}
+
+.vec-preview-katex .katex .scriptstyle,
+.vec-item-wrapper .katex .scriptstyle {
+  font-size: max(11px, 0.84em) !important;
+}
+
+/* =========================================================================
+   2. PER-VECTOR PARAMETRIC CONTROLLER (TACH BACH TUNG VECTOR)
+   ========================================================================= */
+.vec-item {
+  flex-wrap: wrap !important;
+}
+
+.vec-param-controller {
+  width: 100%;
+  flex-basis: 100%;
+  box-sizing: border-box;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle, #e6e8eb);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+:root.dark .vec-param-controller,
+body.dark .vec-param-controller,
+body.dark-theme .vec-param-controller {
+  border-top-color: var(--border-subtle, #2b3036);
+}
+
+.vec-param-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vec-param-val-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.vec-param-var-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary-base, #0090ff);
+  user-select: none;
+}
+
+.vec-param-val-inp {
+  width: 56px;
+  min-width: 52px;
+  height: 22px;
+  box-sizing: border-box;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  padding: 0 4px;
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  border-radius: 2px;
+  background: var(--bg-card, #ffffff);
+  color: var(--fg, #11181c);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -moz-appearance: textfield;
+}
+
+.vec-param-multi-box {
+  display: none;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+
+.vec-multi-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 2px;
+  background: var(--bg-subtle, #f1f3f5);
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  color: var(--primary-base, #0090ff);
+  white-space: nowrap;
+}
+
+:root.dark .vec-multi-badge,
+body.dark .vec-multi-badge,
+body.dark-theme .vec-multi-badge {
+  background: var(--slate-3, #23272c);
+  border-color: var(--border-subtle, #2b3036);
+  color: var(--primary-base, #0090ff);
+}
+
+.vec-param-val-inp::-webkit-outer-spin-button,
+.vec-param-val-inp::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.vec-param-val-inp:focus {
+  border-color: var(--primary-base, #0090ff);
+  box-shadow: 0 0 0 1px var(--primary-base, #0090ff);
+}
+
+:root.dark .vec-param-val-inp,
+body.dark .vec-param-val-inp,
+body.dark-theme .vec-param-val-inp {
+  background: var(--slate-2, #18191b);
+  border-color: var(--border-subtle, #2b3036);
+  color: var(--fg, #eceef0);
+}
+
+.vec-param-btn {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  border-radius: 2px;
+  color: var(--fg, #11181c);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.vec-param-btn i {
+  pointer-events: none;
+}
+
+:root.dark .vec-param-btn,
+body.dark .vec-param-btn,
+body.dark-theme .vec-param-btn {
+  border-color: var(--border-subtle, #2b3036);
+  color: var(--fg, #eceef0);
+}
+
+.vec-param-btn:hover {
+  border-color: var(--primary-base, #0090ff);
+  color: var(--primary-base, #0090ff);
+}
+
+.vec-param-btn.is-active {
+  background: var(--primary-base, #0090ff);
+  border-color: var(--primary-base, #0090ff);
+  color: #ffffff;
+}
+
+.vec-param-slider {
+  flex: 1;
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  accent-color: var(--primary-base, #0090ff);
+  cursor: pointer;
+  margin: 0 !important;
+  height: 14px;
+}
+
+/* =========================================================================
+   3. SETTINGS POPOVER (3 CHẤM CÀI ĐẶT THAM SỐ)
+   ========================================================================= */
+.vec-param-popover {
+  position: fixed;
+  z-index: 999999;
+  width: 290px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  border-radius: 4px;
+  padding: 10px 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+/* Thanh điều hướng Tab trong Popover */
+.vec-pop-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-subtle, #f1f3f5);
+  border-radius: 3px;
+  padding: 2px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-subtle, #dfe3e6);
+}
+
+:root.dark .vec-pop-tabs,
+body.dark .vec-pop-tabs,
+body.dark-theme .vec-pop-tabs {
+  background: var(--slate-2, #18191b);
+  border-color: var(--border-subtle, #2b3036);
+}
+
+.vec-pop-tab-btn {
+  flex: 1;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--muted, #687076);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.vec-pop-tab-btn i {
+  font-size: 13px;
+}
+
+.vec-pop-tab-btn:hover {
+  color: var(--fg, #11181c);
+}
+
+:root.dark .vec-pop-tab-btn:hover,
+body.dark .vec-pop-tab-btn:hover {
+  color: #eceef0;
+}
+
+.vec-pop-tab-btn.active {
+  background: var(--bg-card, #ffffff);
+  color: var(--primary-base, #0090ff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+:root.dark .vec-pop-tab-btn.active,
+body.dark .vec-pop-tab-btn.active {
+  background: var(--slate-4, #2e333a);
+  color: #ffffff;
+}
+
+.vec-pop-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Thẻ chọn biến hoạt ảnh độc lập (Chips) */
+.vec-var-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vec-var-chip {
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 2px;
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  background: var(--bg-base, #ffffff);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted, #687076);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+:root.dark .vec-var-chip,
+body.dark .vec-var-chip,
+body.dark-theme .vec-var-chip {
+  background: var(--slate-2, #18191b);
+  border-color: var(--border-subtle, #2b3036);
+  color: var(--muted, #9ba1a6);
+}
+
+.vec-var-chip.active {
+  border-color: var(--primary-base, #0090ff);
+  background: rgba(0, 144, 255, 0.1);
+  color: var(--primary-base, #0090ff);
+}
+
+:root.dark .vec-var-chip.active,
+body.dark .vec-var-chip.active {
+  background: rgba(0, 144, 255, 0.18);
+  border-color: var(--primary-base, #0090ff);
+  color: #38bdf8;
+}
+
+.vec-var-chip i {
+  font-size: 11px;
+}
+
+:root.dark .vec-param-popover,
+body.dark .vec-param-popover,
+body.dark-theme .vec-param-popover {
+  background: var(--slate-2, #18191b);
+  border-color: var(--border-subtle, #33383f);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+}
+
+.vec-param-popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle, #e6e8eb);
+}
+
+:root.dark .vec-param-popover-header,
+body.dark .vec-param-popover-header,
+body.dark-theme .vec-param-popover-header {
+  border-bottom-color: var(--border-subtle, #2b3036);
+}
+
+.vec-param-popover-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--fg, #11181c);
+}
+
+:root.dark .vec-param-popover-title,
+body.dark .vec-param-popover-title,
+body.dark-theme .vec-param-popover-title {
+  color: #eceef0;
+}
+
+.vec-param-popover-close {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  color: var(--muted, #687076);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.vec-param-popover-close:hover {
+  color: var(--fg, #11181c);
+  background: var(--bg-hover, rgba(0, 0, 0, 0.05));
+}
+
+:root.dark .vec-param-popover-close:hover,
+body.dark .vec-param-popover-close:hover,
+body.dark-theme .vec-param-popover-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.vec-param-section {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vec-param-section:last-child {
+  margin-bottom: 0;
+}
+
+.vec-param-sec-title {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted, #687076);
+  letter-spacing: 0.6px;
+  margin: 0;
+}
+
+:root.dark .vec-param-sec-title,
+body.dark .vec-param-sec-title,
+body.dark-theme .vec-param-sec-title {
+  color: var(--muted, #9ba1a6);
+}
+
+.vec-param-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vec-param-input-group {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  border-radius: 3px;
+  background: var(--bg-base, #ffffff);
+  overflow: hidden;
+  height: 26px;
+  box-sizing: border-box;
+}
+
+:root.dark .vec-param-input-group,
+body.dark .vec-param-input-group,
+body.dark-theme .vec-param-input-group {
+  background: var(--slate-1, #111113);
+  border-color: var(--border-subtle, #2b3036);
+}
+
+.vec-param-addon {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 0 6px;
+  color: var(--muted, #687076);
+  background: var(--bg-subtle, #f1f3f5);
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  border-right: 1px solid var(--border-subtle, #dfe3e6);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+:root.dark .vec-param-addon,
+body.dark .vec-param-addon,
+body.dark-theme .vec-param-addon {
+  background: var(--slate-3, #23272c);
+  border-right-color: var(--border-subtle, #2b3036);
+  color: var(--muted, #9ba1a6);
+}
+
+.vec-param-num-inp {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  padding: 0 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--fg, #11181c);
+  text-align: right;
+  outline: none;
+  box-sizing: border-box;
+}
+
+:root.dark .vec-param-num-inp,
+body.dark .vec-param-num-inp,
+body.dark-theme .vec-param-num-inp {
+  color: #ffffff;
+}
+
+.vec-param-input-group:focus-within {
+  border-color: var(--primary-base, #0090ff);
+  box-shadow: 0 0 0 1px var(--primary-base, #0090ff);
+}
+
+.vec-param-inf-btn {
+  width: 100%;
+  height: 26px;
+  background: transparent;
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  border-radius: 3px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg, #11181c);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+:root.dark .vec-param-inf-btn,
+body.dark .vec-param-inf-btn,
+body.dark-theme .vec-param-inf-btn {
+  border-color: var(--border-subtle, #2b3036);
+  color: var(--fg, #eceef0);
+}
+
+.vec-param-inf-btn:hover {
+  border-color: var(--primary-base, #0090ff);
+  color: var(--primary-base, #0090ff);
+}
+
+.vec-param-inf-btn.active {
+  background: rgba(0, 144, 255, 0.12);
+  border-color: var(--primary-base, #0090ff);
+  color: var(--primary-base, #0090ff);
+  font-weight: 600;
+}
+
+.vec-param-dur-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.vec-param-row-label {
+  font-size: 11px;
+  color: var(--fg, #11181c);
+  font-weight: 500;
+}
+
+:root.dark .vec-param-row-label,
+body.dark .vec-param-row-label,
+body.dark-theme .vec-param-row-label {
+  color: var(--fg, #eceef0);
+}
+
+.vec-param-dur-group {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.vec-param-dur-group .vec-param-addon {
+  border-left: 1px solid var(--border-subtle, #dfe3e6);
+  border-right: none;
+  font-size: 10px;
+}
+
+:root.dark .vec-param-dur-group .vec-param-addon,
+body.dark .vec-param-dur-group .vec-param-addon,
+body.dark-theme .vec-param-dur-group .vec-param-addon {
+  border-left-color: var(--border-subtle, #2b3036);
+}
+
+.vec-param-preset-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.vec-param-preset-btn {
+  flex: 1;
+  height: 22px;
+  background: var(--bg-hover, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  border-radius: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted, #687076);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:root.dark .vec-param-preset-btn,
+body.dark .vec-param-preset-btn,
+body.dark-theme .vec-param-preset-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-subtle, #2b3036);
+  color: var(--muted, #9ba1a6);
+}
+
+.vec-param-preset-btn:hover {
+  background: rgba(0, 144, 255, 0.1);
+  border-color: var(--primary-base, #0090ff);
+  color: var(--primary-base, #0090ff);
+}
+
+.vec-param-trace-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--fg, #11181c);
+  cursor: pointer;
+  user-select: none;
+  margin: 0;
+  white-space: nowrap;
+}
+
+:root.dark .vec-param-trace-label,
+body.dark .vec-param-trace-label {
+  color: var(--fg, #eceef0);
+}
+
+.vec-param-trace-label input {
+  accent-color: var(--primary-base, #0090ff);
+  cursor: pointer;
+  margin: 0;
+  width: 14px;
+  height: 14px;
+}
+
+/* Kiểu dáng dải biến độc lập */
+.vec-param-var-range-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 6px;
+}
+
+.vec-param-var-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--fg, #11181c);
+  width: 52px;
+  flex-shrink: 0;
+}
+
+:root.dark .vec-param-var-tag,
+body.dark .vec-param-var-tag,
+body.dark-theme .vec-param-var-tag {
+  color: #eceef0;
+}
+
+/* Kiểu dáng chọn chế độ chạy 1 biến / đa biến */
+.vec-param-mode-pill-group {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-subtle, #f1f3f5);
+  padding: 2px;
+  border-radius: 3px;
+  border: 1px solid var(--border-subtle, #dfe3e6);
+}
+
+:root.dark .vec-param-mode-pill-group,
+body.dark .vec-param-mode-pill-group,
+body.dark-theme .vec-param-mode-pill-group {
+  background: var(--slate-2, #18191b);
+  border-color: var(--border-subtle, #2b3036);
+}
+
+.vec-param-mode-pill {
+  flex: 1;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--muted, #687076);
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vec-param-mode-pill.active {
+  background: var(--bg-card, #ffffff);
+  color: var(--primary-base, #0090ff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+:root.dark .vec-param-mode-pill.active,
+body.dark .vec-param-mode-pill.active,
+body.dark-theme .vec-param-mode-pill.active {
+  background: var(--slate-4, #2e333a);
+  color: #ffffff;
+}
+
+/* Kiểu dáng ô nhập số nguyên dương cho opacity */
+.vec-param-opacity-inp {
+  width: 44px;
+  height: 22px;
+  box-sizing: border-box;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  border-radius: 2px;
+  background: var(--bg-base, #ffffff);
+  color: var(--fg, #11181c);
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.vec-param-opacity-inp::-webkit-outer-spin-button,
+.vec-param-opacity-inp::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+:root.dark .vec-param-opacity-inp,
+body.dark .vec-param-opacity-inp,
+body.dark-theme .vec-param-opacity-inp {
+  background: var(--slate-1, #111113);
+  border-color: var(--border-subtle, #2b3036);
+  color: #eceef0;
+}
+
+/* Kiểu dáng bộ chọn màu phổ (Color picker) */
+.vec-color-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.vec-color-picker-tool {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vec-color-input-native {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  border-radius: 2px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.vec-color-input-native::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.vec-color-input-native::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+.vec-color-hex-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg, #11181c);
+  width: 62px;
+}
+
+:root.dark .vec-color-hex-text,
+body.dark .vec-color-hex-text,
+body.dark-theme .vec-color-hex-text {
+  color: #eceef0;
+}
+
+/* ==========================================
+   Plain Text Vector Input (GeoGebra Style)
+   ========================================== */
+.vec-text-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 48px 10px 14px;
+  font-family: var(--font-mono, "JetBrains Mono", Consolas, "Courier New", monospace);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-main, #11181c);
+  background-color: var(--bg-base, #ffffff);
+  border: 1px solid var(--border-strong, #dfe3e6);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vec-text-input::placeholder {
+  color: var(--muted, #889096);
+  opacity: 0.8;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 13px;
+}
+
+.vec-text-input:focus {
+  border-color: var(--primary-base, #0090ff);
+  box-shadow: 0 0 0 3px rgba(0, 144, 255, 0.15);
+}
+
+body.dark .vec-text-input,
+body.dark-theme .vec-text-input,
+:root.dark .vec-text-input {
+  background-color: var(--slate-1, #111113);
+  border-color: var(--border-strong, #3e444c);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark .vec-text-input::placeholder,
+body.dark-theme .vec-text-input::placeholder,
+:root.dark .vec-text-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+body.dark .vec-text-input:focus,
+body.dark-theme .vec-text-input:focus,
+:root.dark .vec-text-input:focus {
+  border-color: var(--primary-hover, #3b9eff);
+  box-shadow: 0 0 0 3px rgba(0, 144, 255, 0.25);
+}
+
+/* =========================================================================
+   PARAMETRIC MATRIX CONTROLLER STYLES (MÔ PHỎNG & ĐIỀU KHIỂN MA TRẬN ĐA BIẾN)
+   ========================================================================= */
+.mat-param-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: rgba(0, 144, 255, 0.1);
+  color: var(--primary-base, #0090ff);
+  border: 1px solid rgba(0, 144, 255, 0.25);
+  margin-left: 4px;
+  letter-spacing: 0.2px;
+}
+:root.dark .mat-param-badge,
+body.dark .mat-param-badge {
+  background: rgba(0, 144, 255, 0.16);
+  border-color: rgba(0, 144, 255, 0.35);
+  color: #70b8ff;
+}
+
+.mat-param-controller {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle, #e6e8eb);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:root.dark .mat-param-controller,
+body.dark .mat-param-controller {
+  border-top-color: var(--border-subtle, #2b3036);
+}
+
+.mat-param-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mat-param-val-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.mat-param-var-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary-base, #0090ff);
+  user-select: none;
+}
+
+.mat-param-val-inp {
+  width: 50px;
+  height: 22px;
+  box-sizing: border-box;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  padding: 0 2px;
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  border-radius: 2px;
+  background: var(--bg-card, #ffffff);
+  color: var(--fg, #11181c);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -moz-appearance: textfield;
+}
+.mat-param-val-inp::-webkit-outer-spin-button,
+.mat-param-val-inp::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.mat-param-val-inp:focus {
+  border-color: var(--primary-base, #0090ff);
+  box-shadow: 0 0 0 1px var(--primary-base, #0090ff);
+}
+:root.dark .mat-param-val-inp,
+body.dark .mat-param-val-inp {
+  background: var(--slate-2, #18191b);
+  border-color: var(--border-subtle, #2b3036);
+  color: var(--fg, #eceef0);
+}
+
+.mat-param-btn {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  border-radius: 2px;
+  color: var(--fg, #11181c);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+.mat-param-btn i {
+  pointer-events: none;
+}
+:root.dark .mat-param-btn,
+body.dark .mat-param-btn {
+  border-color: var(--border-subtle, #2b3036);
+  color: var(--fg, #eceef0);
+}
+.mat-param-btn:hover {
+  border-color: var(--primary-base, #0090ff);
+  color: var(--primary-base, #0090ff);
+}
+.mat-param-btn.is-active {
+  background: var(--primary-base, #0090ff);
+  border-color: var(--primary-base, #0090ff);
+  color: #ffffff;
+}
+
+.mat-param-slider {
+  flex: 1;
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  accent-color: var(--primary-base, #0090ff);
+  cursor: pointer;
+  margin: 0 !important;
+  height: 14px;
+}
+
+.mat-param-popover {
+  position: fixed;
+  z-index: 999999;
+  width: 275px;
+  box-sizing: border-box;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  border-radius: 4px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:root.dark .mat-param-popover,
+body.dark .mat-param-popover {
+  background: var(--slate-2, #18191b);
+  border-color: var(--border-subtle, #33383f);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+}
+
+.mixed-matrix-param-wrap {
+  background: var(--bg-hover, rgba(0, 0, 0, 0.02));
+  border: 1px solid var(--border-subtle, #dfe3e6);
+  border-radius: 2px;
+  padding: 8px 10px;
+  margin-top: 4px;
+}
+:root.dark .mixed-matrix-param-wrap,
+body.dark .mixed-matrix-param-wrap {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--border-subtle, #2b3036);
+}
+
+.mixed-param-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.mixed-param-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted, #687076);
+  letter-spacing: 0.5px;
+}
+:root.dark .mixed-param-title,
+body.dark .mixed-param-title {
+  color: var(--muted, #9ba1a6);
+}
+
+/* =========================================================================
+   VECTORIA IMAGE TO VECTOR MESH STYLES
+   ========================================================================= */
+
+.btn-image-vector {
+  width: 100%;
+  margin-top: 8px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 2px;
+  border: 1px solid var(--border-subtle, #33383f);
+  background: var(--bg-card, #18191b);
+  color: var(--text-main, #eee);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-image-vector:hover {
+  border-color: var(--primary-base, #0090ff);
+  color: var(--primary-base, #0090ff);
+  background: var(--primary-subtle, rgba(0, 144, 255, 0.08));
+}
+
+.vec-item-image-mesh {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.vec-mesh-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 2px;
+  background: var(--primary-subtle, rgba(0, 144, 255, 0.12));
+  color: var(--primary-base, #0090ff);
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.vec-mesh-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vec-mesh-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-main, #eee);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vec-mesh-sub {
+  font-size: 11px;
+  color: var(--text-muted, #888);
+  font-family: monospace;
+}
+
+.vec-btn-wireframe.active {
+  color: var(--primary-base, #0090ff) !important;
+  background: var(--primary-subtle, rgba(0, 144, 255, 0.15)) !important;
+}
+
+.vec-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.vec-modal-card {
+  width: 480px;
+  max-width: 100%;
+  background: var(--bg-card, #18191b);
+  border: 1px solid var(--border-subtle, #33383f);
+  border-radius: 2px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+.vec-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle, #2b3036);
+  background: var(--bg-base, #111113);
+}
+
+.vec-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-main, #eee);
+}
+
+.vec-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #888);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vec-modal-close:hover {
+  color: var(--text-main, #eee);
+  background: var(--bg-hover, rgba(255, 255, 255, 0.08));
+}
+
+.vec-modal-body {
+  padding: 16px;
+}
+
+.vec-dropzone {
+  border: 1.5px dashed var(--border-strong, #444c56);
+  border-radius: 2px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--bg-hover, rgba(255, 255, 255, 0.02));
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.vec-dropzone:hover,
+.vec-dropzone.drag-hover {
+  border-color: var(--primary-base, #0090ff);
+  background: var(--primary-subtle, rgba(0, 144, 255, 0.05));
+}
+
+.vec-drop-icon {
+  font-size: 32px;
+  color: var(--primary-base, #0090ff);
+  margin-bottom: 8px;
+}
+
+.vec-drop-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main, #eee);
+  margin-bottom: 4px;
+}
+
+.vec-drop-sub {
+  font-size: 11.5px;
+  color: var(--text-muted, #888);
+}
+
+.vec-drop-preview {
+  max-height: 180px;
+  max-width: 100%;
+  object-fit: contain;
+  margin: 12px auto 0;
+  border: 1px solid var(--border-subtle, #33383f);
+  border-radius: 2px;
+}
+
+.vec-modal-opts {
+  background: var(--bg-base, #111113);
+  border: 1px solid var(--border-subtle, #2b3036);
+  border-radius: 2px;
+  padding: 12px;
+}
+
+.vec-opt-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vec-opt-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted, #9ba1a6);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.vec-opt-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.vec-opt-pill {
+  flex: 1;
+  min-width: 110px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg-card, #1c1d20);
+  border: 1px solid var(--border-subtle, #33383f);
+  border-radius: 2px;
+  color: var(--text-muted, #888);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.vec-opt-pill:hover {
+  border-color: var(--border-strong, #555);
+  color: var(--text-main, #eee);
+}
+
+.vec-opt-pill.active {
+  border-color: var(--primary-base, #0090ff);
+  color: #ffffff;
+  background: var(--primary-base, #0090ff);
+}
+
+.vec-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-subtle, #2b3036);
+  background: var(--bg-base, #111113);
+}
+
+.vec-btn-subtle {
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid var(--border-subtle, #33383f);
+  border-radius: 2px;
+  color: var(--text-muted, #888);
+  cursor: pointer;
+}
+
+.vec-btn-subtle:hover {
+  color: var(--text-main, #eee);
+  background: var(--bg-hover, rgba(255, 255, 255, 0.06));
+}
+
+.vec-btn-primary {
+  padding: 7px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: var(--primary-base, #0090ff);
+  border: 1px solid var(--primary-base, #0090ff);
+  border-radius: 2px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vec-btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover, #0077e6);
+  border-color: var(--primary-hover, #0077e6);
+}
+
+.vec-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 

@@ -64,6 +64,36 @@
       }
     },
 
+    updateLiveMatrix: function (newMatrix) {
+      if (!this.active || !Array.isArray(newMatrix) || newMatrix.length < 2) return;
+      const rows = newMatrix.length;
+      const cols = newMatrix[0].length;
+      if (this.dim === 2 && rows >= 2 && cols >= 2) {
+        this.matrix = [
+          [Number(newMatrix[0][0]) || 0, Number(newMatrix[0][1]) || 0],
+          [Number(newMatrix[1][0]) || 0, Number(newMatrix[1][1]) || 0],
+        ];
+      } else if (this.dim === 3 && rows >= 3 && cols >= 3) {
+        this.matrix = [
+          [Number(newMatrix[0][0]) || 0, Number(newMatrix[0][1]) || 0, Number(newMatrix[0][2]) || 0],
+          [Number(newMatrix[1][0]) || 0, Number(newMatrix[1][1]) || 0, Number(newMatrix[1][2]) || 0],
+          [Number(newMatrix[2][0]) || 0, Number(newMatrix[2][1]) || 0, Number(newMatrix[2][2]) || 0],
+        ];
+      }
+      if (this.dim === 2 && window.Vec2D && typeof window.Vec2D.draw2DAllVectors === "function") {
+        window.Vec2D.draw2DAllVectors();
+      } else if (this.dim === 3 && window.Vec3D) {
+        const M = this.getInterpMatrix(this.t);
+        if (typeof window.Vec3D.updateTransform3D === "function") {
+          window.Vec3D.updateTransform3D(this.t, M);
+        }
+        if (typeof window.Vec3D.renderOnce === "function") {
+          window.Vec3D.renderOnce();
+        }
+      }
+      this.updateHUD(null, false);
+    },
+
     // Thư viện mẫu biến đổi tuyến tính kinh điển
     presets: {
       identity: {

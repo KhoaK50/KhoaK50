@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { User, Lock, KeyRound, UserPlus, LogIn } from 'lucide-react';
 import logo from '../assets/logo.png';
+import { API_BASE_URL } from '../config/api';
 
 export default function Login({ onLogin }) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -25,8 +26,8 @@ export default function Login({ onLogin }) {
       setSuccessMsg('');
       
       const endpoint = isRegistering 
-        ? (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000') + '/api/admin/register'
-        : (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000') + '/api/admin/login';
+        ? `${API_BASE_URL}/api/admin/register`
+        : `${API_BASE_URL}/api/admin/login`;
 
       const res = await fetch(endpoint, {
         method: 'POST',

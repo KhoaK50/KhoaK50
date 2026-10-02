@@ -6,8 +6,9 @@ import {
 import { 
   PieChart, Pie, ScatterChart, Scatter, Cell, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine
 } from 'recharts';
+import { API_BASE_URL } from '../config/api';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
+const API = API_BASE_URL;
 
 const EXT_ICONS = {
   '.py': { icon: <Code2 size={14} />, color: '#3b82f6', label: 'Python' },
@@ -48,6 +49,12 @@ export default function Dashboard() {
       const res = await fetch(`${API}/api/admin/metrics/pedagogical`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (res.status === 401) {
+        localStorage.removeItem('adminAuth');
+        localStorage.removeItem('adminUsername');
+        window.dispatchEvent(new CustomEvent('admin:unauthorized'));
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setPedagogicalData(data);
@@ -66,6 +73,12 @@ export default function Dashboard() {
       const res = await fetch(`${API}/api/admin/metrics/codebase`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (res.status === 401) {
+        localStorage.removeItem('adminAuth');
+        localStorage.removeItem('adminUsername');
+        window.dispatchEvent(new CustomEvent('admin:unauthorized'));
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setCodeMetrics(data);

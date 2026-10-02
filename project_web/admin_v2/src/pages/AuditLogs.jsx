@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ShieldAlert, RefreshCw, Activity, TerminalSquare } from 'lucide-react';
-
+import { API_BASE_URL } from '../config/api';
 
 export default function AuditLogs() {
   const [logs, setLogs] = useState([]);
@@ -11,11 +11,17 @@ export default function AuditLogs() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminAuth');
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/admin/logs`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/logs`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+      if (res.status === 401) {
+        localStorage.removeItem('adminAuth');
+        localStorage.removeItem('adminUsername');
+        window.dispatchEvent(new CustomEvent('admin:unauthorized'));
+        return;
+      }
       if (!res.ok) throw new Error('Không thể tải nhật ký hoạt động. Bạn có đủ quyền không?');
       const data = await res.json();
       setLogs(data);

@@ -125,6 +125,16 @@
     const defaultBg = (window.App && App.theme === "dark") ? "#111113" : "#ffffff";
     Vec3D._scene.background = new THREE.Color(App.getCSS?.("--bg") || defaultBg);
 
+    // Hệ thống đèn chiếu sáng cho không gian 3D
+    const ambLight = new THREE.AmbientLight(0xffffff, 0.90);
+    Vec3D._scene.add(ambLight);
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.75);
+    dirLight1.position.set(30, 45, 50);
+    Vec3D._scene.add(dirLight1);
+    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.45);
+    dirLight2.position.set(-30, -45, -30);
+    Vec3D._scene.add(dirLight2);
+
     Vec3D._camera = new THREE.PerspectiveCamera(Vec3D.DEFAULT_FOV, Math.max(1e-6, (rect.width || 760) / (rect.height || 760)), 0.1, 1e12);
     Vec3D._camera.position.set(10, 10, 10);
     Vec3D._camera.up.set(0, 0, 1);
@@ -647,6 +657,8 @@
     const list = (App.vectorList || []).map((v) => [
       v.id ?? null,
       v.visible !== false ? 1 : 0,
+      v.isImageMesh ? 1 : 0,
+      v.showWireframe ? 1 : 0,
       ...toVec3(v.vec).map((val) => +val.toFixed(12)),
       v.focus ? 1 : 0,
       +(typeof v.alpha === "number" ? v.alpha : 1).toFixed(3),
@@ -877,7 +889,7 @@
       Vec3D._lastDistForVectors = dist;
     }
 
-    const targetPx = 80;
+    const targetPx = 110;
     const step = niceStep(targetPx / Math.max(1e-30, pxPerMath));
     Vec3D.S3D.stepUnit = step;
     const off = Vec3D.S3D.offset;
@@ -1096,6 +1108,50 @@
     if (!(hasA && hasB) || cur.length === 0) Vec3D.clearAngle();
   };
 
+  // --- KẾT XUẤT LƯỚI VECTOR TRANH THÍCH ỨNG 3D (DELAUNAY RELIEF MESH) ---
+  function drawImageMesh3D(it, u) {
+    if (!it.worldPoints || !it.triangles || !Vec3D._vectorsGroup) return;
+
+    const pts = it.worldPoints;
+    const tris = it.triangles;
+    const vCols = it.vertexColors;
+    const alpha = typeof it.alpha === "number" ? Math.max(0, Math.min(1, it.alpha)) : 1.0;
+    const showWireframe = !!it.showWireframe;
+
+    const positions = new Float32Array(pts.length * 3);
+    for (let i = 0; i < pts.length; i++) {
+      positions[i * 3] = pts[i][0] * u;
+      positions[i * 3 + 1] = pts[i][1] * u;
+      positions[i * 3 + 2] = (pts[i][2] || 0) * u;
+    }
+
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    if (vCols && vCols.length === pts.length * 3) {
+      geom.setAttribute("color", new THREE.BufferAttribute(vCols, 3));
+    }
+    geom.setIndex(new THREE.BufferAttribute(new Uint32Array(tris), 1));
+    geom.computeVertexNormals();
+
+    const mat = new THREE.MeshStandardMaterial({
+      vertexColors: !!(vCols && vCols.length === pts.length * 3),
+      roughness: 0.5,
+      metalness: 0.08,
+      side: THREE.DoubleSide,
+      transparent: alpha < 0.999,
+      opacity: alpha,
+      wireframe: showWireframe,
+    });
+
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData.isImageMesh = true;
+    mesh.userData.itemId = it.id;
+
+    Vec3D._vectorsGroup.add(mesh);
+  }
+
   Vec3D.draw3DAllVectors = function (opts = { frame: false }) {
     if (!Vec3D._mathGroup) {
       if (Vec3D.init3D) Vec3D.init3D();
@@ -1128,6 +1184,11 @@
     list.sort((a, b) => (a.focus ? 1 : 0) - (b.focus ? 1 : 0));
 
     for (const it of list) {
+      if (it.isImageMesh) {
+        drawImageMesh3D(it, u);
+        continue;
+      }
+
       if (window.App?.LinearTransform?.isActive?.() && window.App.LinearTransform.dim === 3) {
         if (window.App.LinearTransform.isVectorSelected(it.id)) {
           continue; // Bỏ qua vector đang được mô phỏng biến đổi vì _transformGroup quản lý render Live & Ghost
@@ -1179,7 +1240,7 @@
       group.userData.tipLocal = tipLocal;
       group.userData.dirLocal = dirLocal;
 
-      if (it.focus) {
+      if (it.focus && it.showArrow !== false) {
         // [ENERGY PULSE]
         const pulseMat = new THREE.MeshBasicMaterial({
           color: PULSE_COLOR_3D,
@@ -1277,9 +1338,211 @@
         head.material.depthWrite = false;
       } else {
         group.renderOrder = 1;
+        shaft.renderOrder = 10;
+        head.renderOrder = 10;
       }
 
-      group.add(shaft, head, proj, labelEl);
+      // Vẽ mặt cong 3D hoặc khối thể tích 3D cho vector từ 2 biến trở lên (chỉ bật khi người dùng chọn hiển thị)
+      if (it.isParametric && it.vars && it.vars.length >= 2 && !!it.showAreaFill) {
+        try {
+          const isInteracting = it.isAnimating || (window.App && window.App._isDraggingSlider);
+          const sColor = new THREE.Color(it.surfaceColor || it.colorCss || it.colorHex || "#0090ff");
+          const surfaceOpacity = typeof it.surfaceOpacity === "number" ? it.surfaceOpacity : 0.45;
+          const geom = new THREE.BufferGeometry();
+          const vertices = [];
+          const indices = [];
+          let vertexIndex = 0;
+
+          if (it.vars.length >= 3) {
+            // KHỐI THỂ TÍCH 3D (3-variable Volume): Dựng 6 mặt bao ngoài của khối thể tích tham số
+            const v0Name = it.vars[0], v1Name = it.vars[1], v2Name = it.vars[2];
+            const v0Min = it.paramInfinity ? -20 : Number(it.varRanges?.[v0Name]?.min ?? it.paramMin ?? -4);
+            const v0Max = it.paramInfinity ? 20 : Number(it.varRanges?.[v0Name]?.max ?? it.paramMax ?? 4);
+            const v1Min = it.paramInfinity ? -20 : Number(it.varRanges?.[v1Name]?.min ?? it.surfaceMin ?? -4);
+            const v1Max = it.paramInfinity ? 20 : Number(it.varRanges?.[v1Name]?.max ?? it.surfaceMax ?? 4);
+            const v2Min = it.paramInfinity ? -20 : Number(it.varRanges?.[v2Name]?.min ?? -4);
+            const v2Max = it.paramInfinity ? 20 : Number(it.varRanges?.[v2Name]?.max ?? 4);
+
+            const K = isInteracting ? 6 : 8;
+
+            function addVolumeFace(fixedName, fixedVal, aName, aMin, aMax, bName, bMin, bMax) {
+              const da = (aMax - aMin) / K;
+              const db = (bMax - bMin) / K;
+              const grid = [];
+              for (let i = 0; i <= K; i++) {
+                grid[i] = [];
+                const aVal = aMin + i * da;
+                for (let j = 0; j <= K; j++) {
+                  const bVal = bMin + j * db;
+                  const scope = Object.assign({}, it.scopeValues, {
+                    [fixedName]: fixedVal,
+                    [aName]: aVal,
+                    [bName]: bVal
+                  });
+                  try {
+                    const pt = it.fn.call(it, scope);
+                    if (Array.isArray(pt) && isFinite(pt[0]) && isFinite(pt[1])) {
+                      const z = isFinite(pt[2]) ? pt[2] : 0;
+                      if (Math.abs(pt[0]) <= 50 && Math.abs(pt[1]) <= 50 && Math.abs(z) <= 50) {
+                        vertices.push(pt[0] * u, pt[1] * u, z * u);
+                        grid[i][j] = vertexIndex++;
+                        continue;
+                      }
+                    }
+                  } catch (e) {}
+                  grid[i][j] = -1;
+                }
+              }
+
+              for (let i = 0; i < K; i++) {
+                for (let j = 0; j < K; j++) {
+                  const a = grid[i][j];
+                  const b = grid[i + 1][j];
+                  const c = grid[i + 1][j + 1];
+                  const d = grid[i][j + 1];
+                  if (a !== -1 && b !== -1 && c !== -1) indices.push(a, b, c);
+                  if (a !== -1 && c !== -1 && d !== -1) indices.push(a, c, d);
+                }
+              }
+            }
+
+            // 6 mặt bao quanh khối thể tích tham số
+            addVolumeFace(v0Name, v0Min, v1Name, v1Min, v1Max, v2Name, v2Min, v2Max);
+            addVolumeFace(v0Name, v0Max, v1Name, v1Min, v1Max, v2Name, v2Min, v2Max);
+            addVolumeFace(v1Name, v1Min, v0Name, v0Min, v0Max, v2Name, v2Min, v2Max);
+            addVolumeFace(v1Name, v1Max, v0Name, v0Min, v0Max, v2Name, v2Min, v2Max);
+            addVolumeFace(v2Name, v2Min, v0Name, v0Min, v0Max, v1Name, v1Min, v1Max);
+            addVolumeFace(v2Name, v2Max, v0Name, v0Min, v0Max, v1Name, v1Min, v1Max);
+          } else {
+            // MẶT DIỆN TÍCH CONG 3D (2-variable Surface)
+            const N = isInteracting ? 14 : 26;
+            const M = isInteracting ? 14 : 26;
+            const uMin = it.paramInfinity ? -20 : Number(it.varRanges?.[it.vars[0]]?.min ?? it.paramMin ?? -4);
+            const uMax = it.paramInfinity ? 20 : Number(it.varRanges?.[it.vars[0]]?.max ?? it.paramMax ?? 4);
+            const vMin = it.paramInfinity ? -20 : Number(it.varRanges?.[it.vars[1]]?.min ?? it.surfaceMin ?? -4);
+            const vMax = it.paramInfinity ? 20 : Number(it.varRanges?.[it.vars[1]]?.max ?? it.surfaceMax ?? 4);
+            const du = (uMax - uMin) / N, dv = (vMax - vMin) / M;
+            const evalFn = typeof it.eval2D === "function"
+              ? (uVal, vVal) => it.eval2D(uVal, vVal, it.scopeValues)
+              : (uVal, vVal) => it.fn.call(it, Object.assign({}, it.scopeValues, { [it.vars[0]]: uVal, [it.vars[1]]: vVal }));
+            const indexGrid = [];
+
+            for (let i = 0; i <= N; i++) {
+              indexGrid[i] = [];
+              const uVal = uMin + i * du;
+              for (let j = 0; j <= M; j++) {
+                const vVal = vMin + j * dv;
+                try {
+                  const pt = evalFn(uVal, vVal);
+                  if (Array.isArray(pt) && isFinite(pt[0]) && isFinite(pt[1])) {
+                    const z = isFinite(pt[2]) ? pt[2] : 0;
+                    if (Math.abs(pt[0]) <= 50 && Math.abs(pt[1]) <= 50 && Math.abs(z) <= 50) {
+                      vertices.push(pt[0] * u, pt[1] * u, z * u);
+                      indexGrid[i][j] = vertexIndex++;
+                      continue;
+                    }
+                  }
+                } catch (e) {}
+                indexGrid[i][j] = -1;
+              }
+            }
+
+            for (let i = 0; i < N; i++) {
+              for (let j = 0; j < M; j++) {
+                const a = indexGrid[i][j];
+                const b = indexGrid[i + 1][j];
+                const c = indexGrid[i + 1][j + 1];
+                const d = indexGrid[i][j + 1];
+                if (a !== -1 && b !== -1 && c !== -1) indices.push(a, b, c);
+                if (a !== -1 && c !== -1 && d !== -1) indices.push(a, c, d);
+              }
+            }
+          }
+
+          if (indices.length >= 3) {
+            geom.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+            geom.setIndex(indices);
+            geom.computeVertexNormals();
+
+            // Kết xuất bề mặt đổ bóng trơn láng mượt mà không đan lưới sắt
+            const mat = new THREE.MeshStandardMaterial({
+              color: sColor,
+              roughness: 0.35,
+              metalness: 0.15,
+              transparent: true,
+              opacity: aItem * surfaceOpacity,
+              depthWrite: false,
+              side: THREE.DoubleSide
+            });
+            const surfaceMesh = new THREE.Mesh(geom, mat);
+            surfaceMesh.renderOrder = 0;
+            group.add(surfaceMesh);
+          }
+        } catch (err) {}
+      }
+
+      // Vẽ vệt quỹ đạo đường cong 3D nét đứt cho vector tham số
+      if (it.isParametric && typeof it.fn === "function" && it.showTrajectory !== false) {
+        const exprText = (it.rawExprs || []).join(" ") + " " + (it.latex || "");
+        const isTrig = /sin|cos/i.test(exprText);
+
+        const activeVars = (Array.isArray(it.activeAnimVars) && it.activeAnimVars.length > 0)
+          ? it.activeAnimVars
+          : [it.paramVar || (it.vars && it.vars[0]) || "t"];
+
+        activeVars.forEach((curVar) => {
+          let tMin, tMax, numSamples;
+          if (it.paramInfinity) {
+            tMin = isTrig ? -Math.PI * 4 : -25.0;
+            tMax = isTrig ? Math.PI * 4 : 25.0;
+            numSamples = isTrig ? 180 : 220;
+          } else {
+            const rObj = it.varRanges?.[curVar];
+            tMin = Number(rObj?.min ?? (curVar === it.paramVar ? it.paramMin : -10.0) ?? -10.0);
+            tMax = Number(rObj?.max ?? (curVar === it.paramVar ? it.paramMax : 10.0) ?? 10.0);
+            if (tMax <= tMin) tMax = tMin + 1.0;
+            numSamples = Math.min(260, Math.max(60, Math.round((tMax - tMin) * 15)));
+          }
+
+          const curvePts = [];
+          const dt = (tMax - tMin) / numSamples;
+          const scope = Object.assign({}, it.scopeValues);
+
+          for (let i = 0; i <= numSamples; i++) {
+            const tVal = tMin + i * dt;
+            scope[curVar] = tVal;
+            try {
+              const pt = it.fn.call(it, scope);
+              if (Array.isArray(pt) && isFinite(pt[0]) && isFinite(pt[1])) {
+                const z = isFinite(pt[2]) ? pt[2] : 0;
+                if (Math.abs(pt[0]) <= 50 && Math.abs(pt[1]) <= 50 && Math.abs(z) <= 50) {
+                  curvePts.push(new THREE.Vector3(pt[0] * u, pt[1] * u, z * u));
+                }
+              }
+            } catch (e) {}
+          }
+
+          if (curvePts.length >= 2) {
+            const geom = new THREE.BufferGeometry().setFromPoints(curvePts);
+            const mat = new THREE.LineDashedMaterial({
+              color: it.colorHex || 0x0090ff,
+              transparent: true,
+              opacity: aItem * 0.9,
+              dashSize: 0.35 * u,
+              gapSize: 0.2 * u,
+              depthWrite: false
+            });
+            const line = new THREE.Line(geom, mat);
+            line.computeLineDistances();
+            line.renderOrder = 5;
+            group.add(line);
+          }
+        });
+      }
+
+      if (it.showArrow !== false) {
+        group.add(shaft, head, proj, labelEl);
+      }
       Vec3D._vectorsGroup.add(group);
       Vec3D.threeVecMap.set(it.id, group);
     }
@@ -1292,6 +1555,9 @@
       } else {
         const longest = Math.max(
           ...App.vectorList.map((it) => {
+            if (it.isImageMesh) {
+              return Math.max(it.width || 12, it.height || 12) * 0.7;
+            }
             const v3 = toVec3(it.vec);
             return Math.sqrt(v3[0] ** 2 + v3[1] ** 2 + v3[2] ** 2);
           }),

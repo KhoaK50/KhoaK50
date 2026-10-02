@@ -128,6 +128,7 @@ def check_auth():
         return False, None
 
 def log_admin_action(username, action, details):
+    conn = None
     try:
         ip = request.remote_addr or "unknown"
         conn = get_db_connection()
@@ -137,14 +138,16 @@ def log_admin_action(username, action, details):
             (username, action, details, ip)
         )
         conn.commit()
-        release_db_connection(conn)
     except Exception as e:
         print(f"Failed to log admin action: {e}")
+    finally:
+        if conn:
+            release_db_connection(conn)
 
 # --- 3. ROUTES ---
 @admin_bp.route("/api/admin/login", methods=["POST"])
 def admin_login():
-    data = request.json
+    data = request.json or {}
     username = data.get("username")
     password = data.get("password")
     master_key = data.get("master_key") # Tùy chọn: Nhập 2 lớp bảo vệ
@@ -152,12 +155,15 @@ def admin_login():
     if master_key and master_key != get_admin_secret():
         return jsonify({"error": "Sai Master Key bảo vệ!"}), 401
 
+    if not username or not password:
+        return jsonify({"error": "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu."}), 400
+
+    conn = None
     try:
         conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT id, password_hash FROM admins WHERE username = %s", (username,))
         row = c.fetchone()
-        release_db_connection(conn)
         
         if row and check_password_hash(row[1], password):
             # Tạo JWT Token
@@ -173,12 +179,19 @@ def admin_login():
             return jsonify({"status": "success", "token": token, "username": username}), 200
         else:
             return jsonify({"error": "Sai tên đăng nhập hoặc mật khẩu"}), 401
+    except psycopg2.OperationalError as e:
+        print(f">> [Admin Login DB Error] {e}")
+        return jsonify({"error": "Máy chủ cơ sở dữ liệu tạm thời bận, vui lòng thử lại."}), 503
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f">> [Admin Login Error] {e}")
+        return jsonify({"error": "Đã xảy ra lỗi trong quá trình xử lý đăng nhập."}), 500
+    finally:
+        if conn:
+            release_db_connection(conn)
 
 @admin_bp.route("/api/admin/register", methods=["POST"])
 def admin_register():
-    data = request.json
+    data = request.json or {}
     username = data.get("username")
     password = data.get("password")
     master_key = data.get("master_key")
@@ -189,6 +202,7 @@ def admin_register():
     if not username or not password:
         return jsonify({"error": "Thiếu username hoặc password."}), 400
 
+    conn = None
     try:
         conn = get_db_connection()
         c = conn.cursor()
@@ -199,14 +213,20 @@ def admin_register():
             (username, password_hash)
         )
         conn.commit()
-        release_db_connection(conn)
         
         log_admin_action("system", "REGISTER_ADMIN", f"Tạo tài khoản admin mới: {username}")
         return jsonify({"message": "Tạo tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ."}), 201
     except psycopg2.IntegrityError:
         return jsonify({"error": "Tên đăng nhập này đã tồn tại."}), 409
+    except psycopg2.OperationalError as e:
+        print(f">> [Admin Register DB Error] {e}")
+        return jsonify({"error": "Máy chủ cơ sở dữ liệu tạm thời bận, vui lòng thử lại."}), 503
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f">> [Admin Register Error] {e}")
+        return jsonify({"error": "Đã xảy ra lỗi trong quá trình tạo tài khoản."}), 500
+    finally:
+        if conn:
+            release_db_connection(conn)
 
 @admin_bp.route("/api/admin/verify", methods=["GET"])
 def verify_admin():

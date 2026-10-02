@@ -11,26 +11,29 @@ USER = os.getenv("NEO4J_USER", "neo4j")
 PASSWORD = os.getenv("NEO4J_PASSWORD", "")
 AUTH = (USER, PASSWORD)
 
-print("Dang khoi tao ket noi den may chu Neo4j...")
+import threading
 
-try:
-    if not URI or not PASSWORD:
-        print("[WARNING] NEO4J_URI hoac NEO4J_PASSWORD chua duoc cau hinh trong .env")
-        # Khong exit de web con chay duoc neu khong can neo4j ngay
-        driver = None
-    else:
-        # Khởi tạo Driver kết nối
+driver = None
+
+if not URI or not PASSWORD:
+    print("[WARNING] NEO4J_URI hoac NEO4J_PASSWORD chua duoc cau hinh trong .env")
+else:
+    try:
+        # Khoi tao Driver ket noi (khong ton thoi gian mang)
         driver = GraphDatabase.driver(URI, auth=AUTH)
         
-        # KIỂM TRA ĐƯỜNG TRUYỀN
-        driver.verify_connectivity()
-        print("[SUCCESS] Connected successfully to Neo4j.\n")
-    
-except Exception as e:
-    print("[ERROR] Connection error:")
-    print("If Unauthorized: Check credentials.")
-    print(f"Details: {e}")
-    sys.exit(1)
+        def _verify_bg(drv):
+            try:
+                drv.verify_connectivity()
+                print("[SUCCESS] Connected successfully to Neo4j.\n")
+            except Exception as e:
+                print(f">> [Neo4j Notice] May chu dang ngu dong hoac ket noi cham: {e}\n")
+
+        # Chay kiem tra ket noi trong luong nen de khong lam treo server Flask
+        t = threading.Thread(target=_verify_bg, args=(driver,), daemon=True)
+        t.start()
+    except Exception as e:
+        print(f"[ERROR] Khong the khoi tao driver Neo4j: {e}")
 
 # --- HÀM 2: LẤY LỘ TRÌNH TỪ NEO4J TRẢ VỀ FLASK ---
 def tim_lo_trinh_ngan_nhat(tx, diem_bat_dau, dich_den):

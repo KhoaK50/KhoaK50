@@ -143,6 +143,7 @@
     .vec-actions .btn { width: 24px; height: 24px; padding: 0; background: transparent; border: none; border-radius: 2px; color: var(--muted); font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
     .vec-actions .btn:hover { background: var(--bg-hover); color: var(--fg); }
     .vec-actions .btn.vec-btn-delete:hover { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+    .vec-actions .btn.vec-btn-edit:hover { background: rgba(33, 150, 243, 0.12); color: var(--primary-base); }
 
     /* --- CLEAR ALL BUTTON IN LIST HEADER --- */
     .btn-clear-list { background: transparent; border: none; color: #ef4444; font-size: 11px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px; border-radius: 2px; transition: all 0.15s; }
@@ -321,6 +322,20 @@
                 rowWrap.innerHTML = "";
                 rowWrap.style.display = "block";
                 rowWrap.appendChild(btnDraw);
+
+                const btnImgVec = document.createElement("button");
+                btnImgVec.type = "button";
+                btnImgVec.id = "btnImageToVector";
+                btnImgVec.className = "btn-image-vector";
+                btnImgVec.innerHTML = '<i class="ph ph-image"></i> Nhập ảnh vector hóa';
+                btnImgVec.title = "Chuyển ảnh PNG hoặc JPG thành lưới vector tam giác thích ứng";
+                btnImgVec.onclick = () => {
+                    if (window.App && window.App.ImageVectorizer && typeof window.App.ImageVectorizer.openModal === "function") {
+                        window.App.ImageVectorizer.openModal();
+                    }
+                };
+                rowWrap.appendChild(btnImgVec);
+
                 if (btnAuto) {
                     btnAuto.style.display = "none";
                     rowWrap.appendChild(btnAuto); // Giữ trong DOM cho script khác không bị lỗi null
@@ -391,7 +406,7 @@
 
     const btnSpace = document.createElement("button");
     btnSpace.className = "tab-btn";
-    btnSpace.innerHTML = '<i class="ph ph-cube"></i><span>Cơ sở</span>';
+    btnSpace.innerHTML = '<i class="ph ph-cube"></i><span>Bài toán</span>';
 
     const btnCalc = document.createElement("button");
     btnCalc.className = "tab-btn";
@@ -591,6 +606,7 @@
               <span style="font-size:11px; font-weight:500; color:var(--muted); margin-left:2px;">(1 - 5)</span>
             </div>
             <div id="matrixCalcGridA" class="matrix-grid-container"></div>
+            <div id="matrixCalcParamContainerA" class="mixed-matrix-param-wrap" style="display:none; margin-top:4px;"></div>
             <div id="matrixCalcBlockB" style="display:none; margin-top:6px;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                 <span style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--muted); letter-spacing:0.5px;">Ma trận B</span>
@@ -606,6 +622,7 @@
                 <span style="font-size:11px; font-weight:500; color:var(--muted); margin-left:2px;">(1 - 5)</span>
               </div>
               <div id="matrixCalcGridB" class="matrix-grid-container"></div>
+              <div id="matrixCalcParamContainerB" class="mixed-matrix-param-wrap" style="display:none; margin-top:4px;"></div>
             </div>
             <div style="display: flex; gap: 8px; align-items: stretch; width: 100%;">
               <button id="btnMatrixCompute" class="btn primary" data-require-vectors="false" style="flex: 1; padding: 9px 10px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
@@ -640,6 +657,7 @@
                 <select id="mixedVectorSelect" style="width: 100%;"></select>
               </div>
             </div>
+            <div id="mixedMatrixParamContainer" class="mixed-matrix-param-wrap" style="display:none; margin-top:2px;"></div>
             <button id="btnMixedCompute" class="btn primary" style="width:100%; padding:9px 12px; font-size:13px; font-weight:600; box-shadow:none !important; border-radius:2px;">Thực hiện</button>
             <div id="mixedResultBox" class="help" style="margin-top:2px;">Kết quả phép tính sẽ hiển thị ở đây.</div>
 
@@ -852,6 +870,9 @@
         if (window.App?.LinearTransform?.isActive?.()) {
           window.App.LinearTransform.stop();
         }
+        if (typeof App.updateMixedParamController === "function") {
+          App.updateMixedParamController();
+        }
       });
     }
 
@@ -860,6 +881,10 @@
       mixedVectorSel.addEventListener("change", () => {
         if (window.App?.LinearTransform?.isActive?.()) {
           window.App.LinearTransform.stop();
+        }
+        const resultBox = document.getElementById("mixedResultBox");
+        if (resultBox && resultBox.style.display !== "none" && typeof App.runMixedCalc === "function") {
+          App.runMixedCalc(false);
         }
       });
     }
@@ -888,18 +913,59 @@
     ["matrixCalcRowsA", "matrixCalcColsA", "matrixCalcRowsB", "matrixCalcColsB", "matrixCalcSavedA", "matrixCalcSavedB"].forEach((id) => {
       document.getElementById(id)?.addEventListener("change", resetMatrixReplay);
     });
-    ["matrixCalcGridA", "matrixCalcGridB"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener("input", resetMatrixReplay);
-        el.addEventListener("change", resetMatrixReplay);
+
+    const handleGridChangeA = () => {
+      resetMatrixReplay();
+      if (typeof App.updateMatrixCalcParamController === "function") {
+        App.updateMatrixCalcParamController("A");
       }
+    };
+    const handleGridChangeB = () => {
+      resetMatrixReplay();
+      if (typeof App.updateMatrixCalcParamController === "function") {
+        App.updateMatrixCalcParamController("B");
+      }
+    };
+
+    const elGridA = document.getElementById("matrixCalcGridA");
+    if (elGridA) {
+      elGridA.addEventListener("input", handleGridChangeA);
+      elGridA.addEventListener("change", handleGridChangeA);
+    }
+    const elGridB = document.getElementById("matrixCalcGridB");
+    if (elGridB) {
+      elGridB.addEventListener("input", handleGridChangeB);
+      elGridB.addEventListener("change", handleGridChangeB);
+    }
+
+    ["matrixCalcRowsA", "matrixCalcColsA"].forEach((id) => {
+      document.getElementById(id)?.addEventListener("change", () => {
+        resetMatrixReplay();
+        if (typeof App.updateMatrixCalcParamController === "function") {
+          App.updateMatrixCalcParamController("A");
+        }
+      });
+    });
+    ["matrixCalcRowsB", "matrixCalcColsB"].forEach((id) => {
+      document.getElementById(id)?.addEventListener("change", () => {
+        resetMatrixReplay();
+        if (typeof App.updateMatrixCalcParamController === "function") {
+          App.updateMatrixCalcParamController("B");
+        }
+      });
     });
 
     // Tự động điền dữ liệu ma trận khi chọn từ danh sách đã lưu
     const fillGridFromSaved = (selId, gridId, rowsId, colsId) => {
       const sel = document.getElementById(selId);
-      if (!sel || !sel.value) return;
+      const isA = gridId === "matrixCalcGridA";
+      const target = isA ? "A" : "B";
+      if (!sel || !sel.value) {
+        if (typeof App.updateMatrixCalcParamController === "function") {
+          App.updateMatrixCalcParamController(target, null);
+        }
+        return;
+      }
       const m = (App.matrixList || []).find(x => String(x.id) === String(sel.value));
       if (!m || !Array.isArray(m.values) || m.values.length === 0) return;
       const rInp = document.getElementById(rowsId);
@@ -912,10 +978,19 @@
       for (let i = 0; i < m.rows; i++) {
         for (let j = 0; j < m.cols; j++) {
           const cell = document.getElementById(`${gridId}_cell_${i}_${j}`);
-          if (cell) cell.value = String(m.values[i][j]);
+          if (cell) {
+            const raw = (m.latexValues && m.latexValues[i] && m.latexValues[i][j] !== undefined)
+              ? m.latexValues[i][j]
+              : String(m.values[i][j]);
+            cell.value = raw;
+          }
         }
       }
+      if (typeof App.updateMatrixCalcParamController === "function") {
+        App.updateMatrixCalcParamController(target, m);
+      }
     };
+    App.fillGridFromSaved = fillGridFromSaved;
     const selSavedA = document.getElementById("matrixCalcSavedA");
     const selSavedB = document.getElementById("matrixCalcSavedB");
     if (selSavedA) selSavedA.addEventListener("change", () => fillGridFromSaved("matrixCalcSavedA", "matrixCalcGridA", "matrixCalcRowsA", "matrixCalcColsA"));
@@ -1125,6 +1200,7 @@
     const el = document.getElementById("vectorList");
     if (!el) return;
     document.querySelectorAll("body > .vec-dropdown").forEach(d => d.remove());
+    document.querySelectorAll("body > .vec-param-popover").forEach(p => p.remove());
     // --- RADAR ĐÓNG MENU THÔNG MINH ---
     if (!window._globalMenuCloserAttached) {
         const closeAllMenus = () => {
@@ -1195,17 +1271,99 @@
     const targetList = isAppend ? [App.vectorList[App.vectorList.length - 1]] : App.vectorList;
     for (const item of targetList) {
         
-        // BƯỚC 1: LỌC THEO NÚT CHIPS
+        // XỬ LÝ TRANH LƯỚI VECTOR THÍCH ỨNG (IMAGE MESH)
+        if (item.isImageMesh) {
+            if (activeFilter === 'hidden' && item.visible !== false) continue;
+            if (activeFilter === 'focus' && !item.focus) continue;
+            if (cleanSearch !== "") {
+                const searchKey = `#${App.displayIndexOf(item)} ${item.name || "tranh vector"}`.toLowerCase();
+                if (!searchKey.includes(cleanSearch)) continue;
+            }
+
+            const li = document.createElement("li");
+            li.className = "vec-item vec-item-image-mesh" + (item.highlighted ? " active" : "");
+
+            const iconBadge = document.createElement("span");
+            iconBadge.className = "vec-mesh-badge";
+            iconBadge.innerHTML = '<i class="ph ph-image"></i>';
+            iconBadge.title = "Tranh lưới vector tam giác";
+            li.appendChild(iconBadge);
+
+            const tag = document.createElement("span");
+            tag.className = "tag";
+            tag.textContent = `#${App.displayIndexOf(item)}`;
+            tag.style.whiteSpace = "nowrap";
+            li.appendChild(tag);
+
+            const infoWrap = document.createElement("div");
+            infoWrap.className = "vec-mesh-info";
+            infoWrap.innerHTML = `
+              <div class="vec-mesh-name" title="${item.name || "Tranh Vector"}">${item.name || "Tranh Vector"}</div>
+              <div class="vec-mesh-sub">${(item.numTriangles || 0).toLocaleString()} tam giác - Nổi 3D: ${item.depthScale || 0}</div>
+            `;
+            li.appendChild(infoWrap);
+
+            const actions = document.createElement("div");
+            actions.className = "vec-actions";
+
+            const wireBtn = document.createElement("button");
+            wireBtn.type = "button";
+            wireBtn.className = "btn vec-btn-wireframe" + (item.showWireframe ? " active" : "");
+            wireBtn.innerHTML = '<i class="ph ph-grid-four"></i>';
+            wireBtn.title = item.showWireframe ? "Ẩn khung lưới tam giác" : "Hiện khung lưới tam giác";
+            wireBtn.onclick = (e) => {
+              e.stopPropagation();
+              item.showWireframe = !item.showWireframe;
+              App.renderVectorList();
+              if (App.mode === "3D" && window.Vec3D?.hardRefresh3D) Vec3D.hardRefresh3D(false);
+              else if (window.Vec2D?.draw2DAllVectors) Vec2D.draw2DAllVectors();
+            };
+            actions.appendChild(wireBtn);
+
+            const toggleBtn = document.createElement("button");
+            toggleBtn.type = "button";
+            toggleBtn.className = "btn vec-btn-toggle";
+            toggleBtn.innerHTML = item.visible !== false ? '<i class="ph ph-eye"></i>' : '<i class="ph ph-eye-slash" style="color:#888;"></i>';
+            toggleBtn.title = item.visible !== false ? "Ẩn tranh" : "Hiện tranh";
+            toggleBtn.onclick = (e) => {
+              e.stopPropagation();
+              item.visible = item.visible === false ? true : false;
+              App.renderVectorList();
+              if (App.mode === "3D" && window.Vec3D?.hardRefresh3D) Vec3D.hardRefresh3D(false);
+              else if (window.Vec2D?.draw2DAllVectors) Vec2D.draw2DAllVectors();
+            };
+            actions.appendChild(toggleBtn);
+
+            const delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "btn vec-btn-delete";
+            delBtn.innerHTML = '<i class="ph ph-trash"></i>';
+            delBtn.title = "Xóa tranh";
+            delBtn.onclick = (e) => {
+              e.stopPropagation();
+              const idx = App.vectorList.findIndex((v) => v.id === item.id);
+              if (idx >= 0) App.vectorList.splice(idx, 1);
+              App.renderVectorList();
+              if (App.mode === "3D" && window.Vec3D?.hardRefresh3D) Vec3D.hardRefresh3D(false);
+              else if (window.Vec2D?.draw2DAllVectors) Vec2D.draw2DAllVectors();
+            };
+            actions.appendChild(delBtn);
+
+            li.appendChild(actions);
+            el.appendChild(li);
+            continue;
+        }
+
+        // BƯỚC 1: LỌC THEO NÚT CHIPS (cho vector thông thường)
         if (activeFilter === 'hidden' && item.visible) continue;
         if (activeFilter === 'focus' && !item.focus) continue;
-        if (activeFilter === '2d' && item.vec.length >= 3) continue;
-        if (activeFilter === '3d' && item.vec.length < 3) continue;
+        if (activeFilter === '2d' && (item.vec || []).length >= 3) continue;
+        if (activeFilter === '3d' && (item.vec || []).length < 3) continue;
 
         // BƯỚC 2: LỌC SEARCH THEO TỰ ĐIỂN
         if (cleanSearch !== "") {
-            // Tạo chuỗi gốc chuẩn: "#1[1,2,3]"
-            const dict = `#${App.displayIndexOf(item)}[${item.vec.join(",")}]`.toLowerCase();
-            // Lọc chuỗi tuyệt đối
+            const vecArr = item.vec || [];
+            const dict = `#${App.displayIndexOf(item)}[${vecArr.join(",")}]`.toLowerCase();
             if (!dict.includes(cleanSearch)) continue; 
         }
 
@@ -1213,9 +1371,35 @@
       const li = document.createElement("li");
       li.className = "vec-item" + (item.highlighted ? " active" : "");
 
-      const sw = document.createElement("div");
-      sw.className = "sw";
-      sw.style.background = item.colorCss;
+      const sw = document.createElement("label");
+      sw.className = "sw vec-color-swatch-label";
+      sw.id = `vecColorSwatch_${item.id}`;
+      const effectiveHex = App.colorToHex ? App.colorToHex(item.colorCss || item.colorHex) : (item.colorHex || "#0090ff");
+      sw.style.background = effectiveHex;
+      sw.style.cursor = "pointer";
+      sw.style.position = "relative";
+      sw.title = "Bấm để chọn màu vector";
+
+      const colorInp = document.createElement("input");
+      colorInp.type = "color";
+      colorInp.className = "vec-color-native-picker";
+      colorInp.value = effectiveHex;
+      colorInp.style.position = "absolute";
+      colorInp.style.opacity = "0";
+      colorInp.style.width = "100%";
+      colorInp.style.height = "100%";
+      colorInp.style.cursor = "pointer";
+      colorInp.style.top = "0";
+      colorInp.style.left = "0";
+      colorInp.oninput = (e) => {
+        const hex = e.target.value;
+        sw.style.background = hex;
+        if (typeof App.setVectorColor === "function") {
+          App.setVectorColor(item.id, hex);
+        }
+      };
+      colorInp.onclick = (e) => e.stopPropagation();
+      sw.appendChild(colorInp);
 
       const tag = document.createElement("span");
       tag.className = "tag";
@@ -1224,188 +1408,26 @@
 
       const wrapper = document.createElement("div");
       wrapper.className = "vec-input-wrapper";
+      wrapper.style.cursor = "pointer";
+      wrapper.title = "Bấm để sửa vector";
 
       const mf = document.createElement("math-field");
       mf.className = "vec-math-field";
       mf.value = item.latex || App.formatVectorShort(item.vec);
+      mf.setAttribute("read-only", "true");
       mf.setAttribute("smart-fence", "false");
       mf.setAttribute("smart-mode", "false");
-      mf.setAttribute("math-virtual-keyboard-policy", "manual");
+      mf.setAttribute("math-virtual-keyboard-policy", "none");
+      mf.tabIndex = -1;
 
-      wrapper.addEventListener("click", () => {
-          mf.focus();
-      });
-
-      // Ghi nhớ trạng thái trước khi chỉnh sửa để hỗ trợ Hoàn tác (Undo)
-      mf.addEventListener("focus", () => {
-        if (App.History && typeof App.History.snapshot === "function") {
-          item._preEditState = App.History.snapshot(`Sửa vector #${item.id}`);
-        }
-      });
-      mf.addEventListener("change", () => {
-        if (item._preEditState && App.History && typeof App.History.record === "function") {
-          App.History.record(`Sửa vector #${item.id}`, item._preEditState);
-          item._preEditState = null;
-        }
-      });
-
-      // Sự kiện Edit Vector
-      // [FIX LỖI TOÁN] Sửa lại đoạn sự kiện input của math-field
-      mf.addEventListener("input", () => {
-        try {
-          // 1. Hàm làm sạch LaTeX thành toán thường (cho backend hiểu)
-          const cleanLatex = (latex) => {
-            let s = latex;
-            // Xóa lệnh latex cơ bản
-            s = s.replace(/\\left/g, "").replace(/\\right/g, "");
-            // Chuyển căn: \sqrt{x} -> sqrt(x)
-            s = s.replace(/\\sqrt\{([^}]+)\}/g, "sqrt($1)");
-            // Chuyển phân số: \frac{a}{b} -> (a/b)
-            s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "($1/$2)");
-            // Chuyển các hàm lượng giác/log
-            s = s.replace(/\\(sin|cos|tan|cot|ln|log)/g, "$1");
-            s = s.replace(/\\pi/g, "pi");
-            // Xử lý nhân tắt: số dính liền chữ (2x, 2sqrt) -> thêm dấu *
-            s = s.replace(/(\d)([a-zA-Z\(])/g, "$1*$2");
-            // Xử lý dấu ngoặc dính liền: )( -> )*(
-            s = s.replace(/\)\(/g, ")*(");
-            return s;
-          };
-
-          // 2. Lấy giá trị đã làm sạch để parse
-          const rawValue = mf.value;
-          const cleanValue = cleanLatex(rawValue);
-
-          // Gọi hàm parse cũ của ông với giá trị đã làm sạch
-          const v = App.parseVectorExpr(cleanValue);
-
-          if (v && v.length > 0 && !v.some(isNaN)) {
-            item.vec = v;
-
-            // Giữ nguyên logic hiển thị LaTeX đẹp
-            const needsCalc = /(sin|cos|tan|cot|log|ln|pi|e\^|e\s|e$)/i.test(
-              rawValue,
-            );
-            if (needsCalc) {
-              const latexArr = v.map((val) => App.smartFormat(val));
-              item.latex = `[${latexArr.join(", ")}]`;
-            } else {
-              item.latex = rawValue;
-            }
-
-            // Update App state...
-            App.currentVector = v.slice();
-            if (App.updateCalcSelectLabels) App.updateCalcSelectLabels();
-            if (App.clearAngleOverlay) App.clearAngleOverlay();
-            if (App.renderExtraCalcOptions) App.renderExtraCalcOptions();
-            if (App.redrawAll) App.redrawAll({ frame: true });
-            if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
-            else if (window.Vec2D) Vec2D.draw2DAllVectors();
-          }
-        } catch (err) {
-          // console.log("Lỗi nhập liệu:", err);
-        }
-      });
-
-      const btn = document.createElement("button");
-      btn.className = "vec-menu-btn";
-      btn.innerHTML = '<i class="ph ph-list"></i>';
-      btn.title = "Chèn công thức";
-
-      const dropdown = document.createElement("div");
-      dropdown.className = "vec-dropdown";
-
-      const menuItems = [
-        { label: "Căn bậc 2", latex: "\\sqrt{#0}", preview: "√x" },
-        { label: "Căn bậc n", latex: "\\sqrt[#?]{#0}", preview: "ⁿ√x" },
-        { separator: true },
-        { label: "Sin", latex: "\\sin(#0)", preview: "sin" },
-        { label: "Cos", latex: "\\cos(#0)", preview: "cos" },
-        { label: "Tan", latex: "\\tan(#0)", preview: "tan" },
-        { label: "Cot", latex: "\\cot(#0)", preview: "cot" },
-        { separator: true },
-        { label: "Logarit cơ số a", latex: "\\log_{#?}(#0)", preview: "logₐ" },
-        { label: "Logarit tự nhiên", latex: "\\ln(#0)", preview: "ln" },
-        { separator: true },
-        { label: "Số Pi", latex: "\\pi", preview: "π" },
-        { label: "Số e", latex: "e", preview: "e" },
-      ];
-
-      menuItems.forEach((m) => {
-        if (m.separator) {
-          const hr = document.createElement("div");
-          hr.style.borderTop = "1px solid #eee";
-          hr.style.margin = "4px 0";
-          dropdown.appendChild(hr);
-        } else {
-          const row = document.createElement("div");
-          row.className = "vec-dropdown-item";
-          row.innerHTML = `<span>${m.label}</span><span class="latex-preview">${m.preview}</span>`;
-          row.onclick = (e) => {
-            e.stopPropagation();
-            mf.executeCommand(["insert", m.latex]);
-            mf.focus();
-            dropdown.classList.remove("show");
-          };
-          dropdown.appendChild(row);
-        }
-      });
-
-  
-      // --- SỰ KIỆN MENU (SMART POSITIONING - FIXED VIEWPORT) ---
-      btn.onclick = (e) => {
+      wrapper.addEventListener("click", (e) => {
         e.stopPropagation();
-        
-        const isClosed = !dropdown.classList.contains("show");
-
-        // Đóng sạch các menu khác
-        document.querySelectorAll(".vec-dropdown.show").forEach((d) => d.classList.remove("show"));
-        document.querySelectorAll(".vec-item").forEach((it) => it.style.zIndex = "1");
-
-        if (isClosed) {
-          // [BÍ QUYẾT TELEPORT]: Đưa menu ra thẳng cấp cao nhất là <body> 
-          // Cắt đứt hoàn toàn quan hệ với Sidebar để thoát khỏi lỗi tọa độ
-          document.body.appendChild(dropdown);
-          
-          dropdown.classList.add("show");
-          li.style.zIndex = "999"; 
-
-          requestAnimationFrame(() => {
-            const btnRect = btn.getBoundingClientRect();
-            const menuHeight = dropdown.offsetHeight || 250;
-            const menuWidth = dropdown.offsetWidth || 240;
-            
-            // TRỤC X: Căn mép phải menu bằng mép phải nút
-            let leftPos = btnRect.right - menuWidth;
-            if (leftPos < 10) leftPos = 10; 
-            
-            dropdown.style.left = `${leftPos}px`;
-            dropdown.style.right = "auto";
-
-            // TRỤC Y: So sánh không gian trên và dưới
-            const spaceBelow = window.innerHeight - btnRect.bottom;
-            const spaceAbove = btnRect.top;
-            
-            // Nếu dưới chật VÀ trên rộng hơn -> HẤT LÊN TRÊN
-            if (spaceBelow < menuHeight + 10 && spaceAbove > spaceBelow) {
-                dropdown.style.top = "auto";
-                dropdown.style.bottom = `${window.innerHeight - btnRect.top + 4}px`; 
-                dropdown.style.transformOrigin = "bottom right";
-                dropdown.style.setProperty("box-shadow", "0 -10px 30px rgba(0,0,0,0.3)", "important");
-            } else {
-                // Đủ chỗ -> THẢ XUỐNG DƯỚI
-                dropdown.style.top = `${btnRect.bottom + 4}px`;
-                dropdown.style.bottom = "auto";
-                dropdown.style.transformOrigin = "top right";
-                dropdown.style.setProperty("box-shadow", "0 10px 30px rgba(0,0,0,0.3)", "important");
-            }
-          });
+        if (typeof App.startEditVector === "function") {
+          App.startEditVector(item.id);
         }
-      };
+      });
 
       wrapper.appendChild(mf);
-      wrapper.appendChild(btn);
-      wrapper.appendChild(dropdown);
 
       const actions = document.createElement("div");
       actions.className = "vec-actions";
@@ -1424,15 +1446,62 @@
       };
 
       const toggleBtn = document.createElement("button");
-      toggleBtn.className = "btn";
-      toggleBtn.innerHTML = item.visible ? '<i class="ph ph-eye"></i>' : '<i class="ph ph-eye-slash"></i>';
-      toggleBtn.title = "Ẩn/Hiện";
+      toggleBtn.className = "btn vec-btn-toggle";
+
+      const updateVectorToggleBtn = () => {
+        if (!item.isParametric) {
+          toggleBtn.innerHTML = item.visible !== false ? '<i class="ph ph-eye"></i>' : '<i class="ph ph-eye-slash" style="color: #888"></i>';
+          toggleBtn.title = item.visible !== false ? "Ẩn vector" : "Hiện vector";
+          return;
+        }
+        if (item.visible === false) {
+          toggleBtn.innerHTML = '<i class="ph ph-eye-slash" style="color: #888"></i>';
+          toggleBtn.title = "Ẩn tất cả, bấm để hiện đầy đủ";
+        } else if (item.showArrow === false) {
+          toggleBtn.innerHTML = '<i class="ph ph-wave-sine" style="color: var(--primary-base, #0090ff); font-size: 15px;"></i>';
+          toggleBtn.title = "Chỉ hiện quỹ đạo, thân vector đang ẩn";
+        } else {
+          toggleBtn.innerHTML = '<i class="ph ph-eye"></i>';
+          toggleBtn.title = "Hiện đầy đủ, bấm để chỉ hiện quỹ đạo";
+        }
+      };
+      updateVectorToggleBtn();
+
       toggleBtn.onclick = (e) => {
         e.stopPropagation();
-        item.visible = !item.visible;
-        toggleBtn.innerHTML = item.visible ? '<i class="ph ph-eye"></i>' : '<i class="ph ph-eye-slash" style="color: #888"></i>';
+        if (!item.isParametric) {
+          item.visible = item.visible === false ? true : false;
+        } else {
+          if (item.visible !== false && item.showArrow !== false) {
+            item.visible = true;
+            item.showArrow = false;
+            item.showTrajectory = true;
+          } else if (item.visible !== false && item.showArrow === false) {
+            item.visible = false;
+          } else {
+            item.visible = true;
+            item.showArrow = true;
+            item.showTrajectory = true;
+          }
+          const arrowInp = document.getElementById(`vecParamArrowInp_${item.id}`);
+          if (arrowInp) arrowInp.checked = item.showArrow !== false;
+          const traceInp = document.getElementById(`vecParamTraceInp_${item.id}`);
+          if (traceInp) traceInp.checked = item.showTrajectory !== false;
+        }
+        updateVectorToggleBtn();
         if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
         else if (window.Vec2D) Vec2D.draw2DAllVectors();
+      };
+
+      const editBtn = document.createElement("button");
+      editBtn.className = "btn vec-btn-edit";
+      editBtn.innerHTML = '<i class="ph ph-pen"></i>';
+      editBtn.title = "Sửa vector";
+      editBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (typeof App.startEditVector === "function") {
+          App.startEditVector(item.id);
+        }
       };
 
       const del = document.createElement("button");
@@ -1443,6 +1512,15 @@
       // SỰ KIỆN XÓA (Đã có đủ hàm đồng bộ & Hoàn tác)
       del.onclick = (e) => {
         e.stopPropagation();
+        if (App.editingVectorId === item.id) {
+          App.editingVectorId = null;
+          const btn = document.getElementById("btnDraw") || document.getElementById("btnAddVector");
+          if (btn) {
+            btn.innerHTML = '<i class="ph ph-plus" style="margin-right:6px;"></i> Thêm Vector';
+            btn.classList.remove("success");
+            btn.classList.add("primary");
+          }
+        }
         if (App.History && typeof App.History.record === "function") {
           App.History.record(`Xóa vector #${item.id}`);
         }
@@ -1461,12 +1539,785 @@
 
       actions.appendChild(focusBtn);
       actions.appendChild(toggleBtn);
+      actions.appendChild(editBtn);
       actions.appendChild(del);
 
       li.appendChild(sw);
       li.appendChild(tag);
       li.appendChild(wrapper);
       li.appendChild(actions);
+
+      // ĐIỀU KHIỂN HOẠT ẢNH THAM SỐ TÁCH BẠCH CHO TỪNG VECTOR (CHUẨN 3 CHẤM)
+      if (item.isParametric) {
+        const paramCtrl = document.createElement("div");
+        paramCtrl.className = "vec-param-controller";
+        paramCtrl.style.position = "relative";
+
+        // Thanh điều khiển tinh gọn (biến chạy, play/pause, thanh trượt, reset, nút 3 chấm)
+        const bar = document.createElement("div");
+        bar.className = "vec-param-bar";
+
+        // Khung hiển thị giá trị 1 biến (có ô nhập trực tiếp)
+        const singleValBox = document.createElement("div");
+        singleValBox.className = "vec-param-val-box";
+        singleValBox.id = `vecParamSingleValBox_${item.id}`;
+        singleValBox.title = "Nhập trực tiếp giá trị tham số";
+        const isMultiModeNow = item.activeAnimVars && item.activeAnimVars.length > 1;
+        singleValBox.style.display = isMultiModeNow ? "none" : "inline-flex";
+
+        const valLabel = document.createElement("span");
+        valLabel.className = "vec-param-var-label";
+        valLabel.id = `vecParamVarLbl_${item.id}`;
+        valLabel.textContent = `${item.paramVar || "t"} =`;
+
+        const valInp = document.createElement("input");
+        valInp.type = "number";
+        valInp.className = "vec-param-val-inp";
+        valInp.id = `vecParamValInp_${item.id}`;
+        valInp.value = Number(item.paramVal ?? 1.0).toFixed(2);
+        valInp.step = "0.1";
+
+        // Tự động tạm dừng hoạt ảnh khi người dùng bấm vào gõ giá trị
+        valInp.onfocus = () => {
+          if (item.isAnimating) {
+            App.toggleVectorAnimation(item.id);
+          }
+        };
+
+        // Khi người dùng nhập giá trị tham số trực tiếp:
+        valInp.oninput = (e) => {
+          const val = parseFloat(e.target.value);
+          if (!isNaN(val)) {
+            App.setVectorParamValueDirect(item.id, val);
+          }
+        };
+
+        valInp.onkeydown = (e) => {
+          if (e.key === "Enter") {
+            valInp.blur();
+          }
+        };
+
+        singleValBox.appendChild(valLabel);
+        singleValBox.appendChild(valInp);
+
+        // Khung hiển thị nhiều biến cùng chạy hoạt ảnh
+        const multiValBox = document.createElement("div");
+        multiValBox.className = "vec-param-multi-box";
+        multiValBox.id = `vecParamMultiVals_${item.id}`;
+        multiValBox.style.display = isMultiModeNow ? "flex" : "none";
+        if (isMultiModeNow && item.activeAnimVars) {
+          const badgesHtml = item.activeAnimVars.map((vName) => {
+            const val = (item.scopeValues && item.scopeValues[vName] !== undefined)
+              ? Number(item.scopeValues[vName]).toFixed(2)
+              : (vName === item.paramVar ? Number(item.paramVal).toFixed(2) : "0.00");
+            return `<span class="vec-multi-badge">${vName} = ${val}</span>`;
+          }).join(" ");
+          multiValBox.innerHTML = badgesHtml;
+        }
+
+        const playBtn = document.createElement("button");
+        playBtn.type = "button";
+        playBtn.className = "vec-param-btn vec-param-play" + (item.isAnimating ? " is-active" : "");
+        playBtn.id = `vecParamPlay_${item.id}`;
+        playBtn.title = item.isAnimating ? "Tạm dừng" : "Chạy hoạt ảnh";
+        playBtn.innerHTML = item.isAnimating ? '<i class="ph ph-pause"></i>' : '<i class="ph ph-play"></i>';
+        playBtn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          App.toggleVectorAnimation(item.id);
+        };
+
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.className = "vec-param-slider";
+        slider.id = `vecParamSlider_${item.id}`;
+        slider.min = item.paramInfinity ? -25 : (item.paramMin ?? -10.0);
+        slider.max = item.paramInfinity ? 25 : (item.paramMax ?? 10.0);
+        slider.step = "0.05";
+        slider.value = item.paramVal ?? 1.0;
+        slider.onpointerdown = () => { App._isDraggingSlider = true; };
+        slider.onpointerup = () => {
+          App._isDraggingSlider = false;
+          if (App.mode === "2D" && window.Vec2D) Vec2D.draw2DAllVectors();
+          else if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
+        };
+        slider.oninput = (e) => {
+          App._isDraggingSlider = true;
+          App.setVectorParamValue(item.id, e.target.value);
+        };
+        slider.onchange = () => {
+          App._isDraggingSlider = false;
+          if (App.mode === "2D" && window.Vec2D) Vec2D.draw2DAllVectors();
+          else if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
+        };
+
+        const resetBtn = document.createElement("button");
+        resetBtn.type = "button";
+        resetBtn.className = "vec-param-btn vec-param-reset";
+        resetBtn.title = "Đặt lại về mặc định";
+        resetBtn.innerHTML = '<i class="ph ph-arrow-counter-clockwise"></i>';
+        resetBtn.onclick = (e) => {
+          e.stopPropagation();
+          App.resetVectorParam(item.id);
+        };
+
+        const moreBtn = document.createElement("button");
+        moreBtn.type = "button";
+        moreBtn.className = "vec-param-btn vec-param-more-btn";
+        moreBtn.id = `vecParamMore_${item.id}`;
+        moreBtn.title = "Cài đặt tham số";
+        moreBtn.innerHTML = '<i class="ph ph-dots-three-vertical"></i>';
+
+        paramCtrl.appendChild(multiValBox);
+        bar.appendChild(singleValBox);
+        bar.appendChild(playBtn);
+        bar.appendChild(slider);
+        bar.appendChild(resetBtn);
+        bar.appendChild(moreBtn);
+        paramCtrl.appendChild(bar);
+
+        // Cửa sổ Popover cài đặt nâng cao (Chỉ mở khi bấm 3 chấm, không tự mất khi rê chuột)
+        const popover = document.createElement("div");
+        popover.className = "vec-param-popover";
+        popover.id = `vecParamPopover_${item.id}`;
+        popover.style.display = "none";
+
+        // Tiêu đề popover
+        const popHeader = document.createElement("div");
+        popHeader.className = "vec-param-popover-header";
+        const popTitle = document.createElement("span");
+        popTitle.className = "vec-param-popover-title";
+        popTitle.textContent = `Cài đặt tham số #${App.displayIndexOf(item)}`;
+        const popClose = document.createElement("button");
+        popClose.type = "button";
+        popClose.className = "vec-param-popover-close";
+        popClose.innerHTML = '<i class="ph ph-x"></i>';
+        popClose.onclick = (e) => {
+          e.stopPropagation();
+          popover.style.display = "none";
+        };
+        popHeader.appendChild(popTitle);
+        popHeader.appendChild(popClose);
+        popover.appendChild(popHeader);
+
+        // 1. THANH TABS ĐIỀU HƯỚNG
+        const popTabs = document.createElement("div");
+        popTabs.className = "vec-pop-tabs";
+
+        const tabBtnParam = document.createElement("button");
+        tabBtnParam.type = "button";
+        tabBtnParam.className = "vec-pop-tab-btn active";
+        tabBtnParam.innerHTML = '<i class="ph ph-sliders"></i> <span>Tham số</span>';
+
+        const tabBtnDisplay = document.createElement("button");
+        tabBtnDisplay.type = "button";
+        tabBtnDisplay.className = "vec-pop-tab-btn";
+        tabBtnDisplay.innerHTML = '<i class="ph ph-paint-brush"></i> <span>Hiển thị</span>';
+
+        popTabs.appendChild(tabBtnParam);
+        popTabs.appendChild(tabBtnDisplay);
+        popover.appendChild(popTabs);
+
+        // 2. KHUNG NỘI DUNG TAB 1: THAM SỐ VÀ HOẠT ẢNH
+        const tabContentParam = document.createElement("div");
+        tabContentParam.className = "vec-pop-tab-content";
+
+        // Chọn các biến chạy hoạt ảnh độc lập
+        if (item.vars && item.vars.length > 1) {
+          const secAnimVars = document.createElement("div");
+          secAnimVars.className = "vec-param-section";
+          const titleAnimVars = document.createElement("div");
+          titleAnimVars.className = "vec-param-sec-title";
+          titleAnimVars.textContent = "BIẾN HOẠT ẢNH";
+          secAnimVars.appendChild(titleAnimVars);
+
+          const chipsWrap = document.createElement("div");
+          chipsWrap.className = "vec-var-chips";
+
+          if (!item.activeAnimVars) {
+            item.activeAnimVars = [item.paramVar || item.vars[0]];
+          }
+
+          item.vars.forEach((vName) => {
+            const chip = document.createElement("button");
+            chip.type = "button";
+            const isActive = item.activeAnimVars.includes(vName);
+            chip.className = "vec-var-chip" + (isActive ? " active" : "");
+            chip.innerHTML = isActive
+              ? `<i class="ph ph-check"></i> <span>Biến ${vName}</span>`
+              : `<span>Biến ${vName}</span>`;
+
+            chip.onclick = (e) => {
+              e.stopPropagation();
+              if (!item.activeAnimVars) item.activeAnimVars = [];
+              const idx = item.activeAnimVars.indexOf(vName);
+              if (idx >= 0) {
+                item.activeAnimVars.splice(idx, 1);
+              } else {
+                item.activeAnimVars.push(vName);
+              }
+              const nowActive = item.activeAnimVars.includes(vName);
+              chip.classList.toggle("active", nowActive);
+              chip.innerHTML = nowActive
+                ? `<i class="ph ph-check"></i> <span>Biến ${vName}</span>`
+                : `<span>Biến ${vName}</span>`;
+
+              if (item.activeAnimVars.length === 1) {
+                const singleVar = item.activeAnimVars[0];
+                item.paramVar = singleVar;
+                if (item.varRanges && item.varRanges[singleVar]) {
+                  item.paramMin = item.varRanges[singleVar].min;
+                  item.paramMax = item.varRanges[singleVar].max;
+                  slider.min = item.paramMin;
+                  slider.max = item.paramMax;
+                }
+                if (item.scopeValues && item.scopeValues[singleVar] !== undefined) {
+                  item.paramVal = item.scopeValues[singleVar];
+                }
+                valInp.value = Number(item.paramVal).toFixed(2);
+                slider.value = item.paramVal;
+              }
+
+              App.updateSingleVectorParamUI(item, false);
+              App._renderParamStep();
+            };
+            chipsWrap.appendChild(chip);
+          });
+          secAnimVars.appendChild(chipsWrap);
+          tabContentParam.appendChild(secAnimVars);
+        }
+
+        // Phân khu: DẢI GIÁ TRỊ (MIN - MAX) TỪNG BIẾN ĐỘC LẬP
+        const secRange = document.createElement("div");
+        secRange.className = "vec-param-section";
+        const titleRange = document.createElement("div");
+        titleRange.className = "vec-param-sec-title";
+        titleRange.textContent = "DẢI GIÁ TRỊ (MIN - MAX)";
+        secRange.appendChild(titleRange);
+
+        const varsList = (item.vars && item.vars.length > 0) ? item.vars : [item.paramVar || "t"];
+        if (!item.varRanges) item.varRanges = {};
+
+        varsList.forEach((vName, idx) => {
+          if (!item.varRanges[vName]) {
+            item.varRanges[vName] = {
+              min: (idx === 0 ? (item.paramMin ?? -10.0) : (item.surfaceMin ?? -5.0)),
+              max: (idx === 0 ? (item.paramMax ?? 10.0) : (item.surfaceMax ?? 5.0))
+            };
+          }
+          const rObj = item.varRanges[vName];
+
+          const row = document.createElement("div");
+          row.className = "vec-param-var-range-row";
+
+          const tag = document.createElement("span");
+          tag.className = "vec-param-var-tag";
+          tag.textContent = `Biến ${vName}:`;
+
+          const minGroup = document.createElement("div");
+          minGroup.className = "vec-param-input-group";
+          minGroup.style.flex = "1";
+          const minAddon = document.createElement("span");
+          minAddon.className = "vec-param-addon";
+          minAddon.textContent = "Min";
+          const minInp = document.createElement("input");
+          minInp.className = "vec-param-num-inp vec-param-min-inp";
+          minInp.dataset.var = vName;
+          if (item.paramInfinity) {
+            minInp.type = "text";
+            minInp.value = "-\u221e";
+            minInp.disabled = true;
+          } else {
+            minInp.type = "number";
+            minInp.value = rObj.min;
+            minInp.step = "1";
+          }
+          minInp.oninput = (e) => {
+            const num = parseFloat(e.target.value);
+            if (!isNaN(num)) {
+              rObj.min = num;
+              if (vName === item.paramVar) {
+                item.paramMin = num;
+                if (!item.paramInfinity) slider.min = num;
+              } else if (idx === 1) {
+                item.surfaceMin = num;
+              }
+              item._trajMathCache2D = null;
+              item._trajMathCache3D = null;
+              App._renderParamStep();
+            }
+          };
+          minGroup.appendChild(minAddon);
+          minGroup.appendChild(minInp);
+
+          const maxGroup = document.createElement("div");
+          maxGroup.className = "vec-param-input-group";
+          maxGroup.style.flex = "1";
+          const maxAddon = document.createElement("span");
+          maxAddon.className = "vec-param-addon";
+          maxAddon.textContent = "Max";
+          const maxInp = document.createElement("input");
+          maxInp.className = "vec-param-num-inp vec-param-max-inp";
+          maxInp.dataset.var = vName;
+          if (item.paramInfinity) {
+            maxInp.type = "text";
+            maxInp.value = "+\u221e";
+            maxInp.disabled = true;
+          } else {
+            maxInp.type = "number";
+            maxInp.value = rObj.max;
+            maxInp.step = "1";
+          }
+          maxInp.oninput = (e) => {
+            const num = parseFloat(e.target.value);
+            if (!isNaN(num)) {
+              rObj.max = num;
+              if (vName === item.paramVar) {
+                item.paramMax = num;
+                if (!item.paramInfinity) slider.max = num;
+              } else if (idx === 1) {
+                item.surfaceMax = num;
+              }
+              item._trajMathCache2D = null;
+              item._trajMathCache3D = null;
+              App._renderParamStep();
+            }
+          };
+          maxGroup.appendChild(maxAddon);
+          maxGroup.appendChild(maxInp);
+
+          row.appendChild(tag);
+          row.appendChild(minGroup);
+          row.appendChild(maxGroup);
+          secRange.appendChild(row);
+        });
+
+        // Nút quét vô cực theo tầm nhìn
+        const infBtn = document.createElement("button");
+        infBtn.type = "button";
+        infBtn.className = "vec-param-inf-btn" + (item.paramInfinity ? " active" : "");
+        infBtn.innerHTML = '<i class="ph ph-wave-sine"></i> <span>Quét vô cực theo tầm nhìn</span>';
+        infBtn.onclick = (e) => {
+          e.stopPropagation();
+          item.paramInfinity = !item.paramInfinity;
+          infBtn.classList.toggle("active", item.paramInfinity);
+          const minInputs = tabContentParam.querySelectorAll(".vec-param-min-inp");
+          const maxInputs = tabContentParam.querySelectorAll(".vec-param-max-inp");
+          if (item.paramInfinity) {
+            const vp = App.getViewportRange();
+            slider.min = vp.min;
+            slider.max = vp.max;
+            minInputs.forEach((inp) => {
+              inp.type = "text";
+              inp.value = "-\u221e";
+              inp.disabled = true;
+            });
+            maxInputs.forEach((inp) => {
+              inp.type = "text";
+              inp.value = "+\u221e";
+              inp.disabled = true;
+            });
+          } else {
+            slider.min = item.paramMin ?? -10.0;
+            slider.max = item.paramMax ?? 10.0;
+            minInputs.forEach((inp) => {
+              inp.type = "number";
+              inp.disabled = false;
+              const vName = inp.dataset.var;
+              inp.value = item.varRanges?.[vName]?.min ?? item.paramMin ?? -10;
+            });
+            maxInputs.forEach((inp) => {
+              inp.type = "number";
+              inp.disabled = false;
+              const vName = inp.dataset.var;
+              inp.value = item.varRanges?.[vName]?.max ?? item.paramMax ?? 10;
+            });
+          }
+          item._trajMathCache2D = null;
+          item._trajMathCache3D = null;
+          App._renderParamStep();
+        };
+        secRange.appendChild(infBtn);
+        tabContentParam.appendChild(secRange);
+
+        // Phân khu: CHUYỂN ĐỘNG
+        const secDur = document.createElement("div");
+        secDur.className = "vec-param-section";
+        const titleDur = document.createElement("div");
+        titleDur.className = "vec-param-sec-title";
+        titleDur.textContent = "CHUYỂN ĐỘNG";
+        secDur.appendChild(titleDur);
+
+        const durRow = document.createElement("div");
+        durRow.className = "vec-param-dur-row";
+        const durLabel = document.createElement("span");
+        durLabel.className = "vec-param-row-label";
+        durLabel.textContent = "Thời lượng chu kỳ:";
+
+        const durInputGroup = document.createElement("div");
+        durInputGroup.className = "vec-param-input-group vec-param-dur-group";
+        const durInp = document.createElement("input");
+        durInp.type = "number";
+        durInp.className = "vec-param-num-inp vec-param-dur-inp";
+        durInp.value = item.duration ?? 4.0;
+        durInp.min = "0.5";
+        durInp.max = "60";
+        durInp.step = "0.5";
+        durInp.oninput = (e) => {
+          const v = parseFloat(e.target.value);
+          if (!isNaN(v) && v > 0) item.duration = v;
+        };
+        const durUnit = document.createElement("span");
+        durUnit.className = "vec-param-addon";
+        durUnit.textContent = "giây";
+        durInputGroup.appendChild(durInp);
+        durInputGroup.appendChild(durUnit);
+
+        durRow.appendChild(durLabel);
+        durRow.appendChild(durInputGroup);
+        secDur.appendChild(durRow);
+
+        // Nút preset: 2s, 4s, 8s
+        const presetRow = document.createElement("div");
+        presetRow.className = "vec-param-preset-row";
+        [2, 4, 8].forEach((sec) => {
+          const pill = document.createElement("button");
+          pill.type = "button";
+          pill.className = "vec-param-preset-btn";
+          pill.textContent = `${sec}s`;
+          pill.onclick = (e) => {
+            e.stopPropagation();
+            item.duration = sec;
+            durInp.value = sec;
+          };
+          presetRow.appendChild(pill);
+        });
+        secDur.appendChild(presetRow);
+        tabContentParam.appendChild(secDur);
+
+        popover.appendChild(tabContentParam);
+
+        // 3. KHUNG NỘI DUNG TAB 2: HIỂN THỊ VÀ ĐỒ HỌA
+        const tabContentDisplay = document.createElement("div");
+        tabContentDisplay.className = "vec-pop-tab-content";
+        tabContentDisplay.style.display = "none";
+
+        // Phân khu: ĐỐI TƯỢNG HIỂN THỊ
+        const secDisplay = document.createElement("div");
+        secDisplay.className = "vec-param-section";
+        const titleDisplay = document.createElement("div");
+        titleDisplay.className = "vec-param-sec-title";
+        titleDisplay.textContent = "ĐỐI TƯỢNG HIỂN THỊ";
+        secDisplay.appendChild(titleDisplay);
+
+        // Checkbox: Thân vector mũi tên
+        const arrowLabel = document.createElement("label");
+        arrowLabel.className = "vec-param-trace-label";
+        const arrowInput = document.createElement("input");
+        arrowInput.type = "checkbox";
+        arrowInput.id = `vecParamArrowInp_${item.id}`;
+        arrowInput.checked = item.showArrow !== false;
+        arrowInput.onchange = (e) => {
+          item.showArrow = e.target.checked;
+          if (item.showArrow && item.visible === false) item.visible = true;
+          updateVectorToggleBtn();
+          if (App.mode === "3D" && window.Vec3D) {
+            Vec3D.draw3DAllVectors({ frame: false });
+            if (Vec3D._renderer && Vec3D._scene && Vec3D._camera) {
+              Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
+            }
+          } else if (window.Vec2D && Vec2D.draw2DAllVectors) {
+            Vec2D.draw2DAllVectors();
+          }
+        };
+        const arrowText = document.createElement("span");
+        arrowText.textContent = "Hiện thân vector mũi tên";
+        arrowLabel.appendChild(arrowInput);
+        arrowLabel.appendChild(arrowText);
+        secDisplay.appendChild(arrowLabel);
+
+        // Checkbox: Vệt quỹ đạo đường cong
+        const traceLabel = document.createElement("label");
+        traceLabel.className = "vec-param-trace-label";
+        traceLabel.style.marginTop = "6px";
+        const traceInput = document.createElement("input");
+        traceInput.type = "checkbox";
+        traceInput.id = `vecParamTraceInp_${item.id}`;
+        traceInput.checked = item.showTrajectory !== false;
+        traceInput.onchange = (e) => {
+          item.showTrajectory = e.target.checked;
+          if (item.showTrajectory && item.visible === false) item.visible = true;
+          updateVectorToggleBtn();
+          if (App.mode === "3D" && window.Vec3D) {
+            Vec3D.draw3DAllVectors({ frame: false });
+            if (Vec3D._renderer && Vec3D._scene && Vec3D._camera) {
+              Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
+            }
+          } else if (window.Vec2D && Vec2D.draw2DAllVectors) {
+            Vec2D.draw2DAllVectors();
+          }
+        };
+        const traceText = document.createElement("span");
+        traceText.textContent = "Hiện vệt quỹ đạo đường cong";
+        traceLabel.appendChild(traceInput);
+        traceLabel.appendChild(traceText);
+        secDisplay.appendChild(traceLabel);
+
+        // Nếu vector đa biến: Tùy chọn diện tích / thể tích quét và độ mờ
+        if (item.vars && item.vars.length >= 2) {
+          const areaLabel = document.createElement("label");
+          areaLabel.className = "vec-param-trace-label";
+          areaLabel.style.marginTop = "6px";
+          const areaInput = document.createElement("input");
+          areaInput.type = "checkbox";
+          areaInput.id = `vecParamAreaInp_${item.id}`;
+          areaInput.checked = !!item.showAreaFill;
+          areaInput.onchange = (e) => {
+            item.showAreaFill = e.target.checked;
+            if (App.mode === "3D" && window.Vec3D) {
+              Vec3D.draw3DAllVectors({ frame: false });
+              if (Vec3D._renderer && Vec3D._scene && Vec3D._camera) {
+                Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
+              }
+            } else if (window.Vec2D && Vec2D.draw2DAllVectors) {
+              Vec2D.draw2DAllVectors();
+            }
+          };
+          const areaText = document.createElement("span");
+          areaText.textContent = item.vars.length >= 3 ? "Hiện thể tích quét không gian" : "Hiện diện tích quét mặt phẳng";
+          areaLabel.appendChild(areaInput);
+          areaLabel.appendChild(areaText);
+          secDisplay.appendChild(areaLabel);
+
+          // Nhập số nguyên dương tùy chỉnh Độ mờ (không dùng thanh trượt)
+          const opGroup = document.createElement("div");
+          opGroup.className = "vec-param-opacity-group";
+          opGroup.style.marginTop = "8px";
+          opGroup.style.display = "flex";
+          opGroup.style.justifyContent = "space-between";
+          opGroup.style.alignItems = "center";
+
+          const opLabel = document.createElement("span");
+          opLabel.className = "vec-param-row-label";
+          opLabel.textContent = "Độ mờ miền quét:";
+
+          const curOp = item.surfaceOpacity !== undefined ? item.surfaceOpacity : 0.45;
+          const curPct = Math.round(curOp * 100);
+
+          const opInpBox = document.createElement("div");
+          opInpBox.style.display = "flex";
+          opInpBox.style.alignItems = "center";
+          opInpBox.style.gap = "4px";
+
+          const opInp = document.createElement("input");
+          opInp.type = "number";
+          opInp.className = "vec-param-opacity-inp";
+          opInp.id = `vecParamOpacityVal_${item.id}`;
+          opInp.min = "0";
+          opInp.max = "100";
+          opInp.step = "1";
+          opInp.value = curPct;
+
+          const opPctSpan = document.createElement("span");
+          opPctSpan.textContent = "%";
+          opPctSpan.style.fontSize = "11px";
+          opPctSpan.style.fontWeight = "600";
+          opPctSpan.style.color = "var(--text-sub, #64748b)";
+
+          opInp.oninput = (e) => {
+            let intVal = parseInt(e.target.value, 10);
+            if (isNaN(intVal)) return;
+            if (intVal < 0) intVal = 0;
+            if (intVal > 100) intVal = 100;
+            item.surfaceOpacity = intVal / 100;
+            App._renderParamStep();
+          };
+
+          opInpBox.appendChild(opInp);
+          opInpBox.appendChild(opPctSpan);
+          opGroup.appendChild(opLabel);
+          opGroup.appendChild(opInpBox);
+          secDisplay.appendChild(opGroup);
+        }
+
+        // Công cụ chọn màu vector & quỹ đạo
+        const colorRow = document.createElement("div");
+        colorRow.className = "vec-color-picker-row";
+
+        const colorLbl = document.createElement("span");
+        colorLbl.className = "vec-param-row-label";
+        colorLbl.textContent = "Màu vector & quỹ đạo:";
+
+        const colorTool = document.createElement("div");
+        colorTool.className = "vec-color-picker-tool";
+
+        const effectiveHex = App.colorToHex ? App.colorToHex(item.colorCss || item.colorHex) : (item.colorHex || "#0090ff");
+
+        const popColorInp = document.createElement("input");
+        popColorInp.type = "color";
+        popColorInp.className = "vec-color-input-native";
+        popColorInp.id = `vecPopColorInp_${item.id}`;
+        popColorInp.value = effectiveHex;
+
+        const popColorHex = document.createElement("span");
+        popColorHex.className = "vec-color-hex-text";
+        popColorHex.id = `vecPopColorHex_${item.id}`;
+        popColorHex.textContent = effectiveHex.toUpperCase();
+
+        popColorInp.oninput = (e) => {
+          const hex = e.target.value;
+          popColorHex.textContent = hex.toUpperCase();
+          if (typeof App.setVectorColor === "function") {
+            App.setVectorColor(item.id, hex);
+          }
+        };
+
+        colorTool.appendChild(popColorInp);
+        colorTool.appendChild(popColorHex);
+        colorRow.appendChild(colorLbl);
+        colorRow.appendChild(colorTool);
+        secDisplay.appendChild(colorRow);
+
+        // Công cụ chọn màu riêng cho miền tô diện tích / thể tích
+        if (item.vars && item.vars.length >= 2) {
+          const sColorRow = document.createElement("div");
+          sColorRow.className = "vec-color-picker-row";
+          sColorRow.style.marginTop = "6px";
+
+          const sColorLbl = document.createElement("span");
+          sColorLbl.className = "vec-param-row-label";
+          sColorLbl.textContent = "Màu miền quét:";
+
+          const sColorTool = document.createElement("div");
+          sColorTool.className = "vec-color-picker-tool";
+
+          if (!item.surfaceColor) {
+            item.surfaceColor = effectiveHex;
+          }
+          const effectiveSurfaceHex = item.surfaceColor;
+
+          const popSurfaceColorInp = document.createElement("input");
+          popSurfaceColorInp.type = "color";
+          popSurfaceColorInp.className = "vec-color-input-native";
+          popSurfaceColorInp.id = `vecPopSurfaceColorInp_${item.id}`;
+          popSurfaceColorInp.value = effectiveSurfaceHex;
+
+          const popSurfaceHex = document.createElement("span");
+          popSurfaceHex.className = "vec-color-hex-text";
+          popSurfaceHex.id = `vecPopSurfaceHex_${item.id}`;
+          popSurfaceHex.textContent = effectiveSurfaceHex.toUpperCase();
+
+          popSurfaceColorInp.oninput = (e) => {
+            const hex = e.target.value;
+            item.surfaceColor = hex;
+            popSurfaceHex.textContent = hex.toUpperCase();
+            App._renderParamStep();
+          };
+
+          sColorTool.appendChild(popSurfaceColorInp);
+          sColorTool.appendChild(popSurfaceHex);
+          sColorRow.appendChild(sColorLbl);
+          sColorRow.appendChild(sColorTool);
+          secDisplay.appendChild(sColorRow);
+        }
+
+        tabContentDisplay.appendChild(secDisplay);
+        popover.appendChild(tabContentDisplay);
+
+        // Sự kiện chuyển Tab
+        tabBtnParam.onclick = (e) => {
+          e.stopPropagation();
+          tabBtnParam.classList.add("active");
+          tabBtnDisplay.classList.remove("active");
+          tabContentParam.style.display = "flex";
+          tabContentDisplay.style.display = "none";
+        };
+
+        tabBtnDisplay.onclick = (e) => {
+          e.stopPropagation();
+          tabBtnDisplay.classList.add("active");
+          tabBtnParam.classList.remove("active");
+          tabContentDisplay.style.display = "flex";
+          tabContentParam.style.display = "none";
+        };
+
+        // Bấm nút 3 chấm để bật/tắt Popover cài đặt nâng cao
+        moreBtn.onclick = (e) => {
+          e.stopPropagation();
+          const isOpen = popover.style.display === "block";
+          document.querySelectorAll(".vec-param-popover").forEach((p) => (p.style.display = "none"));
+          if (!isOpen) {
+            if (popover.parentElement !== document.body) {
+              document.body.appendChild(popover);
+            }
+            popover.style.display = "block";
+            popover.dataset.triggerId = moreBtn.id;
+
+            const updatePos = () => {
+              const btnRect = moreBtn.getBoundingClientRect();
+              const popWidth = 275;
+              let left = btnRect.right - popWidth;
+              if (left < 10) left = 10;
+              if (left + popWidth > window.innerWidth - 10) left = window.innerWidth - popWidth - 10;
+              const popHeight = popover.offsetHeight || 230;
+              const spaceBelow = window.innerHeight - btnRect.bottom;
+              const spaceAbove = btnRect.top;
+              let top;
+              if (spaceBelow < popHeight + 10 && spaceAbove > spaceBelow) {
+                top = btnRect.top - popHeight - 4;
+              } else {
+                top = btnRect.bottom + 4;
+              }
+              popover.style.position = "fixed";
+              popover.style.left = `${left}px`;
+              popover.style.top = `${top}px`;
+              popover.style.zIndex = "999999";
+            };
+            requestAnimationFrame(updatePos);
+          }
+        };
+
+        paramCtrl.appendChild(popover);
+        li.appendChild(paramCtrl);
+      }
+
+      // Bộ đóng thông minh khi click ra vùng ngoài và bám theo vị trí khi cuộn (Tuyệt đối không đóng khi hover)
+      if (!window._paramPopoverRadarAttached) {
+        window._paramPopoverRadarAttached = true;
+        document.addEventListener("click", (e) => {
+          if (!e.target.closest(".vec-param-popover") && !e.target.closest(".vec-param-more-btn")) {
+            document.querySelectorAll(".vec-param-popover").forEach((p) => (p.style.display = "none"));
+          }
+        });
+        window.addEventListener("scroll", () => {
+          const openPop = document.querySelector('.vec-param-popover[style*="display: block"]');
+          if (!openPop || !openPop.dataset.triggerId) return;
+          const trig = document.getElementById(openPop.dataset.triggerId);
+          if (!trig) {
+            openPop.style.display = "none";
+            return;
+          }
+          const btnRect = trig.getBoundingClientRect();
+          const popWidth = 275;
+          let left = btnRect.right - popWidth;
+          if (left < 10) left = 10;
+          if (left + popWidth > window.innerWidth - 10) left = window.innerWidth - popWidth - 10;
+          const popHeight = openPop.offsetHeight || 230;
+          const spaceBelow = window.innerHeight - btnRect.bottom;
+          const spaceAbove = btnRect.top;
+          let top;
+          if (spaceBelow < popHeight + 10 && spaceAbove > spaceBelow) {
+            top = btnRect.top - popHeight - 4;
+          } else {
+            top = btnRect.bottom + 4;
+          }
+          openPop.style.left = `${left}px`;
+          openPop.style.top = `${top}px`;
+        }, { capture: true, passive: true });
+        window._paramPopoverRadarAttached = true;
+      }
+
       el.appendChild(li);
     }
     requestAnimationFrame(() => {
@@ -1946,28 +2797,49 @@
     const cells = Array.from(grid.querySelectorAll(".matrix-cell, input.matrix-cell"));
     if (cells.length !== rows * cols) return null;
 
+    const isA = gridId === "matrixCalcGridA";
+    const isB = gridId === "matrixCalcGridB";
+    const paramMat = isA ? App.calcParamMatrixA : (isB ? App.calcParamMatrixB : null);
+
     const values = [];
+    const rawValues = [];
     for (let i = 0; i < rows; i++) {
       const row = [];
+      const rawRow = [];
       for (let j = 0; j < cols; j++) {
         let raw = cells[i * cols + j].value;
         if (typeof raw === "string") raw = raw.trim();
-        let num = Number(raw);
-        if (!Number.isFinite(num)) {
-          try {
-            if (window.App && typeof App.parseVectorExpr === "function") {
-              const parsed = App.parseVectorExpr(`[${raw}]`);
-              if (parsed && Number.isFinite(Number(parsed[0]))) {
-                num = Number(parsed[0]);
+        rawRow.push(raw);
+
+        let num;
+        if (paramMat && paramMat.isParametric && paramMat.values && paramMat.values[i] && paramMat.values[i][j] !== undefined) {
+          num = Number(paramMat.values[i][j]);
+        } else {
+          num = Number(raw);
+          if (!Number.isFinite(num)) {
+            try {
+              if (window.App && typeof App.parseVectorExpr === "function") {
+                const parsed = App.parseVectorExpr(`[${raw}]`);
+                if (parsed && Number.isFinite(Number(parsed[0]))) {
+                  num = Number(parsed[0]);
+                }
               }
-            }
-          } catch (e) {}
+            } catch (e) {}
+          }
         }
         row.push(Number.isFinite(num) ? num : 0);
       }
       values.push(row);
+      rawValues.push(rawRow);
     }
-    return { rows, cols, values };
+    return {
+      rows,
+      cols,
+      values,
+      rawValues,
+      isParametric: !!(paramMat && paramMat.isParametric),
+      paramMat: paramMat
+    };
   }
 
   App.refreshMatrixDropdowns = function() {
@@ -1985,7 +2857,10 @@
         App.matrixList.forEach(m => {
           const opt = document.createElement("option");
           opt.value = m.id;
-          opt.textContent = `${m.name} (${m.rows}✕${m.cols})`;
+          const paramSuffix = m.isParametric
+            ? ` f(${m.vars && m.vars.length > 1 ? m.vars.join(",") : (m.paramVar || "t")})`
+            : "";
+          opt.textContent = `${m.name} (${m.rows}✕${m.cols})${paramSuffix}`;
           sel.appendChild(opt);
         });
       }
@@ -2019,7 +2894,10 @@
           opt.value = String(m.id);
           const r = m.rows || (m.values ? m.values.length : 2);
           const c = m.cols || (m.values && m.values[0] ? m.values[0].length : 2);
-          opt.textContent = `${m.name || "A"} (${r}✕${c})`;
+          const paramSuffix = m.isParametric
+            ? ` f(${m.vars && m.vars.length > 1 ? m.vars.join(",") : (m.paramVar || "t")})`
+            : "";
+          opt.textContent = `${m.name || "A"} (${r}✕${c})${paramSuffix}`;
           matSel.appendChild(opt);
         });
         if (prevMat && matrices.some((m) => String(m.id) === String(prevMat))) {
@@ -2046,14 +2924,164 @@
         vectors.forEach((v) => {
           const opt = document.createElement("option");
           opt.value = String(v.id);
-          const coords = Array.isArray(v.vec) ? `[${v.vec.join(", ")}]` : "";
-          opt.textContent = `${v.name || "v"} = ${coords}`;
+          if (v.isImageMesh) {
+            opt.textContent = `Tranh Vector: ${v.name || "Ảnh mẫu"} (${(v.numTriangles || 0).toLocaleString()} tam giác)`;
+          } else {
+            const coords = Array.isArray(v.vec) ? `[${v.vec.join(", ")}]` : "";
+            opt.textContent = `${v.name || "v"} = ${coords}`;
+          }
           vecSel.appendChild(opt);
         });
         if (prevVec && (prevVec === "all" || vectors.some((v) => String(v.id) === String(prevVec)))) {
           vecSel.value = prevVec;
         }
       }
+    }
+
+    if (typeof App.updateMixedParamController === "function") {
+      App.updateMixedParamController();
+    }
+  };
+
+  App.updateMixedParamController = function () {
+    const container = document.getElementById("mixedMatrixParamContainer");
+    const matSel = document.getElementById("mixedMatrixSelect");
+    if (!container || !matSel) return;
+
+    const matrices = Array.isArray(App.matrixList) ? App.matrixList : [];
+    const item = matrices.find((m) => String(m.id) === String(matSel.value));
+
+    if (!item || !item.isParametric) {
+      container.style.display = "none";
+      container.innerHTML = "";
+      return;
+    }
+
+    container.style.display = "block";
+    container.innerHTML = "";
+
+    const header = document.createElement("div");
+    header.className = "mixed-param-title-row";
+
+    const title = document.createElement("span");
+    title.className = "mixed-param-title";
+    title.textContent = `Tham số ma trận ${item.name || "A"}:`;
+
+    const badge = document.createElement("span");
+    badge.className = "mat-param-badge";
+    const vText = item.vars && item.vars.length > 1 ? item.vars.join(",") : (item.paramVar || "t");
+    badge.textContent = `f(${vText})`;
+    badge.title = `Ma trận phụ thuộc tham số ${item.vars ? item.vars.join(", ") : item.paramVar}`;
+
+    header.appendChild(title);
+    header.appendChild(badge);
+    container.appendChild(header);
+
+    if (typeof App.createMatrixParamController === "function") {
+      const ctrl = App.createMatrixParamController(item, () => {
+        const resultBox = document.getElementById("mixedResultBox");
+        if (resultBox && resultBox.style.display !== "none" && typeof App.runMixedCalc === "function") {
+          App.runMixedCalc(false);
+        }
+      });
+      if (ctrl) container.appendChild(ctrl);
+    }
+  };
+
+  // Bộ điều khiển tham số động cho Ma trận trong tab Phép toán ma trận
+  App.updateMatrixCalcParamController = function (target = "A", sourceModel = null) {
+    const isA = target === "A";
+    const containerId = isA ? "matrixCalcParamContainerA" : "matrixCalcParamContainerB";
+    const gridId = isA ? "matrixCalcGridA" : "matrixCalcGridB";
+    const rowsId = isA ? "matrixCalcRowsA" : "matrixCalcRowsB";
+    const colsId = isA ? "matrixCalcColsA" : "matrixCalcColsB";
+    const propName = isA ? "calcParamMatrixA" : "calcParamMatrixB";
+
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const rowsInput = document.getElementById(rowsId);
+    const colsInput = document.getElementById(colsId);
+    const rows = Math.max(1, Math.min(5, parseInt(rowsInput?.value) || 3));
+    const cols = Math.max(1, Math.min(5, parseInt(colsInput?.value) || 3));
+
+    const gridData = typeof App.readGridValues === "function" ? App.readGridValues(gridId, rows, cols) : null;
+
+    if (!gridData || !gridData.isParametric) {
+      if (App[propName]) {
+        App[propName].isAnimating = false;
+        App[propName] = null;
+      }
+      container.style.display = "none";
+      container.innerHTML = "";
+      return;
+    }
+
+    const existing = App[propName];
+    const src = sourceModel || existing;
+    const sameVars = existing && existing.vars && existing.vars.join(",") === gridData.vars.join(",");
+
+    const paramData = {
+      id: `calc${target}`,
+      name: `Ma trận ${target}`,
+      isParametric: true,
+      vars: gridData.vars,
+      paramVar: (src && gridData.vars.includes(src.paramVar)) ? src.paramVar : gridData.vars[0],
+      scopeValues: Object.assign({}, src ? src.scopeValues : {}),
+      paramVal: src ? src.paramVal : 1.0,
+      initialParamVal: src ? (src.initialParamVal ?? src.paramVal ?? 1.0) : 1.0,
+      paramMin: src ? (src.paramMin ?? -10.0) : -10.0,
+      paramMax: src ? (src.paramMax ?? 10.0) : 10.0,
+      paramInfinity: src ? !!src.paramInfinity : false,
+      duration: src ? (src.duration ?? 4.0) : 4.0,
+      cellParseds: gridData.cellParseds
+    };
+
+    const hue = isA ? 220 : 280;
+    App[propName] = typeof App.createMatrixItem === "function"
+      ? App.createMatrixItem(rows, cols, gridData.values, gridData.latexValues, hue, paramData)
+      : null;
+
+    if (!App[propName]) return;
+
+    App[propName].values = App[propName].evalMatrix(App[propName].paramVal, App[propName].scopeValues);
+
+    // Nếu controller đã hiển thị và các biến không đổi, chỉ cần cập nhật giá trị UI hiện tại
+    if (sameVars && container.style.display === "block" && container.children.length > 0) {
+      if (typeof App.updateSingleMatrixUI === "function") {
+        App.updateSingleMatrixUI(App[propName]);
+      }
+      return;
+    }
+
+    container.style.display = "block";
+    container.innerHTML = "";
+
+    const header = document.createElement("div");
+    header.className = "mixed-param-title-row";
+
+    const title = document.createElement("span");
+    title.className = "mixed-param-title";
+    title.textContent = `Tham số Ma trận ${target}:`;
+
+    const badge = document.createElement("span");
+    badge.className = "mat-param-badge";
+    const vText = App[propName].vars && App[propName].vars.length > 1 ? App[propName].vars.join(",") : (App[propName].paramVar || "t");
+    badge.textContent = `f(${vText})`;
+    badge.title = `Ma trận phụ thuộc tham số ${App[propName].vars ? App[propName].vars.join(", ") : App[propName].paramVar}`;
+
+    header.appendChild(title);
+    header.appendChild(badge);
+    container.appendChild(header);
+
+    if (typeof App.createMatrixParamController === "function") {
+      const ctrl = App.createMatrixParamController(App[propName], () => {
+        const resultBox = document.getElementById("matrixResultBox");
+        if (resultBox && resultBox.style.display !== "none" && typeof App.runMatrixCalc === "function") {
+          App.runMatrixCalc(false);
+        }
+      });
+      if (ctrl) container.appendChild(ctrl);
     }
   };
 
@@ -2469,6 +3497,25 @@
       return "\\begin{bmatrix} " + mat.map(row => row.map(fmtVal).join(" & ")).join(" \\\\ ") + " \\end{bmatrix}";
     };
 
+    const rawMatToLatex = (data, label = "A") => {
+      if (!data || !data.rawValues || !data.rawValues.length) return "";
+      return `\\( ${label} = \\begin{bmatrix} ` + data.rawValues.map(row => row.join(" & ")).join(" \\\\ ") + ` \\end{bmatrix} \\)`;
+    };
+
+    let paramContextHtml = "";
+    if (AData.isParametric && AData.paramMat) {
+      const pMat = AData.paramMat;
+      const pDesc = pMat.vars && pMat.vars.length > 1
+        ? Object.entries(pMat.scopeValues).filter(([k]) => pMat.vars.includes(k)).map(([k, v]) => `${k} = ${fmtVal(v)}`).join(", ")
+        : `${pMat.paramVar || 't'} = ${fmtVal(pMat.paramVal)}`;
+      paramContextHtml = `
+        <div style="margin-bottom:8px; padding:6px 8px; background:var(--bg-subtle, rgba(255,255,255,0.04)); border:1px solid var(--border-subtle, rgba(255,255,255,0.08)); border-radius:2px; font-size:12px;">
+          • Ma trận tham số: ${rawMatToLatex(AData, "A")}<br/>
+          • Giá trị tham số hiện tại: \\( ${pDesc} \\)
+        </div>
+      `;
+    }
+
     let title = "KẾT QUẢ MA TRẬN";
     let resultLatex = "";
     let detailsHtml = "";
@@ -2537,6 +3584,7 @@
         detailsHtml = `
           <div class="calc-section-title">Cách tính đại số</div>
           <div class="calc-explanation-block">
+            ${paramContextHtml}
             ${res.steps.join("<br/>")}
           </div>
           <div class="calc-section-title">Ý nghĩa hình học</div>
@@ -2616,6 +3664,7 @@
           detailsHtml = `
             <div class="calc-section-title">Cách tính đại số</div>
             <div class="calc-explanation-block">
+              ${paramContextHtml}
               ${res.steps.join("<br/>")}
             </div>
             <div class="calc-section-title">Ý nghĩa hình học</div>
@@ -2695,6 +3744,7 @@
       detailsHtml = `
         <div class="calc-section-title">Cách tính đại số</div>
         <div class="calc-explanation-block">
+          ${paramContextHtml}
           ${part1Steps}
         </div>
         <div class="calc-section-title">Ý nghĩa hình học</div>
@@ -2761,6 +3811,7 @@
       detailsHtml = `
         <div class="calc-section-title">Cách tính đại số</div>
         <div class="calc-explanation-block">
+          ${paramContextHtml}
           ${res.steps.join("<br/>")}
         </div>
         <div class="calc-section-title">Ý nghĩa hình học</div>
@@ -2832,9 +3883,24 @@
           - Giai đoạn 2 (ma trận A kích thước 3×2): Nhúng mặt phẳng 2D trở lại không gian 3D thành một mặt phẳng nghiêng có số chiều bằng 2 (hạng của ma trận tích C bằng 2 và định thức bằng 0).`;
         }
 
+        let mulParamContextHtml = paramContextHtml;
+        if (BData && BData.isParametric && BData.paramMat) {
+          const pMatB = BData.paramMat;
+          const pDescB = pMatB.vars && pMatB.vars.length > 1
+            ? Object.entries(pMatB.scopeValues).filter(([k]) => pMatB.vars.includes(k)).map(([k, v]) => `${k} = ${fmtVal(v)}`).join(", ")
+            : `${pMatB.paramVar || 't'} = ${fmtVal(pMatB.paramVal)}`;
+          mulParamContextHtml += `
+            <div style="margin-bottom:8px; padding:6px 8px; background:var(--bg-subtle, rgba(255,255,255,0.04)); border:1px solid var(--border-subtle, rgba(255,255,255,0.08)); border-radius:2px; font-size:12px;">
+              • Ma trận tham số: ${rawMatToLatex(BData, "B")}<br/>
+              • Giá trị tham số hiện tại: \\( ${pDescB} \\)
+            </div>
+          `;
+        }
+
         detailsHtml = `
           <div class="calc-section-title">Cách tính đại số</div>
           <div class="calc-explanation-block">
+            ${mulParamContextHtml}
             ${part1Steps}
           </div>
           <div class="calc-section-title">Ý nghĩa hình học</div>
@@ -2887,6 +3953,15 @@
     }
 
     if (resultBox) {
+      let latexHtml = `\\( ${resultLatex} \\)`;
+      if (window.katex && typeof window.katex.renderToString === "function") {
+        try {
+          latexHtml = window.katex.renderToString(resultLatex, { displayMode: true, throwOnError: false });
+        } catch (e) {
+          latexHtml = `\\( ${resultLatex} \\)`;
+        }
+      }
+
       resultBox.className = "";
       resultBox.style.display = "block";
       resultBox.style.padding = "0";
@@ -2894,11 +3969,21 @@
       resultBox.style.background = "transparent";
       resultBox.innerHTML = App.renderUnifiedResult(
         title,
-        `<div class="calc-result-latex" style="overflow-x: auto; padding: 4px 0; font-size: 15px;">\\( ${resultLatex} \\)</div>`
+        `<div class="calc-result-latex" style="overflow-x: auto; padding: 4px 0; font-size: 15px;">${latexHtml}</div>`
       ) + App.renderExplanationBox(detailsHtml);
 
       if (window.MathJax && window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise([resultBox]).catch(console.warn);
+        if (triggerAnimation) {
+          if (App._matCalcMathJaxTimer) clearTimeout(App._matCalcMathJaxTimer);
+          window.MathJax.typesetPromise([resultBox]).catch(console.warn);
+        } else {
+          if (App._matCalcMathJaxTimer) clearTimeout(App._matCalcMathJaxTimer);
+          App._matCalcMathJaxTimer = setTimeout(() => {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+              window.MathJax.typesetPromise([resultBox]).catch(console.warn);
+            }
+          }, 200);
+        }
       }
     }
 
@@ -2983,6 +4068,146 @@
       });
     } else {
       const vObj = (App.vectorList || []).find((v) => String(v.id) === String(vecSel.value));
+      
+      // XỬ LÝ BIẾN ĐỔI TUYẾN TÍNH CHO TRANH VECTOR MESH
+      if (vObj && vObj.isImageMesh) {
+        if (colsA < 2 || colsA > 3 || rowsA < 2 || rowsA > 3) {
+          const msg = `Ma trận biến đổi tranh vector cần có kích thước 2x2 hoặc 3x3 (hiện tại: ${rowsA}x${colsA}).`;
+          if (window.App?.showToast) App.showToast(msg, "warning");
+          if (resultBox) {
+            resultBox.className = "";
+            resultBox.style.display = "block";
+            resultBox.innerHTML = App.renderUnifiedResult(
+              "LỖI KÍCH THƯỚC",
+              `<span style="color:var(--danger, #e5484d); font-size:12px;">${msg}</span>`
+            );
+          }
+          return;
+        }
+
+        // Đảm bảo có lưu tọa độ đỉnh gốc (baseWorldPoints)
+        if (!vObj.baseWorldPoints || vObj.baseWorldPoints.length !== vObj.worldPoints.length) {
+          vObj.baseWorldPoints = vObj.worldPoints.map(p => [p[0], p[1], p[2] || 0]);
+        }
+
+        const basePts = vObj.baseWorldPoints;
+        const numPts = basePts.length;
+        const newWorldPoints = new Array(numPts);
+
+        const m00 = Number(matrixValues[0][0]) || 0;
+        const m01 = Number(matrixValues[0][1]) || 0;
+        const m02 = colsA >= 3 ? (Number(matrixValues[0][2]) || 0) : 0;
+
+        const m10 = Number(matrixValues[1][0]) || 0;
+        const m11 = Number(matrixValues[1][1]) || 0;
+        const m12 = colsA >= 3 ? (Number(matrixValues[1][2]) || 0) : 0;
+
+        const m20 = rowsA >= 3 ? (Number(matrixValues[2][0]) || 0) : 0;
+        const m21 = rowsA >= 3 ? (Number(matrixValues[2][1]) || 0) : 0;
+        const m22 = rowsA >= 3 && colsA >= 3 ? (Number(matrixValues[2][2]) || 0) : 1;
+
+        if (rowsA === 2 && colsA === 2) {
+          for (let i = 0; i < numPts; i++) {
+            const bp = basePts[i];
+            const nx = m00 * bp[0] + m01 * bp[1];
+            const ny = m10 * bp[0] + m11 * bp[1];
+            newWorldPoints[i] = [nx, ny, bp[2]];
+          }
+        } else {
+          for (let i = 0; i < numPts; i++) {
+            const bp = basePts[i];
+            const nx = m00 * bp[0] + m01 * bp[1] + m02 * bp[2];
+            const ny = m10 * bp[0] + m11 * bp[1] + m12 * bp[2];
+            const nz = m20 * bp[0] + m21 * bp[1] + m22 * bp[2];
+            newWorldPoints[i] = [nx, ny, nz];
+          }
+        }
+
+        vObj.worldPoints = newWorldPoints;
+        vObj.activeTransformMatrix = matrixValues;
+
+        // Vẽ lại đồ thị
+        if (App.mode === "3D" && window.Vec3D?.hardRefresh3D) {
+          Vec3D.hardRefresh3D(false);
+        } else if (window.Vec2D?.draw2DAllVectors) {
+          Vec2D.draw2DAllVectors();
+        }
+
+        // Tính định thức và giải thích hình học
+        let det = 0;
+        if (rowsA === 2 && colsA === 2) {
+          det = m00 * m11 - m01 * m10;
+        } else if (rowsA === 3 && colsA === 3) {
+          det = m00 * (m11 * m22 - m12 * m21) - m01 * (m10 * m22 - m12 * m20) + m02 * (m10 * m21 - m11 * m20);
+        }
+
+        const detVal = parseFloat(det.toFixed(4));
+        const isSingular = Math.abs(det) < 1e-6;
+        const isNegative = det < -1e-6;
+
+        let geomExplanation = "";
+        if (isSingular) {
+          geomExplanation = `<b>Ma trận suy biến (Hạng &lt; ${rowsA}):</b> Định thức \\( \\det(A) = 0 \\). Toàn bộ không gian bị nén triệt tiêu diện tích, ép ${numPts.toLocaleString()} vector đỉnh của bức tranh bẹp dí về một đường thẳng hoặc điểm!`;
+        } else if (isNegative) {
+          geomExplanation = `<b>Biến đổi đảo hướng (Orientation Reversing):</b> Định thức \\( \\det(A) = ${detVal} &lt; 0 \\). Bức tranh bị lật đối xứng gương qua một trục, đồng thời diện tích co dãn theo tỷ lệ \\( |\\det(A)| = ${Math.abs(detVal)} \\).`;
+        } else {
+          geomExplanation = `<b>Biến đổi tuyến tính giữ hướng:</b> Định thức \\( \\det(A) = ${detVal} \\). Mọi tam giác trong bức tranh được co dãn diện tích theo tỷ lệ \\( \\det(A) = ${detVal} \\).`;
+        }
+
+        const col1 = rowsA === 2 ? `\\begin{pmatrix} ${m00.toFixed(2)} \\\\ ${m10.toFixed(2)} \\end{pmatrix}` : `\\begin{pmatrix} ${m00.toFixed(2)} \\\\ ${m10.toFixed(2)} \\\\ ${m20.toFixed(2)} \\end{pmatrix}`;
+        const col2 = rowsA === 2 ? `\\begin{pmatrix} ${m01.toFixed(2)} \\\\ ${m11.toFixed(2)} \\end{pmatrix}` : `\\begin{pmatrix} ${m01.toFixed(2)} \\\\ ${m11.toFixed(2)} \\\\ ${m21.toFixed(2)} \\end{pmatrix}`;
+
+        let detailsHtml = `
+          <div class="calc-section-title">Tiến trình biến đổi tuyến tính toàn bộ ảnh</div>
+          <div class="calc-explanation-block">
+            Áp dụng ánh xạ tuyến tính \\( T(\\vec{p}) = ${matrixName} \\cdot \\vec{p} \\) lên toàn bộ <b>${numPts.toLocaleString()} vector đỉnh</b> của bức tranh.<br/>
+            - <b>Hệ trục cơ sở mới của không gian tranh:</b><br/>
+            &nbsp;&nbsp;+ Vector cơ sở \\( \\vec{i}' = ${col1} \\)<br/>
+            &nbsp;&nbsp;+ Vector cơ sở \\( \\vec{j}' = ${col2} \\)<br/>
+            - <b>Định thức ma trận:</b> \\( \\det(${matrixName}) = ${detVal} \\).
+          </div>
+          <div class="calc-section-title">Ý nghĩa hình học</div>
+          <div class="calc-explanation-block">
+            ${geomExplanation}
+          </div>
+          <div style="margin-top:10px; display:flex; gap:8px;">
+            <button type="button" id="btnResetMeshTransform" class="btn" style="flex:1; padding:7px 10px; font-size:12px; font-weight:600; border-radius:2px; border:1px solid var(--border-subtle, #33383f); background:var(--bg-card, #18191b); color:var(--text-main, #eee); cursor:pointer;">
+              <i class="ph ph-arrow-counter-clockwise"></i> Khôi phục hình dạng gốc
+            </button>
+          </div>
+        `;
+
+        if (resultBox) {
+          resultBox.className = "";
+          resultBox.style.display = "block";
+          resultBox.innerHTML = App.renderUnifiedResult(
+            `BIẾN ĐỔI TRANH VECTOR (${matrixName} · TRANH)`,
+            detailsHtml
+          );
+
+          const resetBtn = resultBox.querySelector("#btnResetMeshTransform");
+          if (resetBtn) {
+            resetBtn.onclick = () => {
+              if (vObj.baseWorldPoints) {
+                vObj.worldPoints = vObj.baseWorldPoints.map(p => [...p]);
+                vObj.activeTransformMatrix = null;
+                if (App.mode === "3D" && window.Vec3D?.hardRefresh3D) {
+                  Vec3D.hardRefresh3D(false);
+                } else if (window.Vec2D?.draw2DAllVectors) {
+                  Vec2D.draw2DAllVectors();
+                }
+                if (window.App?.showToast) App.showToast("Đã khôi phục tranh về hình dạng ban đầu.", "success");
+              }
+            };
+          }
+        }
+
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          window.MathJax.typesetPromise([resultBox]).catch(() => {});
+        }
+        return;
+      }
+
       if (vObj && Array.isArray(vObj.vec)) {
         if (vObj.vec.length !== colsA) {
           const msg = `Kích thước không khớp: Ma trận ${matrixName} có ${colsA} cột nhưng vector ${vObj.name || "v"} có ${vObj.vec.length} phần tử.`;
@@ -3259,6 +4484,43 @@
     }
 
     if (resultBox) {
+      let addParamVecBtnHtml = "";
+      let symbolicVectorExpr = "";
+      if (mObj.isParametric && targetVectors.length === 1) {
+        const tv = targetVectors[0];
+        const v = tv.vec;
+        const exprComponents = [];
+        for (let i = 0; i < rowsA; i++) {
+          const parts = [];
+          for (let j = 0; j < colsA; j++) {
+            const rawCell = (mObj.latexValues && mObj.latexValues[i] && mObj.latexValues[i][j]) ? mObj.latexValues[i][j] : String(mObj.values[i][j]);
+            const vj = v[j] !== undefined ? v[j] : 0;
+            if (vj === 0) continue;
+            if (vj === 1) parts.push(`(${rawCell})`);
+            else if (vj === -1) parts.push(`(-(${rawCell}))`);
+            else parts.push(`(${vj})*(${rawCell})`);
+          }
+          exprComponents.push(parts.length > 0 ? parts.join(" + ") : "0");
+        }
+        symbolicVectorExpr = `[${exprComponents.join(", ")}]`;
+        addParamVecBtnHtml = `
+          <div style="margin-top: 10px; display: flex; justify-content: flex-end;">
+            <button id="btnAddTransformedParamVec" class="btn" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 2px; background: rgba(0, 144, 255, 0.1); color: var(--primary-base); border: 1px solid rgba(0, 144, 255, 0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              <i class="ph ph-plus-circle" style="font-size: 15px;"></i> Lưu thành vector tham số
+            </button>
+          </div>
+        `;
+      }
+
+      let latexHtml = `\\( ${resultLatex} \\)`;
+      if (window.katex && typeof window.katex.renderToString === "function") {
+        try {
+          latexHtml = window.katex.renderToString(resultLatex, { displayMode: true, throwOnError: false });
+        } catch (e) {
+          latexHtml = `\\( ${resultLatex} \\)`;
+        }
+      }
+
       resultBox.className = "";
       resultBox.style.display = "block";
       resultBox.style.padding = "0";
@@ -3266,11 +4528,35 @@
       resultBox.style.background = "transparent";
       resultBox.innerHTML = App.renderUnifiedResult(
         "VECTOR KẾT QUẢ",
-        `<div class="calc-result-latex" style="overflow-x: auto; padding: 4px 0; font-size: 15px;">\\( ${resultLatex} \\)</div>`
-      ) + App.renderExplanationBox(detailsHtml);
+        `<div class="calc-result-latex" style="overflow-x: auto; padding: 4px 0; font-size: 15px;">${latexHtml}</div>`
+      ) + App.renderExplanationBox(detailsHtml) + addParamVecBtnHtml;
+
+      if (symbolicVectorExpr) {
+        const btn = document.getElementById("btnAddTransformedParamVec");
+        if (btn) {
+          btn.onclick = () => {
+            const inp = document.getElementById("vectorInput");
+            if (inp) inp.value = symbolicVectorExpr;
+            if (typeof App.onAddVector === "function") {
+              App.onAddVector();
+              if (App.showToast) App.showToast("Đã thêm vector tham số từ kết quả biến đổi ma trận!");
+            }
+          };
+        }
+      }
 
       if (window.MathJax && window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise([resultBox]).catch(console.warn);
+        if (triggerAnimation) {
+          if (App._mixedCalcMathJaxTimer) clearTimeout(App._mixedCalcMathJaxTimer);
+          window.MathJax.typesetPromise([resultBox]).catch(console.warn);
+        } else {
+          if (App._mixedCalcMathJaxTimer) clearTimeout(App._mixedCalcMathJaxTimer);
+          App._mixedCalcMathJaxTimer = setTimeout(() => {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+              window.MathJax.typesetPromise([resultBox]).catch(console.warn);
+            }
+          }, 200);
+        }
       }
     }
 
@@ -3396,7 +4682,7 @@
           cell._firstKeyOverwrites = false;
         });
 
-        // Keydown xử lý phím theo chuẩn Excel và điều hướng WASD / Mũi tên
+        // Keydown xử lý phím theo chuẩn Excel và điều hướng 4 phím Mũi tên
         cell.addEventListener("keydown", (e) => {
           // 1. Phím Enter: Nhảy sang ô tiếp theo (ngang rồi xuống hàng)
           if (e.key === "Enter") {
@@ -3432,25 +4718,25 @@
             return;
           }
 
-          // 4. Điều hướng 4 hướng Mũi tên (↑, ↓, ←, →) và W, A, S, D khi chưa Double click
+          // 4. Điều hướng 4 hướng Mũi tên (↑, ↓, ←, →) khi chưa Double click (loại bỏ WASD để cho phép nhập sin, cos, a, d)
           if (!cell._isEditMode && !e.ctrlKey && !e.altKey && !e.metaKey) {
             const key = e.key;
-            if (key === "ArrowUp" || key === "w" || key === "W") {
+            if (key === "ArrowUp") {
               e.preventDefault();
               if (i > 0) moveToCell(i - 1, j);
               return;
             }
-            if (key === "ArrowDown" || key === "s" || key === "S") {
+            if (key === "ArrowDown") {
               e.preventDefault();
               if (i < rows - 1) moveToCell(i + 1, j);
               return;
             }
-            if (key === "ArrowLeft" || key === "a" || key === "A") {
+            if (key === "ArrowLeft") {
               e.preventDefault();
               if (j > 0) moveToCell(i, j - 1);
               return;
             }
-            if (key === "ArrowRight" || key === "d" || key === "D") {
+            if (key === "ArrowRight") {
               e.preventDefault();
               if (j < cols - 1) moveToCell(i, j + 1);
               return;

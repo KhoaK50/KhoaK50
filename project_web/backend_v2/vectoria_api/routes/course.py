@@ -997,35 +997,18 @@ def submit_quiz(user_id, quiz_id):
             except Exception as e_task:
                 print(f">> [submit_quiz] Warning updating user_tasks: {e_task}")
 
-        # Cập nhật lộ trình: CHỈ đánh dấu 'completed' khi TOÀN BỘ các node trong lộ trình đã pass
-        if req_path_id and total_score >= 5.0:
+        # Cập nhật lộ trình: CHỈ đánh dấu 'completed' khi bài thi thực sự là BÀI ĐÁNH GIÁ TỔNG KẾT (is_final) và đạt điểm
+        is_final_exam = bool(data.get("is_final") or (str(req_node_id).lower() in ["final_exam", "final-exam"]) or ("tổng kết" in str(quiz_title).lower() and "lộ trình" in str(quiz_title).lower()))
+        if req_path_id and is_final_exam and total_score >= 5.0:
             try:
-                cursor.execute("SELECT path_nodes FROM user_learning_paths WHERE user_id = %s AND path_id = %s", (user_id, req_path_id))
-                p_info = cursor.fetchone()
-                if p_info:
-                    p_nodes = p_info.get("path_nodes") or []
-                    if isinstance(p_nodes, str):
-                        try:
-                            p_nodes = json.loads(p_nodes)
-                        except Exception:
-                            p_nodes = []
-
-                    cursor.execute("""
-                        SELECT node_id FROM user_tasks
-                        WHERE user_id = %s AND task_type = 'practice' AND (progress_data->>'passed')::boolean = true
-                    """, (user_id,))
-                    passed_nodes = {r['node_id'] for r in cursor.fetchall()}
-
-                    all_passed = all(n in passed_nodes for n in p_nodes) if p_nodes else False
-                    if all_passed:
-                        cursor.execute("""
-                            UPDATE user_learning_paths
-                            SET status = 'completed'
-                            WHERE user_id = %s AND path_id = %s
-                        """, (user_id, req_path_id))
-                        print(f">> [submit_quiz] Path {req_path_id} marked COMPLETED: All nodes passed.")
+                cursor.execute("""
+                    UPDATE user_learning_paths
+                    SET status = 'completed'
+                    WHERE user_id = %s AND path_id = %s
+                """, (user_id, req_path_id))
+                print(f">> [submit_quiz] Final Exam passed for path {req_path_id}. Marked COMPLETED.")
             except Exception as e_path:
-                print(f">> [submit_quiz] Warning updating path completion: {e_path}")
+                print(f">> [submit_quiz] Warning updating path final exam completion: {e_path}")
 
         conn.commit()
 

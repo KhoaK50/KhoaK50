@@ -2778,7 +2778,7 @@ function pollQuizMetadata(quizId) {
         fetch(`${API}/api/quiz/${quizId}/metadata`, { headers: headers })
             .then(res => res.json())
             .then(resData => {
-                if (resData && resData.status === 'success' && resData.metadata) {
+                if (resData && (resData.success || resData.status === 'success') && resData.metadata) {
                     const meta = resData.metadata;
                     if (meta.llm_status === 'completed') {
                         clearInterval(_mentorPollTimer);
@@ -3332,9 +3332,34 @@ window.openPathDetail = function(pathObjOrId, containerOverrideId) {
         html += renderMentorCardHTML(mentorSession);
     }
     
-    const isCompleted = pathObj.status === 'completed' || (activeNodeIdx >= pathNodes.length && pathNodes.length > 0);
-    if (isCompleted) {
+    const allLessonsCompleted = isCommitted && (activeNodeIdx >= pathNodes.length && pathNodes.length > 0);
+    const isPathCompleted = (pathObj.status === 'completed');
+    
+    if (isPathCompleted) {
         html += renderAcademicHonorsShowcase(pathObj);
+    } else if (allLessonsCompleted) {
+        html += `
+            <div id="final-exam-unlocked-banner" style="margin-bottom: 24px; border: 1px solid var(--primary-base, #3b82f6); background: var(--bg-card); padding: 20px 24px; border-radius: 2px; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.06);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--primary-base, #3b82f6); background: rgba(59, 130, 246, 0.08); border: 1px solid var(--primary-base, #3b82f6); padding: 2px 8px; margin-bottom: 6px;">
+                            <i class="ph ph-lock-key-open"></i> Đã mở khóa bài tổng kết
+                        </div>
+                        <h2 style="margin: 0 0 4px 0; font-family: var(--font-ui); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">
+                            Bạn đã hoàn thành ${pathNodes.length}/${pathNodes.length} bài học trong lộ trình!
+                        </h2>
+                        <p style="margin: 0; color: var(--text-muted); font-size: 13px; font-family: var(--font-ui); line-height: 1.5;">
+                            Hãy thực hiện Bài đánh giá tổng kết để tổng hợp toàn diện kiến thức và chính thức hoàn tất lộ trình.
+                        </p>
+                    </div>
+                    <div>
+                        <button onclick="if(typeof window.startFinalExamFromTimeline === 'function'){ window.startFinalExamFromTimeline('${pathId}'); } else { window.startFinalExam('${pathId}'); }" style="border-radius: 2px; font-family: var(--font-ui); background: var(--primary-base, #3b82f6); color: #ffffff; border: 1px solid var(--primary-base, #3b82f6); padding: 10px 22px; font-size: 13.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(59,130,246,0.25);">
+                            <i class="ph ph-play-circle" style="font-size: 16px;"></i> Bắt đầu bài đánh giá tổng kết
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
     }
     
     html += `<div id="svg-timeline-wrapper" data-path-id="${pathId}" style="position: relative; margin-left: 20px;">`;
@@ -3452,8 +3477,7 @@ window.openPathDetail = function(pathObjOrId, containerOverrideId) {
     }
     
     // Final Roadmap Evaluation Task
-    let allLessonsCompleted = isCommitted && (activeNodeIdx >= pathNodes.length);
-    let isPathCompleted = pathObj.status === 'completed' || (allLessonsCompleted && pathObj.status === 'completed');
+    // allLessonsCompleted and isPathCompleted are cleanly defined above
 
     let capstoneBorder = 'border: 1px solid var(--border-strong);';
     let capstoneBg = 'background: var(--bg-card);';

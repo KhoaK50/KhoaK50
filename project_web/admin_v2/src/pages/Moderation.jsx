@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { ShieldAlert, AlertTriangle, CheckCircle, XCircle, Edit, Trash, Lock, Filter } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
+const API_BASE = API_BASE_URL;
 
 export default function Moderation() {
   const [activeTab, setActiveTab] = useState('PENDING'); // PENDING or RESOLVED
@@ -21,6 +22,12 @@ export default function Moderation() {
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      if (res.status === 401) {
+        localStorage.removeItem('adminAuth');
+        localStorage.removeItem('adminUsername');
+        window.dispatchEvent(new CustomEvent('admin:unauthorized'));
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setFlags(data.flags);

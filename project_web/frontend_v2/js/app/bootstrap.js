@@ -6,18 +6,28 @@
     if (App.log) App.log(`Frontend origin: ${location.origin}`);
     if (App.pingBackend) App.pingBackend();
 
-    // Keypad top (ĐÃ XÓA btnInsertSlash, btnInsertSqrt)
     const vectorInput = document.getElementById("vectorInput");
     if (vectorInput) {
       vectorInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
           e.preventDefault();
           App.onAddVector();
+        } else if (e.key === "Escape") {
+          if (typeof App.cancelEditVector === "function") {
+            App.cancelEditVector();
+          }
         }
       });
+      vectorInput.addEventListener("input", () => {
+        if (typeof App.updateVectorInputPreview === "function") {
+          App.updateVectorInputPreview();
+        }
+      });
+      if (typeof App.updateVectorInputPreview === "function") {
+        setTimeout(App.updateVectorInputPreview, 120);
+      }
     }
 
-    // Gắn sự kiện an toàn (kiểm tra tồn tại trước khi addEventListener)
     const bindClick = (id, fn) => {
       const el = document.getElementById(id);
       if (el && fn) el.addEventListener("click", fn);

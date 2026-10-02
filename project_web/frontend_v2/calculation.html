@@ -35,9 +35,10 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/solution_panel.css" />
   <link rel="icon" type="image/png" href="assets/images/logo.png" />
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <link rel="stylesheet" href="css/global-search.css">
-
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script src="js/utils/theme-manager.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
@@ -160,7 +161,59 @@
     body.dark math-field:focus-within,
     body.dark-theme math-field:focus-within {
       border-color: var(--primary-hover) !important;
-      box-shadow: 0 0 0 3px rgba(0, 144, 255, 0.25) !important;
+    }
+
+    /* ================================================================= */
+    /* 1.1 STYLE CHO INPUT NHẬP VECTOR THUẦN TÚY (GEOGEBRA-LIKE TEXT INPUT) */
+    /* ================================================================= */
+    .vec-text-input {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 48px 10px 14px;
+      font-family: var(--font-mono, "JetBrains Mono", Consolas, "Courier New", monospace);
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text-main, #11181c);
+      background-color: var(--bg-base, #ffffff);
+      border: 1px solid var(--border-strong, #dfe3e6);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .vec-text-input::placeholder {
+      color: var(--muted, #889096);
+      opacity: 0.8;
+      font-family: var(--font-sans, system-ui, sans-serif);
+      font-size: 13px;
+    }
+
+    .vec-text-input:focus {
+      border-color: var(--primary-base, #0090ff);
+      box-shadow: 0 0 0 3px rgba(0, 144, 255, 0.15);
+    }
+
+    body.dark .vec-text-input,
+    body.dark-theme .vec-text-input,
+    :root.dark .vec-text-input {
+      background-color: var(--slate-1, #111113);
+      border-color: var(--border-strong, #3e444c);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    body.dark .vec-text-input::placeholder,
+    body.dark-theme .vec-text-input::placeholder,
+    :root.dark .vec-text-input::placeholder {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    body.dark .vec-text-input:focus,
+    body.dark-theme .vec-text-input:focus,
+    :root.dark .vec-text-input:focus {
+      border-color: var(--primary-hover, #3b9eff);
+      box-shadow: 0 0 0 3px rgba(0, 144, 255, 0.25);
     }
 
 
@@ -1050,16 +1103,28 @@
 
       
       <div class="card section-calc-info" style="border: 1px solid var(--border); border-radius: 4px; padding: 14px; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <div>
-          <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Chọn bài toán</label>
-          <select id="opExtraSelect" style="width: 100%;">
-            <option value="linear_independence">Độc lập tuyến tính</option>
-            <option value="rank">Hạng của hệ vector</option>
-            <option value="basis">Cơ sở và số chiều</option>
-            <option value="coordinates">Tọa độ vector theo cơ sở</option>
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">1. Chọn chủ đề</label>
+          <select id="topicCategorySelect" style="width: 100%; height: 38px; border: 1px solid var(--border); border-radius: 2px; padding: 0 10px; background: var(--card); color: var(--fg); font-size: 13px; font-weight: 600;">
+            <option value="t1">Chủ đề 1: Kiến thức chuẩn bị</option>
+            <option value="t2">Chủ đề 2: Ma trận và hệ phương trình tuyến tính</option>
+            <option value="t3" selected>Chủ đề 3: Không gian tuyến tính</option>
+            <option value="t4">Chủ đề 4: Không gian Euclide</option>
+            <option value="t5">Chủ đề 5: Ánh xạ tuyến tính</option>
+            <option value="t6">Chủ đề 6: Trị riêng và vector riêng</option>
+            <option value="t7">Chủ đề 7: Dạng toàn phương</option>
           </select>
         </div>
-        <div id="extraForms" style="margin-top: 12px;">
+        <div>
+          <label id="topicTaskSelectLabel" style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">2. Chọn chức năng / bài toán</label>
+          <select id="opExtraSelect" style="width: 100%; height: 38px; border: 1px solid var(--border); border-radius: 2px; padding: 0 10px; background: var(--card); color: var(--fg); font-size: 13px;">
+            <option value="linear_independence">4. Độc lập - phụ thuộc tuyến tính</option>
+            <option value="rank">5. Hạng của hệ vector</option>
+            <option value="basis" selected>7. Cơ sở và số chiều</option>
+            <option value="coordinates">8. Tọa độ của vector đối với một cơ sở</option>
+          </select>
+        </div>
+        <div id="extraForms" style="margin-top: 14px;">
           <div id="form-linear_independence" class="extra-form">
             <div id="indepChecklist" class="checklist"></div>
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
@@ -1100,6 +1165,368 @@
               <button id="btnCoordSolution" class="btn btn-solution" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px;">Lời giải</button>
             </div>
           </div>
+          <div id="form-quadratic_form_conic" class="extra-form">
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Mẫu đường cong</label>
+              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <button type="button" id="presetParabol" class="btn-sub-pill active">Parabol xoay 45 độ</button>
+                <button type="button" id="presetEllipse" class="btn-sub-pill">Elip xoay 45 độ</button>
+                <button type="button" id="presetHyperbola" class="btn-sub-pill">Hyperbol</button>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Ma trận đối xứng A</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hệ số x²:</span>
+                  <input type="number" id="conic_a" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hệ số xy:</span>
+                  <input type="number" id="conic_b" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="-1" step="any" oninput="const b2 = document.getElementById('conic_b_disp'); if (b2) b2.value = this.value;">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hệ số yx đối xứng:</span>
+                  <input type="number" id="conic_b_disp" class="matrix-size-input" style="width: 100%; box-sizing: border-box; opacity: 0.7;" value="-1" disabled title="Tự động đồng bộ với ma trận đối xứng">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hệ số y²:</span>
+                  <input type="number" id="conic_c" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Hệ số bậc một và hằng số</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hệ số x:</span>
+                  <input type="number" id="conic_d" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="-5.65685" step="any">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hệ số y:</span>
+                  <input type="number" id="conic_e" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="-5.65685" step="any">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hằng số f:</span>
+                  <input type="number" id="conic_f" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="0" step="any">
+                </div>
+              </div>
+            </div>
+
+            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
+              <button id="btnConicDraw" class="btn primary" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">Khảo sát</button>
+              <button id="btnConicRotate" class="btn btn-secondary" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;" title="Chéo hóa trực giao để nắn thẳng đường cong về trục chính tắc">Nắn thẳng</button>
+              <button id="btnConicSolution" class="btn btn-solution" type="button" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">Lời giải</button>
+            </div>
+
+            <div id="result_conic_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
+          </div>
+          <div id="form-topic1_parametric_vector" class="extra-form">
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Mẫu quỹ đạo tham số</label>
+              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <button type="button" id="presetParamParabol" class="btn-sub-pill active">Parabol bậc hai</button>
+                <button type="button" id="presetParamCircle" class="btn-sub-pill">Đường tròn</button>
+                <button type="button" id="presetParamCubic" class="btn-sub-pill">Đường bậc ba</button>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Tọa độ vector theo tham số t</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Tọa độ x theo t:</span>
+                  <input type="text" id="param_x_expr" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="t">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Tọa độ y theo t:</span>
+                  <input type="text" id="param_y_expr" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="t*t">
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px;">Giá trị tham số t</span>
+                <span id="param_t_val" style="font-size: 12px; font-weight: 700; color: var(--primary-base); font-family: monospace;">t = 1.00</span>
+              </div>
+              <input type="range" id="param_t_slider" min="-3" max="3" step="0.05" value="1" style="width: 100%; accent-color: var(--primary-base); cursor: pointer;">
+            </div>
+
+            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+                <input type="checkbox" id="chkShowParamTrace" checked style="accent-color: var(--primary-base);">
+                <span>Vẽ vệt quỹ đạo đường cong</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+                <input type="checkbox" id="chkShowTangentVec" checked style="accent-color: var(--primary-base);">
+                <span>Hiển thị vector tiếp tuyến vận tốc</span>
+              </label>
+            </div>
+
+            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
+              <button type="button" id="btnParamPlay" class="btn primary" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">
+                <i class="ph ph-play" style="margin-right: 4px;"></i> Chạy quét t
+              </button>
+              <button type="button" id="btnParamSolution" class="btn btn-solution" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">
+                Lời giải
+              </button>
+            </div>
+
+            <div id="result_param_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
+          </div>
+          <div id="form-topic2_matrix_param" class="extra-form">
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Mẫu ma trận tham số</label>
+              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <button type="button" id="presetMatSym" class="btn-sub-pill active">Đối xứng m</button>
+                <button type="button" id="presetMatShear" class="btn-sub-pill">Trượt ngang m</button>
+                <button type="button" id="presetMatRotate" class="btn-sub-pill">Quay góc m</button>
+                <button type="button" id="presetMatSingular" class="btn-sub-pill">Suy biến m</button>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Các phần tử ma trận A theo m</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hàng 1 Cột 1:</span>
+                  <input type="text" id="mat_m_a11" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hàng 1 Cột 2:</span>
+                  <input type="text" id="mat_m_a12" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="m">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hàng 2 Cột 1:</span>
+                  <input type="text" id="mat_m_a21" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="m">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hàng 2 Cột 2:</span>
+                  <input type="text" id="mat_m_a22" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1">
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px;">Giá trị tham số m</span>
+                <span id="mat_m_val" style="font-size: 12px; font-weight: 700; color: var(--primary-base); font-family: monospace;">m = 0.50</span>
+              </div>
+              <input type="range" id="mat_m_slider" min="-3" max="3" step="0.05" value="0.5" style="width: 100%; accent-color: var(--primary-base); cursor: pointer;">
+            </div>
+
+            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+                <input type="checkbox" id="chkShowParallelogram" checked style="accent-color: var(--primary-base);">
+                <span>Vẽ diện tích hình bình hành cơ sở</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+                <input type="checkbox" id="chkShowBasisVectors" checked style="accent-color: var(--primary-base);">
+                <span>Vẽ vector cột cơ sở ảnh A e1 và A e2</span>
+              </label>
+            </div>
+
+            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
+              <button type="button" id="btnMatMPlay" class="btn primary" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">
+                <i class="ph ph-play" style="margin-right: 4px;"></i> Chạy quét m
+              </button>
+              <button type="button" id="btnMatMSolution" class="btn btn-solution" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">
+                Lời giải
+              </button>
+            </div>
+
+            <div id="result_mat_m_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
+          </div>
+          <div id="form-topic4_gram_schmidt" class="extra-form">
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Mẫu hệ vector</label>
+              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <button type="button" id="presetGS45" class="btn-sub-pill active">Nghiêng 45 độ</button>
+                <button type="button" id="presetGSNarrow" class="btn-sub-pill">Góc nhọn hẹp</button>
+                <button type="button" id="presetGSGeneral" class="btn-sub-pill">Tổng quát</button>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Tọa độ hai vector ban đầu</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Vector v1 x:</span>
+                  <input type="number" id="gs_v1_x" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="3" step="any">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Vector v1 y:</span>
+                  <input type="number" id="gs_v1_y" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Vector v2 x:</span>
+                  <input type="number" id="gs_v2_x" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="2" step="any">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Vector v2 y:</span>
+                  <input type="number" id="gs_v2_y" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="2" step="any">
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+                <input type="checkbox" id="chkGSShowOrig" checked style="accent-color: var(--primary-base);">
+                <span>Vẽ vector gốc ban đầu</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+                <input type="checkbox" id="chkGSShowProj" checked style="accent-color: var(--primary-base);">
+                <span>Hiển thị hình chiếu vuông góc</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--primary-base); font-weight: 600;">
+                <input type="checkbox" id="chkGSNormalize" style="accent-color: var(--primary-base);">
+                <span>Chuẩn hóa về độ dài 1</span>
+              </label>
+            </div>
+
+            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
+              <button type="button" id="btnGSOrthogonalize" class="btn primary" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">
+                <i class="ph ph-intersect" style="margin-right: 4px;"></i> Trực giao hóa
+              </button>
+              <button type="button" id="btnGSSolution" class="btn btn-solution" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">
+                Lời giải
+              </button>
+            </div>
+
+            <div id="result_gs_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
+          </div>
+          <div id="form-topic5_linear_transformation" class="extra-form">
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Mẫu ma trận ánh xạ</label>
+              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <button type="button" id="presetLTSingular" class="btn-sub-pill active">Suy biến chéo</button>
+                <button type="button" id="presetLTProject" class="btn-sub-pill">Chiếu lên Ox</button>
+                <button type="button" id="presetLTInvert" class="btn-sub-pill">Khả nghịch</button>
+                <button type="button" id="presetLTShear" class="btn-sub-pill">Trượt ngang</button>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Các phần tử ma trận A</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hàng 1 Cột 1:</span>
+                  <input type="number" id="lt_a11" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hàng 1 Cột 2:</span>
+                  <input type="number" id="lt_a12" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hàng 2 Cột 1:</span>
+                  <input type="number" id="lt_a21" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hàng 2 Cột 2:</span>
+                  <input type="number" id="lt_a22" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+                <input type="checkbox" id="chkLTShowKer" checked style="accent-color: var(--primary-base);">
+                <span>Hiển thị không gian hạt nhân</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+                <input type="checkbox" id="chkLTShowIm" checked style="accent-color: var(--primary-base);">
+                <span>Hiển thị không gian ảnh</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+                <input type="checkbox" id="chkLTShowComp" checked style="accent-color: var(--primary-base);">
+                <span>Minh họa điểm co xẹp về gốc</span>
+              </label>
+            </div>
+
+            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
+              <button type="button" id="btnLTInspect" class="btn primary" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; border-radius: 4px;">
+                Khảo sát
+              </button>
+              <button type="button" id="btnLTMorph" class="btn btn-secondary" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; border-radius: 4px;">
+                <i class="ph ph-play" style="margin-right: 4px;"></i> Biến đổi lưới
+              </button>
+              <button type="button" id="btnLTSolution" class="btn btn-solution" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; border-radius: 4px;">
+                Lời giải
+              </button>
+            </div>
+
+            <div id="result_lt_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
+          </div>
+          <div id="form-topic6_eigen" class="extra-form">
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Mẫu ma trận trị riêng</label>
+              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <button type="button" id="presetEigenReal" class="btn-sub-pill active">Hai trị riêng thực</button>
+                <button type="button" id="presetEigenSym" class="btn-sub-pill">Đối xứng vuông góc</button>
+                <button type="button" id="presetEigenRot" class="btn-sub-pill">Phép quay phức</button>
+                <button type="button" id="presetEigenRepeated" class="btn-sub-pill">Trị riêng bội</button>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Các phần tử ma trận A</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hàng 1 Cột 1:</span>
+                  <input type="number" id="eigen_a11" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="3" step="any">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hàng 1 Cột 2:</span>
+                  <input type="number" id="eigen_a12" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hàng 2 Cột 1:</span>
+                  <input type="number" id="eigen_a21" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="0" step="any">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--muted);">Hàng 2 Cột 2:</span>
+                  <input type="number" id="eigen_a22" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="2" step="any">
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+                <input type="checkbox" id="chkEigenShowLines" checked style="accent-color: var(--primary-base);">
+                <span>Vẽ đường thẳng không gian riêng</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+                <input type="checkbox" id="chkEigenShowTrans" checked style="accent-color: var(--primary-base);">
+                <span>Hiển thị vector ảnh sau biến đổi</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+                <input type="checkbox" id="chkEigenShowUnitCircle" checked style="accent-color: var(--primary-base);">
+                <span>Hiển thị đường tròn đơn vị</span>
+              </label>
+            </div>
+
+            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
+              <button type="button" id="btnEigenCompute" class="btn primary" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; border-radius: 4px;">
+                Khảo sát
+              </button>
+              <button type="button" id="btnEigenSweep" class="btn btn-secondary" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; border-radius: 4px;">
+                <i class="ph ph-compass" style="margin-right: 4px;"></i> Quét hướng
+              </button>
+              <button type="button" id="btnEigenSolution" class="btn btn-solution" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; border-radius: 4px;">
+                Lời giải
+              </button>
+            </div>
+
+            <div id="result_eigen_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
+          </div>
+          <div id="form-topic-preview" class="extra-form">
+            <div id="topicPreviewContent" style="font-size: 12.5px; line-height: 1.5; color: var(--fg);"></div>
+          </div>
         </div>
       </div>
 
@@ -1111,9 +1538,7 @@
 
         <div style="position: relative; width: 100%;">
 
-          <math-field id="vectorInput" math-virtual-keyboard-policy="manual" smart-fence="false" smart-mode="false" onfocus="window.activeMathField = this">
-            [1, 2]
-          </math-field>
+          <input type="text" id="vectorInput" class="vec-text-input" placeholder="Ví dụ: [1, 2] hoặc [t, t^2]" value="[1, 2]" autocomplete="off" spellcheck="false" onfocus="window.activeMathField = this">
 
           <button id="myMenuBtn" class="custom-menu-btn" title="Phép toán nâng cao">
             <i class="ph ph-list"></i>
@@ -1160,7 +1585,25 @@
             <div class="menu-item" onclick="insertLatex('e')">
               <span>Số e</span> <span class="latex-preview">e</span>
             </div>
+
+            <hr style="margin: 5px 0; border-top: 1px solid #eee;">
+
+            <div class="menu-item" onclick="insertLatex('t')">
+              <span>Tham số t</span> <span class="latex-preview">t</span>
+            </div>
+            <div class="menu-item" onclick="insertLatex('m')">
+              <span>Tham số m</span> <span class="latex-preview">m</span>
+            </div>
           </div>
+        </div>
+
+        <!-- Live KaTeX Preview -->
+        <div id="vecInputPreviewWrap" class="vec-preview-box" style="display: none;">
+          <span class="vec-preview-label">Công thức:</span>
+          <div id="vecInputPreview" class="vec-preview-katex"></div>
+          <button type="button" id="vecPreviewZoomBtn" class="vec-preview-zoom-btn" title="Phóng to công thức" onclick="App.togglePreviewZoom && App.togglePreviewZoom()">
+            <i class="ph ph-magnifying-glass-plus" id="vecPreviewZoomIcon"></i>
+          </button>
         </div>
 
         <div class="row" style="margin-top:8px">
@@ -1177,7 +1620,7 @@
         
         <div class="search-box-modern">
             <i class="ph ph-magnifying-glass search-icon"></i>
-            <input type="text" id="mainVecSearch" placeholder="Tìm ID hoặc Tọa độ (VD: 2.5)..." class="vec-search-inp">
+            <input type="text" id="mainVecSearch" placeholder="Tìm theo ID hoặc tọa độ..." class="vec-search-inp">
         </div>
         
         <div class="vec-filters" id="vecFilters">
@@ -1320,6 +1763,7 @@
 
   <script src="js/utils/math.js"></script>
   <script src="js/utils/parse.js"></script>
+  <script src="js/utils/image_vectorizer.js"></script>
   <script src="js/app/api/endpoints.js"></script>
   <script src="js/app/state.js"></script>
   <script src="js/app/logic/history_manager.js"></script>
@@ -1362,6 +1806,16 @@
   <script src="./js/app/playback/basis_animation.js"></script>
   <script src="js/app/playback/linear_transform.js"></script>
   <script src="js/app/bootstrap.js"></script>
+  <!-- 7 Topics Modules Registry & Topic Handlers -->
+  <script src="js/mock_library.js"></script>
+  <script src="js/app/modules/topics/topics_registry.js"></script>
+  <script src="js/app/modules/topics/topic1_vectors.js"></script>
+  <script src="js/app/modules/topics/topic2_matrices_linear_systems.js"></script>
+  <script src="js/app/modules/topics/topic3_vector_spaces.js"></script>
+  <script src="js/app/modules/topics/topic4_euclidean_spaces.js"></script>
+  <script src="js/app/modules/topics/topic5_linear_transformations.js"></script>
+  <script src="js/app/modules/topics/topic6_eigenvalues_eigenvectors.js"></script>
+  <script src="js/app/modules/topics/topic7_quadratic_forms_conics.js"></script>
 
 
 
@@ -1394,19 +1848,37 @@
 
   <script>
     // Hàm chèn LaTeX vào ô MathLive đang active (Dùng chung cho Vector và Ma Trận)
+    // Hàm chèn công thức vào ô nhập đang active (Dùng chung cho cả ô Text và MathLive)
     window.insertLatex = function (latex) {
-      // Ưu tiên ô đang active, nếu không có thì mặc định lấy vectorInput
       const mf = window.activeMathField || document.getElementById('vectorInput');
       if (mf) {
-        // Lệnh chuẩn của MathLive để chèn
-        mf.executeCommand(['insert', latex]);
-        // Quan trọng: Focus lại vào ô nhập để gõ tiếp luôn
+        if (typeof mf.executeCommand === "function") {
+          mf.executeCommand(['insert', latex]);
+        } else if (typeof mf.setRangeText === "function") {
+          let text = latex
+            .replace(/\\sqrt\[#\?\]\{#0\}/g, "cbrt()")
+            .replace(/\\sqrt\{#0\}/g, "sqrt()")
+            .replace(/\\log_\{#\?\}\(#0\)/g, "log()")
+            .replace(/\\ln\(#0\)/g, "ln()")
+            .replace(/\\(sin|cos|tan|cot)\(#0\)/g, "$1()")
+            .replace(/\\pi/g, "pi")
+            .replace(/\\/g, "");
+          const start = mf.selectionStart !== null && mf.selectionStart !== undefined ? mf.selectionStart : mf.value.length;
+          const end = mf.selectionEnd !== null && mf.selectionEnd !== undefined ? mf.selectionEnd : mf.value.length;
+          mf.setRangeText(text, start, end, 'end');
+          if (text.endsWith("()")) {
+            mf.setSelectionRange(start + text.length - 1, start + text.length - 1);
+          }
+        }
         mf.focus();
+        if (typeof App.updateVectorInputPreview === "function") {
+          App.updateVectorInputPreview();
+        }
       }
       
       // Đóng tất cả các menu đang mở
-      document.querySelectorAll('.vec-dropdown.show').forEach(menu => {
-          menu.classList.remove('show');
+      document.querySelectorAll('.vec-dropdown.show, .custom-menu-dropdown.show').forEach(menu => {
+        menu.classList.remove('show');
       });
     };
 

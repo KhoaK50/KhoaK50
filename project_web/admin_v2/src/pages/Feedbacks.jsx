@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Mail, CheckCircle, Clock, Send, AlertCircle, RefreshCw } from 'lucide-react';
-
+import { API_BASE_URL } from '../config/api';
 
 export default function Feedbacks() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -15,11 +15,17 @@ export default function Feedbacks() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminAuth');
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/admin/feedbacks`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/feedbacks`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+      if (res.status === 401) {
+        localStorage.removeItem('adminAuth');
+        localStorage.removeItem('adminUsername');
+        window.dispatchEvent(new CustomEvent('admin:unauthorized'));
+        return;
+      }
       if (!res.ok) throw new Error('Failed to fetch feedbacks');
       const data = await res.json();
       setFeedbacks(data);
@@ -46,7 +52,7 @@ export default function Feedbacks() {
     try {
       setReplying(true);
       const token = localStorage.getItem('adminAuth');
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/admin/feedbacks/${selectedFeedback.id}/reply`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/feedbacks/${selectedFeedback.id}/reply`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

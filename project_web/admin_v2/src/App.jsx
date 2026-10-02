@@ -13,10 +13,18 @@ import SettingsPage from './pages/Settings';
 import StressTest from './pages/StressTest';
 import Moderation from './pages/Moderation';
 
+import { isTokenValid } from './config/api';
+
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem('adminAuth')
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const token = localStorage.getItem('adminAuth');
+    if (!token || !isTokenValid(token)) {
+      localStorage.removeItem('adminAuth');
+      localStorage.removeItem('adminUsername');
+      return false;
+    }
+    return true;
+  });
 
   const handleLogin = (token, username) => {
     localStorage.setItem('adminAuth', token);
@@ -29,6 +37,14 @@ export default function App() {
     localStorage.removeItem('adminUsername');
     setIsAuthenticated(false);
   };
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      handleLogout();
+    };
+    window.addEventListener('admin:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('admin:unauthorized', handleUnauthorized);
+  }, []);
 
   if (!isAuthenticated) {
     return <Login onLogin={handleLogin} />;

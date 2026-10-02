@@ -452,79 +452,245 @@
     };
   };
 
-  // Hàm xử lý sự kiện nút "Thêm Vector"
+  App.editingVectorId = null;
+
+  // Hủy chế độ sửa vector và khôi phục nút Thêm
+  App.cancelEditVector = function () {
+    if (App.editingVectorId === null) return;
+    App.editingVectorId = null;
+    const btn = document.getElementById("btnDraw") || document.getElementById("btnAddVector");
+    if (btn) {
+      btn.innerHTML = '<i class="ph ph-plus" style="margin-right:6px;"></i> Thêm Vector';
+      btn.classList.remove("success");
+      btn.classList.add("primary");
+    }
+  };
+
+  // Bắt đầu sửa vector: nạp công thức lên form nhập liệu chính
+  App.startEditVector = function (id) {
+    const item = (App.vectorList || []).find((v) => v.id === id);
+    if (!item) return;
+
+    App.editingVectorId = id;
+
+    // Switch tab qua tạo vector nếu đang ở tab khác
+    const createSelect = document.getElementById("createObjectSelect");
+    if (createSelect && createSelect.value !== "vector") {
+      createSelect.value = "vector";
+      createSelect.dispatchEvent(new Event("change"));
+    }
+
+    const inp = document.getElementById("vectorInput");
+    if (inp) {
+      let valToEdit = "";
+      if (item.rawInput) {
+        valToEdit = item.rawInput;
+      } else if (item.rawExprs && Array.isArray(item.rawExprs)) {
+        valToEdit = `[${item.rawExprs.join(", ")}]`;
+      } else if (item.latex) {
+        valToEdit = item.latex;
+      } else if (item.vec && Array.isArray(item.vec)) {
+        valToEdit = App.formatVectorShort(item.vec);
+      }
+      inp.value = valToEdit;
+      if (typeof inp.focus === "function") inp.focus();
+      if (typeof App.updateVectorInputPreview === "function") {
+        App.updateVectorInputPreview(valToEdit);
+      }
+    }
+
+    // Đổi nút bấm thành "Lưu Vector"
+    const btn = document.getElementById("btnDraw") || document.getElementById("btnAddVector");
+    if (btn) {
+      btn.innerHTML = '<i class="ph ph-check" style="margin-right:6px;"></i> Lưu Vector';
+      btn.classList.remove("primary");
+      btn.classList.add("success");
+    }
+
+    // Scroll mượt lên form tạo vector
+    const cardCreate = document.getElementById("card-create") || document.querySelector(".section-create");
+    if (cardCreate && typeof cardCreate.scrollIntoView === "function") {
+      cardCreate.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  // Hàm xử lý sự kiện nút "Thêm Vector" / "Lưu Vector"
   App.onAddVector = function () {
     const inp = document.getElementById("vectorInput");
     if (!inp) return;
 
-    // 1. Lấy dữ liệu thô và dọn dẹp khoảng trắng
-    const raw = inp.value.trim();
+    // 1. Lấy dữ liệu thô và dọn dẹp token rỗng
+    const raw = (inp.value || "").trim();
+    const cleanStr = App.cleanVectorInput ? App.cleanVectorInput(raw) : raw;
 
-    // --- CHỐT CHẶN 1: BẮT BUỘC PHẢI CÓ NGOẶC VUÔNG ---
-    if (!raw.startsWith("[") || !raw.endsWith("]")) {
-      App.showToast(
-        "Sai cú pháp! Vui lòng nhập tọa độ trong ngoặc vuông (VD: [1, 2])",
-      );
-      inp.style.animation = "none";
-      inp.offsetHeight;
-      inp.style.animation = "shakeError 0.4s ease-in-out";
-      return;
-    }
-
-    // Lấy ruột bên trong ngoặc vuông
-    const innerContent = raw.slice(1, -1).trim();
-
-    // --- CHỐT CHẶN 2: KHÔNG CHO PHÉP RỖNG HOẶC DẤU PHẨY BẬY BẠ ---
-    if (
-      innerContent === "" ||
-      innerContent.startsWith(",") ||
-      innerContent.endsWith(",") ||
-      innerContent.includes(",,")
-    ) {
-      App.showToast("Tọa độ không hợp lệ (Dư hoặc thiếu dấu phẩy)");
-      inp.style.animation = "none";
-      inp.offsetHeight;
-      inp.style.animation = "shakeError 0.4s ease-in-out";
+    // Nếu ô nhập hoàn toàn trống rỗng: nhẹ nhàng focus, không quăng lỗi hay rung lắc
+    if (!cleanStr || cleanStr === "[]" || cleanStr === "[,]") {
+      if (typeof inp.focus === "function") inp.focus();
       return;
     }
 
     let v;
     try {
-      v = App.parseVectorExpr(raw);
-      if (!Array.isArray(v) || v.length < 2)
-        throw new Error("Vector phải có ít nhất 2 toạ độ");
-      
-      if (v.length > 5)
-        throw new Error("Vector tối đa 5 chiều để đảm bảo hiệu suất tính toán SymPy.");
+      v = App.parseVectorExpr(cleanStr);
+      if (!v || !Array.isArray(v) || v.length < 2) {
+        App.showToast("Vui lòng nhập tối thiểu 2 tọa độ, ví dụ: 1, 2");
+        return;
+      }
 
-      // --- CHỐT CHẶN 3: BẮT LỖI TỌA ĐỘ VÔ LÝ ---
-      if (
-        v.some((val) => val === null || val === undefined || isNaN(Number(val)))
-      ) {
-        throw new Error("Có chứa giá trị không phải là số hợp lệ.");
+      if (v.length > 5) {
+        App.showToast("Vector tối đa 5 chiều để đảm bảo hiệu suất tính toán");
+        return;
+      }
+
+      if (v.some((val) => val === null || val === undefined || isNaN(Number(val)))) {
+        App.showToast("Tọa độ có chứa giá trị không phải là số hợp lệ");
+        return;
       }
     } catch (err) {
-      App.showToast("Lỗi nhập liệu: " + err.message);
-      inp.style.animation = "none";
-      inp.offsetHeight;
-      inp.style.animation = "shakeError 0.4s ease-in-out";
+      App.showToast("Cú pháp chưa chuẩn xác: " + err.message);
       return;
     }
 
     App.currentVector = v.slice();
     App.firstDrawForVector = true;
+
+    // Chuẩn hóa định dạng LaTeX
+    let latexFormatted = "";
+    if (v.rawExprs && Array.isArray(v.rawExprs)) {
+      const latexParts = v.rawExprs.map((expr) => App.exprToLatex(expr));
+      latexFormatted = `[${latexParts.join(", ")}]`;
+    } else {
+      const rawParts = (App.splitVectorCoordinates ? App.splitVectorCoordinates(cleanStr) : cleanStr.replace(/[\[\]\(\)]/g, "").split(/[,;]/)).map((p) => p.trim()).filter((p) => p.length > 0);
+      const latexParts = rawParts.map((p) => App.exprToLatex(p));
+      latexFormatted = `[${latexParts.join(", ")}]`;
+    }
+
+    // 2. NẾU ĐANG Ở CHẾ ĐỘ SỬA VECTOR CŨ (App.editingVectorId !== null):
+    if (App.editingVectorId !== null) {
+      const targetIdx = (App.vectorList || []).findIndex((it) => it.id === App.editingVectorId);
+      if (targetIdx >= 0) {
+        const item = App.vectorList[targetIdx];
+        item.vec = v.slice();
+        item.rawInput = cleanStr;
+        item.latex = latexFormatted;
+        item.isParametric = !!v.isParametric;
+        if (v.isParametric) {
+          item.paramVar = v.paramVar || "t";
+          item.vars = v.vars || [item.paramVar];
+          item.rawExprs = v.rawExprs;
+          item.fn = v.fn;
+          item.evalParam = v.evalParam;
+          item.eval2D = v.eval2D;
+          item.initialParamVal = item.paramVal ?? 1.0;
+          item.initialVec = v.slice();
+          if (item.showArrow === undefined) item.showArrow = true;
+          if (item.showTrajectory === undefined) item.showTrajectory = true;
+          if (item.showAreaFill === undefined) item.showAreaFill = false;
+          if (item.surfaceOpacity === undefined) item.surfaceOpacity = 0.45;
+          if (!item.varRanges) item.varRanges = {};
+          item.vars.forEach((vName, idx) => {
+            if (!item.varRanges[vName]) {
+              item.varRanges[vName] = {
+                min: idx === 0 ? (item.paramMin ?? -10.0) : (item.surfaceMin ?? -5.0),
+                max: idx === 0 ? (item.paramMax ?? 10.0) : (item.surfaceMax ?? 5.0)
+              };
+            }
+          });
+          if (!item.activeAnimVars || !Array.isArray(item.activeAnimVars)) {
+            item.activeAnimVars = [item.paramVar || item.vars[0] || "t"];
+          }
+        } else {
+          item.vars = null;
+          item.rawExprs = null;
+          item.fn = null;
+          item.evalParam = null;
+          item.eval2D = null;
+        }
+
+        if (App.History && typeof App.History.record === "function") {
+          App.History.record(`Sửa vector #${item.id}`);
+        }
+
+        App.editingVectorId = null;
+        const btn = document.getElementById("btnDraw") || document.getElementById("btnAddVector");
+        if (btn) {
+          btn.innerHTML = '<i class="ph ph-plus" style="margin-right:6px;"></i> Thêm Vector';
+          btn.classList.remove("success");
+          btn.classList.add("primary");
+        }
+
+        if (App.syncParametricControls) App.syncParametricControls();
+        if (App.renderVectorList) App.renderVectorList(false);
+        if (App.refreshCalcVectorOptions) App.refreshCalcVectorOptions();
+        if (App.renderExtraCalcOptions) App.renderExtraCalcOptions();
+        if (App.autoMode) {
+          App.mode = v.length >= 3 ? "3D" : "2D";
+          const mb = document.getElementById("modeBadgeText");
+          if (mb) mb.textContent = `${App.mode}`;
+          const mi = document.getElementById("modeBadgeIcon");
+          if (mi) mi.className = App.mode === "3D" ? "ph ph-cube" : "ph ph-bounding-box";
+        }
+        if (App.redrawAll) App.redrawAll({ frame: false });
+        if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
+        return;
+      }
+      App.editingVectorId = null;
+    }
+
+    // 3. TẠO MỚI VECTOR
     const hue = App._pickUniqueHue ? App._pickUniqueHue() : Math.random() * 360;
     const item = App._attachVectorItem(v, hue);
+    item.rawInput = cleanStr;
+    item.latex = latexFormatted;
 
-    // --- KIỂM TRA HÀM TOÁN HỌC & FORMAT LATEX ---
-    // Luôn luôn lưu lại chuỗi gốc mà người dùng đã gõ để không bị mất định dạng (VD: phân số, căn)
-    item.latex = raw;
+    // Gắn thuộc tính tham số nếu vector phụ thuộc biến
+    if (v.isParametric) {
+      item.isParametric = true;
+      item.paramVar = v.paramVar || "t";
+      item.vars = v.vars || [item.paramVar];
+      item.rawExprs = v.rawExprs;
+      item.fn = v.fn;
+      item.evalParam = v.evalParam;
+      item.eval2D = v.eval2D;
+      item.scopeValues = { t: 1.0, m: 1.0, x: 2.0, y: 1.0, z: 1.0 };
+      if (item.paramVar) {
+        item.scopeValues[item.paramVar] = 1.0;
+      }
+      item.paramVal = 1.0;
+      item.initialParamVal = 1.0;
+      item.initialVec = v.slice();
+      item.paramMin = -10.0;
+      item.paramMax = 10.0;
+      item.paramInfinity = false;
+      item.surfaceMin = -5.0;
+      item.surfaceMax = 5.0;
+      item.duration = 4.0;
+      item.isAnimating = false;
+      item.showArrow = true;
+      item.showTrajectory = true;
+      item.showAreaFill = false;
+      item.surfaceOpacity = 0.45;
+      item.surfaceColor = item.colorHex || "#0090ff";
+      item.activeAnimVars = item.vars && item.vars.length ? [item.vars[0]] : [item.paramVar || "t"];
+      item.varRanges = {};
+      if (item.vars && Array.isArray(item.vars)) {
+        item.vars.forEach((vName, idx) => {
+          item.varRanges[vName] = {
+            min: idx === 0 ? -10.0 : -5.0,
+            max: idx === 0 ? 10.0 : 5.0
+          };
+        });
+      } else if (item.paramVar) {
+        item.varRanges[item.paramVar] = { min: -10.0, max: 10.0 };
+      }
+    }
 
     if (App.History && typeof App.History.record === "function") {
       App.History.record(`Thêm vector #${item.id}`);
     }
 
     App.vectorList.push(item);
+    if (App.syncParametricControls) App.syncParametricControls();
 
     // Nếu user đang gõ tìm kiếm thì phải vẽ lại toàn bộ để lọc. 
     // Nếu không, chỉ gắn nối tiếp vector mới vào cuối để chống lag.
@@ -562,6 +728,15 @@
 
   // Hàm xóa hết vector (FIX LỖI DANH SÁCH VECTOR KHÔNG BIẾN MẤT)
   App.clearAllVectors = function () {
+    if (App.editingVectorId !== null) {
+      App.editingVectorId = null;
+      const btn = document.getElementById("btnDraw") || document.getElementById("btnAddVector");
+      if (btn) {
+        btn.innerHTML = '<i class="ph ph-plus" style="margin-right:6px;"></i> Thêm Vector';
+        btn.classList.remove("success");
+        btn.classList.add("primary");
+      }
+    }
     if (App.History && typeof App.History.record === "function" && App.vectorList.length > 0) {
       App.History.record("Xóa tất cả vector");
     }
@@ -578,6 +753,7 @@
     if (App.renderVectorList) App.renderVectorList();
     if (App.refreshCalcVectorOptions) App.refreshCalcVectorOptions();
     if (App.renderExtraCalcOptions) App.renderExtraCalcOptions(); // Lệnh này giúp dọn dẹp mấy cái Checklist cũ!
+    if (App.syncParametricControls) App.syncParametricControls();
 
     // Xóa luôn text kết quả cũ đang hiển thị
     ["result_indep", "result_rank", "result_basis", "result_coord"].forEach(
@@ -600,6 +776,10 @@
     });
     if (!item) return null;
     
+    if (item.isParametric) {
+      return item.vec.map((x) => String(Math.round(x * 10000) / 10000));
+    }
+
     if (item.latex) {
         let s = item.latex.replace(/^\\left\[|^\[|\\right\]|\]$/g, "");
         return s.split(",").map((x) => x.trim());
@@ -2209,6 +2389,392 @@
     };
     sync3D();
   }
+
+  /* =======================================================================
+     PHẦN 7: ĐIỀU KHIỂN HOẠT ẢNH VECTOR THAM SỐ TÁCH BẠCH TỪNG VECTOR
+     ======================================================================= */
+  App._paramAnimFrameId = null;
+  App._lastAnimTimestamp = null;
+
+  // Lấy tầm nhìn khung vẽ hiện tại để quét tham số vô cực
+  App.getViewportRange = function () {
+    if (window.Vec2D && Vec2D.gridInfo2D) {
+      const g = Vec2D.gridInfo2D;
+      const px = g.px || 40;
+      const canvas = document.getElementById("canvas2D");
+      const w = canvas ? canvas.width : 800;
+      const xSpan = Math.max(10, Math.ceil(w / (px * 2) + 4));
+      return { min: -xSpan, max: xSpan };
+    }
+    return { min: -20, max: 20 };
+  };
+
+  // Chuyển đổi định dạng màu sắc CSS bất kỳ sang mã HEX chuẩn #rrggbb cho input color
+  App.colorToHex = function (colorStr) {
+    if (!colorStr) return "#0090ff";
+    const str = String(colorStr).trim();
+    if (str.startsWith("#")) {
+      if (str.length === 7) return str;
+      if (str.length === 4) {
+        return "#" + str[1] + str[1] + str[2] + str[2] + str[3] + str[3];
+      }
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return "#0090ff";
+    ctx.fillStyle = str;
+    const computed = ctx.fillStyle;
+    if (computed && computed.startsWith("#")) return computed;
+    const m = (computed || "").match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (m) {
+      const r = parseInt(m[1], 10).toString(16).padStart(2, "0");
+      const g = parseInt(m[2], 10).toString(16).padStart(2, "0");
+      const b = parseInt(m[3], 10).toString(16).padStart(2, "0");
+      return `#${r}${g}${b}`;
+    }
+    return "#0090ff";
+  };
+
+  // Cập nhật màu sắc của vector và đồng bộ toàn bộ giao diện 2D / 3D
+  App.setVectorColor = function (itemId, colorHex) {
+    const item = (App.vectorList || []).find((v) => String(v.id) === String(itemId));
+    if (!item || !colorHex) return;
+    const hex = App.colorToHex(colorHex);
+    item.colorHex = hex;
+    item.colorCss = hex;
+    item.color = hex;
+
+    const sw = document.getElementById(`vecColorSwatch_${item.id}`);
+    if (sw) sw.style.background = hex;
+
+    const popHex = document.getElementById(`vecPopColorHex_${item.id}`);
+    if (popHex) popHex.textContent = hex.toUpperCase();
+    const popInp = document.getElementById(`vecPopColorInp_${item.id}`);
+    if (popInp && popInp.value !== hex) popInp.value = hex;
+
+    if (App.mode === "3D" && window.Vec3D) {
+      if (typeof Vec3D.hardRefresh3D === "function") {
+        Vec3D.hardRefresh3D(false);
+      } else if (typeof Vec3D.draw3DAllVectors === "function") {
+        Vec3D.draw3DAllVectors({ frame: false });
+      }
+    } else if (window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {
+      Vec2D.draw2DAllVectors();
+    }
+  };
+
+  // Cập nhật trực tiếp giao diện của một thẻ vector tham số
+  App.updateSingleVectorParamUI = function (item, isTick = false) {
+    if (!item) return;
+
+    const activeVars = Array.isArray(item.activeAnimVars) ? item.activeAnimVars : [];
+    const isMultiMode = activeVars.length > 1;
+    const singleValBox = document.getElementById(`vecParamSingleValBox_${item.id}`);
+    const multiValBox = document.getElementById(`vecParamMultiVals_${item.id}`);
+
+    if (isMultiMode) {
+      if (singleValBox) singleValBox.style.display = "none";
+      if (multiValBox) {
+        multiValBox.style.display = "flex";
+        const content = activeVars.map((vName) => {
+          const val = (item.scopeValues && item.scopeValues[vName] !== undefined)
+            ? Number(item.scopeValues[vName]).toFixed(2)
+            : (vName === item.paramVar ? Number(item.paramVal).toFixed(2) : "0.00");
+          return `<span class="vec-multi-badge">${vName} = ${val}</span>`;
+        }).join(" ");
+        multiValBox.innerHTML = content;
+      }
+    } else {
+      if (multiValBox) multiValBox.style.display = "none";
+      if (singleValBox) singleValBox.style.display = "inline-flex";
+
+      const currentVar = activeVars.length === 1 ? activeVars[0] : (item.paramVar || "t");
+      item.paramVar = currentVar;
+
+      const varLbl = document.getElementById(`vecParamVarLbl_${item.id}`);
+      if (varLbl) {
+        varLbl.textContent = `${currentVar} =`;
+      }
+      const valInp = document.getElementById(`vecParamValInp_${item.id}`);
+      if (valInp && document.activeElement !== valInp) {
+        const curVal = (item.scopeValues && item.scopeValues[currentVar] !== undefined)
+          ? item.scopeValues[currentVar]
+          : item.paramVal;
+        valInp.value = Number(curVal ?? 1.0).toFixed(2);
+      }
+    }
+
+    const sliderEl = document.getElementById(`vecParamSlider_${item.id}`);
+    if (sliderEl && document.activeElement !== sliderEl) {
+      sliderEl.value = item.paramVal;
+    }
+
+    // Khi đang trong vòng lặp vẽ chuyển động (isTick = true), tuyệt đối không đụng vào playBtn
+    // để tránh tái sinh DOM làm trình duyệt hủy sự kiện click của người dùng!
+    if (isTick) return;
+
+    const playBtn = document.getElementById(`vecParamPlay_${item.id}`);
+    if (playBtn) {
+      playBtn.innerHTML = item.isAnimating ? '<i class="ph ph-pause"></i>' : '<i class="ph ph-play"></i>';
+      playBtn.classList.toggle("is-active", !!item.isAnimating);
+      playBtn.title = item.isAnimating ? "Tạm dừng" : "Chạy hoạt ảnh";
+    }
+  };
+
+  // Hàm vẽ đệm trực tiếp cực nhẹ, triệt tiêu hoàn toàn nháy đen do resize canvas
+  App._renderParamStep = function () {
+    if (App.mode === "3D" && window.Vec3D) {
+      if (typeof Vec3D.draw3DAllVectors === "function") {
+        Vec3D.draw3DAllVectors({ frame: false });
+      }
+      if (Vec3D._renderer && Vec3D._scene && Vec3D._camera) {
+        Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
+      }
+      if (Vec3D._labelRenderer && Vec3D._scene && Vec3D._camera) {
+        Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
+      }
+    } else if (window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {
+      Vec2D.draw2DAllVectors();
+    }
+  };
+
+  // Thiết lập giá trị tham số cho một vector cụ thể qua thanh trượt
+  App.setVectorParamValue = function (itemId, val) {
+    const item = (App.vectorList || []).find((v) => String(v.id) === String(itemId));
+    if (!item || !item.isParametric || typeof item.fn !== "function") return;
+    const num = parseFloat(val);
+    if (isNaN(num)) return;
+    item.paramVal = num;
+    if (item.scopeValues && item.paramVar) {
+      item.scopeValues[item.paramVar] = num;
+    }
+    const nextVec = item.fn.call(item, num, item.scopeValues);
+    if (Array.isArray(nextVec) && nextVec.every((c) => isFinite(c))) {
+      item.vec = nextVec;
+    }
+    const valInp = document.getElementById(`vecParamValInp_${item.id}`);
+    if (valInp && document.activeElement !== valInp) {
+      valInp.value = Number(num).toFixed(2);
+    }
+    App.updateSingleVectorParamUI(item, false);
+    App._renderParamStep();
+  };
+
+  // Thiết lập giá trị tham số trực tiếp qua ô nhập (Tự thích ứng mở rộng dải min/max nếu giá trị vượt ngưỡng)
+  App.setVectorParamValueDirect = function (itemId, val) {
+    const item = (App.vectorList || []).find((v) => String(v.id) === String(itemId));
+    if (!item || !item.isParametric) return;
+    const num = parseFloat(val);
+    if (isNaN(num)) return;
+
+    let minChanged = false;
+    let maxChanged = false;
+    if (item.paramMin === undefined || isNaN(item.paramMin)) item.paramMin = -10.0;
+    if (item.paramMax === undefined || isNaN(item.paramMax)) item.paramMax = 10.0;
+
+    if (num < item.paramMin) {
+      item.paramMin = Math.floor(num);
+      minChanged = true;
+    }
+    if (num > item.paramMax) {
+      item.paramMax = Math.ceil(num);
+      maxChanged = true;
+    }
+
+    const sliderEl = document.getElementById(`vecParamSlider_${item.id}`);
+    if (sliderEl) {
+      if (minChanged) sliderEl.min = item.paramMin;
+      if (maxChanged) sliderEl.max = item.paramMax;
+      sliderEl.value = num;
+    }
+
+    const popover = document.getElementById(`vecParamPopover_${item.id}`);
+    if (popover && typeof popover.querySelectorAll === "function") {
+      const inputs = popover.querySelectorAll(".vec-param-num-inp");
+      if (inputs.length >= 2) {
+        if (minChanged) inputs[0].value = item.paramMin;
+        if (maxChanged) inputs[1].value = item.paramMax;
+      }
+    }
+
+    item.paramVal = num;
+    if (item.scopeValues && item.paramVar) {
+      item.scopeValues[item.paramVar] = num;
+    }
+    if (typeof item.fn === "function") {
+      const nextVec = item.fn.call(item, num, item.scopeValues);
+      if (Array.isArray(nextVec) && nextVec.every((c) => isFinite(c))) {
+        item.vec = nextVec;
+      }
+    }
+
+    App.updateSingleVectorParamUI(item, false);
+    App._renderParamStep();
+  };
+
+  // Bật tắt hoạt ảnh cho một vector cụ thể
+  App.toggleVectorAnimation = function (itemId) {
+    const item = (App.vectorList || []).find((v) => String(v.id) === String(itemId));
+    if (!item || !item.isParametric) return;
+    item.isAnimating = !item.isAnimating;
+    if (item.isAnimating) {
+      if (!item.animDirection) item.animDirection = 1;
+      App.startParamAnimationLoop();
+    } else {
+      const anyOtherRunning = (App.vectorList || []).some((v) => v.id !== item.id && v.isParametric && v.isAnimating);
+      if (!anyOtherRunning && App._paramAnimFrameId) {
+        cancelAnimationFrame(App._paramAnimFrameId);
+        App._paramAnimFrameId = null;
+        App._lastAnimTimestamp = null;
+      }
+    }
+    App.updateSingleVectorParamUI(item, false);
+  };
+
+  // Đặt lại tham số của vector về giá trị mặc định lúc mới được tạo ra
+  App.resetVectorParam = function (itemId) {
+    const item = (App.vectorList || []).find((v) => String(v.id) === String(itemId));
+    if (!item || !item.isParametric) return;
+    item.isAnimating = false;
+    const defaultVal = item.initialParamVal !== undefined ? item.initialParamVal : 1.0;
+    item.paramVal = defaultVal;
+    if (item.scopeValues && item.paramVar) {
+      item.scopeValues[item.paramVar] = defaultVal;
+    }
+    item.animDirection = 1;
+    if (typeof item.fn === "function") {
+      const resetVec = item.fn.call(item, defaultVal, item.scopeValues);
+      if (Array.isArray(resetVec) && resetVec.every((c) => isFinite(c))) {
+        item.vec = resetVec;
+      } else if (item.initialVec && Array.isArray(item.initialVec)) {
+        item.vec = item.initialVec.slice();
+      }
+    } else if (item.initialVec && Array.isArray(item.initialVec)) {
+      item.vec = item.initialVec.slice();
+    }
+    const sliderEl = document.getElementById(`vecParamSlider_${item.id}`);
+    if (sliderEl) sliderEl.value = defaultVal;
+
+    const valInp = document.getElementById(`vecParamValInp_${item.id}`);
+    if (valInp) valInp.value = Number(defaultVal).toFixed(2);
+
+    const anyOtherRunning = (App.vectorList || []).some((v) => v.id !== item.id && v.isParametric && v.isAnimating);
+    if (!anyOtherRunning && App._paramAnimFrameId) {
+      cancelAnimationFrame(App._paramAnimFrameId);
+      App._paramAnimFrameId = null;
+      App._lastAnimTimestamp = null;
+    }
+
+    App.updateSingleVectorParamUI(item, false);
+    App._renderParamStep();
+  };
+
+  // Vòng lặp hoạt ảnh tham số đa vector
+  App.startParamAnimationLoop = function () {
+    if (App._paramAnimFrameId) return;
+    App._lastAnimTimestamp = performance.now();
+
+    function step(now) {
+      const dt = Math.min(0.08, (now - (App._lastAnimTimestamp || now)) / 1000);
+      App._lastAnimTimestamp = now;
+
+      let anyRunning = false;
+      let anyChanged = false;
+
+      for (const item of (App.vectorList || [])) {
+        if (item.isParametric && item.isAnimating && typeof item.fn === "function") {
+          anyRunning = true;
+          const duration = Math.max(0.2, Number(item.duration) || 4.0);
+
+          if (!item.varStates) item.varStates = {};
+          if (!item.varRanges) item.varRanges = {};
+
+          // Danh sách biến được chọn chạy (chọn 1 chạy 1, chọn nhiều chạy nhiều, không chọn không chạy)
+          const varsToAnimate = Array.isArray(item.activeAnimVars) ? item.activeAnimVars : [item.paramVar || "t"];
+          if (varsToAnimate.length === 0) {
+            // Không có biến nào được kích hoạt -> đứng yên
+            continue;
+          }
+
+          varsToAnimate.forEach((vName, idx) => {
+            if (!item.varStates[vName]) {
+              const freqRatio = idx === 0 ? 1.0 : (idx === 1 ? 1.4142 : 1.732);
+              item.varStates[vName] = { dir: 1, speedRatio: freqRatio };
+            }
+            const vState = item.varStates[vName];
+
+            // Từng biến có dải Min/Max riêng biệt, không đồng bộ lẫn nhau
+            let rangeObj = item.varRanges[vName];
+            if (!rangeObj) {
+              rangeObj = {
+                min: (idx === 0 ? (item.paramMin ?? -10.0) : (item.surfaceMin ?? -5.0)),
+                max: (idx === 0 ? (item.paramMax ?? 10.0) : (item.surfaceMax ?? 5.0))
+              };
+              item.varRanges[vName] = rangeObj;
+            }
+
+            let vMin = Number(rangeObj.min);
+            let vMax = Number(rangeObj.max);
+            if (isNaN(vMin)) vMin = -10.0;
+            if (isNaN(vMax)) vMax = 10.0;
+
+            if (item.paramInfinity && vName === item.paramVar) {
+              const vp = App.getViewportRange();
+              vMin = vp.min;
+              vMax = vp.max;
+            }
+
+            if (vMax <= vMin) vMax = vMin + 1.0;
+            const vRange = vMax - vMin;
+            const vSpeed = (vRange / duration) * (vState.dir || 1) * (vState.speedRatio || 1);
+
+            let curVal = (item.scopeValues && item.scopeValues[vName] !== undefined)
+              ? item.scopeValues[vName]
+              : (item.paramVal !== undefined && vName === item.paramVar ? item.paramVal : (vMin + vRange / 2));
+
+            let nextVVal = curVal + vSpeed * dt;
+            if (nextVVal >= vMax) {
+              nextVVal = vMax;
+              vState.dir = -1;
+            } else if (nextVVal <= vMin) {
+              nextVVal = vMin;
+              vState.dir = 1;
+            }
+
+            if (item.scopeValues) {
+              item.scopeValues[vName] = nextVVal;
+            }
+            if (vName === item.paramVar) {
+              item.paramVal = nextVVal;
+            }
+          });
+
+          const nextVec = item.fn.call(item, item.scopeValues || item.paramVal);
+          if (Array.isArray(nextVec) && nextVec.every((c) => isFinite(c))) {
+            item.vec = nextVec;
+          }
+          anyChanged = true;
+
+          App.updateSingleVectorParamUI(item, true);
+        }
+      }
+
+      if (anyChanged) {
+        App._renderParamStep();
+      }
+
+      if (anyRunning) {
+        App._paramAnimFrameId = requestAnimationFrame(step);
+      } else {
+        App._paramAnimFrameId = null;
+        App._lastAnimTimestamp = null;
+      }
+    }
+
+    App._paramAnimFrameId = requestAnimationFrame(step);
+  };
 })();
 
 
