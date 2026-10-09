@@ -54,7 +54,7 @@ def save_to_postgres(name, email, message):
     except Exception as e:
         print(f">> [PostgreSQL Error] Lỗi lưu Data: {e}")
 
-init_postgres_db()
+threading.Thread(target=init_postgres_db, daemon=True).start()
 
 # --- HÀM 1: GỬI MAIL AUTO-REPLY CHO KHÁCH (CHUYÊN NGHIỆP) ---
 def send_auto_reply(user_email, user_name, user_message):

@@ -79,22 +79,9 @@
   };
 
   // =========================
-  // B) ANIMATION CONTROLS
+  // B) ANIMATION CONTROLS (TÙY CHỈNH THỜI LƯỢNG SÓNG LAN TỎA)
   // =========================
-  App.BASIS_PHASE_MS_MIN = 100;
-  App.BASIS_PHASE_MS_MAX = 5000;
-  App.BASIS_PHASE_MS_STEP = 50;
-  App.basisAnimPhaseMs = 1000;
-
-  App.setBasisAnimPhaseMs = function (ms) {
-    let x = Math.round(Number(ms));
-    if (!isFinite(x)) x = App.basisAnimPhaseMs;
-    x = Math.max(App.BASIS_PHASE_MS_MIN, Math.min(App.BASIS_PHASE_MS_MAX, x));
-    const step = Math.max(1, App.BASIS_PHASE_MS_STEP || 100);
-    x = Math.round(x / step) * step;
-    App.basisAnimPhaseMs = x;
-    return x;
-  };
+  App.basisWaveDurationMs = 3500; // 3.5s mặc định: lan tỏa như sóng biển êm đềm
 
   App.ensureBasisAnimControls = function () {
     const checklist = $("basisChecklist");
@@ -110,9 +97,9 @@
     wrap.className = "basis-anim-controls";
     wrap.style.display = "flex";
     wrap.style.flexDirection = "column";
-    wrap.style.gap = "10px";
+    wrap.style.gap = "8px";
     wrap.style.margin = "10px 0 8px";
-    wrap.style.padding = "12px";
+    wrap.style.padding = "10px 12px";
     wrap.style.borderRadius = "8px";
     wrap.style.background = "var(--card)";
     wrap.style.border = "1px solid var(--border)";
@@ -124,15 +111,16 @@
     row1.style.gap = "10px";
 
     const lbl = document.createElement("div");
-    lbl.style.fontSize = "13px";
-    lbl.style.fontWeight = "700";
-    lbl.textContent = "Tốc độ Animation:";
+    lbl.style.fontSize = "12.5px";
+    lbl.style.fontWeight = "600";
+    lbl.textContent = "Thời lượng sóng lan tỏa:";
 
     const val = document.createElement("div");
     val.id = "basisSpeedVal";
-    val.style.fontSize = "13px";
-    val.style.fontWeight = "800";
-    val.textContent = `${App.basisAnimPhaseMs} ms`;
+    val.style.fontSize = "12.5px";
+    val.style.fontWeight = "700";
+    val.style.color = "var(--primary, #10b981)";
+    val.textContent = `${(App.basisWaveDurationMs / 1000).toFixed(1)}s`;
 
     row1.appendChild(lbl);
     row1.appendChild(val);
@@ -140,44 +128,21 @@
     const range = document.createElement("input");
     range.type = "range";
     range.id = "basisSpeedRange";
-    range.min = String(App.BASIS_PHASE_MS_MIN);
-    range.max = String(App.BASIS_PHASE_MS_MAX);
-    range.step = String(App.BASIS_PHASE_MS_STEP);
-    range.value = String(App.basisAnimPhaseMs);
+    range.min = "1.5";
+    range.max = "6.0";
+    range.step = "0.5";
+    range.value = String(App.basisWaveDurationMs / 1000);
     range.style.width = "100%";
-
-    const help = document.createElement("div");
-    help.id = "basisSpeedHelp";
-    help.style.fontSize = "12px";
-    help.style.opacity = "0.85";
-    help.innerHTML = `<span style="color:salmon">●</span> Vector phụ thuộc &nbsp; <span style="color:lightgreen">●</span> Vector cơ sở`;
-
-    const btn = document.createElement("button");
-    btn.id = "btnStopBasisAnim";
-    btn.type = "button";
-    btn.textContent = "Dừng & Hủy Animation";
-    btn.className = "btn";
-    btn.style.padding = "6px 12px";
-    btn.style.borderRadius = "6px";
-    btn.style.fontSize = "0.9em";
-    btn.style.cursor = "pointer";
-    btn.style.width = "fit-content";
-    btn.style.marginTop = "5px";
+    range.style.cursor = "pointer";
 
     range.addEventListener("input", () => {
-      const ms = App.setBasisAnimPhaseMs(range.value);
-      if (val) val.textContent = `${ms} ms`;
-    });
-
-    btn.addEventListener("click", () => {
-      App.restoreBasisPreState();
-      if (typeof App.clearAutoVectors === "function") App.clearAutoVectors("basis");
+      const sec = parseFloat(range.value) || 3.5;
+      App.basisWaveDurationMs = Math.round(sec * 1000);
+      val.textContent = `${sec.toFixed(1)}s`;
     });
 
     wrap.appendChild(row1);
     wrap.appendChild(range);
-    wrap.appendChild(help);
-    wrap.appendChild(btn);
 
     host.insertBefore(wrap, out);
   };

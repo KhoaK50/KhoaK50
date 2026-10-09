@@ -4,5 +4,7 @@ from __future__ import annotations
 # Import strategies để chúng tự register vào registry.
 # Lưu ý: chỉ cần import, không cần dùng biến.
 def init_explainers() -> None:
-    # Thêm strategy nào thì import ở đây
+    # Them strategy nao thi import o day
     from vectoria_api.explainers.strategies import basis_gauss_rows  # noqa: F401
+    from vectoria_api.explainers.strategies import linear_independence  # noqa: F401
+    from vectoria_api.explainers.strategies import rank_vectors  # noqa: F401

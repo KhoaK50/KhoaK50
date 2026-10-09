@@ -487,6 +487,7 @@ table.adj-matrix td.diag{background:var(--s3);cursor:default}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <script src="js/utils/tikz_renderer.js"></script>
   <!-- MathJax (Đồng bộ cấu hình giải mã ký tự đô la $...$ như trang Admin) -->
   <script>
     window.MathJax = {
@@ -779,20 +780,36 @@ window.addEventListener("DOMContentLoaded", async () => {
       window._deepLinkHandled = true;
       var openPf = urlParams.has('open_pathfinder') || urlParams.get('open_pathfinder') === '1';
       navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'), openPf ? { open_pathfinder: true } : null);
-    } else if (urlParams.get('type') === 'lesson') {
+    } else if (urlParams.get('type') === 'lesson' || (!urlParams.get('type') && urlParams.has('id'))) {
       window._deepLinkHandled = true;
       var lid = urlParams.get('id');
       var ldata = null;
-      if (typeof MOCK_LIBRARY_DATA !== 'undefined') {
+      var foundTopic = null;
+      var foundSection = null;
+      if (typeof MOCK_LIBRARY_DATA !== 'undefined' && MOCK_LIBRARY_DATA.topics) {
         for (var t of MOCK_LIBRARY_DATA.topics) {
           for (var s of t.sections) {
-            for (var l of s.lessons) { if (l.id === lid) { ldata = l; break; } }
+            for (var l of s.lessons) { 
+              if (l.id === lid) { 
+                ldata = l; 
+                foundTopic = t;
+                foundSection = s;
+                break; 
+              } 
+            }
             if (ldata) break;
           }
           if (ldata) break;
         }
       }
-      navigateTo('lesson', lid, 'Bài học', ldata);
+      if (foundTopic && foundSection) {
+        AppState.path = [
+          { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') },
+          { type:'topic', id:foundTopic.id, title:foundTopic.title, data:foundTopic },
+          { type:'section', id:foundSection.id, title:foundSection.title, data:foundSection }
+        ];
+      }
+      navigateTo('lesson', lid, ldata ? ldata.title : 'Bài học', ldata);
     }
     if (typeof renderCurrentView === "function" && !window._deepLinkHandled) renderCurrentView();
   const _origSetLang = window.setLang;
@@ -813,19 +830,35 @@ window.addEventListener("DOMContentLoaded", async () => {
           var openPf = urlParams.has('open_pathfinder') || urlParams.get('open_pathfinder') === '1';
           navigateTo('graph', 'graph', tr('knowledge.title', 'Không gian Tri thức'), openPf ? { open_pathfinder: true } : null);
           return; // navigateTo triggers renderCurrentView
-        } else if (urlParams.get('type') === 'lesson') {
+        } else if (urlParams.get('type') === 'lesson' || (!urlParams.get('type') && urlParams.has('id'))) {
           var lid = urlParams.get('id');
           var ldata = null;
-          if (typeof MOCK_LIBRARY_DATA !== 'undefined') {
+          var foundTopic = null;
+          var foundSection = null;
+          if (typeof MOCK_LIBRARY_DATA !== 'undefined' && MOCK_LIBRARY_DATA.topics) {
             for (var t of MOCK_LIBRARY_DATA.topics) {
               for (var s of t.sections) {
-                for (var l of s.lessons) { if (l.id === lid) { ldata = l; break; } }
+                for (var l of s.lessons) { 
+                  if (l.id === lid) { 
+                    ldata = l; 
+                    foundTopic = t;
+                    foundSection = s;
+                    break; 
+                  } 
+                }
                 if (ldata) break;
               }
               if (ldata) break;
             }
           }
-          navigateTo('lesson', lid, tr('knowledge.lesson', 'Bài học'), ldata);
+          if (foundTopic && foundSection) {
+            AppState.path = [
+              { type:'root', id:'root', title:tr('knowledge.library', 'Thư viện') },
+              { type:'topic', id:foundTopic.id, title:foundTopic.title, data:foundTopic },
+              { type:'section', id:foundSection.id, title:foundSection.title, data:foundSection }
+            ];
+          }
+          navigateTo('lesson', lid, ldata ? ldata.title : tr('knowledge.lesson', 'Bài học'), ldata);
           return;
         }
       }
@@ -1847,6 +1880,33 @@ function renderLesson(c, lesson) {
 
     let html = texString;
 
+    // Bộ lưu trữ và bảo vệ các khối HTML / SVG nhúng sẵn (không bị escape thẻ < >)
+    const htmlBlockTokens = new Map();
+    let htmlBlockCounter = 0;
+    function storeHtmlBlock(code) {
+      const token = '___PRE_HTML_BLOCK_' + (htmlBlockCounter++) + '___';
+      htmlBlockTokens.set(token, code);
+      return token;
+    }
+
+    // Bảo vệ các khối HTML / SVG đã có sẵn trong cơ sở dữ liệu
+    html = html.replace(/<div class="vectoria-diagram-container"[\s\S]*?<\/svg>\s*<\/div>/g, function(m) { return storeHtmlBlock(m); });
+    html = html.replace(/<div class="latex-solution-header"[\s\S]*?<\/div>/g, function(m) { return storeHtmlBlock(m); });
+    html = html.replace(/<strong class="latex-bai-title"[\s\S]*?<\/strong>/g, function(m) { return storeHtmlBlock(m); });
+    html = html.replace(/<svg[\s\S]*?<\/svg>/g, function(m) { return storeHtmlBlock(m); });
+
+    // Xử lý các khối \begin{tikzpicture} ... \end{tikzpicture} trực tiếp bằng engine TikZ SVG
+    html = html.replace(/\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g, function(tikzCode) {
+      if (window.VectoriaTikz && typeof window.VectoriaTikz.renderTikzToSVG === 'function') {
+        return storeHtmlBlock(window.VectoriaTikz.renderTikzToSVG(tikzCode));
+      }
+      return storeHtmlBlock(
+        '<div class="vectoria-diagram-container" style="margin: 20px auto; padding: 20px; border: 1px dashed var(--s4, #d7dfe3); border-radius: 4px; text-align: center; color: var(--s11, #687076); background: var(--s2, #f9f9fb);">' +
+          '<div style="font-size: 0.95rem; font-weight: 600; color: var(--s12, #11181c);">Sơ đồ hình học vector</div>' +
+        '</div>'
+      );
+    });
+
     // Helper: Trích xuất nội dung trong cặp ngoặc nhọn cân bằng {...}
     function extractBalancedBraces(str, openBraceIndex) {
       if (str[openBraceIndex] !== '{') return null;
@@ -1984,6 +2044,11 @@ function renderLesson(c, lesson) {
     // 1. Dọn dẹp comment bảo toàn URL và ký hiệu \%
     html = stripLatexComments(html);
 
+    // Xử lý \part*{...} hoặc \part{...} thành tiêu đề phần lớn
+    html = replaceCommandWithBraces(html, 'part', function(title) {
+      return '<h1 class="latex-part-title" style="font-size: 1.45rem; font-weight: 800; text-align: center; margin: 32px 0 20px 0; color: var(--s12); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--s4); padding-bottom: 12px;">' + title + '</h1>';
+    });
+
     // Bảo vệ \$ (escaped dollar) để không bị nhầm là mở đầu công thức toán
     function protectEscapedDollars(str) {
       let res = '';
@@ -2032,6 +2097,17 @@ function renderLesson(c, lesson) {
     }
     html = html.replace(/\\begin\s*\{document\}/g, '').replace(/\\end\s*\{document\}/g, '');
 
+    // Chuẩn hóa và làm sạch các dấu phân cách toán học bị lỗi trước khi tokenize (dùng function để tránh $$ bị JS string replace nuốt thành $)
+    html = html.replace(/\${4,}/g, function() { return '$$\n$$'; });
+    html = html.replace(/\$\$([^\n$]+?)\$\$\$/g, function(m, p1) { return '$$' + p1 + '$$\n$$'; });
+    html = html.replace(/\${3,}/g, function() { return '$$\n$$'; });
+    html = html.replace(/\\\\(?=\$\$)/g, '\n\n');
+    html = html.replace(/\\\\(?=\$)/g, '\n');
+    html = html.replace(/\\vert\{\}/g, '|');
+    html = html.replace(/&#8407;/g, '');
+
+
+
     // 3. BẢO VỆ TOÁN HỌC: Trích xuất và thay thế toán học bằng Token bảo vệ
     // Ngăn chặn xung đột giữa cú pháp toán học (<, >, &, \\, _, *) với HTML/DOM
     const mathTokens = new Map();
@@ -2040,6 +2116,8 @@ function renderLesson(c, lesson) {
     function storeMath(code, isDisplay) {
       let cleanCode = code.replace(/\\label\{[^}]*\}/g, '');
       cleanCode = cleanCode.replace(/\\label\b[0-9.]+/g, '');
+      cleanCode = cleanCode.replace(/\\vv\s*\{/g, '\\vec{');
+      cleanCode = cleanCode.replace(/\\vv\b/g, '\\vec');
       const token = '___KATEX_MATH_' + (isDisplay ? 'DISP' : 'INLN') + '_' + (mathCounter++) + '___';
       mathTokens.set(token, { code: cleanCode, isDisplay: isDisplay });
       return token;
@@ -2123,6 +2201,44 @@ function renderLesson(c, lesson) {
     html = html.replace(/\\raggedright\b/g, '');
     html = html.replace(/\\raggedleft\b/g, '');
     html = html.replace(/\\par\b/g, '\n\n');
+
+    // Dọn dẹp chỉ mục sách và cấu trúc tài liệu thừa
+    html = html.replace(/\\tableofcontents\b/g, '');
+    html = html.replace(/\\protect\b/g, '');
+
+    // Dọn dẹp \addcontentsline{...}{...}{...} (3 cặp ngoặc nhọn cân bằng)
+    let acIdx;
+    while ((acIdx = html.indexOf('\\addcontentsline')) !== -1) {
+      let b1 = html.indexOf('{', acIdx);
+      if (b1 === -1) break;
+      let arg1 = extractBalancedBraces(html, b1);
+      if (!arg1) break;
+      let b2 = html.indexOf('{', arg1.endIndex + 1);
+      if (b2 === -1) break;
+      let arg2 = extractBalancedBraces(html, b2);
+      if (!arg2) break;
+      let b3 = html.indexOf('{', arg2.endIndex + 1);
+      if (b3 === -1) break;
+      let arg3 = extractBalancedBraces(html, b3);
+      if (!arg3) break;
+      html = html.substring(0, acIdx) + html.substring(arg3.endIndex + 1);
+    }
+
+    // Xử lý \bai{...} thành huy hiệu tiêu đề bài tập
+    html = replaceCommandWithBraces(html, 'bai', function(inner) {
+      return storeHtmlBlock('<strong class="latex-bai-title" style="color: var(--s12); font-weight: 700; margin-right: 6px;">' + inner + '</strong>');
+    });
+
+    // Xử lý \lgiai thành tiêu đề khối Lời giải chuẩn mực học thuật
+    html = html.replace(/\\lgiai\b/g, function() {
+      return storeHtmlBlock(
+        '<div class="latex-solution-header" style="font-weight: 700; margin: 20px 0 10px; color: var(--s12); display: flex; align-items: center; gap: 8px;">' +
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#30a46c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+        '<span>Lời giải</span>' +
+        '</div>'
+      );
+    });
 
     // Chuyển \today thành định dạng thời gian học thuật tiếng Việt
     html = html.replace(/\\today\b/g, function() {
@@ -2274,14 +2390,55 @@ function renderLesson(c, lesson) {
       return '<figure class="latex-figure">' + clean.trim() + figCap + '</figure>';
     });
 
-    html = replaceEnvironment(html, 'tabular', function(optBracket, optBrace, body) {
-      let cleanBody = body;
-      const firstBrace = cleanBody.indexOf('{');
-      if (firstBrace !== -1 && firstBrace < 15) {
-        const extracted = extractBalancedBraces(cleanBody, firstBrace);
+    const renderTableFn = function(optBracket, optBrace, body) {
+      let cleanBody = body.trim();
+      // Loại bỏ các nhóm đối số {width} hoặc {columns} ở đầu body của tabular / tabularx
+      while (cleanBody.startsWith('{')) {
+        const extracted = extractBalancedBraces(cleanBody, 0);
         if (extracted) {
-          cleanBody = cleanBody.substring(extracted.endIndex + 1);
+          cleanBody = cleanBody.substring(extracted.endIndex + 1).trim();
+        } else {
+          break;
         }
+      }
+      if (cleanBody.startsWith('[')) {
+        const closeBracket = cleanBody.indexOf(']');
+        if (closeBracket !== -1 && closeBracket < 15) {
+          cleanBody = cleanBody.substring(closeBracket + 1).trim();
+        }
+      }
+
+      // Unroll \parbox and \multirow BEFORE splitting by \\ so their internal \\ are not treated as row breaks
+      let pbIdx;
+      while ((pbIdx = cleanBody.indexOf('\\parbox')) !== -1) {
+        let b1 = cleanBody.indexOf('{', pbIdx);
+        if (b1 === -1) break;
+        let a1 = extractBalancedBraces(cleanBody, b1);
+        if (!a1) break;
+        let b2 = cleanBody.indexOf('{', a1.endIndex + 1);
+        if (b2 === -1) break;
+        let a2 = extractBalancedBraces(cleanBody, b2);
+        if (!a2) break;
+        let inner = a2.content.replace(/\\\\/g, '<br/>');
+        cleanBody = cleanBody.substring(0, pbIdx) + inner + cleanBody.substring(a2.endIndex + 1);
+      }
+
+      let mrIdx;
+      while ((mrIdx = cleanBody.indexOf('\\multirow')) !== -1) {
+        let b1 = cleanBody.indexOf('{', mrIdx);
+        if (b1 === -1) break;
+        let a1 = extractBalancedBraces(cleanBody, b1);
+        if (!a1) break;
+        let b2 = cleanBody.indexOf('{', a1.endIndex + 1);
+        if (b2 === -1) break;
+        let a2 = extractBalancedBraces(cleanBody, b2);
+        if (!a2) break;
+        let b3 = cleanBody.indexOf('{', a2.endIndex + 1);
+        if (b3 === -1) break;
+        let a3 = extractBalancedBraces(cleanBody, b3);
+        if (!a3) break;
+        let inner = a3.content.replace(/\\\\/g, '<br/>');
+        cleanBody = cleanBody.substring(0, mrIdx) + inner + cleanBody.substring(a3.endIndex + 1);
       }
 
       const hasHline = cleanBody.includes('\\hline');
@@ -2290,14 +2447,14 @@ function renderLesson(c, lesson) {
 
       const rawRows = cleanBody.split('___TABULAR_ROW_BREAK___')
         .map(function(r) { return r.trim(); })
-        .filter(function(r) { return r && r !== '\\hline'; });
+        .filter(function(r) { return r && r.replace(/\\hline/g, '').trim().length > 0; });
 
       let tableHtml = '<div style="overflow-x: auto; margin: ' + (hasHline ? '20px 0;' : '12px auto;') + ' width: 100%;">' +
         '<table class="latex-table' + (hasHline ? '' : ' latex-table-borderless') + '" style="border-collapse: collapse; margin: 0 auto; ' +
-        (hasHline ? 'border: 1px solid var(--s4); min-width: 50%;' : 'border: none; max-width: 600px;') + ' font-size: 1rem;">';
+        (hasHline ? 'border: 1px solid var(--s4); width: 100%;' : 'border: none; max-width: 600px;') + ' font-size: 0.95rem;">';
 
       rawRows.forEach(function(row, rowIndex) {
-        let cleanRow = row.replace(/\\hline/g, '').trim();
+        let cleanRow = row.replace(/\\hline/g, '').replace(/\\cline\{[^}]*\}/g, '').trim();
         cleanRow = cleanRow.replace(/^\[[0-9.]+\s*(?:cm|pt|mm|em|ex|in)\]\s*/, '').trim();
         if (!cleanRow) return;
 
@@ -2309,8 +2466,12 @@ function renderLesson(c, lesson) {
         const cells = cleanRow.split('&').map(function(c) {
           let cellText = c.trim();
           cellText = cellText.replace(/^\[[0-9.]+\s*(?:cm|pt|mm|em|ex|in)\]\s*/, '').trim();
+          cellText = cellText.replace(/\\(centering|raggedright|raggedleft|arraybackslash)\b/g, '').trim();
           cellText = cellText.replace(/\{\\bf\s+([^}]*)\}/g, '<strong>$1</strong>');
           cellText = cellText.replace(/\\textbf\{([^}]*)\}/g, '<strong>$1</strong>');
+          cellText = cellText.replace(/\\textit\{([^}]*)\}/g, '<em>$1</em>');
+          cellText = cellText.replace(/\\multicolumn\{\d+\}\{[^}]*\}\{([^}]*)\}/g, '$1');
+          cellText = cellText.replace(/\\vspace\{[^}]*\}/g, '');
           cellText = cellText.replace(/___HTML_LT___/g, '&lt;')
                              .replace(/___HTML_GT___/g, '&gt;')
                              .replace(/___HTML_AMP___/g, '&amp;')
@@ -2322,17 +2483,23 @@ function renderLesson(c, lesson) {
         cells.forEach(function(cell, colIndex) {
           if (hasHline) {
             const tag = rowIndex === 0 ? 'th' : 'td';
-            tableHtml += '<' + tag + ' style="border: 1px solid var(--s4); padding: 8px 14px; text-align: center; background: ' + (rowIndex === 0 ? 'var(--s2)' : 'transparent') + ';">' + cell + '</' + tag + '>';
+            const align = (rowIndex === 0 || cell.length <= 25) ? 'center' : 'left';
+            tableHtml += '<' + tag + ' style="border: 1px solid var(--s4); padding: 8px 12px; text-align: ' + align + '; ' +
+              (rowIndex === 0 ? 'background: var(--s2); font-weight: 700; color: var(--s12);' : 'color: var(--s11);') + '">' + cell + '</' + tag + '>';
           } else {
             const isLabelCol = colIndex === 0;
-            tableHtml += '<td style="border: none; padding: 6px 14px; text-align: left; vertical-align: top; ' + (isLabelCol ? 'font-weight: 600; white-space: nowrap; color: var(--s12);' : 'color: var(--s11);') + '">' + cell + '</td>';
+            tableHtml += '<td style="border: none; padding: 6px 14px; text-align: left; vertical-align: top; ' +
+              (isLabelCol ? 'font-weight: 600; white-space: nowrap; color: var(--s12);' : 'color: var(--s11);') + '">' + cell + '</td>';
           }
         });
         tableHtml += '</tr>';
       });
       tableHtml += '</table></div>';
       return tableHtml;
-    });
+    };
+
+    html = replaceEnvironment(html, 'tabularx', renderTableFn);
+    html = replaceEnvironment(html, 'tabular', renderTableFn);
 
     html = replaceEnvironment(html, 'table', function(opt1, opt2, body) {
       return '<div class="latex-table-container" style="text-align: center; margin: 24px 0;">' + body.trim() + '</div>';
@@ -2419,6 +2586,19 @@ function renderLesson(c, lesson) {
       const headerHtml = title ? '<div class="latex-tcolorbox-header"><strong>' + title.trim() + '</strong></div>' : '';
       const formattedBody = formatInnerParagraphs(body.trim());
       return '<div class="latex-tcolorbox">' + headerHtml + '<div class="latex-tcolorbox-content">' + formattedBody + '</div></div>';
+    });
+
+    html = replaceTwoArgCommandWithBraces(html, 'boxpair', function(content, points) {
+      const formattedContent = formatInnerParagraphs(content.trim());
+      const cleanPoints = points.trim().replace(/^\s*\{[^}]*\}/, '').trim();
+      return '<div class="latex-boxpair" style="display: flex; gap: 14px; margin: 18px 0; border: 1px solid var(--s4, #d7dfe3); border-radius: 4px; background: var(--s1); overflow: hidden; align-items: stretch;">' +
+        '<div class="latex-boxpair-content" style="flex: 1; padding: 14px 18px;">' +
+          formattedContent +
+        '</div>' +
+        '<div class="latex-boxpair-points" style="min-width: 90px; width: 100px; background: var(--s2); border-left: 1px solid var(--s3); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--s11); font-size: 0.85rem; text-align: center; padding: 10px;">' +
+          cleanPoints +
+        '</div>' +
+      '</div>';
     });
 
     html = replaceEnvironment(html, 'multicols', function(optBracket, optBrace, body) {
@@ -2690,6 +2870,9 @@ function renderLesson(c, lesson) {
       html = finalReplaced;
     }
 
+    // Dọn dẹp bất kỳ thẻ môi trường TeX mồ côi nào còn sót lại (ví dụ \end{bt}, \begin{bt} không khớp)
+    html = html.replace(/\\(?:begin|end)\{(?:bt|vd|dn|dl|tc|hq|nx|sol|note|btmau|proof|table|figure|tabular|tabularx|center|multicols|minipage|tcolorbox)\*?\}(?:\[[^\]]*\])?(?:\{[^}]*\})?/g, '');
+
     html = replaceCommandWithBraces(html, 'textbf', function(c) { return '<strong style="font-weight: 700;">' + c + '</strong>'; });
     html = replaceCommandWithBraces(html, 'textit', function(c) { return '<em>' + c + '</em>'; });
     html = replaceCommandWithBraces(html, 'underline', function(c) { return '<u>' + c + '</u>'; });
@@ -2783,7 +2966,12 @@ function renderLesson(c, lesson) {
           rendered = katex.renderToString(cleanCode, {
             throwOnError: false,
             strict: 'ignore',
-            displayMode: entry.isDisplay
+            displayMode: entry.isDisplay,
+            macros: {
+              "\\vv": "\\vec",
+              "\\bm": "\\mathbf",
+              "\\boldsymbol": "\\mathbf"
+            }
           });
           if (entry.isDisplay) {
             rendered = '<div class="katex-display-wrapper" style="overflow-x: auto; padding: 6px 0;">' + rendered + '</div>';
@@ -2799,6 +2987,11 @@ function renderLesson(c, lesson) {
 
     // Phục hồi ký hiệu dollar thoát hiểm \$
     html = html.replaceAll('___KATEX_LITERAL_DOLLAR___', '$');
+
+    // Phục hồi các khối HTML / SVG đã được bảo vệ
+    htmlBlockTokens.forEach(function(entry, token) {
+      html = html.replaceAll(token, function() { return entry; });
+    });
 
     const responsiveStyle = `
       <style>
@@ -2863,6 +3056,36 @@ function renderLesson(c, lesson) {
           border-radius: 2px;
           padding: 16px 20px;
           margin: 20px 0;
+        }
+        .latex-solution-header {
+          font-family: var(--font-academic);
+          font-size: 1.15rem;
+          font-weight: 700;
+          color: var(--s12);
+          margin: 22px 0 10px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .latex-solution-header svg {
+          stroke: #30a46c;
+        }
+        .latex-bai-title {
+          color: var(--s12);
+          font-weight: 700;
+          margin-right: 6px;
+        }
+        .vectoria-diagram-container {
+          text-align: center;
+          margin: 24px auto;
+          max-width: 580px;
+          width: 100%;
+        }
+        .vectoria-diagram-container svg {
+          max-width: 100%;
+          height: auto;
+          display: block;
+          margin: 0 auto;
         }
         .latex-box-content {
           font-family: var(--font-academic);
@@ -3042,6 +3265,57 @@ function renderLesson(c, lesson) {
     return responsiveStyle + html;
   }
 
+  function formatMathContent(str) {
+    if (!str || typeof str !== 'string') return '';
+    if (typeof katex !== 'undefined') {
+      var unesc = function(s) { return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>'); };
+      try {
+        return str
+          .replace(/\$\$([\s\S]+?)\$\$/g, function(_, m) {
+            try { return katex.renderToString(unesc(m), { displayMode: true, throwOnError: false, macros: { "\\vv": "\\vec" } }); } catch(err) { return _; }
+          })
+          .replace(/\\\[([\s\S]+?)\\\]/g, function(_, m) {
+            try { return katex.renderToString(unesc(m), { displayMode: true, throwOnError: false, macros: { "\\vv": "\\vec" } }); } catch(err) { return _; }
+          })
+          .replace(/\$([^\$]+?)\$/g, function(_, m) {
+            try { return katex.renderToString(unesc(m), { displayMode: false, throwOnError: false, macros: { "\\vv": "\\vec" } }); } catch(err) { return _; }
+          })
+          .replace(/\\\(([\s\S]*?)\\\)/g, function(_, m) {
+            try { return katex.renderToString(unesc(m), { displayMode: false, throwOnError: false, macros: { "\\vv": "\\vec" } }); } catch(err) { return _; }
+          });
+      } catch(e) {
+        return str;
+      }
+    }
+    return str;
+  }
+
+  function renderMath(element) {
+    if (!element) return;
+    if (window.renderMathInElement) {
+      try {
+        window.renderMathInElement(element, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '\\[', right: '\\]', display: true},
+            {left: '$', right: '$', display: false},
+            {left: '\\(', right: '\\)', display: false}
+          ],
+          macros: {
+            "\\vv": "\\vec",
+            "\\bm": "\\mathbf",
+            "\\boldsymbol": "\\mathbf"
+          },
+          throwOnError: false
+        });
+      } catch(e) {}
+    }
+    if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+      MathJax.typesetPromise([element]).catch(function(){});
+    }
+  }
+  window.renderMath = renderMath;
+  window.formatMathContent = formatMathContent;
 
   function formatLessonBody(contentStr) {
     if (!contentStr || typeof contentStr !== 'string') {
@@ -3056,6 +3330,11 @@ function renderLesson(c, lesson) {
                              !trimmed.includes('\\documentclass') && 
                              !trimmed.includes('\\begin{document}');
     if (isPreformattedHtml) {
+      // Dọn dẹp hoàn toàn ký tự combining &#8407; gây lỗi font/ô vuông
+      trimmed = trimmed.replace(/&#8407;/g, '');
+      if (typeof formatMathContent === 'function') {
+        trimmed = formatMathContent(trimmed);
+      }
       return trimmed;
     }
     return parseLatexToHTML(trimmed);
@@ -3110,6 +3389,7 @@ function renderLesson(c, lesson) {
           var fallback = lesson.contentHTML || lesson.abstract || '';
           body.innerHTML = formatLessonBody(fallback);
         }
+        renderMath(body);
         // Trigger highlight after real content is loaded using task queue
         var taskStr = sessionStorage.getItem('vecHighlightTask');
         if (taskStr) {
@@ -3164,6 +3444,7 @@ function renderLesson(c, lesson) {
       } else {
         var fallback = lesson.contentHTML || lesson.abstract || '';
         body.innerHTML = formatLessonBody(fallback);
+        renderMath(body);
         var taskStr = sessionStorage.getItem('vecHighlightTask');
         if (taskStr) {
           sessionStorage.removeItem('vecHighlightTask');
@@ -3182,6 +3463,7 @@ function renderLesson(c, lesson) {
       console.error("Lỗi fetch DB, dùng content mặc định:", err);
       var fallback = lesson.contentHTML || lesson.abstract || '';
       body.innerHTML = formatLessonBody(fallback);
+      renderMath(body);
       // Trigger highlight for fallback content too
       var taskStr = sessionStorage.getItem('vecHighlightTask');
       if (taskStr) {
@@ -5242,6 +5524,7 @@ function initGraph() {
 </script>
 
 <script src="js/mock_library.js"></script>
+<script src="js/app/nori/nori_dialogue_bag.js"></script>
 <script src="js/app/ui/learning_path.js"></script>
 <script src="js/app/simulation/persona_simulator.js"></script>
 <script>

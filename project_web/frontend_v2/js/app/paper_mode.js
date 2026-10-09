@@ -31,6 +31,13 @@ const PaperMode = (() => {
       if (axisControls) {
         axisControls.style.display = (window.App && window.App.mode === '3D') ? 'inline-flex' : 'none';
       }
+
+      // Resume viewer render loop
+      if (window.App && window.App.mode === '3D' && window.Vec3D) {
+        Vec3D.show3D();
+      } else if (window.Vec2D) {
+        Vec2D.draw2DAllVectors();
+      }
     });
 
     btnPaper.addEventListener('click', () => {
@@ -44,6 +51,11 @@ const PaperMode = (() => {
       viewer.style.display = 'none';
       paperWrap.style.display = 'block';
       if (canvasHudTools) canvasHudTools.style.display = 'none';
+
+      // Pause 3D animation loop to save 100% GPU/CPU while viewing Paper notebook
+      if (window.Vec3D) {
+        Vec3D._animating = false;
+      }
     });
   }
 

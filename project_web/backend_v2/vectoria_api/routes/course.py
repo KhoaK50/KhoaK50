@@ -169,7 +169,7 @@ def init_course_db():
     except Exception as e:
         print(">> Error initializing Course DB:", str(e))
 
-init_course_db()
+threading.Thread(target=init_course_db, daemon=True).start()
 
 from vectoria_api.middleware.auth import token_required
 

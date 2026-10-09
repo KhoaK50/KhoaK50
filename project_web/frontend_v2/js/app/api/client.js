@@ -8,25 +8,16 @@
     const el = document.getElementById("logOut");
     if (!el) return;
     el.innerText =
-      (el.innerText === "—" ? "" : el.innerText + "\n") + String(s);
+      (el.innerText === "-" ? "" : el.innerText + "\n") + String(s);
   };
 
   App.pingBackend = async function () {
     try {
       const r = await fetch(`${App.API_BASE}/api/health`, { mode: "cors" });
       const j = await r.json();
-      App.log(`Backend OK (${App.API_BASE}) — health: ${JSON.stringify(j)}`);
+      App.log(`Backend OK (${App.API_BASE}): health: ${JSON.stringify(j)}`);
     } catch (e) {
-      App.log(`Không gọi được /api/health — ${e}`);
-      // THAY ALERT BẰNG TOAST
-      if (typeof App.showToast === "function") {
-        App.showToast(
-          `Không kết nối được Backend tại ${App.API_BASE}. Đang khởi động lại server, vui lòng đợi xíu nhé!`,
-          "error",
-        );
-      } else {
-        console.warn("Backend error: " + e.message);
-      }
+      console.warn(`Backend offline at ${App.API_BASE}, client-side engine active.`);
     }
   };
 

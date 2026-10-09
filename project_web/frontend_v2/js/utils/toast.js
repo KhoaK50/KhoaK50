@@ -1,4 +1,4 @@
-﻿window.App = window.App || {};
+window.App = window.App || {};
 
 (function() {
   // Ensure CSS
@@ -6,7 +6,7 @@
     const style = document.createElement('style');
     style.id = 'global-toast-css';
     style.innerHTML = `
-      #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 999999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+      #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9990; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
       .toast-item { 
         pointer-events: auto;
         background: var(--bg-card, #fff); color: var(--text-main, #111); 

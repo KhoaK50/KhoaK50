@@ -46,10 +46,23 @@ const ThemeManager = (() => {
   function applyTheme(isDark) {
     // Nếu trình duyệt hỗ trợ View Transitions API -> Dùng hiệu ứng mượt
     if (document.startViewTransition) {
-      document.startViewTransition(() => {
+      try {
+        const transition = document.startViewTransition(() => {
+          applyClasses(isDark);
+          notifyApp(isDark);
+        });
+        if (transition) {
+          if (transition.ready && typeof transition.ready.catch === "function") {
+            transition.ready.catch(() => {});
+          }
+          if (transition.finished && typeof transition.finished.catch === "function") {
+            transition.finished.catch(() => {});
+          }
+        }
+      } catch (err) {
         applyClasses(isDark);
         notifyApp(isDark);
-      });
+      }
     } else {
       // Fallback: Chuyển tức thì (Instant Snap) cho trình duyệt cũ
       applyClasses(isDark);

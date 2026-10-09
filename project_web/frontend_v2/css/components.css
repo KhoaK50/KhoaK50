@@ -34,7 +34,7 @@ html {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 10000;
+  z-index: 10005;
   box-sizing: border-box;
   font-family: var(--font-ui);
 }
@@ -291,6 +291,7 @@ pre {
   gap: 8px;
   max-height: 350px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding-right: 4px;
 }
 
@@ -532,38 +533,6 @@ body.dark .btn.basis-anim-stop:active {
   background: rgba(255, 255, 255, 0.14);
 }
 
-/* Range slider */
-#basisAnimControls input[type="range"] {
-  width: 100%;
-  accent-color: var(--accent, var(--primary-base));
-}
-
-#basisAnimControls input[type="range"]::-webkit-slider-runnable-track {
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.1);
-}
-
-#basisAnimControls input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  background: var(--accent, var(--primary-base));
-  border: 2px solid rgba(255, 255, 255, 0.65);
-  margin-top: -5px;
-}
-
-body.dark
-  #basisAnimControls
-  input[type="range"]::-webkit-slider-runnable-track {
-  background: rgba(255, 255, 255, 0.14);
-}
-
-body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb {
-  border-color: rgba(0, 0, 0, 0.35);
-}
-
 @media (min-width: 769px) {
   @media (hover: hover) {
     .vec-dropdown-container:hover .vec-dropdown-menu {
@@ -642,6 +611,7 @@ body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb {
     height: 100%;
     display: flex;
     align-items: center;
+    box-sizing: border-box;
   }
   .vec-dropdown-menu {
     position: absolute;
@@ -660,6 +630,7 @@ body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb {
     transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     padding: 8px 0;
     z-index: 10001;
+    box-sizing: border-box;
   }
   @media (hover: hover) {
     .vec-dropdown-container:hover .vec-dropdown-menu {
@@ -690,8 +661,9 @@ body.dark #basisAnimControls input[type="range"]::-webkit-slider-thumb {
       font-size: 14px;
       border: none !important;
       outline: none !important;
+      box-sizing: border-box !important;
       transition: background 0.2s, color 0.2s;
-    }
+  }
   .vec-dropdown-item i {
     color: var(--text-main);
     font-size: 16px;

@@ -484,178 +484,112 @@
     }
   };
 
-  // Nạp danh sách chức năng/bài toán tương ứng của một Chủ đề vào #opExtraSelect
+  // Nạp danh sách chức năng/bài toán (giữ lại để tương thích ngược nếu có script cũ gọi)
   App.populateTopicTasks = function (topicId, targetTaskId) {
-    const taskSelect = document.getElementById("opExtraSelect");
-    if (!taskSelect) return;
-
-    const topic = TOPICS_DATA.find((t) => t.id === topicId) || TOPICS_DATA[2]; // Mặc định Chủ đề 3
-    taskSelect.innerHTML = "";
-
-    topic.sections.forEach((sec) => {
-      const opt = document.createElement("option");
-      opt.value = sec.id;
-      opt.textContent = sec.title;
-      taskSelect.appendChild(opt);
-    });
-
-    // Chọn bài toán chỉ định hoặc bài toán đầu tiên
-    let selectedId = targetTaskId;
-    if (!selectedId || !topic.sections.some((s) => s.id === selectedId)) {
-      // Ưu tiên chọn bài toán đã sẵn sàng (ready === true), nếu không thì chọn bài đầu tiên
-      const readySec = topic.sections.find((s) => s.ready);
-      selectedId = readySec ? readySec.id : topic.sections[0].id;
+    if (targetTaskId) {
+      App.switchTopicTask(targetTaskId);
     }
-
-    taskSelect.value = selectedId;
-    App.switchTopicTask(selectedId);
   };
 
-  // Khởi tạo điều khiển phân cấp 2 cấp trên Sidebar
+  // Khởi tạo điều khiển bài toán 1 cấp (Single Grouped Select - Phương án A)
   App.setupTopicsDropdown = function () {
-    const catSelect = document.getElementById("topicCategorySelect");
     const taskSelect = document.getElementById("opExtraSelect");
     if (!taskSelect) return;
 
-    // 1. Đồng bộ Dropdown Cấp 1 (Chủ đề)
-    if (catSelect) {
-      catSelect.innerHTML = "";
-      TOPICS_DATA.forEach((t) => {
-        const opt = document.createElement("option");
-        opt.value = t.id;
-        opt.textContent = t.title;
-        catSelect.appendChild(opt);
-      });
+    // Đọc trạng thái bài toán đã lưu trong sessionStorage nếu có, mặc định là 'linear_independence'
+    const savedTask = sessionStorage.getItem("vectoria_active_task") || "linear_independence";
+    const optExists = Array.from(taskSelect.options).some((o) => o.value === savedTask);
+    const activeTaskId = optExists ? savedTask : "linear_independence";
+    taskSelect.value = activeTaskId;
 
-      // Đọc trạng thái đã lưu trong sessionStorage nếu có, mặc định là Chủ đề 3
-      const savedTopic = sessionStorage.getItem("vectoria_active_topic") || "t3";
-      const topicExists = TOPICS_DATA.some((t) => t.id === savedTopic);
-      const activeTopicId = topicExists ? savedTopic : "t3";
-      catSelect.value = activeTopicId;
-
-      // Lắng nghe sự kiện đổi Chủ đề -> Tự động nạp phần kế tiếp
-      catSelect.addEventListener("change", function () {
-        const newTopicId = this.value;
-        sessionStorage.setItem("vectoria_active_topic", newTopicId);
-        App.populateTopicTasks(newTopicId);
-      });
-
-      // Nạp danh sách bài toán ban đầu cho chủ đề đang chọn
-      App.populateTopicTasks(activeTopicId);
-    } else {
-      // Fallback nếu giao diện chưa có #topicCategorySelect
-      App.populateTopicTasks("t3");
-    }
-
-    // 2. Lắng nghe sự kiện đổi Bài toán (Cấp 2)
+    // Lắng nghe sự kiện đổi Bài toán
     taskSelect.addEventListener("change", function () {
+      sessionStorage.setItem("vectoria_active_task", this.value);
       App.switchTopicTask(this.value);
     });
+
+    // Kích hoạt bài toán ban đầu
+    App.switchTopicTask(activeTaskId);
   };
 
-  // Hiển thị khung xem trước thông tin bài học từ giáo trình cho các mục giai đoạn tiếp theo
-  function renderTopicPreview(sec, topic) {
-    const previewContent = document.getElementById("topicPreviewContent");
-    if (!previewContent) return;
-
-    let lessonsHtml = "";
-    if (sec.lessons && sec.lessons.length > 0) {
-      lessonsHtml = `
-        <div style="margin-top: 10px;">
-          <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.5px;">
-            Các bài học trong mục này:
-          </div>
-          <ul style="margin: 0; padding-left: 18px; color: var(--fg); font-size: 12px; line-height: 1.6;">
-            ${sec.lessons.map((l) => `<li>${l}</li>`).join("")}
-          </ul>
-        </div>
-      `;
-    }
-
-    previewContent.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px;">
-        <span style="font-size: 13px; font-weight: 700; color: var(--fg);">${sec.title}</span>
-        <span style="display: inline-block; padding: 2px 7px; font-size: 10.5px; font-weight: 700; border-radius: 2px; background: rgba(0, 144, 255, 0.12); color: var(--primary-base); border: 1px solid rgba(0, 144, 255, 0.25); white-space: nowrap;">
-          Giai đoạn ${sec.phase}
-        </span>
-      </div>
-      <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">
-        ${sec.desc || "Nội dung học thuật được trích xuất từ đề cương 78 bài học của Vectoria."}
-      </div>
-      ${lessonsHtml}
-      <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; gap: 6px;">
-        <button type="button" class="btn btn-secondary" style="flex: 1; padding: 7px 10px; font-size: 12px; border-radius: 4px;" onclick="document.querySelector('.sidebar-tabs .tab-btn')?.click();">
-          Vào Tab Vector
-        </button>
-        <a href="knowledge_info.html" class="btn btn-secondary" style="flex: 1; padding: 7px 10px; font-size: 12px; border-radius: 4px; text-align: center; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
-          Thư viện lý thuyết
-        </a>
-      </div>
-    `;
-  }
-
-  // Điều phối chuyển đổi bài toán / chức năng
+  // Điều phối chuyển đổi bài toán / chức năng trực quan
   App.switchTopicTask = function (taskId) {
-    // 1. Tìm thông tin section trong dữ liệu chuẩn
-    let foundSec = null;
-    let foundTopic = null;
-    for (const t of TOPICS_DATA) {
-      const s = t.sections.find((sec) => sec.id === taskId);
-      if (s) {
-        foundSec = s;
-        foundTopic = t;
-        break;
+    if (!taskId) return;
+
+    // Dung hoat canh co so va toa do neu chuyen sang bai toan khac
+    if (taskId !== "basis") {
+      if (typeof App.stopBasisAnimation === "function") {
+        try { App.stopBasisAnimation(); } catch (_) {}
+      } else if (window.App?.BasisAnimator?.isActive?.()) {
+        try { window.App.BasisAnimator.stop(); } catch (_) {}
+      }
+    }
+    if (taskId !== "coordinates") {
+      if (typeof App.stopCoordAnimation === "function") {
+        try { App.stopCoordAnimation(); } catch (_) {}
+      } else if (window.App?.CoordAnimator?.isActive?.()) {
+        try { window.App.CoordAnimator.stop(); } catch (_) {}
       }
     }
 
-    // 2. Dọn dẹp hook vẽ 2D tùy chỉnh khi chuyển khỏi bài toán đồ thị
+    // 1. Dọn dẹp hook vẽ 2D tùy chỉnh khi chuyển khỏi bài toán đồ thị
     const isGraphicTask =
       taskId === "quadratic_form_conic" ||
-      taskId === "quadratic_form_canonical" ||
-      taskId === "quadratic_form_sylvester" ||
       taskId === "topic1_parametric_vector" ||
+      taskId === "topic1_dot_product" ||
       taskId === "topic2_matrix_param" ||
-      taskId === "topic2_matrix_system" ||
       taskId === "topic4_gram_schmidt" ||
-      taskId === "topic4_orthogonality" ||
-      taskId === "s20" ||
-      taskId === "s21" ||
-      taskId === "topic5_kernel_image" ||
-      taskId === "topic5_matrix_transform" ||
-      taskId === "s25" ||
-      taskId === "s26" ||
-      taskId === "topic6_eigen" ||
-      taskId === "topic6_char_poly" ||
-      taskId === "topic6_diagonalize" ||
-      taskId === "topic6_symmetric_diag" ||
-      taskId === "s27" ||
-      taskId === "s28" ||
-      taskId === "s29" ||
-      taskId === "s30";
+      taskId === "topic5_linear_transformation" ||
+      taskId === "topic6_eigen";
 
     if (!isGraphicTask) {
       App.custom2DDrawHook = null;
     }
 
-    // 3. Chuyển đổi hiển thị form tương ứng trong #extraForms
-    if (foundSec && foundSec.ready && foundSec.formId) {
-      if (typeof App.showExtraForm === "function") {
-        App.showExtraForm(foundSec.formId);
-      }
-    } else if (foundSec) {
-      renderTopicPreview(foundSec, foundTopic);
-      if (typeof App.showExtraForm === "function") {
-        App.showExtraForm("topic-preview");
-      }
+    // 2. Chuyển đổi hiển thị form tương ứng trong #extraForms
+    if (typeof App.showExtraForm === "function") {
+      App.showExtraForm(taskId);
     }
 
-    // 4. Thông báo cho module phụ trách bài toán
-    Object.keys(App.TopicModules).forEach((tId) => {
+    // 2.1. Cập nhật nhãn liên kết bài học mở tab mới
+    const lessonMap = {
+      "topic1_parametric_vector": { id: "l3", num: 3 },
+      "topic2_matrix_param": { id: "l17", num: 17 },
+      "linear_independence": { id: "l35", num: 35 },
+      "rank": { id: "l37", num: 37 },
+      "basis": { id: "l40", num: 40 },
+      "coordinates": { id: "l43", num: 43 },
+      "topic4_gram_schmidt": { id: "l53", num: 53 },
+      "topic5_linear_transformation": { id: "l58", num: 58 },
+      "topic6_eigen": { id: "l64", num: 64 },
+      "quadratic_form_conic": { id: "l74", num: 74 }
+    };
+    const badge = document.getElementById("topicLessonLinkBadge");
+    if (badge && lessonMap[taskId]) {
+      badge.href = `knowledge_info.html?type=lesson&id=${lessonMap[taskId].id}`;
+      badge.innerHTML = `<i class="ph ph-arrow-square-out" style="margin-right:2px;"></i> [Bài ${lessonMap[taskId].num}]`;
+      badge.title = `Xem lý thuyết Bài ${lessonMap[taskId].num} trên tab mới`;
+    }
+
+    // 3. Thông báo cho module phụ trách bài toán
+    Object.keys(App.TopicModules || {}).forEach((tId) => {
       const mod = App.TopicModules[tId];
       if (mod && typeof mod.onTaskSelect === "function") {
         mod.onTaskSelect(taskId);
       }
     });
+
+    // 4. Nếu là bài toán của Topic 3, đồng bộ danh sách checkbox vector
+    if (
+      taskId === "linear_independence" ||
+      taskId === "rank" ||
+      taskId === "basis" ||
+      taskId === "coordinates"
+    ) {
+      if (typeof App.renderExtraCalcOptions === "function") {
+        App.renderExtraCalcOptions();
+      }
+    }
 
     // 5. Yêu cầu vẽ lại Canvas nếu đang ở chế độ 2D
     if (window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {

@@ -27,11 +27,11 @@ window.TopbarAvatar = {
 
     // Add global theme toggle logic
     const themeBtn = document.getElementById("themeToggleBtn");
-    if (themeBtn) {
+    if (themeBtn && !themeBtn.dataset.themeBound) {
+        themeBtn.dataset.themeBound = "true";
         // Sync icon on load
         const syncIcon = () => {
             const isDark = typeof ThemeManager !== "undefined" ? ThemeManager.isDarkMode() : document.body.classList.contains("dark-theme");
-            
         };
         syncIcon();
         

@@ -39,8 +39,10 @@
     };
 
     bindClick("btnDraw", App.onAddVector);
+    bindClick("btnClearAll", () => {
+      if (typeof App.clearAllVectors === "function") App.clearAllVectors();
+    });
     bindClick("btnAuto", App.toggleAuto);
-    bindClick("btnClearAll", App.clearAllVectors);
     bindClick("themeBadge", App.toggleTheme);
     bindClick("modeBadge", App.toggleMode);
 
@@ -210,6 +212,117 @@
         }
       });
     }
+
+    // --- QUẢN LÝ CÀI ĐẶT ĐỒ THỊ (GRAPH SETTINGS) CHO 2D & 3D ---
+    const savedGraphSettings = (() => {
+      try {
+        const s = localStorage.getItem("vectoria_graph_settings");
+        return s ? JSON.parse(s) : null;
+      } catch (e) { return null; }
+    })();
+
+    App.graphSettings = Object.assign({
+      gridMode: "full",         // 'full' | 'major' | 'none'
+      gridContrast: 50,         // 0 to 100 (%)
+      labelMode: "name",        // 'name' | 'both' | 'none'
+      showAxes: true,           // boolean
+      haloStyle: "precision_reticle" // 'precision_reticle' | 'academic_aura' | 'soft_elevation'
+    }, savedGraphSettings);
+
+    // Neu saved settings la chuoi cu ('hierarchical', etc.), chuyen sang so 50
+    if (typeof App.graphSettings.gridContrast !== "number") {
+      if (App.graphSettings.gridContrast === "subtle") App.graphSettings.gridContrast = 35;
+      else if (App.graphSettings.gridContrast === "high") App.graphSettings.gridContrast = 70;
+      else App.graphSettings.gridContrast = 50;
+    }
+
+    const settingGridMode = document.getElementById("settingGridMode");
+    const settingGridContrastSlider = document.getElementById("settingGridContrastSlider");
+    const settingGridContrastVal = document.getElementById("settingGridContrastVal");
+    const settingLabelMode = document.getElementById("settingLabelMode");
+    const settingShowAxes = document.getElementById("settingShowAxes");
+    const settingHaloStyle = document.getElementById("settingHaloStyle");
+
+    if (settingGridMode) {
+      settingGridMode.value = App.graphSettings.gridMode || "full";
+      settingGridMode.addEventListener("change", (e) => {
+        App.graphSettings.gridMode = e.target.value;
+        App.saveGraphSettings();
+      });
+    }
+
+    function updateSliderFill(slider) {
+      if (!slider) return;
+      const min = Number(slider.min) || 0;
+      const max = Number(slider.max) || 100;
+      const val = Number(slider.value) || 0;
+      const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+      slider.style.setProperty("--slider-pct", `${pct}%`);
+    }
+
+    if (settingGridContrastSlider) {
+      settingGridContrastSlider.value = App.graphSettings.gridContrast;
+      updateSliderFill(settingGridContrastSlider);
+      if (settingGridContrastVal) {
+        settingGridContrastVal.textContent = App.graphSettings.gridContrast + "%";
+      }
+      settingGridContrastSlider.addEventListener("input", (e) => {
+        const val = Number(e.target.value);
+        App.graphSettings.gridContrast = val;
+        updateSliderFill(e.target);
+        if (settingGridContrastVal) {
+          settingGridContrastVal.textContent = val + "%";
+        }
+        App.saveGraphSettings();
+      });
+    }
+
+    if (settingLabelMode) {
+      settingLabelMode.value = App.graphSettings.labelMode || "name";
+      settingLabelMode.addEventListener("change", (e) => {
+        App.graphSettings.labelMode = e.target.value;
+        App.saveGraphSettings();
+      });
+    }
+
+    if (settingShowAxes) {
+      settingShowAxes.checked = App.graphSettings.showAxes !== false;
+      settingShowAxes.addEventListener("change", (e) => {
+        App.graphSettings.showAxes = e.target.checked;
+        App.saveGraphSettings();
+      });
+    }
+
+    if (settingHaloStyle) {
+      const validStyles = ["precision_reticle", "academic_aura", "soft_elevation"];
+      const currentStyle = App.graphSettings.haloStyle;
+      settingHaloStyle.value = validStyles.includes(currentStyle) ? currentStyle : "precision_reticle";
+      settingHaloStyle.addEventListener("change", (e) => {
+        App.graphSettings.haloStyle = e.target.value;
+        App.saveGraphSettings();
+      });
+    }
+
+    App.saveGraphSettings = function () {
+      try {
+        localStorage.setItem("vectoria_graph_settings", JSON.stringify(App.graphSettings));
+        if (App.graphSettings.haloStyle) {
+          localStorage.setItem("vectoria_halo_style", App.graphSettings.haloStyle);
+          App.haloStyle = App.graphSettings.haloStyle;
+        }
+      } catch (e) {}
+
+      if (window.App && window.App.mode === "3D") {
+        if (window.Vec3D && typeof window.Vec3D.updateFromSettings === "function") {
+          window.Vec3D.updateFromSettings();
+        }
+      } else {
+        if (window.Vec2D) {
+          if (typeof window.Vec2D.render2DGrid === "function") window.Vec2D.render2DGrid();
+          if (typeof window.Vec2D.draw2DAllVectors === "function") window.Vec2D.draw2DAllVectors();
+        }
+      }
+    };
   };
 
   // Chạy init khi DOM sẵn sàng

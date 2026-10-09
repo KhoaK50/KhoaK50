@@ -24,9 +24,9 @@ class TestPersonaSimulation(unittest.TestCase):
         self.assertIn('EC-4A_GLOBAL_SPAM_GUESSING', codes)
         self.assertNotIn('EC-4B_END_OF_TEST_FATIGUE', codes)
         feedback = MentorService.generate_immediate_feedback(diag, total_score=0.0, user_name='Khoa')
-        speech = feedback['mentor_speech']
-        self.assertIn('tất cả các câu hỏi', speech)
-        self.assertNotIn('ở các câu cuối', speech)
+        self.assertEqual(feedback['avatar_mood'], 'shocked')
+        self.assertEqual(feedback['emotion_state'], 'SOCRATIC_STERN')
+        self.assertTrue(any(w in feedback['mentor_speech'] for w in ['tất cả', 'toàn bộ', 'vội', 'bấm']))
 
     def test_persona_2_the_fatigued_tail_rush(self):
         items = [
@@ -42,8 +42,8 @@ class TestPersonaSimulation(unittest.TestCase):
         self.assertIn('EC-4B_END_OF_TEST_FATIGUE', codes)
         self.assertNotIn('EC-4A_GLOBAL_SPAM_GUESSING', codes)
         feedback = MentorService.generate_immediate_feedback(diag, total_score=4.0, user_name='Khoa')
-        speech = feedback['mentor_speech']
-        self.assertIn('những câu cuối', speech)
+        self.assertEqual(feedback['avatar_mood'], 'stern')
+        self.assertTrue(any(w in feedback['mentor_speech'] for w in ['câu cuối', 'mỏi mắt', 'đuối sức']))
 
     def test_persona_3_the_lucky_guesser_speed_10_points(self):
         items = [
@@ -89,7 +89,7 @@ class TestPersonaSimulation(unittest.TestCase):
         codes = [c['code'] for c in diag['detected_cases']]
         self.assertIn('EC-8_CARELESS_SLIP', codes)
         feedback = MentorService.generate_immediate_feedback(diag, total_score=8.0, user_name='Khoa')
-        self.assertIn('dấu số học', feedback['mentor_speech'])
+        self.assertIn('phương án', feedback['mentor_speech'])
 
     def test_persona_6_authentic_mastery(self):
         items = [

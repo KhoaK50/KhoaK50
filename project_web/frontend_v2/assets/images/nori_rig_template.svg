@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="500" height="500" fill="none">
+  <defs>
+    <radialGradient id="nori-body-grad" cx="45%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </radialGradient>
+    <radialGradient id="nori-shadow-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(30, 20, 15, 0.25)"/>
+      <stop offset="100%" stop-color="rgba(30, 20, 15, 0)"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Bóng đổ chân (Ground Shadow) -->
+  <g id="Ground_Shadow">
+    <ellipse cx="50" cy="92" rx="26" ry="4" fill="url(#nori-shadow-grad)"/>
+  </g>
+
+  <!-- Thân chính Nori (Root Character) -->
+  <g id="Nori_Character">
+    <!-- Tai trái (Left Ear) -->
+    <g id="Ear_Left" transform-origin="25 22">
+      <ellipse cx="25" cy="22" rx="10.5" ry="9.5" fill="url(#nori-body-grad)" stroke="#78350f" stroke-width="1.6"/>
+      <ellipse cx="25.5" cy="22.5" rx="6.2" ry="5.4" fill="#fecdd3"/>
+    </g>
+
+    <!-- Tai phải (Right Ear) -->
+    <g id="Ear_Right" transform-origin="75 22">
+      <ellipse cx="75" cy="22" rx="10.5" ry="9.5" fill="url(#nori-body-grad)" stroke="#78350f" stroke-width="1.6"/>
+      <ellipse cx="74.5" cy="22.5" rx="6.2" ry="5.4" fill="#fecdd3"/>
+    </g>
+
+    <!-- Bàn chân (Feet) -->
+    <g id="Feet">
+      <ellipse id="Foot_Left" cx="35" cy="85" rx="7.5" ry="4.5" fill="#d97706" stroke="#78350f" stroke-width="1.4"/>
+      <ellipse id="Foot_Right" cx="65" cy="85" rx="7.5" ry="4.5" fill="#d97706" stroke="#78350f" stroke-width="1.4"/>
+    </g>
+
+    <!-- Khối đầu và thân (Body & Tummy) -->
+    <g id="Body_Group">
+      <path id="Body_Silhouette" d="M 50 19 C 72 19, 85 30, 85 47 C 85 62, 79 74, 69 79 C 59 84, 41 84, 31 79 C 21 74, 15 62, 15 47 C 15 30, 28 19, 50 19 Z" fill="url(#nori-body-grad)" stroke="#78350f" stroke-width="1.6"/>
+      <path id="Tummy_Patch" d="M 50 43 C 63 43, 73 51, 73 63 C 73 74, 63 79, 50 79 C 37 79, 27 74, 27 63 C 27 51, 37 43, 50 43 Z" fill="#fefae0" opacity="0.95"/>
+    </g>
+
+    <!-- Má hồng (Blush Cheeks) -->
+    <g id="Blush_Cheeks">
+      <ellipse id="Cheek_Left" cx="25" cy="56" rx="5.2" ry="3.0" fill="rgba(244, 63, 94, 0.38)"/>
+      <ellipse id="Cheek_Right" cx="75" cy="56" rx="5.2" ry="3.0" fill="rgba(244, 63, 94, 0.38)"/>
+    </g>
+
+    <!-- Lông mày (Eyebrows) -->
+    <g id="Eyebrows">
+      <path id="Brow_Left" d="M 34 40.5 Q 39 38 45 40.5" stroke="#78350f" stroke-width="1.9" stroke-linecap="round" fill="none"/>
+      <path id="Brow_Right" d="M 55 40.5 Q 61 38 66 40.5" stroke="#78350f" stroke-width="1.9" stroke-linecap="round" fill="none"/>
+    </g>
+
+    <!-- Đôi mắt (Eyes & Pupils) -->
+    <g id="Eyes_Group">
+      <g id="Eye_Left">
+        <ellipse cx="38" cy="49" rx="5.2" ry="5.8" fill="#292524"/>
+        <circle cx="39.6" cy="46.8" r="1.8" fill="#ffffff"/>
+        <circle cx="36.8" cy="51.2" r="0.85" fill="#ffffff" opacity="0.85"/>
+      </g>
+      <g id="Eye_Right">
+        <ellipse cx="62" cy="49" rx="5.2" ry="5.8" fill="#292524"/>
+        <circle cx="63.6" cy="46.8" r="1.8" fill="#ffffff"/>
+        <circle cx="60.8" cy="51.2" r="0.85" fill="#ffffff" opacity="0.85"/>
+      </g>
+    </g>
+
+    <!-- Mũi (Nose) -->
+    <g id="Nose">
+      <ellipse cx="50" cy="54" rx="1.5" ry="1.1" fill="#292524" opacity="0.65"/>
+    </g>
+
+    <!-- Miệng (Mouth) -->
+    <g id="Mouth">
+      <path id="Mouth_Smile" d="M 45.5 59.5 Q 50 61.5 54.5 59.5" stroke="#78350f" stroke-width="1.9" stroke-linecap="round" fill="none"/>
+    </g>
+
+    <!-- Tay trước (Paws) -->
+    <g id="Paws">
+      <ellipse id="Paw_Left" cx="36" cy="62" rx="4.5" ry="3.5" fill="#f59e0b" stroke="#78350f" stroke-width="1.2"/>
+      <ellipse id="Paw_Right" cx="64" cy="62" rx="4.5" ry="3.5" fill="#f59e0b" stroke="#78350f" stroke-width="1.2"/>
+    </g>
+  </g>
+</svg>

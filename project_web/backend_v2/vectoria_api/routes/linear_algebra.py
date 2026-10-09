@@ -14,12 +14,12 @@ bp = Blueprint("linear_algebra", __name__)
 def compute_rank():
     try:
         data = require_json()
-        vectors = validate_vectors_2d_list(data.get("vectors", []))
+        vectors = data.get("vectors", [])
+        if not vectors:
+            return jsonify({"error": "Dữ liệu vectors không được để trống."}), 400
 
-        A = sp.Matrix(vectors).T
-        rank = A.rank()
-
-        return jsonify({"rank": rank, "message": f"Hạng của hệ vector là {rank}."})
+        payload = explain("rank_vectors", vectors=vectors)
+        return jsonify(payload)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
@@ -31,25 +31,12 @@ def compute_rank():
 def linear_independence():
     try:
         data = require_json()
-        vectors = validate_vectors_2d_list(data.get("vectors", []))
+        vectors = data.get("vectors", [])
+        if not vectors:
+            return jsonify({"error": "Dữ liệu vectors không được để trống."}), 400
 
-        A = sp.Matrix(vectors).T
-        rank = A.rank()
-        num_vectors = A.shape[1]
-
-        independent = rank == num_vectors
-
-        return jsonify(
-            {
-                "independent": independent,
-                "rank": rank,
-                "message": (
-                    "Hệ vector độc lập tuyến tính."
-                    if independent
-                    else "Hệ vector phụ thuộc tuyến tính."
-                ),
-            }
-        )
+        payload = explain("linear_independence", vectors=vectors)
+        return jsonify(payload)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 

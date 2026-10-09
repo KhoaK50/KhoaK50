@@ -15,6 +15,9 @@
 *.p12
 *.cert
 *.crt
+id_rsa*
+id_ed25519*
+id_ecdsa*
 *credentials*.json
 *service_account*.json
 *service-account*.json
@@ -128,5 +131,11 @@ tmp_*/
 **/tmp_*/
 temp_*/
 **/temp_*/
+.tmp*/
+**/.tmp*/
+.tmp_*
+**/.tmp_*
+.agents/
+**/.agents/
 test_*.html
 preview_*.html

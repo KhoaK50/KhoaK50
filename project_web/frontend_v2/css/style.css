@@ -174,7 +174,7 @@
 
     padding-bottom: 80px;
 
-    /* Chá»«a chá»— cho bÃ n phÃ­m áº£o */
+    /* Chá»«a chá»- cho bÃ n phÃ­m áº£o */
 
     overflow-y: auto;
 
@@ -406,7 +406,7 @@ body.dark .view-tool-btn {
 
   right: 20px;
 
-  z-index: 10000;
+  z-index: 9990;
 
   display: flex;
 
@@ -434,7 +434,7 @@ body.dark .view-tool-btn {
 
   border-left: 5px solid #ff4d4f;
 
-  /* Viá»�n Ä‘á»� bÃ¡o lá»—i */
+  /* Viá»�n Ä‘á»� bÃ¡o lá»-i */
 
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 
@@ -1504,7 +1504,7 @@ math-field::part(container) {
 
 }
 
-/* 4. Fix lá»—i hiá»ƒn thá»‹ mÃ u trong cháº¿ Ä‘á»™ tá»‘i (Dark Mode) cho Ã´ nháº­p nÃ y */
+/* 4. Fix lá»-i hiá»ƒn thá»‹ mÃ u trong cháº¿ Ä‘á»™ tá»‘i (Dark Mode) cho Ã´ nháº­p nÃ y */
 
 body.dark math-field.vec-math-input {
 
@@ -1700,7 +1700,7 @@ body.overload-3d #viewerWrap div[style*="translate"] {
 
     width: 100%;
 
-    min-width: 0; /* Báº¯t MathLive thu háº¹p náº¿u háº¿t chá»— */
+    min-width: 0; /* Báº¯t MathLive thu háº¹p náº¿u háº¿t chá»- */
 
     background: transparent !important;
 

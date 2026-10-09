@@ -15,7 +15,7 @@ def _create_pool():
         return None
     try:
         new_pool = psycopg2.pool.ThreadedConnectionPool(
-            minconn=1,
+            minconn=0,
             maxconn=20,
             dsn=DB_URL,
             connect_timeout=10,
@@ -24,13 +24,30 @@ def _create_pool():
             keepalives_interval=10,
             keepalives_count=5
         )
-        print(">> [Database] Connection pool created successfully with TCP keepalives.")
+        print(">> [Database] Connection pool created successfully with TCP keepalives (minconn=0).")
         return new_pool
     except Exception as e:
         print(f">> [Database Error] Could not create connection pool: {e}")
         return None
 
 db_pool = _create_pool()
+
+def _warmup_db_bg():
+    """
+    Kiem tra va lam am ket noi co so du lieu trong tien trinh nen,
+    tranh lam nghen/treo tien trinh khoi dong Flask tren Windows.
+    """
+    time.sleep(0.3)
+    try:
+        conn = get_db_connection(max_retries=2)
+        if conn:
+            release_db_connection(conn)
+            print(">> [Database] Ket noi PostgreSQL (Supabase) da san sang.")
+    except Exception as e:
+        print(f">> [Database Notice] Khoi dong ket noi nen: {e}")
+
+_warmup_thread = threading.Thread(target=_warmup_db_bg, daemon=True)
+_warmup_thread.start()
 
 def _is_connection_alive(conn):
     """

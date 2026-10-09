@@ -41,10 +41,76 @@
     showSubTabs: true,
   };
 
-  // Hàm render MathJax
+  function renderKaTeXInElement(container) {
+    if (!container || !window.katex || typeof window.katex.renderToString !== "function") return;
+    if (container.querySelector(".katex")) return;
+    const walk = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        let text = node.nodeValue;
+        if (!text || (!text.includes("$") && !text.includes("\\[") && !text.includes("\\("))) return;
+        if (node.parentNode && (node.parentNode.classList.contains("katex") || node.parentNode.tagName === "SCRIPT" || node.parentNode.tagName === "STYLE")) return;
+        let replaced = false;
+        let newHtml = text
+          .replace(/\\\[([\s\S]*?)\\\]/g, (_, tex) => {
+            try {
+              replaced = true;
+              return window.katex.renderToString(tex.trim(), { displayMode: true, throwOnError: false });
+            } catch (err) { return _; }
+          })
+          .replace(/\$([^\$\n]+?)\$/g, (_, tex) => {
+            try {
+              replaced = true;
+              return window.katex.renderToString(tex.trim(), { displayMode: false, throwOnError: false });
+            } catch (err) { return _; }
+          })
+          .replace(/\\\(([\s\S]*?)\\\)/g, (_, tex) => {
+            try {
+              replaced = true;
+              return window.katex.renderToString(tex.trim(), { displayMode: false, throwOnError: false });
+            } catch (err) { return _; }
+          });
+        if (replaced) {
+          const span = document.createElement("span");
+          span.innerHTML = newHtml;
+          node.parentNode.replaceChild(span, node);
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        if (node.classList && (node.classList.contains("katex") || node.classList.contains("mjx-container"))) return;
+        Array.from(node.childNodes).forEach(walk);
+      }
+    };
+    walk(container);
+  }
+
+  // Ham render KaTeX va MathJax dong bo
   function typesetMath() {
+    if (body) {
+      if (typeof window.renderMathInElement === "function") {
+        try {
+          window.renderMathInElement(body, {
+            delimiters: [
+              { left: "$$", right: "$$", display: true },
+              { left: "\\[", right: "\\]", display: true },
+              { left: "$", right: "$", display: false },
+              { left: "\\(", right: "\\)", display: false },
+            ],
+            throwOnError: false,
+          });
+        } catch (e) {
+          console.warn("KaTeX render warning:", e);
+        }
+      } else if (window.katex && typeof window.katex.renderToString === "function") {
+        try {
+          renderKaTeXInElement(body);
+        } catch (e) {
+          console.warn("KaTeX fallback warning:", e);
+        }
+      }
+    }
+
     if (window.MathJax && typeof window.MathJax.typesetPromise === "function") {
-      return window.MathJax.typesetPromise([overlay]);
+      const targets = body ? [body] : [overlay];
+      return window.MathJax.typesetPromise(targets).catch((e) => console.warn(e));
     }
     return Promise.resolve();
   }
@@ -232,7 +298,21 @@
     if (titleTextEl) titleTextEl.textContent = state.titleText;
     if (titleMathEl) {
       titleMathEl.innerHTML = state.titleMath;
-      // Ép MathJax dịch riêng cái tiêu đề (Fix lỗi hiển thị raw code)
+      if (typeof window.renderMathInElement === "function") {
+        try {
+          window.renderMathInElement(titleMathEl, {
+            delimiters: [
+              { left: "\\(", right: "\\)", display: false },
+              { left: "$", right: "$", display: false },
+            ],
+            throwOnError: false,
+          });
+        } catch (_) {}
+      } else if (window.katex && typeof window.katex.renderToString === "function") {
+        try {
+          renderKaTeXInElement(titleMathEl);
+        } catch (_) {}
+      }
       if (window.MathJax && typeof window.MathJax.typesetPromise === "function") {
         window.MathJax.typesetPromise([titleMathEl]).catch((e) => console.warn(e));
       }

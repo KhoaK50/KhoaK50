@@ -19,9 +19,9 @@
     ) || window.innerWidth < 768;
 
   const GEOM_QUALITY = {
-    shaftSeg: isMobile ? 12 : 24,
-    headSeg: isMobile ? 16 : 32,
-    maxPixel: isMobile ? 1.5 : 2,
+    shaftSeg: isMobile ? 8 : 12,
+    headSeg: isMobile ? 12 : 16,
+    maxPixel: isMobile ? 1.25 : 1.5,
   };
 
   const threeLayer = document.getElementById("threeLayer");
@@ -93,9 +93,6 @@
 
     Vec3D.DEFAULT_FOV = 24;
 
-    if (getComputedStyle(threeLayer).display === "none") {
-      threeLayer.style.display = "block";
-    }
     const rect = threeLayer.getBoundingClientRect();
 
     // 1. WebGL Renderer
@@ -149,8 +146,18 @@
     Vec3D._controls.enableDamping = true;
     Vec3D._controls.dampingFactor = 0.07;
     Vec3D._controls.rotateSpeed = 0.6;
+    Vec3D._isOrbiting = false;
     Vec3D._controls.addEventListener("start", () => {
       Vec3D._userControlledCamera = true;
+      Vec3D._isOrbiting = true;
+    });
+    Vec3D._controls.addEventListener("end", () => {
+      Vec3D._isOrbiting = false;
+    });
+    Vec3D._controls.addEventListener("change", () => {
+      if (typeof Vec3D.updateVectorLabelsLive === "function") {
+        Vec3D.updateVectorLabelsLive();
+      }
     });
     
     // [FIX QUAN TRỌNG 2]: Trả lại quyền Kéo (Pan) Đồ thị cho Chuột Phải
@@ -243,32 +250,71 @@
 
       raycaster.setFromCamera(mouse, Vec3D._camera);
 
-      if (Vec3D._vectorsGroup) {
-          const heads = [];
-          Vec3D._vectorsGroup.traverse(child => {
-              if (child.isMesh && child.geometry && child.geometry.type === "ConeGeometry" && child.visible) {
-                  heads.push(child);
-              }
-          });
+      const isBlocked = typeof App.isInteractionBlocked === "function" && App.isInteractionBlocked();
+      if (!isBlocked && !(window.App && App.isAnimating)) {
+          let hitId = null;
+          let group = null;
 
-          raycaster.params.Line.threshold = 0.5;
-          const intersects = raycaster.intersectObjects(heads, false);
-          
-          if (intersects.length > 0) {
-              let group = intersects[0].object.parent;
-              let hitId = null;
-              for (let [id, grp] of Vec3D.threeVecMap.entries()) {
-                  if (grp === group) { hitId = id; break; }
+          // 1. Raycast Heads
+          if (Vec3D._pickableHeads && Vec3D._pickableHeads.length > 0) {
+              raycaster.params.Line.threshold = 0.5;
+              const intersects = raycaster.intersectObjects(Vec3D._pickableHeads, false);
+              if (intersects.length > 0) {
+                  const hitObj = intersects[0].object;
+                  hitId = hitObj.userData?.vectorId || null;
+                  group = hitObj.parent;
+                  if (!hitId) {
+                      for (let [id, grp] of Vec3D.threeVecMap.entries()) {
+                          if (grp === group) { hitId = id; break; }
+                      }
+                  }
               }
+          }
 
-              if (hitId && !(window.App && App.isAnimating)) {
+          // 2. Raycast Shafts
+          if (!hitId && Vec3D._pickableMeshes && Vec3D._pickableMeshes.length > 0) {
+              const intersects = raycaster.intersectObjects(Vec3D._pickableMeshes, false);
+              if (intersects.length > 0) {
+                  let p = intersects[0].object;
+                  while (p && p !== Vec3D._vectorsGroup) {
+                      for (const [id, grp] of Vec3D.threeVecMap.entries()) {
+                          if (grp === p) { hitId = id; group = grp; break; }
+                      }
+                      if (hitId) break;
+                      p = p.parent;
+                  }
+              }
+          }
+
+          // 3. Kiem tra CSS2D Labels
+          if (!hitId && Vec3D._vectorsGroup) {
+              for (const g of Vec3D._vectorsGroup.children) {
+                  const vId = g.userData?.vectorId;
+                  const lbl = g.children.find((ch) => ch.isCSS2DObject && ch.name === "tipLabel");
+                  if (lbl && lbl.element && lbl.visible !== false) {
+                      const lrect = lbl.element.getBoundingClientRect();
+                      if (cx >= lrect.left - 4 && cx <= lrect.right + 4 && cy >= lrect.top - 4 && cy <= lrect.bottom + 4) {
+                          hitId = vId;
+                          group = g;
+                          break;
+                      }
+                  }
+              }
+          }
+
+          if (hitId) {
+              if (!group) group = Vec3D.threeVecMap.get(hitId);
+              if (group && group.userData && group.userData.tipLocal) {
                   Vec3D.S3D.draggedVectorId = hitId;
+                  Vec3D.S3D.hoveredVectorId = hitId;
+                  Vec3D._isOrbiting = false; // Triệt tiêu cờ Orbiting để không chặn kéo
+                  Vec3D._controls.enabled = false; // Tạm khóa OrbitControls
+
                   if (window.App && App.History && typeof App.History.snapshot === "function") {
                     Vec3D.S3D._dragPreState = App.History.snapshot(`Di chuyển vector #${hitId}`);
                     const hitV = App.vectorList.find((v) => v.id === hitId);
                     Vec3D.S3D._dragStartVec = hitV ? [...hitV.vec] : null;
                   }
-                  Vec3D._controls.enabled = false; 
 
                   const tipWorld = group.userData.tipLocal.clone().add(Vec3D.S3D.offset);
                   constraintStart.copy(tipWorld); // Lưu gốc để trượt
@@ -293,27 +339,116 @@
                       if (planeNormal.lengthSq() < 0.001) planeNormal.copy(camDir).multiplyScalar(-1);
                       dragPlane.setFromNormalAndCoplanarPoint(planeNormal, tipWorld);
                   } else {
-                      // KÉO TỰ DO: Dùng mặt phẳng song song Camera như cũ
+                      // KÉO TỰ DO: Dùng mặt phẳng vuông góc với Camera đi qua đỉnh vector
                       dragPlane.setFromNormalAndCoplanarPoint(camDir.multiplyScalar(-1), tipWorld);
                   }
 
+                  // PHƯƠNG ÁN 1: Khóa độ lệch tương đối giữa chuột và ngọn vector tại thời điểm click
                   const planeIntersect = new THREE.Vector3();
-                  raycaster.ray.intersectPlane(dragPlane, planeIntersect);
-                  if (planeIntersect) dragOffset.copy(planeIntersect).sub(tipWorld);
+                  const hasPlaneHit = raycaster.ray.intersectPlane(dragPlane, planeIntersect);
+                  if (hasPlaneHit) {
+                    dragOffset.copy(planeIntersect).sub(tipWorld);
+                  } else {
+                    dragOffset.set(0, 0, 0);
+                  }
 
-                  e.preventDefault(); e.stopImmediatePropagation();
-                  renderDom.setPointerCapture(e.pointerId || (e.touches ? e.touches[0].identifier : 0));
-                  renderDom.style.cursor = Vec3D.S3D.axisConstraint ? "ns-resize" : "crosshair";
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.stopImmediatePropagation();
+                  try {
+                    renderDom.setPointerCapture(e.pointerId || (e.touches ? e.touches[0].identifier : 0));
+                  } catch (_) {}
+                  renderDom.style.cursor = "grabbing";
+                  Vec3D.draw3DAllVectors();
+                  return;
               }
           }
       }
     };
     
-    // POINTER MOVE: Trượt Vector
+    // POINTER MOVE: Trượt Vector hoặc Hover phát hiện tọa độ
     const pointerMoveHandler = (e) => {
-      if (!Vec3D.S3D.draggedVectorId) return; 
+      if (Vec3D._isOrbiting && !Vec3D.S3D.draggedVectorId) return;
+
+      if (!Vec3D.S3D.draggedVectorId) {
+        // [HOVER DETECTION IN 3D]
+        if (!Vec3D._camera || !Vec3D._vectorsGroup) return;
+        const rect = renderDom.getBoundingClientRect();
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        mouse.x = ((cx - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((cy - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, Vec3D._camera);
+
+        let hitId = null;
+
+        // 1. Ưu tiên raycast vào HEAD (đầu vector để nắm kéo)
+        const isBlocked = typeof App.isInteractionBlocked === "function" && App.isInteractionBlocked();
+        if (!isBlocked && Vec3D._pickableHeads && Vec3D._pickableHeads.length > 0) {
+          const headIntersects = raycaster.intersectObjects(Vec3D._pickableHeads, false);
+          if (headIntersects.length > 0) {
+            const headObj = headIntersects[0].object;
+            hitId = headObj.userData?.vectorId || null;
+            if (!hitId) {
+              let p = headObj;
+              while (p && p !== Vec3D._vectorsGroup) {
+                for (const [id, grp] of Vec3D.threeVecMap.entries()) {
+                  if (grp === p) { hitId = id; break; }
+                }
+                if (hitId) break;
+                p = p.parent;
+              }
+            }
+          }
+        }
+
+        // 2. Kiểm tra thân vector (Shaft)
+        if (!isBlocked && !hitId && Vec3D._pickableMeshes && Vec3D._pickableMeshes.length > 0) {
+          const bodyIntersects = raycaster.intersectObjects(Vec3D._pickableMeshes, false);
+          if (bodyIntersects.length > 0) {
+            let p = bodyIntersects[0].object;
+            while (p && p !== Vec3D._vectorsGroup) {
+              for (const [id, grp] of Vec3D.threeVecMap.entries()) {
+                if (grp === p) { hitId = id; break; }
+              }
+              if (hitId) break;
+              p = p.parent;
+            }
+          }
+        }
+
+        // 3. Kiểm tra nhãn CSS2D Labels
+        if (!isBlocked && !hitId && Vec3D._vectorsGroup) {
+          for (const g of Vec3D._vectorsGroup.children) {
+            const vId = g.userData?.vectorId;
+            const lbl = g.children.find((ch) => ch.isCSS2DObject && ch.name === "tipLabel");
+            if (lbl && lbl.element && lbl.visible !== false) {
+              const lrect = lbl.element.getBoundingClientRect();
+              if (cx >= lrect.left - 4 && cx <= lrect.right + 4 && cy >= lrect.top - 4 && cy <= lrect.bottom + 4) {
+                hitId = vId;
+                break;
+              }
+            }
+          }
+        }
+
+        // RÀNG BUỘC CON TRỎ: Đổi thành 'grab' khi hover mũi tên hoặc nhãn
+        renderDom.style.cursor = (!isBlocked && hitId) ? "grab" : "default";
+
+        if (hitId !== Vec3D.S3D.hoveredVectorId) {
+          Vec3D.S3D.hoveredVectorId = hitId;
+          Vec3D.S3D.activeVectorId = hitId;
+          if (typeof Vec3D.updateVectorLabelsLive === "function") {
+            Vec3D.updateVectorLabelsLive();
+          }
+          Vec3D.draw3DAllVectors(); // Cập nhật reticle halo ngay lập tức
+        }
+        return;
+      } 
       
-      e.preventDefault(); e.stopImmediatePropagation();
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
       const vItem = App.vectorList.find(v => v.id === Vec3D.S3D.draggedVectorId);
       if (!vItem) return;
 
@@ -326,14 +461,13 @@
       raycaster.setFromCamera(mouse, Vec3D._camera);
       const u = Math.max(1e-12, Vec3D.S3D.unitsPerWorld);
       
-      // [FIX NAM CHÂM]: Chỉ dùng Ctrl, lấy thông số vạch lưới hiện tại để hít
       const isSnap = e.ctrlKey; 
       const step = Vec3D.S3D.stepUnit || 1; 
 
       const intersect = new THREE.Vector3();
-      raycaster.ray.intersectPlane(dragPlane, intersect);
+      const hasHit = raycaster.ray.intersectPlane(dragPlane, intersect);
       
-      if (intersect) {
+      if (hasHit) {
           let newPosWorld;
           
           if (Vec3D.S3D.axisConstraint) {
@@ -355,7 +489,6 @@
           let ny = newPosWorld.y / u;
           let nz = newPosWorld.z / u;
 
-          // LÀM TRÒN THEO CHUẨN VẠCH LƯỚI (VD: Lưới 0.5 thì 1.1 -> 1.0, 1.4 -> 1.5)
           if (isSnap) { 
               nx = Math.round(nx / step) * step; 
               ny = Math.round(ny / step) * step; 
@@ -365,7 +498,11 @@
           if (Vec3D.S3D.axisConstraint === 'x') vItem.vec[0] = nx;
           else if (Vec3D.S3D.axisConstraint === 'y') vItem.vec[1] = ny;
           else if (Vec3D.S3D.axisConstraint === 'z') vItem.vec[2] = nz;
-          else { vItem.vec[0] = nx; vItem.vec[1] = ny; vItem.vec[2] = nz; }
+          else {
+            vItem.vec[0] = nx;
+            vItem.vec[1] = ny;
+            vItem.vec[2] = nz;
+          }
       }
       // [LIVE SYNC] ÉP ĐỒNG BỘ PHÉP CHIẾU BÊN 3D (ZERO LAG)
       if (App.currentProjVisual) {
@@ -388,7 +525,6 @@
               } else {
                   res.vec = v2.vec.map(() => 0);
               }
-              // Lưu ý: Không cần gọi hàm phụ, vì file 3D đã có sync3D loop quét liên tục!
           }
       }
       const placeholder = "[" + vItem.vec.map((val, i) => {
@@ -402,11 +538,6 @@
       }).join(", ") + "]";
       App.coordOut?.(placeholder);
 
-      const group = Vec3D.threeVecMap.get(Vec3D.S3D.draggedVectorId);
-      if (group) {
-          const lbl = group.children.find(ch => ch.isCSS2DObject);
-          if (lbl) lbl.visible = false;
-      }
       Vec3D.draw3DAllVectors(); 
     };
 
@@ -417,7 +548,9 @@
           const draggedVec = App.vectorList.find(v => v.id === Vec3D.S3D.draggedVectorId);
           if (draggedVec) {
               draggedVec.vec = draggedVec.vec.map(val => Number(Number(val).toFixed(2)));
-              draggedVec.latex = `[${draggedVec.vec.join(", ")}]`;
+              if (!draggedVec.isParametric) {
+                draggedVec.latex = `[${draggedVec.vec.join(", ")}]`;
+              }
 
               // [HOÀN TÁC THÔNG MINH]: Chỉ lưu nếu vector có thay đổi vị trí thực tế
               if (
@@ -432,6 +565,20 @@
                 );
                 if (moved) {
                   App.History.record(`Di chuyển vector #${draggedVec.id}`, Vec3D.S3D._dragPreState);
+                  if (!draggedVec.isParametric) {
+                    const newCoordsStr = App.formatVectorShort ? App.formatVectorShort(draggedVec.vec) : `[${draggedVec.vec.join(", ")}]`;
+                    draggedVec.rawInput = newCoordsStr;
+                    draggedVec.latex = newCoordsStr;
+                    if (App.editingVectorId === draggedVec.id) {
+                      const inp = document.getElementById("vectorInput");
+                      if (inp) {
+                        inp.value = newCoordsStr;
+                        if (typeof App.updateVectorInputPreview === "function") {
+                          App.updateVectorInputPreview(newCoordsStr);
+                        }
+                      }
+                    }
+                  }
                 }
               }
           }
@@ -439,9 +586,14 @@
           Vec3D.S3D._dragPreState = null;
           Vec3D.S3D._dragStartVec = null;
           Vec3D.S3D.draggedVectorId = null;
+          Vec3D.S3D.hoveredVectorId = null;
+          Vec3D.S3D.activeVectorId = null;
+          Vec3D._isOrbiting = false;
           Vec3D._controls.enabled = true; // Mở lại OrbitControls
           renderDom.style.cursor = "default";
-          if (renderDom.releasePointerCapture && e.pointerId) renderDom.releasePointerCapture(e.pointerId);
+          if (renderDom.releasePointerCapture && e.pointerId) {
+            try { renderDom.releasePointerCapture(e.pointerId); } catch (_) {}
+          }
 
           // 2. Chốt số Vector bóng (Hình chiếu)
           if (App.currentProjVisual) {
@@ -463,10 +615,21 @@
       }
     };
 
-    renderDom.addEventListener("pointerdown", pointerDownHandler);
+    renderDom.addEventListener("pointerdown", pointerDownHandler, { capture: true });
     renderDom.addEventListener("pointermove", pointerMoveHandler);
     renderDom.addEventListener("pointerup", pointerUpHandler);
     renderDom.addEventListener("pointercancel", pointerUpHandler);
+    renderDom.addEventListener("pointerleave", () => {
+      if (Vec3D.S3D.hoveredVectorId !== null || Vec3D.S3D.activeVectorId !== null) {
+        Vec3D.S3D.hoveredVectorId = null;
+        Vec3D.S3D.activeVectorId = null;
+        renderDom.style.cursor = "default";
+        if (typeof Vec3D.updateVectorLabelsLive === "function") {
+          Vec3D.updateVectorLabelsLive();
+        }
+        Vec3D.draw3DAllVectors();
+      }
+    });
 
     // Kéo 2 ngón Mobile (Zoom & Pan)
     let lastTouchDistance = null;
@@ -512,8 +675,10 @@
     Vec3D._controls.addEventListener("change", () => {
       if (App.mode !== "3D") return;
       Vec3D.addAxisLabelsDynamic();
-      Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
-      Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
+      if (!Vec3D._animating) {
+        Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
+        Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
+      }
     });
 
     const onResize = () => {
@@ -653,20 +818,57 @@
   // =========================================================
   // SYNC & RENDER LOOP
   // =========================================================
+  Vec3D._lastSyncCache = [];
   Vec3D._syncVectorList = function () {
-    const list = (App.vectorList || []).map((v) => [
-      v.id ?? null,
-      v.visible !== false ? 1 : 0,
-      v.isImageMesh ? 1 : 0,
-      v.showWireframe ? 1 : 0,
-      ...toVec3(v.vec).map((val) => +val.toFixed(12)),
-      v.focus ? 1 : 0,
-      +(typeof v.alpha === "number" ? v.alpha : 1).toFixed(3),
-      String(v.colorHex || v.colorCss || ""),
-    ]);
-    const sig = JSON.stringify(list);
-    if (sig !== Vec3D._vecSignature) {
-      Vec3D._vecSignature = sig;
+    const vList = App.vectorList || [];
+    const cache = Vec3D._lastSyncCache;
+    let isDirty = false;
+
+    const isBasisAnim = window.App && (App._basisAnimActive || (App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive()));
+    const isCoordAnim = window.App && (App._coordAnimActive || (App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()));
+
+    if (vList.length !== cache.length) {
+      isDirty = true;
+    } else {
+      for (let i = 0; i < vList.length; i++) {
+        const v = vList[i];
+        const c = cache[i];
+        const vArr = v.vec;
+        if (
+          v.id !== c.id ||
+          (v.visible !== false ? 1 : 0) !== c.vis ||
+          (v.isImageMesh ? 1 : 0) !== c.isImg ||
+          (v.showWireframe ? 1 : 0) !== c.wire ||
+          (v.focus ? 1 : 0) !== c.focus ||
+          ((isBasisAnim && typeof v._basisAlpha === "number") ? v._basisAlpha : ((isCoordAnim && typeof v._coordAlpha === "number") ? v._coordAlpha : (v.alpha ?? 1))) !== c.alpha ||
+          ((isBasisAnim && v._basisColorCss) ? v._basisColorCss : ((isCoordAnim && v._coordColorCss) ? v._coordColorCss : (v.colorHex || v.colorCss || ""))) !== c.col ||
+          !vArr ||
+          vArr[0] !== c.x ||
+          vArr[1] !== c.y ||
+          (vArr[2] ?? 0) !== c.z
+        ) {
+          isDirty = true;
+          break;
+        }
+      }
+    }
+
+    if (isDirty) {
+      Vec3D._lastSyncCache = vList.map((v) => {
+        const vArr = v.vec || [0, 0, 0];
+        return {
+          id: v.id,
+          vis: v.visible !== false ? 1 : 0,
+          isImg: v.isImageMesh ? 1 : 0,
+          wire: v.showWireframe ? 1 : 0,
+          focus: v.focus ? 1 : 0,
+          alpha: (isBasisAnim && typeof v._basisAlpha === "number") ? v._basisAlpha : ((isCoordAnim && typeof v._coordAlpha === "number") ? v._coordAlpha : (v.alpha ?? 1)),
+          col: (isBasisAnim && v._basisColorCss) ? v._basisColorCss : ((isCoordAnim && v._coordColorCss) ? v._coordColorCss : (v.colorHex || v.colorCss || "")),
+          x: vArr[0],
+          y: vArr[1],
+          z: vArr[2] ?? 0,
+        };
+      });
       Vec3D.draw3DAllVectors({
         frame: false,
       });
@@ -683,6 +885,15 @@
 
     const c2d = document.getElementById("canvas2d");
     if (c2d) c2d.style.display = "none";
+    const overlay2d = document.getElementById("labels2dOverlay");
+    if (overlay2d) {
+      overlay2d.style.display = "none";
+      overlay2d.innerHTML = "";
+    }
+    if (document.body) {
+      document.body.classList.add("mode-3d");
+      document.body.classList.remove("mode-2d");
+    }
     threeLayer.style.display = "block";
     try {
       threeLayer.focus({
@@ -698,15 +909,12 @@
         requestAnimationFrame(loop);
 
         // --- ENERGY PULSE (Focus) ---
-        if (Vec3D._vectorsGroup) {
+        if (Vec3D._focusPulseMaterials && Vec3D._focusPulseMaterials.length > 0) {
           const time = Date.now() * PULSE_SPEED_3D;
           const pulseOpacity = 0.2 + ((Math.sin(time) + 1) / 2) * 0.5; // 0.2 -> 0.7
-
-          Vec3D._vectorsGroup.traverse((obj) => {
-            if (obj.userData?.isFocusPulse && obj.material) {
-              obj.material.opacity = pulseOpacity;
-            }
-          });
+          for (let i = 0; i < Vec3D._focusPulseMaterials.length; i++) {
+            Vec3D._focusPulseMaterials[i].opacity = pulseOpacity;
+          }
         }
         // -----------------------------
 
@@ -761,36 +969,50 @@
     if (!Vec3D._mathGroup) {
       Vec3D._mathGroup = new THREE.Group();
       Vec3D._scene.add(Vec3D._mathGroup);
-    } else {
       const keepVectors = Vec3D._vectorsGroup || new THREE.Group();
       const keepAngles = Vec3D._angleLayer || new THREE.Group();
       const keepTransform = Vec3D._transformGroup || null;
       keepVectors.parent && keepVectors.parent.remove(keepVectors);
       keepAngles.parent && keepAngles.parent.remove(keepAngles);
       if (keepTransform && keepTransform.parent) keepTransform.parent.remove(keepTransform);
+      if (Vec3D._nori3DGroup && Vec3D._nori3DGroup.parent) Vec3D._nori3DGroup.parent.remove(Vec3D._nori3DGroup);
       Vec3D._mathGroup.clear();
       Vec3D._vectorsGroup = keepVectors;
       Vec3D._angleLayer = keepAngles;
       if (keepTransform) Vec3D._transformGroup = keepTransform;
+      Vec3D._nori3DGroup = null;
     }
     if (!Vec3D._vectorsGroup) Vec3D._vectorsGroup = new THREE.Group();
     if (!Vec3D._angleLayer) Vec3D._angleLayer = new THREE.Group();
 
-    Vec3D._planeXY = new THREE.Mesh(
-      new THREE.PlaneGeometry(Lw * 2, Lw * 2),
-      new THREE.MeshBasicMaterial({
-        color: App.getCSS?.("--card") || "#222",
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.18,
-        depthWrite: false,
-      }),
-    );
-    Vec3D._planeXY.renderOrder = 0;
-    Vec3D._mathGroup.add(Vec3D._planeXY);
+    // Bo hoan toan gridHelper san Oxy o 3D theo yeu cau cua nguoi dung
+    Vec3D._planeXY = null;
+
+    // Don dep triet de axesGroup cu khoi _mathGroup va giai phong tai nguyen
+    if (Vec3D._axesGroup) {
+      if (Vec3D._axesGroup.parent) Vec3D._axesGroup.parent.remove(Vec3D._axesGroup);
+      Vec3D._axesGroup.traverse((obj) => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) obj.material.dispose();
+      });
+      Vec3D._axesGroup = null;
+    }
+    if (Vec3D._mathGroup) {
+      for (let i = Vec3D._mathGroup.children.length - 1; i >= 0; i--) {
+        const c = Vec3D._mathGroup.children[i];
+        if (c.name === "axesGroup") {
+          Vec3D._mathGroup.remove(c);
+          c.traverse((obj) => {
+            if (obj.geometry) obj.geometry.dispose();
+            if (obj.material) obj.material.dispose();
+          });
+        }
+      }
+    }
 
     Vec3D._axesGroup = (function buildAxesWorld(L) {
       const g = new THREE.Group();
+      g.name = "axesGroup";
       const mk = (a, b, cssVar) =>
         new THREE.Line(
           new THREE.BufferGeometry().setFromPoints([a, b]),
@@ -809,11 +1031,160 @@
       );
       return g;
     })(Lw);
+    const showAxesInitial = (window.App?.graphSettings?.showAxes !== false);
+    Vec3D._axesGroup.visible = showAxesInitial;
     Vec3D._mathGroup.add(Vec3D._axesGroup);
     Vec3D._mathGroup.add(Vec3D._vectorsGroup);
     Vec3D._mathGroup.add(Vec3D._angleLayer);
     if (Vec3D._transformGroup) Vec3D._mathGroup.add(Vec3D._transformGroup);
     Vec3D._mathGroup.position.copy(Vec3D.S3D.offset);
+    Vec3D.updateFromSettings();
+  };
+
+  // Cập nhật nhãn vector 3D tức thì chuẩn KaTeX (Zero Lag, chống đè mũi tên & chống chồng chập)
+  Vec3D.updateVectorLabelsLive = function () {
+    if (!Vec3D._vectorsGroup) return;
+    const settings = window.App?.graphSettings || { labelMode: "name" };
+    const rect = Vec3D._renderer?.domElement?.getBoundingClientRect() || { width: 760, height: 760 };
+
+    // 1. Tính toán tọa độ màn hình của các đỉnh vector để phân tách khi chồng chập
+    const tipData = [];
+    for (const g of Vec3D._vectorsGroup.children) {
+      const vId = g.userData?.vectorId;
+      const it = App.vectorList?.find((v) => v.id === vId);
+      if (!it || !g.userData?.tipLocal) continue;
+      const tScr = Vec3D._camera ? g.userData.tipLocal.clone().project(Vec3D._camera) : new THREE.Vector3();
+      tipData.push({
+        vId,
+        it,
+        group: g,
+        pxX: ((tScr.x + 1) / 2) * rect.width,
+        pxY: ((-tScr.y + 1) / 2) * rect.height,
+        tipLocal: g.userData.tipLocal,
+      });
+    }
+
+    const originScr = Vec3D._camera ? new THREE.Vector3(0, 0, 0).project(Vec3D._camera) : new THREE.Vector3();
+    const origPxX = ((originScr.x + 1) / 2) * rect.width;
+    const origPxY = ((-originScr.y + 1) / 2) * rect.height;
+
+    for (let i = 0; i < tipData.length; i++) {
+      const td = tipData[i];
+      const it = td.it;
+      const g = td.group;
+      const lbl = g.children.find((ch) => ch.isCSS2DObject && ch.name === "tipLabel");
+      if (!lbl || !lbl.element) continue;
+
+      const isHoveredOrFocused = (Vec3D.S3D.hoveredVectorId === it.id) || (Vec3D.S3D.draggedVectorId === it.id) || !!it.focus;
+      const showCoord = settings.labelMode === "both" || isHoveredOrFocused;
+      const latex = App.getVectorLatexLabel ? App.getVectorLatexLabel(it, showCoord) : (it.name || "v");
+
+      if (lbl.element.dataset.latex !== latex) {
+        lbl.element.dataset.latex = latex;
+        if (window.katex) {
+          lbl.element.innerHTML = katex.renderToString(latex, { throwOnError: false, displayMode: false });
+        } else {
+          lbl.element.textContent = latex;
+        }
+      }
+
+      const isBasisAnim = window.App && (App._basisAnimActive || (App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive()));
+      const isCoordAnim = window.App && (App._coordAnimActive || (App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()));
+      const isDark = (window.App && App.theme === "dark") || document.documentElement.classList.contains("dark") || (document.body && document.body.classList.contains("dark"));
+      const labelColor = (isBasisAnim && it._basisColorCss)
+        ? it._basisColorCss
+        : ((isCoordAnim && it._coordColorCss)
+          ? it._coordColorCss
+          : (it.colorCss || it.colorHex || (isDark ? "#ffffff" : "#111827")));
+
+      lbl.element.style.color = "var(--text-main, #edeef0)";
+      lbl.element.style.setProperty("--vec-color", labelColor);
+      lbl.element.style.borderColor = labelColor;
+      if (isHoveredOrFocused) {
+        lbl.element.classList.add("is-hovered");
+      } else {
+        lbl.element.classList.remove("is-hovered");
+      }
+
+      if (settings.labelMode === "none" && !isHoveredOrFocused) {
+        lbl.element.style.display = "none";
+        lbl.visible = false;
+      } else {
+        lbl.element.style.display = "";
+        lbl.visible = true;
+      }
+
+      // 2. Chống đè lên mũi tên & tách nhãn khi chồng chập
+      let shiftCount = 0;
+      let myRank = 0;
+      for (let j = 0; j < tipData.length; j++) {
+        if (i === j) continue;
+        const dSq = (tipData[j].pxX - td.pxX) ** 2 + (tipData[j].pxY - td.pxY) ** 2;
+        if (dSq < 2025) { // Trong bán kính 45px
+          shiftCount++;
+          if (tipData[j].vId < td.vId) myRank++;
+        }
+      }
+
+      const dx = td.pxX - origPxX;
+      const dy = td.pxY - origPxY;
+      const angle = (dx * dx + dy * dy > 4) ? Math.atan2(dy, dx) : -Math.PI / 4;
+
+      let offX = Math.cos(angle) * 22;
+      let offY = Math.sin(angle) * 22;
+      if (shiftCount > 0) {
+        const shiftFactor = myRank - shiftCount / 2;
+        const nx = -Math.sin(angle);
+        const ny = Math.cos(angle);
+        offX += nx * shiftFactor * 34;
+        offY += ny * shiftFactor * 28;
+      }
+      lbl.element.style.marginLeft = `${Math.round(offX)}px`;
+      lbl.element.style.marginTop = `${Math.round(offY)}px`;
+    }
+  };
+
+  Vec3D.updateFromSettings = function () {
+    const App = window.App || {};
+    if (App.mode !== "3D" || !Vec3D._scene) return;
+    const settings = App.graphSettings || { gridMode: "full", labelMode: "name", showAxes: true };
+
+    // 1. Grid (Hop khung)
+    if (Vec3D._frameGroup) {
+      Vec3D._frameGroup.visible = settings.gridMode === "full";
+    }
+
+    // 2. Truc toa do (Axes, Ticks, Letters)
+    const showAxes = settings.showAxes !== false;
+    if (Vec3D._axesGroup) {
+      Vec3D._axesGroup.visible = showAxes;
+    }
+    if (Vec3D._mathGroup) {
+      for (let i = 0; i < Vec3D._mathGroup.children.length; i++) {
+        const c = Vec3D._mathGroup.children[i];
+        if (c.name === "axesGroup") c.visible = showAxes;
+      }
+    }
+    if (Vec3D._ticksGroup) {
+      Vec3D._ticksGroup.visible = showAxes;
+    }
+
+    // Force cap nhat nhan so va chu truc
+    Vec3D._lastLabelKey = "";
+    Vec3D.addAxisLabelsDynamic();
+
+    // 3. Nhan Vector (Tip Labels)
+    if (typeof Vec3D.updateVectorLabelsLive === "function") {
+      Vec3D.updateVectorLabelsLive();
+    }
+
+    Vec3D.draw3DAllVectors();
+    if (Vec3D._renderer && Vec3D._scene && Vec3D._camera) {
+      Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
+    }
+    if (Vec3D._labelRenderer && Vec3D._scene && Vec3D._camera) {
+      Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
+    }
   };
 
   function niceStep(raw) {
@@ -871,10 +1242,12 @@
     const pxPerMath = pxPerWorld * u;
     Vec3D._pxPerWorld = pxPerWorld;
 
-    const uChanged = Math.abs(u - (Vec3D._lastUForVectors || 0)) > 1e-6;
-    const distChanged = Vec3D._lastDistForVectors !== undefined && Math.abs(dist - Vec3D._lastDistForVectors) > 0.1;
+    const lastU = Vec3D._lastUForVectors || 0;
+    const uRatio = lastU > 0 ? Math.abs(u - lastU) / lastU : 1;
 
-    if (uChanged || distChanged) {
+    // Chi ve lai tat ca vector khi do phong to thu nho (zoom u) thay doi dang ke (> 8%)
+    // Tuyet doi khong ve lai khi xoay camera de dat toc do 60-120 FPS muot ma khong lag
+    if (uRatio > 0.08) {
       Vec3D.draw3DAllVectors({
         frame: false,
       });
@@ -883,7 +1256,6 @@
         const u0 = g.userData.angleMeta.createdU || 1;
         const s = u / u0;
         g.scale.set(s, s, s);
-        
       }
       Vec3D._lastUForVectors = u;
       Vec3D._lastDistForVectors = dist;
@@ -893,7 +1265,9 @@
     const step = niceStep(targetPx / Math.max(1e-30, pxPerMath));
     Vec3D.S3D.stepUnit = step;
     const off = Vec3D.S3D.offset;
-    const key = `${Lw}|${step}|${u}|${App.theme}|${Math.round(dist * 1000)}|${off.x.toFixed(4)},${off.y.toFixed(4)},${off.z.toFixed(4)}`;
+    const settings = window.App?.graphSettings || { showAxes: true, gridMode: "full" };
+    const offKey = `${off.x.toFixed(2)},${off.y.toFixed(2)},${off.z.toFixed(2)}`;
+    const key = `${Lw}|${step}|${+u.toFixed(5)}|${App.theme}|${settings.showAxes}|${settings.gridMode}|${offKey}`;
 
     if (key === Vec3D._lastLabelKey) return;
     Vec3D._lastLabelKey = key;
@@ -914,6 +1288,22 @@
     }
     Vec3D._tickLabels.length = 0;
     Vec3D._axisLetters.length = 0;
+
+    const showAxes = settings.showAxes !== false;
+    if (Vec3D._axesGroup) {
+      Vec3D._axesGroup.visible = showAxes;
+    }
+    if (Vec3D._mathGroup) {
+      for (let i = 0; i < Vec3D._mathGroup.children.length; i++) {
+        const c = Vec3D._mathGroup.children[i];
+        if (c.name === "axesGroup") c.visible = showAxes;
+      }
+    }
+
+    // Neu tat truc toa do, tat ca 3 duong truc, vach chia, chu so va ky hieu x, y, z deu bien mat
+    if (!showAxes) {
+      return;
+    }
 
     const t0x = -Vec3D.S3D.offset.x / u;
     const t0y = -Vec3D.S3D.offset.y / u;
@@ -951,6 +1341,9 @@
       }),
     );
     Vec3D._mathGroup.add(Vec3D._ticksGroup);
+    if (window.App?.graphSettings?.showAxes === false) {
+      Vec3D._ticksGroup.visible = false;
+    }
 
     const putLabel = (axis, tMath) => {
       if (Math.abs(tMath) <= 1e-12) return;
@@ -960,12 +1353,8 @@
       const inner = document.createElement("div");
       inner.className = `axis-label-inner axis-${axis}`;
       inner.textContent = txt;
-      inner.style.color =
-        axis === "x"
-          ? App.getCSS?.("--axis-x") || "red"
-          : axis === "y"
-            ? App.getCSS?.("--axis-y") || "green"
-            : App.getCSS?.("--axis-z") || "blue";
+      const isDark = (window.App && App.theme === "dark");
+      inner.style.color = isDark ? "#f1f5f9" : "#1e293b";
       outer.appendChild(inner);
       const obj = new THREE.CSS2DObject(outer);
       const s = tMath * u;
@@ -986,35 +1375,30 @@
       const el = document.createElement("div");
       el.className = "axis-letter";
       el.textContent = txt;
+      const isDark = (window.App && App.theme === "dark");
       el.style.color =
         axis === "x"
-          ? App.getCSS?.("--axis-x") || "red"
+          ? (App.getCSS?.("--axis-x") || (isDark ? "#ff8a8a" : "#e04b4b"))
           : axis === "y"
-            ? App.getCSS?.("--axis-y") || "green"
-            : App.getCSS?.("--axis-z") || "blue";
+            ? (App.getCSS?.("--axis-y") || (isDark ? "#7be3a0" : "#2fb463"))
+            : (App.getCSS?.("--axis-z") || (isDark ? "#9bb9ff" : "#3a78ff"));
       const obj = new THREE.CSS2DObject(el);
       obj.position.copy(position);
       Vec3D._mathGroup.add(obj);
       Vec3D._axisLetters.push(obj);
     };
-    addLetter("X", "x", new THREE.Vector3(letterOffW, 0, 0));
-    addLetter("Y", "y", new THREE.Vector3(0, letterOffW, 0));
-    addLetter("Z", "z", new THREE.Vector3(0, 0, letterOffW));
+    addLetter("x", "x", new THREE.Vector3(letterOffW, 0, 0));
+    addLetter("y", "y", new THREE.Vector3(0, letterOffW, 0));
+    addLetter("z", "z", new THREE.Vector3(0, 0, letterOffW));
 
     (function updateTipLabels() {
       if (!Vec3D._vectorsGroup) return;
-      // Dịch nhãn ra xa một chút (đơn vị pixel) để không đè vào mũi tên
-      const desiredPx = 25; 
-      const offsetW = desiredPx / (Vec3D._pxPerWorld || 1);
-      
       for (const g of Vec3D._vectorsGroup.children) {
         const tip = g.userData?.tipLocal;
         if (!tip) continue;
-        const lbl = g.children.find(ch => ch.isCSS2DObject && ch.name === "tipLabel");
+        const lbl = g.children.find((ch) => ch.isCSS2DObject && ch.name === "tipLabel");
         if (!lbl) continue;
-        
-        // Đẩy nhãn lệch ra một khoảng cố định (tip + offset)
-        lbl.position.copy(tip.clone().add(new THREE.Vector3(offsetW, offsetW, offsetW)));
+        lbl.position.copy(tip);
       }
     })();
 
@@ -1046,7 +1430,6 @@
     colorCSS = "#444",
     alpha = 1,
   ) {
-    const g = new THREE.Group();
     const [x, y, z] = vecWorld;
     const mat = new THREE.LineDashedMaterial({
       color: new THREE.Color(colorCSS),
@@ -1055,24 +1438,28 @@
       transparent: true,
       opacity: Math.max(0, Math.min(1, Number(alpha) || 0)),
     });
-    const mk = (pts) => {
-      const geo = new THREE.BufferGeometry().setFromPoints(pts);
-      const l = new THREE.Line(geo, mat);
-      l.computeLineDistances();
-      return l;
-    };
-    g.add(mk([new THREE.Vector3(x, y, z), new THREE.Vector3(x, y, 0)]));
-    g.add(mk([new THREE.Vector3(x, y, z), new THREE.Vector3(0, y, z)]));
-    g.add(mk([new THREE.Vector3(x, y, z), new THREE.Vector3(x, 0, z)]));
-    g.add(mk([new THREE.Vector3(x, y, 0), new THREE.Vector3(x, 0, 0)]));
-    g.add(mk([new THREE.Vector3(x, y, 0), new THREE.Vector3(0, y, 0)]));
-    g.add(mk([new THREE.Vector3(0, y, z), new THREE.Vector3(0, 0, z)]));
-    g.add(mk([new THREE.Vector3(x, 0, z), new THREE.Vector3(0, 0, z)]));
-    g.add(mk([new THREE.Vector3(x, 0, 0), new THREE.Vector3(x, y, 0)]));
-    g.add(mk([new THREE.Vector3(0, y, 0), new THREE.Vector3(x, y, 0)]));
-    g.add(mk([new THREE.Vector3(0, 0, z), new THREE.Vector3(x, 0, z)]));
-    g.add(mk([new THREE.Vector3(0, 0, z), new THREE.Vector3(0, y, z)]));
-    return g;
+    // Hop nhat 9 canh hop hinh chieu vao 1 mesh duy nhat (THREE.LineSegments)
+    // giam thieu draw calls tu 11 xuong con 1 cho moi vector
+    const positions = new Float32Array([
+      // Tu dinh (x, y, z) ha vuong goc xuong 3 mat phang toa do
+      x, y, z,   x, y, 0,
+      x, y, z,   0, y, z,
+      x, y, z,   x, 0, z,
+      // Tu diem chieu (x, y, 0) tren mat XY chieu ve 2 truc X va Y
+      x, y, 0,   x, 0, 0,
+      x, y, 0,   0, y, 0,
+      // Tu diem chieu (x, 0, z) tren mat XZ chieu ve 2 truc X va Z
+      x, 0, z,   x, 0, 0,
+      x, 0, z,   0, 0, z,
+      // Tu diem chieu (0, y, z) tren mat YZ chieu ve 2 truc Y va Z
+      0, y, z,   0, y, 0,
+      0, y, z,   0, 0, z,
+    ]);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    const lineSegs = new THREE.LineSegments(geo, mat);
+    lineSegs.computeLineDistances();
+    return lineSegs;
   };
 
   function clipToCubeMath(x, y, z, L) {
@@ -1173,6 +1560,9 @@
     });
     Vec3D._vectorsGroup.clear();
     Vec3D.threeVecMap.clear();
+    Vec3D._pickableMeshes = [];
+    Vec3D._pickableHeads = [];
+    Vec3D._focusPulseMaterials = [];
 
     const u = Math.max(1e-12, Vec3D.S3D.unitsPerWorld);
     const Lm = Vec3D._axisMaxWorld / u;
@@ -1182,6 +1572,25 @@
 
     // Sort: Focus last
     list.sort((a, b) => (a.focus ? 1 : 0) - (b.focus ? 1 : 0));
+
+    // Thu thập tọa độ đỉnh của tất cả vector để xử lý chống chồng chập (De-overlap) và góc chiếu màn hình
+    const rect = Vec3D._renderer?.domElement?.getBoundingClientRect() || { width: 760, height: 760 };
+    const allTips = list.map((item) => {
+      const vecCoord = toVec3(item.vec);
+      const tipM = clipToCubeMath(vecCoord[0], vecCoord[1], vecCoord[2], Lm);
+      const tipL = tipM.clone().multiplyScalar(u);
+      const tScr = Vec3D._camera ? tipL.clone().project(Vec3D._camera) : new THREE.Vector3();
+      return {
+        id: item.id,
+        pxX: ((tScr.x + 1) / 2) * rect.width,
+        pxY: ((-tScr.y + 1) / 2) * rect.height,
+        tipLocal: tipL,
+      };
+    });
+
+    const originScr = Vec3D._camera ? new THREE.Vector3(0, 0, 0).project(Vec3D._camera) : new THREE.Vector3();
+    const origPxX = ((originScr.x + 1) / 2) * rect.width;
+    const origPxY = ((-originScr.y + 1) / 2) * rect.height;
 
     for (const it of list) {
       if (it.isImageMesh) {
@@ -1194,9 +1603,14 @@
           continue; // Bỏ qua vector đang được mô phỏng biến đổi vì _transformGroup quản lý render Live & Ghost
         }
       }
+      const isBasisAnim = window.App && (App._basisAnimActive || (App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive()));
+      const isCoordAnim = window.App && (App._coordAnimActive || (App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()));
       const v = toVec3(it.vec);
-      let aItem =
-        typeof it.alpha === "number" ? Math.max(0, Math.min(1, it.alpha)) : 1;
+      let aItem = (isBasisAnim && typeof it._basisAlpha === "number")
+        ? Math.max(0, Math.min(1, it._basisAlpha))
+        : ((isCoordAnim && typeof it._coordAlpha === "number")
+          ? Math.max(0, Math.min(1, it._coordAlpha))
+          : (typeof it.alpha === "number" ? Math.max(0, Math.min(1, it.alpha)) : 1));
 
       // Dim others
       if (hasFocus && !it.focus) aItem *= 0.15;
@@ -1234,53 +1648,105 @@
       const DYN_HEAD_R = idealHeadR;
       const DYN_SHAFT_R = Math.min(idealShaftR, DYN_HEAD_R * 0.44);
       const shaftLen = Math.max(len - DYN_HEAD_H, 1e-6);
-      const color = new THREE.Color(it.colorHex || it.colorCss || "#ffffff");
+      const colStr = (isBasisAnim && it._basisColorCss) ? it._basisColorCss : ((isCoordAnim && it._coordColorCss) ? it._coordColorCss : (it.colorHex || it.colorCss || "#ffffff"));
+      const color = new THREE.Color(colStr);
 
       const group = new THREE.Group();
+      group.userData.vectorId = it.id;
       group.userData.tipLocal = tipLocal;
       group.userData.dirLocal = dirLocal;
 
-      if (it.focus && it.showArrow !== false) {
-        // [ENERGY PULSE]
-        const pulseMat = new THREE.MeshBasicMaterial({
-          color: PULSE_COLOR_3D,
-          transparent: true,
-          opacity: 0.5,
-          depthWrite: false,
-          side: THREE.FrontSide,
-        });
+      const isTargeted = (Vec3D.S3D.hoveredVectorId === it.id) || (Vec3D.S3D.draggedVectorId === it.id) || !!it.focus;
+      if (isTargeted && it.showArrow !== false) {
+        // [HALO HOVER & FOCUS 3D]
+        const hStyle = (window.App && window.App.graphSettings && window.App.graphSettings.haloStyle)
+          || (window.App && window.App.haloStyle)
+          || (typeof localStorage !== "undefined" && localStorage.getItem("vectoria_halo_style"))
+          || "precision_reticle";
 
-        const haloR = 2.5 * worldPerPx;
-        const pulseShaftR = DYN_SHAFT_R + haloR;
-        const pulseHeadR = DYN_HEAD_R + haloR;
-        const pulseHeadH = DYN_HEAD_H + haloR * 1.5;
+        if (hStyle === "precision_reticle") {
+          // [PRECISION RETICLE 3D] Tâm ngắm kỹ thuật & Trắc địa mặt phẳng hướng Camera
+          const haloR = 12 * worldPerPx;
+          const reticleGroup = new THREE.Group();
+          reticleGroup.name = "reticleHalo";
+          reticleGroup.position.copy(tipLocal);
 
-        const pulseShaft = new THREE.Mesh(
-          new THREE.CylinderGeometry(
-            pulseShaftR,
-            pulseShaftR,
-            shaftLen,
-            12, 1, true
-          ),
-          pulseMat,
-        );
-        pulseShaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
-        pulseShaft.position.copy(dirLocal.clone().multiplyScalar(shaftLen / 2));
-        pulseShaft.userData.isFocusPulse = true;
-        group.add(pulseShaft);
+          // 1. Vòng tròn ngoài
+          const ringMat = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.9,
+            side: THREE.DoubleSide,
+            depthTest: false,
+          });
+          const ringMesh = new THREE.Mesh(new THREE.RingGeometry(haloR * 0.88, haloR, 32), ringMat);
+          reticleGroup.add(ringMesh);
 
-        const pulseHead = new THREE.Mesh(
-          new THREE.ConeGeometry(
-            pulseHeadR,
-            pulseHeadH,
-            12
-          ),
-          pulseMat,
-        );
-        pulseHead.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
-        pulseHead.position.copy(tipLocal.clone().addScaledVector(dirLocal, -pulseHeadH / 2));
-        pulseHead.userData.isFocusPulse = true;
-        group.add(pulseHead);
+          // 2. Vòng tròn ngắm trong
+          const innerRingMesh = new THREE.Mesh(new THREE.RingGeometry(haloR * 0.38, haloR * 0.46, 24), ringMat);
+          reticleGroup.add(innerRingMesh);
+
+          // 3. 4 vạch chuẩn ngắm tâm (Crosshair ticks)
+          const tickPositions = new Float32Array(24);
+          const tIn = haloR * 0.55, tOut = haloR * 1.35;
+          tickPositions[0] = tIn; tickPositions[1] = 0; tickPositions[2] = 0;
+          tickPositions[3] = tOut; tickPositions[4] = 0; tickPositions[5] = 0;
+          tickPositions[6] = -tIn; tickPositions[7] = 0; tickPositions[8] = 0;
+          tickPositions[9] = -tOut; tickPositions[10] = 0; tickPositions[11] = 0;
+          tickPositions[12] = 0; tickPositions[13] = tIn; tickPositions[14] = 0;
+          tickPositions[15] = 0; tickPositions[16] = tOut; tickPositions[17] = 0;
+          tickPositions[18] = 0; tickPositions[19] = -tIn; tickPositions[20] = 0;
+          tickPositions[21] = 0; tickPositions[22] = -tOut; tickPositions[23] = 0;
+
+          const tickGeo = new THREE.BufferGeometry();
+          tickGeo.setAttribute("position", new THREE.BufferAttribute(tickPositions, 3));
+          const tickMat = new THREE.LineBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.95,
+            depthTest: false,
+          });
+          const tickLines = new THREE.LineSegments(tickGeo, tickMat);
+          reticleGroup.add(tickLines);
+
+          if (Vec3D._camera) reticleGroup.quaternion.copy(Vec3D._camera.quaternion);
+          reticleGroup.renderOrder = 999;
+          group.add(reticleGroup);
+        } else {
+          // Classic Neon hoặc Soft Elevation
+          const pulseColor3D = (hStyle === "classic_neon") ? PULSE_COLOR_3D : (it.colorHex || it.colorCss || PULSE_COLOR_3D);
+          const pulseMat = new THREE.MeshBasicMaterial({
+            color: pulseColor3D,
+            transparent: true,
+            opacity: 0.55,
+            depthWrite: false,
+            side: THREE.FrontSide,
+          });
+          Vec3D._focusPulseMaterials.push(pulseMat);
+
+          const haloR = 2.5 * worldPerPx;
+          const pulseShaftR = DYN_SHAFT_R + haloR;
+          const pulseHeadR = DYN_HEAD_R + haloR;
+          const pulseHeadH = DYN_HEAD_H + haloR * 1.5;
+
+          const pulseShaft = new THREE.Mesh(
+            new THREE.CylinderGeometry(pulseShaftR, pulseShaftR, shaftLen, 12, 1, true),
+            pulseMat
+          );
+          pulseShaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
+          pulseShaft.position.copy(dirLocal.clone().multiplyScalar(shaftLen / 2));
+          pulseShaft.userData.isFocusPulse = true;
+          group.add(pulseShaft);
+
+          const pulseHead = new THREE.Mesh(
+            new THREE.ConeGeometry(pulseHeadR, pulseHeadH, 12),
+            pulseMat
+          );
+          pulseHead.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
+          pulseHead.position.copy(tipLocal.clone().addScaledVector(dirLocal, -pulseHeadH / 2));
+          pulseHead.userData.isFocusPulse = true;
+          group.add(pulseHead);
+        }
       }
 
       const isTransparent = aItem < 0.98;
@@ -1310,25 +1776,109 @@
       head.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
       head.position.copy(tipLocal.clone().addScaledVector(dirLocal, -DYN_HEAD_H / 2));
 
+      // Hit target vô hình để tóm đầu vector chính xác 100% bằng raycaster (dùng transparent thay vì visible: false)
+      const hitRadius = Math.max(DYN_HEAD_R * 2.2, 14 * worldPerPx);
+      const hitHead = new THREE.Mesh(
+        new THREE.SphereGeometry(hitRadius, 8, 6),
+        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+      );
+      hitHead.position.copy(tipLocal);
+      hitHead.userData.isVectorHead = true;
+      hitHead.userData.vectorId = it.id;
+
+      const projColor = it.isParametric
+        ? (it.colorHex || it.colorCss || "#0090ff")
+        : (App.getCSS?.("--axis") || "#888");
+      const projAlpha = it.isParametric
+        ? Math.max(0.75, aItem * 0.95)
+        : aItem * 0.9;
       const proj = Vec3D.buildProjectionGroupZUp(
         [tipLocal.x, tipLocal.y, tipLocal.z],
-        App.getCSS?.("--axis") || "#888",
-        aItem * 0.9,
+        projColor,
+        projAlpha,
       );
+      if (it.showProjection === false) {
+        proj.visible = false;
+      }
       
       const el = document.createElement("div");
       el.className = "tip-label";
-      el.textContent = App.formatTip ? App.formatTip(it.vec) : `[${it.vec.join(", ")}]`;
+      const settings = window.App?.graphSettings || { labelMode: "name" };
+
+      const isHoveredOrFocused = (Vec3D.S3D.hoveredVectorId === it.id) || (Vec3D.S3D.draggedVectorId === it.id) || !!it.focus;
+      const showCoord = settings.labelMode === "both" || isHoveredOrFocused;
+      const latex = App.getVectorLatexLabel ? App.getVectorLatexLabel(it, showCoord) : (it.name || "v");
+
+      el.dataset.latex = latex;
+      if (window.katex) {
+        el.innerHTML = katex.renderToString(latex, { throwOnError: false, displayMode: false });
+      } else {
+        el.textContent = latex;
+      }
+
+      const isDark = (window.App && App.theme === "dark") || document.documentElement.classList.contains("dark") || (document.body && document.body.classList.contains("dark"));
+      const labelColor = (isBasisAnim && it._basisColorCss)
+        ? it._basisColorCss
+        : ((isCoordAnim && it._coordColorCss)
+          ? it._coordColorCss
+          : (it.colorCss || it.colorHex || (isDark ? "#ffffff" : "#111827")));
+
+      el.style.color = "var(--text-main, #edeef0)";
+      el.style.setProperty("--vec-color", labelColor);
+      el.style.borderColor = labelColor;
+      if (isHoveredOrFocused) {
+        el.classList.add("is-hovered");
+      } else {
+        el.classList.remove("is-hovered");
+      }
       el.style.opacity = String(aItem);
+      if (settings.labelMode === "none" && !isHoveredOrFocused) {
+        el.style.display = "none";
+      }
+
+      // Xử lý chống chồng chập (De-overlap) và đẩy nhãn ra ngoài đầu nhọn mũi tên
+      const myTipData = allTips.find((t) => t.id === it.id);
+      let shiftCount = 0;
+      let myRank = 0;
+      if (myTipData) {
+        for (let j = 0; j < allTips.length; j++) {
+          if (allTips[j].id === it.id) continue;
+          const distSq = (allTips[j].pxX - myTipData.pxX) ** 2 + (allTips[j].pxY - myTipData.pxY) ** 2;
+          if (distSq < 2025) { // Trong bán kính 45px
+            shiftCount++;
+            if (allTips[j].id < it.id) myRank++;
+          }
+        }
+      }
+
+      const dx = myTipData ? (myTipData.pxX - origPxX) : 1;
+      const dy = myTipData ? (myTipData.pxY - origPxY) : -1;
+      const screenAngle = (dx * dx + dy * dy > 4) ? Math.atan2(dy, dx) : -Math.PI / 4;
+
+      let offX = Math.cos(screenAngle) * 22;
+      let offY = Math.sin(screenAngle) * 22;
+      if (shiftCount > 0) {
+        const shiftFactor = myRank - shiftCount / 2;
+        const nx = -Math.sin(screenAngle);
+        const ny = Math.cos(screenAngle);
+        offX += nx * shiftFactor * 34;
+        offY += ny * shiftFactor * 28;
+      }
+      el.style.marginLeft = `${Math.round(offX)}px`;
+      el.style.marginTop = `${Math.round(offY)}px`;
+
       const labelEl = new THREE.CSS2DObject(el);
       labelEl.name = "tipLabel";
       labelEl.position.copy(tipLocal);
+      if (settings.labelMode === "none") {
+        labelEl.visible = false;
+      }
 
       if (aItem <= 0.001) {
         group.visible = false;
       }
 
-      if (App._basisAnimActive && it._basisIsBasis) {
+      if (isBasisAnim && it._basisIsBasis) {
         group.renderOrder = 999;
         shaft.renderOrder = 999;
         head.renderOrder = 999;
@@ -1481,8 +2031,9 @@
         } catch (err) {}
       }
 
-      // Vẽ vệt quỹ đạo đường cong 3D nét đứt cho vector tham số
-      if (it.isParametric && typeof it.fn === "function" && it.showTrajectory !== false) {
+      // Vẽ vệt quỹ đạo đường cong 3D nét đứt cho vector tham số (chỉ khi có đúng 1 biến)
+      const varCount = Array.isArray(it.vars) ? it.vars.length : 1;
+      if (it.isParametric && typeof it.fn === "function" && it.showTrajectory !== false && varCount <= 1) {
         const exprText = (it.rawExprs || []).join(" ") + " " + (it.latex || "");
         const isTrig = /sin|cos/i.test(exprText);
 
@@ -1541,7 +2092,9 @@
       }
 
       if (it.showArrow !== false) {
-        group.add(shaft, head, proj, labelEl);
+        group.add(shaft, head, hitHead, proj, labelEl);
+        Vec3D._pickableMeshes.push(shaft, head);
+        Vec3D._pickableHeads.push(hitHead);
       }
       Vec3D._vectorsGroup.add(group);
       Vec3D.threeVecMap.set(it.id, group);
@@ -1586,6 +2139,53 @@
       Vec3D._drawUnitSphere(normalizeGhost.unitCircleAlpha);
     } else if (Vec3D._unitSphereMesh) {
       Vec3D._unitSphereMesh.visible = false;
+    }
+
+    // Dẹp sạch hoàn toàn Nori khỏi 3D: Nori chỉ hoạt động ở mặt phẳng 2D
+    if (Vec3D._nori3DGroup) {
+      Vec3D.removeNoriHamsterEntity3D();
+    }
+
+    // [BASIS & DIMENSION SUBSPACE HOOK 3D]
+    if (window.App && App.BasisAnimator && App.BasisAnimator.isActive()) {
+      App.BasisAnimator.render3D(Vec3D._mathGroup);
+    }
+    // [COORDINATE ANIMATION HOOK 3D]
+    if (window.App && App.CoordAnimator && App.CoordAnimator.isActive()) {
+      App.CoordAnimator.render3D(Vec3D._mathGroup);
+    }
+  };
+
+  // --- THỰC THỂ LINH VẬT NORI: ĐÃ DẸP KHỎI KHÔNG GIAN 3D (CHỈ HOẠT ĐỘNG Ở 2D CHUẨN MỰC) ---
+  Vec3D._nori3DGroup = null;
+  Vec3D._noriTextureCache = {};
+
+  Vec3D.removeNoriHamsterEntity3D = function () {
+    if (!Vec3D._nori3DGroup) return;
+    if (Vec3D._nori3DGroup.parent) {
+      Vec3D._nori3DGroup.parent.remove(Vec3D._nori3DGroup);
+    }
+    Vec3D._nori3DGroup.traverse((obj) => {
+      if (obj.geometry) obj.geometry.dispose?.();
+      if (Array.isArray(obj.material)) {
+        obj.material.forEach((m) => m?.dispose?.());
+      } else {
+        obj.material?.dispose?.();
+      }
+    });
+    Vec3D._nori3DGroup = null;
+  };
+
+  Vec3D.renderNoriHamsterEntity3D = function () {
+    if (Vec3D._nori3DGroup) {
+      Vec3D.removeNoriHamsterEntity3D();
+    }
+  };
+
+  Vec3D.setNori3DExpression = function () {};
+  Vec3D.applyTransformToNori3D = function () {
+    if (Vec3D._nori3DGroup) {
+      Vec3D.removeNoriHamsterEntity3D();
     }
   };
 
@@ -2349,6 +2949,7 @@
         ts.trajGeo.attributes.position.needsUpdate = true;
       });
     }
+
   };
 
   // --- UTILS ---

@@ -94,6 +94,33 @@
       this.updateHUD(null, false);
     },
 
+    updateLiveVector: function (vecId, newVec) {
+      if (!this.active || !Array.isArray(newVec)) return;
+      if (this.targetVectors && this.targetVectors.length > 0) {
+        let found = false;
+        this.targetVectors.forEach((tv) => {
+          if (String(tv.id) === String(vecId)) {
+            tv.vec = newVec.slice(0, this.dim);
+            found = true;
+          }
+        });
+        if (found) {
+          if (this.dim === 2 && window.Vec2D && typeof window.Vec2D.draw2DAllVectors === "function") {
+            window.Vec2D.draw2DAllVectors();
+          } else if (this.dim === 3 && window.Vec3D) {
+            const M = this.getInterpMatrix(this.t);
+            if (typeof window.Vec3D.updateTransform3D === "function") {
+              window.Vec3D.updateTransform3D(this.t, M);
+            }
+            if (typeof window.Vec3D.renderOnce === "function") {
+              window.Vec3D.renderOnce();
+            }
+          }
+          this.updateHUD(null, false);
+        }
+      }
+    },
+
     // Thư viện mẫu biến đổi tuyến tính kinh điển
     presets: {
       identity: {
@@ -435,6 +462,40 @@
         this._keyHandler = null;
       }
 
+      if (typeof window.App?.triggerNoriRelief === "function") {
+        window.App.triggerNoriRelief();
+      }
+
+      // Dừng đồng bộ tất cả hoạt ảnh ma trận và vector tham số đang chạy
+      if (window.App) {
+        const matrices = [...(App.matrixList || [])];
+        if (App.calcParamMatrixA) matrices.push(App.calcParamMatrixA);
+        if (App.calcParamMatrixB) matrices.push(App.calcParamMatrixB);
+        matrices.forEach((m) => {
+          if (m && m.isParametric && m.isAnimating) {
+            m.isAnimating = false;
+            if (typeof App.updateSingleMatrixUI === "function") App.updateSingleMatrixUI(m);
+          }
+        });
+        if (App._matAnimFrameId) {
+          cancelAnimationFrame(App._matAnimFrameId);
+          App._matAnimFrameId = null;
+          App._lastMatAnimTimestamp = null;
+        }
+
+        const vectors = Array.isArray(App.vectorList) ? App.vectorList : [];
+        vectors.forEach((v) => {
+          if (v && v.isParametric && v.isAnimating) {
+            v.isAnimating = false;
+            if (typeof App.updateSingleVectorUI === "function") App.updateSingleVectorUI(v);
+          }
+        });
+        if (App._animFrameId) {
+          cancelAnimationFrame(App._animFrameId);
+          App._animFrameId = null;
+        }
+      }
+
       // Ẩn thanh playback sidebar
       const playbackBox = document.getElementById("sidebarTransformPlayback");
       if (playbackBox) playbackBox.style.display = "none";
@@ -490,6 +551,9 @@
         if (this.t >= 0.999) {
           this.t = 1;
           this.isPlaying = false; // Dừng lại ở đích để người dùng quan sát
+          if (typeof window.App?.triggerNoriRelief === "function") {
+            window.App.triggerNoriRelief();
+          }
         }
 
         this.updateHUD(timestamp, this.t === 1);
@@ -540,6 +604,9 @@
       this.isPlaying = false;
       this.lastTime = null;
       this.updateHUD(null, true);
+      if (typeof window.App?.triggerNoriRelief === "function") {
+        window.App.triggerNoriRelief();
+      }
       const M = this.getInterpMatrix(0);
       if (this.dim === 3 && window.Vec3D && typeof Vec3D.updateTransform3D === "function") {
         Vec3D.updateTransform3D(0, M);
@@ -1159,12 +1226,13 @@
 
       ctx.save();
 
-      // 2. VẼ LƯỚI KHÔNG GIAN BIẾN DẠNG (TRANSFORMED GRID) - Gom thành 1 Path duy nhất
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = "rgba(59, 130, 246, 0.22)";
+      // 2. VẼ LƯỚI KHÔNG GIAN BIẾN DẠNG (TRANSFORMED GRID)
+      const isDarkTheme = document.body.classList.contains("dark-theme") || document.body.classList.contains("dark") || (window.App && App.theme === "dark");
+      ctx.lineWidth = 1.25;
+      ctx.strokeStyle = isDarkTheme ? "rgba(96, 165, 250, 0.58)" : "rgba(37, 99, 235, 0.50)";
       ctx.beginPath();
 
-      // Đường lưới biến dạng tương ứng với x = k
+      // Đường lưới biến dạng tương ứng với x = k (song song trục tung Oy')
       for (let k = -gridRange; k <= gridRange; k += kStep) {
         if (k === 0) continue;
         const p1 = this.mulVec(M, [k, -L]);
@@ -1174,7 +1242,7 @@
         ctx.lineTo(cx + p2[0] * px, cy - p2[1] * px);
       }
 
-      // Đường lưới biến dạng tương ứng với y = m
+      // Đường lưới biến dạng tương ứng với y = m (song song trục hoành Ox')
       for (let m = -gridRange; m <= gridRange; m += kStep) {
         if (m === 0) continue;
         const p1 = this.mulVec(M, [-L, m]);
@@ -1184,6 +1252,56 @@
         ctx.lineTo(cx + p2[0] * px, cy - p2[1] * px);
       }
       ctx.stroke();
+
+      // 2b. VẼ 2 TRỤC TỌA ĐỘ KHÔNG GIAN BIẾN DẠNG (TRANSFORMED AXES Ox' VÀ Oy')
+      // Trục hoành biến dạng Ox' (đường thẳng đi qua gốc tọa độ theo hướng i')
+      const pOx1 = this.mulVec(M, [-L, 0]);
+      const pOx2 = this.mulVec(M, [L, 0]);
+      ctx.save();
+      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = isDarkTheme ? "rgba(239, 68, 68, 0.88)" : "rgba(220, 38, 38, 0.85)";
+      ctx.beginPath();
+      ctx.moveTo(cx + pOx1[0] * px, cy - pOx1[1] * px);
+      ctx.lineTo(cx + pOx2[0] * px, cy - pOx2[1] * px);
+      ctx.stroke();
+
+      // Trục tung biến dạng Oy' (đường thẳng đi qua gốc tọa độ theo hướng j')
+      const pOy1 = this.mulVec(M, [0, -L]);
+      const pOy2 = this.mulVec(M, [0, L]);
+      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = isDarkTheme ? "rgba(16, 185, 129, 0.88)" : "rgba(5, 150, 105, 0.85)";
+      ctx.beginPath();
+      ctx.moveTo(cx + pOy1[0] * px, cy - pOy1[1] * px);
+      ctx.lineTo(cx + pOy2[0] * px, cy - pOy2[1] * px);
+      ctx.stroke();
+
+      // Nhãn trục biến dạng x' và y' ở mép màn hình
+      const vI_dir = this.mulVec(M, [1, 0]);
+      const lenI_dir = Math.hypot(vI_dir[0], vI_dir[1]);
+      if (lenI_dir > 1e-4) {
+        const uIx = vI_dir[0] / lenI_dir;
+        const uIy = vI_dir[1] / lenI_dir;
+        const distLabel = Math.min(w * 0.45, h * 0.45, maxDistPx * 0.9);
+        const lx = cx + uIx * distLabel;
+        const ly = cy - uIy * distLabel;
+        ctx.font = "italic 700 12px system-ui, sans-serif";
+        ctx.fillStyle = isDarkTheme ? "#f87171" : "#dc2626";
+        ctx.fillText("x'", lx + 8, ly - 4);
+      }
+
+      const vJ_dir = this.mulVec(M, [0, 1]);
+      const lenJ_dir = Math.hypot(vJ_dir[0], vJ_dir[1]);
+      if (lenJ_dir > 1e-4) {
+        const uJx = vJ_dir[0] / lenJ_dir;
+        const uJy = vJ_dir[1] / lenJ_dir;
+        const distLabel = Math.min(w * 0.45, h * 0.45, maxDistPx * 0.9);
+        const lx = cx + uJx * distLabel;
+        const ly = cy - uJy * distLabel;
+        ctx.font = "italic 700 12px system-ui, sans-serif";
+        ctx.fillStyle = isDarkTheme ? "#34d399" : "#059669";
+        ctx.fillText("y'", lx + 8, ly - 4);
+      }
+      ctx.restore();
 
       // 3. VẼ HÌNH BÌNH HÀNH ĐỊNH THỨC (DETERMINANT PARALLELOGRAM)
       if (this.layers.showVolume) {

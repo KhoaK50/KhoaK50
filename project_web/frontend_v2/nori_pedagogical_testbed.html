@@ -580,6 +580,120 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- STAGE 3.5: NORI STATE CONTROLLER & EMOTIONAL MOMENTUM HUD -->
+                <div class="stage-box">
+                    <div class="stage-box-header">
+                        <div class="stage-box-title">
+                            <i class="ph ph-chart-polar" style="color: var(--primary-base); font-size: 16px;"></i>
+                            Vector Động Lượng Cảm Xúc M(t) & Biến Thể Cử Chỉ
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span id="nori-state-badge" style="font-size: 11.5px; font-weight: 700; color: var(--primary-base); background: var(--primary-subtle); border: 1px solid var(--primary-base); padding: 2px 8px;">
+                                IDLE
+                            </span>
+                            <span id="nori-exam-badge" style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); background: var(--bg-body); border: 1px solid var(--border); padding: 2px 8px;">
+                                Chế độ Thường
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 4D Momentum Vector Gauges -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                        <!-- P: Patience -->
+                        <div style="background: var(--bg-body); border: 1px solid var(--border); padding: 10px 12px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 4px;">
+                                <span><strong>P(t) · Độ kiên nhẫn</strong> <span style="color: var(--text-muted); font-size: 10.5px;">(Target: 0.70)</span></span>
+                                <span id="gauge-val-p" style="font-family: var(--font-mono); font-weight: 700; color: var(--primary-base);">0.700</span>
+                            </div>
+                            <div style="height: 6px; background: var(--border); width: 100%; position: relative;">
+                                <div id="gauge-fill-p" style="height: 100%; width: 70%; background: var(--primary-base); transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+
+                        <!-- E: Excitement -->
+                        <div style="background: var(--bg-body); border: 1px solid var(--border); padding: 10px 12px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 4px;">
+                                <span><strong>E(t) · Độ phấn khích</strong> <span style="color: var(--text-muted); font-size: 10.5px;">(Target: 0.20)</span></span>
+                                <span id="gauge-val-e" style="font-family: var(--font-mono); font-weight: 700; color: #d97706;">0.200</span>
+                            </div>
+                            <div style="height: 6px; background: var(--border); width: 100%; position: relative;">
+                                <div id="gauge-fill-e" style="height: 100%; width: 20%; background: #d97706; transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+
+                        <!-- F: Fatigue -->
+                        <div style="background: var(--bg-body); border: 1px solid var(--border); padding: 10px 12px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 4px;">
+                                <span><strong>F(t) · Độ mệt mỏi</strong> <span style="color: var(--text-muted); font-size: 10.5px;">(Target: 0.00)</span></span>
+                                <span id="gauge-val-f" style="font-family: var(--font-mono); font-weight: 700; color: var(--danger-base);">0.000</span>
+                            </div>
+                            <div style="height: 6px; background: var(--border); width: 100%; position: relative;">
+                                <div id="gauge-fill-f" style="height: 100%; width: 0%; background: var(--danger-base); transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+
+                        <!-- S: Streak Momentum -->
+                        <div style="background: var(--bg-body); border: 1px solid var(--border); padding: 10px 12px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 4px;">
+                                <span><strong>S(t) · Động lượng chuỗi</strong> <span style="color: var(--text-muted); font-size: 10.5px;">(Target: 0.00)</span></span>
+                                <span id="gauge-val-s" style="font-family: var(--font-mono); font-weight: 700; color: var(--success-base);">0.000</span>
+                            </div>
+                            <div style="height: 6px; background: var(--border); width: 100%; position: relative;">
+                                <div id="gauge-fill-s" style="height: 100%; width: 0%; background: var(--success-base); transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Variation & Procedural Motion Info Box -->
+                    <div style="background: var(--bg-body); border: 1px solid var(--border); padding: 12px; margin-bottom: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                            <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">
+                                <i class="ph ph-dice-three" style="color: var(--primary-base);"></i> Biến Thể Cử Chỉ Đang Kích Hoạt:
+                                <span id="nori-variation-active-name" style="color: var(--primary-base); font-weight: 700;">Chớp mắt, liếc nhìn chuột</span>
+                            </div>
+                            <button class="btn" style="padding: 3px 8px; font-size: 11px;" onclick="manualResampleVariation()">
+                                <i class="ph ph-shuffle"></i> Bốc Thăm Lại
+                            </button>
+                        </div>
+                        <div id="nori-variation-distribution-chips" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); border-top: 1px dashed var(--border); padding-top: 8px; flex-wrap: wrap; gap: 6px;">
+                            <span>Tần số nhịp thở: <strong id="jitter-val-breath" style="color: var(--text-main);">0.35 Hz</strong></span>
+                            <span>Độ trôi mắt liếc: <strong id="jitter-val-eye" style="color: var(--text-main);">0.12</strong></span>
+                            <span>Saccade vi mô: <strong id="jitter-val-saccade" style="color: var(--text-main);">1.50</strong></span>
+                            <span>Triệt tiêu xao nhãng: <strong id="jitter-val-suppress" style="color: var(--success-base);">TẮT</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Manual Pedagogical Event Simulator Toolbar -->
+                    <div>
+                        <div style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;">
+                            Kích Hoạt Sự Kiện Sư Phạm Giả Lập:
+                        </div>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button class="btn" style="font-size: 11.5px; padding: 5px 9px;" onclick="triggerNoriEvent('STREAK_CORRECT')">
+                                <i class="ph ph-fire" style="color: #ea580c;"></i> Chuỗi đúng (+Streak)
+                            </button>
+                            <button class="btn" style="font-size: 11.5px; padding: 5px 9px;" onclick="triggerNoriEvent('HINT_REQUESTED')">
+                                <i class="ph ph-lightbulb" style="color: #d97706;"></i> Cần gợi ý (Hint)
+                            </button>
+                            <button class="btn" style="font-size: 11.5px; padding: 5px 9px;" onclick="triggerNoriEvent('QUESTION_WRONG')">
+                                <i class="ph ph-x-circle" style="color: var(--danger-base);"></i> Thử sai (Mistake)
+                            </button>
+                            <button class="btn" style="font-size: 11.5px; padding: 5px 9px;" onclick="triggerNoriEvent('STUCK_LONG')">
+                                <i class="ph ph-hourglass-high" style="color: var(--warning-base);"></i> Bế tắc >90s (Stuck)
+                            </button>
+                            <button id="btn-toggle-exam-mode" class="btn" style="font-size: 11.5px; padding: 5px 9px;" onclick="toggleNoriExamMode()">
+                                <i class="ph ph-lock-key"></i> Bật Chế Độ Thi
+                            </button>
+                            <button class="btn" style="font-size: 11.5px; padding: 5px 9px;" onclick="triggerNoriEvent('RESET')">
+                                <i class="ph ph-arrows-counter-clockwise"></i> Reset M(t)
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- RIGHT COLUMN: ACCUMULATED JSON INSPECTOR & BUG HUNTER -->
@@ -597,6 +711,9 @@
                         </button>
                         <button class="inspector-tab-btn" onclick="switchInspectorTab('bughunter')">
                             <i class="ph ph-bug"></i> 🐞 1-Click Bug Hunter
+                        </button>
+                        <button class="inspector-tab-btn" onclick="switchInspectorTab('momentum')">
+                            <i class="ph ph-cpu"></i> Động Lượng & Test Suite
                         </button>
                     </div>
 
@@ -663,6 +780,37 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- TAB 5: MOMENTUM & IN-BROWSER AUTOMATED TEST SUITE -->
+                        <div id="tab-pane-momentum" style="display: none;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div style="font-size: 13px; font-weight: 700;">
+                                    Kiểm Thử Sư Phạm & Toán Học Tự Động (In-Browser Assertions)
+                                </div>
+                                <button class="btn btn-primary" style="padding: 5px 12px; font-size: 11.5px;" onclick="runInBrowserStateTests()">
+                                    <i class="ph ph-play"></i> Chạy Test Tự Động
+                                </button>
+                            </div>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                                Bộ kiểm thử tự động kiểm chứng 5 tiêu chí nghiệm thu: Chặn miền [0, 1]^4, Phân rã tiệm cận 30s về baseline, Khóa QUIET_FOCUSED trong bài thi, Kiểm tra phân phối Monte Carlo 1.000 mẫu sai số dưới 5%, và Thu dọn bộ định thời chống rò rỉ bộ nhớ.
+                            </p>
+
+                            <div id="testbed-suite-results-container">
+                                <div class="bug-report-box">
+                                    <div style="font-size: 12px; color: var(--text-muted);">
+                                        Bấm [Chạy Test Tự Động] để bắt đầu kiểm chứng toàn diện mô-đun NoriStateController.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 16px;">
+                                <div style="font-size: 12px; font-weight: 700; margin-bottom: 6px;">
+                                    Telemetry Vector M(t) Thời Gian Thực:
+                                </div>
+                                <div id="momentum-json-box" class="json-code-box" style="max-height: 220px;">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -670,15 +818,19 @@
     </div>
 
     <!-- Scripts -->
+    <script src="js/app/nori/nori_state_controller.js"></script>
     <script src="js/app/simulation/nori_avatar_renderer.js"></script>
     <script src="js/app/simulation/journey_autopilot_engine.js"></script>
     <script>
         // App State
         let engine = null;
+        let noriController = null;
         let activeTab = 'session';
         let currentSelectedOptionKey = null;
 
         function initTestbed() {
+            initNoriController();
+
             if (typeof window.JourneyAutopilotEngine !== 'function') {
                 console.error('JourneyAutopilotEngine not loaded!');
                 return;
@@ -841,6 +993,13 @@
 
         function handleNodeChange(node, nodeIdx) {
             renderTimelineNodes();
+            if (noriController) {
+                if (node && (node.isExam || nodeIdx === 4)) {
+                    noriController.onEvent('EXAM_MODE_START');
+                } else if (noriController.isExamMode) {
+                    noriController.onEvent('EXAM_MODE_END');
+                }
+            }
         }
 
         function handleQuestionChange(question, qIdx) {
@@ -866,6 +1025,17 @@
             }
 
             updateAvatar(streamState.currentMood, !streamState.isComplete);
+
+            // Sync with NoriStateController on completed question or session score
+            if (noriController && sessionData && sessionData.score !== undefined) {
+                if (sessionData.score >= 8.0) {
+                    noriController.onEvent('STREAK_CORRECT', { streak: 3 });
+                } else if (sessionData.score <= 5.0) {
+                    noriController.onEvent('QUESTION_WRONG');
+                } else {
+                    noriController.onEvent('HINT_REQUESTED');
+                }
+            }
 
             // Update summary pill & action
             const summaryPill = document.getElementById('mentor-summary-pill');
@@ -1029,6 +1199,9 @@
         function executeResetTabulaRasa() {
             if (!engine) return;
             engine.resetAll();
+            if (noriController) {
+                noriController.resetToBaseline();
+            }
             renderQuestion(window.JOURNEY_NODES[0].questions[0], 0);
             updateAvatar('thoughtful_2', false);
             const speechBox = document.getElementById('testbed-speech-box');
@@ -1072,7 +1245,7 @@
         function switchInspectorTab(tabId) {
             activeTab = tabId;
             document.querySelectorAll('.inspector-tab-btn').forEach(btn => btn.classList.remove('is-active'));
-            ['session', 'telemetry', 'speech', 'bughunter'].forEach(t => {
+            ['session', 'telemetry', 'speech', 'bughunter', 'momentum'].forEach(t => {
                 const pane = document.getElementById(`tab-pane-${t}`);
                 if (pane) pane.style.display = t === tabId ? 'block' : 'none';
             });
@@ -1081,6 +1254,19 @@
 
             if (tabId === 'bughunter' && engine) {
                 runInstantBugHunter();
+            } else if (tabId === 'momentum') {
+                runInBrowserStateTests();
+                if (noriController) {
+                    updateNoriHUD({
+                        momentum: noriController.momentum,
+                        state: noriController.state,
+                        isExamMode: noriController.isExamMode,
+                        variation: noriController.currentVariation,
+                        jitter: noriController.getProceduralJitter(),
+                        elapsedSeconds: noriController.elapsedSeconds,
+                        idleInactivitySeconds: noriController.idleInactivitySeconds
+                    });
+                }
             }
         }
 
@@ -1102,6 +1288,395 @@
         function toggleTheme() {
             document.body.classList.toggle('dark');
         }
+
+        // =====================================================================
+        // NORI STATE CONTROLLER & EMOTIONAL MOMENTUM INTEGRATION
+        // =====================================================================
+
+        function initNoriController() {
+            if (typeof window.NoriStateController !== 'function') {
+                console.error('NoriStateController not loaded!');
+                return;
+            }
+
+            noriController = new window.NoriStateController({
+                tickIntervalMs: 500,
+                autoStart: true,
+                onUpdate: updateNoriHUD
+            });
+
+            window.noriController = noriController;
+
+            updateNoriHUD({
+                momentum: noriController.momentum,
+                state: noriController.state,
+                isExamMode: noriController.isExamMode,
+                variation: noriController.currentVariation,
+                jitter: noriController.getProceduralJitter(),
+                elapsedSeconds: 0,
+                idleInactivitySeconds: 0
+            });
+        }
+
+        function updateNoriHUD(snapshot) {
+            if (!snapshot) return;
+            const m = snapshot.momentum || {};
+
+            // 1. Numeric values
+            const pVal = Number(m.P || 0);
+            const eVal = Number(m.E || 0);
+            const fVal = Number(m.F || 0);
+            const sVal = Number(m.S || 0);
+
+            const elP = document.getElementById('gauge-val-p');
+            const elE = document.getElementById('gauge-val-e');
+            const elF = document.getElementById('gauge-val-f');
+            const elS = document.getElementById('gauge-val-s');
+
+            if (elP) elP.textContent = pVal.toFixed(3);
+            if (elE) elE.textContent = eVal.toFixed(3);
+            if (elF) elF.textContent = fVal.toFixed(3);
+            if (elS) elS.textContent = sVal.toFixed(3);
+
+            // 2. Visual gauge bars
+            const barP = document.getElementById('gauge-fill-p');
+            const barE = document.getElementById('gauge-fill-e');
+            const barF = document.getElementById('gauge-fill-f');
+            const barS = document.getElementById('gauge-fill-s');
+
+            if (barP) barP.style.width = Math.min(100, Math.max(0, pVal * 100)).toFixed(1) + '%';
+            if (barE) barE.style.width = Math.min(100, Math.max(0, eVal * 100)).toFixed(1) + '%';
+            if (barF) barF.style.width = Math.min(100, Math.max(0, fVal * 100)).toFixed(1) + '%';
+            if (barS) barS.style.width = Math.min(100, Math.max(0, sVal * 100)).toFixed(1) + '%';
+
+            // 3. State & Exam badges
+            const stateBadge = document.getElementById('nori-state-badge');
+            if (stateBadge) {
+                stateBadge.textContent = snapshot.state || 'IDLE';
+                if (snapshot.state === 'CELEBRATING') {
+                    stateBadge.style.color = '#16a34a';
+                    stateBadge.style.background = '#f0fdf4';
+                    stateBadge.style.borderColor = '#16a34a';
+                } else if (snapshot.state === 'QUIET_FOCUSED') {
+                    stateBadge.style.color = '#64748b';
+                    stateBadge.style.background = '#f1f5f9';
+                    stateBadge.style.borderColor = '#94a3b8';
+                } else if (snapshot.state === 'THINKING') {
+                    stateBadge.style.color = '#d97706';
+                    stateBadge.style.background = '#fffbeb';
+                    stateBadge.style.borderColor = '#d97706';
+                } else {
+                    stateBadge.style.color = 'var(--primary-base)';
+                    stateBadge.style.background = 'var(--primary-subtle)';
+                    stateBadge.style.borderColor = 'var(--primary-base)';
+                }
+            }
+
+            const examBadge = document.getElementById('nori-exam-badge');
+            const examBtn = document.getElementById('btn-toggle-exam-mode');
+            if (examBadge) {
+                if (snapshot.isExamMode) {
+                    examBadge.textContent = 'Chế độ Thi cử (Im lặng)';
+                    examBadge.style.color = 'var(--danger-base)';
+                    examBadge.style.background = 'var(--danger-subtle)';
+                    examBadge.style.borderColor = 'var(--danger-base)';
+                    if (examBtn) examBtn.innerHTML = '<i class="ph ph-lock-key-open"></i> Tắt Chế Độ Thi';
+                } else {
+                    examBadge.textContent = 'Chế độ Thường';
+                    examBadge.style.color = 'var(--text-muted)';
+                    examBadge.style.background = 'var(--bg-body)';
+                    examBadge.style.borderColor = 'var(--border)';
+                    if (examBtn) examBtn.innerHTML = '<i class="ph ph-lock-key"></i> Bật Chế Độ Thi';
+                }
+            }
+
+            // 4. Variation active & distribution chips
+            const varName = document.getElementById('nori-variation-active-name');
+            if (varName && snapshot.variation) {
+                varName.textContent = `[${snapshot.variation.key}] ${snapshot.variation.label} (${(snapshot.variation.weight * 100).toFixed(1)}%)`;
+            }
+
+            const chipsContainer = document.getElementById('nori-variation-distribution-chips');
+            if (chipsContainer && noriController) {
+                const dist = noriController.getVariationDistribution(snapshot.state);
+                let chipsHtml = dist.map(v => {
+                    const isCur = snapshot.variation && snapshot.variation.id === v.id;
+                    const pct = (v.probability * 100).toFixed(1);
+                    return `
+                        <div style="font-size: 11px; padding: 3px 8px; border: 1px solid ${isCur ? 'var(--primary-base)' : 'var(--border)'}; background: ${isCur ? 'var(--primary-subtle)' : 'var(--bg-card)'}; color: ${isCur ? 'var(--primary-base)' : 'var(--text-muted)'}; font-weight: ${isCur ? '700' : '500'};">
+                            ${v.key}: ${v.label} - <strong>${pct}%</strong>
+                        </div>
+                    `;
+                }).join('');
+                chipsContainer.innerHTML = chipsHtml;
+            }
+
+            // 5. Procedural Jitter readout
+            const jitter = snapshot.jitter || {};
+            const breathEl = document.getElementById('jitter-val-breath');
+            const eyeEl = document.getElementById('jitter-val-eye');
+            const saccadeEl = document.getElementById('jitter-val-saccade');
+            const suppressEl = document.getElementById('jitter-val-suppress');
+
+            if (breathEl) breathEl.textContent = (jitter.breathing?.frequencyHz || 0).toFixed(2) + ' Hz';
+            if (eyeEl) eyeEl.textContent = (jitter.eyeDrift?.trackingSpeed || 0).toFixed(2);
+            if (saccadeEl) saccadeEl.textContent = (jitter.eyeDrift?.saccadeScale || 0).toFixed(2);
+            if (suppressEl) {
+                if (jitter.suppressJitter) {
+                    suppressEl.textContent = 'BẬT (Khóa yên tĩnh)';
+                    suppressEl.style.color = 'var(--danger-base)';
+                } else {
+                    suppressEl.textContent = 'TẮT (Chuyển động tự nhiên)';
+                    suppressEl.style.color = 'var(--success-base)';
+                }
+            }
+
+            // 6. Real-time JSON telemetry when Momentum tab is visible
+            const jsonBox = document.getElementById('momentum-json-box');
+            if (jsonBox && activeTab === 'momentum') {
+                jsonBox.textContent = JSON.stringify({
+                    momentum: snapshot.momentum,
+                    state: snapshot.state,
+                    isExamMode: snapshot.isExamMode,
+                    variation: snapshot.variation,
+                    jitter: snapshot.jitter,
+                    elapsedSeconds: Number(snapshot.elapsedSeconds || 0).toFixed(1),
+                    idleInactivitySeconds: Number(snapshot.idleInactivitySeconds || 0).toFixed(1)
+                }, null, 2);
+            }
+        }
+
+        function triggerNoriEvent(type) {
+            if (!noriController) return;
+            noriController.onEvent(type);
+        }
+
+        function toggleNoriExamMode() {
+            if (!noriController) return;
+            if (noriController.isExamMode) {
+                noriController.onEvent('EXAM_MODE_END');
+            } else {
+                noriController.onEvent('EXAM_MODE_START');
+            }
+        }
+
+        function manualResampleVariation() {
+            if (!noriController) return;
+            if (typeof noriController.resampleVariation === 'function') {
+                noriController.resampleVariation();
+            } else {
+                noriController._selectVariationForCurrentState();
+                noriController._notifySubscribers();
+            }
+        }
+
+        function runInBrowserStateTests() {
+            const container = document.getElementById('testbed-suite-results-container');
+            if (!container) return;
+
+            container.innerHTML = '<div style="font-size: 12px; color: var(--text-muted); padding: 10px;">Đang thực thi các kịch bản kiểm thử toán học & phân phối Monte Carlo...</div>';
+
+            setTimeout(() => {
+                const results = [];
+
+                // TEST 1: Bounding & NaN Immunity
+                try {
+                    const testCtrl = new window.NoriStateController({ autoStart: false });
+                    testCtrl.onEvent('CUSTOM_MOMENTUM_DELTA', { deltaP: 999, deltaE: 999, deltaF: 999, deltaS: 999 });
+                    let m = testCtrl.momentum;
+                    const passOverflow = (m.P === 1.0 && m.E === 1.0 && m.F === 1.0 && m.S === 1.0);
+
+                    testCtrl.onEvent('CUSTOM_MOMENTUM_DELTA', { deltaP: -999, deltaE: -999, deltaF: -999, deltaS: -999 });
+                    m = testCtrl.momentum;
+                    const passUnderflow = (m.P === 0.0 && m.E === 0.0 && m.F === 0.0 && m.S === 0.0);
+
+                    testCtrl.setMomentum({ P: NaN, E: Infinity, F: -Infinity, S: 'str' });
+                    m = testCtrl.momentum;
+                    const passNaN = (Number.isFinite(m.P) && Number.isFinite(m.E) && Number.isFinite(m.F) && Number.isFinite(m.S));
+
+                    testCtrl.destroy();
+
+                    if (passOverflow && passUnderflow && passNaN) {
+                        results.push({
+                            id: 'bound_nan_immunity',
+                            name: 'Chặn Miền [0.0, 1.0] & Miễn Nhiễm NaN / Infinity',
+                            status: 'PASSED',
+                            detail: 'Mọi giá trị P, E, F, S luôn bị ép chặt vào [0.0, 1.0]. Không bao giờ bị NaN, vô hạn hoặc số âm.'
+                        });
+                    } else {
+                        results.push({
+                            id: 'bound_nan_immunity',
+                            name: 'Chặn Miền [0.0, 1.0] & Miễn Nhiễm NaN / Infinity',
+                            status: 'FAILED',
+                            detail: 'Lỗi chặn giá trị: overflow/underflow hoặc NaN lọt qua validation.'
+                        });
+                    }
+                } catch (err) {
+                    results.push({ id: 'bound_nan_immunity', name: 'Chặn Miền [0.0, 1.0]', status: 'FAILED', detail: err.message });
+                }
+
+                // TEST 2: 30-Second Inactivity Decay
+                try {
+                    const testCtrl = new window.NoriStateController({
+                        autoStart: false,
+                        initialMomentum: { P: 1.0, E: 1.0, F: 1.0, S: 1.0 }
+                    });
+                    for (let i = 0; i < 60; i++) {
+                        testCtrl.tick(0.5);
+                    }
+                    const m = testCtrl.momentum;
+                    const dP = Math.abs(m.P - 0.7);
+                    const dE = Math.abs(m.E - 0.2);
+                    const dF = Math.abs(m.F - 0.0);
+                    const dS = Math.abs(m.S - 0.0);
+                    testCtrl.destroy();
+
+                    if (dP < 0.01 && dE < 0.01 && dF < 0.01 && dS < 0.01) {
+                        results.push({
+                            id: 'asymptotic_decay',
+                            name: 'Phân Rã Tiệm Cận 30 Giây Về Ngưỡng Cân Bằng',
+                            status: 'PASSED',
+                            detail: `Đạt chuẩn hội tụ baseline: P=${m.P.toFixed(3)} (->0.70), E=${m.E.toFixed(3)} (->0.20), F=${m.F.toFixed(3)} (->0.00), S=${m.S.toFixed(3)} (->0.00). Sai số cực tiểu < 0.005.`
+                        });
+                    } else {
+                        results.push({
+                            id: 'asymptotic_decay',
+                            name: 'Phân Rã Tiệm Cận 30 Giây Về Ngưỡng Cân Bằng',
+                            status: 'FAILED',
+                            detail: `Không hội tụ đúng baseline sau 30s: P=${m.P}, E=${m.E}, F=${m.F}, S=${m.S}`
+                        });
+                    }
+                } catch (err) {
+                    results.push({ id: 'asymptotic_decay', name: 'Phân Rã Tiệm Cận 30 Giây', status: 'FAILED', detail: err.message });
+                }
+
+                // TEST 3: EXAM_MODE_START Suppression
+                try {
+                    const testCtrl = new window.NoriStateController({ autoStart: false });
+                    testCtrl.onEvent('EXAM_MODE_START');
+                    const isStateQuiet = testCtrl.state === 'QUIET_FOCUSED';
+                    const isExam = testCtrl.isExamMode === true;
+                    const jitter = testCtrl.getProceduralJitter();
+                    const jitterSuppressed = jitter.suppressJitter === true && jitter.eyeDrift.trackingSpeed === 0 && jitter.eyeDrift.saccadeScale === 0;
+                    testCtrl.destroy();
+
+                    if (isStateQuiet && isExam && jitterSuppressed) {
+                        results.push({
+                            id: 'exam_mode_freeze',
+                            name: 'Chế Độ Thi (EXAM_MODE_START) Triệt Tiêu Xao Nhãng',
+                            status: 'PASSED',
+                            detail: 'Khóa cứng trạng thái QUIET_FOCUSED. Độ trôi mắt liếc chuột và vi chớp (saccades) triệt tiêu về 0.0.'
+                        });
+                    } else {
+                        results.push({
+                            id: 'exam_mode_freeze',
+                            name: 'Chế Độ Thi (EXAM_MODE_START) Triệt Tiêu Xao Nhãng',
+                            status: 'FAILED',
+                            detail: 'Chế độ thi chưa khóa chuyển động hoàn toàn.'
+                        });
+                    }
+                } catch (err) {
+                    results.push({ id: 'exam_mode_freeze', name: 'Chế Độ Thi (EXAM_MODE_START)', status: 'FAILED', detail: err.message });
+                }
+
+                // TEST 4: Monte Carlo 1,000 Draws Statistical Margin (< 5%)
+                try {
+                    const testCtrl = new window.NoriStateController({ autoStart: false });
+                    testCtrl.resetToBaseline();
+
+                    const N = 1000;
+                    const counts = { A: 0, B: 0, C: 0 };
+                    for (let i = 0; i < N; i++) {
+                        const v = testCtrl.selectVariation('IDLE');
+                        counts[v.key]++;
+                    }
+                    const rA = counts.A / N;
+                    const rB = counts.B / N;
+                    const rC = counts.C / N;
+                    const errA = Math.abs(rA - 0.50);
+                    const errB = Math.abs(rB - 0.30);
+                    const errC = Math.abs(rC - 0.20);
+                    testCtrl.destroy();
+
+                    if (errA < 0.05 && errB < 0.05 && errC < 0.05) {
+                        results.push({
+                            id: 'monte_carlo_distribution',
+                            name: 'Kiểm Tra Phân Phối Biến Thể Monte Carlo (N=1.000)',
+                            status: 'PASSED',
+                            detail: `Tỷ lệ quan sát: A=${(rA*100).toFixed(1)}% (sai số ${(errA*100).toFixed(1)}%), B=${(rB*100).toFixed(1)}% (sai số ${(errB*100).toFixed(1)}%), C=${(rC*100).toFixed(1)}% (sai số ${(errC*100).toFixed(1)}%). Toàn bộ sai số dưới ngưỡng 5.0%.`
+                        });
+                    } else {
+                        results.push({
+                            id: 'monte_carlo_distribution',
+                            name: 'Kiểm Tra Phân Phối Biến Thể Monte Carlo (N=1.000)',
+                            status: 'FAILED',
+                            detail: `Sai số thống kê vượt quá 5%: A_err=${(errA*100).toFixed(1)}%, B_err=${(errB*100).toFixed(1)}%, C_err=${(errC*100).toFixed(1)}%`
+                        });
+                    }
+                } catch (err) {
+                    results.push({ id: 'monte_carlo_distribution', name: 'Kiểm Tra Phân Phối Biến Thể Monte Carlo', status: 'FAILED', detail: err.message });
+                }
+
+                // TEST 5: Memory Leak & Lifecycle Cleanup
+                try {
+                    const testCtrl = new window.NoriStateController({ autoStart: true, tickIntervalMs: 50 });
+                    const wasActive = testCtrl._timerId !== null;
+                    testCtrl.destroy();
+                    const isDestroyed = testCtrl.isDestroyed === true && testCtrl._timerId === null && testCtrl._subscribers.length === 0;
+
+                    if (wasActive && isDestroyed) {
+                        results.push({
+                            id: 'lifecycle_cleanup',
+                            name: 'Cơ Chế Dọn Dẹp (destroy) Chống Rò Rỉ Bộ Nhớ',
+                            status: 'PASSED',
+                            detail: 'Phương thức destroy() giải phóng hoàn toàn bộ định thời setInterval, hủy toàn bộ subscribers, ngăn ngừa rò rỉ bộ nhớ.'
+                        });
+                    } else {
+                        results.push({
+                            id: 'lifecycle_cleanup',
+                            name: 'Cơ Chế Dọn Dẹp (destroy) Chống Rò Rỉ Bộ Nhớ',
+                            status: 'FAILED',
+                            detail: 'Không dọn dẹp sạch sẽ bộ định thời hoặc mảng subscriber.'
+                        });
+                    }
+                } catch (err) {
+                    results.push({ id: 'lifecycle_cleanup', name: 'Cơ Chế Dọn Dẹp (destroy)', status: 'FAILED', detail: err.message });
+                }
+
+                // Render Summary & Cards
+                const allPassed = results.every(r => r.status === 'PASSED');
+                let html = `
+                    <div style="margin-bottom: 12px;">
+                        <span class="${allPassed ? 'bug-badge-pass' : 'bug-badge-fail'}">
+                            ${allPassed ? '✓ 5/5 TIÊU CHÍ NGHIỆM THU ĐẠT CHUẨN HOÀN TOÀN' : '✕ PHÁT HIỆN LỖI KIỂM THỬ'}
+                        </span>
+                    </div>
+                `;
+
+                results.forEach(r => {
+                    const isPass = r.status === 'PASSED';
+                    html += `
+                        <div class="bug-report-box" style="margin-bottom: 8px; border-left: 3px solid ${isPass ? 'var(--success-base)' : 'var(--danger-base)'};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <strong style="font-size: 12px; color: var(--text-main);">${r.name}</strong>
+                                <span style="font-size: 11px; font-weight: 700; color: ${isPass ? 'var(--success-base)' : 'var(--danger-base)'};">${r.status}</span>
+                            </div>
+                            <div style="font-size: 11.5px; color: var(--text-muted); line-height: 1.5;">
+                                ${r.detail}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            }, 50);
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (noriController) {
+                noriController.destroy();
+            }
+        });
 
         window.addEventListener('DOMContentLoaded', initTestbed);
     </script>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>So sánh 4 phong cách Halo Vectoria</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      padding: 30px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+    p.subtitle {
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .card-header {
+      padding: 14px 18px;
+      background: #f1f5f9;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-original { background: #e0f2fe; color: #0369a1; }
+    .badge-candidate { background: #ecfdf5; color: #047857; }
+    .card-body {
+      padding: 16px;
+      display: flex;
+      gap: 16px;
+      background: #ffffff;
+      align-items: center;
+      justify-content: center;
+    }
+    .img-wrap {
+      flex: 1;
+      text-align: center;
+    }
+    .img-wrap img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      background: #ffffff;
+    }
+    .img-label {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 6px;
+      font-weight: 500;
+    }
+    .card-desc {
+      padding: 12px 18px 16px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #475569;
+      border-top: 1px solid #f1f5f9;
+      background: #fafafa;
+    }
+  </style>
+</head>
+<body>
+  <h1>BẢNG SO SÁNH 4 PHONG CÁCH TIÊU ĐIỂM (HALO) TRÊN VECTORIA</h1>
+  <p class="subtitle">Quan sát trực tiếp trên 2 màu vector đại diện: Vector u (Xanh dương) và Vector v (Đỏ)</p>
+
+  <div class="grid">
+    <!-- Style 1 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">1. Classic Cyan Neon (Nguyên bản cũ - 100% Cached)</span>
+        <span class="badge badge-original">Đã lưu đệm</span>
+      </div>
+      <div class="card-body">
+        <div class="img-wrap">
+          <img src="/halo_1_classic_neon_closeup.png" alt="u vector neon">
+          <div class="img-label">Vector u (Xanh dương)</div>
+        </div>
+        <div class="img-wrap">
+          <img src="/halo_red_1_classic_neon_closeup.png" alt="v vector neon">
+          <div class="img-label">Vector v (Đỏ)</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        Quầng sáng Cyan (#00ffff) nhịp đập lớn (6-20px). Ưu điểm: Nổi bật tức thì. Nhược điểm: Áp đặt màu cyan neon lên mọi vector (kể cả vector đỏ), hơi giống game arcade hơn tài liệu toán học.
+      </div>
+    </div>
+
+    <!-- Style 2 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">2. Academic Aura (Đồng sắc hàn lâm)</span>
+        <span class="badge badge-candidate">Đề xuất</span>
+      </div>
+      <div class="card-body">
+        <div class="img-wrap">
+          <img src="/halo_2_academic_aura_closeup.png" alt="u vector aura">
+          <div class="img-label">Vector u (Xanh dương)</div>
+        </div>
+        <div class="img-wrap">
+          <img src="/halo_red_2_academic_aura_closeup.png" alt="v vector aura">
+          <div class="img-label">Vector v (Đỏ)</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        Hào quang đồng sắc mềm mại (lớp ngoài 7-10px alpha 0.20 + lớp trong 4-5px alpha 0.38) lấy chính mã màu của vector. Tĩnh lặng, êm ái, tôn vinh màu nhận diện cá thể của vector.
+      </div>
+    </div>
+
+    <!-- Style 3 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">3. Precision Reticle (Tâm ngắm kỹ thuật & Trắc địa)</span>
+        <span class="badge badge-candidate">Đề xuất</span>
+      </div>
+      <div class="card-body">
+        <div class="img-wrap">
+          <img src="/halo_3_precision_reticle_closeup.png" alt="u vector reticle">
+          <div class="img-label">Vector u (Xanh dương)</div>
+        </div>
+        <div class="img-wrap">
+          <img src="/halo_red_3_precision_reticle_closeup.png" alt="v vector reticle">
+          <div class="img-label">Vector v (Đỏ)</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        Phong cách bản vẽ kỹ thuật CAD: 2 vòng tròn đồng tâm hairline 1px tại ngọn tip mút (r=5px, r=11px), 4 vạch ngắm chữ thập trắc địa và đường gióng song song nét đứt dọc thân vector.
+      </div>
+    </div>
+
+    <!-- Style 4 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">4. Soft Elevation (Bóng nổi chiều sâu 3D)</span>
+        <span class="badge badge-candidate">Đề xuất</span>
+      </div>
+      <div class="card-body">
+        <div class="img-wrap">
+          <img src="/halo_4_soft_elevation_closeup.png" alt="u vector elevation">
+          <div class="img-label">Vector u (Xanh dương)</div>
+        </div>
+        <div class="img-wrap">
+          <img src="/halo_red_4_soft_elevation_closeup.png" alt="v vector elevation">
+          <div class="img-label">Vector v (Đỏ)</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        Tạo chiều sâu nâng nổi (elevation) bằng shadowBlur 12px cùng tông màu vector, kết hợp viền sáng 6px ôm sát. Cảm giác vector như một chiếc compa hoặc kim nổi nhẹ trên mặt giấy can.
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -27,6 +27,18 @@
   App.nextMatrixId = 1;
 
   App._previewTemp = null;
+
+  // Khoa tuong tac keo tha dau vector khi dang co hoat canh
+  App.isInteractionBlocked = function () {
+    return !!(
+      App.isAnimating ||
+      App._basisAnimActive ||
+      (App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive()) ||
+      App._coordAnimActive ||
+      (App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()) ||
+      (App.LinearTransform && typeof App.LinearTransform.isActive === "function" && App.LinearTransform.isActive())
+    );
+  };
 })();
 
 // ===== Basis Overlay Animator (2D/3D) =====
@@ -295,5 +307,67 @@
     App._basisOverlay.active = false;
 
     renderNow();
+  };
+
+  /* ============== NORI LIVING ENTITY STATE (2D & 3D) ============== */
+  App.noriEntityActive = false;
+  App.isNoriRelieved = false;
+  App._noriReliefTimeout = null;
+
+  App.toggleNoriEntity = function () {
+    // Nori là thực thể sư phạm 2D phẳng, nếu đang ở 3D thì tự động chuyển về 2D
+    if (App.mode === "3D" && typeof App.toggleMode === "function") {
+      App.toggleMode();
+    }
+    App.noriEntityActive = !App.noriEntityActive;
+    const btn = document.getElementById("btnNoriEntity");
+    if (btn) {
+      if (App.noriEntityActive) {
+        btn.classList.add("active");
+        btn.title = "Đang hiển thị Nori trong mặt phẳng 2D (Bấm để ẩn)";
+      } else {
+        btn.classList.remove("active");
+        btn.title = "Bật/Tắt thực thể Nori trong mặt phẳng 2D";
+      }
+    }
+    const chk = document.getElementById("chkLTShowNori");
+    if (chk) {
+      chk.checked = App.noriEntityActive;
+    }
+
+    // Đảm bảo dẹp sạch hoàn toàn Nori khỏi 3D
+    if (window.Vec3D && typeof window.Vec3D.removeNoriHamsterEntity3D === "function") {
+      window.Vec3D.removeNoriHamsterEntity3D();
+    }
+
+    // Hiển thị tức thì trên 2D
+    if (App.mode === "2D" && window.Vec2D && typeof window.Vec2D.draw2DAllVectors === "function") {
+      window.Vec2D.draw2DAllVectors();
+    }
+
+    // Cập nhật ngay danh sách chọn mục tiêu biến đổi tuyến tính
+    if (typeof App.refreshTransformTab === "function") {
+      App.refreshTransformTab();
+    }
+  };
+
+  App.triggerNoriRelief = function () {
+    if (!App.noriEntityActive) return;
+    App.isNoriRelieved = true;
+    if (App._noriReliefTimeout) {
+      clearTimeout(App._noriReliefTimeout);
+    }
+
+    if (App.mode === "2D" && window.Vec2D?.draw2DAllVectors) {
+      window.Vec2D.draw2DAllVectors();
+    }
+
+    App._noriReliefTimeout = setTimeout(() => {
+      App.isNoriRelieved = false;
+      App._noriReliefTimeout = null;
+      if (App.mode === "2D" && window.Vec2D?.draw2DAllVectors) {
+        window.Vec2D.draw2DAllVectors();
+      }
+    }, 1500);
   };
 })();

@@ -39,6 +39,7 @@
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
   <script src="js/utils/theme-manager.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
@@ -258,42 +259,174 @@
       top: 100%;
       background: var(--bg-base);
       border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      border-radius: 4px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
       z-index: 100000;
-      min-width: 200px;
-      overflow: hidden;
-      margin-top: 5px;
+      min-width: 175px;
+      width: 180px;
+      box-sizing: border-box;
+      overflow: visible;
+      margin-top: 4px;
+      padding: 4px 0;
+    }
+
+    .menu-group-item {
+      position: relative;
+    }
+
+    .menu-group-header {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.1s ease, color 0.1s ease;
+      user-select: none;
+    }
+
+    .menu-group-header .group-title {
+      font-weight: 500;
+    }
+
+    .menu-group-header .group-arrow {
+      font-size: 11px;
+      color: var(--text-muted);
+      transition: transform 0.15s ease;
+    }
+
+    .menu-group-header:hover,
+    .menu-group-item:hover > .menu-group-header,
+    .menu-group-item.is-open > .menu-group-header {
+      background: var(--bg-hover);
+      color: var(--primary-base);
+    }
+
+    .menu-group-header:hover .group-arrow,
+    .menu-group-item:hover > .menu-group-header .group-arrow,
+    .menu-group-item.is-open > .menu-group-header .group-arrow {
+      color: var(--primary-base);
+    }
+
+    /* Submenu flyout mở sang bên phải khít sát tầng 1 (0 gap, border chồng khớp) */
+    .menu-sub-flyout {
+      display: none;
+      position: absolute;
+      left: calc(100% - 1px);
+      right: auto;
+      top: -1px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+      z-index: 100001;
+      min-width: 195px;
+      max-height: 380px;
+      overflow-y: auto;
+      padding: 4px 0;
+    }
+
+    /* Cầu nối hover vô hình giữa tầng 1 và tầng 2 chống rớt hover khi lia chuột chậm hoặc chéo góc */
+    .menu-sub-flyout::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      bottom: -8px;
+      left: -14px;
+      width: 18px;
+      background: transparent;
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    .menu-group-item:hover > .menu-sub-flyout,
+    .menu-group-item.is-open > .menu-sub-flyout {
+      display: block;
+    }
+
+    .sub-section-title {
+      padding: 6px 12px 3px 12px;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      user-select: none;
     }
 
     .menu-item {
-      padding: 10px 15px;
+      padding: 7px 12px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-main);
-      border-bottom: 1px solid var(--border-subtle);
       display: flex;
+      align-items: center;
       justify-content: space-between;
+      transition: background 0.1s ease, color 0.1s ease;
+      white-space: nowrap;
     }
-    .menu-item:last-child { border-bottom: none; }
-    .menu-item:hover { background-color: var(--bg-hover); color: var(--primary-base); }
+
+    .menu-item:hover {
+      background-color: var(--bg-hover);
+      color: var(--primary-base);
+    }
 
     .latex-preview {
-      font-family: 'Times New Roman', serif;
+      font-family: 'STIX Two Text', 'Times New Roman', serif;
       font-style: italic;
       color: var(--text-muted);
+      font-size: 12.5px;
+      margin-left: 8px;
     }
 
     body.dark .custom-menu-dropdown,
-    body.dark-theme .custom-menu-dropdown {
+    body.dark-theme .custom-menu-dropdown,
+    body.dark .menu-sub-flyout,
+    body.dark-theme .menu-sub-flyout {
       background: var(--bg-card);
-      border: 1px solid var(--border-strong);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      border-color: var(--border-strong);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
     }
+
+    body.dark .menu-group-header,
+    body.dark-theme .menu-group-header,
     body.dark .menu-item,
-    body.dark-theme .menu-item { color: var(--text-muted); border-bottom: 1px solid var(--border-strong); }
+    body.dark-theme .menu-item {
+      color: var(--text-main);
+    }
+
+    body.dark .menu-group-header:hover,
+    body.dark-theme .menu-group-header:hover,
+    body.dark .menu-group-item:hover > .menu-group-header,
+    body.dark-theme .menu-group-item:hover > .menu-group-header,
     body.dark .menu-item:hover,
-    body.dark-theme .menu-item:hover { background-color: var(--bg-hover); color: var(--primary-base); }
+    body.dark-theme .menu-item:hover {
+      background-color: var(--bg-hover);
+      color: var(--primary-base);
+    }
+
+    @media (max-width: 640px) {
+      .menu-sub-flyout {
+        position: static;
+        left: auto;
+        right: auto;
+        top: auto;
+        box-shadow: none;
+        border: none;
+        border-left: 2px solid var(--primary-base);
+        margin: 2px 8px 4px 16px;
+        padding: 0;
+        max-height: none;
+      }
+      .menu-sub-flyout::before {
+        display: none;
+      }
+      .menu-group-item.is-open > .menu-group-header .group-arrow {
+        transform: rotate(90deg);
+      }
+    }
     /* ================================================================= */
     /* 3. SOLUTION PANEL - LIGHT & DARK MODE */
     /* ================================================================= */
@@ -1103,25 +1236,26 @@
 
       
       <div class="card section-calc-info" style="border: 1px solid var(--border); border-radius: 4px; padding: 14px; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <div style="margin-bottom: 12px;">
-          <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">1. Chọn chủ đề</label>
-          <select id="topicCategorySelect" style="width: 100%; height: 38px; border: 1px solid var(--border); border-radius: 2px; padding: 0 10px; background: var(--card); color: var(--fg); font-size: 13px; font-weight: 600;">
-            <option value="t1">Chủ đề 1: Kiến thức chuẩn bị</option>
-            <option value="t2">Chủ đề 2: Ma trận và hệ phương trình tuyến tính</option>
-            <option value="t3" selected>Chủ đề 3: Không gian tuyến tính</option>
-            <option value="t4">Chủ đề 4: Không gian Euclide</option>
-            <option value="t5">Chủ đề 5: Ánh xạ tuyến tính</option>
-            <option value="t6">Chủ đề 6: Trị riêng và vector riêng</option>
-            <option value="t7">Chủ đề 7: Dạng toàn phương</option>
-          </select>
-        </div>
         <div>
-          <label id="topicTaskSelectLabel" style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">2. Chọn chức năng / bài toán</label>
-          <select id="opExtraSelect" style="width: 100%; height: 38px; border: 1px solid var(--border); border-radius: 2px; padding: 0 10px; background: var(--card); color: var(--fg); font-size: 13px;">
-            <option value="linear_independence">4. Độc lập - phụ thuộc tuyến tính</option>
-            <option value="rank">5. Hạng của hệ vector</option>
-            <option value="basis" selected>7. Cơ sở và số chiều</option>
-            <option value="coordinates">8. Tọa độ của vector đối với một cơ sở</option>
+          <label id="topicTaskSelectLabel" style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; letter-spacing: 0.5px;">
+            <span>Chọn bài toán khảo sát &amp; trực quan</span>
+            <a id="topicLessonLinkBadge" href="knowledge_info.html?type=lesson&id=l35" target="_blank" class="lesson-badge-link" title="Xem lý thuyết Bài 35 trên tab mới">
+              <i class="ph ph-arrow-square-out" style="margin-right:2px;"></i> [Bài 35]
+            </a>
+          </label>
+          <select id="opExtraSelect" style="width: 100%; height: 38px; border: 1px solid var(--border); border-radius: 2px; padding: 0 10px; background: var(--card); color: var(--fg); font-size: 13px; font-weight: 600;">
+            <optgroup label="I. CẤU TRÚC KHÔNG GIAN VECTOR">
+              <option value="linear_independence" selected>1. Khảo sát độc lập và phụ thuộc tuyến tính [Bài 35]</option>
+              <option value="rank">2. Hạng của hệ vector và dạng bậc thang [Bài 37]</option>
+              <option value="basis">3. Cơ sở và số chiều của không gian con [Bài 40]</option>
+              <option value="coordinates">4. Tọa độ của vector đối với một cơ sở [Bài 43]</option>
+              <option value="topic4_gram_schmidt">5. Thuật toán trực giao hóa Gram - Schmidt [Bài 53]</option>
+            </optgroup>
+            <optgroup label="II. TOÁN TỬ TUYẾN TÍNH & DẠNG TOÀN PHƯƠNG">
+              <option value="topic5_linear_transformation">6. Ma trận biểu diễn ánh xạ tuyến tính, Ker và Im [Bài 58]</option>
+              <option value="topic6_eigen">7. Trị riêng, vector riêng và chéo hóa ma trận [Bài 64]</option>
+              <option value="quadratic_form_conic">8. Dạng toàn phương và đưa về dạng chính tắc [Bài 74]</option>
+            </optgroup>
           </select>
         </div>
         <div id="extraForms" style="margin-top: 14px;">
@@ -1129,24 +1263,27 @@
             <div id="indepChecklist" class="checklist"></div>
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
               <button id="btnIndep" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px;">Kiểm tra</button>
+              <button type="button" class="btn btn-secondary btn-solution" id="btnIndepSolution" style="display: none;"><i class="ph ph-file-text"></i> Lời giải</button>
               <button id="btnInteract" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px;" class="btn btn-secondary"
                 title="Khảo sát hình hộp 3D và độc lập tuyến tính">
                 <i class="ph ph-cube"></i> Hình hộp 3D
               </button>
             </div>
-            <pre id="result_indep"></pre>
+            <div id="result_indep" style="width: 100%;"></div>
           </div>
           <div id="form-rank" class="extra-form">
             <div id="rankChecklist" class="checklist"></div>
-            <div class="row" style="margin-top: 10px;">
-              <button id="btnRank" class="btn primary" style="width: 100%; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px;">Tính hạng</button>
+            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
+              <button id="btnRank" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px;">Tính hạng</button>
+              <button type="button" class="btn btn-secondary btn-solution" id="btnRankSolution" style="display: none;"><i class="ph ph-file-text"></i> Lời giải</button>
             </div>
-            <pre id="result_rank"></pre>
+            <div id="result_rank" style="width: 100%;"></div>
           </div>
           <div id="form-basis" class="extra-form">
             <div id="basisChecklist" class="checklist"></div>
-            <div class="row" style="margin-top: 10px; display: flex; gap: 8px;">
+            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
               <button id="btnBasis" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px;">Tính cơ sở</button>
+              <button id="btnBasisAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px;"><i class="ph ph-play-circle"></i> Trực quan</button>
               <button id="btnOpenSolution" class="btn btn-solution" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px;">Lời giải</button>
             </div>
             <div id="result_basis" style="width:100%"></div>
@@ -1162,18 +1299,12 @@
 
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
               <button id="btnCoord" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px;">Xuất tọa độ</button>
+              <button id="btnCoordAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px;"><i class="ph ph-play-circle"></i> Trực quan</button>
               <button id="btnCoordSolution" class="btn btn-solution" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px;">Lời giải</button>
             </div>
+            <div id="result_coord" style="width: 100%; margin-top: 10px;"></div>
           </div>
           <div id="form-quadratic_form_conic" class="extra-form">
-            <div style="margin-bottom: 10px;">
-              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Mẫu đường cong</label>
-              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                <button type="button" id="presetParabol" class="btn-sub-pill active">Parabol xoay 45 độ</button>
-                <button type="button" id="presetEllipse" class="btn-sub-pill">Elip xoay 45 độ</button>
-                <button type="button" id="presetHyperbola" class="btn-sub-pill">Hyperbol</button>
-              </div>
-            </div>
 
             <div style="margin-bottom: 10px;">
               <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Ma trận đối xứng A</label>
@@ -1223,132 +1354,8 @@
 
             <div id="result_conic_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
           </div>
-          <div id="form-topic1_parametric_vector" class="extra-form">
-            <div style="margin-bottom: 10px;">
-              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Mẫu quỹ đạo tham số</label>
-              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                <button type="button" id="presetParamParabol" class="btn-sub-pill active">Parabol bậc hai</button>
-                <button type="button" id="presetParamCircle" class="btn-sub-pill">Đường tròn</button>
-                <button type="button" id="presetParamCubic" class="btn-sub-pill">Đường bậc ba</button>
-              </div>
-            </div>
-
-            <div style="margin-bottom: 10px;">
-              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Tọa độ vector theo tham số t</label>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Tọa độ x theo t:</span>
-                  <input type="text" id="param_x_expr" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="t">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Tọa độ y theo t:</span>
-                  <input type="text" id="param_y_expr" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="t*t">
-                </div>
-              </div>
-            </div>
-
-            <div style="margin-bottom: 12px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px;">Giá trị tham số t</span>
-                <span id="param_t_val" style="font-size: 12px; font-weight: 700; color: var(--primary-base); font-family: monospace;">t = 1.00</span>
-              </div>
-              <input type="range" id="param_t_slider" min="-3" max="3" step="0.05" value="1" style="width: 100%; accent-color: var(--primary-base); cursor: pointer;">
-            </div>
-
-            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
-              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
-                <input type="checkbox" id="chkShowParamTrace" checked style="accent-color: var(--primary-base);">
-                <span>Vẽ vệt quỹ đạo đường cong</span>
-              </label>
-              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
-                <input type="checkbox" id="chkShowTangentVec" checked style="accent-color: var(--primary-base);">
-                <span>Hiển thị vector tiếp tuyến vận tốc</span>
-              </label>
-            </div>
-
-            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button type="button" id="btnParamPlay" class="btn primary" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">
-                <i class="ph ph-play" style="margin-right: 4px;"></i> Chạy quét t
-              </button>
-              <button type="button" id="btnParamSolution" class="btn btn-solution" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">
-                Lời giải
-              </button>
-            </div>
-
-            <div id="result_param_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
-          </div>
-          <div id="form-topic2_matrix_param" class="extra-form">
-            <div style="margin-bottom: 10px;">
-              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Mẫu ma trận tham số</label>
-              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                <button type="button" id="presetMatSym" class="btn-sub-pill active">Đối xứng m</button>
-                <button type="button" id="presetMatShear" class="btn-sub-pill">Trượt ngang m</button>
-                <button type="button" id="presetMatRotate" class="btn-sub-pill">Quay góc m</button>
-                <button type="button" id="presetMatSingular" class="btn-sub-pill">Suy biến m</button>
-              </div>
-            </div>
-
-            <div style="margin-bottom: 10px;">
-              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Các phần tử ma trận A theo m</label>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hàng 1 Cột 1:</span>
-                  <input type="text" id="mat_m_a11" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hàng 1 Cột 2:</span>
-                  <input type="text" id="mat_m_a12" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="m">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hàng 2 Cột 1:</span>
-                  <input type="text" id="mat_m_a21" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="m">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hàng 2 Cột 2:</span>
-                  <input type="text" id="mat_m_a22" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1">
-                </div>
-              </div>
-            </div>
-
-            <div style="margin-bottom: 12px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px;">Giá trị tham số m</span>
-                <span id="mat_m_val" style="font-size: 12px; font-weight: 700; color: var(--primary-base); font-family: monospace;">m = 0.50</span>
-              </div>
-              <input type="range" id="mat_m_slider" min="-3" max="3" step="0.05" value="0.5" style="width: 100%; accent-color: var(--primary-base); cursor: pointer;">
-            </div>
-
-            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
-              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
-                <input type="checkbox" id="chkShowParallelogram" checked style="accent-color: var(--primary-base);">
-                <span>Vẽ diện tích hình bình hành cơ sở</span>
-              </label>
-              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
-                <input type="checkbox" id="chkShowBasisVectors" checked style="accent-color: var(--primary-base);">
-                <span>Vẽ vector cột cơ sở ảnh A e1 và A e2</span>
-              </label>
-            </div>
-
-            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button type="button" id="btnMatMPlay" class="btn primary" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">
-                <i class="ph ph-play" style="margin-right: 4px;"></i> Chạy quét m
-              </button>
-              <button type="button" id="btnMatMSolution" class="btn btn-solution" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">
-                Lời giải
-              </button>
-            </div>
-
-            <div id="result_mat_m_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
-          </div>
           <div id="form-topic4_gram_schmidt" class="extra-form">
-            <div style="margin-bottom: 10px;">
-              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Mẫu hệ vector</label>
-              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                <button type="button" id="presetGS45" class="btn-sub-pill active">Nghiêng 45 độ</button>
-                <button type="button" id="presetGSNarrow" class="btn-sub-pill">Góc nhọn hẹp</button>
-                <button type="button" id="presetGSGeneral" class="btn-sub-pill">Tổng quát</button>
-              </div>
-            </div>
+            
 
             <div style="margin-bottom: 10px;">
               <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Tọa độ hai vector ban đầu</label>
@@ -1401,13 +1408,56 @@
             <div id="result_gs_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
           </div>
           <div id="form-topic5_linear_transformation" class="extra-form">
-            <div style="margin-bottom: 10px;">
-              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Mẫu ma trận ánh xạ</label>
-              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                <button type="button" id="presetLTSingular" class="btn-sub-pill active">Suy biến chéo</button>
-                <button type="button" id="presetLTProject" class="btn-sub-pill">Chiếu lên Ox</button>
-                <button type="button" id="presetLTInvert" class="btn-sub-pill">Khả nghịch</button>
-                <button type="button" id="presetLTShear" class="btn-sub-pill">Trượt ngang</button>
+            
+
+            <!-- Bộ chọn nhanh Phép biến đổi hình học cơ bản -->
+            <div style="margin-bottom: 12px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin: 0;">Phép biến đổi hình học cơ bản</label>
+              </div>
+              
+              <div style="display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap;" id="lt_geo_presets">
+                <button type="button" class="btn-geo-preset active" data-preset="custom" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--primary-base, #3b82f6); color: #fff; cursor: pointer;">Tùy biến</button>
+                <button type="button" class="btn-geo-preset" data-preset="rotation" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); cursor: pointer;">Quay θ</button>
+                <button type="button" class="btn-geo-preset" data-preset="reflectX" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); cursor: pointer;">Lật Ox</button>
+                <button type="button" class="btn-geo-preset" data-preset="reflectY" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); cursor: pointer;">Lật Oy</button>
+                <button type="button" class="btn-geo-preset" data-preset="reflectOrigin" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); cursor: pointer;">Lật O</button>
+                <button type="button" class="btn-geo-preset" data-preset="scale" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); cursor: pointer;">Co giãn</button>
+                <button type="button" class="btn-geo-preset" data-preset="shear" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); cursor: pointer;">Trượt</button>
+              </div>
+
+              <!-- Điều khiển Quay góc θ -->
+              <div id="lt_rotation_ctrl" style="display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; padding: 6px 8px; margin-top: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="font-size: 11.5px; font-weight: 600; color: var(--fg);">Góc quay θ:</span>
+                  <span id="lt_rot_angle_val" style="font-size: 12px; font-weight: 700; color: var(--primary-base, #3b82f6);">0° (0 rad)</span>
+                </div>
+                <input type="range" id="lt_rot_slider" min="0" max="360" value="0" step="1" style="width: 100%; accent-color: var(--primary-base, #3b82f6); cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; font-size: 9.5px; color: var(--muted); margin-top: 2px;">
+                  <span>0°</span>
+                  <span>90°</span>
+                  <span>180°</span>
+                  <span>270°</span>
+                  <span>360°</span>
+                </div>
+              </div>
+
+              <!-- Điều khiển Co giãn k -->
+              <div id="lt_scale_ctrl" style="display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; padding: 6px 8px; margin-top: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="font-size: 11.5px; font-weight: 600; color: var(--fg);">Hệ số co giãn k:</span>
+                  <span id="lt_scale_val" style="font-size: 12px; font-weight: 700; color: var(--primary-base, #3b82f6);">1.5×</span>
+                </div>
+                <input type="range" id="lt_scale_slider" min="0.2" max="3.0" value="1.5" step="0.1" style="width: 100%; accent-color: var(--primary-base, #3b82f6); cursor: pointer;">
+              </div>
+
+              <!-- Điều khiển Trượt k -->
+              <div id="lt_shear_ctrl" style="display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; padding: 6px 8px; margin-top: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="font-size: 11.5px; font-weight: 600; color: var(--fg);">Độ trượt k:</span>
+                  <span id="lt_shear_val" style="font-size: 12px; font-weight: 700; color: var(--primary-base, #3b82f6);">1.0</span>
+                </div>
+                <input type="range" id="lt_shear_slider" min="-2.0" max="2.0" value="1.0" step="0.1" style="width: 100%; accent-color: var(--primary-base, #3b82f6); cursor: pointer;">
               </div>
             </div>
 
@@ -1433,45 +1483,43 @@
               </div>
             </div>
 
-            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
-              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;">
+              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
                 <input type="checkbox" id="chkLTShowKer" checked style="accent-color: var(--primary-base);">
-                <span>Hiển thị không gian hạt nhân</span>
+                <span>Không gian hạt nhân Ker(T)</span>
               </label>
-              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
                 <input type="checkbox" id="chkLTShowIm" checked style="accent-color: var(--primary-base);">
-                <span>Hiển thị không gian ảnh</span>
+                <span>Không gian ảnh Im(T)</span>
               </label>
-              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
                 <input type="checkbox" id="chkLTShowComp" checked style="accent-color: var(--primary-base);">
-                <span>Minh họa điểm co xẹp về gốc</span>
+                <span>Điểm co xẹp về gốc 0</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
+                <input type="checkbox" id="chkLTShowNori" style="accent-color: var(--primary-base);" onchange="if(window.App &amp;&amp; window.App.toggleNoriEntity &amp;&amp; (App.noriEntityActive !== this.checked)) window.App.toggleNoriEntity()">
+                <span>Vật thể Nori trong trường biến dạng</span>
               </label>
             </div>
 
-            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button type="button" id="btnLTInspect" class="btn primary" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; border-radius: 4px;">
-                Khảo sát
+            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+              <button type="button" id="btnLTInspect" class="btn primary" style="width: 100%; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">
+                Khảo sát ánh xạ tuyến tính
               </button>
-              <button type="button" id="btnLTMorph" class="btn btn-secondary" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; border-radius: 4px;">
-                <i class="ph ph-play" style="margin-right: 4px;"></i> Biến đổi lưới
-              </button>
-              <button type="button" id="btnLTSolution" class="btn btn-solution" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; border-radius: 4px;">
-                Lời giải
-              </button>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" id="btnLTMorph" class="btn btn-secondary" style="flex: 1; padding: 9px 8px; font-size: 12.5px; font-weight: 600; border-radius: 4px; white-space: nowrap;">
+                  <i class="ph ph-play" style="margin-right: 4px;"></i> Biến đổi lưới
+                </button>
+                <button type="button" id="btnLTSolution" class="btn btn-solution" style="flex: 1; padding: 9px 8px; font-size: 12.5px; font-weight: 600; border-radius: 4px; white-space: nowrap;">
+                  Lời giải
+                </button>
+              </div>
             </div>
 
             <div id="result_lt_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
           </div>
           <div id="form-topic6_eigen" class="extra-form">
-            <div style="margin-bottom: 10px;">
-              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Mẫu ma trận trị riêng</label>
-              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                <button type="button" id="presetEigenReal" class="btn-sub-pill active">Hai trị riêng thực</button>
-                <button type="button" id="presetEigenSym" class="btn-sub-pill">Đối xứng vuông góc</button>
-                <button type="button" id="presetEigenRot" class="btn-sub-pill">Phép quay phức</button>
-                <button type="button" id="presetEigenRepeated" class="btn-sub-pill">Trị riêng bội</button>
-              </div>
-            </div>
+            
 
             <div style="margin-bottom: 10px;">
               <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Các phần tử ma trận A</label>
@@ -1495,40 +1543,40 @@
               </div>
             </div>
 
-            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
-              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;">
+              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
                 <input type="checkbox" id="chkEigenShowLines" checked style="accent-color: var(--primary-base);">
-                <span>Vẽ đường thẳng không gian riêng</span>
+                <span>Đường thẳng không gian riêng</span>
               </label>
-              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
                 <input type="checkbox" id="chkEigenShowTrans" checked style="accent-color: var(--primary-base);">
-                <span>Hiển thị vector ảnh sau biến đổi</span>
+                <span>Vector ảnh sau biến đổi</span>
               </label>
-              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
+              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
                 <input type="checkbox" id="chkEigenShowUnitCircle" checked style="accent-color: var(--primary-base);">
-                <span>Hiển thị đường tròn đơn vị</span>
+                <span>Đường tròn đơn vị</span>
               </label>
             </div>
 
-            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button type="button" id="btnEigenCompute" class="btn primary" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; border-radius: 4px;">
-                Khảo sát
+            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+              <button type="button" id="btnEigenCompute" class="btn primary" style="width: 100%; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">
+                Khảo sát trị riêng &amp; vector riêng
               </button>
-              <button type="button" id="btnEigenSweep" class="btn btn-secondary" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; border-radius: 4px;">
-                <i class="ph ph-compass" style="margin-right: 4px;"></i> Quét hướng
-              </button>
-              <button type="button" id="btnEigenSolution" class="btn btn-solution" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; border-radius: 4px;">
-                Lời giải
-              </button>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" id="btnEigenSweep" class="btn btn-secondary" style="flex: 1; padding: 9px 8px; font-size: 12.5px; font-weight: 600; border-radius: 4px; white-space: nowrap;">
+                  <i class="ph ph-compass" style="margin-right: 4px;"></i> Quét hướng
+                </button>
+                <button type="button" id="btnEigenSolution" class="btn btn-solution" style="flex: 1; padding: 9px 8px; font-size: 12.5px; font-weight: 600; border-radius: 4px; white-space: nowrap;">
+                  Lời giải
+                </button>
+              </div>
             </div>
 
             <div id="result_eigen_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
-          </div>
-          <div id="form-topic-preview" class="extra-form">
-            <div id="topicPreviewContent" style="font-size: 12.5px; line-height: 1.5; color: var(--fg);"></div>
-          </div>
+
         </div>
       </div>
+    </div>
 
       <div class="card section-create" id="card-create">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -1546,53 +1594,127 @@
 
           <div id="myCustomMenu" class="custom-menu-dropdown">
 
-            <div class="menu-item" onclick="insertLatex('\\sqrt{#0}')">
-              <span>Căn bậc 2</span> <span class="latex-preview">√x</span>
-            </div>
-            <div class="menu-item" onclick="insertLatex('\\sqrt[#?]{#0}')">
-              <span>Căn bậc n</span> <span class="latex-preview">ⁿ√x</span>
-            </div>
-
-            <hr style="margin: 5px 0; border-top: 1px solid #eee;">
-
-            <div class="menu-item" onclick="insertLatex('\\sin(#0)')">
-              <span>Sin</span> <span class="latex-preview">sin</span>
-            </div>
-            <div class="menu-item" onclick="insertLatex('\\cos(#0)')">
-              <span>Cos</span> <span class="latex-preview">cos</span>
-            </div>
-            <div class="menu-item" onclick="insertLatex('\\tan(#0)')">
-              <span>Tan</span> <span class="latex-preview">tan</span>
-            </div>
-            <div class="menu-item" onclick="insertLatex('\\cot(#0)')">
-              <span>Cot</span> <span class="latex-preview">cot</span>
-            </div>
-
-            <hr style="margin: 5px 0; border-top: 1px solid #eee;">
-
-            <div class="menu-item" onclick="insertLatex('\\log_{#?}(#0)')">
-              <span>Logarit cơ số a</span> <span class="latex-preview">logₐ</span>
-            </div>
-            <div class="menu-item" onclick="insertLatex('\\ln(#0)')">
-              <span>Logarit tự nhiên</span> <span class="latex-preview">ln</span>
+            <!-- 1. Căn & Lũy thừa -->
+            <div class="menu-group-item" data-group="roots">
+              <div class="menu-group-header">
+                <span class="group-title">Căn & Lũy thừa</span>
+                <span class="group-arrow"><i class="ph ph-caret-right"></i></span>
+              </div>
+              <div class="menu-sub-flyout">
+                <div class="menu-item" onclick="insertLatex('\\sqrt{#0}')">
+                  <span>Căn bậc 2</span> <span class="latex-preview">√x</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('cbrt(#0)')">
+                  <span>Căn bậc 3</span> <span class="latex-preview">∛x</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('root(#?, #0)')">
+                  <span>Căn bậc n</span> <span class="latex-preview">ⁿ√x</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('^{(#0)}')">
+                  <span>Lũy thừa mũ</span> <span class="latex-preview">xⁿ</span>
+                </div>
+              </div>
             </div>
 
-            <hr style="margin: 5px 0; border-top: 1px solid #eee;">
-
-            <div class="menu-item" onclick="insertLatex('\\pi')">
-              <span>Số Pi</span> <span class="latex-preview">π</span>
+            <!-- 2. Lượng giác -->
+            <div class="menu-group-item" data-group="trig">
+              <div class="menu-group-header">
+                <span class="group-title">Lượng giác</span>
+                <span class="group-arrow"><i class="ph ph-caret-right"></i></span>
+              </div>
+              <div class="menu-sub-flyout">
+                <div class="sub-section-title">Cơ bản</div>
+                <div class="menu-item" onclick="insertLatex('\\sin(#0)')">
+                  <span>Sin</span> <span class="latex-preview">sin</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('\\cos(#0)')">
+                  <span>Cos</span> <span class="latex-preview">cos</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('\\tan(#0)')">
+                  <span>Tan</span> <span class="latex-preview">tan</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('\\cot(#0)')">
+                  <span>Cot</span> <span class="latex-preview">cot</span>
+                </div>
+                <div class="sub-section-title">Góc & Lượng giác ngược</div>
+                <div class="menu-item" onclick="insertLatex('\\arccos(#0)')">
+                  <span>Arccos (Góc vector)</span> <span class="latex-preview">arccos</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('\\arcsin(#0)')">
+                  <span>Arcsin</span> <span class="latex-preview">arcsin</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('\\arctan(#0)')">
+                  <span>Arctan</span> <span class="latex-preview">arctan</span>
+                </div>
+                <div class="sub-section-title">Hyperbolic</div>
+                <div class="menu-item" onclick="insertLatex('sinh(#0)')">
+                  <span>Sinh</span> <span class="latex-preview">sinh</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('cosh(#0)')">
+                  <span>Cosh</span> <span class="latex-preview">cosh</span>
+                </div>
+              </div>
             </div>
-            <div class="menu-item" onclick="insertLatex('e')">
-              <span>Số e</span> <span class="latex-preview">e</span>
+
+            <!-- 3. Logarit -->
+            <div class="menu-group-item" data-group="logs">
+              <div class="menu-group-header">
+                <span class="group-title">Logarit</span>
+                <span class="group-arrow"><i class="ph ph-caret-right"></i></span>
+              </div>
+              <div class="menu-sub-flyout">
+                <div class="menu-item" onclick="insertLatex('\\log_{#?}(#0)')">
+                  <span>Logarit cơ số a (tự chọn)</span> <span class="latex-preview">logₐ</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('\\log_{2}(#0)')">
+                  <span>Logarit cơ số 2</span> <span class="latex-preview">log₂</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('\\log_{10}(#0)')">
+                  <span>Logarit cơ số 10</span> <span class="latex-preview">log₁₀</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('\\ln(#0)')">
+                  <span>Logarit tự nhiên (e)</span> <span class="latex-preview">ln</span>
+                </div>
+              </div>
             </div>
 
-            <hr style="margin: 5px 0; border-top: 1px solid #eee;">
-
-            <div class="menu-item" onclick="insertLatex('t')">
-              <span>Tham số t</span> <span class="latex-preview">t</span>
-            </div>
-            <div class="menu-item" onclick="insertLatex('m')">
-              <span>Tham số m</span> <span class="latex-preview">m</span>
+            <!-- 4. Hằng số & Tham số -->
+            <div class="menu-group-item" data-group="constants">
+              <div class="menu-group-header">
+                <span class="group-title">Hằng số & Tham số</span>
+                <span class="group-arrow"><i class="ph ph-caret-right"></i></span>
+              </div>
+              <div class="menu-sub-flyout">
+                <div class="sub-section-title">Hằng số toán học</div>
+                <div class="menu-item" onclick="insertLatex('\\pi')">
+                  <span>Số Pi</span> <span class="latex-preview">π</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('e')">
+                  <span>Số Euler (e)</span> <span class="latex-preview">e</span>
+                </div>
+                <div class="sub-section-title">Tham số biến thiên</div>
+                <div class="menu-item" onclick="insertLatex('t')">
+                  <span>Tham số t</span> <span class="latex-preview">t</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('m')">
+                  <span>Tham số m</span> <span class="latex-preview">m</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('u')">
+                  <span>Tham số u</span> <span class="latex-preview">u</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('v')">
+                  <span>Tham số v</span> <span class="latex-preview">v</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('x')">
+                  <span>Tham số x</span> <span class="latex-preview">x</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('y')">
+                  <span>Tham số y</span> <span class="latex-preview">y</span>
+                </div>
+                <div class="menu-item" onclick="insertLatex('z')">
+                  <span>Tham số z</span> <span class="latex-preview">z</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1601,9 +1723,6 @@
         <div id="vecInputPreviewWrap" class="vec-preview-box" style="display: none;">
           <span class="vec-preview-label">Công thức:</span>
           <div id="vecInputPreview" class="vec-preview-katex"></div>
-          <button type="button" id="vecPreviewZoomBtn" class="vec-preview-zoom-btn" title="Phóng to công thức" onclick="App.togglePreviewZoom && App.togglePreviewZoom()">
-            <i class="ph ph-magnifying-glass-plus" id="vecPreviewZoomIcon"></i>
-          </button>
         </div>
 
         <div class="row" style="margin-top:8px">
@@ -1617,6 +1736,8 @@
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px;">
           <label style="margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px;">Danh sách vector</label>
         </div>
+
+        <div id="masterParamBar" style="display: none !important;"></div>
         
         <div class="search-box-modern">
             <i class="ph ph-magnifying-glass search-icon"></i>
@@ -1685,21 +1806,71 @@
               <i class="ph ph-arrows-counter-clockwise"></i>
             </button>
 
+            <!-- Segment 4b: Bật/Tắt thực thể Nori trong không gian 2D -->
+            <button type="button" id="btnNoriEntity" class="hud-btn" title="Bật/Tắt thực thể Nori trong mặt phẳng 2D" onclick="if(window.App &amp;&amp; window.App.toggleNoriEntity) window.App.toggleNoriEntity()">
+              <i class="ph ph-paw-print"></i>
+            </button>
+
             <!-- Segment 5: Menu Tùy chọn Canvas -->
             <div class="hud-dropdown-wrap" id="canvasMenuContainer">
               <button type="button" id="canvasMenuBtn" class="hud-btn" title="Tùy chọn không gian &amp; đồ họa">
                 <i class="ph ph-sliders-horizontal"></i>
               </button>
               <div class="hud-dropdown-menu" id="canvasMenuDropdown">
-                <div class="hud-menu-header">Hoạt họa & Đồ họa</div>
-                <div class="hud-menu-toggle-row" id="animToggleRow" onclick="document.getElementById('animToggle').click()">
-                  <span class="hud-menu-item-text">Hoạt họa phép tính</span>
-                  <label class="switch" style="margin: 0; width: 32px; height: 18px; pointer-events: none;">
-                    <input type="checkbox" id="animToggle" checked>
-                    <span class="slider round" style="border-radius: 18px;"></span>
+                <!-- 1. HIỂN THỊ ĐỒ THỊ -->
+                <div class="hud-menu-header">Hiển thị đồ thị</div>
+                <div class="hud-menu-select-row">
+                  <span class="hud-menu-item-text">Lưới tọa độ</span>
+                  <select id="settingGridMode" class="hud-select">
+                    <option value="full">Lưới đầy đủ</option>
+                    <option value="major">Chỉ lưới chính</option>
+                    <option value="none">Tắt lưới</option>
+                  </select>
+                </div>
+                <div class="hud-menu-slider-row">
+                  <div class="hud-menu-slider-header">
+                    <span class="hud-menu-item-text">Tương phản lưới</span>
+                    <span class="hud-menu-slider-val" id="settingGridContrastVal">50%</span>
+                  </div>
+                  <input type="range" id="settingGridContrastSlider" class="hud-range-slider" min="0" max="100" value="50" step="5">
+                </div>
+                <div class="hud-menu-select-row">
+                  <span class="hud-menu-item-text">Nhãn vector</span>
+                  <select id="settingLabelMode" class="hud-select">
+                    <option value="name">Chỉ tên vector</option>
+                    <option value="both">Tên &amp; Tọa độ</option>
+                    <option value="none">Tắt nhãn</option>
+                  </select>
+                </div>
+                <div class="hud-menu-toggle-row" id="settingAxesRow" onclick="document.getElementById('settingShowAxes').click()">
+                  <span class="hud-menu-item-text">Trục tọa độ</span>
+                  <label class="hud-switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="settingShowAxes" checked>
+                    <span class="hud-switch-track"></span>
                   </label>
                 </div>
                 <div class="hud-menu-divider"></div>
+
+                <!-- 2. HOẠT HỌA & ĐỒ HỌA -->
+                <div class="hud-menu-header">Hoạt họa & Đồ họa</div>
+                <div class="hud-menu-select-row">
+                  <span class="hud-menu-item-text">Tiêu điểm vector</span>
+                  <select id="settingHaloStyle" class="hud-select">
+                    <option value="precision_reticle" selected>Tâm điểm tọa độ</option>
+                    <option value="academic_aura">Quầng sáng đồng màu</option>
+                    <option value="soft_elevation">Đổ bóng mờ</option>
+                  </select>
+                </div>
+                <div class="hud-menu-toggle-row" id="animToggleRow" onclick="document.getElementById('animToggle').click()">
+                  <span class="hud-menu-item-text">Hoạt họa phép tính</span>
+                  <label class="hud-switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="animToggle" checked>
+                    <span class="hud-switch-track"></span>
+                  </label>
+                </div>
+                <div class="hud-menu-divider"></div>
+
+                <!-- 3. DỮ LIỆU PHIÊN LÀM VIỆC -->
                 <div class="hud-menu-header">Dữ liệu phiên làm việc</div>
                 <button type="button" class="hud-menu-item" onclick="if(window.App && window.App.SessionManager) window.App.exportSession()">
                   <i class="ph ph-cloud-arrow-down"></i>
@@ -1715,13 +1886,20 @@
         </div>
       <div id="viewer">
         <canvas id="canvas2d"></canvas>
+        <div id="labels2dOverlay" class="labels-2d-overlay" aria-hidden="true"></div>
         <div id="threeLayer" tabindex="0" aria-label="3D viewer"></div>
       </div>
       
       <!-- PAPER MODE CANVAS -->
       <div id="paperWrap" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; box-sizing: border-box; background: var(--bg-base); z-index: 50; overflow-y: auto; padding: 80px 40px 40px;">
         <div class="paper-container" style="max-width: 1000px; margin: 0 auto; background: var(--bg-card); min-height: 800px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); padding: 40px; border: 1px solid var(--border-strong);">
-          <input type="text" id="paperTitle" placeholder="Tiêu đề phiên tính toán (Ví dụ: Bài tập đại số)..." style="width: 100%; font-size: 24px; font-weight: bold; border: none; background: transparent; color: var(--text-main); margin-bottom: 20px; outline: none; border-bottom: 2px dashed var(--border-strong); padding-bottom: 10px; font-family: var(--font-ui);">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; border-bottom: 2px dashed var(--border-strong); padding-bottom: 12px;">
+            <input type="text" id="paperTitle" placeholder="Tiêu đề phiên tính toán (Ví dụ: Bài tập đại số)..." style="flex: 1; font-size: 24px; font-weight: bold; border: none; background: transparent; color: var(--text-main); outline: none; font-family: var(--font-ui);">
+            <button type="button" id="btnClearPaperTop" class="hud-btn" style="width: auto; height: 32px; padding: 0 12px; gap: 6px; font-size: 13px; font-weight: 600; border: 1px solid var(--border-subtle); border-radius: 4px; color: #ef4444; background: rgba(239, 68, 68, 0.08); cursor: pointer;" title="Xóa toàn bộ lịch sử ghi chép">
+              <i class="ph ph-trash" style="font-size: 15px;"></i>
+              <span>Xóa sổ tay</span>
+            </button>
+          </div>
           <div id="paperLogArea" style="font-size: 16px; line-height: 1.8; color: var(--text-main); font-family: var(--font-academic);">
             <div style="text-align: center; color: var(--text-muted); margin-top: 100px; font-style: italic; font-family: var(--font-sans);">
               <i class="ph ph-pen-nib" style="font-size: 32px; margin-bottom: 15px; opacity: 0.5;"></i><br>
@@ -1780,12 +1958,15 @@
   <script src="js/app/logic/tasks_controller/coord_controller.js"></script>
 
   <script src="js/app/ui/tasks_generator/basis_generator.js"></script>
-
   <script src="js/app/logic/tasks_controller/basis_controller.js"></script>
+
+  <script src="js/app/ui/tasks_generator/indep_generator.js"></script>
+  <script src="js/app/ui/tasks_generator/rank_generator.js"></script>
 
   <script src="js/app/playback/animator.js"></script>
   <script src="js/app/logic/logger.js"></script>
   <script src="js/app/logic/vector_controller.js"></script>
+  <script src="js/app/logic/param_master_controller.js"></script>
   <script src="js/app/logic/gauss_steps.js"></script>
   <script src="js/viewers/viewer2D.js"></script>
 
@@ -1804,6 +1985,7 @@
 
   <script src="js/app/playback/operation_animation.js"></script>
   <script src="./js/app/playback/basis_animation.js"></script>
+  <script src="./js/app/playback/coord_animation.js"></script>
   <script src="js/app/playback/linear_transform.js"></script>
   <script src="js/app/bootstrap.js"></script>
   <!-- 7 Topics Modules Registry & Topic Handlers -->
@@ -1816,6 +1998,7 @@
   <script src="js/app/modules/topics/topic5_linear_transformations.js"></script>
   <script src="js/app/modules/topics/topic6_eigenvalues_eigenvectors.js"></script>
   <script src="js/app/modules/topics/topic7_quadratic_forms_conics.js"></script>
+  <script src="js/app/modules/topics/core_problems_engine.js"></script>
 
 
 
@@ -1850,62 +2033,178 @@
     // Hàm chèn LaTeX vào ô MathLive đang active (Dùng chung cho Vector và Ma Trận)
     // Hàm chèn công thức vào ô nhập đang active (Dùng chung cho cả ô Text và MathLive)
     window.insertLatex = function (latex) {
-      const mf = window.activeMathField || document.getElementById('vectorInput');
+      let mf = window.activeMathField;
+      if (!mf || !document.body.contains(mf)) {
+        const matrixTabActive = document.getElementById('btnSegmentMatrix')?.classList.contains('active');
+        if (matrixTabActive) {
+          mf = document.querySelector('#matrixCreateGrid input, #matrixCreateGrid math-field');
+        } else {
+          mf = document.getElementById('vectorInput');
+        }
+      }
       if (mf) {
         if (typeof mf.executeCommand === "function") {
           mf.executeCommand(['insert', latex]);
         } else if (typeof mf.setRangeText === "function") {
-          let text = latex
-            .replace(/\\sqrt\[#\?\]\{#0\}/g, "cbrt()")
-            .replace(/\\sqrt\{#0\}/g, "sqrt()")
-            .replace(/\\log_\{#\?\}\(#0\)/g, "log()")
-            .replace(/\\ln\(#0\)/g, "ln()")
-            .replace(/\\(sin|cos|tan|cot)\(#0\)/g, "$1()")
-            .replace(/\\pi/g, "pi")
-            .replace(/\\/g, "");
+          let text = "";
+          let selectStartOffset = null;
+          let selectEndOffset = null;
+
+          if (latex === 'root(#?, #0)' || latex === '\\sqrt[#?]{#0}') {
+            text = "root(n, )";
+            selectStartOffset = 5; // select 'n'
+            selectEndOffset = 6;
+          } else if (latex === '\\sqrt{#0}') {
+            text = "sqrt()";
+            selectStartOffset = 5;
+            selectEndOffset = 5;
+          } else if (latex === 'cbrt(#0)') {
+            text = "cbrt()";
+            selectStartOffset = 5;
+            selectEndOffset = 5;
+          } else if (latex === '^{(#0)}' || latex === '^()') {
+            text = "^()";
+            selectStartOffset = 2;
+            selectEndOffset = 2;
+          } else if (latex === '\\log_{#?}(#0)') {
+            text = "log_a()";
+            selectStartOffset = 4; // select 'a'
+            selectEndOffset = 5;
+          } else if (latex === '\\log_{2}(#0)') {
+            text = "log_2()";
+            selectStartOffset = 6;
+            selectEndOffset = 6;
+          } else if (latex === '\\log_{10}(#0)') {
+            text = "log10()";
+            selectStartOffset = 6;
+            selectEndOffset = 6;
+          } else if (latex === '\\ln(#0)') {
+            text = "ln()";
+            selectStartOffset = 3;
+            selectEndOffset = 3;
+          } else if (/^\\?(sin|cos|tan|cot|sinh|cosh|tanh|asin|acos|atan|arccos|arcsin|arctan)\(#0\)$/.test(latex)) {
+            const fnName = latex.replace(/\\|\(#0\)/g, "");
+            text = fnName + "()";
+            selectStartOffset = text.length - 1;
+            selectEndOffset = text.length - 1;
+          } else if (latex === '\\pi') {
+            text = "pi";
+          } else {
+            text = latex.replace(/\\/g, "");
+          }
+
           const start = mf.selectionStart !== null && mf.selectionStart !== undefined ? mf.selectionStart : mf.value.length;
           const end = mf.selectionEnd !== null && mf.selectionEnd !== undefined ? mf.selectionEnd : mf.value.length;
           mf.setRangeText(text, start, end, 'end');
-          if (text.endsWith("()")) {
-            mf.setSelectionRange(start + text.length - 1, start + text.length - 1);
+          if (selectStartOffset !== null && selectEndOffset !== null) {
+            mf.setSelectionRange(start + selectStartOffset, start + selectEndOffset);
           }
         }
         mf.focus();
+        mf.dispatchEvent(new Event('input', { bubbles: true }));
         if (typeof App.updateVectorInputPreview === "function") {
           App.updateVectorInputPreview();
         }
       }
       
       // Đóng tất cả các menu đang mở
-      document.querySelectorAll('.vec-dropdown.show, .custom-menu-dropdown.show').forEach(menu => {
-        menu.classList.remove('show');
-      });
+      const menu = document.getElementById('myCustomMenu');
+      if (menu) menu.style.display = 'none';
+      const matMenu = document.getElementById('matrixCustomMenu');
+      if (matMenu) matMenu.style.display = 'none';
+      document.querySelectorAll('.menu-group-item.is-open').forEach(el => el.classList.remove('is-open'));
+      document.querySelectorAll('.vec-dropdown.show').forEach(m => m.classList.remove('show'));
     };
 
-    // Xử lý sự kiện Bật/Tắt menu
+    // Xử lý sự kiện Bật/Tắt menu phân tầng
     document.addEventListener('DOMContentLoaded', () => {
       const btn = document.getElementById('myMenuBtn');
       const menu = document.getElementById('myCustomMenu');
 
       if (btn && menu) {
-        // 1. Bấm nút thì hiện/ẩn
+        // 1. Bấm nút 3 gạch thì hiện/ẩn
         btn.addEventListener('click', (e) => {
-          e.stopPropagation(); // Không cho sự kiện lan ra ngoài
-          // 1. Tìm tất cả menu con trong danh sách và đóng lại
+          e.stopPropagation();
           document.querySelectorAll('.vec-dropdown').forEach(d => d.classList.remove('show'));
-          // 2. Reset z-index của các dòng
           document.querySelectorAll('.vec-item').forEach(it => it.classList.remove('active-z'));
-          // 3. [QUAN TRỌNG] Reset padding của khung danh sách về 0 (để nó co lại)
           const list = document.getElementById("vectorList");
           if (list) list.style.paddingBottom = "0px";
           const isHidden = menu.style.display === 'none' || menu.style.display === '';
-          menu.style.display = isHidden ? 'block' : 'none';
+          if (isHidden) {
+            if (menu.parentElement !== document.body) {
+              document.body.appendChild(menu);
+            }
+            const updateMenuPos = () => {
+              const btnRect = btn.getBoundingClientRect();
+              const menuWidth = 180;
+              menu.style.position = 'fixed';
+              menu.style.right = 'auto';
+              menu.style.width = `${menuWidth}px`;
+              menu.style.top = `${btnRect.bottom + 4}px`;
+              let leftPos = btnRect.left;
+              if (leftPos + menuWidth > window.innerWidth - 10) {
+                leftPos = Math.max(10, window.innerWidth - menuWidth - 10);
+              }
+              menu.style.left = `${leftPos}px`;
+              menu.style.zIndex = '999999';
+            };
+            menu.style.display = 'block';
+            updateMenuPos();
+            menu.querySelectorAll('.menu-group-item.is-open').forEach(el => el.classList.remove('is-open'));
+          } else {
+            menu.style.display = 'none';
+            menu.querySelectorAll('.menu-group-item.is-open').forEach(el => el.classList.remove('is-open'));
+          }
         });
 
-        // 2. Bấm ra ngoài thì tắt menu
+        // Tự động bám theo nút khi cuộn trang
+        window.addEventListener('scroll', () => {
+          if (menu && menu.style.display === 'block') {
+            const btnRect = btn.getBoundingClientRect();
+            const menuWidth = 180;
+            menu.style.right = 'auto';
+            menu.style.width = `${menuWidth}px`;
+            menu.style.top = `${btnRect.bottom + 4}px`;
+            let leftPos = btnRect.left;
+            if (leftPos + menuWidth > window.innerWidth - 10) {
+              leftPos = Math.max(10, window.innerWidth - menuWidth - 10);
+            }
+            menu.style.left = `${leftPos}px`;
+          }
+        }, { capture: true, passive: true });
+
+        // 2. Click vào header nhóm để toggle accordion (hỗ trợ mobile và desktop click)
+        menu.querySelectorAll('.menu-group-header').forEach(header => {
+          header.addEventListener('click', (e) => {
+            const parent = header.closest('.menu-group-item');
+            if (parent) {
+              const wasOpen = parent.classList.contains('is-open');
+              menu.querySelectorAll('.menu-group-item.is-open').forEach(el => el.classList.remove('is-open'));
+              if (!wasOpen) parent.classList.add('is-open');
+              e.stopPropagation();
+            }
+          });
+        });
+
+        // Hỗ trợ rê chuột (hover) mượt mà, giữ trạng thái mở tầng 2 tự nhiên không bị tắt đột ngột
+        menu.querySelectorAll('.menu-group-item').forEach(item => {
+          item.addEventListener('mouseenter', () => {
+            menu.querySelectorAll('.menu-group-item.is-open').forEach(el => {
+              if (el !== item) el.classList.remove('is-open');
+            });
+            item.classList.add('is-open');
+          });
+        });
+
+        menu.addEventListener('mouseleave', () => {
+          menu.querySelectorAll('.menu-group-item.is-open').forEach(el => el.classList.remove('is-open'));
+        });
+
+        // 3. Bấm ra ngoài thì tắt menu
         document.addEventListener('click', (e) => {
-          if (!menu.contains(e.target) && e.target !== btn) {
+          if (!menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
             menu.style.display = 'none';
+            menu.querySelectorAll('.menu-group-item.is-open').forEach(el => el.classList.remove('is-open'));
           }
         });
       }

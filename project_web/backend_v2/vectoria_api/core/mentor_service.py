@@ -24,11 +24,16 @@ class MentorService:
     Bạn TUYỆT ĐỐI KHÔNG PHẢI là giáo viên, gia sư nghiêm khắc hay giám thị. Tuyệt đối KHÔNG xưng 'thầy - em', 'cô - em'.
     Bạn xưng hô tự nhiên như bạn thân cùng bàn: 'Khoa ơi,', 'Bạn ơi,', xưng 'tớ - bạn' hoặc 'mình - bạn'.
 
+    ĐẶC THÙ HỆ THỐNG (BẮT BUỘC KHẮC CỐT GHI TÂM):
+    - ĐÂY LÀ HỆ THỐNG BÀI TẬP TRẮC NGHIỆM KHÁCH QUAN 4 PHƯƠNG ÁN (A, B, C, D).
+    - TUYỆT ĐỐI CẤM bịa ra các câu mang hơi hướng TỰ LUẬN như: 'bước biến đổi logic', 'lập luận từ đầu tới đuôi', 'bấm máy tính rút gọn', 'quên dấu trừ ở bước tính', 'trình bày lời giải'...
+    - Hãy phản ánh chính xác hành vi TRẮC NGHIỆM của người học: đắn đo phân vân đổi qua đổi lại giữa hai phương án A và B rồi chốt nhầm, chọn quá vội khi chưa kịp quét hết 4 phương án, dính bẫy phương án mồi (distractor trap: bẫy đổi dấu kết quả, bẫy nghịch đảo ma trận, bẫy điều kiện định thức), hoặc bấm nộp chớp nhoáng như bốc thăm may rủi.
+
     NGUYÊN TẮC VĂN PHONG VÀ CÁ TÍNH (BẮT BUỘC TUÂN THỦ):
     1. VÍ VON ĐỜI THỰC GẦN GŨI SINH VIÊN (ANTI-CRINGE):
        - TUYỆT ĐỐI CẤM gượng ép chơi chữ hay nhồi nhét thuật ngữ toán học gượng gạo (CẤM: 'niềm tin khả nghịch', 'không gian co cụm sự tự tin', 'ma trận tình bạn').
-       - Hãy dùng các hình ảnh đời thường mà sinh viên đại học ai cũng gặp: ly trà sữa phân vân đường đá, điện thoại tụt pin vì cày lâu, trượt vỏ chuối vì quên dấu trừ, bóc tách bài toán như xếp hình lego, nín thở chờ đáp án, cú đêm 2h sáng giường nệm gọi tên.
-       - Trêu nhẹ nhưng duyên và ấm lòng: 'Ủa bạn ơi, nãy là bạn đọc đề hay đề đọc bạn vậy nè?', 'Hú hồn chim én, nãy tớ nín thở xem bạn bấm luôn á!', 'Ú òa! Bất ngờ chưa!'.
+       - Dùng các hình ảnh sinh viên đại học gần gũi: ly trà sữa phân vân đường đá, điện thoại tụt pin vì cày lâu, phân vân đứng trước hai lựa chọn 50/50, bốc thăm may rủi, cú đêm 2h sáng giường nệm gọi tên.
+       - Trêu nhẹ nhưng duyên và ấm lòng: 'Ủa bạn ơi, nãy là bạn đọc đề hay đề đọc bạn vậy nè?', 'Hú hồn chim én, nãy tớ nín thở xem bạn chốt đáp án luôn á!', 'Ú òa! Bất ngờ chưa!'.
     2. TUYỆT ĐỐI CẤM THUẬT NGỮ NỘI BỘ VÀ TỪ SÁO RỖNG:
        - Cấm các biến nội bộ: 'RTE', 'l_z', 'BKT', 'theta', 'EC-1', 'flag', 'ngưỡng đọc hiểu', 'điều kiện biên'...
        - Cấm sáo ngữ rẻ tiền: 'nâng tầm', 'kỷ nguyên mới', 'thay đổi cuộc chơi', 'bộ não sắc sảo', 'êm ru', 'lên đỉnh'.
@@ -261,63 +266,63 @@ class MentorService:
         # Case 6: Procedural Trap (EC-2)
         if "EC-2_PROCEDURAL_TRAP" in case_codes:
             openers = [
-                f"{salutation}mấy câu tính toán công thức của bài {topic_title} bạn bấm máy vèo vèo chuẩn không cần chỉnh luôn, tớ vỗ tay rào rào nè!",
-                f"{salutation}kỹ năng tính toán của bạn ở bài {topic_title} mượt mà đỉnh cao luôn á, bấm số nhanh như chớp!",
-                f"{salutation}tớ công nhận bạn làm mấy bước biến đổi đại số của bài {topic_title} rất điêu luyện luôn nè!"
+                f"{salutation}mấy câu tính số cụ thể của bài {topic_title} bạn chọn đáp án chuẩn xác và dứt khoát ghê luôn, tớ vỗ tay rào rào nè!",
+                f"{salutation}kỹ năng xử lý các câu hỏi số liệu ở bài {topic_title} mượt mà đỉnh cao luôn á, chốt đáp án nhanh như chớp!",
+                f"{salutation}tớ thấy mấy câu hỏi tính ma trận tường minh của bài {topic_title} bạn chốt phương án cực kỳ ngọt ngào nè!"
             ]
             observations = [
-                "Cơ mà hễ đụng tới bản chất lý thuyết là bạn hơi khựng lại xíu ha.",
-                "Nhưng mà khi gặp các câu hỏi xoay quanh ý nghĩa bản chất định lý thì bạn lại hơi bối rối một chút.",
-                "Mỗi khi đề bài hỏi sâu vào lý do vì sao có công thức đó, tức là đụng vào bản chất, thì bạn lại phân vân."
+                "Cơ mà hễ đề bài xoay sang hỏi bản chất lý thuyết định lý là các phương án lựa chọn làm mình hơi khựng lại xíu ha.",
+                "Nhưng mà khi gặp các câu hỏi trắc nghiệm xoay quanh ý nghĩa hình học của phép biến đổi thì mình lại hơi đắn đo một chút.",
+                "Mỗi khi người ra đề gài các phương án lựa chọn về điều kiện bản chất, tức là đụng vào cốt lõi định nghĩa, thì bạn lại phân vân."
             ]
             analogies = [
-                "Toán giống như lắp lego vậy á, ráp trơn tru nhưng phải hiểu khối nào chịu lực thì công trình mới vững được.",
-                "Giống như học lái xe biết nhấn ga nhấn phanh nhưng cũng cần hiểu luật giao thông thì mới an toàn trên đường dài á.",
-                "Tính toán là thanh kiếm, còn thấu hiểu bản chất mới là tấm khiên bảo vệ bạn trước mọi cạm bẫy của đề thi nha."
+                "Trắc nghiệm lý thuyết giống như đi tìm chìa khóa vạn năng vậy á, hiểu bản chất thì nhìn lướt qua là loại ngay 3 phương án nhiễu liền.",
+                "Giống như nhìn biển báo giao thông vậy, nhận diện đúng ký hiệu bản chất là tự tin chọn ngay không sợ bị gài bẫy.",
+                "Thuộc công thức tính là thanh kiếm, còn thấu hiểu bản chất hình học mới là tấm khiên giúp bạn tránh mọi phương án mồi nha."
             ]
             advices = [
-                f"Dành thêm chút thời gian nghía lại ý nghĩa hình học và bản chất của {topic_title}, bạn sẽ thấy bài toán thú vị hơn nhiều đó!",
-                f"Tụi mình cùng ngẫm lại bản chất lý thuyết của {topic_title} một xíu là tự tin cân đẹp mọi dạng bài liền à!",
-                f"Hiểu sâu bản chất định lý sẽ giúp bạn không bao giờ bị đánh lừa bởi bất kỳ đề bài biến tướng nào hết trơn!"
+                f"Dành thêm chút thời gian nghía lại ý nghĩa hình học của {topic_title}, bạn sẽ thấy các phương án bẫy rất dễ nhận diện đó!",
+                f"Tụi mình cùng ngẫm lại định nghĩa cốt lõi của {topic_title} một xíu là tự tin chọn trúng phóc phương án đúng liền à!",
+                f"Nắm chắc bản chất định lý sẽ giúp bạn quét sạch mọi phương án gây nhiễu của đề thi trắc nghiệm nhé!"
             ]
             return {
                 "mentor_speech": f"{random.choice(openers)} {random.choice(observations)} {random.choice(analogies)} {random.choice(advices)}",
                 "emotion_state": "ANALYTICAL_NEUTRAL",
                 "avatar_mood": "thoughtful",
                 "emotion_progression": ["wink", "thoughtful", "empathetic"],
-                "summary_reason": "Tính toán rất cừ nhưng cần củng cố thêm bản chất định lý.",
+                "summary_reason": "Chọn đúng các câu tính toán cụ thể nhưng còn phân vân ở phương án lý thuyết.",
                 "suggested_action": f"Xem lại ý nghĩa hình học của {topic_title} cùng Nori nhé."
             }
 
         # Case 7: Careless Slip (EC-8)
         if "EC-8_CARELESS_SLIP" in case_codes:
             openers = [
-                f"{salutation}trời ơi tiếc hùi hụi luôn á! Bài {topic_title} này bạn nắm chắc như lòng bàn tay rồi mà!",
-                f"{salutation}tớ ngồi cạnh xem mà tiếc đứt ruột luôn nè bạn ơi! Bài {topic_title} làm hay ơi là hay luôn!",
-                f"{salutation}xém chút nữa là ẵm trọn điểm tuyệt đối bài {topic_title} rồi á, tiếc quá chừng luôn!"
+                f"{salutation}trời ơi tiếc hùi hụi luôn á! Kiến thức bài {topic_title} này bạn nắm chắc như lòng bàn tay rồi mà!",
+                f"{salutation}tớ ngồi cạnh xem mà tiếc giùm bạn luôn nè! Bài {topic_title} này xém chút xíu nữa là ẵm trọn điểm tuyệt đối rồi á!",
+                f"{salutation}chỉ thiếu một tẹo may mắn nữa thôi là đạt điểm tối đa bài {topic_title} rồi, tiếc ghê luôn nè bạn ơi!"
             ]
             observations = [
-                "Bạn lập luận đâu ra đó chắc nịch từ đầu tới đuôi, mà khúc cuối trượt vỏ chuối vì nhầm dấu ở bước cộng trừ.",
-                "Phương pháp giải thì chuẩn chỉnh một trăm phần trăm, chỉ mỗi tội khúc bấm máy tính hay rút gọn lại sơ ý nhầm dấu một xíu.",
-                "Mọi bước biến đổi logic đều đỉnh chóp, chỉ vướng mỗi lỗi nhầm dấu số học làm rơi rớt điểm uổng ghê."
+                "Toàn bài bạn chọn đáp án siêu chuẩn và dứt khoát, chỉ có đúng một câu bị dính phải phương án bẫy mà người ra đề gài vào.",
+                "Chủ đề này bạn làm chủ kiến thức rất tốt, chỉ sơ ý chọn nhầm phương án mồi đối xứng dấu mà người ta cố tình đưa vào làm nhiễu.",
+                "Mọi câu hỏi khó bạn đều chọn đúng ngọt ngào, chỉ tiếc là có câu lướt qua hơi vội nên bấm trúng đáp án gài bẫy."
             ]
             analogies = [
-                "Coi như bài học xương máu nè, giống như dắt xe tới cổng nhà rồi mà quên gạt chân chống vậy á.",
-                "Đúng là ma trận hay số học thì dấu trừ luôn là kẻ thù số một của mọi sinh viên tụi mình ha.",
-                "Trượt vỏ chuối ngay trước vạch đích thế này cay cú ghê, nhưng lần sau cẩn thận là không ai qua mặt được bạn đâu."
+                "Người ra đề trắc nghiệm tinh quái lắm, luôn chuẩn bị sẵn một phương án sai chỉ khác đúng cái dấu trừ hay chiều đảo ngược để thử thách độ tinh mắt của tụi mình á.",
+                "Trắc nghiệm toán thì các phương án mồi luôn giăng bẫy rất ngọt, chỉ cần lơ là một nhịp là dễ bấm nhầm liền ha.",
+                "Như đi siêu thị chọn đúng món mình thích rồi mà lúc tính tiền lại cầm nhầm bao bì giống hệt vậy á."
             ]
             advices = [
-                "Lần sau trước khi bấm nộp bài, dành ra năm giây rà soát lại dấu cộng trừ là điểm mười nằm gọn trong tay rồi nha!",
-                "Nhớ kiểm tra kỹ dấu số học ở bước cuối cùng, bạn có đủ bản lĩnh để đạt điểm tối đa ở bài sau đó!",
-                "Khắc phục được nhầm dấu là bạn vô đối luôn, chuẩn bị tinh thần rinh trọn điểm mười nhé!"
+                "Lần sau trước khi chốt nộp bài, dành ra năm giây quét mắt đối chiếu lại các phương án gây nhiễu là điểm mười nằm gọn trong tay nha!",
+                "Chỉ cần để ý kỹ bẫy dấu ở các phương án lựa chọn, bạn dư sức rinh trọn điểm tối đa ở bài sau đó!",
+                "Rút kinh nghiệm để ý các đáp án gài bẫy là bạn vô đối luôn, chuẩn bị tinh thần đạt điểm mười nhé!"
             ]
             return {
                 "mentor_speech": f"{random.choice(openers)} {random.choice(observations)} {random.choice(analogies)} {random.choice(advices)}",
                 "emotion_state": "EMPATHETIC_ENCOURAGING",
                 "avatar_mood": "empathetic",
                 "emotion_progression": ["puzzled", "stern", "empathetic"],
-                "summary_reason": "Nắm chắc phương pháp, chỉ sơ suất ở bước tính toán số học.",
-                "suggested_action": "Rèn luyện thêm thói quen kiểm tra dấu số học trước khi hoàn thành."
+                "summary_reason": "Nắm chắc kiến thức, chỉ sơ suất chọn nhầm phương án gài bẫy gây nhiễu.",
+                "suggested_action": "Dành 5 giây đối chiếu các phương án mồi trước khi chốt đáp án nhé."
             }
 
         # Case 8: Repeated Attempt High Score (attempt_number >= 2 and total_score >= 8.0)

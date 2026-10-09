@@ -59,7 +59,7 @@
         }
 
         try {
-          const parsed = App.parseVectorExpr(`[${raw}]`);
+          const parsed = App.parseVectorExpr(`[${raw}]`, true);
           if (!parsed || parsed.length === 0 || isNaN(Number(parsed[0]))) {
             return null; // Không hợp lệ
           }
@@ -120,7 +120,10 @@
       isParametric: isParametric,
       vars: vars,
       paramVar: primaryVar,
+      activeAnimVars: Array.isArray(paramData.activeAnimVars) ? paramData.activeAnimVars : (vars.length ? [...vars] : [primaryVar]),
       scopeValues: scopeValues,
+      varRanges: paramData.varRanges || {},
+      varStates: paramData.varStates || {},
       paramVal: paramData.paramVal !== undefined ? paramData.paramVal : 1.0,
       initialParamVal: paramData.initialParamVal !== undefined ? paramData.initialParamVal : (paramData.paramVal !== undefined ? paramData.paramVal : 1.0),
       paramMin: paramData.paramMin !== undefined ? paramData.paramMin : -10.0,
@@ -154,7 +157,7 @@
             row.push(Array.isArray(v) ? (isNaN(v[0]) ? 0 : v[0]) : (isNaN(v) ? 0 : v));
           } else if (this.latexValues && this.latexValues[i] && this.latexValues[i][j]) {
             try {
-              const p = App.parseVectorExpr(`[${this.latexValues[i][j]}]`);
+              const p = App.parseVectorExpr(`[${this.latexValues[i][j]}]`, true);
               if (p && typeof p.fn === "function") {
                 const v = p.fn(sc);
                 row.push(Array.isArray(v) ? (isNaN(v[0]) ? 0 : v[0]) : (isNaN(v) ? 0 : v));
@@ -371,19 +374,94 @@
   // Cập nhật giá trị hiển thị trên thẻ ma trận
   App.updateSingleMatrixUI = function (item) {
     if (!item) return;
+
+    const activeVars = (Array.isArray(item.activeAnimVars) && item.activeAnimVars.length > 0)
+      ? item.activeAnimVars
+      : (item.vars && item.vars.length ? item.vars : [item.paramVar || "t"]);
+    const isMultiMode = activeVars.length > 1;
+
+    const curVar = item.paramVar || activeVars[0];
+    item.paramVar = curVar;
+
+    const varLbl = document.getElementById(`matParamVarLbl_${item.id}`);
+    if (varLbl) {
+      varLbl.textContent = `${curVar} =`;
+    }
+
     const valInp = document.getElementById(`matParamValInp_${item.id}`);
     if (valInp && document.activeElement !== valInp) {
-      valInp.value = Number(item.paramVal ?? 1.0).toFixed(2);
+      const curVal = (item.scopeValues && item.scopeValues[curVar] !== undefined)
+        ? item.scopeValues[curVar]
+        : (item.paramVal ?? 1.0);
+      valInp.value = Number(curVal).toFixed(2);
     }
     const slider = document.getElementById(`matParamSlider_${item.id}`);
     if (slider) {
-      slider.value = item.paramVal ?? 1.0;
+      const curVal = (item.scopeValues && item.scopeValues[curVar] !== undefined)
+        ? item.scopeValues[curVar]
+        : (item.paramVal ?? 1.0);
+      slider.value = curVal;
     }
     const playBtn = document.getElementById(`matParamPlay_${item.id}`);
     if (playBtn) {
       playBtn.className = "mat-param-btn mat-param-play" + (item.isAnimating ? " is-active" : "");
       playBtn.innerHTML = item.isAnimating ? '<i class="ph ph-pause"></i>' : '<i class="ph ph-play"></i>';
       playBtn.title = item.isAnimating ? "Tạm dừng" : "Chạy hoạt ảnh";
+    }
+
+    // Cập nhật các huy hiệu biến chạy đồng thời (multi-variable badges)
+    const multiBox = document.getElementById(`matParamMultiVals_${item.id}`);
+    if (multiBox) {
+      multiBox.style.display = isMultiMode ? "flex" : "none";
+      if (isMultiMode) {
+        const badges = multiBox.querySelectorAll(".mat-multi-badge");
+        if (badges.length === activeVars.length) {
+          activeVars.forEach((vName, idx) => {
+            const b = badges[idx];
+            const val = (item.scopeValues && item.scopeValues[vName] !== undefined)
+              ? Number(item.scopeValues[vName]).toFixed(2)
+              : (vName === curVar ? Number(item.paramVal).toFixed(2) : "1.00");
+            b.textContent = `${vName} = ${val}`;
+            b.classList.toggle("active", vName === curVar);
+          });
+        } else {
+          multiBox.innerHTML = "";
+          activeVars.forEach((vName) => {
+            const val = (item.scopeValues && item.scopeValues[vName] !== undefined)
+              ? Number(item.scopeValues[vName]).toFixed(2)
+              : (vName === curVar ? Number(item.paramVal).toFixed(2) : "1.00");
+            const isCur = (vName === curVar);
+            const badge = document.createElement("button");
+            badge.type = "button";
+            badge.className = "mat-multi-badge" + (isCur ? " active" : "");
+            badge.title = `Bấm để điều khiển biến ${vName} trên thanh trượt và ô nhập`;
+            badge.textContent = `${vName} = ${val}`;
+            badge.onclick = (e) => {
+              e.stopPropagation();
+              item.paramVar = vName;
+              if (item.varRanges && item.varRanges[vName]) {
+                item.paramMin = item.varRanges[vName].min;
+                item.paramMax = item.varRanges[vName].max;
+              }
+              if (item.scopeValues && item.scopeValues[vName] !== undefined) {
+                item.paramVal = item.scopeValues[vName];
+              }
+              const s = document.getElementById(`matParamSlider_${item.id}`);
+              if (s) {
+                s.min = item.paramInfinity ? -25 : (item.paramMin ?? -10.0);
+                s.max = item.paramInfinity ? 25 : (item.paramMax ?? 10.0);
+                s.value = item.paramVal;
+              }
+              const vl = document.getElementById(`matParamVarLbl_${item.id}`);
+              if (vl) vl.textContent = `${vName} =`;
+              const vi = document.getElementById(`matParamValInp_${item.id}`);
+              if (vi) vi.value = Number(item.paramVal).toFixed(2);
+              App.updateSingleMatrixUI(item);
+            };
+            multiBox.appendChild(badge);
+          });
+        }
+      }
     }
   };
 
@@ -415,6 +493,11 @@
     }
 
     App.updateSingleMatrixUI(item);
+
+    // Đồng bộ với MasterParamController trong chế độ link_names
+    if (window.App?.MasterParamController?.broadcastParamValue) {
+      window.App.MasterParamController.broadcastParamValue(item.paramVar || "t", num, "matrix", item.id);
+    }
 
     // Đồng bộ Live với LinearTransform
     if (window.App?.LinearTransform?.isActive?.()) {
@@ -497,10 +580,20 @@
     item.isAnimating = false;
     const defaultVal = item.initialParamVal !== undefined ? item.initialParamVal : 1.0;
     item.paramVal = defaultVal;
-    if (item.scopeValues && item.paramVar) {
-      item.scopeValues[item.paramVar] = defaultVal;
+    if (item.scopeValues) {
+      if (item.paramVar) item.scopeValues[item.paramVar] = defaultVal;
+      if (item.vars && Array.isArray(item.vars)) {
+        item.vars.forEach((v) => {
+          item.scopeValues[v] = defaultVal;
+        });
+      }
     }
     item.animDirection = 1;
+    if (item.varStates) {
+      Object.keys(item.varStates).forEach((k) => {
+        item.varStates[k].dir = 1;
+      });
+    }
     if (typeof item.evalMatrix === "function") {
       item.values = item.evalMatrix(defaultVal, item.scopeValues);
     }
@@ -548,26 +641,66 @@
       allItems.forEach((item) => {
         if (item.isParametric && item.isAnimating) {
           hasActive = true;
-          const min = item.paramInfinity ? -25 : (item.paramMin ?? -10.0);
-          const max = item.paramInfinity ? 25 : (item.paramMax ?? 10.0);
-          const span = max - min;
-          const dur = Math.max(0.5, item.duration ?? 4.0);
-          const speed = span / dur;
+          const varsToAnim = (item.activeAnimVars && item.activeAnimVars.length > 0)
+            ? item.activeAnimVars
+            : [item.paramVar || "t"];
 
-          let nextVal = (item.paramVal ?? 1.0) + (item.animDirection || 1) * speed * dt;
-          if (nextVal >= max) {
-            nextVal = max;
-            item.animDirection = -1;
-          } else if (nextVal <= min) {
-            nextVal = min;
-            item.animDirection = 1;
-          }
-          item.paramVal = nextVal;
-          if (item.scopeValues && item.paramVar) {
-            item.scopeValues[item.paramVar] = nextVal;
-          }
+          if (!item.varStates) item.varStates = {};
+          if (!item.varRanges) item.varRanges = {};
+
+          const isLockstep = (item.syncMode === "lockstep");
+
+          varsToAnim.forEach((vName, idx) => {
+            if (!item.varStates[vName]) {
+              const freqRatio = isLockstep ? 1.0 : (idx === 0 ? 1.0 : (idx === 1 ? 1.4142 : (idx === 2 ? 1.732 : 2.236)));
+              item.varStates[vName] = { dir: 1, speedRatio: freqRatio };
+            }
+            const vState = item.varStates[vName];
+            if (isLockstep) {
+              vState.speedRatio = 1.0;
+            }
+
+            let rangeObj = item.varRanges[vName];
+            if (!rangeObj) {
+              rangeObj = {
+                min: (idx === 0 ? (item.paramMin ?? -10.0) : -5.0),
+                max: (idx === 0 ? (item.paramMax ?? 10.0) : 5.0)
+              };
+              item.varRanges[vName] = rangeObj;
+            }
+
+            let vMin = Number(rangeObj.min);
+            let vMax = Number(rangeObj.max);
+            if (isNaN(vMin)) vMin = -10.0;
+            if (isNaN(vMax)) vMax = 10.0;
+            if (vMax <= vMin) vMax = vMin + 1.0;
+
+            const dur = Math.max(0.5, item.duration ?? 4.0);
+            const vSpan = vMax - vMin;
+            const vSpeed = (vSpan / dur) * (vState.dir || 1) * (vState.speedRatio || 1);
+
+            let curVal = (item.scopeValues && item.scopeValues[vName] !== undefined)
+              ? item.scopeValues[vName]
+              : (vName === item.paramVar ? (item.paramVal ?? 1.0) : (vMin + vSpan / 2));
+
+            let nextVVal = curVal + vSpeed * dt;
+            if (nextVVal >= vMax) {
+              nextVVal = vMax;
+              vState.dir = -1;
+            } else if (nextVVal <= vMin) {
+              nextVVal = vMin;
+              vState.dir = 1;
+            }
+
+            if (!item.scopeValues) item.scopeValues = {};
+            item.scopeValues[vName] = nextVVal;
+            if (vName === item.paramVar) {
+              item.paramVal = nextVVal;
+            }
+          });
+
           if (typeof item.evalMatrix === "function") {
-            item.values = item.evalMatrix(nextVal, item.scopeValues);
+            item.values = item.evalMatrix(item.paramVal, item.scopeValues);
           }
 
           App.updateSingleMatrixUI(item);
@@ -619,12 +752,25 @@
     const paramCtrl = document.createElement("div");
     paramCtrl.className = "mat-param-controller";
 
+    // Khởi tạo activeAnimVars nếu chưa có
+    if (!item.activeAnimVars || !Array.isArray(item.activeAnimVars) || !item.activeAnimVars.length) {
+      item.activeAnimVars = item.vars && item.vars.length ? [...item.vars] : [item.paramVar || "t"];
+    }
+
+    const isMultiModeNow = (item.activeAnimVars && item.activeAnimVars.length > 1) || (item.vars && item.vars.length > 1);
+
+    // Khung hiển thị các huy hiệu biến chạy hoạt ảnh đồng thời (Multi-variable Badges)
+    const multiValBox = document.createElement("div");
+    multiValBox.className = "mat-param-multi-box";
+    multiValBox.id = `matParamMultiVals_${item.id}`;
+    multiValBox.style.display = isMultiModeNow ? "flex" : "none";
+
     const bar = document.createElement("div");
     bar.className = "mat-param-bar";
 
     const valBox = document.createElement("div");
     valBox.className = "mat-param-val-box";
-    valBox.title = "Nhập trực tiếp giá trị tham số";
+    valBox.title = "Nhập trực tiếp giá trị tham số đang chọn";
 
     const valLabel = document.createElement("span");
     valLabel.className = "mat-param-var-label";
@@ -698,6 +844,47 @@
       else if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
     };
 
+    const updateMultiBadges = () => {
+      multiValBox.innerHTML = "";
+      if (!item.activeAnimVars || !item.activeAnimVars.length) {
+        item.activeAnimVars = item.vars && item.vars.length ? [...item.vars] : [item.paramVar || "t"];
+      }
+      const curVar = item.paramVar || item.activeAnimVars[0];
+      item.activeAnimVars.forEach((vName) => {
+        const val = (item.scopeValues && item.scopeValues[vName] !== undefined)
+          ? Number(item.scopeValues[vName]).toFixed(2)
+          : (vName === curVar ? Number(item.paramVal).toFixed(2) : "1.00");
+        const isCur = (vName === curVar);
+        const badge = document.createElement("button");
+        badge.type = "button";
+        badge.className = "mat-multi-badge" + (isCur ? " active" : "");
+        badge.title = `Bấm để điều khiển biến ${vName} trên thanh trượt và ô nhập`;
+        badge.textContent = `${vName} = ${val}`;
+        badge.onclick = (e) => {
+          e.stopPropagation();
+          item.paramVar = vName;
+          if (item.varRanges && item.varRanges[vName]) {
+            item.paramMin = item.varRanges[vName].min;
+            item.paramMax = item.varRanges[vName].max;
+          }
+          if (item.scopeValues && item.scopeValues[vName] !== undefined) {
+            item.paramVal = item.scopeValues[vName];
+          }
+          slider.min = item.paramInfinity ? -25 : (item.paramMin ?? -10.0);
+          slider.max = item.paramInfinity ? 25 : (item.paramMax ?? 10.0);
+          slider.value = item.paramVal;
+          valLabel.textContent = `${vName} =`;
+          valInp.value = Number(item.paramVal).toFixed(2);
+          updateMultiBadges();
+          if (typeof onUpdateCallback === "function") onUpdateCallback(item);
+        };
+        multiValBox.appendChild(badge);
+      });
+    };
+    if (isMultiModeNow) {
+      updateMultiBadges();
+    }
+
     const resetBtn = document.createElement("button");
     resetBtn.type = "button";
     resetBtn.className = "mat-param-btn mat-param-reset";
@@ -716,6 +903,7 @@
     moreBtn.title = "Cài đặt tham số";
     moreBtn.innerHTML = '<i class="ph ph-dots-three-vertical"></i>';
 
+    paramCtrl.appendChild(multiValBox);
     bar.appendChild(valBox);
     bar.appendChild(playBtn);
     bar.appendChild(slider);
@@ -733,7 +921,7 @@
     popHeader.className = "vec-param-popover-header";
     const popTitle = document.createElement("span");
     popTitle.className = "vec-param-popover-title";
-    popTitle.textContent = `Cài đặt tham số ${item.paramVar || "t"}`;
+    popTitle.textContent = `Cài đặt tham số ${item.name || "M"}`;
     const popClose = document.createElement("button");
     popClose.type = "button";
     popClose.className = "vec-param-popover-close";
@@ -746,103 +934,197 @@
     popHeader.appendChild(popClose);
     popover.appendChild(popHeader);
 
-    // Phân khu chọn biến hoạt ảnh chính nếu ma trận có từ 2 biến trở lên
+    // 1. Phân khu chọn các biến hoạt ảnh (chạy đồng thời hoặc chọn lẻ)
     if (item.vars && item.vars.length > 1) {
-      const secVar = document.createElement("div");
-      secVar.className = "vec-param-section";
-      const titleVar = document.createElement("div");
-      titleVar.className = "vec-param-sec-title";
-      titleVar.textContent = "BIẾN HOẠT ẢNH CHÍNH";
-      secVar.appendChild(titleVar);
+      const secAnimVars = document.createElement("div");
+      secAnimVars.className = "vec-param-section";
+      const titleAnimVars = document.createElement("div");
+      titleAnimVars.className = "vec-param-sec-title";
+      titleAnimVars.textContent = "BIẾN HOẠT ẢNH (CHỌN CHẠY ĐỒNG THỜI)";
+      secAnimVars.appendChild(titleAnimVars);
 
-      const varRow = document.createElement("div");
-      varRow.className = "vec-param-preset-row";
+      const chipsWrap = document.createElement("div");
+      chipsWrap.className = "mat-var-chips";
+
       item.vars.forEach((vName) => {
-        const vBtn = document.createElement("button");
-        vBtn.type = "button";
-        vBtn.className = "vec-param-preset-btn" + (item.paramVar === vName ? " active" : "");
-        vBtn.textContent = `Biến ${vName}`;
-        vBtn.onclick = (e) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        const isActive = item.activeAnimVars.includes(vName);
+        chip.className = "mat-var-chip" + (isActive ? " active" : "");
+        chip.innerHTML = isActive
+          ? `<i class="ph ph-check"></i> <span>Biến ${vName}</span>`
+          : `<span>Biến ${vName}</span>`;
+
+        chip.onclick = (e) => {
           e.stopPropagation();
-          if (item.paramVar === vName) return;
-          item.paramVar = vName;
-          popTitle.textContent = `Cài đặt tham số ${vName}`;
-          varRow.querySelectorAll(".vec-param-preset-btn").forEach((b) => b.classList.remove("active"));
-          vBtn.classList.add("active");
-          valLabel.textContent = `${vName} =`;
-          if (item.scopeValues && item.scopeValues[vName] !== undefined) {
-            item.paramVal = item.scopeValues[vName];
+          if (!item.activeAnimVars) item.activeAnimVars = [];
+          const idx = item.activeAnimVars.indexOf(vName);
+          if (idx >= 0) {
+            item.activeAnimVars.splice(idx, 1);
           } else {
-            item.paramVal = 1.0;
+            item.activeAnimVars.push(vName);
           }
-          if (typeof item.evalMatrix === "function") {
-            item.values = item.evalMatrix(item.paramVal, item.scopeValues);
+          if (item.activeAnimVars.length === 0) {
+            item.activeAnimVars.push(vName);
           }
-          valInp.value = Number(item.paramVal).toFixed(2);
-          slider.value = item.paramVal;
+          const nowActive = item.activeAnimVars.includes(vName);
+          chip.classList.toggle("active", nowActive);
+          chip.innerHTML = nowActive
+            ? `<i class="ph ph-check"></i> <span>Biến ${vName}</span>`
+            : `<span>Biến ${vName}</span>`;
+
+          if (item.activeAnimVars.length === 1) {
+            const singleVar = item.activeAnimVars[0];
+            item.paramVar = singleVar;
+            if (item.varRanges && item.varRanges[singleVar]) {
+              item.paramMin = item.varRanges[singleVar].min;
+              item.paramMax = item.varRanges[singleVar].max;
+              slider.min = item.paramMin;
+              slider.max = item.paramMax;
+            }
+            if (item.scopeValues && item.scopeValues[singleVar] !== undefined) {
+              item.paramVal = item.scopeValues[singleVar];
+            }
+            valLabel.textContent = `${singleVar} =`;
+            valInp.value = Number(item.paramVal).toFixed(2);
+            slider.value = item.paramVal;
+          }
+
+          multiValBox.style.display = item.activeAnimVars.length > 1 ? "flex" : "none";
+          updateMultiBadges();
           App.updateSingleMatrixUI(item);
           if (typeof onUpdateCallback === "function") onUpdateCallback(item);
         };
-        varRow.appendChild(vBtn);
+        chipsWrap.appendChild(chip);
       });
-      secVar.appendChild(varRow);
-      popover.appendChild(secVar);
+      secAnimVars.appendChild(chipsWrap);
+
+      // Hàng nút chọn nhanh: Tất cả / Biến chính & Chế độ đồng bộ
+      const quickRow = document.createElement("div");
+      quickRow.style.cssText = "display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;";
+
+      const btnAll = document.createElement("button");
+      btnAll.type = "button";
+      btnAll.className = "vec-param-preset-btn";
+      btnAll.style.cssText = "flex:1; padding:4px 6px; font-size:10.5px;";
+      btnAll.textContent = "Chạy tất cả biến";
+      btnAll.onclick = (e) => {
+        e.stopPropagation();
+        item.activeAnimVars = [...item.vars];
+        chipsWrap.querySelectorAll(".mat-var-chip").forEach((c) => {
+          c.classList.add("active");
+          const v = c.textContent.replace("Biến ", "").trim();
+          c.innerHTML = `<i class="ph ph-check"></i> <span>Biến ${v}</span>`;
+        });
+        multiValBox.style.display = "flex";
+        updateMultiBadges();
+        App.updateSingleMatrixUI(item);
+      };
+
+      const btnSyncMode = document.createElement("button");
+      btnSyncMode.type = "button";
+      btnSyncMode.className = "vec-param-preset-btn" + (item.syncMode === "lockstep" ? " active" : "");
+      btnSyncMode.style.cssText = "flex:1; padding:4px 6px; font-size:10.5px;";
+      btnSyncMode.textContent = item.syncMode === "lockstep" ? "Đồng bước" : "Độc lập (tần số)";
+      btnSyncMode.title = "Chuyển đổi giữa chạy cùng tốc độ hoặc tần số vàng";
+      btnSyncMode.onclick = (e) => {
+        e.stopPropagation();
+        item.syncMode = (item.syncMode === "lockstep") ? "independent" : "lockstep";
+        btnSyncMode.classList.toggle("active", item.syncMode === "lockstep");
+        btnSyncMode.textContent = item.syncMode === "lockstep" ? "Đồng bước" : "Độc lập (tần số)";
+      };
+
+      quickRow.appendChild(btnAll);
+      quickRow.appendChild(btnSyncMode);
+      secAnimVars.appendChild(quickRow);
+      popover.appendChild(secAnimVars);
     }
 
-    // Dải giá trị
+    // 2. Dải giá trị (Min - Max) từng biến
     const secRange = document.createElement("div");
     secRange.className = "vec-param-section";
     const titleRange = document.createElement("div");
     titleRange.className = "vec-param-sec-title";
-    titleRange.textContent = "DẢI GIÁ TRỊ";
+    titleRange.textContent = "DẢI GIÁ TRỊ (MIN - MAX)";
     secRange.appendChild(titleRange);
 
-    const gridRange = document.createElement("div");
-    gridRange.className = "vec-param-grid-2";
+    const varsList = (item.vars && item.vars.length > 0) ? item.vars : [item.paramVar || "t"];
+    if (!item.varRanges) item.varRanges = {};
 
-    const minGroup = document.createElement("div");
-    minGroup.className = "vec-param-input-group";
-    const minBadge = document.createElement("span");
-    minBadge.className = "vec-param-addon";
-    minBadge.textContent = "Min";
-    const minInp = document.createElement("input");
-    minInp.type = "number";
-    minInp.className = "vec-param-num-inp";
-    minInp.value = item.paramMin ?? -10.0;
-    minInp.step = "1";
-    minInp.oninput = (e) => {
-      const v = parseFloat(e.target.value);
-      if (!isNaN(v)) {
-        item.paramMin = v;
-        if (!item.paramInfinity) slider.min = v;
+    varsList.forEach((vName, idx) => {
+      if (!item.varRanges[vName]) {
+        item.varRanges[vName] = {
+          min: (idx === 0 ? (item.paramMin ?? -10.0) : -5.0),
+          max: (idx === 0 ? (item.paramMax ?? 10.0) : 5.0)
+        };
       }
-    };
-    minGroup.appendChild(minBadge);
-    minGroup.appendChild(minInp);
+      const rObj = item.varRanges[vName];
 
-    const maxGroup = document.createElement("div");
-    maxGroup.className = "vec-param-input-group";
-    const maxBadge = document.createElement("span");
-    maxBadge.className = "vec-param-addon";
-    maxBadge.textContent = "Max";
-    const maxInp = document.createElement("input");
-    maxInp.type = "number";
-    maxInp.className = "vec-param-num-inp";
-    maxInp.value = item.paramMax ?? 10.0;
-    maxInp.step = "1";
-    maxInp.oninput = (e) => {
-      const v = parseFloat(e.target.value);
-      if (!isNaN(v)) {
-        item.paramMax = v;
-        if (!item.paramInfinity) slider.max = v;
-      }
-    };
-    maxGroup.appendChild(maxBadge);
-    maxGroup.appendChild(maxInp);
+      const row = document.createElement("div");
+      row.className = "vec-param-var-range-row";
+      row.style.cssText = "display:flex; align-items:center; gap:6px; margin-bottom:5px;";
 
-    gridRange.appendChild(minGroup);
-    gridRange.appendChild(maxGroup);
-    secRange.appendChild(gridRange);
+      const tag = document.createElement("span");
+      tag.className = "vec-param-var-tag";
+      tag.style.cssText = "font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; width:52px; color:var(--muted);";
+      tag.textContent = `${vName}:`;
+
+      const gridRange = document.createElement("div");
+      gridRange.className = "vec-param-grid-2";
+      gridRange.style.cssText = "flex:1; display:grid; grid-template-columns:1fr 1fr; gap:4px;";
+
+      const minGroup = document.createElement("div");
+      minGroup.className = "vec-param-input-group";
+      const minBadge = document.createElement("span");
+      minBadge.className = "vec-param-addon";
+      minBadge.textContent = "Min";
+      const minInp = document.createElement("input");
+      minInp.type = "number";
+      minInp.className = "vec-param-num-inp";
+      minInp.value = rObj.min;
+      minInp.step = "1";
+      minInp.oninput = (e) => {
+        const v = parseFloat(e.target.value);
+        if (!isNaN(v)) {
+          rObj.min = v;
+          if (vName === item.paramVar && !item.paramInfinity) {
+            item.paramMin = v;
+            slider.min = v;
+          }
+        }
+      };
+      minGroup.appendChild(minBadge);
+      minGroup.appendChild(minInp);
+
+      const maxGroup = document.createElement("div");
+      maxGroup.className = "vec-param-input-group";
+      const maxBadge = document.createElement("span");
+      maxBadge.className = "vec-param-addon";
+      maxBadge.textContent = "Max";
+      const maxInp = document.createElement("input");
+      maxInp.type = "number";
+      maxInp.className = "vec-param-num-inp";
+      maxInp.value = rObj.max;
+      maxInp.step = "1";
+      maxInp.oninput = (e) => {
+        const v = parseFloat(e.target.value);
+        if (!isNaN(v)) {
+          rObj.max = v;
+          if (vName === item.paramVar && !item.paramInfinity) {
+            item.paramMax = v;
+            slider.max = v;
+          }
+        }
+      };
+      maxGroup.appendChild(maxBadge);
+      maxGroup.appendChild(maxInp);
+
+      gridRange.appendChild(minGroup);
+      gridRange.appendChild(maxGroup);
+      row.appendChild(tag);
+      row.appendChild(gridRange);
+      secRange.appendChild(row);
+    });
 
     const infBtn = document.createElement("button");
     infBtn.type = "button";
@@ -856,14 +1138,15 @@
         slider.min = -25;
         slider.max = 25;
       } else {
-        slider.min = item.paramMin ?? -10.0;
-        slider.max = item.paramMax ?? 10.0;
+        const curR = item.varRanges[item.paramVar] || { min: -10, max: 10 };
+        slider.min = curR.min;
+        slider.max = curR.max;
       }
     };
     secRange.appendChild(infBtn);
     popover.appendChild(secRange);
 
-    // Chuyển động và thời lượng
+    // 3. Chuyển động và thời lượng
     const secDur = document.createElement("div");
     secDur.className = "vec-param-section";
     const titleDur = document.createElement("div");
@@ -958,7 +1241,9 @@
   App.renderMatrixList = function () {
     const el = document.getElementById("matrixList");
     if (!el) return;
-
+    if (window.App?.MasterParamController?.updateUI) {
+      window.App.MasterParamController.updateUI();
+    }
     document.querySelectorAll("body > .mat-param-popover").forEach((p) => p.remove());
 
     if (!window._globalMatMenuCloserAttached) {
@@ -1115,11 +1400,35 @@
       li.appendChild(headerRow);
       li.appendChild(preview);
 
+      if (item.isParametric && typeof App.createMatrixParamController === "function") {
+        const pCtrl = App.createMatrixParamController(item, () => {
+          for (let i = 0; i < item.rows; i++) {
+            for (let j = 0; j < item.cols; j++) {
+              const cellEl = preview.querySelector(`[data-row="${i}"][data-col="${j}"]`);
+              if (cellEl) {
+                const rawCell = item.latexValues && item.latexValues[i] && item.latexValues[i][j] !== undefined
+                  ? item.latexValues[i][j]
+                  : fmtCell(item.values[i][j]);
+                if (cellEl.tagName.toLowerCase() === "math-field") {
+                  cellEl.value = rawCell;
+                } else {
+                  cellEl.textContent = rawCell;
+                }
+              }
+            }
+          }
+        });
+        if (pCtrl) li.appendChild(pCtrl);
+      }
+
       el.appendChild(li);
     }
 
     if (typeof App.refreshMatrixDropdowns === "function") {
       App.refreshMatrixDropdowns();
+    }
+    if (typeof App.updateObjectCountBadges === "function") {
+      App.updateObjectCountBadges();
     }
   };
 

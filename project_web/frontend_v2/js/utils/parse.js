@@ -128,8 +128,70 @@
       return -1;
     }
 
-    // 1. Xử lý các hàm toán học: sqrt, cbrt, sin, cos, tan, cot, sinh, cosh, tanh, ln, log, exp, abs
-    const funcs = ['sqrt', 'cbrt', 'sinh', 'cosh', 'tanh', 'sin', 'cos', 'tan', 'cot', 'ln', 'log', 'exp', 'abs'];
+    // 0. Xử lý hàm căn thức tổng quát: root(n, x) hoặc nthroot(n, x)
+    for (const rFn of ['root', 'nthroot']) {
+      const pattern = rFn + '(';
+      let searchFrom = 0;
+      while (true) {
+        const idx = s.indexOf(pattern, searchFrom);
+        if (idx === -1) break;
+        if (idx > 0 && (s[idx - 1] === '\\' || /[a-zA-Z]/.test(s[idx - 1]))) {
+          searchFrom = idx + 1;
+          continue;
+        }
+        const openIdx = idx + rFn.length;
+        const closeIdx = findMatchingParen(s, openIdx);
+        if (closeIdx === -1) {
+          searchFrom = openIdx + 1;
+          continue;
+        }
+        const inner = s.substring(openIdx + 1, closeIdx);
+        let commaIdx = -1;
+        let d = 0;
+        for (let j = 0; j < inner.length; j++) {
+          if (inner[j] === '(' || inner[j] === '[' || inner[j] === '{') d++;
+          else if (inner[j] === ')' || inner[j] === ']' || inner[j] === '}') d--;
+          else if (inner[j] === ',' && d === 0) { commaIdx = j; break; }
+        }
+        let replacement = '';
+        if (commaIdx !== -1) {
+          const deg = inner.substring(0, commaIdx).trim();
+          const rad = inner.substring(commaIdx + 1).trim();
+          replacement = `\\sqrt[${App.exprToLatex(deg)}]{${App.exprToLatex(rad)}}`;
+        } else {
+          replacement = `\\sqrt{${App.exprToLatex(inner)}}`;
+        }
+        s = s.substring(0, idx) + replacement + s.substring(closeIdx + 1);
+        searchFrom = idx + replacement.length;
+      }
+    }
+
+    // 0.1 Xử lý logarit có cơ số: log_a(x), log_{a}(x), log10(x), log2(x)
+    let logSearchFrom = 0;
+    while (true) {
+      const remaining = s.substring(logSearchFrom);
+      const m = remaining.match(/(?:(?<!\\)log_\{?([a-zA-Z0-9_\.]+)\}?|(?<!\\)log(10|2))\(/);
+      if (!m) break;
+      const idx = logSearchFrom + m.index;
+      const base = m[1] || m[2];
+      const openIdx = idx + m[0].length - 1;
+      const closeIdx = findMatchingParen(s, openIdx);
+      if (closeIdx === -1) {
+        logSearchFrom = idx + m[0].length;
+        continue;
+      }
+      const inner = s.substring(openIdx + 1, closeIdx);
+      const replacement = `\\log_{${base}}(${App.exprToLatex(inner)})`;
+      s = s.substring(0, idx) + replacement + s.substring(closeIdx + 1);
+      logSearchFrom = idx + replacement.length;
+    }
+
+    // 1. Xử lý các hàm toán học: sqrt, cbrt, sin, cos, tan, cot, sinh, cosh, tanh, ln, log, exp, abs, arccos, arcsin, arctan
+    const funcs = [
+      'sqrt', 'cbrt', 'sinh', 'cosh', 'tanh', 'sin', 'cos', 'tan', 'cot',
+      'arccos', 'arcsin', 'arctan', 'arccot', 'acos', 'asin', 'atan', 'acot',
+      'ln', 'log', 'exp', 'abs'
+    ];
     for (const fn of funcs) {
       const pattern = fn + '(';
       let searchFrom = 0;
@@ -150,15 +212,44 @@
         }
 
         const inner = s.substring(openIdx + 1, closeIdx);
-        const innerLatex = App.exprToLatex(inner);
         let replacement = '';
-        if (fn === 'sqrt') replacement = `\\sqrt{${innerLatex}}`;
-        else if (fn === 'cbrt') replacement = `\\sqrt[3]{${innerLatex}}`;
-        else if (fn === 'abs') replacement = `|${innerLatex}|`;
-        else if (fn === 'ln') replacement = `\\ln(${innerLatex})`;
-        else if (fn === 'log') replacement = `\\log(${innerLatex})`;
-        else if (fn === 'exp') replacement = `e^{${innerLatex}}`;
-        else replacement = `\\${fn}(${innerLatex})`;
+        if (fn === 'sqrt') {
+          replacement = `\\sqrt{${App.exprToLatex(inner)}}`;
+        } else if (fn === 'cbrt') {
+          replacement = `\\sqrt[3]{${App.exprToLatex(inner)}}`;
+        } else if (fn === 'abs') {
+          replacement = `|${App.exprToLatex(inner)}|`;
+        } else if (fn === 'ln') {
+          replacement = `\\ln(${App.exprToLatex(inner)})`;
+        } else if (fn === 'log') {
+          // Kiểm tra log(a, x) có 2 tham số
+          let commaIdx = -1;
+          let d = 0;
+          for (let j = 0; j < inner.length; j++) {
+            if (inner[j] === '(' || inner[j] === '[' || inner[j] === '{') d++;
+            else if (inner[j] === ')' || inner[j] === ']' || inner[j] === '}') d--;
+            else if (inner[j] === ',' && d === 0) { commaIdx = j; break; }
+          }
+          if (commaIdx !== -1) {
+            const base = inner.substring(0, commaIdx).trim();
+            const val = inner.substring(commaIdx + 1).trim();
+            replacement = `\\log_{${App.exprToLatex(base)}}(${App.exprToLatex(val)})`;
+          } else {
+            replacement = `\\log(${App.exprToLatex(inner)})`;
+          }
+        } else if (fn === 'exp') {
+          replacement = `e^{${App.exprToLatex(inner)}}`;
+        } else if (fn === 'arccos' || fn === 'acos') {
+          replacement = `\\arccos(${App.exprToLatex(inner)})`;
+        } else if (fn === 'arcsin' || fn === 'asin') {
+          replacement = `\\arcsin(${App.exprToLatex(inner)})`;
+        } else if (fn === 'arctan' || fn === 'atan') {
+          replacement = `\\arctan(${App.exprToLatex(inner)})`;
+        } else if (fn === 'arccot' || fn === 'acot') {
+          replacement = `\\operatorname{arccot}(${App.exprToLatex(inner)})`;
+        } else {
+          replacement = `\\${fn}(${App.exprToLatex(inner)})`;
+        }
 
         s = s.substring(0, idx) + replacement + s.substring(closeIdx + 1);
         searchFrom = idx + replacement.length;
@@ -359,8 +450,9 @@
 
     try {
       const parts = App.splitVectorCoordinates(cleaned);
-      if (parts.length === 0) {
+      if (!parts || parts.length < 2) {
         wrap.style.display = "none";
+        preview.innerHTML = "";
         return;
       }
 
@@ -397,16 +489,8 @@
     }
   };
 
-  // Bật/tắt chế độ kính lúp phóng to xem công thức
-  App.togglePreviewZoom = function () {
-    const wrap = document.getElementById("vecInputPreviewWrap");
-    const icon = document.getElementById("vecPreviewZoomIcon");
-    if (!wrap) return;
-    const isZoomed = wrap.classList.toggle("is-zoomed");
-    if (icon) {
-      icon.className = isZoomed ? "ph ph-magnifying-glass-minus" : "ph ph-magnifying-glass-plus";
-    }
-  };
+  // Không còn sử dụng nút zoom thủ công, tự động khóa sàn kích thước số mũ qua CSS Math Floor
+  App.togglePreviewZoom = function () {};
 
   // =========================================================================
   // TOÁN TỬ VÀ MÔI TRƯỜNG BIÊN DỊCH BẬC CAO CHO HIỆU NĂNG TỐI ĐA (PRE-COMPILED ENGINE)
@@ -415,14 +499,26 @@
     pi: Math.PI,
     e: Math.E,
     sqrt: Math.sqrt,
+    cbrt: Math.cbrt,
+    root: (n, x) => (x < 0 && n % 2 !== 0) ? -Math.pow(-x, 1 / n) : Math.pow(x, 1 / n),
+    nthroot: (n, x) => (x < 0 && n % 2 !== 0) ? -Math.pow(-x, 1 / n) : Math.pow(x, 1 / n),
     abs: Math.abs,
-    log: Math.log,
-    log10: Math.log10,
+    log: (a, b) => b !== undefined ? Math.log(b) / Math.log(a) : Math.log(a),
+    log2: (x) => Math.log2 ? Math.log2(x) : Math.log(x) / Math.LN2,
+    log10: (x) => Math.log10 ? Math.log10(x) : Math.log(x) / Math.LN10,
     ln: Math.log,
     sin: Math.sin,
     cos: Math.cos,
     tan: Math.tan,
     cot: (x) => 1 / Math.tan(x),
+    asin: Math.asin,
+    acos: Math.acos,
+    atan: Math.atan,
+    acot: (x) => Math.PI / 2 - Math.atan(x),
+    arcsin: Math.asin,
+    arccos: Math.acos,
+    arctan: Math.atan,
+    arccot: (x) => Math.PI / 2 - Math.atan(x),
     sinh: Math.sinh,
     cosh: Math.cosh,
     tanh: Math.tanh,
@@ -433,14 +529,26 @@
     pi: Math.PI,
     e: Math.E,
     sqrt: Math.sqrt,
+    cbrt: Math.cbrt,
+    root: (n, x) => (x < 0 && n % 2 !== 0) ? -Math.pow(-x, 1 / n) : Math.pow(x, 1 / n),
+    nthroot: (n, x) => (x < 0 && n % 2 !== 0) ? -Math.pow(-x, 1 / n) : Math.pow(x, 1 / n),
     abs: Math.abs,
-    log: Math.log,
-    log10: Math.log10,
+    log: (a, b) => b !== undefined ? Math.log(b) / Math.log(a) : Math.log(a),
+    log2: (x) => Math.log2 ? Math.log2(x) : Math.log(x) / Math.LN2,
+    log10: (x) => Math.log10 ? Math.log10(x) : Math.log(x) / Math.LN10,
     ln: Math.log,
     sin: (x) => Math.sin(x * DEG_TO_RAD),
     cos: (x) => Math.cos(x * DEG_TO_RAD),
     tan: (x) => Math.tan(x * DEG_TO_RAD),
     cot: (x) => 1 / Math.tan(x * DEG_TO_RAD),
+    asin: (x) => Math.asin(x) / DEG_TO_RAD,
+    acos: (x) => Math.acos(x) / DEG_TO_RAD,
+    atan: (x) => Math.atan(x) / DEG_TO_RAD,
+    acot: (x) => (Math.PI / 2 - Math.atan(x)) / DEG_TO_RAD,
+    arcsin: (x) => Math.asin(x) / DEG_TO_RAD,
+    arccos: (x) => Math.acos(x) / DEG_TO_RAD,
+    arctan: (x) => Math.atan(x) / DEG_TO_RAD,
+    arccot: (x) => (Math.PI / 2 - Math.atan(x)) / DEG_TO_RAD,
     sinh: Math.sinh,
     cosh: Math.cosh,
     tanh: Math.tanh,
@@ -467,8 +575,11 @@
         var x = (s && s.x !== undefined) ? s.x : 1.0;
         var y = (s && s.y !== undefined) ? s.y : 1.0;
         var z = (s && s.z !== undefined) ? s.z : 1.0;
-        var pi = M.pi, e = M.e, sqrt = M.sqrt, abs = M.abs, log = M.log, log10 = M.log10, ln = M.ln;
+        var pi = M.pi, e = M.e, sqrt = M.sqrt, cbrt = M.cbrt, root = M.root, nthroot = M.nthroot, abs = M.abs;
+        var log = M.log, log2 = M.log2, log10 = M.log10, ln = M.ln;
         var sin = M.sin, cos = M.cos, tan = M.tan, cot = M.cot;
+        var asin = M.asin, acos = M.acos, atan = M.atan, acot = M.acot;
+        var arcsin = M.arcsin, arccos = M.arccos, arctan = M.arctan, arccot = M.arccot;
         var sinh = M.sinh, cosh = M.cosh, tanh = M.tanh;
         return Number(${e});
       `);
@@ -489,7 +600,7 @@
     }
   }
 
-  App.parseVectorExpr = function (str) {
+  App.parseVectorExpr = function (str, allowScalar = false) {
     if (!str) return null;
     let s = App.cleanVectorInput(str);
     if (!s || s === "[]" || s === "[,]") return null;
@@ -589,8 +700,20 @@
 
     s = replaceMathCommands(s);
 
-    // [FIX] Logarit cơ số n: \log_2(8) -> log(8)/log(2)
-    s = s.replace(/\\?log_\{?(\d+|e)\}?\(?(.+?)\)?/g, "(log($2)/log($1))");
+    // Logarit có cơ số: \log_2(8) hoặc log_a(x) hoặc \log_{a}(x)
+    s = s.replace(/\\?log_\{?([a-zA-Z0-9_\.]+)\}?\(([^()]+)\)/g, "(log($2)/log($1))");
+    // Logarit thập phân và nhị phân
+    s = s.replace(/\\?log10\(([^()]+)\)/g, "(log($1)/log(10))");
+    s = s.replace(/\\?log2\(([^()]+)\)/g, "(log($1)/log(2))");
+    // Căn bậc n tổng quát: root(n, x) hoặc nthroot(n, x)
+    s = s.replace(/\\?(?:root|nthroot)\(([^,]+),([^()]+)\)/g, "(($2)**(1/($1)))");
+    // Căn bậc 3: cbrt(x)
+    s = s.replace(/\\?cbrt\(([^()]+)\)/g, "(($1)**(1/3))");
+    // Lượng giác ngược: arccos, arcsin, arctan, arccot
+    s = s.replace(/\\?arccos\b/g, "acos");
+    s = s.replace(/\\?arcsin\b/g, "asin");
+    s = s.replace(/\\?arctan\b/g, "atan");
+    s = s.replace(/\\?arccot\(([^()]+)\)/g, "(pi/2-atan($1))");
 
     // [FIX LỖI CỦA ÔNG] Logarit tự nhiên (ln) và log thường
     s = s.replace(/\\?ln\b/g, "log");
@@ -606,6 +729,11 @@
     // 3. Xóa dấu gạch chéo còn sót lại
     s = s.replace(/\\/g, "");
 
+    // Chuẩn hóa hàm lượng giác không ngoặc hoặc dính liền: cost -> cos(t), sint -> sin(t), cos t -> cos(t), sin t -> sin(t)
+    s = s.replace(/\b(sin|cos|tan|cot|sinh|cosh|tanh|asin|acos|atan)\s*([tmuvxyz])\b/g, "$1($2)");
+    // Chuẩn hóa hàm lượng giác với số không ngoặc: cos2 -> cos(2), sin3 -> sin(3)
+    s = s.replace(/\b(sin|cos|tan|cot|sinh|cosh|tanh|asin|acos|atan)\s*(\d+(?:\.\d+)?)\b/g, "$1($2)");
+
     // 4. Nhân ẩn (Implicit Multiplication)
     // Số nhân chữ/ngoặc: 2x -> 2*x, 2(3) -> 2*(3)
     s = s.replace(/(\d)\s*([a-z\(])/g, "$1*$2");
@@ -618,7 +746,7 @@
     // Biến nhân ngoặc: t(t+1) -> t*(t+1)
     s = s.replace(/\b([tmuvxyz])\s*\(/g, "$1*(");
     // Biến nhân hàm toán học: m sin(u) -> m*sin(u), u cos(v) -> u*cos(v)
-    s = s.replace(/\b([tmuvxyz])\s+(sin|cos|tan|cot|sqrt|cbrt|ln|log|exp|sinh|cosh|tanh|abs)\b/g, "$1*$2");
+    s = s.replace(/\b([tmuvxyz])\s+(sin|cos|tan|cot|sqrt|cbrt|root|nthroot|ln|log|exp|sinh|cosh|tanh|abs|asin|acos|atan|arccos|arcsin|arctan)\b/g, "$1*$2");
     // Hằng số nhân số: pi2 -> pi*2
     s = s.replace(/\b(pi|e)\s*(\d)/g, "$1*$2");
 
@@ -627,20 +755,21 @@
       return prefix + "((-1)*(" + base + "**" + exp + "))";
     });
 
-    // 5. Tách mảng vector
+    // 5. Tách mảng vector (Yêu cầu tối thiểu 2 tọa độ cho vector; cho phép 1 số nếu allowScalar = true cho ma trận)
     let parts = App.splitVectorCoordinates(s);
-    if (!parts || parts.length === 0 || parts.every((p) => p === "")) return null;
+    const minCoords = allowScalar ? 1 : 2;
+    if (!parts || parts.length < minCoords || parts.every((p) => p === "")) return null;
 
     // Khoan dung với tọa độ rỗng (ví dụ người dùng vừa xóa một số: [1, ])
     parts = parts.map((p) => (p === "" ? "0" : p));
-    if (parts.length === 1) parts.push("0");
     if (parts.length > 5) parts = parts.slice(0, 5);
 
     // 6. Nhận diện các biến tham số hợp lệ: t, m, u, v, x, y, z
     const allowedVars = ["t", "m", "u", "v", "x", "y", "z"];
     const reservedWords = new Set([
       "pi", "e", "sin", "cos", "tan", "cot", "sinh", "cosh", "tanh",
-      "log", "log10", "ln", "abs", "sqrt", "math"
+      "asin", "acos", "atan", "acot", "arcsin", "arccos", "arctan", "arccot",
+      "log", "log10", "log2", "ln", "abs", "sqrt", "cbrt", "root", "nthroot", "math"
     ]);
 
     const detectedVars = [];
@@ -773,5 +902,14 @@
         .join(", ") +
       "]"
     );
+  };
+
+  // Hàm phân tích biểu thức vô hướng đơn lẻ (Dành cho ô phần tử ma trận)
+  App.parseScalarExpr = function (str) {
+    if (str === null || str === undefined) return null;
+    const trimmed = String(str).trim();
+    if (trimmed === "") return 0;
+    const wrapped = trimmed.startsWith("[") && trimmed.endsWith("]") ? trimmed : `[${trimmed}]`;
+    return App.parseVectorExpr(wrapped, true);
   };
 })();

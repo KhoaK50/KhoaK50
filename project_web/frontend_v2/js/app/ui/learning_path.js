@@ -2800,9 +2800,12 @@ function pollQuizMetadata(quizId) {
                         const newMood = meta.mentor_speech?.avatar_mood || meta.tone_emotion || 'thoughtful';
                         const newProgression = meta.mentor_speech?.emotion_progression || [newMood];
 
-                        if (speechText) {
+                        // Bảo vệ bong bóng thoại: Nếu câu thoại ban đầu đã hiển thị, TUYỆT ĐỐI không gọi đè làm giật Nori
+                        const speechBubbleEl = document.getElementById('mentor-speech-text');
+                        const alreadyHasSpeech = speechBubbleEl && speechBubbleEl.textContent.trim().length > 5;
+                        if (speechText && !alreadyHasSpeech) {
                             startTypewriterEffect(speechText, newProgression);
-                        } else {
+                        } else if (newMood) {
                             morphCompanionAvatarMood(newMood, false);
                         }
                         

@@ -107,7 +107,7 @@ def init_admin_db():
     except Exception as e:
         print(f">> [Database Error] Admin init: {e}")
 
-init_admin_db()
+threading.Thread(target=init_admin_db, daemon=True).start()
 
 # --- 2. AUTHENTICATION & LOGGING ---
 def check_auth():

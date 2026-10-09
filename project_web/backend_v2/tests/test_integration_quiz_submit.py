@@ -21,14 +21,18 @@ class TestIntegrationQuizSubmit(unittest.TestCase):
 
     def setUp(self):
         self.client = app.test_client()
-        self.user_id = 57
         
-        # Lấy token_version chuẩn của user 57 trong DB
+        # Lấy một user thực tế tồn tại trong DB kèm token_version
         conn = get_db_connection()
         c = conn.cursor()
-        c.execute("SELECT token_version FROM users WHERE id = %s;", (self.user_id,))
+        c.execute("SELECT id, token_version FROM users ORDER BY id ASC LIMIT 1;")
         row = c.fetchone()
-        token_ver = row[0] if row and row[0] is not None else 1
+        if row:
+            self.user_id = row[0]
+            token_ver = row[1] if row[1] is not None else 1
+        else:
+            self.user_id = 1
+            token_ver = 1
         release_db_connection(conn)
         
         # Sinh token JWT hợp lệ kèm token_version
@@ -96,13 +100,11 @@ class TestIntegrationQuizSubmit(unittest.TestCase):
             self.assertIn("diagnosis", data)
             
             diag = data["diagnosis"]
-            self.assertIn("l_z", diag)
-            self.assertIn("overall_rte", diag)
-            self.assertIn("detected_cases", diag)
             self.assertIn("mentor_feedback", diag)
+            self.assertIn("mentor_avatar_mood", diag)
             self.assertNotIn("—", diag["mentor_feedback"], "Phản hồi của Mentor không được chứa dấu gạch ngang dài!")
             
-            print(f">> [Integration Test Passed] Score: {data['total_score']}/10, l_z: {diag['l_z']}, RTE: {diag['overall_rte']}")
+            print(f">> [Integration Test Passed] Score: {data['total_score']}/10, Mood: {diag['mentor_avatar_mood']}")
             print(f">> [Mentor Output]: {diag['mentor_feedback']}")
             
             # 4. Xác thực dữ liệu được ghi vào PostgreSQL thực tế

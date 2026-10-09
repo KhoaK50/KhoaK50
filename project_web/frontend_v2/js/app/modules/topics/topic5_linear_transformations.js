@@ -283,6 +283,31 @@
       imText = "{0} (Chỉ có gốc tọa độ)";
     }
 
+    let detMeaningHtml = "";
+    const absDet = Math.abs(ltState.det);
+    if (Math.abs(ltState.det) < 1e-5) {
+      detMeaningHtml = `
+        <div style="grid-column: span 2; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 3px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); color: #dc2626; font-size: 11px; font-weight: 600; margin-top: 4px;">
+          <span>✖ Ma trận suy biến (det = 0):</span>
+          <span style="font-weight: 400;">Không gian bị ép xẹp thành 1 chiều hoặc điểm</span>
+        </div>
+      `;
+    } else if (ltState.det > 0) {
+      detMeaningHtml = `
+        <div style="grid-column: span 2; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 3px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.25); color: #16a34a; font-size: 11px; font-weight: 600; margin-top: 4px;">
+          <span>✓ Bảo toàn hướng không gian (det > 0):</span>
+          <span style="font-weight: 400;">Không gian thuận chiều, diện tích co giãn ${absDet.toFixed(2)} lần</span>
+        </div>
+      `;
+    } else {
+      detMeaningHtml = `
+        <div style="grid-column: span 2; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 3px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); color: #d97706; font-size: 11px; font-weight: 600; margin-top: 4px;">
+          <span>⚠ Đảo hướng không gian (det < 0):</span>
+          <span style="font-weight: 400;">Không gian bị lật đối xứng gương, diện tích co giãn ${absDet.toFixed(2)} lần</span>
+        </div>
+      `;
+    }
+
     box.innerHTML = `
       <div style="font-weight: 700; color: var(--fg); margin-bottom: 6px; font-size: 12px;">
         Khảo sát Ánh xạ tuyến tính:
@@ -292,6 +317,7 @@
         <div><span style="color: var(--muted);">Hạng rank(A):</span> ${r}</div>
         <div><span style="color: var(--muted);">Số chiều ảnh dim(Im):</span> ${r}</div>
         <div><span style="color: var(--muted);">Số chiều nhân dim(Ker):</span> ${n}</div>
+        ${detMeaningHtml}
         <div style="grid-column: span 2; border-top: 1px solid var(--border); padding-top: 5px; margin-top: 2px;">
           <span style="color: #ef4444; font-weight: 600;">Hạt nhân Ker(T):</span> ${kerText}
         </div>
@@ -450,78 +476,134 @@
       if (!btnInspect) return;
       this._isInitialized = true;
 
-      // Nút Preset
-      const pSingular = document.getElementById("presetLTSingular");
-      const pProject = document.getElementById("presetLTProject");
-      const pInvert = document.getElementById("presetLTInvert");
-      const pShear = document.getElementById("presetLTShear");
-
-      const clearActivePill = () => {
-        [pSingular, pProject, pInvert, pShear].forEach((b) => {
-          if (b) b.classList.remove("active");
-        });
-      };
-
       const syncInputsFromMatrix = () => {
         const a11 = document.getElementById("lt_a11");
         const a12 = document.getElementById("lt_a12");
         const a21 = document.getElementById("lt_a21");
         const a22 = document.getElementById("lt_a22");
-        if (a11) a11.value = ltState.matrix[0][0];
-        if (a12) a12.value = ltState.matrix[0][1];
-        if (a21) a21.value = ltState.matrix[1][0];
-        if (a22) a22.value = ltState.matrix[1][1];
+        if (a11) a11.value = Number(ltState.matrix[0][0].toFixed(3));
+        if (a12) a12.value = Number(ltState.matrix[0][1].toFixed(3));
+        if (a21) a21.value = Number(ltState.matrix[1][0].toFixed(3));
+        if (a22) a22.value = Number(ltState.matrix[1][1].toFixed(3));
       };
 
-      if (pSingular) {
-        pSingular.addEventListener("click", () => {
-          clearActivePill();
-          pSingular.classList.add("active");
-          ltState.matrix = [
-            [1, 1],
-            [1, 1]
-          ];
-          syncInputsFromMatrix();
-          this.execute();
+      // Bộ chọn nhanh phép biến đổi hình học
+      const presetButtons = document.querySelectorAll("#lt_geo_presets .btn-geo-preset");
+      const rotCtrl = document.getElementById("lt_rotation_ctrl");
+      const rotSlider = document.getElementById("lt_rot_slider");
+      const rotVal = document.getElementById("lt_rot_angle_val");
+      const scaleCtrl = document.getElementById("lt_scale_ctrl");
+      const scaleSlider = document.getElementById("lt_scale_slider");
+      const scaleVal = document.getElementById("lt_scale_val");
+      const shearCtrl = document.getElementById("lt_shear_ctrl");
+      const shearSlider = document.getElementById("lt_shear_slider");
+      const shearVal = document.getElementById("lt_shear_val");
+
+      const setActivePreset = (presetName) => {
+        presetButtons.forEach((btn) => {
+          if (btn.dataset.preset === presetName) {
+            btn.classList.add("active");
+            btn.style.background = "var(--primary-base, #3b82f6)";
+            btn.style.color = "#ffffff";
+          } else {
+            btn.classList.remove("active");
+            btn.style.background = "var(--bg-card)";
+            btn.style.color = "var(--fg)";
+          }
+        });
+        if (rotCtrl) rotCtrl.style.display = presetName === "rotation" ? "block" : "none";
+        if (scaleCtrl) scaleCtrl.style.display = presetName === "scale" ? "block" : "none";
+        if (shearCtrl) shearCtrl.style.display = presetName === "shear" ? "block" : "none";
+      };
+
+      const applyMatrix = (m) => {
+        ltState.matrix = [
+          [Number(m[0][0]) || 0, Number(m[0][1]) || 0],
+          [Number(m[1][0]) || 0, Number(m[1][1]) || 0]
+        ];
+        syncInputsFromMatrix();
+        this.execute();
+        if (window.App && App.LinearTransform && App.LinearTransform.isActive && App.LinearTransform.isActive()) {
+          App.LinearTransform.updateLiveMatrix(ltState.matrix);
+        }
+      };
+
+      presetButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const p = btn.dataset.preset;
+          setActivePreset(p);
+          if (p === "rotation") {
+            const deg = rotSlider ? parseFloat(rotSlider.value) || 0 : 0;
+            const rad = (deg * Math.PI) / 180;
+            if (rotVal) rotVal.textContent = `${deg}° (${rad.toFixed(2)} rad)`;
+            applyMatrix([
+              [Math.cos(rad), -Math.sin(rad)],
+              [Math.sin(rad), Math.cos(rad)]
+            ]);
+          } else if (p === "reflectX") {
+            applyMatrix([
+              [1, 0],
+              [0, -1]
+            ]);
+          } else if (p === "reflectY") {
+            applyMatrix([
+              [-1, 0],
+              [0, 1]
+            ]);
+          } else if (p === "reflectOrigin") {
+            applyMatrix([
+              [-1, 0],
+              [0, -1]
+            ]);
+          } else if (p === "scale") {
+            const k = scaleSlider ? parseFloat(scaleSlider.value) || 1.5 : 1.5;
+            if (scaleVal) scaleVal.textContent = `${k.toFixed(1)}×`;
+            applyMatrix([
+              [k, 0],
+              [0, k]
+            ]);
+          } else if (p === "shear") {
+            const k = shearSlider ? parseFloat(shearSlider.value) || 1.0 : 1.0;
+            if (shearVal) shearVal.textContent = `${k.toFixed(1)}`;
+            applyMatrix([
+              [1, k],
+              [0, 1]
+            ]);
+          }
+        });
+      });
+
+      if (rotSlider) {
+        rotSlider.addEventListener("input", (e) => {
+          const deg = parseFloat(e.target.value) || 0;
+          const rad = (deg * Math.PI) / 180;
+          if (rotVal) rotVal.textContent = `${deg}° (${rad.toFixed(2)} rad)`;
+          applyMatrix([
+            [Math.cos(rad), -Math.sin(rad)],
+            [Math.sin(rad), Math.cos(rad)]
+          ]);
         });
       }
 
-      if (pProject) {
-        pProject.addEventListener("click", () => {
-          clearActivePill();
-          pProject.classList.add("active");
-          ltState.matrix = [
-            [1, 0],
-            [0, 0]
-          ];
-          syncInputsFromMatrix();
-          this.execute();
+      if (scaleSlider) {
+        scaleSlider.addEventListener("input", (e) => {
+          const k = parseFloat(e.target.value) || 1.0;
+          if (scaleVal) scaleVal.textContent = `${k.toFixed(1)}×`;
+          applyMatrix([
+            [k, 0],
+            [0, k]
+          ]);
         });
       }
 
-      if (pInvert) {
-        pInvert.addEventListener("click", () => {
-          clearActivePill();
-          pInvert.classList.add("active");
-          ltState.matrix = [
-            [2, -1],
-            [1, 1.5]
-          ];
-          syncInputsFromMatrix();
-          this.execute();
-        });
-      }
-
-      if (pShear) {
-        pShear.addEventListener("click", () => {
-          clearActivePill();
-          pShear.classList.add("active");
-          ltState.matrix = [
-            [1, 1.5],
+      if (shearSlider) {
+        shearSlider.addEventListener("input", (e) => {
+          const k = parseFloat(e.target.value) || 0;
+          if (shearVal) shearVal.textContent = `${k.toFixed(1)}`;
+          applyMatrix([
+            [1, k],
             [0, 1]
-          ];
-          syncInputsFromMatrix();
-          this.execute();
+          ]);
         });
       }
 
@@ -532,7 +614,11 @@
           el.addEventListener("input", (e) => {
             const val = parseFloat(e.target.value) || 0;
             ltState.matrix[row][col] = val;
+            setActivePreset("custom");
             this.execute();
+            if (window.App && App.LinearTransform && App.LinearTransform.isActive && App.LinearTransform.isActive()) {
+              App.LinearTransform.updateLiveMatrix(ltState.matrix);
+            }
           });
         }
       };
@@ -608,6 +694,7 @@
       if (a22 && !isNaN(parseFloat(a22.value))) ltState.matrix[1][1] = parseFloat(a22.value);
 
       computeKernelAndImage();
+      App.activeNoriTransformMatrix = ltState.matrix;
       App.custom2DDrawHook = drawLinearTransformOnCanvas2D;
       updateInfoPanel();
 
@@ -617,9 +704,16 @@
     },
 
     onTaskSelect: function (taskId) {
-      if (taskId === "topic5_kernel_image" || taskId === "s25" || taskId === "topic5_matrix_transform" || taskId === "s26") {
+      if (
+        taskId === "topic5_linear_transformation" ||
+        taskId === "topic5_kernel_image" ||
+        taskId === "s25" ||
+        taskId === "topic5_matrix_transform" ||
+        taskId === "s26"
+      ) {
         this.execute();
       } else {
+        App.activeNoriTransformMatrix = null;
         if (window.App && App.LinearTransform && App.LinearTransform.isActive && App.LinearTransform.isActive()) {
           App.LinearTransform.stop();
           const btnMorph = document.getElementById("btnLTMorph");

@@ -69,10 +69,8 @@
   App._basisModeActive = false;
 
   App.restoreBasisPreState = function () {
-    if (typeof App.stopBasisAnimation === "function") {
-      try {
-        App.stopBasisAnimation();
-      } catch (_) {}
+    if (window.App && App.BasisAnimator && typeof App.BasisAnimator.stop === "function") {
+      try { App.BasisAnimator.stop(); } catch (_) {}
     }
     App._basisAnimActive = false;
     (App.vectorList || []).forEach((it) => {
@@ -94,23 +92,8 @@
   };
 
   // =========================
-  // B) ANIMATION CONTROLS
+  // B) ANIMATION CONTROLS (HỢP NHẤT TRỰC TIẾP TRÊN SIDEBAR)
   // =========================
-  App.BASIS_PHASE_MS_MIN = 100;
-  App.BASIS_PHASE_MS_MAX = 5000;
-  App.BASIS_PHASE_MS_STEP = 50;
-  App.basisAnimPhaseMs = 1000;
-
-  App.setBasisAnimPhaseMs = function (ms) {
-    let x = Math.round(Number(ms));
-    if (!isFinite(x)) x = App.basisAnimPhaseMs;
-    x = Math.max(App.BASIS_PHASE_MS_MIN, Math.min(App.BASIS_PHASE_MS_MAX, x));
-    const step = Math.max(1, App.BASIS_PHASE_MS_STEP || 100);
-    x = Math.round(x / step) * step;
-    App.basisAnimPhaseMs = x;
-    return x;
-  };
-
   App.ensureBasisAnimControls = function () {
     const checklist = $("basisChecklist");
     const out = $("result_basis");
@@ -122,80 +105,97 @@
 
     const wrap = document.createElement("div");
     wrap.id = "basisAnimControls";
-    wrap.className = "basis-anim-controls";
-    wrap.style.display = "flex";
-    wrap.style.flexDirection = "column";
-    wrap.style.gap = "10px";
-    wrap.style.margin = "10px 0 8px";
-    wrap.style.padding = "12px";
-    wrap.style.borderRadius = "8px";
-    wrap.style.background = "var(--card)";
-    wrap.style.border = "1px solid var(--border)";
+    wrap.className = "basis-sidebar-anim-box";
 
-    const row1 = document.createElement("div");
-    row1.style.display = "flex";
-    row1.style.alignItems = "baseline";
-    row1.style.justifyContent = "space-between";
-    row1.style.gap = "10px";
+    wrap.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
+        <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted, #64748b);">Trực quan hóa không gian</span>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span class="basis-step-pill" id="basisStepCounter">Bước 1 / 3</span>
+          <button type="button" id="btnBasisCloseAnim" class="basis-anim-close-btn" title="Đóng trực quan" style="background: transparent; border: none; cursor: pointer; color: var(--text-muted, #64748b); font-size: 13px; padding: 2px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;">
+            <i class="ph ph-x"></i>
+          </button>
+        </div>
+      </div>
 
-    const lbl = document.createElement("div");
-    lbl.style.fontSize = "13px";
-    lbl.style.fontWeight = "700";
-    lbl.textContent = "Tốc độ Animation:";
+      <div class="coord-phase-pills basis-step-pills" id="basisStepPills"></div>
 
-    const val = document.createElement("div");
-    val.id = "basisSpeedVal";
-    val.style.fontSize = "13px";
-    val.style.fontWeight = "800";
-    val.textContent = `${App.basisAnimPhaseMs} ms`;
+      <div class="basis-anim-btn-row">
+        <button type="button" id="btnBasisPrev" class="basis-ctrl-btn" title="Bước trước">
+          <i class="ph ph-skip-back"></i>
+        </button>
+        <button type="button" id="btnBasisPlay" class="basis-ctrl-btn primary" title="Phát / Tạm dừng">
+          <i class="ph ph-play" id="iconBasisPlay"></i>
+        </button>
+        <button type="button" id="btnBasisNext" class="basis-ctrl-btn" title="Bước tiếp">
+          <i class="ph ph-skip-forward"></i>
+        </button>
+        <button type="button" id="btnBasisReplay" class="basis-ctrl-btn" title="Phát lại từ đầu">
+          <i class="ph ph-arrow-counter-clockwise"></i>
+        </button>
+      </div>
 
-    row1.appendChild(lbl);
-    row1.appendChild(val);
+      <div class="hud-menu-slider-row basis-speed-slider-wrap" style="padding: 6px 0 2px; margin-top: 6px; border-top: 1px dashed var(--border-subtle, var(--border, #e2e8f0));">
+        <div class="hud-menu-slider-header" style="font-size: 11.5px; margin-bottom: 2px;">
+          <span class="hud-menu-item-text" style="color: var(--text-muted, #64748b); font-weight: 600;">Tốc độ phát</span>
+          <span class="hud-menu-slider-val" id="basisSpeedValue">1.0×</span>
+        </div>
+        <input type="range" id="basisSpeedSlider" min="0.2" max="2.5" step="0.1" value="1.0" class="hud-range-slider" />
+      </div>
 
-    const range = document.createElement("input");
-    range.type = "range";
-    range.id = "basisSpeedRange";
-    range.min = String(App.BASIS_PHASE_MS_MIN);
-    range.max = String(App.BASIS_PHASE_MS_MAX);
-    range.step = String(App.BASIS_PHASE_MS_STEP);
-    range.value = String(App.basisAnimPhaseMs);
-    range.style.width = "100%";
+      <div class="basis-step-explainer" id="basisStepExplainer">
+        <div class="basis-step-title" id="basisStepTitle">Khảo sát hệ vector</div>
+        <div class="basis-step-desc" id="basisStepDesc">Bấm nút Trực quan để bắt đầu trực quan hóa không gian.</div>
+      </div>
+    `;
 
-    const help = document.createElement("div");
-    help.id = "basisSpeedHelp";
-    help.style.fontSize = "12px";
-    help.style.opacity = "0.85";
-    help.innerHTML = `<span style="color:salmon">●</span> Vector phụ thuộc &nbsp; <span style="color:lightgreen">●</span> Vector cơ sở`;
+    wrap.style.display = "none";
 
-    const btn = document.createElement("button");
-    btn.id = "btnStopBasisAnim";
-    btn.type = "button";
-    btn.textContent = "Dừng & Hủy Animation";
-    btn.className = "btn";
-    btn.style.padding = "6px 12px";
-    btn.style.borderRadius = "6px";
-    btn.style.fontSize = "0.9em";
-    btn.style.cursor = "pointer";
-    btn.style.width = "fit-content";
-    btn.style.marginTop = "5px";
+    // Dat khoi hoat canh nam ngay duoi khoi ket qua de giu logic thi giac mach lac
+    if (out.nextSibling) {
+      host.insertBefore(wrap, out.nextSibling);
+    } else {
+      host.appendChild(wrap);
+    }
 
-    range.addEventListener("input", () => {
-      const ms = App.setBasisAnimPhaseMs(range.value);
-      if (val) val.textContent = `${ms} ms`;
-    });
+    const btnClose = wrap.querySelector("#btnBasisCloseAnim");
+    if (btnClose) {
+      btnClose.addEventListener("click", () => {
+        App.stopBasisAnimation();
+      });
+    }
 
-    btn.addEventListener("click", () => {
-      App.restoreBasisPreState();
-      if (typeof App.clearAutoVectors === "function")
-        App.clearAutoVectors("basis");
-    });
+    const speedSlider = wrap.querySelector("#basisSpeedSlider");
+    const syncSliderPct = (val) => {
+      if (!speedSlider) return;
+      const min = parseFloat(speedSlider.min) || 0.2;
+      const max = parseFloat(speedSlider.max) || 2.5;
+      const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+      speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+      speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+    };
+    if (speedSlider) {
+      speedSlider.addEventListener("input", (e) => {
+        const val = parseFloat(e.target.value) || 1.0;
+        syncSliderPct(val);
+        const valLabel = wrap.querySelector("#basisSpeedValue");
+        if (valLabel) valLabel.textContent = `${val.toFixed(1)}×`;
+      });
+      syncSliderPct(1.0);
+    }
+  };
 
-    wrap.appendChild(row1);
-    wrap.appendChild(range);
-    wrap.appendChild(help);
-    wrap.appendChild(btn);
+  // Dừng và giải phóng hoạt cảnh cơ sở
+  App.stopBasisAnimation = function () {
+    const wrap = $("basisAnimControls");
+    if (wrap) wrap.style.display = "none";
 
-    host.insertBefore(wrap, out);
+    if (window.App && App.BasisAnimator && typeof App.BasisAnimator.stop === "function") {
+      try { App.BasisAnimator.stop(); } catch (_) {}
+    }
+    if (typeof App.restoreBasisPreState === "function") {
+      try { App.restoreBasisPreState(); } catch (_) {}
+    }
   };
 
   if (document.readyState === "loading") {
@@ -264,12 +264,32 @@
     });
 
     try {
-      // [FIX] Thêm tham số pivot_strategy='basic' để báo cho backend biết:
-      // "Đừng có tự ý đổi chỗ vector của tao!"
-      const data = await App.callAPI("basis", {
-        vectors: vecs,
-        pivot_strategy: "basic",
-      });
+      // [QUAN TRỌNG] Trích xuất cơ sở trực tiếp từ họ vector của người dùng trên đồ thị
+      const has3DVector = selectedItems.some(
+        (it) => it.vec && it.vec.length >= 3 && Math.abs(it.vec[2] || 0) > 1e-5
+      );
+      if (has3DVector && App.mode !== "3D" && typeof App.toggleMode === "function") {
+        App.toggleMode();
+      }
+      const spaceDim = (App.mode === "3D" || has3DVector) ? 3 : 2;
+      const basisPlan = typeof App.analyzeBasisPlan === "function"
+        ? App.analyzeBasisPlan(selectedItems, spaceDim)
+        : null;
+
+      let data = null;
+      try {
+        data = await App.callAPI("basis", {
+          vectors: vecs,
+          pivot_strategy: "basic",
+        });
+      } catch (apiErr) {
+        console.warn("Backend API basis call failed or offline, falling back to client-side geometric solver:", apiErr);
+        data = {
+          basis: basisPlan?.finalBasis?.map((it) => it.vec) || [],
+          dimension: basisPlan?.finalDim || 2,
+          steps: [],
+        };
+      }
 
       // Gọi hàm sinh lời giải
       const gen = App.TasksGen && App.TasksGen.Basis;
@@ -282,24 +302,28 @@
       let packEqGeneral = gen && gen.buildBasisByEquationsGeneral ? gen.buildBasisByEquationsGeneral(selectedItems, data) : null;
       let packEqStep = gen && gen.buildBasisByEquationsStepwise ? gen.buildBasisByEquationsStepwise(selectedItems, data) : null;
 
-      const basis = Array.isArray(packMat?.basisVectors)
-        ? packMat.basisVectors
-        : Array.isArray(data?.basis)
-          ? data.basis
-          : [];
+      const basisItems = basisPlan?.finalBasis?.length
+        ? basisPlan.finalBasis
+        : selectedItems.slice(0, typeof data?.dimension === "number" ? data.dimension : 2);
 
-      const dim =
-        typeof packMat?.dimension === "number"
-          ? packMat.dimension
-          : typeof data?.dimension === "number"
-            ? data.dimension
-            : null;
+      const dim = typeof basisPlan?.finalDim === "number"
+        ? basisPlan.finalDim
+        : (typeof packMat?.dimension === "number" ? packMat.dimension : (typeof data?.dimension === "number" ? data.dimension : basisItems.length));
+
+      const dependentItems = basisPlan?.steps
+        ? basisPlan.steps.filter((s) => s.type === "REDUNDANT" || s.type === "REDUNDANT_ZERO").map((s) => s.item).filter(Boolean)
+        : [];
 
       // --- [MỚI] 1. TẠO HTML HIỂN THỊ ĐẸP (MATHLIVE READ-ONLY) ---
 
       // Hàm chuyển vector [1, 2] thành Latex (1, 2) để hiển thị trong Mathfield
-      // [FIX FINAL] Logic hiển thị: Căn -> Phân số (nghiêm ngặt) -> Thập phân
-      const fmtVecForMathLive = (v) => {
+      // [FIX FINAL] Logic hiển thị: Tham số -> Căn -> Phân số (nghiêm ngặt) -> Thập phân
+      const fmtVecForMathLive = (v, item) => {
+        if (item && item.isParametric && item.rawExprs && item.rawExprs.length) {
+          const parts = item.rawExprs.map((e) => (App.exprToLatex ? App.exprToLatex(e) : e));
+          return `\\left(${parts.join(", ")}\\right)`;
+        }
+
         // Helper: Rút gọn căn
         const simplifySqrtStr = (n) => {
           let coef = 1;
@@ -381,78 +405,100 @@
 
         return `\\left(${nums.join(", ")}\\right)`;
       };
-      // Tạo danh sách các thẻ <math-field>
-      const basisMathFields = basis.length
-        ? basis
+      const getVecIndex = (it, fallbackNum) => {
+        if (!it) return String(fallbackNum);
+        if (typeof App.displayIndexOf === "function") {
+          const d = App.displayIndexOf(it);
+          if (d) return String(d);
+        }
+        const idx = App.vectorList ? App.vectorList.indexOf(it) : -1;
+        return idx >= 0 ? String(idx + 1) : String(fallbackNum);
+      };
+
+      // Tạo danh sách các thẻ <math-field> cho từng vector cơ sở từ hệ thực tế của người dùng
+      const basisMathFields = basisItems.length
+        ? basisItems
             .map(
-              (v) => `
-            <math-field read-only style="
-                display: block;
-                width: 100%;
-                background: var(--bg-paper, #fff); /* Ăn theo nền sáng/tối */
-                border: 1px solid var(--border, #ccc);
-                border-radius: 8px;
-                padding: 10px 12px;
-                margin-bottom: 8px;
-                font-size: 1.3em; /* [QUAN TRỌNG] Chữ to rõ */
-                color: var(--text-main, #333);
-                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-                pointer-events: none; /* Chặn click chỉnh sửa */
-            ">
-                ${fmtVecForMathLive(v)}
-            </math-field>
+              (it, idx) => `
+            <div style="margin-bottom: 6px;">
+              <math-field read-only style="
+                  width: 100%;
+                  box-sizing: border-box;
+                  background: var(--bg-paper, var(--card, #fff));
+                  border: 1px solid var(--border-subtle, var(--border, #ccc));
+                  border-radius: 4px;
+                  padding: 6px 12px;
+                  font-size: 1.2em;
+                  color: var(--text-main, #333);
+                  pointer-events: none;
+              ">
+                  v_{${getVecIndex(it, idx + 1)}} = ${fmtVecForMathLive(it.vec, it)}
+              </math-field>
+            </div>
           `,
             )
             .join("")
-        : `<div style="font-style:italic; color:#888; padding: 5px;">(Không có vector cơ sở)</div>`;
+        : `<div style="font-style:italic; color:var(--text-muted, #888); padding: 5px;">(Không có vector cơ sở)</div>`;
+
+      // Khối danh sách vector phụ thuộc (nếu có)
+      let dependentHTML = "";
+      if (dependentItems.length > 0) {
+        const depList = dependentItems
+          .map(
+            (it, idx) => `
+          <div style="margin-bottom: 6px;">
+            <math-field read-only style="
+                width: 100%;
+                box-sizing: border-box;
+                background: var(--bg-hover, rgba(0,0,0,0.02));
+                border: 1px dashed var(--border-subtle, var(--border, #ccc));
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-size: 1.15em;
+                color: var(--text-muted, #64748b);
+                pointer-events: none;
+            ">
+                v_{${getVecIndex(it, idx + 1)}} = ${fmtVecForMathLive(it.vec, it)}
+            </math-field>
+          </div>
+        `,
+          )
+          .join("");
+
+        dependentHTML = `
+          <div style="margin-top: 6px; padding-top: 8px; border-top: 1px dashed var(--border-subtle, var(--border, #ccc));">
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-muted, #64748b); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.03em;">
+              Vector phụ thuộc tuyến tính (loại khỏi cơ sở):
+            </div>
+            ${depList}
+          </div>
+        `;
+      }
 
       // HTML Khung kết quả (Hoàn toàn dùng DIV, không dùng LI/UL)
       const resultHTML = `
-        <div style="display:flex; flex-direction:column; gap:12px; padding: 5px 0 40px 0;">
-            
-            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; width:100%;">
-                
-                <div style="display:flex; align-items:center; white-space:nowrap;">
-                    <span style="font-weight:600; font-size:1.1em; color:var(--text-main, #333); margin-right:6px;">Số chiều:</span>
-                    <span style="font-family:'Times New Roman', serif; font-style:italic; font-size:1.2em; color:var(--text-main, #333);">dim(V) = </span>
-                    <span style="font-weight:bold; font-size:1.4em; color:#2196F3; margin-left:6px;">${dim ?? "?"}</span>
+        <div style="display:flex; flex-direction:column; gap:8px; padding: 4px 0 12px 0;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:var(--bg-hover, rgba(0,0,0,0.02)); border:1px solid var(--border-subtle, var(--border, #e2e8f0)); border-radius:4px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted, #64748b);">Số chiều:</span>
+                    <span style="font-weight:700; font-size:13px; color:var(--primary-base, #10b981);">dim(V) = ${dim ?? "?"}</span>
                 </div>
-
-                <div style="flex-grow:1;"></div>
-
-                <div style="font-weight:600; font-size:1.1em; color:var(--text-sec, #555); white-space:nowrap;">
-                    Cơ sở gồm:
-                </div>
+                <span style="font-size:11.5px; font-weight:600; color:var(--text-muted, #64748b);">Hệ cơ sở B (${basisItems.length} vector)</span>
             </div>
             
             <div style="display:flex; flex-direction:column; width:100%;">
                 ${basisMathFields}
             </div>
 
+            ${dependentHTML}
             
-            <div style="margin-top:5px; font-size:1.2em; color:#888; font-style:italic; border-top:1px dashed #ccc; padding-top:8px; text-align: left; width: 100%;">
-                    👉 Bấm nút <b>"Lời giải"</b> để xem chi tiết.
-                </div>
+            <div style="font-size:11.5px; color:var(--text-muted, #888); font-style:italic; padding-top:4px; text-align: left; width: 100%;">
+                👉 Bấm <b>"Trực quan"</b> để xem hoạt cảnh không gian hoặc <b>"Lời giải"</b> để xem chi tiết biến đổi ma trận bậc thang (khử Gauss) và giải hệ phương trình.
+            </div>
         </div>
       `;
 
-      // 2. Text thô dùng cho animation (giữ nguyên để không lỗi logic khác)
-      const basisStr = basis.length
-        ? basis.map((v) => `(${v.join(", ")})`).join("\n")
-        : "(rỗng)";
-      const explanationText = `Số chiều dim(V) = ${dim}\nCơ sở gồm:\n${basisStr}`;
-
-      let dependentIds = [];
-      if (Array.isArray(data?.dependents) && data.dependents.length) {
-        dependentIds = data.dependents
-          .map((idx) => selectedItems[idx])
-          .filter(Boolean)
-          .map((it) => it.id);
-      }
-
-      if (typeof App.playBasisSolution === "function") {
-        await App.playBasisSolution(explanationText);
-      }
+      let dependentIds = dependentItems.map((it) => it.id);
 
       // [FIX] Gán HTML đẹp vào ô kết quả
       if (out) {
@@ -493,35 +539,59 @@
               type: 'basis', 
               selectedIds: checkedIds,
               dependentIds: dependentIds,
-              basisVectors: basis,
+              basisVectors: basisItems.map((it) => it.vec),
               phaseMs: App.basisAnimPhaseMs
           };
           App.PaperLogger.log("Tìm Cơ sở & Số chiều", ltx, "", cachedConfig, animData);
         }
       }
 
-      if (
-        typeof App.addAutoVector === "function" &&
-        Array.isArray(basis) &&
-        basis.length
-      ) {
-        basis.forEach((v) => App.addAutoVector(v, "basis"));
-      }
-
-      App._basisModeActive = true;
-
-      if (typeof App.startBasisAnimation === "function") {
-        App.startBasisAnimation({
-          selectedIds: checkedIds,
-          dependentIds: dependentIds,
-          basisVectors: basis,
-          phaseMs: App.basisAnimPhaseMs,
-        });
-      }
+      // [QUAN TRỌNG] Không tự ý chèn auto-vector (1, 0), (0, 1) lên canvas.
+      // Lưu lại dữ liệu để khi người dùng bấm nút "Trực quan" sẽ khởi chạy hoạt cảnh
+      App._lastBasisAnimData = {
+        selectedIds: checkedIds,
+        dependentIds: dependentIds,
+        basisVectors: basisItems.map((it) => it.vec),
+        phaseMs: App.basisAnimPhaseMs,
+      };
     } catch (err) {
       if (out) out.innerText = "Lỗi: " + err.message;
       if (typeof App.showToast === "function") App.showToast(err.message);
     }
+  };
+
+  // =========================
+  // D) TRỰC QUAN HÓA CƠ SỞ (TÁCH RIÊNG KHỎI TÍNH TOÁN)
+  // =========================
+  App.startBasisAnimateUI = async function () {
+    App.ensureBasisAnimControls();
+    const wrap = $("basisAnimControls");
+
+    // Nếu hộp trực quan đang mở hoặc hoạt cảnh đang chạy: bấm nút Trực quan sẽ dừng và tắt (Toggle)
+    const isBoxOpen = wrap && wrap.style.display !== "none" && wrap.style.display !== "";
+    if (isBoxOpen || window.App?.BasisAnimator?.isActive?.()) {
+      App.stopBasisAnimation();
+      return;
+    }
+
+    // Nếu chưa tính toán trước đó, gọi tính toán để trích xuất cơ sở
+    if (!App._lastBasisAnimData) {
+      await App.basisAndDimUI();
+    }
+    if (!App._lastBasisAnimData) return;
+
+    // Dừng hoạt cảnh tọa độ nếu đang chạy
+    if (typeof App.stopCoordAnimation === "function") {
+      App.stopCoordAnimation();
+    } else if (window.App?.CoordAnimator?.isActive?.()) {
+      App.CoordAnimator.stop();
+    }
+
+    App._basisModeActive = true;
+    if (typeof App.startBasisAnimation === "function") {
+      App.startBasisAnimation(App._lastBasisAnimData);
+    }
+    if (wrap) wrap.style.display = "block";
   };
 
   // --- INIT ---
@@ -534,7 +604,15 @@
       newBtn.addEventListener("click", App.basisAndDimUI);
     }
 
-    // 2. XỬ LÝ NÚT LỜI GIẢI (Logic thông minh)
+    // 2. XỬ LÝ NÚT TRỰC QUAN (Tách riêng khỏi Tính cơ sở)
+    const btnAnimate = $("btnBasisAnimate");
+    if (btnAnimate) {
+      const newBtnAnimate = btnAnimate.cloneNode(true);
+      if (btnAnimate.parentNode) btnAnimate.parentNode.replaceChild(newBtnAnimate, btnAnimate);
+      newBtnAnimate.addEventListener("click", App.startBasisAnimateUI);
+    }
+
+    // 3. XỬ LÝ NÚT LỜI GIẢI (Logic thông minh)
     const btnShow = $("btnOpenSolution");
     if (btnShow) {
       // [SỬA] Luôn hiện nút này ngay từ đầu (để giống bên Tọa độ)

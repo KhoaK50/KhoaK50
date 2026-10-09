@@ -529,8 +529,8 @@ def init_user_db():
     except Exception as e:
         print(f">> [Database Error - User DB] {e}")
 
-# Tự động chạy tạo bảng khi khởi động backend
-init_user_db()
+import threading
+threading.Thread(target=init_user_db, daemon=True).start()
 
 
 def send_auth_email(to_email, subject, html_content):

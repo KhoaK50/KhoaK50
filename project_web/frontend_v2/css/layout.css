@@ -150,7 +150,7 @@
 }
 
 :root {
-  --sidebar-width: 440px;
+  --sidebar-width: 490px;
 }
 
 /* =================== RESPONSIVE =================== */
@@ -160,7 +160,8 @@
     top: 0;
     left: 0;
     width: var(--sidebar-width) !important;
-    min-width: var(--sidebar-width) !important;
+    min-width: 420px !important;
+    max-width: 700px !important;
     transform: none !important;
     margin-left: calc( (var(--sidebar-width) + 40px) * -1 );
     transition: margin-left var(--t-slow) cubic-bezier(0.4, 0, 0.2, 1);
@@ -284,11 +285,11 @@ body.is-resizing #controls {
   
   /* Prevent squishing, enforce clipping */
   #controls {
-    max-width: var(--sidebar-width) !important;
+    max-width: 700px !important;
     overflow-x: hidden !important;
   }
   #controls > * {
-    min-width: 320px !important;
+    min-width: 340px !important;
   }
   
   #controls.open {

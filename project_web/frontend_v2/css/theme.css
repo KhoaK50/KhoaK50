@@ -24,9 +24,11 @@
   --warn: #f59e0b;
   --danger: #ef4444;
 
-  /* 3D */
+  /* 2D & 3D Grid & Axes */
   --grid-light: #e9eaee;
-  --axis: #2a2f36;
+  --grid-major: #94a3b8;
+  --grid-minor: #b8c5d6;
+  --axis: #0f172a;
   --axis-x: #e04b4b;
   --axis-y: #2fb463;
   --axis-z: #3a78ff;
@@ -70,7 +72,10 @@
   --accent-700: #52a9ff;
   --accent-soft: rgba(0, 144, 255, 0.16);
 
+  /* 2D & 3D Grid & Axes */
   --grid-light: #262b36;
+  --grid-major: #475569;
+  --grid-minor: #2e3846;
   --axis: #dadbe3;
   --axis-x: #ff8a8a;
   --axis-y: #7be3a0;
