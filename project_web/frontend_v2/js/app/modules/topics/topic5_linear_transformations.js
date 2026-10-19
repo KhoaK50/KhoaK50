@@ -1,705 +1,555 @@
 // =========================================================================
 // topic5_linear_transformations.js - Module Chủ Đề 5: Ánh Xạ Tuyến Tính
-// Khảo sát Hạt nhân Ker(T), Không gian ảnh Im(T) và Ma trận ánh xạ 2D
+// Khảo sát Hạt nhân Ker(T), Không gian ảnh Im(T) và Định lý Hạng - Số khuyết
+// Đồng bộ 2D (2x2) và 3D (3x3) với App.matrixList & App.LTAnimator
+// Tuân thủ triệt để Zero Em-dash (\u2014) và chuẩn mực Anti-Slop.
 // =========================================================================
 (function () {
   window.App = window.App || {};
 
-  // Trạng thái module Ánh xạ tuyến tính
-  const ltState = {
-    matrix: [
-      [1, 1],
-      [1, 1]
-    ],
-    det: 0,
-    rank: 1,
-    nullity: 1,
-    kerDir: [-1, 1],
-    imDir: [1, 1],
-    showKernel: true,
-    showImage: true,
-    showCompression: true,
-    isMorphing: false
-  };
-
-  // Tính toán hạt nhân Ker(T) và ảnh Im(T) của ma trận 2x2
-  function computeKernelAndImage() {
-    const a = Number(ltState.matrix[0][0]) || 0;
-    const b = Number(ltState.matrix[0][1]) || 0;
-    const c = Number(ltState.matrix[1][0]) || 0;
-    const d = Number(ltState.matrix[1][1]) || 0;
-
-    const det = a * d - b * c;
-    ltState.det = det;
-
-    const normA = Math.sqrt(a * a + b * b + c * c + d * d);
-
-    // Trường hợp ma trận không: rank = 0, nullity = 2
-    if (normA < 1e-9) {
-      ltState.rank = 0;
-      ltState.nullity = 2;
-      ltState.kerDir = [1, 0];
-      ltState.imDir = [0, 0];
-      return;
-    }
-
-    // Trường hợp khả nghịch: rank = 2, nullity = 0
-    if (Math.abs(det) > 1e-5) {
-      ltState.rank = 2;
-      ltState.nullity = 0;
-      ltState.kerDir = [0, 0];
-      ltState.imDir = [1, 0];
-      return;
-    }
-
-    // Trường hợp suy biến cấp 1: rank = 1, nullity = 1
-    ltState.rank = 1;
-    ltState.nullity = 1;
-
-    // Hạt nhân là nghiệm của phương trình ax + by = 0 (hoặc cx + dy = 0)
-    let kx = 0;
-    let ky = 0;
-    if (Math.abs(a) > 1e-5 || Math.abs(b) > 1e-5) {
-      kx = -b;
-      ky = a;
-    } else {
-      kx = -d;
-      ky = c;
-    }
-    const lenK = Math.sqrt(kx * kx + ky * ky);
-    ltState.kerDir = lenK > 1e-9 ? [kx / lenK, ky / lenK] : [1, 0];
-
-    // Không gian ảnh Im(T) sinh bởi cột khác không của A: [a, c]^T hoặc [b, d]^T
-    let ix = a;
-    let iy = c;
-    if (Math.abs(ix) < 1e-5 && Math.abs(iy) < 1e-5) {
-      ix = b;
-      iy = d;
-    }
-    const lenI = Math.sqrt(ix * ix + iy * iy);
-    ltState.imDir = lenI > 1e-9 ? [ix / lenI, iy / lenI] : [1, 0];
+  function $(id) {
+    return document.getElementById(id);
   }
 
-  // Hook vẽ đồ họa 2D trực quan trên Canvas của Viewer2D
-  function drawLinearTransformOnCanvas2D(ctx, gridInfo, logicalSize) {
-    const cx = gridInfo.originPx.x;
-    const cy = gridInfo.originPx.y;
-    const px = gridInfo.pixelsPerUnit;
+  function fmtScalarLatex(val) {
+    if (!Number.isFinite(val) || Math.abs(val) < 1e-7) return "0";
+    const sign = val < 0 ? "-" : "";
+    const abs = Math.abs(val);
+    if (Math.abs(abs - Math.round(abs)) < 1e-6) {
+      return sign + String(Math.round(abs));
+    }
+    for (let den = 2; den <= 24; den++) {
+      const num = Math.round(abs * den);
+      if (Math.abs(abs - num / den) < 1e-6) {
+        return `${sign}\\frac{${num}}{${den}}`;
+      }
+    }
+    return (val < 0 ? "-" : "") + parseFloat(abs.toFixed(3)).toString();
+  }
 
-    const wX = (x) => cx + x * px;
-    const wY = (y) => cy - y * px;
+  function fmtScalarPlain(val) {
+    if (!Number.isFinite(val) || Math.abs(val) < 1e-6) return "0";
+    if (Math.abs(val - Math.round(val)) < 1e-5) return String(Math.round(val));
+    for (let den = 2; den <= 16; den++) {
+      const num = Math.round(val * den);
+      if (Math.abs(val - num / den) < 1e-5) {
+        return `${num}/${den}`;
+      }
+    }
+    return parseFloat(val.toFixed(2)).toString();
+  }
 
-    ctx.save();
+  function matrixToBmatrixLatex(M) {
+    if (!Array.isArray(M) || !M.length) return "\\begin{bmatrix} 0 \\end{bmatrix}";
+    const rows = M.map((r) => r.map(fmtScalarLatex).join(" & ")).join(" \\\\ ");
+    return `\\begin{bmatrix} ${rows} \\end{bmatrix}`;
+  }
 
-    const a = ltState.matrix[0][0];
-    const b = ltState.matrix[0][1];
-    const c = ltState.matrix[1][0];
-    const d = ltState.matrix[1][1];
+  function vecToColLatex(v) {
+    if (!Array.isArray(v)) return "\\begin{bmatrix} 0 \\end{bmatrix}";
+    return `\\begin{bmatrix} ${v.map(fmtScalarLatex).join(" \\\\ ")} \\end{bmatrix}`;
+  }
 
-    const te1 = [a, c];
-    const te2 = [b, d];
+  // --- THUẬT TOÁN ĐẠI SỐ TUYẾN TÍNH NỘI TẠI (KHÔNG PHỤ THUỘC MOCK) ---
+  function computeLTAnalysis(rawValues, n) {
+    const dim = n === 3 ? 3 : 2;
+    const matrix = [];
+    for (let i = 0; i < dim; i++) {
+      matrix[i] = [];
+      for (let j = 0; j < dim; j++) {
+        matrix[i][j] = Number(rawValues?.[i]?.[j] ?? 0);
+      }
+    }
 
-    // 1. Trường hợp suy biến: rank = 1 (Định thức = 0)
-    if (ltState.rank === 1) {
-      const farSpan = 30; // Chiều dài kéo dài qua màn hình
+    // 1. Định thức det(A)
+    let det = 0;
+    if (dim === 2) {
+      det = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+    } else {
+      det =
+        matrix[0][0] * (matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1]) -
+        matrix[0][1] * (matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0]) +
+        matrix[0][2] * (matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0]);
+    }
 
-      // A. Vẽ không gian Hạt nhân Ker(T): Đường thẳng nét đứt màu đỏ cam
-      if (ltState.showKernel) {
-        const k = ltState.kerDir;
-        ctx.strokeStyle = "rgba(239, 68, 68, 0.9)";
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([6, 5]);
+    // 2. Vết ma trận trace(A)
+    let trace = 0;
+    for (let i = 0; i < dim; i++) trace += matrix[i][i];
 
-        ctx.beginPath();
-        ctx.moveTo(wX(-farSpan * k[0]), wY(-farSpan * k[1]));
-        ctx.lineTo(wX(farSpan * k[0]), wY(farSpan * k[1]));
-        ctx.stroke();
-        ctx.setLineDash([]);
+    // 3. Các cột của ma trận A (chính là T(e_j))
+    const columns = [];
+    for (let j = 0; j < dim; j++) {
+      const col = [];
+      for (let i = 0; i < dim; i++) {
+        col.push(matrix[i][j]);
+      }
+      columns.push(col);
+    }
 
-        // Nhãn Ker(T)
-        ctx.font = "700 12px system-ui, sans-serif";
-        ctx.fillStyle = "#ef4444";
-        ctx.fillText("Ker(T)", wX(3.5 * k[0]) + 6, wY(3.5 * k[1]) - 6);
+    // 4. Khử Gauss - Jordan tìm RREF, pivotCols, rank và nullity
+    const RREF = matrix.map((row) => row.slice());
+    const pivotCols = [];
+    const pivotRows = [];
+    let pr = 0;
+    const eps = 1e-5;
 
-        // Minh họa co xẹp: các điểm trên hạt nhân bị nén về gốc (0, 0)
-        if (ltState.showCompression) {
-          [-2.5, -1.2, 1.2, 2.5].forEach((factor) => {
-            const px0 = wX(factor * k[0]);
-            const py0 = wY(factor * k[1]);
-
-            // Điểm hạt nhân
-            ctx.fillStyle = "#ef4444";
-            ctx.beginPath();
-            ctx.arc(px0, py0, 3.5, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Mũi tên hướng về gốc 0
-            const dx = cx - px0;
-            const dy = cy - py0;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist > 15) {
-              const arrowLen = 14;
-              const ax = px0 + (dx / dist) * arrowLen;
-              const ay = py0 + (dy / dist) * arrowLen;
-
-              ctx.strokeStyle = "rgba(239, 68, 68, 0.65)";
-              ctx.lineWidth = 1.5;
-              ctx.beginPath();
-              ctx.moveTo(px0, py0);
-              ctx.lineTo(ax, ay);
-              ctx.stroke();
-            }
-          });
+    for (let c = 0; c < dim && pr < dim; c++) {
+      let maxR = pr;
+      let maxVal = Math.abs(RREF[pr][c]);
+      for (let r = pr + 1; r < dim; r++) {
+        if (Math.abs(RREF[r][c]) > maxVal) {
+          maxVal = Math.abs(RREF[r][c]);
+          maxR = r;
         }
       }
+      if (maxVal < eps) continue;
 
-      // B. Vẽ không gian Ảnh Im(T): Đường thẳng màu xanh lam neon đậm nét
-      if (ltState.showImage) {
-        const im = ltState.imDir;
-        ctx.strokeStyle = "rgba(0, 144, 255, 0.85)";
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([]);
+      const tmp = RREF[pr];
+      RREF[pr] = RREF[maxR];
+      RREF[maxR] = tmp;
 
-        ctx.beginPath();
-        ctx.moveTo(wX(-farSpan * im[0]), wY(-farSpan * im[1]));
-        ctx.lineTo(wX(farSpan * im[0]), wY(farSpan * im[1]));
-        ctx.stroke();
+      const pv = RREF[pr][c];
+      for (let j = c; j < dim; j++) RREF[pr][j] /= pv;
+      for (let r = 0; r < dim; r++) {
+        if (r !== pr && Math.abs(RREF[r][c]) > 1e-9) {
+          const factor = RREF[r][c];
+          for (let j = c; j < dim; j++) RREF[r][j] -= factor * RREF[pr][j];
+        }
+      }
+      pivotCols.push(c);
+      pivotRows.push(pr);
+      pr++;
+    }
 
-        // Nhãn Im(T)
-        ctx.font = "700 12px system-ui, sans-serif";
-        ctx.fillStyle = "#0090ff";
-        ctx.fillText("Im(T)", wX(3.8 * im[0]) + 6, wY(3.8 * im[1]) - 6);
+    const rank = pivotCols.length;
+    const nullity = dim - rank;
+
+    const freeCols = [];
+    for (let c = 0; c < dim; c++) {
+      if (!pivotCols.includes(c)) freeCols.push(c);
+    }
+
+    // 5. Cơ sở Hạt nhân Ker(T)
+    const kerBasis = [];
+    if (nullity > 0) {
+      for (const freeCol of freeCols) {
+        const x = new Array(dim).fill(0);
+        x[freeCol] = 1;
+        for (let i = 0; i < pivotCols.length; i++) {
+          const pivCol = pivotCols[i];
+          const pivRow = pivotRows[i];
+          x[pivCol] = -RREF[pivRow][freeCol];
+        }
+        // Chuẩn hóa vector cơ sở
+        let maxAbs = 0;
+        let sign = 1;
+        for (let i = 0; i < dim; i++) {
+          const a = Math.abs(x[i]);
+          if (a > maxAbs) maxAbs = a;
+          if (a > 1e-5 && sign === 1) sign = x[i] < 0 ? -1 : 1;
+        }
+        if (maxAbs > 1e-8) {
+          let scaled = x.map((v) => (v / maxAbs) * sign);
+          let foundInt = false;
+          for (let mult = 1; mult <= 12; mult++) {
+            const cand = scaled.map((v) => v * mult);
+            if (cand.every((v) => Math.abs(v - Math.round(v)) < 1e-3)) {
+              kerBasis.push(cand.map((v) => Math.round(v)));
+              foundInt = true;
+              break;
+            }
+          }
+          if (!foundInt) {
+            kerBasis.push(scaled.map((v) => Number(v.toFixed(3))));
+          }
+        }
       }
     }
 
-    // 2. Trường hợp ma trận khả nghịch: rank = 2 (Định thức khác 0)
-    if (ltState.rank === 2) {
-      // Hạt nhân chỉ có duy nhất vector 0
-      if (ltState.showKernel) {
-        ctx.fillStyle = "#ef4444";
-        ctx.beginPath();
-        ctx.arc(cx, cy, 5.0, 0, Math.PI * 2);
-        ctx.fill();
+    // 6. Cơ sở Không gian Ảnh Im(T)
+    const imBasis = pivotCols.map((c) => columns[c]);
 
-        ctx.font = "700 11.5px system-ui, sans-serif";
-        ctx.fillStyle = "#ef4444";
-        ctx.fillText("Ker(T) = {0}", cx + 10, cy + 14);
-      }
-
-      // Không gian ảnh là toàn bộ mặt phẳng R2
-      // Vẽ hình bình hành cơ sở ảnh biểu thị diện tích det(A)
-      if (ltState.showImage) {
-        const p0x = cx;
-        const p0y = cy;
-        const p1x = wX(te1[0]);
-        const p1y = wY(te1[1]);
-        const p2x = wX(te1[0] + te2[0]);
-        const p2y = wY(te1[1] + te2[1]);
-        const p3x = wX(te2[0]);
-        const p3y = wY(te2[1]);
-
-        ctx.fillStyle = "rgba(0, 144, 255, 0.12)";
-        ctx.strokeStyle = "rgba(0, 144, 255, 0.35)";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(p0x, p0y);
-        ctx.lineTo(p1x, p1y);
-        ctx.lineTo(p2x, p2y);
-        ctx.lineTo(p3x, p3y);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-      }
-    }
-
-    // 3. Luôn vẽ hai vector cột ảnh T(e1) và T(e2)
-    function drawArrow(x0, y0, x1, y1, color, labelText) {
-      const dx = x1 - x0;
-      const dy = y1 - y0;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      if (len < 1e-4) return;
-
-      ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2.5;
-      ctx.moveTo(x0, y0);
-      ctx.lineTo(x1, y1);
-      ctx.stroke();
-
-      const headLen = Math.min(10, len * 0.35);
-      const angle = Math.atan2(dy, dx);
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(
-        x1 - headLen * Math.cos(angle - Math.PI / 7),
-        y1 - headLen * Math.sin(angle - Math.PI / 7)
-      );
-      ctx.lineTo(
-        x1 - headLen * Math.cos(angle + Math.PI / 7),
-        y1 - headLen * Math.sin(angle + Math.PI / 7)
-      );
-      ctx.closePath();
-      ctx.fill();
-
-      if (labelText) {
-        ctx.font = "700 11.5px system-ui, sans-serif";
-        ctx.fillStyle = color;
-        ctx.fillText(labelText, x1 + 6, y1 - 4);
-      }
-    }
-
-    drawArrow(cx, cy, wX(te1[0]), wY(te1[1]), "#0090ff", "T(e1)");
-    drawArrow(cx, cy, wX(te2[0]), wY(te2[1]), "#10b981", "T(e2)");
-
-    ctx.restore();
+    return {
+      dim,
+      is3D: dim === 3,
+      matrix,
+      det,
+      trace,
+      rank,
+      nullity,
+      isInvertible: rank === dim,
+      columns,
+      RREF,
+      pivotCols,
+      freeCols,
+      kerBasis,
+      imBasis
+    };
   }
 
-  // Cập nhật bảng kết quả đọc nhanh bên dưới form
-  function updateInfoPanel() {
-    const box = document.getElementById("result_lt_info");
-    if (!box) return;
+  // --- KẾT XUẤT KHUNG KẾT QUẢ MATH-CLEAN-CARD (CHUẨN TOPIC 6 & 7) ---
+  function renderLTInfoCard(matItem, analysis) {
+    const box = $("result_lt_info");
+    if (!box || !analysis) return;
 
     box.style.display = "block";
-    const det = ltState.det.toFixed(2);
-    const r = ltState.rank;
-    const n = ltState.nullity;
+    const mfStyle =
+      "background: var(--bg-paper, var(--card, #fff)); border: 1px solid var(--border-subtle, var(--border, #ccc)); border-radius: 4px; padding: 6px 12px; font-size: 1.05em; color: var(--text-main, var(--fg, #333)); pointer-events: none; width: 100%; box-sizing: border-box;";
 
-    let kerText = "";
-    if (r === 2) {
-      kerText = "{0} (Chỉ có gốc tọa độ)";
-    } else if (r === 1) {
-      kerText = `span{[${ltState.kerDir[0].toFixed(2)}, ${ltState.kerDir[1].toFixed(2)}]} (Đường thẳng đi qua gốc)`;
+    const n = analysis.dim;
+    const r = analysis.rank;
+    const k = analysis.nullity;
+    const detVal = analysis.det;
+
+    // Phân loại hình học định thức
+    let statusText = "";
+    let statusBadgeColor = "";
+    if (analysis.isInvertible) {
+      statusText = "Khả nghịch (Đẳng cấu không gian)";
+      statusBadgeColor = "var(--primary-base, #0284c7)";
+    } else if (r === 0) {
+      statusText = "Ánh xạ không (Triệt tiêu toàn không gian)";
+      statusBadgeColor = "#ef4444";
     } else {
-      kerText = "R^2 (Toàn không gian)";
+      statusText = `Suy biến (Không gian bị nén về ${r} chiều)`;
+      statusBadgeColor = "#f59e0b";
     }
 
-    let imText = "";
-    if (r === 2) {
-      imText = "R^2 (Toàn không gian)";
-    } else if (r === 1) {
-      imText = `span{[${ltState.imDir[0].toFixed(2)}, ${ltState.imDir[1].toFixed(2)}]} (Đường thẳng đi qua gốc)`;
+    // Dòng định thức & vết ma trận
+    const invLatex = `\\det(A) = ${fmtScalarLatex(detVal)}, \\quad \\text{tr}(A) = ${fmtScalarLatex(analysis.trace)}`;
+
+    // Định lý số chiều
+    const rankNullityLatex = `\\dim \\ker(T) + \\dim \\text{Im}(T) = ${k} + ${r} = ${n} = \\dim(V)`;
+
+    // Cơ sở Hạt nhân Ker(T)
+    let kerLatex = "";
+    if (k === 0) {
+      kerLatex = "\\ker(T) = \\left\\{ \\mathbf{0} \\right\\}, \\quad \\dim \\ker(T) = 0";
     } else {
-      imText = "{0} (Chỉ có gốc tọa độ)";
+      const kerCols = analysis.kerBasis.map(vecToColLatex).join(", ");
+      kerLatex = `\\ker(T) = \\text{span} \\left\\{ ${kerCols} \\right\\}, \\quad \\dim \\ker(T) = ${k}`;
     }
 
-    let detMeaningHtml = "";
-    const absDet = Math.abs(ltState.det);
-    if (Math.abs(ltState.det) < 1e-5) {
-      detMeaningHtml = `
-        <div style="grid-column: span 2; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 3px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); color: #dc2626; font-size: 11px; font-weight: 600; margin-top: 4px;">
-          <span>✖ Ma trận suy biến (det = 0):</span>
-          <span style="font-weight: 400;">Không gian bị ép xẹp thành 1 chiều hoặc điểm</span>
-        </div>
-      `;
-    } else if (ltState.det > 0) {
-      detMeaningHtml = `
-        <div style="grid-column: span 2; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 3px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.25); color: #16a34a; font-size: 11px; font-weight: 600; margin-top: 4px;">
-          <span>✓ Bảo toàn hướng không gian (det > 0):</span>
-          <span style="font-weight: 400;">Không gian thuận chiều, diện tích co giãn ${absDet.toFixed(2)} lần</span>
-        </div>
-      `;
+    // Cơ sở Không gian ảnh Im(T)
+    let imLatex = "";
+    if (r === 0) {
+      imLatex = "\\text{Im}(T) = \\left\\{ \\mathbf{0} \\right\\}, \\quad \\dim \\text{Im}(T) = 0";
     } else {
-      detMeaningHtml = `
-        <div style="grid-column: span 2; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 3px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); color: #d97706; font-size: 11px; font-weight: 600; margin-top: 4px;">
-          <span>⚠ Đảo hướng không gian (det < 0):</span>
-          <span style="font-weight: 400;">Không gian bị lật đối xứng gương, diện tích co giãn ${absDet.toFixed(2)} lần</span>
-        </div>
-      `;
+      const imCols = analysis.imBasis.map(vecToColLatex).join(", ");
+      imLatex = `\\text{Im}(T) = \\text{span} \\left\\{ ${imCols} \\right\\}, \\quad \\dim \\text{Im}(T) = ${r}`;
     }
 
     box.innerHTML = `
-      <div style="font-weight: 700; color: var(--fg); margin-bottom: 6px; font-size: 12px;">
-        Khảo sát Ánh xạ tuyến tính:
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11.5px; color: var(--fg);">
-        <div><span style="color: var(--muted);">Định thức det(A):</span> ${det}</div>
-        <div><span style="color: var(--muted);">Hạng rank(A):</span> ${r}</div>
-        <div><span style="color: var(--muted);">Số chiều ảnh dim(Im):</span> ${r}</div>
-        <div><span style="color: var(--muted);">Số chiều nhân dim(Ker):</span> ${n}</div>
-        ${detMeaningHtml}
-        <div style="grid-column: span 2; border-top: 1px solid var(--border); padding-top: 5px; margin-top: 2px;">
-          <span style="color: #ef4444; font-weight: 600;">Hạt nhân Ker(T):</span> ${kerText}
+      <div style="margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border-subtle, var(--border));">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: var(--bg-hover, rgba(0,0,0,0.03)); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle, var(--border));">
+          <span style="font-size: 0.78em; color: var(--text-muted, var(--muted)); font-weight: 700;">HẠNG MA TRẬN: <strong style="color: var(--primary-base, var(--fg)); font-size: 1.15em;">${r} / ${n}</strong></span>
+          <span style="font-size: 0.8em; font-weight: 600; color: ${statusBadgeColor};">${statusText}</span>
         </div>
-        <div style="grid-column: span 2; border-top: 1px solid var(--border); padding-top: 5px;">
-          <span style="color: #0090ff; font-weight: 600;">Không gian ảnh Im(T):</span> ${imText}
+
+        <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">BẢO TOÀN SỐ CHIỀU (ĐỊNH LÝ HẠNG - SỐ KHUYẾT):</div>
+        <div style="margin-bottom: 10px;">
+          <math-field read-only style="${mfStyle}">${rankNullityLatex}</math-field>
         </div>
-        <div style="grid-column: span 2; font-size: 11px; color: var(--muted); margin-top: 2px;">
-          Định lý số chiều: dim(Ker) + dim(Im) = ${n} + ${r} = 2
+
+        <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">KHÔNG GIAN HẠT NHÂN KER(T):</div>
+        <div style="margin-bottom: 10px;">
+          <math-field read-only style="${mfStyle}">${kerLatex}</math-field>
         </div>
+
+        <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">KHÔNG GIAN ẢNH IM(T):</div>
+        <div style="margin-bottom: 10px;">
+          <math-field read-only style="${mfStyle}">${imLatex}</math-field>
+        </div>
+
+        <div style="border-top: 1px dashed var(--border-subtle, var(--border)); padding-top: 8px;">
+          <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">ĐỊNH THỨC & VẾT MA TRẬN:</div>
+          <math-field read-only style="${mfStyle}">${invLatex}</math-field>
+        </div>
+
+        <div style="margin-top: 10px; font-size: 0.78em; color: var(--text-muted, var(--muted)); font-style: italic; text-align: center;">Nhấn "Trực quan" để xem hoạt cảnh liên hoàn 3 bước hoặc "Lời giải" để xem chứng minh chi tiết!</div>
       </div>
     `;
   }
 
-  // Bộ sinh lời giải LaTeX KaTeX sư phạm từng bước chi tiết
-  function generateLinearTransformSolution() {
-    computeKernelAndImage();
+  // --- BỘ SINH LỜI GIẢI HỌC THUẬT 2 TAB (solution_panel.js) ---
+  function generateLinearTransformSolution(matItem, analysis) {
+    const n = analysis.dim;
+    const r = analysis.rank;
+    const k = analysis.nullity;
+    const A_latex = matrixToBmatrixLatex(analysis.matrix);
+    const RREF_latex = matrixToBmatrixLatex(analysis.RREF);
 
-    const a = ltState.matrix[0][0];
-    const b = ltState.matrix[0][1];
-    const c = ltState.matrix[1][0];
-    const d = ltState.matrix[1][1];
-    const det = ltState.det;
-    const r = ltState.rank;
-    const n = ltState.nullity;
-
-    let kerExplain = "";
-    if (r === 2) {
-      kerExplain = `
-        Vì $\\det(A) = ${det.toFixed(2)} \\ne 0$, ma trận $A$ khả nghịch. Hệ phương trình thuần nhất $A \\mathbf{x} = \\mathbf{0}$ chỉ có duy nhất nghiệm tầm thường $\\mathbf{x} = \\mathbf{0}$.
-        $$\\ker(T) = \\left\\{ \\begin{bmatrix} 0 \\\\ 0 \\end{bmatrix} \\right\\}, \\quad \\dim(\\ker(T)) = 0$$
-      `;
-    } else if (r === 1) {
-      const kx = ltState.kerDir[0].toFixed(3);
-      const ky = ltState.kerDir[1].toFixed(3);
-      kerExplain = `
-        Vì $\\det(A) = 0$, ma trận $A$ suy biến. Hệ phương trình thuần nhất trở thành:
-        $$\\begin{cases} ${a}x + ${b}y = 0 \\\\ ${c}x + ${d}y = 0 \\end{cases}$$
-        Do hai hàng phụ thuộc tuyến tính, phương trình xác định hạt nhân là $(${a})x + (${b})y = 0$.
-        $$\\ker(T) = \\text{span} \\left\\{ \\begin{bmatrix} ${kx} \\\\ ${ky} \\end{bmatrix} \\right\\}, \\quad \\dim(\\ker(T)) = 1$$
-        Mọi vector nằm trên đường thẳng này đều bị ánh xạ biến thành vector không $\\mathbf{0}$.
+    // ==========================================
+    // TAB 1: PHƯƠNG PHÁP MA TRẬN & KHỬ GAUSS
+    // ==========================================
+    let tab1KerSteps = "";
+    if (k === 0) {
+      tab1KerSteps = `
+        Vì ma trận $A$ có đầy đủ $n = ${n}$ vị trí trụ (không có ẩn tự do), hệ phương trình thuần nhất $A \\mathbf{x} = \\mathbf{0}$ chỉ có duy nhất nghiệm tầm thường:
+        $$\\mathbf{x} = \\mathbf{0} \\implies \\ker(T) = \\left\\{ \\mathbf{0} \\right\\}, \\quad \\dim \\ker(T) = 0$$
       `;
     } else {
-      kerExplain = `
-        Vì $A$ là ma trận không, $A \\mathbf{x} = \\mathbf{0}$ với mọi $\\mathbf{x} \\in \\mathbb{R}^2$.
-        $$\\ker(T) = \\mathbb{R}^2, \\quad \\dim(\\ker(T)) = 2$$
+      const freeVarsList = analysis.freeCols.map((c) => `x_${c + 1}`).join(", ");
+      const kerColsLatex = analysis.kerBasis.map(vecToColLatex).join(", ");
+      tab1KerSteps = `
+        Từ ma trận bậc thang rút gọn $\\text{RREF}(A)$, các ẩn tự do là $${freeVarsList}$. Cho từng ẩn tự do nhận giá trị 1 và các ẩn tự do còn lại bằng 0, ta xác định được cơ sở của Hạt nhân:
+        $$\\ker(T) = \\text{span} \\left\\{ ${kerColsLatex} \\right\\}, \\quad \\dim \\ker(T) = ${k}$$
+        Mọi vector thuộc không gian con này đều bị ánh xạ $T$ biến đổi về đúng vector không $\\mathbf{0}$.
       `;
     }
 
-    let imExplain = "";
-    if (r === 2) {
-      imExplain = `
-        Vì hạng của $A$ bằng $2$, hai vector cột của $A$ độc lập tuyến tính và tạo thành một cơ sở của $\\mathbb{R}^2$:
-        $$\\text{Im}(T) = \\text{span} \\left\\{ \\begin{bmatrix} ${a} \\\\ ${c} \\end{bmatrix}, \\begin{bmatrix} ${b} \\\\ ${d} \\end{bmatrix} \\right\\} = \\mathbb{R}^2, \\quad \\dim(\\text{Im}(T)) = 2$$
-      `;
-    } else if (r === 1) {
-      const ix = ltState.imDir[0].toFixed(3);
-      const iy = ltState.imDir[1].toFixed(3);
-      imExplain = `
-        Hạng của $A$ bằng $1$, các cột của $A$ cùng phương với nhau. Không gian ảnh là một đường thẳng đi qua gốc tọa độ:
-        $$\\text{Im}(T) = \\text{span} \\left\\{ \\begin{bmatrix} ${ix} \\\\ ${iy} \\end{bmatrix} \\right\\}, \\quad \\dim(\\text{Im}(T)) = 1$$
-      `;
-    } else {
-      imExplain = `
-        Vì $A$ là ma trận không, toàn bộ không gian bị nén về gốc:
-        $$\\text{Im}(T) = \\left\\{ \\begin{bmatrix} 0 \\\\ 0 \\end{bmatrix} \\right\\}, \\quad \\dim(\\text{Im}(T)) = 0$$
-      `;
-    }
+    const imColsLatex = analysis.imBasis.map(vecToColLatex).join(", ");
+    const pivotColsNames = analysis.pivotCols.map((c) => `Cột \\, ${c + 1}`).join(", ");
 
-    const html = `
+    const tab1Html = `
       <div style="padding: 6px 0; font-size: 13.5px; line-height: 1.7; color: var(--fg);">
         <p style="margin-bottom: 12px;">
-          Xét ánh xạ tuyến tính $T: \\mathbb{R}^2 \\to \\mathbb{R}^2$ có ma trận biểu diễn trong cơ sở chính tắc là:
-          $$A = \\begin{bmatrix} ${a} & ${b} \\\\ ${c} & ${d} \\end{bmatrix}$$
+          Xét ánh xạ tuyến tính $T: \\mathbb{R}^${n} \\to \\mathbb{R}^${n}$ có ma trận biểu diễn trong cơ sở chính tắc là:
+          $$A = ${A_latex}$$
         </p>
 
         <div style="background: var(--bg-hover); border-left: 3px solid var(--primary-base); padding: 10px 14px; margin-bottom: 14px; border-radius: 2px;">
-          <strong>Mục tiêu:</strong> Xác định Hạt nhân $\\ker(T)$, Không gian ảnh $\\text{Im}(T)$ và kiểm chứng Định lý số chiều.
+          <strong>Mục tiêu:</strong> Đưa ma trận về dạng bậc thang rút gọn RREF, tìm cơ sở và số chiều của Hạt nhân $\\ker(T)$ và Không gian ảnh $\\text{Im}(T)$.
         </div>
 
         <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-          Bước 1: Tính định thức và xác định hạng ma trận
+          Bước 1: Khử Gauss - Jordan đưa về Dạng Bậc thang Rút gọn (RREF)
         </h4>
         <p>
-          Định thức của ma trận $A$:
-          $$\\det(A) = (${a})(${d}) - (${b})(${c}) = ${det.toFixed(2)}$$
-          Hạng của ma trận $A$:
+          Thực hiện các phép biến đổi sơ cấp theo hàng trên ma trận $A$:
+          $$A = ${A_latex} \\xrightarrow{\\text{Gauss-Jordan}} \\text{RREF}(A) = ${RREF_latex}$$
+          Số hàng khác không trong $\\text{RREF}(A)$ chính là hạng của ma trận:
           $$\\text{rank}(A) = ${r}$$
         </p>
 
         <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-          Bước 2: Tìm Hạt nhân Ker(T)
+          Bước 2: Tìm Cơ sở của Không gian Ảnh Im(T)
         </h4>
         <p>
-          Theo định nghĩa, $\\ker(T) = \\{\\mathbf{x} \\in \\mathbb{R}^2 \\mid A \\mathbf{x} = \\mathbf{0}\\}$.
+          Các cột trụ của $\\text{RREF}(A)$ nằm tại các vị trí: $${pivotColsNames}$. Các cột tương ứng của ma trận gốc $A$ tạo thành một cơ sở của Không gian ảnh:
+          $$\\text{Im}(T) = \\text{span} \\left\\{ ${imColsLatex} \\right\\}, \\quad \\dim \\text{Im}(T) = ${r}$$
         </p>
-        <div>${kerExplain}</div>
 
         <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-          Bước 3: Tìm Không gian ảnh Im(T)
+          Bước 3: Giải Hệ Thuần nhất Ax = 0 tìm Hạt nhân Ker(T)
         </h4>
         <p>
-          Không gian ảnh $\\text{Im}(T)$ được sinh bởi các vector cột của ma trận $A$:
+          Hạt nhân $\\ker(T)$ là tập hợp các nghiệm của phương trình $A \\mathbf{x} = \\mathbf{0}$, tương đương với $\\text{RREF}(A) \\mathbf{x} = \\mathbf{0}$:
         </p>
-        <div>${imExplain}</div>
+        <div>${tab1KerSteps}</div>
 
         <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-          Bước 4: Kiểm chứng Định lý số chiều (Rank-Nullity Theorem)
+          Bước 4: Kết luận Khảo sát
         </h4>
         <p>
-          Định lý số chiều khẳng định với mọi ánh xạ tuyến tính $T: V \\to W$:
-          $$\\dim(\\ker(T)) + \\dim(\\text{Im}(T)) = \\dim(V)$$
-          Thay các kết quả vừa tính:
-          $$\\dim(\\ker(T)) + \\dim(\\text{Im}(T)) = ${n} + ${r} = 2 = \\dim(\\mathbb{R}^2)$$
+          Hạng ma trận: $\\text{rank}(T) = ${r}$, số khuyết: $\\text{nullity}(T) = ${k}$.
+        </p>
+      </div>
+    `;
+
+    // ==========================================
+    // TAB 2: ĐỊNH NGHĨA & ĐỊNH LÝ SỐ CHIỀU
+    // ==========================================
+    const tab2Html = `
+      <div style="padding: 6px 0; font-size: 13.5px; line-height: 1.7; color: var(--fg);">
+        <p style="margin-bottom: 12px;">
+          Ánh xạ tuyến tính $T: \\mathbb{R}^${n} \\to \\mathbb{R}^${n}$ được xác định hoàn toàn bởi ảnh của các vector trong cơ sở chính tắc $\\{e_1, \\dots, e_${n}\\}$:
+          $$T(e_j) = A e_j = \\text{cột thứ } j \\text{ của ma trận } A$$
+        </p>
+
+        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
+          1. Bản chất Hình học của Hạt nhân Ker(T)
+        </h4>
+        <p>
+          Theo định nghĩa: $\\ker(T) = \\{\\mathbf{x} \\in \\mathbb{R}^${n} \\mid T(\\mathbf{x}) = \\mathbf{0}\\}$.
+          <br>
+          ${
+            k === 0
+              ? "Vì $\\ker(T) = \\{\\mathbf{0}\\}$, ánh xạ là <strong>đơn ánh</strong> (injective). Không có bất kỳ phương khác không nào bị co xẹp về gốc."
+              : `Hạt nhân là một không gian con có số chiều $\\dim \\ker(T) = ${k}$. Mọi vector nằm trên không gian con này đều bị ánh xạ ép dẹp hoàn toàn về điểm gốc tọa độ $O(0,0${n === 3 ? ",0" : ""})$. Đây chính là ${k} chiều không gian bị mất đi trong quá trình biến đổi.`
+          }
+        </p>
+
+        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
+          2. Bản chất Hình học của Không gian Ảnh Im(T)
+        </h4>
+        <p>
+          Theo định nghĩa: $\\text{Im}(T) = \\{T(\\mathbf{x}) \\mid \\mathbf{x} \\in \\mathbb{R}^${n}\\} = \\text{span}\\{T(e_1), \\dots, T(e_${n})\\}$.
+          <br>
+          ${
+            r === n
+              ? "Vì $\\dim \\text{Im}(T) = " + n + "$, không gian ảnh bao trùm toàn bộ không gian đích $\\mathbb{R}^" + n + "$, ánh xạ là <strong>toàn ánh</strong> (surjective) và là một <strong>đẳng cấu</strong>."
+              : `Toàn bộ không gian $\\mathbb{R}^${n}$ sau biến đổi bị nén ép lại và giam giữ trọn vẹn trong không gian con ${r} chiều $\\text{Im}(T)$.`
+          }
+        </p>
+
+        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
+          3. Kiểm chứng Định lý Hạng - Số khuyết (Rank - Nullity Theorem)
+        </h4>
+        <div style="background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.25); padding: 12px; border-radius: 4px; margin: 10px 0;">
+          <p style="margin: 0; font-weight: 600;">
+            Định lý khẳng định với mọi ánh xạ tuyến tính $T: V \\to W$:
+            $$\\dim \\ker(T) + \\dim \\text{Im}(T) = \\dim(V)$$
+          </p>
+        </div>
+        <p>
+          Thay các kết quả tính toán vào định lý:
+          $$\\dim \\ker(T) + \\dim \\text{Im}(T) = ${k} + ${r} = ${n} = \\dim(\\mathbb{R}^${n})$$
           Định lý được nghiệm đúng.
         </p>
 
-        <div style="background: rgba(0, 144, 255, 0.08); border: 1px solid rgba(0, 144, 255, 0.3); padding: 12px; border-radius: 2px; margin-top: 14px;">
-          <strong style="color: #0090ff;">Ý nghĩa hình học:</strong><br>
-          ${r === 1 ? "Ma trận làm xẹp toàn bộ mặt phẳng 2 chiều thành một đường thẳng 1 chiều. Chiều bị mất đi chính là số chiều của Hạt nhân $\\ker(T)$, biểu diễn bằng các vector bị nén về điểm gốc 0." : "Ánh xạ bảo toàn số chiều của không gian, biến một đơn vị diện tích thành diện tích $\\det(A) = " + det.toFixed(2) + "$."}
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 2px; margin-top: 14px;">
+          <strong style="color: #10b981;">Ý nghĩa vật lý & hình học:</strong><br>
+          Số chiều bị ép mất về gốc $\\mathbf{0}$ ($\\text{nullity} = ${k}$) cộng với số chiều còn lại của ảnh ($\\text{rank} = ${r}$) luôn bảo toàn bằng đúng số chiều tự do ban đầu ($n = ${n}$).
         </div>
       </div>
     `;
 
-    if (window.App && typeof App.openCustomSolution === "function") {
-      App.openCustomSolution("Khảo Sát Hạt Nhân & Không Gian Ảnh", html);
-    } else {
-      const solBody = document.getElementById("solutionBody");
-      const solOverlay = document.getElementById("solutionOverlay");
-      const solTitle = document.getElementById("solTitleText");
-      if (solTitle) solTitle.textContent = "Khảo Sát Hạt Nhân & Không Gian Ảnh";
-      if (solBody) solBody.innerHTML = html;
-      if (solOverlay) {
-        solOverlay.classList.add("is-open");
-        solOverlay.setAttribute("aria-hidden", "false");
-      }
-      if (window.renderMathInElement) {
-        renderMathInElement(solBody, {
-          delimiters: [
-            { left: "$$", right: "$$", display: true },
-            { left: "\\[", right: "\\]", display: true },
-            { left: "\\(", right: "\\)", display: false },
-            { left: "$", right: "$", display: false }
-          ]
-        });
-      }
+    if (window.App && typeof App.openSolutionPanel === "function") {
+      App.openSolutionPanel({
+        title: "Khảo Sát Hạt Nhân Ker(T) & Không Gian Ảnh Im(T)",
+        math: `A \\in \\mathbb{R}^{${n} \\times ${n}}`,
+        content1: tab1Html,
+        content2: tab2Html,
+        content2Sub: "",
+        tab1Label: "Cách 1: Ma trận & Khử Gauss",
+        tab2Label: "Cách 2: Định nghĩa & Định lý số chiều",
+        showSubTabs: false,
+        autoOpen: true
+      });
+    } else if (typeof App.openCustomSolution === "function") {
+      App.openCustomSolution("Khảo Sát Hạt Nhân & Không Gian Ảnh", tab1Html);
     }
   }
 
-  // Module định nghĩa cho Chủ đề 5
+  // =========================================================================
+  // MODULE ĐIỀU HÀNH CHỦ ĐỀ 5 (Topic5Module)
+  // =========================================================================
   const Topic5Module = {
     _isInitialized: false,
+    _lastAnalysis: null,
 
     init: function () {
       if (this._isInitialized) return;
-      const btnInspect = document.getElementById("btnLTInspect");
+      const btnInspect = $("btnLTInspect");
       if (!btnInspect) return;
       this._isInitialized = true;
 
-      const syncInputsFromMatrix = () => {
-        const a11 = document.getElementById("lt_a11");
-        const a12 = document.getElementById("lt_a12");
-        const a21 = document.getElementById("lt_a21");
-        const a22 = document.getElementById("lt_a22");
-        if (a11) a11.value = Number(ltState.matrix[0][0].toFixed(3));
-        if (a12) a12.value = Number(ltState.matrix[0][1].toFixed(3));
-        if (a21) a21.value = Number(ltState.matrix[1][0].toFixed(3));
-        if (a22) a22.value = Number(ltState.matrix[1][1].toFixed(3));
-      };
+      // 1. Làm mới dropdown chọn ma trận từ App.matrixList
+      if (typeof App.refreshLTMatrixDropdown === "function") {
+        App.refreshLTMatrixDropdown();
+      }
 
-      // Bộ chọn nhanh phép biến đổi hình học
-      const presetButtons = document.querySelectorAll("#lt_geo_presets .btn-geo-preset");
-      const rotCtrl = document.getElementById("lt_rotation_ctrl");
-      const rotSlider = document.getElementById("lt_rot_slider");
-      const rotVal = document.getElementById("lt_rot_angle_val");
-      const scaleCtrl = document.getElementById("lt_scale_ctrl");
-      const scaleSlider = document.getElementById("lt_scale_slider");
-      const scaleVal = document.getElementById("lt_scale_val");
-      const shearCtrl = document.getElementById("lt_shear_ctrl");
-      const shearSlider = document.getElementById("lt_shear_slider");
-      const shearVal = document.getElementById("lt_shear_val");
-
-      const setActivePreset = (presetName) => {
-        presetButtons.forEach((btn) => {
-          if (btn.dataset.preset === presetName) {
-            btn.classList.add("active");
-            btn.style.background = "var(--primary-base, #3b82f6)";
-            btn.style.color = "#ffffff";
-          } else {
-            btn.classList.remove("active");
-            btn.style.background = "var(--bg-card)";
-            btn.style.color = "var(--fg)";
+      const sel = $("ltMatrixSelect");
+      const previewEl = $("ltMatrixPreview");
+      if (sel) {
+        sel.addEventListener("change", () => {
+          if (typeof App.stopLTAnimation === "function") {
+            try { App.stopLTAnimation(); } catch (_) {}
           }
-        });
-        if (rotCtrl) rotCtrl.style.display = presetName === "rotation" ? "block" : "none";
-        if (scaleCtrl) scaleCtrl.style.display = presetName === "scale" ? "block" : "none";
-        if (shearCtrl) shearCtrl.style.display = presetName === "shear" ? "block" : "none";
-      };
-
-      const applyMatrix = (m) => {
-        ltState.matrix = [
-          [Number(m[0][0]) || 0, Number(m[0][1]) || 0],
-          [Number(m[1][0]) || 0, Number(m[1][1]) || 0]
-        ];
-        syncInputsFromMatrix();
-        this.execute();
-        if (window.App && App.LinearTransform && App.LinearTransform.isActive && App.LinearTransform.isActive()) {
-          App.LinearTransform.updateLiveMatrix(ltState.matrix);
-        }
-      };
-
-      presetButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const p = btn.dataset.preset;
-          setActivePreset(p);
-          if (p === "rotation") {
-            const deg = rotSlider ? parseFloat(rotSlider.value) || 0 : 0;
-            const rad = (deg * Math.PI) / 180;
-            if (rotVal) rotVal.textContent = `${deg}° (${rad.toFixed(2)} rad)`;
-            applyMatrix([
-              [Math.cos(rad), -Math.sin(rad)],
-              [Math.sin(rad), Math.cos(rad)]
-            ]);
-          } else if (p === "reflectX") {
-            applyMatrix([
-              [1, 0],
-              [0, -1]
-            ]);
-          } else if (p === "reflectY") {
-            applyMatrix([
-              [-1, 0],
-              [0, 1]
-            ]);
-          } else if (p === "reflectOrigin") {
-            applyMatrix([
-              [-1, 0],
-              [0, -1]
-            ]);
-          } else if (p === "scale") {
-            const k = scaleSlider ? parseFloat(scaleSlider.value) || 1.5 : 1.5;
-            if (scaleVal) scaleVal.textContent = `${k.toFixed(1)}×`;
-            applyMatrix([
-              [k, 0],
-              [0, k]
-            ]);
-          } else if (p === "shear") {
-            const k = shearSlider ? parseFloat(shearSlider.value) || 1.0 : 1.0;
-            if (shearVal) shearVal.textContent = `${k.toFixed(1)}`;
-            applyMatrix([
-              [1, k],
-              [0, 1]
-            ]);
+          const selData = App.getOrEnsureSelectedSquareMatrix
+            ? App.getOrEnsureSelectedSquareMatrix("ltMatrixSelect")
+            : null;
+          if (selData && typeof App.renderMatrixPreviewGrid === "function") {
+            App.renderMatrixPreviewGrid(previewEl, selData.item, { isConic: false });
           }
-        });
-      });
-
-      if (rotSlider) {
-        rotSlider.addEventListener("input", (e) => {
-          const deg = parseFloat(e.target.value) || 0;
-          const rad = (deg * Math.PI) / 180;
-          if (rotVal) rotVal.textContent = `${deg}° (${rad.toFixed(2)} rad)`;
-          applyMatrix([
-            [Math.cos(rad), -Math.sin(rad)],
-            [Math.sin(rad), Math.cos(rad)]
-          ]);
-        });
-      }
-
-      if (scaleSlider) {
-        scaleSlider.addEventListener("input", (e) => {
-          const k = parseFloat(e.target.value) || 1.0;
-          if (scaleVal) scaleVal.textContent = `${k.toFixed(1)}×`;
-          applyMatrix([
-            [k, 0],
-            [0, k]
-          ]);
-        });
-      }
-
-      if (shearSlider) {
-        shearSlider.addEventListener("input", (e) => {
-          const k = parseFloat(e.target.value) || 0;
-          if (shearVal) shearVal.textContent = `${k.toFixed(1)}`;
-          applyMatrix([
-            [1, k],
-            [0, 1]
-          ]);
-        });
-      }
-
-      // Lắng nghe thay đổi phần tử ma trận
-      const bindMatrixChange = (id, row, col) => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.addEventListener("input", (e) => {
-            const val = parseFloat(e.target.value) || 0;
-            ltState.matrix[row][col] = val;
-            setActivePreset("custom");
+          // Nếu bảng kết quả đang mở thì khảo sát lại ma trận mới
+          const resBox = $("result_lt_info");
+          if (resBox && resBox.style.display !== "none") {
             this.execute();
-            if (window.App && App.LinearTransform && App.LinearTransform.isActive && App.LinearTransform.isActive()) {
-              App.LinearTransform.updateLiveMatrix(ltState.matrix);
-            }
-          });
-        }
-      };
-
-      bindMatrixChange("lt_a11", 0, 0);
-      bindMatrixChange("lt_a12", 0, 1);
-      bindMatrixChange("lt_a21", 1, 0);
-      bindMatrixChange("lt_a22", 1, 1);
-
-      // Checkbox các lớp hiển thị
-      const chkKer = document.getElementById("chkLTShowKer");
-      if (chkKer) {
-        chkKer.addEventListener("change", (e) => {
-          ltState.showKernel = e.target.checked;
-          if (window.Vec2D && Vec2D.draw2DAllVectors) Vec2D.draw2DAllVectors();
+          }
         });
       }
 
-      const chkIm = document.getElementById("chkLTShowIm");
-      if (chkIm) {
-        chkIm.addEventListener("change", (e) => {
-          ltState.showImage = e.target.checked;
-          if (window.Vec2D && Vec2D.draw2DAllVectors) Vec2D.draw2DAllVectors();
-        });
-      }
-
-      const chkComp = document.getElementById("chkLTShowComp");
-      if (chkComp) {
-        chkComp.addEventListener("change", (e) => {
-          ltState.showCompression = e.target.checked;
-          if (window.Vec2D && Vec2D.draw2DAllVectors) Vec2D.draw2DAllVectors();
-        });
-      }
-
-      // Nút Khảo sát
+      // 2. Nút Khảo sát (#btnLTInspect)
       btnInspect.addEventListener("click", () => {
         this.execute();
       });
 
-      // Nút Biến đổi lưới (kết nối với App.LinearTransform engine)
-      const btnMorph = document.getElementById("btnLTMorph");
-      if (btnMorph) {
-        btnMorph.addEventListener("click", () => {
-          if (window.App && App.LinearTransform) {
-            if (App.LinearTransform.isActive && App.LinearTransform.isActive()) {
-              App.LinearTransform.stop();
-              btnMorph.innerHTML = '<i class="ph ph-play" style="margin-right:4px;"></i> Biến đổi lưới';
+      // 3. Nút Trực quan (#btnLTAnimate)
+      const btnAnimate = $("btnLTAnimate");
+      if (btnAnimate) {
+        btnAnimate.addEventListener("click", () => {
+          const selData = App.getOrEnsureSelectedSquareMatrix
+            ? App.getOrEnsureSelectedSquareMatrix("ltMatrixSelect")
+            : null;
+          if (!selData) return;
+
+          if (window.App && App.LTAnimator) {
+            if (App.LTAnimator.isActive()) {
+              App.LTAnimator.stop();
             } else {
-              App.LinearTransform.start(ltState.matrix, 2);
-              btnMorph.innerHTML = '<i class="ph ph-stop" style="margin-right:4px;"></i> Dừng biến đổi';
+              this.execute();
+              App.LTAnimator.start(selData.item);
             }
           }
         });
       }
 
-      // Nút Lời giải
-      const btnSol = document.getElementById("btnLTSolution");
+      // 4. Nút Lời giải (#btnLTSolution)
+      const btnSol = $("btnLTSolution");
       if (btnSol) {
-        btnSol.addEventListener("click", generateLinearTransformSolution);
+        btnSol.addEventListener("click", () => {
+          const selData = App.getOrEnsureSelectedSquareMatrix
+            ? App.getOrEnsureSelectedSquareMatrix("ltMatrixSelect")
+            : null;
+          if (!selData) return;
+          const analysis = computeLTAnalysis(selData.values, selData.n);
+          generateLinearTransformSolution(selData.item, analysis);
+        });
       }
+
+      // 5. Checkboxes hiển thị lớp hình học
+      const chkKer = $("chkLTShowKer");
+      const chkIm = $("chkLTShowIm");
+      const chkComp = $("chkLTShowComp");
+      const handleCheckboxChange = () => {
+        if (App.mode === "3D" && window.Vec3D && typeof Vec3D.hardRefresh3D === "function") {
+          Vec3D.hardRefresh3D();
+        } else if (window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {
+          Vec2D.draw2DAllVectors();
+        }
+      };
+      if (chkKer) chkKer.addEventListener("change", handleCheckboxChange);
+      if (chkIm) chkIm.addEventListener("change", handleCheckboxChange);
+      if (chkComp) chkComp.addEventListener("change", handleCheckboxChange);
     },
 
     execute: function () {
       if (!this._isInitialized) this.init();
 
-      const a11 = document.getElementById("lt_a11");
-      const a12 = document.getElementById("lt_a12");
-      const a21 = document.getElementById("lt_a21");
-      const a22 = document.getElementById("lt_a22");
-      if (a11 && !isNaN(parseFloat(a11.value))) ltState.matrix[0][0] = parseFloat(a11.value);
-      if (a12 && !isNaN(parseFloat(a12.value))) ltState.matrix[0][1] = parseFloat(a12.value);
-      if (a21 && !isNaN(parseFloat(a21.value))) ltState.matrix[1][0] = parseFloat(a21.value);
-      if (a22 && !isNaN(parseFloat(a22.value))) ltState.matrix[1][1] = parseFloat(a22.value);
+      const selData = App.getOrEnsureSelectedSquareMatrix
+        ? App.getOrEnsureSelectedSquareMatrix("ltMatrixSelect")
+        : null;
+      if (!selData) return;
 
-      computeKernelAndImage();
-      App.activeNoriTransformMatrix = ltState.matrix;
-      App.custom2DDrawHook = drawLinearTransformOnCanvas2D;
-      updateInfoPanel();
+      const analysis = computeLTAnalysis(selData.values, selData.n);
+      this._lastAnalysis = analysis;
 
+      // Đồng bộ chế độ 2D / 3D
+      if (analysis.is3D && App.mode !== "3D") {
+        if (typeof App.setMode === "function") App.setMode("3D");
+        else if (typeof App.toggleMode === "function") App.toggleMode();
+      } else if (!analysis.is3D && App.mode === "3D") {
+        if (typeof App.setMode === "function") App.setMode("2D");
+        else if (typeof App.toggleMode === "function") App.toggleMode();
+      }
+
+      // Hiển thị khung kết quả chuẩn
+      renderLTInfoCard(selData.item, analysis);
+
+      // Cập nhật khung xem trước ma trận
+      const previewEl = $("ltMatrixPreview");
+      if (previewEl && typeof App.renderMatrixPreviewGrid === "function") {
+        App.renderMatrixPreviewGrid(previewEl, selData.item, { isConic: false });
+      }
+
+      // Vẽ lại trên Viewers
       if (window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {
         Vec2D.draw2DAllVectors();
+      }
+      if (window.Vec3D && typeof Vec3D.hardRefresh3D === "function") {
+        Vec3D.hardRefresh3D();
       }
     },
 
@@ -711,20 +561,22 @@
         taskId === "topic5_matrix_transform" ||
         taskId === "s26"
       ) {
+        if (typeof App.refreshLTMatrixDropdown === "function") {
+          App.refreshLTMatrixDropdown();
+        }
         this.execute();
       } else {
-        App.activeNoriTransformMatrix = null;
-        if (window.App && App.LinearTransform && App.LinearTransform.isActive && App.LinearTransform.isActive()) {
-          App.LinearTransform.stop();
-          const btnMorph = document.getElementById("btnLTMorph");
-          if (btnMorph) {
-            btnMorph.innerHTML = '<i class="ph ph-play" style="margin-right:4px;"></i> Biến đổi lưới';
-          }
-        }
-        if (App.custom2DDrawHook === drawLinearTransformOnCanvas2D) {
-          App.custom2DDrawHook = null;
+        if (typeof App.stopLTAnimation === "function") {
+          try { App.stopLTAnimation(); } catch (_) {}
         }
       }
+    }
+  };
+
+  // Hàm tiện ích dừng hoạt cảnh toàn cục
+  App.stopLTAnimation = function () {
+    if (window.App && App.LTAnimator && App.LTAnimator.isActive()) {
+      App.LTAnimator.stop();
     }
   };
 

@@ -1,695 +1,747 @@
 // =========================================================================
-// topic6_eigenvalues_eigenvectors.js - Module Chủ Đề 6: Trị Riêng & Vector Riêng
-// Khảo sát Trị riêng, Vector riêng, Không gian riêng và Chéo hóa ma trận 2D
+// topic6_eigenvalues_eigenvectors.js - Chủ đề 6: Trị riêng, Vector riêng & Chéo hóa
+// Tích hợp đồng bộ với App.matrixList, App.EigenAnimator (4 bước động học) &
+// Hệ thống Lời giải Học thuật 2 Tab (solution_panel.js)
 // =========================================================================
 (function () {
   window.App = window.App || {};
 
-  // Trạng thái của module Trị riêng & Vector riêng
-  const eigenState = {
-    matrix: [
-      [3, 1],
-      [0, 2]
-    ],
-    trace: 5,
-    det: 6,
-    delta: 1,
-    isComplex: false,
-    eigenvalues: [3, 2],
-    eigenvectors: [
-      [1, 0],
-      [-1, 1]
-    ],
-    isDiagonalizable: true,
-    showEigenspaces: true,
-    showTransformed: true,
-    showUnitCircle: true,
-    isSweeping: false,
-    sweepAngle: 0,
-    sweepAnimId: null
-  };
+  let cachedEigenSolutionConfig = null;
 
-  // Tính toán trị riêng và vector riêng của ma trận 2x2
-  function computeEigen() {
-    const a = Number(eigenState.matrix[0][0]) || 0;
-    const b = Number(eigenState.matrix[0][1]) || 0;
-    const c = Number(eigenState.matrix[1][0]) || 0;
-    const d = Number(eigenState.matrix[1][1]) || 0;
+  function $(id) {
+    return document.getElementById(id);
+  }
 
-    const tr = a + d;
-    const det = a * d - b * c;
-    const delta = tr * tr - 4 * det;
+  function fmtScalarLatex(val) {
+    if (!Number.isFinite(val) || Math.abs(val) < 1e-7) return "0";
+    const sign = val < 0 ? "-" : "";
+    const abs = Math.abs(val);
+    if (Math.abs(abs - Math.round(abs)) < 1e-6) {
+      return sign + String(Math.round(abs));
+    }
+    for (let den = 2; den <= 24; den++) {
+      const num = Math.round(abs * den);
+      if (Math.abs(abs - num / den) < 1e-6) {
+        return `${sign}\\frac{${num}}{${den}}`;
+      }
+    }
+    return (val < 0 ? "-" : "") + parseFloat(abs.toFixed(3)).toString();
+  }
 
-    eigenState.trace = tr;
-    eigenState.det = det;
-    eigenState.delta = delta;
+  function fmtScalarPlain(val) {
+    if (!Number.isFinite(val) || Math.abs(val) < 1e-6) return "0";
+    if (Math.abs(val - Math.round(val)) < 1e-5) return String(Math.round(val));
+    for (let den = 2; den <= 16; den++) {
+      const num = Math.round(val * den);
+      if (Math.abs(val - num / den) < 1e-5) {
+        return `${num}/${den}`;
+      }
+    }
+    return parseFloat(val.toFixed(2)).toString();
+  }
 
-    // 1. Trường hợp trị riêng phức (phép quay thuần túy)
-    if (delta < -1e-6) {
-      eigenState.isComplex = true;
-      const alpha = tr / 2;
-      const beta = Math.sqrt(-delta) / 2;
-      eigenState.eigenvalues = [
-        { real: alpha, imag: beta },
-        { real: alpha, imag: -beta }
-      ];
-      eigenState.eigenvectors = [];
-      eigenState.isDiagonalizable = false;
+  function matrixToBmatrixLatex(M) {
+    if (!Array.isArray(M) || !M.length) return "\\begin{bmatrix} 0 \\end{bmatrix}";
+    const rows = M.map((r) => r.map(fmtScalarLatex).join(" & ")).join(" \\\\ ");
+    return `\\begin{bmatrix} ${rows} \\end{bmatrix}`;
+  }
+
+  function vecToColLatex(v) {
+    if (!Array.isArray(v)) return "\\begin{bmatrix} 0 \\end{bmatrix}";
+    return `\\begin{bmatrix} ${v.map(fmtScalarLatex).join(" \\\\ ")} \\end{bmatrix}`;
+  }
+
+  // Lấy ma trận vuông đang chọn trong App.matrixList (TUYỆT ĐỐI KHÔNG tự động tạo ma trận mặc định)
+  function getOrEnsureSelectedSquareMatrix() {
+    const matrices = Array.isArray(App.matrixList) ? App.matrixList : [];
+    const sel = $("eigenMatrixSelect");
+
+    let item = null;
+    if (sel && sel.value) {
+      item = matrices.find((m) => String(m.id) === String(sel.value));
+    }
+    if (!item && matrices.length > 0) {
+      item = matrices.find((m) => m.rows === m.cols && (m.rows === 2 || m.rows === 3)) || matrices[0];
+      if (sel && item) sel.value = String(item.id);
+    }
+
+    // Nếu người dùng chưa tạo ma trận nào trong tab ĐỐI TƯỢNG, thông báo và chuyển sang tab ĐỐI TƯỢNG (phần Ma trận)
+    if (!item) {
+      if (typeof App.showToast === "function") {
+        App.showToast("Danh sách trống! Hãy tạo ma trận vuông ở tab Đối tượng trước.", "warning");
+      }
+      const firstTab = document.querySelector(".sidebar-tabs .tab-btn");
+      if (firstTab) firstTab.click();
+      const createSelect = document.getElementById("createObjectSelect");
+      if (createSelect && createSelect.value !== "matrix") {
+        createSelect.value = "matrix";
+        createSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      return null;
+    }
+
+    if (item.rows !== item.cols || (item.rows !== 2 && item.rows !== 3)) {
+      if (typeof App.showToast === "function") {
+        App.showToast(`Ma trận ${item.name} (${item.rows}×${item.cols}) không phải ma trận vuông cấp 2 hoặc cấp 3!`, "warning");
+      }
+      return null;
+    }
+
+    const matValues = typeof item.evalMatrix === "function" ? item.evalMatrix() : item.values;
+    return { item, values: matValues };
+  }
+
+  // Hiển thị bảng xem trước ma trận đang chọn (ẩn hoàn toàn nếu chưa có ma trận nào trong danh sách)
+  function renderSelectedMatrixPreview() {
+    const previewEl = $("eigenMatrixPreview");
+    if (!previewEl) return;
+
+    const matrices = Array.isArray(App.matrixList) ? App.matrixList : [];
+    const sel = $("eigenMatrixSelect");
+    const item = sel && sel.value ? matrices.find((m) => String(m.id) === String(sel.value)) : matrices[0];
+
+    if (!item) {
+      previewEl.style.display = "none";
+      previewEl.innerHTML = "";
       return;
     }
 
-    eigenState.isComplex = false;
-
-    // 2. Hai nghiệm thực phân biệt hoặc nghiệm kép
-    let l1 = 0;
-    let l2 = 0;
-    if (Math.abs(delta) <= 1e-6) {
-      l1 = tr / 2;
-      l2 = tr / 2;
-    } else {
-      l1 = (tr + Math.sqrt(delta)) / 2;
-      l2 = (tr - Math.sqrt(delta)) / 2;
+    previewEl.style.display = "block";
+    const vals = typeof item.evalMatrix === "function" ? item.evalMatrix() : item.values;
+    const isSquareValid = item.rows === item.cols && (item.rows === 2 || item.rows === 3);
+    const cellsHtml = [];
+    for (let i = 0; i < item.rows; i++) {
+      for (let j = 0; j < item.cols; j++) {
+        const v = vals?.[i]?.[j] ?? 0;
+        cellsHtml.push(`
+          <div style="background: var(--bg-card, var(--card)); border: 1px solid var(--border); border-radius: 2px; padding: 4px 6px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--fg);">
+            ${fmtScalarPlain(Number(v))}
+          </div>
+        `);
+      }
     }
 
-    eigenState.eigenvalues = [l1, l2];
-
-    // Tìm vector riêng tương ứng với từng trị riêng: (A - lambda I)v = 0
-    function findEigenvector(lambdaVal) {
-      const m11 = a - lambdaVal;
-      const m12 = b;
-      const m21 = c;
-      const m22 = d - lambdaVal;
-
-      let vx = 0;
-      let vy = 0;
-
-      if (Math.abs(m12) > 1e-6) {
-        vx = -m12;
-        vy = m11;
-      } else if (Math.abs(m21) > 1e-6) {
-        vx = m22;
-        vy = -m21;
-      } else if (Math.abs(m11) > 1e-6) {
-        vx = 0;
-        vy = 1;
-      } else if (Math.abs(m22) > 1e-6) {
-        vx = 1;
-        vy = 0;
-      } else {
-        vx = 1;
-        vy = 0;
-      }
-
-      const len = Math.sqrt(vx * vx + vy * vy);
-      return len > 1e-7 ? [vx / len, vy / len] : [1, 0];
-    }
-
-    const v1 = findEigenvector(l1);
-    let v2 = findEigenvector(l2);
-
-    // Nếu trị riêng kép, kiểm tra ma trận có bội hình học bằng 2 không
-    if (Math.abs(l1 - l2) <= 1e-6) {
-      const isScalarIdentity = Math.abs(b) < 1e-6 && Math.abs(c) < 1e-6 && Math.abs(a - d) < 1e-6;
-      if (isScalarIdentity) {
-        eigenState.eigenvectors = [
-          [1, 0],
-          [0, 1]
-        ];
-        eigenState.isDiagonalizable = true;
-      } else {
-        eigenState.eigenvectors = [v1];
-        eigenState.isDiagonalizable = false;
-      }
-    } else {
-      // Đảm bảo hướng vector trực quan sạch đẹp
-      if (v1[0] < 0 || (Math.abs(v1[0]) < 1e-6 && v1[1] < 0)) {
-        v1[0] = -v1[0];
-        v1[1] = -v1[1];
-      }
-      if (v2[0] < 0 || (Math.abs(v2[0]) < 1e-6 && v2[1] < 0)) {
-        v2[0] = -v2[0];
-        v2[1] = -v2[1];
-      }
-      eigenState.eigenvectors = [v1, v2];
-      eigenState.isDiagonalizable = true;
-    }
+    previewEl.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; font-size: 11px; color: var(--muted);">
+        <span>Ma trận đang chọn: <b style="color: var(--fg);">${item.name} (${item.rows}×${item.cols})</b></span>
+        <span style="color: ${isSquareValid ? "var(--text-muted, var(--muted))" : "#ef4444"}; font-weight: 600;">
+          ${isSquareValid ? "Ma trận vuông hợp lệ" : "Cần ma trận 2×2 hoặc 3×3"}
+        </span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(${item.cols}, 1fr); gap: 4px;">
+        ${cellsHtml.join("")}
+      </div>
+    `;
   }
 
-  // Hook vẽ đồ họa 2D trực quan trên Canvas của Viewer2D
-  function drawEigenOnCanvas2D(ctx, gridInfo, logicalSize) {
-    const cx = gridInfo.originPx.x;
-    const cy = gridInfo.originPx.y;
-    const px = gridInfo.pixelsPerUnit;
+  // Làm mới dropdown chọn ma trận #eigenMatrixSelect từ App.matrixList
+  App.refreshEigenMatrixDropdown = function () {
+    const sel = $("eigenMatrixSelect");
+    if (!sel) return;
 
-    const wX = (x) => cx + x * px;
-    const wY = (y) => cy - y * px;
+    const matrices = Array.isArray(App.matrixList) ? App.matrixList : [];
+    const prevVal = sel.value;
+    sel.innerHTML = "";
 
-    ctx.save();
+    if (matrices.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "(Chưa có ma trận - Tạo ở tab Đối tượng)";
+      sel.appendChild(opt);
+      const resBox = $("result_eigen_info");
+      if (resBox) {
+        resBox.style.display = "none";
+        resBox.innerHTML = "";
+      }
+    } else {
+      matrices.forEach((m) => {
+        const opt = document.createElement("option");
+        opt.value = String(m.id);
+        const sqTag = m.rows === m.cols && (m.rows === 2 || m.rows === 3) ? "" : " [Không vuông]";
+        opt.textContent = `${m.name} (${m.rows}×${m.cols})${sqTag}`;
+        sel.appendChild(opt);
+      });
 
-    // 1. Vẽ đường tròn đơn vị tham chiếu nếu được bật
-    if (eigenState.showUnitCircle) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, 1.0 * px, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(100, 116, 139, 0.3)";
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 4]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // Hàm phụ vẽ vector có mũi tên sắc nét
-    function drawArrow(x0, y0, x1, y1, color, labelText, lineWidth) {
-      const dx = x1 - x0;
-      const dy = y1 - y0;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      if (len < 1e-4) return;
-
-      ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = lineWidth || 2.5;
-      ctx.moveTo(x0, y0);
-      ctx.lineTo(x1, y1);
-      ctx.stroke();
-
-      const headLen = Math.min(10, len * 0.35);
-      const angle = Math.atan2(dy, dx);
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(
-        x1 - headLen * Math.cos(angle - Math.PI / 7),
-        y1 - headLen * Math.sin(angle - Math.PI / 7)
-      );
-      ctx.lineTo(
-        x1 - headLen * Math.cos(angle + Math.PI / 7),
-        y1 - headLen * Math.sin(angle + Math.PI / 7)
-      );
-      ctx.closePath();
-      ctx.fill();
-
-      if (labelText) {
-        ctx.font = "700 11.5px system-ui, sans-serif";
-        ctx.fillStyle = color;
-        ctx.fillText(labelText, x1 + 8, y1 - 4);
+      if (prevVal && matrices.some((m) => String(m.id) === String(prevVal))) {
+        sel.value = prevVal;
+      } else {
+        const firstSquare = matrices.find((m) => m.rows === m.cols && (m.rows === 2 || m.rows === 3));
+        sel.value = String((firstSquare || matrices[0]).id);
       }
     }
 
-    // 2. Trường hợp trị riêng thực
-    if (!eigenState.isComplex && eigenState.eigenvectors.length > 0) {
-      const colors = ["#0090ff", "#10b981"];
-      const farSpan = 35;
+    renderSelectedMatrixPreview();
+  };
 
-      eigenState.eigenvectors.forEach((v, idx) => {
-        const lVal = eigenState.eigenvalues[idx] || eigenState.eigenvalues[0];
-        const color = colors[idx % colors.length];
+  // Khởi tạo hộp điều khiển hoạt cảnh 4 bước #eigenAnimControls
+  App.ensureEigenAnimControls = function () {
+    const out = $("result_eigen_info");
+    if (!out) return;
+    if ($("eigenAnimControls")) return;
 
-        // A. Đường thẳng không gian riêng E_lambda kéo dài qua màn hình
-        if (eigenState.showEigenspaces) {
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 1.5;
-          ctx.setLineDash([5, 4]);
-          ctx.beginPath();
-          ctx.moveTo(wX(-farSpan * v[0]), wY(-farSpan * v[1]));
-          ctx.lineTo(wX(farSpan * v[0]), wY(farSpan * v[1]));
-          ctx.stroke();
-          ctx.setLineDash([]);
+    const host = out.parentElement;
+    if (!host) return;
 
-          ctx.font = "600 11px system-ui, sans-serif";
-          ctx.fillStyle = color;
-          ctx.fillText(`E_λ${idx + 1}`, wX(3.5 * v[0]) + 6, wY(3.5 * v[1]) - 4);
+    const wrap = document.createElement("div");
+    wrap.id = "eigenAnimControls";
+    wrap.className = "basis-sidebar-anim-box";
+    wrap.style.display = "none";
+    wrap.style.marginTop = "10px";
+
+    wrap.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
+        <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted, #64748b);">Trực quan hóa Trị riêng &amp; Chéo hóa</span>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span class="basis-step-pill" id="eigenStepCounter">Bước 1 / 3</span>
+          <button type="button" id="btnEigenCloseAnim" class="basis-anim-close-btn" title="Đóng trực quan" style="background: transparent; border: none; cursor: pointer; color: var(--text-muted, #64748b); font-size: 13px; padding: 2px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;">
+            <i class="ph ph-x"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="coord-phase-pills" id="eigenPhasePills">
+        <button type="button" class="coord-phase-btn active" data-phase="0" title="Bước 1: Ma trận A biến đổi cơ sở chuẩn e₁, e₂ làm lệch phương">Bước 1</button>
+        <button type="button" class="coord-phase-btn" data-phase="1" title="Bước 2: Lộ diện Trục bất biến (Vector riêng v) & Độ co giãn (Trị riêng λ)">Bước 2</button>
+        <button type="button" class="coord-phase-btn" data-phase="2" title="Bước 3: Kẻ lưới theo Cơ sở Vector riêng - Bản chất Chéo hóa D">Bước 3</button>
+      </div>
+
+      <div class="basis-anim-btn-row">
+        <button type="button" id="btnEigenPrev" class="basis-ctrl-btn" title="Bước trước">
+          <i class="ph ph-skip-back"></i>
+        </button>
+        <button type="button" id="btnEigenPlay" class="basis-ctrl-btn primary" title="Phát / Tạm dừng">
+          <i class="ph ph-pause" id="iconEigenPlay"></i>
+        </button>
+        <button type="button" id="btnEigenNext" class="basis-ctrl-btn" title="Bước tiếp">
+          <i class="ph ph-skip-forward"></i>
+        </button>
+        <button type="button" id="btnEigenReplay" class="basis-ctrl-btn" title="Phát lại từ đầu">
+          <i class="ph ph-arrow-counter-clockwise"></i>
+        </button>
+      </div>
+
+      <div class="hud-menu-slider-row basis-speed-slider-wrap" style="padding: 6px 0 2px; margin-top: 6px; border-top: 1px dashed var(--border-subtle, var(--border, #e2e8f0));">
+        <div class="hud-menu-slider-header" style="font-size: 11.5px; margin-bottom: 2px;">
+          <span class="hud-menu-item-text" style="color: var(--text-muted, #64748b); font-weight: 600;">Tốc độ phát</span>
+          <span class="hud-menu-slider-val" id="eigenSpeedValue">1.0×</span>
+        </div>
+        <input type="range" id="eigenSpeedSlider" min="0.2" max="2.5" step="0.1" value="1.0" class="hud-range-slider" />
+      </div>
+
+      <div class="basis-step-explainer" id="eigenStepExplainer">
+        <div class="basis-step-title" id="eigenStepTitle">Khảo sát trị riêng &amp; vector riêng</div>
+        <div class="basis-step-desc" id="eigenStepDesc">Bấm nút Trực quan để khởi chạy hoạt cảnh 3 bước.</div>
+      </div>
+    `;
+
+    if (out.nextSibling) {
+      host.insertBefore(wrap, out.nextSibling);
+    } else {
+      host.appendChild(wrap);
+    }
+
+    const speedSlider = wrap.querySelector("#eigenSpeedSlider");
+    const syncSliderPct = (val) => {
+      if (!speedSlider) return;
+      const min = parseFloat(speedSlider.min) || 0.2;
+      const max = parseFloat(speedSlider.max) || 2.5;
+      const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+      speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+      speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+    };
+
+    if (speedSlider) {
+      speedSlider.addEventListener("input", (e) => {
+        const val = parseFloat(e.target.value) || 1.0;
+        syncSliderPct(val);
+        const valLabel = wrap.querySelector("#eigenSpeedValue");
+        if (valLabel) valLabel.textContent = `${val.toFixed(1)}×`;
+      });
+      syncSliderPct(1.0);
+    }
+
+    const phaseBtns = wrap.querySelectorAll(".coord-phase-btn");
+    phaseBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const ph = parseInt(btn.dataset.phase, 10);
+        if (window.App && App.EigenAnimator && typeof App.EigenAnimator.goToPhase === "function") {
+          App.EigenAnimator.goToPhase(ph);
         }
+      });
+    });
 
-        // B. Vector riêng đơn vị v_i
-        const tipX = wX(v[0]);
-        const tipY = wY(v[1]);
-        drawArrow(cx, cy, tipX, tipY, color, `v${idx + 1}`, 3.0);
-
-        // C. Vector ảnh A v_i = lambda v_i sau biến đổi
-        if (eigenState.showTransformed) {
-          const avX = wX(lVal * v[0]);
-          const avY = wY(lVal * v[1]);
-          // Vẽ vector ảnh hơi nhạt hơn hoặc nét chấm để so sánh độ co giãn
-          ctx.setLineDash([3, 2]);
-          drawArrow(cx, cy, avX, avY, color, `Av${idx + 1} = ${lVal.toFixed(1)}v${idx + 1}`, 2.0);
-          ctx.setLineDash([]);
-        }
+    const btnClose = wrap.querySelector("#btnEigenCloseAnim");
+    if (btnClose) {
+      btnClose.addEventListener("click", () => {
+        App.stopEigenAnimation();
       });
     }
 
-    // 3. Trường hợp trị riêng phức
-    if (eigenState.isComplex) {
-      ctx.font = "600 12px system-ui, sans-serif";
-      ctx.fillStyle = "#f59e0b";
-      ctx.fillText("Trị riêng phức: Phép quay không có hướng bất biến thực", cx - 140, cy - 30);
+    if (window.App && App.EigenAnimator && typeof App.EigenAnimator.bindSidebarControls === "function") {
+      App.EigenAnimator.bindSidebarControls();
     }
+  };
 
-    // 4. Minh họa quét vector thử nghiệm tìm hướng bất biến
-    if (eigenState.isSweeping) {
-      const rad = eigenState.sweepAngle;
-      const x = Math.cos(rad);
-      const y = Math.sin(rad);
-
-      const a = eigenState.matrix[0][0];
-      const b = eigenState.matrix[0][1];
-      const c = eigenState.matrix[1][0];
-      const d = eigenState.matrix[1][1];
-
-      const ax = a * x + b * y;
-      const ay = c * x + d * y;
-
-      // Vector thử nghiệm x
-      drawArrow(cx, cy, wX(x), wY(y), "#f59e0b", "x", 2.5);
-
-      // Vector ảnh Ax
-      drawArrow(cx, cy, wX(ax), wY(ay), "#a855f7", "Ax", 2.5);
-
-      // Kiểm tra chập cùng phương: tích có hướng x * ay - y * ax gần bằng 0
-      const cross = Math.abs(x * ay - y * ax);
-      if (cross < 0.08) {
-        ctx.strokeStyle = "#10b981";
-        ctx.lineWidth = 3.0;
-        ctx.beginPath();
-        ctx.arc(wX(x), wY(y), 8, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.font = "700 11px system-ui, sans-serif";
-        ctx.fillStyle = "#10b981";
-        ctx.fillText("Hướng bất biến!", wX(x) + 12, wY(y) - 6);
-      }
+  App.stopEigenAnimation = function () {
+    if (window.App && App.EigenAnimator && typeof App.EigenAnimator.stop === "function") {
+      App.EigenAnimator.stop();
     }
+    const wrap = $("eigenAnimControls");
+    if (wrap) wrap.style.display = "none";
+  };
 
-    ctx.restore();
-  }
-
-  // Vòng lặp animation quét hướng bất biến
-  function sweepTick() {
-    if (!eigenState.isSweeping) return;
-
-    eigenState.sweepAngle += 0.025;
-    if (eigenState.sweepAngle >= Math.PI * 2) {
-      eigenState.sweepAngle = 0;
-    }
-
-    if (window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {
-      Vec2D.draw2DAllVectors();
-    }
-
-    eigenState.sweepAnimId = requestAnimationFrame(sweepTick);
-  }
-
-  // Cập nhật bảng kết quả đọc nhanh bên dưới form
-  function updateInfoPanel() {
-    const box = document.getElementById("result_eigen_info");
-    if (!box) return;
+  // Hiển thị bảng kết quả đồng bộ với #result_basis (dùng math-field read-only, không trộn màu chữ)
+  function renderEigenInfoCard(matItem, sys) {
+    const box = $("result_eigen_info");
+    if (!box || !sys) return;
 
     box.style.display = "block";
-    const tr = eigenState.trace;
-    const det = eigenState.det;
-    const delta = eigenState.delta;
+    const mfStyle =
+      "background: var(--bg-paper, var(--card, #fff)); border: 1px solid var(--border-subtle, var(--border, #ccc)); border-radius: 4px; padding: 6px 12px; font-size: 1.1em; color: var(--text-main, var(--fg, #333)); pointer-events: none; width: 100%; box-sizing: border-box;";
 
-    let evalText = "";
-    let evecText = "";
-    let diagText = "";
+    let eigenPairsHtml = "";
+    let diagBlockHtml = "";
 
-    if (eigenState.isComplex) {
-      const alpha = (tr / 2).toFixed(2);
-      const beta = (Math.sqrt(-delta) / 2).toFixed(2);
-      evalText = `λ1,2 = ${alpha} ± ${beta}i (Cặp phức liên hợp)`;
-      evecText = "Không có vector riêng thực trong R^2";
-      diagText = "Không thể chéo hóa trên trường số thực R";
-    } else {
-      const l1 = eigenState.eigenvalues[0].toFixed(2);
-      const l2 = eigenState.eigenvalues[1].toFixed(2);
-      evalText = `λ1 = ${l1}, λ2 = ${l2}`;
-
-      if (eigenState.eigenvectors.length >= 2) {
-        const v1 = eigenState.eigenvectors[0];
-        const v2 = eigenState.eigenvectors[1];
-        evecText = `v1 = [${v1[0].toFixed(2)}, ${v1[1].toFixed(2)}], v2 = [${v2[0].toFixed(2)}, ${v2[1].toFixed(2)}]`;
-        diagText = "Chéo hóa được (Có đủ 2 vector riêng độc lập tuyến tính)";
-      } else if (eigenState.eigenvectors.length === 1) {
-        const v1 = eigenState.eigenvectors[0];
-        evecText = `v1 = [${v1[0].toFixed(2)}, ${v1[1].toFixed(2)}] (Chỉ có 1 chiều)`;
-        diagText = "Không thể chéo hóa (Bội hình học < Bội đại số)";
-      }
-    }
-
-    box.innerHTML = `
-      <div style="font-weight: 700; color: var(--fg); margin-bottom: 6px; font-size: 12px;">
-        Kết quả Trị riêng và Vector riêng:
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11.5px; color: var(--fg);">
-        <div><span style="color: var(--muted);">Vết ma trận tr(A):</span> ${tr.toFixed(2)}</div>
-        <div><span style="color: var(--muted);">Định thức det(A):</span> ${det.toFixed(2)}</div>
-        <div style="grid-column: span 2; border-top: 1px solid var(--border); padding-top: 5px; margin-top: 2px;">
-          <span style="color: #0090ff; font-weight: 600;">Trị riêng:</span> ${evalText}
-        </div>
-        <div style="grid-column: span 2;">
-          <span style="color: #10b981; font-weight: 600;">Vector riêng:</span> ${evecText}
-        </div>
-        <div style="grid-column: span 2; border-top: 1px solid var(--border); padding-top: 5px;">
-          <span style="color: var(--muted);">Tính chéo hóa:</span> ${diagText}
-        </div>
-      </div>
-    `;
-  }
-
-  // Bộ sinh lời giải LaTeX KaTeX sư phạm từng bước chi tiết
-  function generateEigenSolution() {
-    computeEigen();
-
-    const a = eigenState.matrix[0][0];
-    const b = eigenState.matrix[0][1];
-    const c = eigenState.matrix[1][0];
-    const d = eigenState.matrix[1][1];
-    const tr = eigenState.trace;
-    const det = eigenState.det;
-    const delta = eigenState.delta;
-
-    let eigenContent = "";
-    if (eigenState.isComplex) {
-      const alpha = (tr / 2).toFixed(3);
-      const beta = (Math.sqrt(-delta) / 2).toFixed(3);
-      eigenContent = `
-        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-          Bước 2: Tìm các nghiệm trị riêng
-        </h4>
-        <p>
-          Biệt thức $\\Delta = (${tr})^2 - 4(${det}) = ${delta.toFixed(2)} < 0$.<br>
-          Phương trình không có nghiệm thực mà có cặp nghiệm phức liên hợp:
-          $$\\lambda_{1,2} = ${alpha} \\pm ${beta}i$$
-          Vì không có trị riêng thực, không tồn tại vector riêng thực nào trong $\\mathbb{R}^2$. Ánh xạ đại diện cho một phép co giãn kết hợp phép quay không gian.
-        </p>
-        <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); padding: 12px; border-radius: 2px; margin-top: 14px;">
-          <strong style="color: #f59e0b;">Kết luận:</strong><br>
-          Ma trận không thể chéo hóa trên trường số thực $\\mathbb{R}$.
+    if (sys.isComplex && sys.eigenPairs.length === 0) {
+      const re = fmtScalarPlain(sys.complexPair.re);
+      const im = fmtScalarPlain(sys.complexPair.im);
+      const complexLatex = `\\lambda_{1,2} = ${re} \\pm ${im}i \\quad (\\text{Nghiệm phức, không có vector riêng thực})`;
+      eigenPairsHtml = `<math-field read-only style="${mfStyle}">${complexLatex}</math-field>`;
+      const invLatex = `\\text{tr}(A) = ${fmtScalarLatex(sys.trace)}, \\quad \\det(A) = ${fmtScalarLatex(sys.det)}, \\quad \\Delta = ${fmtScalarLatex(sys.delta)} < 0`;
+      diagBlockHtml = `
+        <div style="border-top: 1px dashed var(--border-subtle, var(--border)); padding-top: 10px;">
+          <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">BẤT BIẾN ĐẶC TRƯNG CỦA MA TRẬN:</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <math-field read-only style="${mfStyle}">${invLatex}</math-field>
+          </div>
         </div>
       `;
     } else {
-      const l1 = eigenState.eigenvalues[0];
-      const l2 = eigenState.eigenvalues[1];
+      eigenPairsHtml = sys.eigenPairs
+        .map((ep, idx) => {
+          const lamStr = fmtScalarLatex(ep.lambda);
+          const vecStr = ep.vec.map(fmtScalarLatex).join(", ");
+          const pairLatex = `\\lambda_{${idx + 1}} = ${lamStr} \\implies v_{${idx + 1}} = (${vecStr})^T`;
+          return `<math-field read-only style="${mfStyle}">${pairLatex}</math-field>`;
+        })
+        .join("");
 
-      let v1Html = "";
-      let v2Html = "";
-      let diagHtml = "";
-
-      if (eigenState.eigenvectors.length >= 1) {
-        const v1 = eigenState.eigenvectors[0];
-        v1Html = `
-          <p>
-            <strong>Với $\\lambda_1 = ${l1.toFixed(2)}$:</strong> Ta giải hệ $(A - ${l1.toFixed(2)}I)\\mathbf{v} = \\mathbf{0}$:
-            $$\\begin{bmatrix} ${a - l1.toFixed(2)} & ${b} \\\\ ${c} & ${d - l1.toFixed(2)} \\end{bmatrix} \\begin{bmatrix} x \\\\ y \\end{bmatrix} = \\begin{bmatrix} 0 \\\\ 0 \\end{bmatrix}$$
-            Ta chọn một vector riêng đại diện: $\\vec{v}_1 = \\begin{bmatrix} ${v1[0].toFixed(3)} \\\\ ${v1[1].toFixed(3)} \\end{bmatrix}$. Không gian riêng tương ứng là $E_{\\lambda_1} = \\text{span}\\{\\vec{v}_1\\}$.
-          </p>
-        `;
-      }
-
-      if (eigenState.eigenvectors.length >= 2) {
-        const v2 = eigenState.eigenvectors[1];
-        v2Html = `
-          <p>
-            <strong>Với $\\lambda_2 = ${l2.toFixed(2)}$:</strong> Ta giải hệ $(A - ${l2.toFixed(2)}I)\\mathbf{v} = \\mathbf{0}$:
-            $$\\begin{bmatrix} ${a - l2.toFixed(2)} & ${b} \\\\ ${c} & ${d - l2.toFixed(2)} \\end{bmatrix} \\begin{bmatrix} x \\\\ y \\end{bmatrix} = \\begin{bmatrix} 0 \\\\ 0 \\end{bmatrix}$$
-            Ta chọn một vector riêng đại diện: $\\vec{v}_2 = \\begin{bmatrix} ${v2[0].toFixed(3)} \\\\ ${v2[1].toFixed(3)} \\end{bmatrix}$. Không gian riêng tương ứng là $E_{\\lambda_2} = \\text{span}\\{\\vec{v}_2\\}$.
-          </p>
-        `;
-
-        const v1 = eigenState.eigenvectors[0];
-        diagHtml = `
-          <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-            Bước 4: Chéo hóa ma trận
-          </h4>
-          <p>
-            Vì có 2 vector riêng độc lập tuyến tính, ma trận $A$ chéo hóa được.<br>
-            Ma trận làm chéo $P$ và ma trận chéo $D$:
-            $$P = \\begin{bmatrix} \\vec{v}_1 & \\vec{v}_2 \\end{bmatrix} = \\begin{bmatrix} ${v1[0].toFixed(2)} & ${v2[0].toFixed(2)} \\\\ ${v1[1].toFixed(2)} & ${v2[1].toFixed(2)} \\end{bmatrix}, \\quad D = \\begin{bmatrix} ${l1.toFixed(2)} & 0 \\\\ 0 & ${l2.toFixed(2)} \\end{bmatrix}$$
-            Hệ thức chéo hóa thỏa mãn: $P^{-1} A P = D$ hay $A = P D P^{-1}$.
-          </p>
-          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 2px; margin-top: 14px;">
-            <strong style="color: #10b981;">Ý nghĩa hình học:</strong><br>
-            Trong hệ tọa độ cơ sở mới xác định bởi $\\{\\vec{v}_1, \\vec{v}_2\\}$, phép biến đổi ma trận $A$ chỉ đơn thuần là phép dãn nở độc lập dọc theo hai trục với các hệ số tỷ lệ lần lượt là $\\lambda_1$ và $\\lambda_2$.
+      if (sys.isDiagonalizable) {
+        const diagVals = sys.eigenPairs.map((ep) => fmtScalarLatex(ep.lambda)).join(", ");
+        const diagLatex = `D = P^{-1}AP = \\text{diag}(${diagVals})`;
+        diagBlockHtml = `
+          <div style="border-top: 1px dashed var(--border-subtle, var(--border)); padding-top: 10px;">
+            <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">MA TRẬN ĐƯỜNG CHÉO CHÉO HÓA:</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <math-field read-only style="${mfStyle}">${diagLatex}</math-field>
+            </div>
           </div>
         `;
       } else {
-        diagHtml = `
-          <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-            Bước 4: Xét tính chéo hóa
-          </h4>
-          <p>
-            Trị riêng bội có số chiều không gian riêng nhỏ hơn bội đại số (bội hình học = 1 < bội đại số = 2).<br>
-            Do đó, không đủ vector riêng độc lập tuyến tính để lập cơ sở cho toàn không gian $\\mathbb{R}^2$. Ma trận $A$ không thể chéo hóa được.
-          </p>
+        const invLatex = `\\text{tr}(A) = ${fmtScalarLatex(sys.trace)}, \\quad \\det(A) = ${fmtScalarLatex(sys.det)} \\quad (\\text{Khuyết vector riêng ĐLTT})`;
+        diagBlockHtml = `
+          <div style="border-top: 1px dashed var(--border-subtle, var(--border)); padding-top: 10px;">
+            <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">TRẠNG THÁI CHÉO HÓA:</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <math-field read-only style="${mfStyle}">${invLatex}</math-field>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    const statusLabel = sys.isDiagonalizable ? "Chéo hóa được" : "Không chéo hóa được";
+
+    box.innerHTML = `
+      <div style="margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border-subtle, var(--border));">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: var(--bg-hover, rgba(0,0,0,0.03)); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle, var(--border));">
+          <span style="font-size: 0.78em; color: var(--text-muted, var(--muted)); font-weight: 700;">SỐ VECTOR RIÊNG ĐLTT: <strong style="color: var(--primary-base, var(--fg)); font-size: 1.15em;">${sys.eigenPairs.length} / ${sys.dim}</strong></span>
+          <span style="font-size: 0.8em; font-weight: 600; color: var(--text-main, var(--fg));">${statusLabel}</span>
+        </div>
+        <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">CÁC CẶP TRỊ RIÊNG - VECTOR RIÊNG:</div>
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;">
+          ${eigenPairsHtml}
+        </div>
+        ${diagBlockHtml}
+        <div style="margin-top: 10px; font-size: 0.78em; color: var(--text-muted, var(--muted)); font-style: italic; text-align: center;">Nhấn "Lời giải" ở trên để xem chi tiết từng bước biến đổi!</div>
+      </div>
+    `;
+  }
+
+  // Sinh phương trình đường thẳng bất biến tường minh cho hệ 2x2: (a - lambda)x + by = 0
+  function format2DLineEquationLatex(aMinusLam, b, c, dMinusLam) {
+    const eps = 1e-7;
+    let A = aMinusLam;
+    let B = b;
+    if (Math.abs(A) <= eps && Math.abs(B) <= eps) {
+      A = c;
+      B = dMinusLam;
+    }
+    if (Math.abs(A) <= eps && Math.abs(B) <= eps) {
+      return "0x + 0y = 0 \\; (\\text{Mọi đường thẳng qua } O)";
+    }
+    const aStr = fmtScalarLatex(A);
+    const bAbsStr = fmtScalarLatex(Math.abs(B));
+    const signB = B >= 0 ? "+" : "-";
+    return `(${aStr})x ${signB} (${bAbsStr})y = 0`;
+  }
+
+  // Sinh lời giải học thuật 2 Tab chuẩn đại học cho solution_panel.js
+  function buildEigenAcademicSolutionConfig(matItem, sys) {
+    const M = sys.matrix;
+    const matName = matItem?.name || "A";
+    const matLatex = matrixToBmatrixLatex(M);
+
+    // TAB 1: ĐA THỨC ĐẶC TRƯNG & KHÔNG GIAN RIÊNG
+    let tab1Html = "";
+    if (sys.dim === 2) {
+      const a = M[0][0], b = M[0][1], c = M[1][0], d = M[1][1];
+      const tr = sys.trace;
+      const det = sys.det;
+      const delta = sys.delta;
+
+      let step2And3 = "";
+      if (sys.isComplex) {
+        const re = fmtScalarLatex(sys.complexPair.re);
+        const im = fmtScalarLatex(sys.complexPair.im);
+        step2And3 = `
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 2: Khai triển định thức và giải phương trình đặc trưng</div>
+            <div class="sol-step-body">
+              <p>Khai triển định thức cấp 2 theo quy tắc đường chéo chính trừ đường chéo phụ:</p>
+              $$P(\\lambda) = (${fmtScalarLatex(a)} - \\lambda)(${fmtScalarLatex(d)} - \\lambda) - (${fmtScalarLatex(b)})(${fmtScalarLatex(c)}) = \\lambda^2 - (${fmtScalarLatex(tr)})\\lambda + (${fmtScalarLatex(det)}) = 0$$
+              <p>Xét biệt thức của phương trình bậc hai:</p>
+              $$\\Delta = (\\text{tr}(A))^2 - 4\\det(A) = (${fmtScalarLatex(tr)})^2 - 4(${fmtScalarLatex(det)}) = ${fmtScalarLatex(delta)} < 0$$
+              <p>Do $\\Delta < 0$, phương trình đặc trưng vô nghiệm trên trường số thực $\\mathbb{R}$ và có hai nghiệm phức liên hợp trên $\\mathbb{C}$:</p>
+              $$\\lambda_{1,2} = ${re} \\pm ${im}i$$
+            </div>
+          </div>
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 3 & Pha 4: Kết luận về đường bất biến thực</div>
+            <div class="sol-step-body">
+              <p>Vì phương trình đặc trưng không có nghiệm thực, không tồn tại vector khác không $v \\in \\mathbb{R}^2$ nào giữ nguyên phương sau phép biến đổi $A$. Về mặt hình học, ma trận $A$ chứa thành phần xoay làm mọi đường thẳng qua gốc tọa độ $O$ đều bị xoay lệch đi, nên không có đường thẳng bất biến nét đứt nào trên mặt phẳng thực.</p>
+            </div>
+          </div>
+        `;
+      } else {
+        const rootsLatex = sys.distinctEigenvalues
+          .map((it, idx) => `\\lambda_{${idx + 1}} = ${fmtScalarLatex(it.lambda)} \\text{ (bội đại số } m_a = ${it.algMult}\\text{)}`)
+          .join(", \\quad ");
+
+        const eigenspaceBlocks = sys.distinctEigenvalues.map((it, idx) => {
+          const lam = it.lambda;
+          const m00Val = a - lam;
+          const m01Val = b;
+          const m10Val = c;
+          const m11Val = d - lam;
+          const m00 = fmtScalarLatex(m00Val);
+          const m01 = fmtScalarLatex(m01Val);
+          const m10 = fmtScalarLatex(m10Val);
+          const m11 = fmtScalarLatex(m11Val);
+          const lineEqLatex = format2DLineEquationLatex(m00Val, m01Val, m10Val, m11Val);
+          const basisVecsLatex = (it.basis || []).map(vecToColLatex).join(", \\; ");
+          const firstVec = (it.basis && it.basis[0]) ? it.basis[0] : [1, 0];
+          return `
+            <div style="margin-bottom: 12px; padding: 10px 12px; background: var(--bg-hover); border-left: 3px solid var(--primary-base); border-radius: 2px;">
+              <p style="margin: 0 0 6px 0;"><strong>Trường hợp ${idx + 1}: Thay trị riêng $\\lambda_{${idx + 1}} = ${fmtScalarLatex(lam)}$ vào hệ $(A - \\lambda I)v = \\vec{0}$:</strong></p>
+              <p style="margin: 0 0 6px 0;">Lấy các phần tử trên đường chéo chính của $A$ trừ đi $\\lambda_{${idx + 1}} = ${fmtScalarLatex(lam)}$, ta được hệ phương trình tuyến tính thuần nhất tìm tọa độ $v = (x, y)^T$:</p>
+              $$\\begin{bmatrix} ${fmtScalarLatex(a)} - (${fmtScalarLatex(lam)}) & ${m01} \\\\ ${m10} & ${fmtScalarLatex(d)} - (${fmtScalarLatex(lam)}) \\end{bmatrix} \\begin{bmatrix} x \\\\ y \\end{bmatrix} = \\begin{bmatrix} 0 \\\\ 0 \\end{bmatrix} \\iff \\begin{bmatrix} ${m00} & ${m01} \\\\ ${m10} & ${m11} \\end{bmatrix} \\begin{bmatrix} x \\\\ y \\end{bmatrix} = \\begin{bmatrix} 0 \\\\ 0 \\end{bmatrix}$$
+              <p style="margin: 6px 0;"><strong>Nguồn gốc đường thẳng bất biến nét đứt $E_{\\lambda_{${idx + 1}}}$:</strong> Vì $\\det(A - \\lambda_{${idx + 1}}I) = 0$, hai dòng của ma trận trên tỷ lệ với nhau và rút gọn về phương trình đường thẳng đi qua gốc tọa độ $O(0,0)$:</p>
+              $$E_{\\lambda_{${idx + 1}}}: \\quad ${lineEqLatex}$$
+              <p style="margin: 6px 0 0 0;">Đường thẳng này chính là <strong>đường thẳng bất biến nét đứt</strong> hiển thị ở Bước 2 trên đồ thị. Chọn một điểm khác gốc $O$ nằm trên đường thẳng này (chẳng hạn $x = ${fmtScalarLatex(firstVec[0])} \\implies y = ${fmtScalarLatex(firstVec[1])}$), ta thu được vector riêng cơ sở:</p>
+              $$B_{E_{${fmtScalarLatex(lam)}}} = \\left\\{ ${basisVecsLatex} \\right\\} \\quad (\\text{số chiều } m_g = ${it.geoMult})$$
+            </div>
+          `;
+        }).join("");
+
+        const verifyLines = sys.eigenPairs.map((ep, i) => {
+          const vx = ep.vec[0], vy = ep.vec[1];
+          const avx = a * vx + b * vy;
+          const avy = c * vx + d * vy;
+          return `$$A v_{${i + 1}} = ${matLatex} \\begin{bmatrix} ${fmtScalarLatex(vx)} \\\\ ${fmtScalarLatex(vy)} \\end{bmatrix} = \\begin{bmatrix} ${fmtScalarLatex(avx)} \\\\ ${fmtScalarLatex(avy)} \\end{bmatrix} = ${fmtScalarLatex(ep.lambda)} \\begin{bmatrix} ${fmtScalarLatex(vx)} \\\\ ${fmtScalarLatex(vy)} \\end{bmatrix} = \\lambda_{${i + 1}} v_{${i + 1}}$$`;
+        }).join("");
+
+        step2And3 = `
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 2: Khai triển định thức $\\det(A - \\lambda I) = 0$ tìm trị riêng $\\lambda$</div>
+            <div class="sol-step-body">
+              <p>Trừ $\\lambda$ vào đường chéo chính của ma trận $A$ và tính định thức cấp 2 (tích đường chéo chính trừ tích đường chéo phụ):</p>
+              $$P(\\lambda) = \\det(A - \\lambda I_2) = \\begin{vmatrix} ${fmtScalarLatex(a)} - \\lambda & ${fmtScalarLatex(b)} \\\\ ${fmtScalarLatex(c)} & ${fmtScalarLatex(d)} - \\lambda \\end{vmatrix} = (${fmtScalarLatex(a)} - \\lambda)(${fmtScalarLatex(d)} - \\lambda) - (${fmtScalarLatex(b)})(${fmtScalarLatex(c)}) = 0$$
+              <p>Khai triển thành phương trình bậc hai theo $\\lambda$ (với vết $\\text{tr}(A) = ${fmtScalarLatex(a)} + (${fmtScalarLatex(d)}) = ${fmtScalarLatex(tr)}$ và định thức $\\det(A) = ${fmtScalarLatex(det)}$):</p>
+              $$\\lambda^2 - (${fmtScalarLatex(tr)})\\lambda + (${fmtScalarLatex(det)}) = 0$$
+              <p>Tính biệt thức $\\Delta = (${fmtScalarLatex(tr)})^2 - 4(${fmtScalarLatex(det)}) = ${fmtScalarLatex(delta)} \\ge 0$, ta giải được các trị riêng thực:</p>
+              $$${rootsLatex}$$
+            </div>
+          </div>
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 3: Từ đâu sinh ra các đường thẳng bất biến nét đứt và vector riêng $v_i$?</div>
+            <div class="sol-step-body">
+              ${eigenspaceBlocks}
+            </div>
+          </div>
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 4: Kiểm chứng trực tiếp $Av_i = \\lambda_i v_i$ và kết luận</div>
+            <div class="sol-step-body">
+              <p>Nhân trực tiếp ma trận $A$ với từng vector riêng tìm được để kiểm chứng chúng nằm đúng trên đường bất biến và chỉ co giãn $\\lambda_i$ lần:</p>
+              ${verifyLines}
+              <p>Vậy hệ có <strong>${sys.eigenPairs.length}</strong> vector riêng độc lập tuyến tính: ${sys.eigenPairs.map((ep, i) => `$v_{${i + 1}} = (${ep.vec.map(fmtScalarLatex).join(", ")})^T$ ứng với $\\lambda_{${i + 1}} = ${fmtScalarLatex(ep.lambda)}$`).join("; ")}.</p>
+            </div>
+          </div>
         `;
       }
 
-      eigenContent = `
-        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-          Bước 2: Tìm các nghiệm trị riêng
-        </h4>
-        <p>
-          Biệt thức $\\Delta = (${tr})^2 - 4(${det}) = ${delta.toFixed(2)} \\ge 0$.<br>
-          Phương trình có các nghiệm trị riêng thực:
-          $$\\lambda_1 = ${l1.toFixed(3)}, \\quad \\lambda_2 = ${l2.toFixed(3)}$$
-        </p>
+      tab1Html = `
+        <div class="sol-container">
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 1: Tại sao lại lập biểu thức $(A - \\lambda I)v = \\vec{0}$ và tính $\\det(A - \\lambda I) = 0$?</div>
+            <div class="sol-step-body">
+              <p>Xét ma trận vuông cấp 2: $$${matName} = ${matLatex}$$</p>
+              <p><strong>1. Từ bài toán hình học sang phương trình đại số:</strong> Khi nhân ma trận $A$ vào một vector bất kỳ, hầu hết các vector đều bị bẻ lệch hướng (như $\\vec{e}_1, \\vec{e}_2$ ở Bước 1). Ta muốn tìm những vector đặc biệt $v \\neq \\vec{0}$ <strong>không bị đổi phương</strong> sau phép biến đổi, tức là ảnh $Av$ chỉ là một bội số vô hướng $\\lambda$ của chính $v$:</p>
+              $$A v = \\lambda v \\quad (v \\neq \\vec{0})$$
+              <p><strong>2. Tại sao phải nhân thêm ma trận đơn vị $I$ vào $\\lambda$?</strong> Chuyển vế sang trái ta có $Av - \\lambda v = \\vec{0}$. Tuy nhiên, $A$ là một <em>ma trận</em> $2 \\times 2$ còn $\\lambda$ là một <em>con số vô hướng</em>, trong đại số tuyến tính không thể lấy ma trận trừ trực tiếp một con số ($A - \\lambda$ là vô nghĩa). Vì ma trận đơn vị $I = \\begin{bmatrix} 1 & 0 \\\\ 0 & 1 \\end{bmatrix}$ không làm thay đổi vector khi nhân ($Iv = v$), ta thay $\\lambda v = \\lambda I v$ rồi đặt nhân tử chung $v$ ra ngoài:</p>
+              $$Av - \\lambda I v = \\vec{0} \\iff (A - \\lambda I)v = \\vec{0}$$
+              <p><strong>3. Tại sao lại phải tính định thức $\\det(A - \\lambda I) = 0$?</strong> Hệ phương trình thuần nhất $(A - \\lambda I)v = \\vec{0}$ luôn có nghiệm tầm thường $v = \\vec{0}$. Nhưng vector riêng bắt buộc phải <strong>khác không ($v \\neq \\vec{0}$)</strong> để xác định được phương của đường thẳng. Hệ thuần nhất có nghiệm $v \\neq \\vec{0}$ khi và chỉ khi ma trận hệ số $(A - \\lambda I)$ không khả nghịch (làm sụp đổ diện tích về $0$), nghĩa là định thức của nó phải bằng $0$:</p>
+              $$\\det(A - \\lambda I) = 0$$
+            </div>
+          </div>
+          ${step2And3}
+        </div>
+      `;
+    } else {
+      // 3x3
+      const tr = sys.trace;
+      const c1 = sys.c1;
+      const det = sys.det;
+      const rootsLatex = sys.distinctEigenvalues
+        .map((it, idx) => `\\lambda_{${idx + 1}} = ${fmtScalarLatex(it.lambda)} \\text{ (bội đại số } m_a = ${it.algMult}\\text{)}`)
+        .join(", \\quad ");
 
-        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-          Bước 3: Xác định các không gian riêng tương ứng
-        </h4>
-        ${v1Html}
-        ${v2Html}
-        ${diagHtml}
+      const eigenspaceBlocks = sys.distinctEigenvalues.map((it, idx) => {
+        const lam = it.lambda;
+        const shifted = M.map((row, rIdx) => row.map((val, cIdx) => (rIdx === cIdx ? val - lam : val)));
+        const basisVecsLatex = (it.basis || []).map(vecToColLatex).join(", \\; ");
+        return `
+          <div style="margin-bottom: 12px; padding: 10px 12px; background: var(--bg-hover); border-left: 3px solid var(--primary-base); border-radius: 2px;">
+            <p style="margin: 0 0 6px 0;"><strong>Trường hợp ${idx + 1}: Thay trị riêng $\\lambda = ${fmtScalarLatex(lam)}$ vào hệ $(A - \\lambda I_3)v = \\vec{0}$:</strong></p>
+            <p style="margin: 0 0 6px 0;">Trừ $\\lambda = ${fmtScalarLatex(lam)}$ vào đường chéo chính của $A$, ta được ma trận hệ số của hệ phương trình thuần nhất:</p>
+            $$A - (${fmtScalarLatex(lam)})I_3 = ${matrixToBmatrixLatex(shifted)}$$
+            <p style="margin: 6px 0 0 0;">Khử Gauss hệ phương trình $(A - (${fmtScalarLatex(lam)})I_3)v = \\vec{0}$ và chọn giá trị cho ẩn tự do, ta thu được cơ sở của không gian riêng bất biến $E_{${fmtScalarLatex(lam)}}$ (số chiều $m_g = ${it.geoMult}$):</p>
+            $$B_{E_{${fmtScalarLatex(lam)}}} = \\left\\{ ${basisVecsLatex} \\right\\}$$
+          </div>
+        `;
+      }).join("");
+
+      tab1Html = `
+        <div class="sol-container">
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 1: Tại sao lại lập biểu thức $(A - \\lambda I_3)v = \\vec{0}$ và tính $\\det(A - \\lambda I_3) = 0$?</div>
+            <div class="sol-step-body">
+              <p>Xét ma trận vuông cấp 3: $$${matName} = ${matLatex}$$</p>
+              <p>Từ điều kiện hình học vector riêng giữ nguyên phương $Av = \\lambda v \\; (v \\neq \\vec{0})$, ta nhân ma trận đơn vị $I_3$ vào hằng số $\\lambda$ để có thể đặt nhân tử chung: $Av - \\lambda I_3 v = \\vec{0} \\iff (A - \\lambda I_3)v = \\vec{0}$.</p>
+              <p>Để hệ phương trình thuần nhất này có nghiệm khác không ($v \\neq \\vec{0}$), ma trận hệ số $(A - \\lambda I_3)$ phải suy biến, tức là định thức của nó phải bằng $0$:</p>
+              $$P(\\lambda) = \\det(A - \\lambda I_3) = -\\left(\\lambda^3 - (${fmtScalarLatex(tr)})\\lambda^2 + (${fmtScalarLatex(c1)})\\lambda - (${fmtScalarLatex(det)})\\right) = 0$$
+            </div>
+          </div>
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 2: Giải phương trình đặc trưng tìm trị riêng $\\lambda$</div>
+            <div class="sol-step-body">
+              <p>Giải phương trình bậc ba $\\lambda^3 - (${fmtScalarLatex(tr)})\\lambda^2 + (${fmtScalarLatex(c1)})\\lambda - (${fmtScalarLatex(det)}) = 0$, ta thu được các trị riêng thực:</p>
+              $$${rootsLatex || "\\text{Không có nghiệm thực}"}$$
+            </div>
+          </div>
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 3 & Pha 4: Giải hệ $(A - \\lambda_i I_3)v = \\vec{0}$ tìm trục bất biến và vector riêng</div>
+            <div class="sol-step-body">
+              ${eigenspaceBlocks}
+            </div>
+          </div>
+        </div>
       `;
     }
 
-    const html = `
-      <div style="padding: 6px 0; font-size: 13.5px; line-height: 1.7; color: var(--fg);">
-        <p style="margin-bottom: 12px;">
-          Xét ma trận vuông cấp 2:
-          $$A = \\begin{bmatrix} ${a} & ${b} \\\\ ${c} & ${d} \\end{bmatrix}$$
-        </p>
+    // TAB 2: CHÉO HÓA MA TRẬN (A = P D P^-1)
+    let tab2Html = "";
+    if (sys.isDiagonalizable && sys.P && sys.D) {
+      const pLatex = matrixToBmatrixLatex(sys.P);
+      const dLatex = matrixToBmatrixLatex(sys.D);
+      const pInvBlock = sys.PInv
+        ? `<p>Ma trận chuyển cơ sở nghịch đảo $P^{-1}$:</p>$$P^{-1} = ${matrixToBmatrixLatex(sys.PInv)}$$`
+        : "";
+      const vecNames = sys.eigenPairs.map((_, i) => `v_{${i + 1}}`).join(", ");
 
-        <div style="background: var(--bg-hover); border-left: 3px solid var(--primary-base); padding: 10px 14px; margin-bottom: 14px; border-radius: 2px;">
-          <strong>Mục tiêu:</strong> Lập phương trình đặc trưng, tìm các trị riêng $\\lambda$, vector riêng $\\vec{v}$ thỏa mãn $A\\vec{v} = \\lambda \\vec{v}$ và kiểm tra tính chéo hóa.
+      tab2Html = `
+        <div class="sol-container">
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 1: Kiểm tra điều kiện cần và đủ để chéo hóa</div>
+            <div class="sol-step-body">
+              <p>Ma trận vuông cấp $n = ${sys.dim}$ chéo hóa được trên $\\mathbb{R}$ khi và chỉ khi tổng số chiều của các không gian riêng bằng $n$ (mọi trị riêng đều thực và có bội hình học bằng bội đại số).</p>
+              <p>Ở đây $\\sum \\dim(E_{\\lambda_i}) = ${sys.eigenPairs.length} = ${sys.dim}$, nên hệ vector riêng $B = \\{${vecNames}\\}$ lập thành một cơ sở của $\\mathbb{R}^${sys.dim}$. Do đó ma trận <strong>chéo hóa được</strong>.</p>
+            </div>
+          </div>
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 2: Lập ma trận làm chéo $P$ và ma trận đường chéo $D$</div>
+            <div class="sol-step-body">
+              <p>Vì $Av_i = \\lambda_i v_i$, khi ghép các vector riêng $v_i$ làm các cột của ma trận $P = \\begin{bmatrix} ${vecNames} \\end{bmatrix}$, ta có $AP = PD$. Nhân $P^{-1}$ vào bên trái hai vế ta thu được:</p>
+              $$P = ${pLatex}, \\quad D = P^{-1}AP = ${dLatex}$$
+              ${pInvBlock}
+            </div>
+          </div>
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 3 & Pha 4: Hệ thức chéo hóa và Ý nghĩa của Bước 3 trên đồ thị</div>
+            <div class="sol-step-body">
+              <p>Ta có phân tích chéo hóa:</p>
+              $$P^{-1} A P = D \\iff A = P D P^{-1}$$
+              <p><strong>Ý nghĩa hình học (liên kết 3 bước trực quan):</strong></p>
+              <ul style="margin: 4px 0 0 18px; padding: 0;">
+                <li>Ở <strong>Bước 1</strong>, hệ lưới chuẩn $\\{\\vec{e}_1, \\vec{e}_2\\}$ bị ma trận $A$ bẻ nghiêng vì $\\vec{e}_1, \\vec{e}_2$ không nằm trên đường bất biến.</li>
+                <li>Ở <strong>Bước 2</strong>, giải hệ $(A - \\lambda_i I)v = \\vec{0}$ cho ta các đường thẳng bất biến nét đứt đi qua $O$, trên đó $v_i$ chỉ trượt thành $\\lambda_i v_i$.</li>
+                <li>Ở <strong>Bước 3</strong>, khi đổi sang hệ lưới mới kẻ song song với cơ sở Vector riêng $B = \\{${vecNames}\\}$ (tức nhân với $P^{-1}$), phép biến đổi $A$ trở thành ma trận đường chéo $D$: các ô lưới riêng chỉ co giãn thuần túy $\\lambda_i$ lần dọc theo các đường bất biến mà không còn bị bẻ lệch góc.</li>
+              </ul>
+            </div>
+          </div>
         </div>
-
-        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-          Bước 1: Lập đa thức đặc trưng và phương trình đặc trưng
-        </h4>
-        <p>
-          Đa thức đặc trưng của ma trận $A$:
-          $$P(\\lambda) = \\det(A - \\lambda I) = \\begin{vmatrix} ${a} - \\lambda & ${b} \\\\ ${c} & ${d} - \\lambda \\end{vmatrix}$$
-          Khai triển định thức:
-          $$P(\\lambda) = (${a} - \\lambda)(${d} - \\lambda) - (${b})(${c}) = \\lambda^2 - (${tr})\\lambda + (${det})$$
-          Phương trình đặc trưng: $\\lambda^2 - (${tr})\\lambda + (${det}) = 0$.
-        </p>
-
-        ${eigenContent}
-      </div>
-    `;
-
-    if (window.App && typeof App.openCustomSolution === "function") {
-      App.openCustomSolution("Trị Riêng, Vector Riêng & Chéo Hóa Ma Trận", html);
+      `;
     } else {
-      const solBody = document.getElementById("solutionBody");
-      const solOverlay = document.getElementById("solutionOverlay");
-      const solTitle = document.getElementById("solTitleText");
-      if (solTitle) solTitle.textContent = "Trị Riêng, Vector Riêng & Chéo Hóa Ma Trận";
-      if (solBody) solBody.innerHTML = html;
-      if (solOverlay) {
-        solOverlay.classList.add("is-open");
-        solOverlay.setAttribute("aria-hidden", "false");
-      }
-      if (window.renderMathInElement) {
-        renderMathInElement(solBody, {
-          delimiters: [
-            { left: "$$", right: "$$", display: true },
-            { left: "\\[", right: "\\]", display: true },
-            { left: "\\(", right: "\\)", display: false },
-            { left: "$", right: "$", display: false }
-          ]
-        });
-      }
+      tab2Html = `
+        <div class="sol-container">
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 1: Kiểm tra điều kiện chéo hóa trên trường số thực $\\mathbb{R}$</div>
+            <div class="sol-step-body">
+              <p>Để ma trận vuông cấp $n = ${sys.dim}$ chéo hóa được trên $\\mathbb{R}$, ma trận phải có đủ ${sys.dim} vector riêng thực độc lập tuyến tính tạo thành một cơ sở của $\\mathbb{R}^${sys.dim}$.</p>
+              <p><strong>Kết quả kiểm tra:</strong> ${sys.reasonNotDiag}</p>
+            </div>
+          </div>
+          <div class="sol-step">
+            <div class="sol-step-header">Pha 2: Kết luận</div>
+            <div class="sol-step-body">
+              <p>Vì số lượng vector riêng độc lập tuyến tính (${sys.eigenPairs.length}) nhỏ hơn số chiều không gian (${sys.dim}), không tồn tại ma trận khả nghịch $P \\in M_${sys.dim}(\\mathbb{R})$ sao cho $P^{-1}AP$ là ma trận đường chéo. Ma trận <strong>không chéo hóa được</strong> trên $\\mathbb{R}$.</p>
+            </div>
+          </div>
+        </div>
+      `;
     }
+
+    return {
+      title: "Trị riêng, Vector riêng & Chéo hóa Ma trận",
+      math: `\\( \\mathbb{R}^{${sys.dim} \\times ${sys.dim}} \\)`,
+      tab1Label: "Tab 1: Giải tìm Trị riêng & Đường bất biến",
+      tab2Label: "Tab 2: Chéo hóa A = P D P⁻¹",
+      showSubTabs: false,
+      content1: tab1Html,
+      content2: tab2Html,
+      autoOpen: false
+    };
   }
 
-  // Module định nghĩa cho Chủ đề 6
+  function computeAndPrepareEigen() {
+    const selData = getOrEnsureSelectedSquareMatrix();
+    if (!selData) return null;
+
+    const { item, values } = selData;
+    const sys = typeof App.solveEigenSystem === "function" ? App.solveEigenSystem(values) : null;
+    if (!sys) return null;
+
+    renderEigenInfoCard(item, sys);
+    cachedEigenSolutionConfig = buildEigenAcademicSolutionConfig(item, sys);
+
+    if (typeof App.openSolutionPanel === "function") {
+      App.openSolutionPanel({ ...cachedEigenSolutionConfig, autoOpen: false });
+    }
+
+    if (window.App.PaperLogger) {
+      const ltx = sys.isComplex
+        ? `\\Delta < 0 \\text{ (Trị riêng phức)}`
+        : sys.distinctEigenvalues.map((d, idx) => `\\lambda_{${idx + 1}} = ${fmtScalarLatex(d.lambda)}`).join(", \\; ");
+      App.PaperLogger.log("Trị riêng, Vector riêng & Chéo hóa", ltx, "", cachedEigenSolutionConfig, {
+        type: "eigen",
+        matrixId: item.id
+      });
+    }
+
+    return { item, values, sys };
+  }
+
   const Topic6Module = {
     _isInitialized: false,
 
     init: function () {
+      App.ensureEigenAnimControls();
+      App.refreshEigenMatrixDropdown();
       if (this._isInitialized) return;
-      const btnCompute = document.getElementById("btnEigenCompute");
-      if (!btnCompute) return;
+
+      const btnCompute = $("btnEigenCompute");
+      const btnAnimate = $("btnEigenAnimate");
+      const btnSol = $("btnEigenSolution");
+      if (!btnCompute && !btnAnimate && !btnSol) return;
       this._isInitialized = true;
 
-      // Nút Preset
-      const pReal = document.getElementById("presetEigenReal");
-      const pSym = document.getElementById("presetEigenSym");
-      const pRot = document.getElementById("presetEigenRot");
-      const pRepeated = document.getElementById("presetEigenRepeated");
-
-      const clearActivePill = () => {
-        [pReal, pSym, pRot, pRepeated].forEach((b) => {
-          if (b) b.classList.remove("active");
-        });
-      };
-
-      const syncInputsFromMatrix = () => {
-        const a11 = document.getElementById("eigen_a11");
-        const a12 = document.getElementById("eigen_a12");
-        const a21 = document.getElementById("eigen_a21");
-        const a22 = document.getElementById("eigen_a22");
-        if (a11) a11.value = eigenState.matrix[0][0];
-        if (a12) a12.value = eigenState.matrix[0][1];
-        if (a21) a21.value = eigenState.matrix[1][0];
-        if (a22) a22.value = eigenState.matrix[1][1];
-      };
-
-      if (pReal) {
-        pReal.addEventListener("click", () => {
-          clearActivePill();
-          pReal.classList.add("active");
-          eigenState.matrix = [
-            [3, 1],
-            [0, 2]
-          ];
-          syncInputsFromMatrix();
-          this.execute();
+      const sel = $("eigenMatrixSelect");
+      if (sel && !sel._eigenBound) {
+        sel._eigenBound = true;
+        sel.addEventListener("change", () => {
+          if (typeof App.stopEigenAnimation === "function" && window.App?.EigenAnimator?.isActive?.()) {
+            App.stopEigenAnimation();
+          }
+          renderSelectedMatrixPreview();
         });
       }
 
-      if (pSym) {
-        pSym.addEventListener("click", () => {
-          clearActivePill();
-          pSym.classList.add("active");
-          eigenState.matrix = [
-            [2, 1],
-            [1, 2]
-          ];
-          syncInputsFromMatrix();
-          this.execute();
+      // 1. Nút "Tính trị riêng"
+      if (btnCompute) {
+        btnCompute.addEventListener("click", () => {
+          if (typeof App.stopEigenAnimation === "function" && window.App?.EigenAnimator?.isActive?.()) {
+            App.stopEigenAnimation();
+          }
+          computeAndPrepareEigen();
         });
       }
 
-      if (pRot) {
-        pRot.addEventListener("click", () => {
-          clearActivePill();
-          pRot.classList.add("active");
-          eigenState.matrix = [
-            [0, -1],
-            [1, 0]
-          ];
-          syncInputsFromMatrix();
-          this.execute();
-        });
-      }
+      // 2. Nút "Trực quan" (Bật/Tắt hoạt cảnh 4 bước App.EigenAnimator)
+      if (btnAnimate) {
+        btnAnimate.addEventListener("click", () => {
+          App.ensureEigenAnimControls();
+          const wrap = $("eigenAnimControls");
+          const isBoxOpen = wrap && wrap.style.display !== "none" && wrap.style.display !== "";
+          if (isBoxOpen || window.App?.EigenAnimator?.isActive?.()) {
+            App.stopEigenAnimation();
+            return;
+          }
 
-      if (pRepeated) {
-        pRepeated.addEventListener("click", () => {
-          clearActivePill();
-          pRepeated.classList.add("active");
-          eigenState.matrix = [
-            [2, 1],
-            [0, 2]
-          ];
-          syncInputsFromMatrix();
-          this.execute();
-        });
-      }
+          const res = computeAndPrepareEigen();
+          if (!res) return;
 
-      // Lắng nghe thay đổi phần tử ma trận
-      const bindMatrixChange = (id, row, col) => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.addEventListener("input", (e) => {
-            const val = parseFloat(e.target.value) || 0;
-            eigenState.matrix[row][col] = val;
-            this.execute();
-          });
-        }
-      };
+          // Dừng các animator khác nếu đang chạy
+          if (typeof App.stopBasisAnimation === "function") App.stopBasisAnimation();
+          if (typeof App.stopCoordAnimation === "function") App.stopCoordAnimation();
 
-      bindMatrixChange("eigen_a11", 0, 0);
-      bindMatrixChange("eigen_a12", 0, 1);
-      bindMatrixChange("eigen_a21", 1, 0);
-      bindMatrixChange("eigen_a22", 1, 1);
-
-      // Checkbox các lớp hiển thị
-      const chkLines = document.getElementById("chkEigenShowLines");
-      if (chkLines) {
-        chkLines.addEventListener("change", (e) => {
-          eigenState.showEigenspaces = e.target.checked;
-          if (window.Vec2D && Vec2D.draw2DAllVectors) Vec2D.draw2DAllVectors();
-        });
-      }
-
-      const chkTrans = document.getElementById("chkEigenShowTrans");
-      if (chkTrans) {
-        chkTrans.addEventListener("change", (e) => {
-          eigenState.showTransformed = e.target.checked;
-          if (window.Vec2D && Vec2D.draw2DAllVectors) Vec2D.draw2DAllVectors();
-        });
-      }
-
-      const chkCircle = document.getElementById("chkEigenShowUnitCircle");
-      if (chkCircle) {
-        chkCircle.addEventListener("change", (e) => {
-          eigenState.showUnitCircle = e.target.checked;
-          if (window.Vec2D && Vec2D.draw2DAllVectors) Vec2D.draw2DAllVectors();
-        });
-      }
-
-      // Nút Khảo sát
-      btnCompute.addEventListener("click", () => {
-        this.execute();
-      });
-
-      // Nút Quét hướng bất biến (Animation)
-      const btnSweep = document.getElementById("btnEigenSweep");
-      if (btnSweep) {
-        btnSweep.addEventListener("click", () => {
-          eigenState.isSweeping = !eigenState.isSweeping;
-          if (eigenState.isSweeping) {
-            btnSweep.innerHTML = '<i class="ph ph-pause" style="margin-right:4px;"></i> Dừng quét';
-            eigenState.sweepAngle = 0;
-            requestAnimationFrame(sweepTick);
-          } else {
-            btnSweep.innerHTML = '<i class="ph ph-compass" style="margin-right:4px;"></i> Quét hướng';
-            if (eigenState.sweepAnimId) {
-              cancelAnimationFrame(eigenState.sweepAnimId);
-              eigenState.sweepAnimId = null;
+          if (window.App && App.EigenAnimator) {
+            const ok = App.EigenAnimator.start({
+              matrix: res.values,
+              matrixId: res.item.id
+            });
+            if (ok && wrap) {
+              wrap.style.display = "flex";
             }
-            if (window.Vec2D && Vec2D.draw2DAllVectors) Vec2D.draw2DAllVectors();
           }
         });
       }
 
-      // Nút Lời giải
-      const btnSol = document.getElementById("btnEigenSolution");
+      // 3. Nút "Lời giải"
       if (btnSol) {
-        btnSol.addEventListener("click", generateEigenSolution);
+        btnSol.addEventListener("click", () => {
+          if (!cachedEigenSolutionConfig) {
+            computeAndPrepareEigen();
+          }
+          if (cachedEigenSolutionConfig && typeof App.openSolutionPanel === "function") {
+            App.openSolutionPanel({ ...cachedEigenSolutionConfig, autoOpen: true });
+          }
+        });
       }
     },
 
     execute: function () {
       if (!this._isInitialized) this.init();
-
-      const a11 = document.getElementById("eigen_a11");
-      const a12 = document.getElementById("eigen_a12");
-      const a21 = document.getElementById("eigen_a21");
-      const a22 = document.getElementById("eigen_a22");
-      if (a11 && !isNaN(parseFloat(a11.value))) eigenState.matrix[0][0] = parseFloat(a11.value);
-      if (a12 && !isNaN(parseFloat(a12.value))) eigenState.matrix[0][1] = parseFloat(a12.value);
-      if (a21 && !isNaN(parseFloat(a21.value))) eigenState.matrix[1][0] = parseFloat(a21.value);
-      if (a22 && !isNaN(parseFloat(a22.value))) eigenState.matrix[1][1] = parseFloat(a22.value);
-
-      computeEigen();
-      App.custom2DDrawHook = drawEigenOnCanvas2D;
-      updateInfoPanel();
-
-      if (window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {
-        Vec2D.draw2DAllVectors();
-      }
+      App.refreshEigenMatrixDropdown();
     },
 
     onTaskSelect: function (taskId) {
@@ -705,19 +757,8 @@
       ) {
         this.execute();
       } else {
-        if (eigenState.isSweeping) {
-          eigenState.isSweeping = false;
-          if (eigenState.sweepAnimId) {
-            cancelAnimationFrame(eigenState.sweepAnimId);
-            eigenState.sweepAnimId = null;
-          }
-          const btnSweep = document.getElementById("btnEigenSweep");
-          if (btnSweep) {
-            btnSweep.innerHTML = '<i class="ph ph-compass" style="margin-right:4px;"></i> Quét hướng';
-          }
-        }
-        if (App.custom2DDrawHook === drawEigenOnCanvas2D) {
-          App.custom2DDrawHook = null;
+        if (typeof App.stopEigenAnimation === "function") {
+          App.stopEigenAnimation();
         }
       }
     }
@@ -732,4 +773,7 @@
       }
     });
   }
+  window.addEventListener("DOMContentLoaded", function () {
+    Topic6Module.init();
+  });
 })();

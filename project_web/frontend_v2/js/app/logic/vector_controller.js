@@ -384,10 +384,15 @@
     const axisPanel = document.getElementById("axisControls");
     if (axisPanel) axisPanel.style.display = to3D ? "inline-flex" : "none";
 
-    const btnNori = document.getElementById("btnNoriEntity");
-    if (btnNori) btnNori.style.display = to3D ? "none" : "";
+    const noriBtns = document.querySelectorAll("#btnNoriEntity, #btnNoriEntitySidebar, .btn-nori-pencil");
+    noriBtns.forEach((btn) => {
+      btn.style.display = to3D ? "none" : "";
+    });
     
     if (to3D) {
+      if (window.App && window.App.noriFloatingCompanion) {
+        window.App.noriFloatingCompanion.hide();
+      }
       if (window.Vec3D) {
         if (!Vec3D._scene) Vec3D.init3D();
         Vec3D.removeNoriHamsterEntity3D?.();
@@ -663,6 +668,15 @@
           if (mb) mb.textContent = `${App.mode}`;
           const mi = document.getElementById("modeBadgeIcon");
           if (mi) mi.className = App.mode === "3D" ? "ph ph-cube" : "ph ph-bounding-box";
+
+          const noriBtns = document.querySelectorAll("#btnNoriEntity, #btnNoriEntitySidebar, .btn-nori-pencil");
+          noriBtns.forEach((btn) => {
+            btn.style.display = is3D ? "none" : "";
+          });
+          if (is3D && window.App && window.App.noriFloatingCompanion) {
+            window.App.noriFloatingCompanion.hide();
+          }
+
           if (is3D && window.Vec3D) Vec3D.show3D();
           else if (!is3D && window.Vec2D) Vec2D.show2D();
         }
@@ -755,6 +769,14 @@
       if (mb) mb.textContent = `${App.mode}`;
       const mi = document.getElementById("modeBadgeIcon");
       if (mi) mi.className = App.mode === "3D" ? "ph ph-cube" : "ph ph-bounding-box";
+
+      const noriBtns = document.querySelectorAll("#btnNoriEntity, #btnNoriEntitySidebar, .btn-nori-pencil");
+      noriBtns.forEach((btn) => {
+        btn.style.display = is3D ? "none" : "";
+      });
+      if (is3D && window.App && window.App.noriFloatingCompanion) {
+        window.App.noriFloatingCompanion.hide();
+      }
       
       const axisPanel = document.getElementById("axisControls");
       if (axisPanel) axisPanel.style.display = is3D ? "inline-flex" : "none";
@@ -778,6 +800,19 @@
 
   // Hàm xóa hết vector (FIX LỖI DANH SÁCH VECTOR KHÔNG BIẾN MẤT)
   App.clearAllVectors = function () {
+    if (typeof App.stopBasisAnimation === "function") {
+      try { App.stopBasisAnimation(); } catch (_) {}
+    } else if (window.App?.BasisAnimator?.isActive?.()) {
+      try { window.App.BasisAnimator.stop(); } catch (_) {}
+    }
+    if (typeof App.stopCoordAnimation === "function") {
+      try { App.stopCoordAnimation(); } catch (_) {}
+    } else if (window.App?.CoordAnimator?.isActive?.()) {
+      try { window.App.CoordAnimator.stop(); } catch (_) {}
+    }
+    App._lastBasisAnimData = null;
+    App._lastCoordAnimData = null;
+
     if (App.editingVectorId !== null) {
       App.editingVectorId = null;
       const btn = document.getElementById("btnDraw") || document.getElementById("btnAddVector");
@@ -1867,7 +1902,11 @@
 
   App.rankVectorsUI = async function () {
     const container = document.getElementById("rankChecklist");
-    if (typeof App.handleEmptyListAction === "function" && App.handleEmptyListAction()) return;
+    if (typeof App.requireVectors === "function") {
+      if (!App.requireVectors()) return;
+    } else if (typeof App.handleEmptyListAction === "function" && App.handleEmptyListAction()) {
+      return;
+    }
     const vectors = App.getCheckedVectors(container);
     if (!vectors || !vectors.length) {
       if (typeof App.showToast === "function") App.showToast("Hãy tick chọn ít nhất 1 vector!");
@@ -1928,16 +1967,96 @@
         }
       }
     } catch (err) {
-      if (resBox) {
-        resBox.innerHTML = `<div style="color: #ef4444; font-size: 13px; padding: 6px 0;">Lỗi: ${err.message}</div>`;
+      // Client-side fallback solver when API offline
+      try {
+        const is3D = vectors.some((v) => v.length >= 3);
+        const nDim = is3D ? 3 : 2;
+        const A = vectors.map((v) => v.slice(0, nDim));
+        const m = A.length;
+        const steps = [];
+        let r = 0;
+        for (let c = 0; c < nDim && r < m; c++) {
+          let maxR = r;
+          let maxV = Math.abs(A[r][c]);
+          for (let i = r + 1; i < m; i++) {
+            if (Math.abs(A[i][c]) > maxV) { maxV = Math.abs(A[i][c]); maxR = i; }
+          }
+          if (maxV < 1e-5) continue;
+          if (maxR !== r) {
+            const tmp = A[r]; A[r] = A[maxR]; A[maxR] = tmp;
+            steps.push({ latex_label: `h_${r + 1} \\leftrightarrow h_${maxR + 1}`, matrix: A.map((row) => row.slice()) });
+          }
+          const pv = A[r][c];
+          for (let i = r + 1; i < m; i++) {
+            if (Math.abs(A[i][c]) > 1e-5) {
+              const f = A[i][c] / pv;
+              for (let j = c; j < nDim; j++) { A[i][j] -= f * A[r][j]; if (Math.abs(A[i][j]) < 1e-10) A[i][j] = 0; }
+              const fStr = Math.abs(f - Math.round(f)) < 1e-4 ? String(Math.round(f)) : f.toFixed(2);
+              steps.push({ latex_label: `h_${i + 1} \\leftarrow h_${i + 1} - ${fStr} h_${r + 1}`, matrix: A.map((row) => row.slice()) });
+            }
+          }
+          r++;
+        }
+        const fallbackRes = {
+          vectors: vectors,
+          dimension: nDim,
+          num_vectors: m,
+          rank: r,
+          result: { rank: r },
+          method_matrix: { steps: steps }
+        };
+        App.currentRankData = fallbackRes;
+
+        const cardHtml = `
+          <div class="academic-result-card" style="margin-top: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--card);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 13px; background: rgba(59, 130, 246, 0.12); border: 1px solid #3b82f6; color: #2563eb;">
+                <i class="ph ph-hash" style="font-size: 15px;"></i> Hạng của hệ vector: ${r}
+              </span>
+              <span style="font-size: 12px; color: var(--muted); font-weight: 600;">dim(span) = ${r}</span>
+            </div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+              Không gian sinh bởi ${m} vector có số chiều bằng ${r}.
+            </div>
+          </div>
+        `;
+        if (resBox) resBox.innerHTML = cardHtml;
+
+        const btnSol = document.getElementById("btnRankSolution");
+        if (btnSol) btnSol.style.display = "inline-flex";
+
+        if (App.TasksGen && App.TasksGen.Rank && typeof App.TasksGen.Rank.buildSolution === "function") {
+          const pack = App.TasksGen.Rank.buildSolution(fallbackRes, vectors);
+          App.cachedRankConfig = {
+            title: pack.titleText || "Hạng của hệ vector",
+            math: pack.titleMath || `\\( \\mathbb{R}^{${nDim}} \\)`,
+            tab1Label: pack.tab1Label || "Cách 1: Ma trận bậc thang",
+            tab2Label: pack.tab2Label || "Cách 2: Hệ độc lập tuyến tính tối đại",
+            showSubTabs: false,
+            content1: pack.content1,
+            content2: pack.content2,
+            autoOpen: false,
+          };
+          if (typeof App.openSolutionPanel === "function") {
+            App.openSolutionPanel(App.cachedRankConfig);
+          }
+        }
+      } catch (innerErr) {
+        if (resBox) {
+          resBox.innerHTML = `<div style="color: #ef4444; font-size: 13px; padding: 6px 0;">Lỗi: ${err.message}</div>`;
+        }
+        if (typeof App.showToast === "function") App.showToast(err.message);
       }
-      if (typeof App.showToast === "function") App.showToast(err.message);
     }
   };
 
   App.linearIndependenceUI = async function () {
     const container = document.getElementById("indepChecklist");
-    if (typeof App.handleEmptyListAction === "function" && App.handleEmptyListAction()) return;
+    if (typeof App.requireVectors === "function") {
+      if (!App.requireVectors()) return;
+    } else if (typeof App.handleEmptyListAction === "function" && App.handleEmptyListAction()) {
+      return;
+    }
     const vectors = App.getCheckedVectors(container);
     if (!vectors || !vectors.length) {
       if (typeof App.showToast === "function") App.showToast("Hãy tick chọn ít nhất 1 vector!");
@@ -2006,10 +2125,109 @@
         }
       }
     } catch (err) {
-      if (resBox) {
-        resBox.innerHTML = `<div style="color: #ef4444; font-size: 13px; padding: 6px 0;">Lỗi: ${err.message}</div>`;
+      // Client-side fallback solver when API offline
+      try {
+        const is3D = vectors.some((v) => v.length >= 3);
+        const nDim = is3D ? 3 : 2;
+        const A = vectors.map((v) => v.slice(0, nDim));
+        const m = A.length;
+        const steps = [];
+        let r = 0;
+        for (let c = 0; c < nDim && r < m; c++) {
+          let maxR = r;
+          let maxV = Math.abs(A[r][c]);
+          for (let i = r + 1; i < m; i++) {
+            if (Math.abs(A[i][c]) > maxV) { maxV = Math.abs(A[i][c]); maxR = i; }
+          }
+          if (maxV < 1e-5) continue;
+          if (maxR !== r) {
+            const tmp = A[r]; A[r] = A[maxR]; A[maxR] = tmp;
+            steps.push({ latex_label: `h_${r + 1} \\leftrightarrow h_${maxR + 1}`, matrix: A.map((row) => row.slice()) });
+          }
+          const pv = A[r][c];
+          for (let i = r + 1; i < m; i++) {
+            if (Math.abs(A[i][c]) > 1e-5) {
+              const f = A[i][c] / pv;
+              for (let j = c; j < nDim; j++) { A[i][j] -= f * A[r][j]; if (Math.abs(A[i][j]) < 1e-10) A[i][j] = 0; }
+              const fStr = Math.abs(f - Math.round(f)) < 1e-4 ? String(Math.round(f)) : f.toFixed(2);
+              steps.push({ latex_label: `h_${i + 1} \\leftarrow h_${i + 1} - ${fStr} h_${r + 1}`, matrix: A.map((row) => row.slice()) });
+            }
+          }
+          r++;
+        }
+        const isIndep = r === m;
+        const fallbackRes = {
+          vectors: vectors,
+          dimension: nDim,
+          num_vectors: m,
+          rank: r,
+          independent: isIndep,
+          result: { rank: r, is_independent: isIndep },
+          method_matrix: { steps: steps }
+        };
+        App.currentIndepData = fallbackRes;
+
+        const statusText = isIndep ? "Độc lập tuyến tính" : "Phụ thuộc tuyến tính";
+        const badgeBg = isIndep ? "rgba(16, 185, 129, 0.12)" : "rgba(245, 158, 11, 0.12)";
+        const badgeBorder = isIndep ? "#10b981" : "#f59e0b";
+        const badgeColor = isIndep ? "#059669" : "#d97706";
+        const iconClass = isIndep ? "ph-check-circle" : "ph-warning-circle";
+
+        const cardHtml = `
+          <div class="academic-result-card" style="margin-top: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--card);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 13px; background: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeColor};">
+                <i class="ph ${iconClass}" style="font-size: 15px;"></i> ${statusText}
+              </span>
+              <span style="font-size: 12px; color: var(--muted); font-weight: 600;">Hạng r = ${r} / ${m} vector</span>
+            </div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+              ${isIndep ? "Hệ vector thỏa mãn điều kiện độc lập tuyến tính." : "Hệ vector tồn tại biểu diễn tuyến tính phụ thuộc."}
+            </div>
+          </div>
+        `;
+        if (resBox) resBox.innerHTML = cardHtml;
+
+        const btnSol = document.getElementById("btnIndepSolution");
+        if (btnSol) btnSol.style.display = "inline-flex";
+
+        if (App.TasksGen && App.TasksGen.Indep && typeof App.TasksGen.Indep.buildSolution === "function") {
+          const pack = App.TasksGen.Indep.buildSolution(fallbackRes, vectors);
+          App.cachedIndepConfig = {
+            title: pack.titleText || "Độc lập - phụ thuộc tuyến tính",
+            math: pack.titleMath || `\\( \\mathbb{R}^{${nDim}} \\)`,
+            tab1Label: pack.tab1Label || "Cách 1: Khử Gauss ma trận dòng",
+            tab2Label: pack.tab2Label || "Cách 2: Hệ phương trình thuần nhất",
+            showSubTabs: false,
+            content1: pack.content1,
+            content2: pack.content2,
+            autoOpen: false,
+          };
+          if (typeof App.openSolutionPanel === "function") {
+            App.openSolutionPanel(App.cachedIndepConfig);
+          }
+        }
+      } catch (innerErr) {
+        if (resBox) {
+          resBox.innerHTML = `<div style="color: #ef4444; font-size: 13px; padding: 6px 0;">Lỗi: ${err.message}</div>`;
+        }
       }
-      if (typeof App.showToast === "function") App.showToast(err.message);
+    }
+  };
+
+  App.startIndepAnimateUI = function (vectors) {
+    if (window.App && App.IndepAnimator && typeof App.IndepAnimator.start === "function") {
+      const container = document.getElementById("indepChecklist");
+      const list = vectors || (container ? App.getCheckedVectors(container) : []);
+      App.IndepAnimator.start(list);
+    }
+  };
+
+  App.startRankAnimateUI = function (vectors) {
+    if (window.App && App.RankAnimator && typeof App.RankAnimator.start === "function") {
+      const container = document.getElementById("rankChecklist");
+      const list = vectors || (container ? App.getCheckedVectors(container) : []);
+      App.RankAnimator.start(list);
     }
   };
 
@@ -2082,6 +2300,42 @@
       document.getElementById("btnRank").onclick = App.rankVectorsUI;
 
     function bindAcademicSolutionButtons() {
+      // Bài 1: Độc lập tuyến tính
+      const btnIndepAnim = document.getElementById("btnIndepAnimate");
+      if (btnIndepAnim && !btnIndepAnim._boundM1) {
+        btnIndepAnim._boundM1 = true;
+        btnIndepAnim.addEventListener("click", () => {
+          if (typeof App.requireVectors === "function" && !App.requireVectors()) return;
+          if (window.App && App.IndepAnimator && typeof App.IndepAnimator.start === "function") {
+            const container = document.getElementById("indepChecklist");
+            const checked = container ? App.getCheckedVectors(container) : [];
+            App.IndepAnimator.start(checked);
+          } else if (typeof App.startIndepAnimateUI === "function") {
+            App.startIndepAnimateUI();
+          } else if (typeof App.showToast === "function") {
+            App.showToast("Trình trực quan Độc lập tuyến tính đang được khởi tạo...", "info");
+          }
+        });
+      }
+
+      // Bài 2: Hạng của hệ vector
+      const btnRankAnim = document.getElementById("btnRankAnimate");
+      if (btnRankAnim && !btnRankAnim._boundM1) {
+        btnRankAnim._boundM1 = true;
+        btnRankAnim.addEventListener("click", () => {
+          if (typeof App.requireVectors === "function" && !App.requireVectors()) return;
+          if (window.App && App.RankAnimator && typeof App.RankAnimator.start === "function") {
+            const container = document.getElementById("rankChecklist");
+            const checked = container ? App.getCheckedVectors(container) : [];
+            App.RankAnimator.start(checked);
+          } else if (typeof App.startRankAnimateUI === "function") {
+            App.startRankAnimateUI();
+          } else if (typeof App.showToast === "function") {
+            App.showToast("Trình trực quan Hạng vector đang được khởi tạo...", "info");
+          }
+        });
+      }
+
       const btnIndepSol = document.getElementById("btnIndepSolution");
       if (btnIndepSol) {
         btnIndepSol.onclick = () => {

@@ -826,6 +826,8 @@
 
     const isBasisAnim = window.App && (App._basisAnimActive || (App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive()));
     const isCoordAnim = window.App && (App._coordAnimActive || (App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()));
+    const isIndepAnim = window.App && (App._indepAnimActive || (App.IndepAnimator && typeof App.IndepAnimator.isActive === "function" && App.IndepAnimator.isActive()));
+    const isRankAnim = window.App && (App._rankAnimActive || (App.RankAnimator && typeof App.RankAnimator.isActive === "function" && App.RankAnimator.isActive()));
 
     if (vList.length !== cache.length) {
       isDirty = true;
@@ -1090,12 +1092,18 @@
 
       const isBasisAnim = window.App && (App._basisAnimActive || (App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive()));
       const isCoordAnim = window.App && (App._coordAnimActive || (App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()));
+      const isIndepAnim = window.App && (App._indepAnimActive || (App.IndepAnimator && typeof App.IndepAnimator.isActive === "function" && App.IndepAnimator.isActive()));
+      const isRankAnim = window.App && (App._rankAnimActive || (App.RankAnimator && typeof App.RankAnimator.isActive === "function" && App.RankAnimator.isActive()));
       const isDark = (window.App && App.theme === "dark") || document.documentElement.classList.contains("dark") || (document.body && document.body.classList.contains("dark"));
       const labelColor = (isBasisAnim && it._basisColorCss)
         ? it._basisColorCss
         : ((isCoordAnim && it._coordColorCss)
           ? it._coordColorCss
-          : (it.colorCss || it.colorHex || (isDark ? "#ffffff" : "#111827")));
+          : ((isIndepAnim && it._indepColorCss)
+            ? it._indepColorCss
+            : ((isRankAnim && it._rankColorCss)
+              ? it._rankColorCss
+              : (it.colorCss || it.colorHex || (isDark ? "#ffffff" : "#111827")))));
 
       lbl.element.style.color = "var(--text-main, #edeef0)";
       lbl.element.style.setProperty("--vec-color", labelColor);
@@ -1605,12 +1613,21 @@
       }
       const isBasisAnim = window.App && (App._basisAnimActive || (App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive()));
       const isCoordAnim = window.App && (App._coordAnimActive || (App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()));
+      const isIndepAnim = window.App && (App._indepAnimActive || (App.IndepAnimator && typeof App.IndepAnimator.isActive === "function" && App.IndepAnimator.isActive()));
+      const isRankAnim = window.App && (App._rankAnimActive || (App.RankAnimator && typeof App.RankAnimator.isActive === "function" && App.RankAnimator.isActive()));
+      const isGSAnim = window.App && (App._gsAnimActive || (App.GSAnimator && typeof App.GSAnimator.isActive === "function" && App.GSAnimator.isActive()));
       const v = toVec3(it.vec);
       let aItem = (isBasisAnim && typeof it._basisAlpha === "number")
         ? Math.max(0, Math.min(1, it._basisAlpha))
         : ((isCoordAnim && typeof it._coordAlpha === "number")
           ? Math.max(0, Math.min(1, it._coordAlpha))
-          : (typeof it.alpha === "number" ? Math.max(0, Math.min(1, it.alpha)) : 1));
+          : ((isIndepAnim && typeof it._indepAlpha === "number")
+            ? Math.max(0, Math.min(1, it._indepAlpha))
+            : ((isRankAnim && typeof it._rankAlpha === "number")
+              ? Math.max(0, Math.min(1, it._rankAlpha))
+              : ((isGSAnim && typeof it._gsAlpha === "number")
+                ? Math.max(0, Math.min(1, it._gsAlpha))
+                : (typeof it.alpha === "number" ? Math.max(0, Math.min(1, it.alpha)) : 1)))));
 
       // Dim others
       if (hasFocus && !it.focus) aItem *= 0.15;
@@ -1648,7 +1665,7 @@
       const DYN_HEAD_R = idealHeadR;
       const DYN_SHAFT_R = Math.min(idealShaftR, DYN_HEAD_R * 0.44);
       const shaftLen = Math.max(len - DYN_HEAD_H, 1e-6);
-      const colStr = (isBasisAnim && it._basisColorCss) ? it._basisColorCss : ((isCoordAnim && it._coordColorCss) ? it._coordColorCss : (it.colorHex || it.colorCss || "#ffffff"));
+      const colStr = (isBasisAnim && it._basisColorCss) ? it._basisColorCss : ((isCoordAnim && it._coordColorCss) ? it._coordColorCss : ((isIndepAnim && it._indepColorCss) ? it._indepColorCss : ((isRankAnim && it._rankColorCss) ? it._rankColorCss : ((isGSAnim && it._gsColorCss) ? it._gsColorCss : (it.colorHex || it.colorCss || "#ffffff")))));
       const color = new THREE.Color(colStr);
 
       const group = new THREE.Group();
@@ -1768,6 +1785,7 @@
       );
       shaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
       shaft.position.copy(dirLocal.clone().multiplyScalar(shaftLen / 2));
+      shaft.renderOrder = 4;
 
       const head = new THREE.Mesh(
         new THREE.ConeGeometry(DYN_HEAD_R, DYN_HEAD_H, GEOM_QUALITY.headSeg),
@@ -1775,6 +1793,7 @@
       );
       head.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirLocal);
       head.position.copy(tipLocal.clone().addScaledVector(dirLocal, -DYN_HEAD_H / 2));
+      head.renderOrder = 4;
 
       // Hit target vô hình để tóm đầu vector chính xác 100% bằng raycaster (dùng transparent thay vì visible: false)
       const hitRadius = Math.max(DYN_HEAD_R * 2.2, 14 * worldPerPx);
@@ -1821,7 +1840,13 @@
         ? it._basisColorCss
         : ((isCoordAnim && it._coordColorCss)
           ? it._coordColorCss
-          : (it.colorCss || it.colorHex || (isDark ? "#ffffff" : "#111827")));
+          : ((isIndepAnim && it._indepColorCss)
+            ? it._indepColorCss
+            : ((isRankAnim && it._rankColorCss)
+              ? it._rankColorCss
+              : ((isGSAnim && it._gsColorCss)
+                ? it._gsColorCss
+                : (it.colorCss || it.colorHex || (isDark ? "#ffffff" : "#111827"))))));
 
       el.style.color = "var(--text-main, #edeef0)";
       el.style.setProperty("--vec-color", labelColor);
@@ -1878,7 +1903,7 @@
         group.visible = false;
       }
 
-      if (isBasisAnim && it._basisIsBasis) {
+      if ((isBasisAnim && it._basisIsBasis) || it._isEigenTemp) {
         group.renderOrder = 999;
         shaft.renderOrder = 999;
         head.renderOrder = 999;
@@ -2153,6 +2178,26 @@
     // [COORDINATE ANIMATION HOOK 3D]
     if (window.App && App.CoordAnimator && App.CoordAnimator.isActive()) {
       App.CoordAnimator.render3D(Vec3D._mathGroup);
+    }
+    // [EIGENVALUE & DIAGONALIZATION HOOK 3D]
+    if (window.App && App.EigenAnimator && App.EigenAnimator.isActive()) {
+      App.EigenAnimator.render3D(Vec3D._mathGroup);
+    }
+    // [INDEPENDENCE ANIMATION HOOK 3D]
+    if (window.App && App.IndepAnimator && App.IndepAnimator.isActive()) {
+      App.IndepAnimator.render3D(Vec3D._mathGroup);
+    }
+    // [RANK & GAUSS ANIMATION HOOK 3D]
+    if (window.App && App.RankAnimator && App.RankAnimator.isActive()) {
+      App.RankAnimator.render3D(Vec3D._mathGroup);
+    }
+    // [GRAM - SCHMIDT ANIMATION HOOK 3D]
+    if (window.App && App.GSAnimator && App.GSAnimator.isActive()) {
+      App.GSAnimator.render3D(Vec3D._mathGroup);
+    }
+    // [LINEAR TRANSFORMATION ANIMATION HOOK 3D]
+    if (window.App && App.LTAnimator && App.LTAnimator.isActive()) {
+      App.LTAnimator.render3D(Vec3D._mathGroup);
     }
   };
 

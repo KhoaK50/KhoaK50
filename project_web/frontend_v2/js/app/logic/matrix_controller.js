@@ -323,6 +323,9 @@
   // 5. CRUD: XÓA 1 MA TRẬN
   // =========================================================================
   App.deleteMatrix = function (id) {
+    if (typeof App.stopEigenAnimation === "function" && window.App?.EigenAnimator?.isActive?.()) {
+      try { App.stopEigenAnimation(); } catch (_) {}
+    }
     const idx = App.matrixList.findIndex((m) => m.id === id);
     if (idx < 0) return;
     const item = App.matrixList[idx];
@@ -347,6 +350,9 @@
   // 6. CRUD: XÓA HẾT
   // =========================================================================
   App.clearAllMatrices = function () {
+    if (typeof App.stopEigenAnimation === "function" && window.App?.EigenAnimator?.isActive?.()) {
+      try { App.stopEigenAnimation(); } catch (_) {}
+    }
     if (App.matrixList.length === 0) {
       App.showToast("Danh sách đã trống rồi!", "warning");
       return;
@@ -1302,16 +1308,6 @@
       headerLeft.appendChild(tag);
       headerLeft.appendChild(dim);
 
-      // Nếu là ma trận tham số, hiển thị huy hiệu f(t) hoặc f(u,v)
-      if (item.isParametric) {
-        const badge = document.createElement("span");
-        badge.className = "mat-param-badge";
-        const vText = item.vars && item.vars.length > 1 ? item.vars.join(",") : (item.paramVar || "t");
-        badge.textContent = `f(${vText})`;
-        badge.title = `Ma trận phụ thuộc tham số ${item.vars ? item.vars.join(", ") : item.paramVar}`;
-        headerLeft.appendChild(badge);
-      }
-
       // Actions
       const actions = document.createElement("div");
       actions.className = "mat-actions";
@@ -1400,27 +1396,6 @@
       li.appendChild(headerRow);
       li.appendChild(preview);
 
-      if (item.isParametric && typeof App.createMatrixParamController === "function") {
-        const pCtrl = App.createMatrixParamController(item, () => {
-          for (let i = 0; i < item.rows; i++) {
-            for (let j = 0; j < item.cols; j++) {
-              const cellEl = preview.querySelector(`[data-row="${i}"][data-col="${j}"]`);
-              if (cellEl) {
-                const rawCell = item.latexValues && item.latexValues[i] && item.latexValues[i][j] !== undefined
-                  ? item.latexValues[i][j]
-                  : fmtCell(item.values[i][j]);
-                if (cellEl.tagName.toLowerCase() === "math-field") {
-                  cellEl.value = rawCell;
-                } else {
-                  cellEl.textContent = rawCell;
-                }
-              }
-            }
-          }
-        });
-        if (pCtrl) li.appendChild(pCtrl);
-      }
-
       el.appendChild(li);
     }
 
@@ -1435,5 +1410,320 @@
   // Xuất khẩu các hàm cốt lõi phục vụ tính toán ma trận tham số
   App.readGridValues = readGridValues;
   App.createMatrixItem = createMatrixItem;
+
+  // =========================================================================
+  // BỘ ĐIỀU KHIỂN MA TRẬN VUÔNG & SELECTOR DÙNG CHUNG (MILIESTONE 1)
+  // =========================================================================
+
+  // Định dạng số hiển thị trong ô xem trước ma trận
+  function fmtMatrixScalar(v) {
+    if (v === null || v === undefined || isNaN(v)) return "0";
+    const n = Number(v);
+    if (Math.abs(n) < 1e-9) return "0";
+    if (Math.abs(n - Math.round(n)) < 1e-4) return String(Math.round(n));
+    for (let den = 2; den <= 12; den++) {
+      const num = Math.round(n * den);
+      if (Math.abs(n - num / den) < 1e-4) {
+        return num < 0 ? `-${Math.abs(num)}/${den}` : `${num}/${den}`;
+      }
+    }
+    return n.toFixed(2).replace(/\.?0+$/, "");
+  }
+
+  // 1. Kiểm tra và lấy ma trận vuông đang chọn (TUYỆT ĐỐI KHÔNG tự tạo mặc định)
+  App.getOrEnsureSelectedSquareMatrix = function (selectId, options = {}) {
+    const matrices = Array.isArray(App.matrixList) ? App.matrixList : [];
+    const sel = document.getElementById(selectId || "eigenMatrixSelect");
+
+    let item = null;
+    if (sel && sel.value) {
+      item = matrices.find((m) => String(m.id) === String(sel.value));
+    }
+    if (!item && matrices.length > 0) {
+      item = matrices.find((m) => m.rows === m.cols && (m.rows === 2 || m.rows === 3)) || matrices[0];
+      if (sel && item) sel.value = String(item.id);
+    }
+
+    // Nếu người dùng chưa tạo ma trận nào trong tab Đối tượng, cảnh báo và chuyển tab
+    if (!item) {
+      if (typeof App.showToast === "function") {
+        App.showToast("Danh sách trống! Hãy tạo ma trận vuông ở tab Đối tượng trước.", "warning");
+      }
+      const firstTab = document.querySelector(".sidebar-tabs .tab-btn");
+      if (firstTab) firstTab.click();
+      const createSelect = document.getElementById("createObjectSelect");
+      if (createSelect && createSelect.value !== "matrix") {
+        createSelect.value = "matrix";
+        createSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      return null;
+    }
+
+    // Kiểm tra tính chất ma trận vuông cấp 2 hoặc cấp 3
+    if (item.rows !== item.cols || (item.rows !== 2 && item.rows !== 3)) {
+      if (typeof App.showToast === "function") {
+        App.showToast(`Ma trận ${item.name} (${item.rows}×${item.cols}) không phải ma trận vuông cấp 2 hoặc cấp 3!`, "warning");
+      }
+      return null;
+    }
+
+    const n = item.rows;
+    const rawVals = typeof item.evalMatrix === "function" ? item.evalMatrix() : item.values;
+    const values = [];
+    for (let i = 0; i < n; i++) {
+      values[i] = [];
+      for (let j = 0; j < n; j++) {
+        values[i][j] = Number(rawVals?.[i]?.[j] ?? 0);
+      }
+    }
+
+    // Kiểm tra tính đối xứng và trích xuất ma trận đối xứng liên kết 1/2(A + Aᵀ)
+    let isSymmetric = true;
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        if (Math.abs(values[i][j] - values[j][i]) > 1e-5) {
+          isSymmetric = false;
+          break;
+        }
+      }
+      if (!isSymmetric) break;
+    }
+
+    let symmetricValues = values;
+    if (options.requireSymmetric && !isSymmetric) {
+      symmetricValues = [];
+      for (let i = 0; i < n; i++) {
+        symmetricValues[i] = [];
+        for (let j = 0; j < n; j++) {
+          symmetricValues[i][j] = (values[i][j] + values[j][i]) / 2;
+        }
+      }
+    }
+
+    return {
+      item,
+      values,
+      symmetricValues,
+      isSymmetric,
+      n,
+      rows: n,
+      cols: n
+    };
+  };
+
+  // 2. Kết xuất khung xem trước ma trận dùng chung
+  App.renderMatrixPreviewGrid = function (previewEl, item, options = {}) {
+    if (!previewEl) return;
+    if (!item) {
+      previewEl.style.display = "none";
+      previewEl.innerHTML = "";
+      return;
+    }
+
+    previewEl.style.display = "block";
+    const n = item.rows;
+    const isSquareValid = item.rows === item.cols && (item.rows === 2 || item.rows === 3);
+    const rawVals = typeof item.evalMatrix === "function" ? item.evalMatrix() : item.values;
+
+    let displayVals = rawVals;
+    let badgeHtml = "";
+
+    if (options.isConic) {
+      // Đối với Bài 8 Dạng toàn phương
+      if (!isSquareValid) {
+        badgeHtml = '<span style="color: #ef4444; font-weight: 600;">Cần ma trận vuông 2×2 hoặc 3×3</span>';
+      } else {
+        let isSym = true;
+        for (let i = 0; i < n; i++) {
+          for (let j = i + 1; j < n; j++) {
+            if (Math.abs((rawVals?.[i]?.[j] ?? 0) - (rawVals?.[j]?.[i] ?? 0)) > 1e-5) {
+              isSym = false;
+              break;
+            }
+          }
+          if (!isSym) break;
+        }
+
+        if (isSym) {
+          badgeHtml = '<span style="color: var(--muted); font-weight: 600;">Ma trận đối xứng A = Aᵀ</span>';
+        } else {
+          badgeHtml = '<span style="color: var(--amber, #f59e0b); font-weight: 600;">Tự động đối xứng hóa: ½(A + Aᵀ)</span>';
+          displayVals = [];
+          for (let i = 0; i < n; i++) {
+            displayVals[i] = [];
+            for (let j = 0; j < n; j++) {
+              displayVals[i][j] = ((rawVals?.[i]?.[j] ?? 0) + (rawVals?.[j]?.[i] ?? 0)) / 2;
+            }
+          }
+        }
+      }
+    } else {
+      // Đối với Bài 6 Ánh xạ tuyến tính
+      badgeHtml = `<span style="color: ${isSquareValid ? "var(--muted)" : "#ef4444"}; font-weight: 600;">${
+        isSquareValid ? "Ma trận vuông hợp lệ" : "Cần ma trận 2×2 hoặc 3×3"
+      }</span>`;
+    }
+
+    const cellsHtml = [];
+    for (let i = 0; i < item.rows; i++) {
+      for (let j = 0; j < item.cols; j++) {
+        const v = displayVals?.[i]?.[j] ?? 0;
+        cellsHtml.push(`
+          <div style="background: var(--bg-card, var(--card)); border: 1px solid var(--border); border-radius: 2px; padding: 4px 6px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--fg);">
+            ${fmtMatrixScalar(v)}
+          </div>
+        `);
+      }
+    }
+
+    let footerNote = "";
+    if (options.isConic && isSquareValid) {
+      footerNote = `
+        <div style="margin-top: 6px; font-size: 11px; color: var(--muted); font-style: italic;">
+          Dạng toàn phương xᵀAx chỉ phụ thuộc vào phần đối xứng: aᵢⱼ = (mᵢⱼ + mⱼᵢ)/2.
+        </div>
+      `;
+    }
+
+    previewEl.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; font-size: 11px; color: var(--muted);">
+        <span>Ma trận đang chọn: <b style="color: var(--fg);">${item.name} (${item.rows}×${item.cols})</b></span>
+        ${badgeHtml}
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(${item.cols}, 1fr); gap: 4px;">
+        ${cellsHtml.join("")}
+      </div>
+      ${footerNote}
+    `;
+  };
+
+  // 3. Làm mới dropdown Bài 6: Ánh xạ tuyến tính (#ltMatrixSelect & #ltMatrixPreview)
+  App.refreshLTMatrixDropdown = function () {
+    const sel = document.getElementById("ltMatrixSelect");
+    const previewEl = document.getElementById("ltMatrixPreview");
+    if (!sel) return;
+
+    const matrices = Array.isArray(App.matrixList) ? App.matrixList : [];
+    const prevVal = sel.value;
+    sel.innerHTML = "";
+
+    if (matrices.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "(Chưa có ma trận - Tạo ở tab Đối tượng)";
+      sel.appendChild(opt);
+      if (previewEl) {
+        previewEl.style.display = "none";
+        previewEl.innerHTML = "";
+      }
+      const resBox = document.getElementById("result_lt_info");
+      if (resBox) {
+        resBox.style.display = "none";
+        resBox.innerHTML = "";
+      }
+    } else {
+      matrices.forEach((m) => {
+        const opt = document.createElement("option");
+        opt.value = String(m.id);
+        const sqTag = m.rows === m.cols && (m.rows === 2 || m.rows === 3) ? "" : " [Không vuông]";
+        opt.textContent = `${m.name} (${m.rows}×${m.cols})${sqTag}`;
+        sel.appendChild(opt);
+      });
+
+      if (prevVal && matrices.some((m) => String(m.id) === String(prevVal))) {
+        sel.value = prevVal;
+      } else {
+        const firstSquare = matrices.find((m) => m.rows === m.cols && (m.rows === 2 || m.rows === 3));
+        sel.value = String((firstSquare || matrices[0]).id);
+      }
+    }
+
+    if (!sel._ltBound) {
+      sel._ltBound = true;
+      sel.addEventListener("change", () => {
+        if (typeof App.stopLTAnimation === "function" && window.App?.LTAnimator?.isActive?.()) {
+          try { App.stopLTAnimation(); } catch (_) {}
+        }
+        const curItem = matrices.find((m) => String(m.id) === String(sel.value));
+        App.renderMatrixPreviewGrid(previewEl, curItem, { isConic: false });
+      });
+    }
+
+    const curItem = matrices.find((m) => String(m.id) === String(sel.value));
+    App.renderMatrixPreviewGrid(previewEl, curItem, { isConic: false });
+  };
+
+  // 4. Làm mới dropdown Bài 8: Dạng toàn phương (#conicMatrixSelect & #conicMatrixPreview)
+  App.refreshConicMatrixDropdown = function () {
+    const sel = document.getElementById("conicMatrixSelect");
+    const previewEl = document.getElementById("conicMatrixPreview");
+    if (!sel) return;
+
+    const matrices = Array.isArray(App.matrixList) ? App.matrixList : [];
+    const prevVal = sel.value;
+    sel.innerHTML = "";
+
+    if (matrices.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "(Chưa có ma trận - Tạo ở tab Đối tượng)";
+      sel.appendChild(opt);
+      if (previewEl) {
+        previewEl.style.display = "none";
+        previewEl.innerHTML = "";
+      }
+      const resBox = document.getElementById("result_conic_info");
+      if (resBox) {
+        resBox.style.display = "none";
+        resBox.innerHTML = "";
+      }
+    } else {
+      matrices.forEach((m) => {
+        const opt = document.createElement("option");
+        opt.value = String(m.id);
+        const isSquare = m.rows === m.cols && (m.rows === 2 || m.rows === 3);
+        let tag = "";
+        if (!isSquare) {
+          tag = " [Không vuông]";
+        } else {
+          const raw = typeof m.evalMatrix === "function" ? m.evalMatrix() : m.values;
+          let isSym = true;
+          for (let i = 0; i < m.rows; i++) {
+            for (let j = i + 1; j < m.cols; j++) {
+              if (Math.abs((raw?.[i]?.[j] ?? 0) - (raw?.[j]?.[i] ?? 0)) > 1e-5) {
+                isSym = false;
+                break;
+              }
+            }
+            if (!isSym) break;
+          }
+          if (!isSym) tag = " [Tự động đối xứng hóa]";
+        }
+        opt.textContent = `${m.name} (${m.rows}×${m.cols})${tag}`;
+        sel.appendChild(opt);
+      });
+
+      if (prevVal && matrices.some((m) => String(m.id) === String(prevVal))) {
+        sel.value = prevVal;
+      } else {
+        const firstSquare = matrices.find((m) => m.rows === m.cols && (m.rows === 2 || m.rows === 3));
+        sel.value = String((firstSquare || matrices[0]).id);
+      }
+    }
+
+    if (!sel._conicBound) {
+      sel._conicBound = true;
+      sel.addEventListener("change", () => {
+        if (typeof App.stopConicAnimation === "function" && window.App?.ConicAnimator?.isActive?.()) {
+          try { App.stopConicAnimation(); } catch (_) {}
+        }
+        const curItem = matrices.find((m) => String(m.id) === String(sel.value));
+        App.renderMatrixPreviewGrid(previewEl, curItem, { isConic: true });
+      });
+    }
+
+    const curItem = matrices.find((m) => String(m.id) === String(sel.value));
+    App.renderMatrixPreviewGrid(previewEl, curItem, { isConic: true });
+  };
 
 })();

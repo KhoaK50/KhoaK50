@@ -705,6 +705,19 @@ body.mode-3d #labels2dOverlay {
   display: none !important;
 }
 
+/* Triệt tiêu hoàn toàn linh vật Nori và các nút Nori khi ở không gian 3D */
+body.mode-3d #noriFloatingCompanion {
+  display: none !important;
+}
+
+body.mode-3d #btnNoriEntity,
+body.mode-3d #btnNoriEntitySidebar,
+body.mode-3d .btn-nori-pencil,
+body.mode-3d #chkLTShowNori,
+body.mode-3d label:has(#chkLTShowNori) {
+  display: none !important;
+}
+
 .vec-label-2d {
   position: absolute;
   top: 0;
@@ -2446,6 +2459,11 @@ body.dark-theme .vec-pop-master-reset:hover {
 
 .btn-nori-pencil .nori-pencil-icon {
   flex-shrink: 0;
+  font-size: 15px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.2s ease;
 }
 
@@ -2663,6 +2681,36 @@ body.dark-theme .vec-pop-master-reset:hover {
   border-color: var(--primary-base, #0090ff);
   color: #ffffff;
   background: var(--primary-base, #0090ff);
+}
+
+.vec-depth-input {
+  width: 58px;
+  background: var(--bg-card, #1c1d20);
+  border: 1px solid var(--border-subtle, #33383f);
+  color: var(--text-main, #eee);
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+  padding: 5px 6px;
+  border-radius: 2px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.vec-depth-input:focus {
+  border-color: var(--primary-base, #0090ff);
+  background: var(--bg-surface, #24262b);
+  outline: none;
+}
+
+.vec-depth-input::-webkit-inner-spin-button,
+.vec-depth-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.vec-depth-input {
+  -moz-appearance: textfield;
 }
 
 .vec-modal-footer {
@@ -2948,5 +2996,288 @@ html.dark .basis-step-desc {
   }
 }
 
+/* ========================================================================= */
+/* NORI FLOATING COMPANION - PHYSICAL INTERACTIVE WIDGET                     */
+/* ========================================================================= */
+#noriFloatingCompanion {
+  position: fixed;
+  z-index: 15; /* Nằm dưới sidebar (#controls z-index: 250) và topbar/HUD, chỉ nổi trên canvas */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+  touch-action: none;
+  pointer-events: none; /* Khung chữ nhật bao quanh hoàn toàn trong suốt với chuột, không che vector */
+  transition: opacity 0.25s ease;
+}
 
+/* Stage chứa Nori */
+.nori-companion-stage {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  transform-origin: 50% 90%;
+  will-change: transform;
+  pointer-events: none; /* Vùng trong suốt xung quanh không chặn tương tác vector */
+}
+
+@keyframes noriLivingBreath {
+  0%, 100% {
+    transform: scale(1.0, 1.0);
+  }
+  50% {
+    transform: scale(0.985, 1.018);
+  }
+}
+
+.nori-companion-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.12));
+  pointer-events: none;
+  transform-origin: 50% 85%;
+  animation: noriLivingBreath 3.6s ease-in-out infinite;
+}
+
+.nori-companion-stage.is-grabbed .nori-companion-svg,
+.nori-companion-stage.is-tickled .nori-companion-svg,
+.nori-companion-stage.is-super-tickled .nori-companion-svg,
+.nori-companion-stage.is-puffed .nori-companion-svg,
+.nori-companion-stage.is-dizzy-stumble .nori-companion-svg,
+.nori-companion-stage.is-sneezing-blast .nori-companion-svg {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nori-companion-svg {
+    animation: none;
+  }
+}
+
+/* Chỉ các thực thể vẽ bên trong Nori mới nhận tương tác chuột */
+#Nori_Character {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.nori-companion-stage.is-grabbed #Nori_Character {
+  cursor: grabbing;
+}
+
+#Ear_Left, #Ear_Right,
+#Cheek_Left_Group, #Cheek_Right_Group,
+#Nose_Group, #Tummy_Group,
+#Cheek_Left_Group *, #Cheek_Right_Group *,
+#Nose_Group *, #Tummy_Group * {
+  pointer-events: all !important;
+}
+
+body.dark .nori-companion-svg,
+body.dark-theme .nori-companion-svg {
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45));
+}
+
+/* Hiệu ứng bưng lên lơ lửng (Airborne) */
+.nori-companion-stage.is-grabbed .nori-body-mesh {
+  transform: scale(0.92, 1.10);
+  transition: transform 0.12s ease-out;
+}
+
+/* Đôi chân buông thõng đung đưa trong không trung */
+@keyframes noriFeetDangle {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(1.8px) rotate(-6deg); }
+}
+
+.nori-companion-stage.is-grabbed #Feet {
+  animation: noriFeetDangle 0.45s ease-in-out infinite alternate;
+  transform-origin: 50% 85%;
+}
+
+/* Hiệu ứng tiếp đất nảy bồng bềnh Squash & Stretch */
+@keyframes noriLandingSquash {
+  0%   { transform: scale(1.0, 1.0); }
+  25%  { transform: scale(1.24, 0.76); }
+  50%  { transform: scale(0.92, 1.12); }
+  75%  { transform: scale(1.06, 0.95); }
+  100% { transform: scale(1.0, 1.0); }
+}
+
+.nori-companion-stage.is-landing {
+  animation: noriLandingSquash 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Kéo tai đàn hồi */
+#Ear_Left, #Ear_Right {
+  cursor: pointer;
+  transition: transform 0.05s linear;
+}
+
+/* Vùng tương tác Easter Eggs */
+#Ear_Left, #Ear_Right {
+  cursor: grab;
+  transition: transform 0.05s linear;
+}
+
+#Ear_Left:hover, #Ear_Right:hover,
+#Cheek_Left_Group:hover, #Cheek_Right_Group:hover,
+#Nose_Group:hover, #Tummy_Group:hover {
+  filter: brightness(1.08);
+}
+
+#Cheek_Left_Group, #Cheek_Right_Group {
+  cursor: grab;
+  transform-origin: 50% 50%;
+  transition: transform 0.08s ease;
+}
+
+#Nose_Group, #Tummy_Group {
+  cursor: pointer;
+}
+
+/* Easter Egg 3: Chọc bụng cười khúc khích */
+@keyframes noriTickleJiggle {
+  0%, 100% { transform: scale(1.0, 1.0) rotate(0deg); }
+  25% { transform: scale(1.12, 0.88) rotate(-6deg); }
+  50% { transform: scale(0.94, 1.06) rotate(6deg); }
+  75% { transform: scale(1.08, 0.92) rotate(-4deg); }
+}
+
+.nori-companion-stage.is-tickled {
+  animation: noriTickleJiggle 0.4s ease-in-out infinite;
+}
+
+/* Easter Egg 4: Xoa đầu vuốt ve purring */
+@keyframes noriPettingPurr {
+  0%, 100% { transform: translateY(0px) scale(1.0, 1.0); }
+  50% { transform: translateY(2px) scale(1.04, 0.96); }
+}
+
+.nori-companion-stage.is-petting {
+  animation: noriPettingPurr 0.35s ease-in-out infinite;
+}
+
+/* Easter Egg 5: Chóng mặt loạng choạng (Dizzy Stumble) */
+@keyframes noriDizzyStumble {
+  0%, 100% { transform: rotate(0deg) translateX(0px); }
+  20% { transform: rotate(-8deg) translateX(-4px); }
+  40% { transform: rotate(6deg) translateX(3px); }
+  60% { transform: rotate(-5deg) translateX(-2px); }
+  80% { transform: rotate(3deg) translateX(1px); }
+}
+
+.nori-companion-stage.is-dizzy-stumble {
+  animation: noriDizzyStumble 0.65s ease-in-out infinite;
+}
+
+/* Easter Egg 6: Thả rơi tự do bẹp dí (Sky Splat) */
+@keyframes noriSkySplat {
+  0%   { transform: scale(1.0, 1.0); }
+  35%  { transform: scale(1.48, 0.52); }
+  65%  { transform: scale(0.88, 1.15); }
+  85%  { transform: scale(1.06, 0.95); }
+  100% { transform: scale(1.0, 1.0); }
+}
+
+.nori-companion-stage.is-splat {
+  animation: noriSkySplat 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Easter Egg 7: Phồng má giận dỗi (Blowfish Puff) */
+.nori-companion-stage.is-puffed {
+  transform: scale(1.26);
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Bong bóng thoại nhỏ của Nori */
+.nori-speech-bubble {
+  position: absolute;
+  bottom: calc(100% - 6px);
+  right: 10px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-strong, #cbd5e1);
+  padding: 5px 12px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-main, #1e293b);
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.nori-speech-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  right: 46px;
+  border-width: 5px 5px 0;
+  border-style: solid;
+  border-color: var(--bg-card, #ffffff) transparent;
+  display: block;
+  width: 0;
+}
+
+body.dark .nori-speech-bubble,
+body.dark-theme .nori-speech-bubble {
+  background: var(--bg-card, #1e2024);
+  border-color: var(--border-strong, #3f444e);
+  color: var(--text-main, #f1f5f9);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+body.dark .nori-speech-bubble::after,
+body.dark-theme .nori-speech-bubble::after {
+  border-color: var(--bg-card, #1e2024) transparent;
+}
+
+.nori-speech-bubble.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Easter Egg 3: Choc bung cuoi khuc khich tu nhien */
+@keyframes noriSuperTickle {
+  0%, 100% { transform: translateY(0px) scale(1.0, 1.0) rotate(0deg); }
+  20% { transform: translateY(-2.2px) scale(1.04, 0.96) rotate(-1.5deg); }
+  40% { transform: translateY(0.5px) scale(0.98, 1.02) rotate(1.2deg); }
+  60% { transform: translateY(-1.8px) scale(1.03, 0.97) rotate(-1.0deg); }
+  80% { transform: translateY(0.2px) scale(0.99, 1.01) rotate(0.8deg); }
+}
+
+.nori-companion-stage.is-super-tickled {
+  animation: noriSuperTickle 0.58s ease-in-out infinite;
+  transform-origin: 50% 75%;
+}
+
+.nori-companion-stage.is-super-tickled #Paws {
+  animation: noriPawsClutch 0.28s ease-in-out infinite alternate;
+  transform-origin: 50% 65%;
+}
+
+@keyframes noriPawsClutch {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-2.5px) scale(1.08); }
+}
+
+/* Easter Egg: Hat xi chuan muc 3 pha */
+@keyframes noriSneezeShiver {
+  0%, 100% { transform: translateY(-8px) scale(0.94, 1.06) rotate(0deg); }
+  25% { transform: translateY(-8px) scale(0.94, 1.06) rotate(-2deg); }
+  75% { transform: translateY(-8px) scale(0.94, 1.06) rotate(2deg); }
+}
+
+.nori-companion-stage.is-sneezing-inhale {
+  animation: noriSneezeShiver 0.12s ease-in-out infinite;
+}
+
+.nori-companion-stage.is-sneezing-blast {
+  transform: translateY(14px) scale(1.28, 0.74) !important;
+  transition: transform 0.08s cubic-bezier(0.18, 0.89, 0.32, 1.28) !important;
+}
 

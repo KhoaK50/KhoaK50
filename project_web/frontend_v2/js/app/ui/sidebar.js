@@ -501,21 +501,14 @@
 
                 const btnNori = document.createElement("button");
                 btnNori.type = "button";
-                btnNori.id = "btnNoriEntity";
+                btnNori.id = "btnNoriEntitySidebar";
                 btnNori.className = "btn-nori-pencil" + (window.App?.noriEntityActive ? " active" : "");
                 btnNori.title = "Bật/Tắt thực thể Nori trong mặt phẳng 2D";
                 if (window.App && window.App.mode === "3D") {
                     btnNori.style.display = "none";
                 }
                 btnNori.innerHTML = `
-                    <svg class="nori-pencil-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5.5 7.5 C3.8 5.5, 5.2 2.5, 7.8 3.5 C9.2 4.2, 9.8 6.0, 9.5 7.8" />
-                        <path d="M18.5 7.5 C20.2 5.5, 18.8 2.5, 16.2 3.5 C14.8 4.2, 14.2 6.0, 14.5 7.8" />
-                        <ellipse cx="12" cy="13.5" rx="7.2" ry="6.8" />
-                        <circle cx="9.2" cy="12.5" r="0.9" fill="currentColor" />
-                        <circle cx="14.8" cy="12.5" r="0.9" fill="currentColor" />
-                        <path d="M11.2 14.6 Q12 15.2 12.8 14.6" />
-                    </svg>
+                    <i class="ph ph-paw-print nori-pencil-icon"></i>
                     <span>Nori</span>
                 `;
                 btnNori.onclick = () => {
@@ -1123,13 +1116,31 @@
         if (index !== 2 && window.App?.LinearTransform?.isActive?.()) {
           window.App.LinearTransform.stop();
         }
-        // Nếu rời khỏi tab Bài toán (index !== 1): dừng ngay hoạt cảnh cơ sở và ẩn công cụ
+        // Nếu rời khỏi tab Bài toán (index !== 1): dừng ngay hoạt cảnh cơ sở / tọa độ và ẩn công cụ
         if (index !== 1) {
-          if (window.App?.BasisAnimator?.isActive?.()) {
-            window.App.BasisAnimator.stop();
+          if (typeof App.stopBasisAnimation === "function") {
+            try { App.stopBasisAnimation(); } catch (_) {}
+          } else if (window.App?.BasisAnimator?.isActive?.()) {
+            try { window.App.BasisAnimator.stop(); } catch (_) {}
           }
           const c = document.getElementById("basisAnimControls");
           if (c) c.style.display = "none";
+
+          if (typeof App.stopCoordAnimation === "function") {
+            try { App.stopCoordAnimation(); } catch (_) {}
+          } else if (window.App?.CoordAnimator?.isActive?.()) {
+            try { window.App.CoordAnimator.stop(); } catch (_) {}
+          }
+          const cc = document.getElementById("coordAnimControls");
+          if (cc) cc.style.display = "none";
+
+          if (typeof App.stopEigenAnimation === "function") {
+            try { App.stopEigenAnimation(); } catch (_) {}
+          } else if (window.App?.EigenAnimator?.isActive?.()) {
+            try { window.App.EigenAnimator.stop(); } catch (_) {}
+          }
+          const ec = document.getElementById("eigenAnimControls");
+          if (ec) ec.style.display = "none";
         }
       };
     });
@@ -1270,6 +1281,11 @@
     const mixedVectorSel = document.getElementById("mixedVectorSelect");
     if (mixedVectorSel) {
       mixedVectorSel.addEventListener("change", () => {
+        if (mixedVectorSel.value === "nori_entity") {
+          mixedVectorSel.dataset.userExplicitNori = "true";
+        } else {
+          delete mixedVectorSel.dataset.userExplicitNori;
+        }
         if (window.App?.LinearTransform?.isActive?.()) {
           window.App.LinearTransform.stop();
         }
@@ -1911,6 +1927,14 @@
           const traceInp = document.getElementById(`vecParamTraceInp_${item.id}`);
           if (traceInp) traceInp.checked = item.showTrajectory !== false;
         }
+        if (item.visible === false) {
+          if (typeof App.stopBasisAnimation === "function" && window.App?.BasisAnimator?.isActive?.()) {
+            try { App.stopBasisAnimation(); } catch (_) {}
+          }
+          if (typeof App.stopCoordAnimation === "function" && window.App?.CoordAnimator?.isActive?.()) {
+            try { App.stopCoordAnimation(); } catch (_) {}
+          }
+        }
         updateVectorToggleBtn();
         if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
         else if (window.Vec2D) Vec2D.draw2DAllVectors();
@@ -1935,6 +1959,20 @@
       // SỰ KIỆN XÓA (Tối ưu cực hạn O(1) DOM - Xóa tức thì không freeze)
       del.onclick = (e) => {
         e.stopPropagation();
+        // Dừng hoạt cảnh cơ sở / tọa độ trước khi lưu lịch sử & xóa vector để trả về tọa độ gốc
+        if (typeof App.stopBasisAnimation === "function") {
+          try { App.stopBasisAnimation(); } catch (_) {}
+        } else if (window.App?.BasisAnimator?.isActive?.()) {
+          try { window.App.BasisAnimator.stop(); } catch (_) {}
+        }
+        if (typeof App.stopCoordAnimation === "function") {
+          try { App.stopCoordAnimation(); } catch (_) {}
+        } else if (window.App?.CoordAnimator?.isActive?.()) {
+          try { window.App.CoordAnimator.stop(); } catch (_) {}
+        }
+        App._lastBasisAnimData = null;
+        App._lastCoordAnimData = null;
+
         if (App.editingVectorId === item.id) {
           App.editingVectorId = null;
           const btn = document.getElementById("btnDraw") || document.getElementById("btnAddVector");
@@ -3305,6 +3343,35 @@
 
       const cb = row.querySelector("input[type='checkbox']");
 
+      cb.addEventListener("change", () => {
+        if (name === "basis") {
+          App._lastBasisAnimData = null;
+          if (typeof App.stopBasisAnimation === "function" && window.App?.BasisAnimator?.isActive?.()) {
+            try { App.stopBasisAnimation(); } catch (_) {}
+          }
+        } else if (name === "coord") {
+          App._lastCoordAnimData = null;
+          if (typeof App.stopCoordAnimation === "function" && window.App?.CoordAnimator?.isActive?.()) {
+            try { App.stopCoordAnimation(); } catch (_) {}
+          }
+        } else if (name === "indep") {
+          App._lastIndepAnimData = null;
+          if (typeof App.stopIndepAnimation === "function" && window.App?.IndepAnimator?.isActive?.()) {
+            try { App.stopIndepAnimation(); } catch (_) {}
+          }
+        } else if (name === "rank") {
+          App._lastRankAnimData = null;
+          if (typeof App.stopRankAnimation === "function" && window.App?.RankAnimator?.isActive?.()) {
+            try { App.stopRankAnimation(); } catch (_) {}
+          }
+        } else if (name === "gs") {
+          App._lastGSAnimData = null;
+          if (typeof App.stopGSAnimation === "function" && window.App?.GSAnimator?.isActive?.()) {
+            try { App.stopGSAnimation(); } catch (_) {}
+          }
+        }
+      });
+
       // Click vào dòng tự tick checkbox
       row.onclick = (e) => {
         if (e.target === cb) return;
@@ -3369,6 +3436,7 @@
     const basisChecklist = document.getElementById("basisChecklist");
     const indepChecklist = document.getElementById("indepChecklist");
     const rankChecklist = document.getElementById("rankChecklist");
+    const gsChecklist = document.getElementById("gsChecklist");
     const v1DotSelect = document.getElementById("v1DotSelect");
     const v2DotSelect = document.getElementById("v2DotSelect");
 
@@ -3394,6 +3462,7 @@
     makeChecklist(basisChecklist, "basis");
     makeChecklist(indepChecklist, "indep");
     makeChecklist(rankChecklist, "rank");
+    makeChecklist(gsChecklist, "gs");
   };
 
   App.updateCalcSelectLabels = function () {
@@ -3444,6 +3513,7 @@
     syncChecklistText("basis"); // Hệ cơ sở
     syncChecklistText("rank"); // Tìm hạng
     syncChecklistText("coord"); // Tìm tọa độ
+    syncChecklistText("gs"); // Trực giao hóa Gram - Schmidt
   };
 
   App.showExtraForm = function (op) {
@@ -3463,6 +3533,60 @@
         try { window.App.CoordAnimator.stop(); } catch (_) {}
       }
       const c = document.getElementById("coordAnimControls");
+      if (c) c.style.display = "none";
+    }
+    if (op !== "linear_independence") {
+      if (typeof App.stopIndepAnimation === "function") {
+        try { App.stopIndepAnimation(); } catch (_) {}
+      } else if (window.App?.IndepAnimator?.isActive?.()) {
+        try { window.App.IndepAnimator.stop(); } catch (_) {}
+      }
+      const c = document.getElementById("indepAnimControls");
+      if (c) c.style.display = "none";
+    }
+    if (op !== "rank") {
+      if (typeof App.stopRankAnimation === "function") {
+        try { App.stopRankAnimation(); } catch (_) {}
+      } else if (window.App?.RankAnimator?.isActive?.()) {
+        try { window.App.RankAnimator.stop(); } catch (_) {}
+      }
+      const c = document.getElementById("rankAnimControls");
+      if (c) c.style.display = "none";
+    }
+    if (op !== "topic4_gram_schmidt") {
+      if (typeof App.stopGSAnimation === "function") {
+        try { App.stopGSAnimation(); } catch (_) {}
+      } else if (window.App?.GSAnimator?.isActive?.()) {
+        try { window.App.GSAnimator.stop(); } catch (_) {}
+      }
+      const c = document.getElementById("gsAnimControls");
+      if (c) c.style.display = "none";
+    }
+    if (op !== "topic5_linear_transformation") {
+      if (typeof App.stopLTAnimation === "function") {
+        try { App.stopLTAnimation(); } catch (_) {}
+      } else if (window.App?.LTAnimator?.isActive?.()) {
+        try { window.App.LTAnimator.stop(); } catch (_) {}
+      }
+      const c = document.getElementById("ltAnimControls");
+      if (c) c.style.display = "none";
+    }
+    if (op !== "topic6_eigen") {
+      if (typeof App.stopEigenAnimation === "function") {
+        try { App.stopEigenAnimation(); } catch (_) {}
+      } else if (window.App?.EigenAnimator?.isActive?.()) {
+        try { window.App.EigenAnimator.stop(); } catch (_) {}
+      }
+      const ec = document.getElementById("eigenAnimControls");
+      if (ec) ec.style.display = "none";
+    }
+    if (op !== "quadratic_form_conic") {
+      if (typeof App.stopConicAnimation === "function") {
+        try { App.stopConicAnimation(); } catch (_) {}
+      } else if (window.App?.ConicAnimator?.isActive?.()) {
+        try { window.App.ConicAnimator.stop(); } catch (_) {}
+      }
+      const c = document.getElementById("conicAnimControls");
       if (c) c.style.display = "none";
     }
     const extraForms = document.getElementById("extraForms");
@@ -3540,54 +3664,66 @@
     for (let btn of buttons) {
       if (btn.textContent.trim() === "Xem trước") btn.remove();
 
-      // Bỏ qua các nút thao tác ma trận thuần túy không yêu cầu vector hoặc khi mục tiêu là Nori
-      if (
+      // Kiểm tra xem nút có thuộc form ma trận hay không
+      const isMatrixScoped =
         btn.dataset.requireVectors === "false" ||
         btn.id === "btnMatrixCompute" ||
         btn.id === "btnMixedCompute" ||
         btn.id === "btnMixedComputeAndTransform" ||
-        (btn.closest && btn.closest("#calcMatrixPanel")) ||
-        (btn.closest && btn.closest("#calcMixedPanel") && isNoriTarget)
-      ) {
-        continue;
-      }
+        btn.id === "btnEigenCompute" ||
+        btn.id === "btnEigenAnimate" ||
+        btn.id === "btnEigenSolution" ||
+        btn.id === "btnLTInspect" ||
+        btn.id === "btnLTAnimate" ||
+        btn.id === "btnLTSolution" ||
+        btn.id === "btnConicDraw" ||
+        btn.id === "btnConicAnimate" ||
+        btn.id === "btnConicSolution" ||
+        (btn.closest && (
+          btn.closest("#calcMatrixPanel") ||
+          btn.closest("#form-topic5_linear_transformation") ||
+          btn.closest("#form-topic6_eigen") ||
+          btn.closest("#form-quadratic_form_conic") ||
+          (btn.closest("#calcMixedPanel") && isNoriTarget)
+        ));
 
-      // 2. Gắn chốt chặn cho các nút tính toán
-      // Danh sách các từ khóa trên nút cần chặn
-      const keywords = [
+      if (isMatrixScoped) continue;
+
+      // 2. Gắn chốt chặn cho các nút tính toán vector
+      const vectorKeywords = [
         "Thực hiện",
         "Kiểm tra",
         "Tính hạng",
         "Tính cơ sở",
         "Xuất tọa độ",
         "Tính toán",
+        "Trực giao hóa"
       ];
-      const btnText = btn.textContent.trim();
+      const isVectorAnimateOrSol =
+        btn.id === "btnIndepAnimate" ||
+        btn.id === "btnRankAnimate" ||
+        btn.id === "btnGSAnimate" ||
+        btn.id === "btnBasisAnimate" ||
+        btn.id === "btnCoordAnimate" ||
+        btn.id === "btnIndepSolution" ||
+        btn.id === "btnRankSolution" ||
+        btn.id === "btnGSSolution";
 
-      if (keywords.some((k) => btnText.includes(k))) {
+      const btnText = btn.textContent.trim();
+      const needsVectorGuard = vectorKeywords.some((k) => btnText.includes(k)) || isVectorAnimateOrSol;
+
+      if (needsVectorGuard) {
         if (!btn.dataset.hasCheck) {
           btn.dataset.hasCheck = "true";
-          // Dùng capture phase (true) để chặn sự kiện trước khi nó chạy vào logic cũ
           btn.addEventListener(
             "click",
             (e) => {
-              const curNoriTarget = (document.getElementById("mixedVectorSelect")?.value === "nori_entity") || !!App.noriEntityActive;
-              if (
-                btn.dataset.requireVectors === "false" ||
-                btn.id === "btnMatrixCompute" ||
-                btn.id === "btnMixedCompute" ||
-                btn.id === "btnMixedComputeAndTransform" ||
-                (btn.closest && btn.closest("#calcMatrixPanel")) ||
-                (btn.closest && btn.closest("#calcMixedPanel") && curNoriTarget)
-              ) {
-                return;
-              }
               if (!App.requireVectors()) {
                 e.stopImmediatePropagation();
                 e.preventDefault();
               }
             },
-            true,
+            true
           );
         }
       }
@@ -3703,6 +3839,15 @@
     if (typeof App.refreshTransformTab === "function") {
       App.refreshTransformTab();
     }
+    if (typeof App.refreshEigenMatrixDropdown === "function") {
+      App.refreshEigenMatrixDropdown();
+    }
+    if (typeof App.refreshLTMatrixDropdown === "function") {
+      App.refreshLTMatrixDropdown();
+    }
+    if (typeof App.refreshConicMatrixDropdown === "function") {
+      App.refreshConicMatrixDropdown();
+    }
   };
 
   App.refreshMixedCalcOptions = function () {
@@ -3743,16 +3888,23 @@
       const is2D = (window.App && App.mode === "2D");
 
       if (vectors.length === 0) {
+        const optEmpty = document.createElement("option");
+        optEmpty.value = "";
+        optEmpty.textContent = "(Chưa có vector)";
+        vecSel.appendChild(optEmpty);
+
         if (is2D) {
           const optNori = document.createElement("option");
           optNori.value = "nori_entity";
-          optNori.textContent = "🐹 Linh vật Nori (Thực thể 2D)";
+          optNori.textContent = "Linh vật Nori";
           vecSel.appendChild(optNori);
         }
-        const opt = document.createElement("option");
-        opt.value = "";
-        opt.textContent = "(Chưa có vector thường)";
-        vecSel.appendChild(opt);
+
+        if (prevVec === "nori_entity" && vecSel.dataset.userExplicitNori === "true" && is2D) {
+          vecSel.value = "nori_entity";
+        } else {
+          vecSel.value = "";
+        }
       } else {
         if (vectors.length > 1) {
           const optAll = document.createElement("option");
@@ -3781,12 +3933,13 @@
         if (is2D) {
           const optNori = document.createElement("option");
           optNori.value = "nori_entity";
-          optNori.textContent = "🐹 Linh vật Nori (Thực thể 2D)";
+          optNori.textContent = "Linh vật Nori";
           vecSel.appendChild(optNori);
         }
-      }
-      if (prevVec && (prevVec === "all" || (prevVec === "nori_entity" && is2D) || vectors.some((v) => String(v.id) === String(prevVec)))) {
-        vecSel.value = prevVec;
+
+        if (prevVec && (prevVec === "all" || (prevVec === "nori_entity" && is2D) || vectors.some((v) => String(v.id) === String(prevVec)))) {
+          vecSel.value = prevVec;
+        }
       }
     }
 
@@ -5260,12 +5413,6 @@
 
         const playbackHUD = document.getElementById("sidebarTransformPlayback");
 
-        // Ẩn playback HUD của hệ vector vì Nori là thực thể đặc biệt (tương tự ImageMesh)
-        if (playbackHUD) playbackHUD.style.display = "none";
-        if (window.App?.LinearTransform && App.LinearTransform.isActive()) {
-          App.LinearTransform.stop();
-        }
-
         if (App.mode !== "2D" && typeof App.toggleMode === "function") {
           App.toggleMode();
         }
@@ -5280,15 +5427,20 @@
         App.isNoriRelieved = false;
 
         if (triggerAnimation) {
-          if (typeof App.animateNoriTransform === "function") {
-            App.animateNoriTransform(matrixValues, 850);
+          if (playbackHUD) playbackHUD.style.display = "block";
+          if (window.App?.LinearTransform) {
+            App.LinearTransform.start(matrixValues, []);
           } else {
             App.activeNoriTransformMatrix = matrixValues;
             if (window.Vec2D?.draw2DAllVectors) Vec2D.draw2DAllVectors();
           }
         } else {
-          App.activeNoriTransformMatrix = matrixValues;
-          if (window.Vec2D?.draw2DAllVectors) Vec2D.draw2DAllVectors();
+          if (window.App?.LinearTransform && App.LinearTransform.isActive()) {
+            App.LinearTransform.updateLiveMatrix(matrixValues);
+          } else {
+            App.activeNoriTransformMatrix = matrixValues;
+            if (window.Vec2D?.draw2DAllVectors) Vec2D.draw2DAllVectors();
+          }
         }
         return;
       } else if (vObj && Array.isArray(vObj.vec)) {

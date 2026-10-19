@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem("vec_theme");
+        if (theme === "dark") {
+          document.documentElement.classList.add("dark", "dark-theme");
+        } else {
+          document.documentElement.classList.remove("dark", "dark-theme");
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bản chất &amp; Phương pháp Giải: Trị riêng, Vector riêng và Chéo hóa Ma trận | Vectoria</title>
+  <link rel="icon" type="image/png" href="assets/images/logo.png" />
+  <link rel="stylesheet" href="css/radix_colors.css" />
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+  <style>
+    @font-face {
+      font-family: "Academic Font";
+      src: url("fonts/STIXTwoText-Regular.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Academic Font";
+      src: url("fonts/STIXTwoText-Bold.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      --doc-bg: #fcfcfd;
+      --doc-paper: #ffffff;
+      --doc-surface: #f8fafc;
+      --doc-callout-bg: #f1f5f9;
+      --doc-border: #e2e8f0;
+      --doc-border-strong: #cbd5e1;
+      --doc-text: #0f172a;
+      --doc-text-secondary: #334155;
+      --doc-muted: #64748b;
+      --doc-primary: #0090ff;
+      --doc-Eigen1: #059669;
+      --doc-Eigen2: #0284c7;
+      --doc-Warn: #d97706;
+      --doc-Danger: #dc2626;
+      --font-ui: "Be Vietnam Pro", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-academic: "Academic Font", "STIX Two Text", "Latin Modern Roman", "Times New Roman", Georgia, serif;
+      --font-mono: "JetBrains Mono", Consolas, monospace;
+    }
+
+    html.dark,
+    body.dark,
+    body.dark-theme {
+      --doc-bg: #111113;
+      --doc-paper: #18191b;
+      --doc-surface: #1f2124;
+      --doc-callout-bg: #1e232a;
+      --doc-border: #2c2f36;
+      --doc-border-strong: #3d424d;
+      --doc-text: #f1f5f9;
+      --doc-text-secondary: #cbd5e1;
+      --doc-muted: #94a3b8;
+      --doc-primary: #38bdf8;
+      --doc-Eigen1: #10b981;
+      --doc-Eigen2: #38bdf8;
+      --doc-Warn: #f59e0b;
+      --doc-Danger: #f87171;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      opacity: 1 !important;
+      visibility: visible !important;
+      background-color: var(--doc-bg);
+      color: var(--doc-text);
+      font-family: var(--font-ui);
+      line-height: 1.65;
+      overflow-y: auto !important;
+      overflow-x: hidden;
+      height: auto !important;
+      min-height: 100vh;
+    }
+
+    /* Thanh điều hướng chuẩn học thuật */
+    .doc-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 56px;
+      background: var(--doc-paper);
+      border-bottom: 1px solid var(--doc-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .doc-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .doc-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--doc-text);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+    }
+
+    .doc-brand img {
+      height: 26px;
+      width: auto;
+    }
+
+    .doc-breadcrumb {
+      font-size: 12.5px;
+      color: var(--doc-muted);
+      border-left: 1px solid var(--doc-border);
+      padding-left: 14px;
+      font-weight: 500;
+    }
+
+    .doc-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .doc-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 12px;
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--doc-text);
+      background: var(--doc-surface);
+      border: 1px solid var(--doc-border);
+      border-radius: 2px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: border-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .doc-btn:hover {
+      border-color: var(--doc-primary);
+    }
+
+    .doc-btn.primary {
+      background: var(--doc-primary);
+      color: #ffffff;
+      border-color: var(--doc-primary);
+    }
+
+    /* Khung tài liệu chính kiểu PDF LaTeX */
+    .doc-wrapper {
+      max-width: 1040px;
+      margin: 28px auto 64px;
+      padding: 0 20px;
+    }
+
+    .doc-paper {
+      background: var(--doc-paper);
+      border: 1px solid var(--doc-border);
+      border-radius: 2px;
+      padding: 44px 52px;
+    }
+
+    .doc-header {
+      border-bottom: 2px solid var(--doc-text);
+      padding-bottom: 22px;
+      margin-bottom: 28px;
+    }
+
+    .doc-kicker {
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--doc-primary);
+      margin-bottom: 8px;
+    }
+
+    .doc-title {
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.28;
+      letter-spacing: -0.02em;
+      color: var(--doc-text);
+      margin-bottom: 10px;
+    }
+
+    .doc-subtitle {
+      font-family: var(--font-academic);
+      font-size: 16.5px;
+      color: var(--doc-text-secondary);
+      line-height: 1.55;
+    }
+
+    /* Bảng tóm tắt đề bài mẫu */
+    .problem-statement-box {
+      background: var(--doc-surface);
+      border: 1px solid var(--doc-border-strong);
+      border-left: 3px solid var(--doc-primary);
+      border-radius: 2px;
+      padding: 18px 22px;
+      margin-bottom: 32px;
+    }
+
+    .problem-statement-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--doc-primary);
+      margin-bottom: 8px;
+    }
+
+    .problem-statement-body {
+      font-family: var(--font-academic);
+      font-size: 16.5px;
+      color: var(--doc-text);
+    }
+
+    /* Các bước giải (Section) */
+    .step-section {
+      margin-bottom: 38px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--doc-border);
+    }
+
+    .step-section:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .step-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--doc-text);
+      color: var(--doc-paper);
+      border-radius: 2px;
+    }
+
+    .step-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--doc-muted);
+    }
+
+    .step-heading {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--doc-text);
+      margin-bottom: 14px;
+      letter-spacing: -0.01em;
+    }
+
+    .academic-prose {
+      font-family: var(--font-academic);
+      font-size: 16.5px;
+      color: var(--doc-text-secondary);
+      line-height: 1.75;
+    }
+
+    .academic-prose p {
+      margin-bottom: 12px;
+    }
+
+    .academic-prose ul,
+    .academic-prose ol {
+      margin: 8px 0 14px 22px;
+    }
+
+    .academic-prose li {
+      margin-bottom: 6px;
+    }
+
+    .math-display-box {
+      background: var(--doc-surface);
+      border: 1px solid var(--doc-border);
+      border-radius: 2px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      overflow-x: auto;
+      color: var(--doc-text);
+    }
+
+    /* Hộp giải mã uẩn khúc ("Tại sao lại làm như vậy?") */
+    .why-box {
+      background: var(--doc-callout-bg);
+      border: 1px solid var(--doc-border-strong);
+      border-left: 3px solid var(--doc-Warn);
+      border-radius: 2px;
+      padding: 16px 20px;
+      margin: 16px 0;
+    }
+
+    .why-box-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--doc-Warn);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 10px;
+    }
+
+    .why-item {
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed var(--doc-border-strong);
+    }
+
+    .why-item:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .why-question {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--doc-text);
+      margin-bottom: 4px;
+    }
+
+    .why-answer {
+      font-family: var(--font-academic);
+      font-size: 15.8px;
+      color: var(--doc-text-secondary);
+      line-height: 1.68;
+    }
+
+    /* Lưới đối chiếu 2 cột (cho 2 trị riêng) */
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .eigen-case-card {
+      background: var(--doc-surface);
+      border: 1px solid var(--doc-border);
+      border-radius: 2px;
+      padding: 16px 18px;
+    }
+
+    .eigen-case-card.case-1 {
+      border-top: 3px solid var(--doc-Eigen1);
+    }
+
+    .eigen-case-card.case-2 {
+      border-top: 3px solid var(--doc-Eigen2);
+    }
+
+    .eigen-case-title {
+      font-family: var(--font-ui);
+      font-size: 13.5px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--doc-text);
+    }
+
+    /* Bảng so sánh chuẩn LaTeX \hline */
+    .latex-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14.5px;
+    }
+
+    .latex-table th,
+    .latex-table td {
+      border-top: 1px solid var(--doc-border-strong);
+      border-bottom: 1px solid var(--doc-border-strong);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .latex-table thead th {
+      border-top: 2px solid var(--doc-text);
+      border-bottom: 1.5px solid var(--doc-text);
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--doc-text);
+      background: var(--doc-surface);
+    }
+
+    .latex-table tbody tr:last-child td {
+      border-bottom: 2px solid var(--doc-text);
+    }
+
+    /* Khu vực mô phỏng trực quan tương tác đi kèm bài giảng */
+    .interactive-lab {
+      background: var(--doc-surface);
+      border: 1px solid var(--doc-border-strong);
+      border-radius: 2px;
+      padding: 20px;
+      margin: 24px 0 32px;
+    }
+
+    .lab-top-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--doc-border);
+    }
+
+    .lab-stage-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .lab-tab-btn {
+      padding: 6px 12px;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--doc-paper);
+      color: var(--doc-text-secondary);
+      border: 1px solid var(--doc-border-strong);
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .lab-tab-btn.active {
+      background: var(--doc-primary);
+      color: #ffffff;
+      border-color: var(--doc-primary);
+    }
+
+    .lab-body-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .lab-canvas-wrap {
+      background: var(--doc-paper);
+      border: 1px solid var(--doc-border);
+      border-radius: 2px;
+      position: relative;
+      height: 390px;
+    }
+
+    #eigenGuideCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .lab-explain-panel {
+      background: var(--doc-paper);
+      border: 1px solid var(--doc-border);
+      border-radius: 2px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .lab-slider-box {
+      padding-top: 10px;
+      border-top: 1px dashed var(--doc-border-strong);
+    }
+
+    .lab-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--doc-text-secondary);
+      margin-top: 8px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-swatch {
+      width: 14px;
+      height: 3px;
+      display: inline-block;
+    }
+
+    @media (max-width: 820px) {
+      .doc-paper {
+        padding: 24px 18px;
+      }
+      .two-col-grid,
+      .lab-body-grid {
+        grid-template-columns: 1fr;
+      }
+      .doc-breadcrumb {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="doc-topbar">
+    <div class="doc-topbar-left">
+      <a href="index.html" class="doc-brand">
+        <img src="assets/images/logo.png" alt="Logo Vectoria" />
+        <span>VECTORIA</span>
+      </a>
+      <span class="doc-breadcrumb">Chủ đề 6: Trị riêng, Vector riêng &amp; Chéo hóa Ma trận [Bài 64]</span>
+    </div>
+    <div class="doc-topbar-right">
+      <button type="button" class="doc-btn" id="btnToggleTheme" title="Chuyển chế độ Sáng / Tối">
+        <i class="ph ph-moon" id="themeIcon"></i>
+        <span>Giao diện</span>
+      </button>
+      <a href="calculation.html" class="doc-btn primary">
+        <i class="ph ph-calculator"></i>
+        <span>Mở phòng Tính toán</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="doc-wrapper">
+    <article class="doc-paper">
+      <header class="doc-header">
+        <div class="doc-kicker">Tài liệu Giải phẫu Bản chất Toán học</div>
+        <h1 class="doc-title">Giải Mã Toàn Bộ Quy Trình Tìm Trị Riêng, Vector Riêng &amp; Chéo Hóa Ma Trận</h1>
+        <p class="doc-subtitle">
+          Phân tích từng bước biến đổi trên một ví dụ số nguyên đẹp, giải thích tường tận mọi uẩn khúc đại số và hình học: vì sao phải nhân thêm ma trận đơn vị $I$, vì sao tính định thức bằng $0$, từ đâu xuất hiện 2 đường thẳng bất biến nét đứt, và tại sao phải lấy 2 vector riêng làm cơ sở mới ở bước chéo hóa cuối cùng.
+        </p>
+      </header>
+
+      <!-- ĐỀ BÀI MẪU CÓ SỐ NGUYÊN ĐẸP -->
+      <section class="problem-statement-box">
+        <div class="problem-statement-title">Bài toán mẫu xuyên suốt (Số nguyên đẹp)</div>
+        <div class="problem-statement-body">
+          Cho ma trận vuông cấp 2:
+          $$A = \begin{bmatrix} 4 & 1 \\ 2 & 3 \end{bmatrix}$$
+          <strong>Yêu cầu:</strong>
+          <ol style="margin: 6px 0 0 22px;">
+            <li>Tìm các trị riêng $\lambda$ và phương trình các đường thẳng bất biến (không gian riêng $E_\lambda$) của ma trận $A$.</li>
+            <li>Tìm các vector riêng đại diện $v_1, v_2$ nằm trên các đường thẳng bất biến đó.</li>
+            <li>Chéo hóa ma trận $A = P D P^{-1}$ và dùng hệ cơ sở vector riêng $\{v_1, v_2\}$ để tính nhanh ảnh của vector bất kỳ $\vec{u} = (3, 0)^T$ cũng như lũy thừa $A^{10}\vec{u}$.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- MÔ PHỎNG TƯƠNG TÁC TRỰC QUAN -->
+      <section class="interactive-lab" aria-label="Mô phỏng hình học 4 giai đoạn của ma trận A">
+        <div class="lab-top-row">
+          <div>
+            <strong style="font-size: 14px; display: block;">Mô phỏng Hình học Tương tác cho Ma trận $A = \begin{bmatrix} 4 & 1 \\ 2 & 3 \end{bmatrix}$</strong>
+            <span style="font-size: 12px; color: var(--doc-muted);">Bấm chọn từng giai đoạn hoặc kéo thanh trượt $t \in [0, 1]$ để quan sát sự khác biệt giữa cơ sở chuẩn và cơ sở vector riêng.</span>
+          </div>
+          <div class="lab-stage-tabs" id="labStageTabs">
+            <button type="button" class="lab-tab-btn active" data-stage="1">1. Cơ sở chuẩn bị lệch</button>
+            <button type="button" class="lab-tab-btn" data-stage="2">2. Hai đường bất biến &amp; $v_1, v_2$</button>
+            <button type="button" class="lab-tab-btn" data-stage="3">3. Ý nghĩa Chéo hóa (Vector $\vec{u}$ bất kỳ)</button>
+          </div>
+        </div>
+
+        <div class="lab-body-grid">
+          <div>
+            <div class="lab-canvas-wrap">
+              <canvas id="eigenGuideCanvas"></canvas>
+            </div>
+            <div class="lab-legend">
+              <span class="legend-item"><span class="legend-swatch" style="background:#ef4444;"></span> $\vec{e}_1, \vec{e}_2$ (Cơ sở chuẩn)</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#059669;"></span> Đường bất biến $E_5: y = x$ &amp; $v_1(1,1)$</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#0284c7;"></span> Đường bất biến $E_2: y = -2x$ &amp; $v_2(1,-2)$</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#d97706;"></span> Vector thử $\vec{u}(3,0) = 2v_1 + 1v_2$</span>
+            </div>
+          </div>
+
+          <div class="lab-explain-panel">
+            <div id="labStageTitle" style="font-size: 14.5px; font-weight: 700; color: var(--doc-text);"></div>
+            <div id="labStageDesc" style="font-family: var(--font-academic); font-size: 15.5px; color: var(--doc-text-secondary); line-height: 1.65;"></div>
+
+            <div class="lab-slider-box">
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; font-weight: 600; margin-bottom: 6px;">
+                <span>Tiến độ biến đổi ma trận ($I \to A$):</span>
+                <span id="labSliderLabel" style="color: var(--doc-primary); font-family: var(--font-mono);">t = 1.00 (100%)</span>
+              </div>
+              <input type="range" id="labProgressSlider" min="0" max="1" step="0.01" value="1" style="width: 100%; accent-color: var(--doc-primary); cursor: pointer;" />
+              <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <button type="button" class="doc-btn primary" id="btnLabPlay" style="flex: 1; justify-content: center;">
+                  <i class="ph ph-play"></i>
+                  <span>Chạy biến đổi $t: 0 \to 1$</span>
+                </button>
+                <button type="button" class="doc-btn" id="btnLabReset" style="justify-content: center;">
+                  <span>Về ban đầu ($t = 0$)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- BƯỚC 1: TỪ BÀI TOÁN HÌNH HỌC SANG PHƯƠNG TRÌNH (A - \lambda I)v = 0 -->
+      <!-- ================================================================= -->
+      <section class="step-section" id="step-1">
+        <div class="step-badge-row">
+          <span class="step-number">Bước 1</span>
+          <span class="step-tag">Thiết lập phương trình đại số từ hiện tượng hình học</span>
+        </div>
+        <h2 class="step-heading">Tại sao từ $Av = \lambda v$ lại biến thành $(A - \lambda I)v = \vec{0}$?</h2>
+
+        <div class="academic-prose">
+          <p>
+            Khi ta nhân ma trận $A = \begin{bmatrix} 4 & 1 \\ 2 & 3 \end{bmatrix}$ với hai vector đơn vị chuẩn của hệ trục $Oxy$:
+          </p>
+          <div class="math-display-box">
+            $$A\vec{e}_1 = \begin{bmatrix} 4 & 1 \\ 2 & 3 \end{bmatrix} \begin{bmatrix} 1 \\ 0 \end{bmatrix} = \begin{bmatrix} 4 \\ 2 \end{bmatrix}, \qquad A\vec{e}_2 = \begin{bmatrix} 4 & 1 \\ 2 & 3 \end{bmatrix} \begin{bmatrix} 0 \\ 1 \end{bmatrix} = \begin{bmatrix} 1 \\ 3 \end{bmatrix}$$
+          </div>
+          <p>
+            Ta thấy $\vec{e}_1$ ban đầu nằm ngang trên trục $Ox$ đã bị bẻ chéo lên điểm $(4, 2)$, còn $\vec{e}_2$ ban đầu nằm dọc trên trục $Oy$ bị bẻ nghiêng sang $(1, 3)$. Hầu hết các vector trong mặt phẳng đều bị <strong>đổi hướng</strong> như vậy.
+          </p>
+          <p>
+            <strong>Câu hỏi đặt ra:</strong> Liệu có tồn tại những hướng đặc biệt nào mà vector $v = \begin{bmatrix} x \\ y \end{bmatrix} \neq \vec{0}$ nằm trên đó <strong>không bị bẻ lệch hướng</strong> sau khi nhân với $A$, mà chỉ bị kéo dài ra hoặc co ngắn lại $\lambda$ lần trên chính đường thẳng chứa nó?
+          </p>
+          <p>
+            Điều kiện "ảnh $Av$ cùng phương với $v$" được viết thành phương trình toán học:
+          </p>
+          <div class="math-display-box">
+            $$A v = \lambda v \quad \text{với } v = \begin{bmatrix} x \\ y \end{bmatrix} \neq \begin{bmatrix} 0 \\ 0 \end{bmatrix}$$
+          </div>
+          <p>
+            Để giải phương trình này tìm $\lambda$ và $v$, ta chuyển vế sang bên trái và chèn ma trận đơn vị $I = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}$ vào:
+          </p>
+          <div class="math-display-box">
+            $$A v - \lambda v = \vec{0} \iff A v - \lambda I v = \vec{0} \iff (A - \lambda I) v = \vec{0}$$
+          </div>
+          <p>
+            Thay ma trận $A = \begin{bmatrix} 4 & 1 \\ 2 & 3 \end{bmatrix}$ và $\lambda I = \begin{bmatrix} \lambda & 0 \\ 0 & \lambda \end{bmatrix}$ vào, ta có:
+          </p>
+          <div class="math-display-box">
+            $$A - \lambda I = \begin{bmatrix} 4 & 1 \\ 2 & 3 \end{bmatrix} - \begin{bmatrix} \lambda & 0 \\ 0 & \lambda \end{bmatrix} = \begin{bmatrix} 4 - \lambda & 1 \\ 2 & 3 - \lambda \end{bmatrix}$$
+          </div>
+        </div>
+
+        <div class="why-box">
+          <div class="why-box-header">
+            <i class="ph ph-question"></i>
+            <span>Giải mã uẩn khúc ở Bước 1</span>
+          </div>
+          <div class="why-item">
+            <div class="why-question">1. Tại sao không rút gọn luôn thành $(A - \lambda)v = \vec{0}$ mà bắt buộc phải nhân thêm ma trận đơn vị $I$ thành $(A - \lambda I)v = \vec{0}$?</div>
+            <div class="why-answer">
+              Vì $A$ là một <strong>bảng số $2 \times 2$ (ma trận)</strong> còn $\lambda$ chỉ là <strong>một con số thực (vô hướng)</strong>. Trong toán học, phép trừ một ma trận cho một con số ($A - \lambda$) là không xác định (không biết lấy phần tử nào của ma trận để trừ). Nhờ tính chất ma trận đơn vị nhân với vector nào cũng bằng chính vector đó ($Iv = v$), ta thay $\lambda v = \lambda (Iv) = (\lambda I)v$. Khi đó $\lambda I = \begin{bmatrix} \lambda & 0 \\ 0 & \lambda \end{bmatrix}$ trở thành một ma trận cùng cỡ $2 \times 2$ với $A$, giúp ta trừ được $\lambda$ trực tiếp vào <strong>đường chéo chính</strong> của ma trận $A$.
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="why-question">2. Tại sao định nghĩa bắt buộc vector riêng $v \neq \vec{0}$, nhưng trị riêng $\lambda = 0$ thì lại hoàn toàn hợp lệ?</div>
+            <div class="why-answer">
+              <ul>
+                <li>Nếu cho phép $v = \vec{0} = (0, 0)^T$, thì $A\vec{0} = \lambda\vec{0} \iff \vec{0} = \vec{0}$ luôn đúng với <em>mọi số $\lambda$ bất kỳ</em>! Hơn nữa, điểm $(0,0)$ không có hướng nên không thể xác định được đường thẳng nào. Vì vậy bắt buộc $v \neq \vec{0}$.</li>
+                <li>Ngược lại, nếu một vector $v \neq \vec{0}$ sau biến đổi bị bẹp dí về gốc tọa độ ($Av = \vec{0} = 0 \cdot v$), thì hướng của đường thẳng chứa $v$ vẫn xác định hoàn toàn rõ ràng, chỉ là hệ số co giãn trên đường đó bằng $\lambda = 0$.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- BƯỚC 2: TẠI SAO TÍNH ĐỊNH THỨC det(A - \lambda I) = 0?             -->
+      <!-- ================================================================= -->
+      <section class="step-section" id="step-2">
+        <div class="step-badge-row">
+          <span class="step-number">Bước 2</span>
+          <span class="step-tag">Giải phương trình đặc trưng tìm Trị riêng $\lambda$</span>
+        </div>
+        <h2 class="step-heading">Tại sao lại phải tính định thức $\det(A - \lambda I) = 0$?</h2>
+
+        <div class="academic-prose">
+          <p>
+            Từ Bước 1, bài toán quy về tìm $\lambda$ sao cho hệ phương trình tuyến tính thuần nhất sau đây có nghiệm <strong>khác không ($v \neq \vec{0}$)</strong>:
+          </p>
+          <div class="math-display-box">
+            $$\begin{bmatrix} 4 - \lambda & 1 \\ 2 & 3 - \lambda \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \end{bmatrix}$$
+          </div>
+          <p>
+            Để hệ phương trình thuần nhất này có nghiệm $(x, y) \neq (0, 0)$, định thức của ma trận hệ số $A - \lambda I$ bắt buộc phải bằng $0$:
+          </p>
+          <div class="math-display-box">
+            $$P(\lambda) = \det(A - \lambda I) = \begin{vmatrix} 4 - \lambda & 1 \\ 2 & 3 - \lambda \end{vmatrix} = 0$$
+          </div>
+          <p>
+            Áp dụng công thức định thức cấp 2 (tích đường chéo chính trừ tích đường chéo phụ):
+          </p>
+          <div class="math-display-box">
+            $$(4 - \lambda)(3 - \lambda) - (1)(2) = 0$$
+            $$\iff (12 - 7\lambda + \lambda^2) - 2 = 0$$
+            $$\iff \lambda^2 - 7\lambda + 10 = 0$$
+            $$\iff (\lambda - 5)(\lambda - 2) = 0 \implies \left[ \begin{aligned} \lambda_1 &= 5 \\ \lambda_2 &= 2 \end{aligned} \right.$$
+          </div>
+          <p>
+            Vậy ma trận $A$ có 2 trị riêng thực phân biệt rất đẹp là <strong>$\lambda_1 = 5$</strong> và <strong>$\lambda_2 = 2$</strong>.
+          </p>
+        </div>
+
+        <div class="why-box">
+          <div class="why-box-header">
+            <i class="ph ph-question"></i>
+            <span>Giải mã uẩn khúc ở Bước 2</span>
+          </div>
+          <div class="why-item">
+            <div class="why-question">1. Tại sao muốn có nghiệm $v \neq \vec{0}$ thì định thức $\det(A - \lambda I)$ lại phải bằng $0$?</div>
+            <div class="why-answer">
+              Hãy giả sử ngược lại: nếu $\det(A - \lambda I) \neq 0$, thì ma trận $(A - \lambda I)$ <strong>khả nghịch</strong> (có ma trận nghịch đảo $(A - \lambda I)^{-1}$). Khi đó, nhân $(A - \lambda I)^{-1}$ vào hai vế của phương trình $(A - \lambda I)v = \vec{0}$, ta suy ra ngay:
+              $$v = (A - \lambda I)^{-1} \vec{0} = \vec{0}$$
+              Tức là hệ chỉ có duy nhất nghiệm tầm thường $x = 0, y = 0$ (mâu thuẫn với yêu cầu $v \neq \vec{0}$!). Do đó, để thoát khỏi nghiệm duy nhất $v = \vec{0}$ và sinh ra cả một đường thẳng nghiệm khác không, ma trận $(A - \lambda I)$ bắt buộc phải <strong>không khả nghịch (suy biến)</strong>, tức là $\det(A - \lambda I) = 0$.
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="why-question">2. Ý nghĩa hình học của $\det(A - \lambda I) = 0$ là gì?</div>
+            <div class="why-answer">
+              Định thức của một ma trận đo tỷ lệ diện tích sau biến đổi. $\det(A - \lambda I) = 0$ có nghĩa là phép biến đổi $(A - \lambda I)$ <strong>ép bẹp toàn bộ mặt phẳng 2 chiều xuống thành một đường thẳng</strong>, nhờ đó mới có cả một đường thẳng chứa các vector $v \neq \vec{0}$ bị ép trúng về điểm gốc $\vec{0}$ (thỏa mãn $(A - \lambda I)v = \vec{0}$).
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- BƯỚC 3: TỪ ĐÂU SINH RA 2 ĐƯỜNG THẲNG BẤT BIẾN NÉT ĐỨT & VECTOR RIÊNG -->
+      <!-- ================================================================= -->
+      <section class="step-section" id="step-3">
+        <div class="step-badge-row">
+          <span class="step-number">Bước 3</span>
+          <span class="step-tag">Giải hệ $(A - \lambda_i I)v = \vec{0}$ tìm Đường thẳng bất biến &amp; Vector riêng</span>
+        </div>
+        <h2 class="step-heading">Từ đâu sinh ra 2 đường thẳng bất biến nét đứt và tọa độ $v_1, v_2$?</h2>
+
+        <div class="academic-prose">
+          <p>
+            Có được $\lambda_1 = 5$ và $\lambda_2 = 2$ từ Bước 2, ta chỉ việc <strong>thay ngược từng giá trị $\lambda$ vào hệ phương trình $(A - \lambda I)v = \vec{0}$</strong>. Chính hệ phương trình này sẽ cho ta trực tiếp phương trình của 2 đường thẳng bất biến nét đứt trên mặt phẳng tọa độ!
+          </p>
+        </div>
+
+        <div class="two-col-grid">
+          <!-- TRƯỜNG HỢP 1: LAMBDA = 5 -->
+          <div class="eigen-case-card case-1">
+            <div class="eigen-case-title" style="color: var(--doc-Eigen1);">Trường hợp 1: Thay $\lambda_1 = 5$ vào $(A - 5I)v = \vec{0}$</div>
+            <div class="academic-prose" style="font-size: 15.5px;">
+              <p>Lấy đường chéo chính của $A$ trừ đi $5$:</p>
+              $$\begin{bmatrix} 4 - 5 & 1 \\ 2 & 3 - 5 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \end{bmatrix} \iff \begin{bmatrix} -1 & 1 \\ 2 & -2 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \end{bmatrix}$$
+              <p>Viết tường minh thành hệ 2 phương trình:</p>
+              $$\begin{cases} -1x + 1y = 0 \\ 2x - 2y = 0 \end{cases} \iff y = x$$
+              <p>
+                <strong>Kết quả hình học:</strong> Phương trình <strong>$y = x$</strong> (hay $-x + y = 0$) chính là <strong>đường thẳng bất biến nét đứt màu xanh lá ($E_5$)</strong> đi qua gốc tọa độ $O(0,0)$!
+              </p>
+              <p>
+                <strong>Chọn vector riêng đại diện $v_1$:</strong> Mọi điểm $(x, y) \neq (0,0)$ nằm trên đường thẳng $y = x$ đều có dạng $(t, t)^T = t\begin{bmatrix} 1 \\ 1 \end{bmatrix}$. Chọn $t = 1$ (tức $x = 1 \implies y = 1$), ta được vector riêng cơ sở:
+              </p>
+              $$v_1 = \begin{bmatrix} 1 \\ 1 \end{bmatrix}$$
+              <p>
+                <strong>Kiểm chứng:</strong> Nhân thử $A$ với $v_1$:
+                $$Av_1 = \begin{bmatrix} 4 & 1 \\ 2 & 3 \end{bmatrix}\begin{bmatrix} 1 \\ 1 \end{bmatrix} = \begin{bmatrix} 5 \\ 5 \end{bmatrix} = 5\begin{bmatrix} 1 \\ 1 \end{bmatrix} = 5v_1$$
+                Vector $v_1(1,1)$ nằm trên đường $y = x$, sau biến đổi vẫn nằm im trên đường $y = x$ và dài gấp $5$ lần!
+              </p>
+            </div>
+          </div>
+
+          <!-- TRƯỜNG HỢP 2: LAMBDA = 2 -->
+          <div class="eigen-case-card case-2">
+            <div class="eigen-case-title" style="color: var(--doc-Eigen2);">Trường hợp 2: Thay $\lambda_2 = 2$ vào $(A - 2I)v = \vec{0}$</div>
+            <div class="academic-prose" style="font-size: 15.5px;">
+              <p>Lấy đường chéo chính của $A$ trừ đi $2$:</p>
+              $$\begin{bmatrix} 4 - 2 & 1 \\ 2 & 3 - 2 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \end{bmatrix} \iff \begin{bmatrix} 2 & 1 \\ 2 & 1 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \end{bmatrix}$$
+              <p>Viết tường minh thành hệ 2 phương trình:</p>
+              $$\begin{cases} 2x + 1y = 0 \\ 2x + 1y = 0 \end{cases} \iff y = -2x$$
+              <p>
+                <strong>Kết quả hình học:</strong> Phương trình <strong>$y = -2x$</strong> (hay $2x + y = 0$) chính là <strong>đường thẳng bất biến nét đứt màu xanh dương ($E_2$)</strong> đi qua gốc tọa độ $O(0,0)$!
+              </p>
+              <p>
+                <strong>Chọn vector riêng đại diện $v_2$:</strong> Mọi điểm $(x, y) \neq (0,0)$ nằm trên đường thẳng $y = -2x$ đều có dạng $(t, -2t)^T = t\begin{bmatrix} 1 \\ -2 \end{bmatrix}$. Chọn $t = 1$ (tức $x = 1 \implies y = -2$), ta được vector riêng cơ sở:
+              </p>
+              $$v_2 = \begin{bmatrix} 1 \\ -2 \end{bmatrix}$$
+              <p>
+                <strong>Kiểm chứng:</strong> Nhân thử $A$ với $v_2$:
+                $$Av_2 = \begin{bmatrix} 4 & 1 \\ 2 & 3 \end{bmatrix}\begin{bmatrix} 1 \\ -2 \end{bmatrix} = \begin{bmatrix} 2 \\ -4 \end{bmatrix} = 2\begin{bmatrix} 1 \\ -2 \end{bmatrix} = 2v_2$$
+                Vector $v_2(1,-2)$ nằm trên đường $y = -2x$, sau biến đổi vẫn nằm trên đường $y = -2x$ và dài gấp $2$ lần!
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="why-box">
+          <div class="why-box-header">
+            <i class="ph ph-question"></i>
+            <span>Giải mã uẩn khúc ở Bước 3</span>
+          </div>
+          <div class="why-item">
+            <div class="why-question">1. Tại sao khi thay $\lambda$ vào hệ, hai dòng của ma trận lúc nào cũng tỷ lệ với nhau (như $[-1, 1]$ với $[2, -2]$, hoặc $[2, 1]$ với $[2, 1]$)?</div>
+            <div class="why-answer">
+              Đó là hệ quả tất yếu của Bước 2! Vì ở Bước 2 ta đã chọn $\lambda$ sao cho định thức $\det(A - \lambda I) = 0$, nên hai dòng của ma trận $(A - \lambda I)$ <strong>bắt buộc phải phụ thuộc tuyến tính (tỷ lệ với nhau)</strong>. Nhờ hai phương trình rút gọn còn 1 phương trình duy nhất dạng $ax + by = 0$, hệ mới có vô số nghiệm tạo thành <strong>một đường thẳng đi qua gốc tọa độ $O(0,0)$</strong>.
+              <br />
+              <em>Mẹo kiểm tra lỗi sai khi làm bài thi:</em> Nếu khi thay $\lambda$ vào mà bạn thấy 2 dòng của ma trận không tỷ lệ với nhau (giải ra $x = 0, y = 0$), điều đó báo hiệu 100% bạn đã tính nhầm nghiệm $\lambda$ ở Bước 2!
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="why-question">2. Tại sao chọn $x = 1$ để suy ra $v_1 = (1, 1)^T$ và $v_2 = (1, -2)^T$? Nếu chọn $x = 2 \implies v_1 = (2, 2)^T$ hay $x = -1 \implies v_2 = (-1, 2)^T$ có đúng không?</div>
+            <div class="why-answer">
+              <strong>Hoàn toàn đúng!</strong> Một trị riêng không chỉ có 1 vector riêng, mà có <strong>cả một đường thẳng chứa vô số vector riêng</strong> (gọi là không gian riêng $E_\lambda$). Bất kỳ vector khác không nào nằm trên đường thẳng $y = x$ như $(1,1)^T, (2,2)^T, (-5,-5)^T$ đều là vector riêng ứng với $\lambda_1 = 5$. Chúng ta chọn $x = 1$ chỉ để lấy ra 1 vector có tọa độ nguyên gọn nhất làm <strong>cơ sở đại diện (vạch đơn vị)</strong> cho đường thẳng đó.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- BƯỚC 4: TẠI SAO PHẢI CÓ BƯỚC CHÉO HÓA CUỐI CÙNG?                  -->
+      <!-- ================================================================= -->
+      <section class="step-section" id="step-4">
+        <div class="step-badge-row">
+          <span class="step-number">Bước 4</span>
+          <span class="step-tag">Chéo hóa ma trận $A = P D P^{-1}$ và Ứng dụng thực tế</span>
+        </div>
+        <h2 class="step-heading">Tại sao phải có bước Chéo hóa cuối cùng? Lấy 2 vector riêng làm "2 vector đơn vị mới" có tác dụng gì?</h2>
+
+        <div class="academic-prose">
+          <p>
+            Đây là thắc mắc rất tự nhiên: <em>"Ở Bước 3 đã tìm xong $\lambda_1 = 5, v_1 = (1, 1)^T$ và $\lambda_2 = 2, v_2 = (1, -2)^T$ rồi. Tại sao lại phải ghép chúng vào ma trận $P$ để chéo hóa $D = P^{-1}AP$? Lấy 2 vector riêng làm cơ sở thì chẳng khác nào coi 2 vector đó là 2 vector đơn vị của không gian mới, làm vậy để được gì?"</em>
+          </p>
+          <p>
+            Câu trả lời nằm ở chỗ: Bước 3 mới chỉ cho biết chuyện gì xảy ra với các vector <strong>nằm sẵn trên 2 đường nét đứt</strong>. Thế còn một vector <strong>bất kỳ nằm ngoài 2 đường đó</strong>, ví dụ $\vec{u} = \begin{bmatrix} 3 \\ 0 \end{bmatrix}$ (nằm trên trục $Ox$), hoặc khi ta cần nhân ma trận $10$ lần liên tiếp ($A^{10}\vec{u}$), thì tính làm sao?
+          </p>
+          <p>
+            Khi ta <strong>lấy $v_1 = \begin{bmatrix} 1 \\ 1 \end{bmatrix}$ và $v_2 = \begin{bmatrix} 1 \\ -2 \end{bmatrix}$ làm 2 vector đơn vị của hệ lưới mới</strong>, ta lập được ma trận chuyển cơ sở $P$ (ghép $v_1, v_2$ làm 2 cột) và ma trận đường chéo $D$ (đặt $\lambda_1, \lambda_2$ lên đường chéo):
+          </p>
+          <div class="math-display-box">
+            $$P = \begin{bmatrix} v_1 & v_2 \end{bmatrix} = \begin{bmatrix} 1 & 1 \\ 1 & -2 \end{bmatrix}, \qquad D = \begin{bmatrix} \lambda_1 & 0 \\ 0 & \lambda_2 \end{bmatrix} = \begin{bmatrix} 5 & 0 \\ 0 & 2 \end{bmatrix}, \qquad P^{-1} = \frac{1}{-3}\begin{bmatrix} -2 & -1 \\ -1 & 1 \end{bmatrix} = \begin{bmatrix} \frac{2}{3} & \frac{1}{3} \\ \frac{1}{3} & -\frac{1}{3} \end{bmatrix}$$
+          </div>
+          <p>
+            Khi đó, ma trận $A$ được phân tách thành chuỗi 3 bước <strong>$A = P D P^{-1}$</strong>. Hãy xem điều kỳ diệu xảy ra khi biến đổi vector $\vec{u} = \begin{bmatrix} 3 \\ 0 \end{bmatrix}$ qua 3 bước này:
+          </p>
+
+          <table class="latex-table">
+            <thead>
+              <tr>
+                <th style="width: 24%;">Công đoạn trong $A\vec{u} = P D (P^{-1}\vec{u})$</th>
+                <th style="width: 38%;">Phép tính cụ thể với $\vec{u} = (3, 0)^T$</th>
+                <th style="width: 38%;">Ý nghĩa bản chất (Tại sao lại làm thế?)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Công đoạn 1: Nhân $P^{-1}$</strong><br />$\vec{c} = P^{-1}\vec{u}$</td>
+                <td>
+                  $$\vec{c} = \begin{bmatrix} \frac{2}{3} & \frac{1}{3} \\ \frac{1}{3} & -\frac{1}{3} \end{bmatrix} \begin{bmatrix} 3 \\ 0 \end{bmatrix} = \begin{bmatrix} 2 \\ 1 \end{bmatrix}$$
+                  Nghĩa là: $\vec{u} = 2v_1 + 1v_2$.
+                </td>
+                <td>
+                  <strong>Đổi sang hệ tọa độ nhận $v_1, v_2$ làm 2 vector đơn vị:</strong> Vector $\vec{u}(3,0)$ tuy không nằm trên đường bất biến, nhưng được tách thành <strong>$2$ bước dọc theo đường $v_1$</strong> cộng với <strong>$1$ bước dọc theo đường $v_2$</strong>.
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Công đoạn 2: Nhân $D$</strong><br />$\vec{c}' = D\vec{c}$</td>
+                <td>
+                  $$\vec{c}' = \begin{bmatrix} 5 & 0 \\ 0 & 2 \end{bmatrix} \begin{bmatrix} 2 \\ 1 \end{bmatrix} = \begin{bmatrix} 5 \times 2 \\ 2 \times 1 \end{bmatrix} = \begin{bmatrix} 10 \\ 2 \end{bmatrix}$$
+                </td>
+                <td>
+                  <strong>Co giãn độc lập trên 2 đường bất biến:</strong> Vì mỗi thành phần đã nằm gọn trên đường bất biến của nó, thành phần thứ nhất chỉ việc nhân $\lambda_1 = 5$ ($2v_1 \to 10v_1$), thành phần thứ hai chỉ việc nhân $\lambda_2 = 2$ ($1v_2 \to 2v_2$). Không hề có sự trộn chéo giữa 2 trục!
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Công đoạn 3: Nhân $P$</strong><br />$A\vec{u} = P\vec{c}'$</td>
+                <td>
+                  $$A\vec{u} = 10v_1 + 2v_2 = 10\begin{bmatrix} 1 \\ 1 \end{bmatrix} + 2\begin{bmatrix} 1 \\ -2 \end{bmatrix} = \begin{bmatrix} 12 \\ 6 \end{bmatrix}$$
+                </td>
+                <td>
+                  <strong>Đổi ngược về hệ trục chuẩn $Oxy$:</strong> Gom hai thành phần đã giãn ($10v_1$ và $2v_2$) lại để đọc tọa độ cuối cùng $(12, 6)^T$ trên mặt phẳng chuẩn.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>
+            <strong>Sức mạnh thực sự khi tính lũy thừa $A^{10}$ (hoặc $A^{100}$):</strong>
+            Giả sử bài toán yêu cầu tính $A^{10}\vec{u}$ (biến đổi liên tiếp $10$ lần). Nếu nhân ma trận $A$ thông thường $10$ lần thì cực kỳ phức tạp. Nhưng vì trong hệ lưới $\{v_1, v_2\}$, mỗi lần nhân $A$ chỉ là nhân $5$ vào trục thứ nhất và nhân $2$ vào trục thứ hai, nên nhân $10$ lần chỉ đơn giản là nhân $5^{10}$ và $2^{10}$:
+          </p>
+          <div class="math-display-box">
+            $$A^{10}\vec{u} = P D^{10} P^{-1}\vec{u} = 2 \cdot 5^{10} v_1 + 1 \cdot 2^{10} v_2 = 2 \cdot 5^{10} \begin{bmatrix} 1 \\ 1 \end{bmatrix} + 2^{10} \begin{bmatrix} 1 \\ -2 \end{bmatrix}$$
+          </div>
+        </div>
+
+        <div class="why-box">
+          <div class="why-box-header">
+            <i class="ph ph-question"></i>
+            <span>Giải mã uẩn khúc ở Bước 4</span>
+          </div>
+          <div class="why-item">
+            <div class="why-question">1. Tóm lại: Tại sao coi 2 vector riêng là "2 vector đơn vị mới" lại giúp bài toán dễ hơn?</div>
+            <div class="why-answer">
+              Trong hệ trục chuẩn $\{\vec{e}_1, \vec{e}_2\}$, ma trận $A = \begin{bmatrix} 4 & 1 \\ 2 & 3 \end{bmatrix}$ có hai số ngoài đường chéo khác không ($1$ và $2$), làm hoành độ và tung độ bị <strong>dính chùm vào nhau</strong> ($x' = 4x + y$, $y' = 2x + 3y$). Còn khi lấy $\{v_1, v_2\}$ làm 2 vector đơn vị mới, ma trận biểu diễn biến thành ma trận đường chéo $D = \begin{bmatrix} 5 & 0 \\ 0 & 2 \end{bmatrix}$ (ngoài đường chéo bằng $0$), giúp <strong>tách một hệ phương trình đang dính chùm thành 2 trục độc lập hoàn toàn</strong> ($c_1' = 5c_1$, $c_2' = 2c_2$).
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="why-question">2. Có phải ma trận vuông $2 \times 2$ nào cũng có đủ 2 đường thẳng bất biến để chéo hóa không?</div>
+            <div class="why-answer">
+              <strong>Không!</strong> Có 3 kịch bản hình học có thể xảy ra đối với một ma trận $2 \times 2$:
+              <ul>
+                <li><strong>Trường hợp 1 (Chéo hóa được - như ví dụ trên):</strong> Có đủ 2 vector riêng độc lập tuyến tính $\{v_1, v_2\}$ (tạo thành 2 đường bất biến cắt nhau tại $O$ hoặc cả mặt phẳng giữ nguyên phương). Khi đó mới kẻ được hệ lưới 2 chiều mới.</li>
+                <li><strong>Trường hợp 2 (Ma trận trượt / Shear - Không chéo hóa được):</strong> Ví dụ $A = \begin{bmatrix} 1 & 1 \\ 0 & 1 \end{bmatrix}$ có nghiệm kép $\lambda_1 = \lambda_2 = 1$, nhưng khi thay vào $(A - I)v = \vec{0}$ chỉ rút ra được <strong>1 đường thẳng bất biến duy nhất</strong> là trục $Ox$ ($y = 0$). Vì chỉ có 1 trục riêng nên không đủ 2 vector đơn vị để dựng mặt lưới 2 chiều $\implies$ Không chéo hóa được.</li>
+                <li><strong>Trường hợp 3 (Ma trận xoay - Không chéo hóa được trên $\mathbb{R}$):</strong> Ví dụ $A = \begin{bmatrix} 0 & -1 \\ 1 & 0 \end{bmatrix}$ (xoay $90^\circ$) có $\Delta < 0$ (nghiệm phức $\lambda = \pm i$). Mọi đường thẳng qua gốc $O$ đều bị xoay lệch đi nên <strong>không có đường bất biến thực nào</strong>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // 1. Render KaTeX
+      if (window.renderMathInElement) {
+        window.renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "$", right: "$", display: false }
+          ],
+          throwOnError: false
+        });
+      }
+
+      // 2. Theme Toggle
+      const btnTheme = document.getElementById("btnToggleTheme");
+      const themeIcon = document.getElementById("themeIcon");
+      function syncThemeIcon() {
+        const isDark = document.documentElement.classList.contains("dark");
+        if (themeIcon) {
+          themeIcon.className = isDark ? "ph ph-sun" : "ph ph-moon";
+        }
+      }
+      syncThemeIcon();
+
+      if (btnTheme) {
+        btnTheme.addEventListener("click", function () {
+          const isDark = !document.documentElement.classList.contains("dark");
+          document.documentElement.classList.toggle("dark", isDark);
+          document.documentElement.classList.toggle("dark-theme", isDark);
+          document.body.classList.toggle("dark", isDark);
+          document.body.classList.toggle("dark-theme", isDark);
+          try {
+            localStorage.setItem("vec_theme", isDark ? "dark" : "light");
+          } catch (e) {}
+          syncThemeIcon();
+          drawInteractiveCanvas();
+        });
+      }
+
+      // 3. Interactive Canvas cho ma trận A = [[4, 1], [2, 3]]
+      const canvas = document.getElementById("eigenGuideCanvas");
+      const slider = document.getElementById("labProgressSlider");
+      const sliderLbl = document.getElementById("labSliderLabel");
+      const stageTitle = document.getElementById("labStageTitle");
+      const stageDesc = document.getElementById("labStageDesc");
+      const btnPlay = document.getElementById("btnLabPlay");
+      const btnReset = document.getElementById("btnLabReset");
+      const tabBtns = document.querySelectorAll("#labStageTabs .lab-tab-btn");
+
+      let currentStage = 1;
+      let tVal = 1.0;
+      let animRaf = null;
+
+      const STAGE_COPY = {
+        1: {
+          title: "Giai đoạn 1: Cơ sở chuẩn e₁(1,0) và e₂(0,1) bị bẻ lệch hướng",
+          desc: "Khi kéo t từ 0 đến 1, ma trận A = [[4, 1], [2, 3]] biến e₁(1, 0) thành (4, 2) và e₂(0, 1) thành (1, 3). Cả hai vector đơn vị chuẩn đều bị văng ra khỏi trục Ox, Oy ban đầu, làm mặt lưới vuông chuẩn bị kéo xiên."
+        },
+        2: {
+          title: "Giai đoạn 2: Hai đường thẳng bất biến E₅ (y = x) và E₂ (y = -2x)",
+          desc: "Giải (A - 5I)v = 0 được đường nét đứt xanh lá y = x chứa v₁(1, 1); giải (A - 2I)v = 0 được đường nét đứt xanh dương y = -2x chứa v₂(1, -2). Khi t chạy từ 0 đến 1, v₁ trượt đúng trên đường y = x tới (5, 5) = 5v₁, còn v₂ trượt đúng trên đường y = -2x tới (2, -4) = 2v₂."
+        },
+        3: {
+          title: "Giai đoạn 3: Ý nghĩa của Chéo hóa A = P·D·P⁻¹ với vector bất kỳ u(3, 0)",
+          desc: "Xét vector u(3, 0) nằm trên trục Ox (không nằm trên 2 đường bất biến). Nếu lấy {v₁, v₂} làm 2 vector đơn vị mới, u được phân tích thành u = 2v₁ + 1v₂ (hình bình hành nét đứt). Khi biến đổi, thành phần 2v₁ nhân 5 thành 10v₁, thành phần 1v₂ nhân 2 thành 2v₂, tổng hợp lại ra đúng Au = 10v₁ + 2v₂ = (12, 6)!"
+        }
+      };
+
+      function updateStageText() {
+        const info = STAGE_COPY[currentStage];
+        if (stageTitle) stageTitle.textContent = info.title;
+        if (stageDesc) stageDesc.textContent = info.desc;
+      }
+
+      function drawArrow(ctx, x1, y1, x2, y2, color, lineWidth, dashed) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const len = Math.hypot(dx, dy);
+        if (len < 2) return;
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = lineWidth || 2.2;
+        if (dashed) ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const headLen = Math.min(10, len * 0.35);
+        const angle = Math.atan2(dy, dx);
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawTag(ctx, x, y, text, color, isDark) {
+        ctx.save();
+        ctx.font = "600 11.5px 'JetBrains Mono', monospace";
+        const padX = 5;
+        const w = ctx.measureText(text).width + padX * 2;
+        const h = 18;
+        ctx.fillStyle = isDark ? "rgba(24, 25, 27, 0.92)" : "rgba(255, 255, 255, 0.92)";
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.fillRect(x, y - h / 2, w, h);
+        ctx.strokeRect(x, y - h / 2, w, h);
+        ctx.fillStyle = color;
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, x + padX, y);
+        ctx.restore();
+      }
+
+      function drawInteractiveCanvas() {
+        if (!canvas) return;
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const W = rect.width;
+        const H = rect.height;
+        const isDark = document.documentElement.classList.contains("dark");
+
+        // Đặt tâm O lệch nhẹ sang trái-dưới để nhìn rõ cả (5,5) và (12,6)
+        const scale = currentStage === 3 ? Math.min(W, H) / 16.5 : Math.min(W, H) / 12.5;
+        const cx = currentStage === 3 ? W * 0.24 : W * 0.36;
+        const cy = currentStage === 3 ? H * 0.66 : H * 0.60;
+
+        const wX = (x) => cx + x * scale;
+        const wY = (y) => cy - y * scale;
+
+        ctx.clearRect(0, 0, W, H);
+
+        // Ma trận nội suy M(t) = (1 - t)*I + t*A với A = [[4, 1], [2, 3]]
+        const m00 = 1 + 3 * tVal;
+        const m01 = 0 + 1 * tVal;
+        const m10 = 0 + 2 * tVal;
+        const m11 = 1 + 2 * tVal;
+
+        // 1. Lưới tọa độ nền cố định (mờ)
+        ctx.strokeStyle = isDark ? "rgba(148, 163, 184, 0.10)" : "rgba(15, 23, 42, 0.06)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let k = -15; k <= 15; k++) {
+          ctx.moveTo(wX(k), 0);
+          ctx.lineTo(wX(k), H);
+          ctx.moveTo(0, wY(k));
+          ctx.lineTo(W, wY(k));
+        }
+        ctx.stroke();
+
+        // 2. Lưới biến đổi
+        if (currentStage === 1 || currentStage === 2) {
+          ctx.strokeStyle = isDark ? "rgba(56, 189, 248, 0.18)" : "rgba(2, 132, 199, 0.16)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          for (let k = -10; k <= 10; k++) {
+            ctx.moveTo(wX(m00 * -10 + m01 * k), wY(m10 * -10 + m11 * k));
+            ctx.lineTo(wX(m00 * 10 + m01 * k), wY(m10 * 10 + m11 * k));
+            ctx.moveTo(wX(m00 * k + m01 * -10), wY(m10 * k + m11 * -10));
+            ctx.lineTo(wX(m00 * k + m01 * 10), wY(m10 * k + m11 * 10));
+          }
+          ctx.stroke();
+        } else if (currentStage === 3) {
+          // Vẽ lưới cơ sở riêng song song với v1(1,1) và v2(1,-2)
+          ctx.strokeStyle = isDark ? "rgba(16, 185, 129, 0.22)" : "rgba(5, 150, 105, 0.20)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          for (let k = -8; k <= 8; k++) {
+            ctx.moveTo(wX(-12 * 1 + k * 1), wY(-12 * 1 + k * -2));
+            ctx.lineTo(wX(12 * 1 + k * 1), wY(12 * 1 + k * -2));
+            ctx.moveTo(wX(k * 1 - 12 * 1), wY(k * 1 - 12 * -2));
+            ctx.lineTo(wX(k * 1 + 12 * 1), wY(k * 1 + 12 * -2));
+          }
+          ctx.stroke();
+        }
+
+        // 3. Trục tọa độ Ox, Oy
+        ctx.strokeStyle = isDark ? "rgba(226, 232, 240, 0.45)" : "rgba(15, 23, 42, 0.45)";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(0, cy);
+        ctx.lineTo(W, cy);
+        ctx.moveTo(cx, 0);
+        ctx.lineTo(cx, H);
+        ctx.stroke();
+
+        // 4. Hai đường thẳng bất biến nét đứt (Ở Stage 2 và Stage 3)
+        if (currentStage >= 2) {
+          // Đường E_5: y = x
+          ctx.save();
+          ctx.strokeStyle = "#10b981";
+          ctx.lineWidth = 1.8;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.moveTo(wX(-12), wY(-12));
+          ctx.lineTo(wX(14), wY(14));
+          ctx.stroke();
+
+          // Đường E_2: y = -2x
+          ctx.strokeStyle = "#0284c7";
+          ctx.beginPath();
+          ctx.moveTo(wX(-8), wY(16));
+          ctx.lineTo(wX(8), wY(-16));
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // 5. Vẽ các vector theo từng giai đoạn
+        if (currentStage === 1) {
+          // Ghost e1, e2 ban đầu
+          drawArrow(ctx, wX(0), wY(0), wX(1), wY(0), "rgba(239, 68, 68, 0.35)", 1.6, true);
+          drawArrow(ctx, wX(0), wY(0), wX(0), wY(1), "rgba(245, 158, 11, 0.35)", 1.6, true);
+
+          // Ảnh của e1, e2
+          const e1x = m00, e1y = m10;
+          const e2x = m01, e2y = m11;
+          drawArrow(ctx, wX(0), wY(0), wX(e1x), wY(e1y), "#ef4444", 2.6, false);
+          drawArrow(ctx, wX(0), wY(0), wX(e2x), wY(e2y), "#f59e0b", 2.6, false);
+
+          drawTag(ctx, wX(e1x) + 6, wY(e1y), `Ae₁(${e1x.toFixed(1)}, ${e1y.toFixed(1)})`, "#ef4444", isDark);
+          drawTag(ctx, wX(e2x) + 6, wY(e2y) - 8, `Ae₂(${e2x.toFixed(1)}, ${e2y.toFixed(1)})`, "#d97706", isDark);
+        } else if (currentStage === 2) {
+          // Vẽ mờ e1, e2 để đối chiếu
+          drawArrow(ctx, wX(0), wY(0), wX(m00), wY(m10), "rgba(239, 68, 68, 0.30)", 1.6, false);
+          drawArrow(ctx, wX(0), wY(0), wX(m01), wY(m11), "rgba(245, 158, 11, 0.30)", 1.6, false);
+
+          // Ghost v1(1,1) và v2(1,-2)
+          drawArrow(ctx, wX(0), wY(0), wX(1), wY(1), "rgba(16, 185, 129, 0.45)", 1.8, true);
+          drawArrow(ctx, wX(0), wY(0), wX(1), wY(-2), "rgba(2, 132, 199, 0.45)", 1.8, true);
+
+          // Ảnh của v1 và v2 trượt đúng trên 2 đường bất biến
+          const s1 = 1 + 4 * tVal; // 1 -> 5
+          const s2 = 1 + 1 * tVal; // 1 -> 2
+          const v1x = 1 * s1, v1y = 1 * s1;
+          const v2x = 1 * s2, v2y = -2 * s2;
+
+          drawArrow(ctx, wX(0), wY(0), wX(v1x), wY(v1y), "#059669", 2.8, false);
+          drawArrow(ctx, wX(0), wY(0), wX(v2x), wY(v2y), "#0284c7", 2.8, false);
+
+          drawTag(ctx, wX(v1x) + 8, wY(v1y), `${s1.toFixed(1)}·v₁ (${v1x.toFixed(1)}, ${v1y.toFixed(1)})`, "#059669", isDark);
+          drawTag(ctx, wX(v2x) + 8, wY(v2y), `${s2.toFixed(1)}·v₂ (${v2x.toFixed(1)}, ${v2y.toFixed(1)})`, "#0284c7", isDark);
+        } else if (currentStage === 3) {
+          // Vector bất kỳ u = (3, 0) = 2*v1 + 1*v2
+          // Khi biến đổi: thành phần 1 là (2 * (1 + 4t)) * v1, thành phần 2 là (1 * (1 + 1t)) * v2
+          const c1 = 2 * (1 + 4 * tVal); // 2 -> 10
+          const c2 = 1 * (1 + 1 * tVal); // 1 -> 2
+          const p1x = c1 * 1, p1y = c1 * 1;
+          const p2x = c2 * 1, p2y = c2 * -2;
+          const ux = p1x + p2x, uy = p1y + p2y;
+
+          // Đường gióng hình bình hành từ 2 trục riêng tới u(t)
+          ctx.save();
+          ctx.strokeStyle = isDark ? "rgba(251, 191, 36, 0.65)" : "rgba(217, 119, 6, 0.65)";
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          ctx.moveTo(wX(p1x), wY(p1y));
+          ctx.lineTo(wX(ux), wY(uy));
+          ctx.moveTo(wX(p2x), wY(p2y));
+          ctx.lineTo(wX(ux), wY(uy));
+          ctx.stroke();
+          ctx.restore();
+
+          // 2 thành phần trên 2 trục riêng
+          drawArrow(ctx, wX(0), wY(0), wX(p1x), wY(p1y), "#059669", 2.4, false);
+          drawArrow(ctx, wX(0), wY(0), wX(p2x), wY(p2y), "#0284c7", 2.4, false);
+
+          // Vector u(t)
+          drawArrow(ctx, wX(0), wY(0), wX(3), wY(0), "rgba(217, 119, 6, 0.35)", 1.6, true);
+          drawArrow(ctx, wX(0), wY(0), wX(ux), wY(uy), "#d97706", 2.8, false);
+
+          drawTag(ctx, wX(p1x) - 55, wY(p1y) - 14, `${c1.toFixed(1)}v₁`, "#059669", isDark);
+          drawTag(ctx, wX(p2x) + 8, wY(p2y) + 8, `${c2.toFixed(1)}v₂`, "#0284c7", isDark);
+          drawTag(ctx, wX(ux) + 8, wY(uy), `u(t) = (${ux.toFixed(1)}, ${uy.toFixed(1)})`, "#d97706", isDark);
+        }
+      }
+
+      tabBtns.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          tabBtns.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentStage = parseInt(btn.dataset.stage, 10) || 1;
+          updateStageText();
+          drawInteractiveCanvas();
+        });
+      });
+
+      if (slider) {
+        slider.addEventListener("input", function (e) {
+          if (animRaf) {
+            cancelAnimationFrame(animRaf);
+            animRaf = null;
+          }
+          tVal = parseFloat(e.target.value) || 0;
+          if (sliderLbl) sliderLbl.textContent = `t = ${tVal.toFixed(2)} (${Math.round(tVal * 100)}%)`;
+          drawInteractiveCanvas();
+        });
+      }
+
+      if (btnReset) {
+        btnReset.addEventListener("click", function () {
+          if (animRaf) {
+            cancelAnimationFrame(animRaf);
+            animRaf = null;
+          }
+          tVal = 0;
+          if (slider) slider.value = "0";
+          if (sliderLbl) sliderLbl.textContent = "t = 0.00 (0%)";
+          drawInteractiveCanvas();
+        });
+      }
+
+      if (btnPlay) {
+        btnPlay.addEventListener("click", function () {
+          if (animRaf) cancelAnimationFrame(animRaf);
+          const startTime = performance.now();
+          const dur = 2200;
+          function tick(now) {
+            const p = Math.min(1, (now - startTime) / dur);
+            // Smoothstep
+            tVal = p * p * (3 - 2 * p);
+            if (slider) slider.value = String(tVal);
+            if (sliderLbl) sliderLbl.textContent = `t = ${tVal.toFixed(2)} (${Math.round(tVal * 100)}%)`;
+            drawInteractiveCanvas();
+            if (p < 1) {
+              animRaf = requestAnimationFrame(tick);
+            } else {
+              animRaf = null;
+            }
+          }
+          animRaf = requestAnimationFrame(tick);
+        });
+      }
+
+      window.addEventListener("resize", drawInteractiveCanvas);
+      updateStageText();
+      drawInteractiveCanvas();
+    });
+  </script>
+</body>
+</html>

@@ -671,10 +671,12 @@
           return;
         }
 
+        const origCol = it.colorCss || it.colorHex || "#10b981";
+
         if (step.type === "INIT") {
           // BƯỚC 0 (INIT): Hiển thị tất cả vector ứng viên bằng màu định danh gốc, sẵn sàng khảo sát
-          it._basisColorCss = it.colorCss;
-          it.haloCss = it.haloCss || it.colorCss;
+          it._basisColorCss = origCol;
+          it.haloCss = origCol;
           it._basisAlpha = 1.0;
           delete it._basisIsBasis;
           delete it._basisIsRedundant;
@@ -682,17 +684,15 @@
         }
 
         if (step.type === "CRYSTALLIZE") {
-          // BƯỚC CUỐI (KẾT TINH): Cơ sở xanh ngọc rực rỡ, vector phụ thuộc màu vàng hổ phách
+          // BƯỚC CUỐI (KẾT TINH): Giữ nguyên màu định danh gốc của từng vector để không bị hiểu nhầm trộn màu
+          it._basisColorCss = origCol;
+          it.haloCss = origCol;
           if (basisIds.has(it.id)) {
-            it._basisColorCss = "#10b981";
-            it.haloCss = "#10b981";
             it._basisAlpha = 1.0;
             it._basisIsBasis = true;
             delete it._basisIsRedundant;
           } else {
-            it._basisColorCss = "#f59e0b";
-            it.haloCss = "#f59e0b";
-            it._basisAlpha = 0.70;
+            it._basisAlpha = 0.65;
             it._basisIsRedundant = true;
             delete it._basisIsBasis;
           }
@@ -700,23 +700,20 @@
         }
 
         if (isExpand && it.id === activeId) {
-          // Vector đang trong quá trình khảo sát & quét: Màu Sky Blue khảo sát
-          it._basisColorCss = "#0284c7";
-          it.haloCss = "#38bdf8";
+          it._basisColorCss = origCol;
+          it.haloCss = origCol;
           it._basisAlpha = 1.0;
           delete it._basisIsBasis;
           delete it._basisIsRedundant;
         } else if (basisIds.has(it.id)) {
-          // Vector cơ sở: Xanh ngọc Emerald
-          it._basisColorCss = "#10b981";
-          it.haloCss = "#10b981";
+          it._basisColorCss = origCol;
+          it.haloCss = origCol;
           it._basisAlpha = 1.0;
           it._basisIsBasis = true;
           delete it._basisIsRedundant;
         } else if (it.id === activeId && (step.type === "REDUNDANT" || step.type === "REDUNDANT_ZERO")) {
-          // Vector đang bị bẫy thừa: Vàng hổ phách
-          it._basisColorCss = "#f59e0b";
-          it.haloCss = "#f59e0b";
+          it._basisColorCss = origCol;
+          it.haloCss = origCol;
           it._basisAlpha = 1.0;
           it._basisIsRedundant = true;
           delete it._basisIsBasis;
@@ -728,13 +725,13 @@
 
           if (isPassed) {
             // Đã xét qua và là vector phụ thuộc
-            it._basisColorCss = "#f59e0b";
-            it.haloCss = "#f59e0b";
+            it._basisColorCss = origCol;
+            it.haloCss = origCol;
             it._basisAlpha = 0.55;
             it._basisIsRedundant = true;
           } else {
             // Chưa duyệt tới lượt: Làm mờ nhẹ để hướng sự chú ý vào vector đang khảo sát
-            it._basisColorCss = "#94a3b8";
+            it._basisColorCss = origCol;
             it._basisAlpha = 0.35;
             delete it._basisIsRedundant;
           }
@@ -901,6 +898,12 @@
     // =========================================================================
     render2DSubspace(ctx, gridInfo) {
       if (!this._active || !gridInfo || App.mode !== "2D") return;
+      const list = App.vectorList || [];
+      if (!this._candidateItems?.length || !this._candidateItems.every((it) => it && list.some((v) => v && v.id === it.id && v.visible !== false))) {
+        if (typeof App.stopBasisAnimation === "function") App.stopBasisAnimation();
+        else this.stop();
+        return;
+      }
       const step = this.getStep();
       if (!step) return;
 
@@ -1356,6 +1359,12 @@
     // =========================================================================
     render3D(mathGroup) {
       if (!this._active || !mathGroup || App.mode !== "3D") return;
+      const list = App.vectorList || [];
+      if (!this._candidateItems?.length || !this._candidateItems.every((it) => it && list.some((v) => v && v.id === it.id && v.visible !== false))) {
+        if (typeof App.stopBasisAnimation === "function") App.stopBasisAnimation();
+        else this.stop();
+        return;
+      }
       const step = this.getStep();
       if (!step) return;
 
@@ -1363,6 +1372,11 @@
       const u = Vec3D.S3D.unitsPerWorld || 1;
       const Lw = Vec3D._axisMaxWorld || 50;
       const Lm = Lw / u;
+
+      const vFOV = ((Vec3D._camera ? Vec3D._camera.fov : 24) * Math.PI) / 180;
+      const screenH = Math.max(1, Vec3D._renderer?.domElement?.clientHeight || 760);
+      const camDist = Vec3D._camera ? Vec3D._camera.position.length() : 25;
+      const worldPerPx = (2 * Math.tan(vFOV / 2) * camDist) / screenH;
 
       // Đảm bảo nhóm Three.js chuyên dụng cho Subspace
       if (!Vec3D._basisSubspaceGroup) {
@@ -1402,7 +1416,7 @@
         return l;
       };
 
-      const makeDashedLine = (p1, p2, color, opacity = 0.85, dashSize = 0.5 * u, gapSize = 0.25 * u) => {
+      const makeDashedLine = (p1, p2, color, opacity = 0.85, dashSize = 12 * worldPerPx, gapSize = 7 * worldPerPx) => {
         const geom = new THREE.BufferGeometry().setFromPoints([p1, p2]);
         const mat = new THREE.LineDashedMaterial({
           color,
@@ -1438,8 +1452,8 @@
         if (isDashed) {
           mat = new THREE.LineDashedMaterial({
             color,
-            dashSize: 0.4 * u,
-            gapSize: 0.25 * u,
+            dashSize: 10 * worldPerPx,
+            gapSize: 6 * worldPerPx,
             transparent: true,
             opacity,
             depthWrite: false
@@ -1475,24 +1489,29 @@
           transparent: true,
           opacity,
           side: THREE.DoubleSide,
-          depthWrite: false
+          depthWrite: false,
+          polygonOffset: true,
+          polygonOffsetFactor: 2,
+          polygonOffsetUnits: 2
         });
         const m = new THREE.Mesh(geom, mat);
-        m.renderOrder = 0;
+        m.renderOrder = -1;
         return m;
       };
 
       const makeMarker = (pos, radius, color, haloRadius = 0, haloOpacity = 0.35) => {
+        const effRadius = Math.min(radius, 3.0 * worldPerPx);
+        const effHalo = haloRadius > 0 ? Math.min(haloRadius, 5.2 * worldPerPx) : 0;
         const grp = new THREE.Group();
-        const sphereGeo = new THREE.SphereGeometry(radius, 16, 12);
+        const sphereGeo = new THREE.SphereGeometry(effRadius, 16, 12);
         const sphereMat = new THREE.MeshBasicMaterial({ color, depthWrite: false });
         const sphere = new THREE.Mesh(sphereGeo, sphereMat);
         sphere.position.copy(pos);
         sphere.renderOrder = 5;
         grp.add(sphere);
 
-        if (haloRadius > 0) {
-          const haloGeo = new THREE.SphereGeometry(haloRadius, 16, 12);
+        if (effHalo > 0) {
+          const haloGeo = new THREE.SphereGeometry(effHalo, 16, 12);
           const haloMat = new THREE.MeshBasicMaterial({
             color,
             transparent: true,

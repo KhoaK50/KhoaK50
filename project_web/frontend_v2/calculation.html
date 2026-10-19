@@ -1262,22 +1262,20 @@
           <div id="form-linear_independence" class="extra-form">
             <div id="indepChecklist" class="checklist"></div>
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button id="btnIndep" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px;">Kiểm tra</button>
-              <button type="button" class="btn btn-secondary btn-solution" id="btnIndepSolution" style="display: none;"><i class="ph ph-file-text"></i> Lời giải</button>
-              <button id="btnInteract" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px;" class="btn btn-secondary"
-                title="Khảo sát hình hộp 3D và độc lập tuyến tính">
-                <i class="ph ph-cube"></i> Hình hộp 3D
-              </button>
+              <button id="btnIndep" class="btn primary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px; white-space: nowrap;">Kiểm tra</button>
+              <button id="btnIndepAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button id="btnIndepSolution" class="btn btn-secondary btn-solution" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Lời giải</button>
             </div>
-            <div id="result_indep" style="width: 100%;"></div>
+            <div id="result_indep" style="width: 100%; margin-top: 10px;"></div>
           </div>
           <div id="form-rank" class="extra-form">
             <div id="rankChecklist" class="checklist"></div>
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button id="btnRank" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px;">Tính hạng</button>
-              <button type="button" class="btn btn-secondary btn-solution" id="btnRankSolution" style="display: none;"><i class="ph ph-file-text"></i> Lời giải</button>
+              <button id="btnRank" class="btn primary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px; white-space: nowrap;">Tính hạng</button>
+              <button id="btnRankAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button id="btnRankSolution" class="btn btn-secondary btn-solution" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Lời giải</button>
             </div>
-            <div id="result_rank" style="width: 100%;"></div>
+            <div id="result_rank" style="width: 100%; margin-top: 10px;"></div>
           </div>
           <div id="form-basis" class="extra-form">
             <div id="basisChecklist" class="checklist"></div>
@@ -1306,80 +1304,24 @@
           </div>
           <div id="form-quadratic_form_conic" class="extra-form">
 
-            <div style="margin-bottom: 10px;">
-              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Ma trận đối xứng A</label>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hệ số x²:</span>
-                  <input type="number" id="conic_a" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hệ số xy:</span>
-                  <input type="number" id="conic_b" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="-1" step="any" oninput="const b2 = document.getElementById('conic_b_disp'); if (b2) b2.value = this.value;">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hệ số yx đối xứng:</span>
-                  <input type="number" id="conic_b_disp" class="matrix-size-input" style="width: 100%; box-sizing: border-box; opacity: 0.7;" value="-1" disabled title="Tự động đồng bộ với ma trận đối xứng">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hệ số y²:</span>
-                  <input type="number" id="conic_c" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
-                </div>
-              </div>
-            </div>
+            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Chọn ma trận đối xứng A (Dạng toàn phương xᵀAx)</label>
+            <select id="conicMatrixSelect" style="width: 100%; height: 36px; border: 1px solid var(--border); border-radius: 2px; padding: 0 10px; background: var(--card); color: var(--fg); font-size: 13px; font-weight: 600;"></select>
 
-            <div style="margin-bottom: 12px;">
-              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Hệ số bậc một và hằng số</label>
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hệ số x:</span>
-                  <input type="number" id="conic_d" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="-5.65685" step="any">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hệ số y:</span>
-                  <input type="number" id="conic_e" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="-5.65685" step="any">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hằng số f:</span>
-                  <input type="number" id="conic_f" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="0" step="any">
-                </div>
-              </div>
-            </div>
+            <div id="conicMatrixPreview" style="margin-top: 8px; padding: 8px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
 
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button id="btnConicDraw" class="btn primary" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">Khảo sát</button>
-              <button id="btnConicRotate" class="btn btn-secondary" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;" title="Chéo hóa trực giao để nắn thẳng đường cong về trục chính tắc">Nắn thẳng</button>
-              <button id="btnConicSolution" class="btn btn-solution" type="button" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">Lời giải</button>
+              <button id="btnConicDraw" class="btn primary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Chính tắc hóa</button>
+              <button id="btnConicAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button id="btnConicSolution" class="btn btn-solution" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Lời giải</button>
             </div>
 
-            <div id="result_conic_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
+            <div id="result_conic_info" style="display: none; width: 100%; margin-top: 10px;"></div>
           </div>
           <div id="form-topic4_gram_schmidt" class="extra-form">
             
 
-            <div style="margin-bottom: 10px;">
-              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Tọa độ hai vector ban đầu</label>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Vector v1 x:</span>
-                  <input type="number" id="gs_v1_x" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="3" step="any">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Vector v1 y:</span>
-                  <input type="number" id="gs_v1_y" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
-                </div>
-              </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Vector v2 x:</span>
-                  <input type="number" id="gs_v2_x" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="2" step="any">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Vector v2 y:</span>
-                  <input type="number" id="gs_v2_y" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="2" step="any">
-                </div>
-              </div>
-            </div>
+            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Chọn hệ vector trực giao hóa</label>
+            <div id="gsChecklist" class="checklist"></div>
 
             <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
               <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
@@ -1392,96 +1334,25 @@
               </label>
               <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--primary-base); font-weight: 600;">
                 <input type="checkbox" id="chkGSNormalize" style="accent-color: var(--primary-base);">
-                <span>Chuẩn hóa về độ dài 1</span>
+                <span>Chuẩn hóa về độ dài 1 (Cơ sở trực chuẩn)</span>
               </label>
             </div>
 
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button type="button" id="btnGSOrthogonalize" class="btn primary" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">
-                <i class="ph ph-intersect" style="margin-right: 4px;"></i> Trực giao hóa
-              </button>
-              <button type="button" id="btnGSSolution" class="btn btn-solution" style="flex: 1; padding: 9px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px;">
-                Lời giải
-              </button>
+              <button type="button" id="btnGSOrthogonalize" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Trực giao hóa</button>
+              <button type="button" id="btnGSAnimate" class="btn btn-secondary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button type="button" id="btnGSSolution" class="btn btn-solution" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Lời giải</button>
             </div>
 
-            <div id="result_gs_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
+            <div id="result_gs_info" style="display: none; width: 100%; margin-top: 10px;"></div>
           </div>
           <div id="form-topic5_linear_transformation" class="extra-form">
             
 
-            <!-- Bộ chọn nhanh Phép biến đổi hình học cơ bản -->
-            <div style="margin-bottom: 12px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin: 0;">Phép biến đổi hình học cơ bản</label>
-              </div>
-              
-              <div style="display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap;" id="lt_geo_presets">
-                <button type="button" class="btn-geo-preset active" data-preset="custom" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--primary-base, #3b82f6); color: #fff; cursor: pointer;">Tùy biến</button>
-                <button type="button" class="btn-geo-preset" data-preset="rotation" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); cursor: pointer;">Quay θ</button>
-                <button type="button" class="btn-geo-preset" data-preset="reflectX" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); cursor: pointer;">Lật Ox</button>
-                <button type="button" class="btn-geo-preset" data-preset="reflectY" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); cursor: pointer;">Lật Oy</button>
-                <button type="button" class="btn-geo-preset" data-preset="reflectOrigin" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); cursor: pointer;">Lật O</button>
-                <button type="button" class="btn-geo-preset" data-preset="scale" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); cursor: pointer;">Co giãn</button>
-                <button type="button" class="btn-geo-preset" data-preset="shear" style="font-size: 11px; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); cursor: pointer;">Trượt</button>
-              </div>
+            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Chọn ma trận vuông khảo sát (A)</label>
+            <select id="ltMatrixSelect" style="width: 100%; height: 36px; border: 1px solid var(--border); border-radius: 2px; padding: 0 10px; background: var(--card); color: var(--fg); font-size: 13px; font-weight: 600;"></select>
 
-              <!-- Điều khiển Quay góc θ -->
-              <div id="lt_rotation_ctrl" style="display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; padding: 6px 8px; margin-top: 6px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                  <span style="font-size: 11.5px; font-weight: 600; color: var(--fg);">Góc quay θ:</span>
-                  <span id="lt_rot_angle_val" style="font-size: 12px; font-weight: 700; color: var(--primary-base, #3b82f6);">0° (0 rad)</span>
-                </div>
-                <input type="range" id="lt_rot_slider" min="0" max="360" value="0" step="1" style="width: 100%; accent-color: var(--primary-base, #3b82f6); cursor: pointer;">
-                <div style="display: flex; justify-content: space-between; font-size: 9.5px; color: var(--muted); margin-top: 2px;">
-                  <span>0°</span>
-                  <span>90°</span>
-                  <span>180°</span>
-                  <span>270°</span>
-                  <span>360°</span>
-                </div>
-              </div>
-
-              <!-- Điều khiển Co giãn k -->
-              <div id="lt_scale_ctrl" style="display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; padding: 6px 8px; margin-top: 6px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                  <span style="font-size: 11.5px; font-weight: 600; color: var(--fg);">Hệ số co giãn k:</span>
-                  <span id="lt_scale_val" style="font-size: 12px; font-weight: 700; color: var(--primary-base, #3b82f6);">1.5×</span>
-                </div>
-                <input type="range" id="lt_scale_slider" min="0.2" max="3.0" value="1.5" step="0.1" style="width: 100%; accent-color: var(--primary-base, #3b82f6); cursor: pointer;">
-              </div>
-
-              <!-- Điều khiển Trượt k -->
-              <div id="lt_shear_ctrl" style="display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px; padding: 6px 8px; margin-top: 6px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                  <span style="font-size: 11.5px; font-weight: 600; color: var(--fg);">Độ trượt k:</span>
-                  <span id="lt_shear_val" style="font-size: 12px; font-weight: 700; color: var(--primary-base, #3b82f6);">1.0</span>
-                </div>
-                <input type="range" id="lt_shear_slider" min="-2.0" max="2.0" value="1.0" step="0.1" style="width: 100%; accent-color: var(--primary-base, #3b82f6); cursor: pointer;">
-              </div>
-            </div>
-
-            <div style="margin-bottom: 10px;">
-              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Các phần tử ma trận A</label>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hàng 1 Cột 1:</span>
-                  <input type="number" id="lt_a11" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hàng 1 Cột 2:</span>
-                  <input type="number" id="lt_a12" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hàng 2 Cột 1:</span>
-                  <input type="number" id="lt_a21" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hàng 2 Cột 2:</span>
-                  <input type="number" id="lt_a22" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
-                </div>
-              </div>
-            </div>
+            <div id="ltMatrixPreview" style="margin-top: 8px; padding: 8px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
 
             <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;">
               <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
@@ -1497,84 +1368,33 @@
                 <span>Điểm co xẹp về gốc 0</span>
               </label>
               <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
-                <input type="checkbox" id="chkLTShowNori" style="accent-color: var(--primary-base);" onchange="if(window.App &amp;&amp; window.App.toggleNoriEntity &amp;&amp; (App.noriEntityActive !== this.checked)) window.App.toggleNoriEntity()">
+                <input type="checkbox" id="chkLTShowNori" style="accent-color: var(--primary-base);" onchange="if (window.App && window.App.toggleNoriEntity && (App.noriEntityActive !== this.checked)) window.App.toggleNoriEntity()">
                 <span>Vật thể Nori trong trường biến dạng</span>
               </label>
             </div>
 
-            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
-              <button type="button" id="btnLTInspect" class="btn primary" style="width: 100%; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">
-                Khảo sát ánh xạ tuyến tính
-              </button>
-              <div style="display: flex; gap: 6px;">
-                <button type="button" id="btnLTMorph" class="btn btn-secondary" style="flex: 1; padding: 9px 8px; font-size: 12.5px; font-weight: 600; border-radius: 4px; white-space: nowrap;">
-                  <i class="ph ph-play" style="margin-right: 4px;"></i> Biến đổi lưới
-                </button>
-                <button type="button" id="btnLTSolution" class="btn btn-solution" style="flex: 1; padding: 9px 8px; font-size: 12.5px; font-weight: 600; border-radius: 4px; white-space: nowrap;">
-                  Lời giải
-                </button>
-              </div>
+            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
+              <button type="button" id="btnLTInspect" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Khảo sát</button>
+              <button type="button" id="btnLTAnimate" class="btn btn-secondary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button type="button" id="btnLTSolution" class="btn btn-solution" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Lời giải</button>
             </div>
 
-            <div id="result_lt_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
+            <div id="result_lt_info" style="display: none; width: 100%; margin-top: 10px;"></div>
           </div>
           <div id="form-topic6_eigen" class="extra-form">
-            
+            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Chọn ma trận vuông khảo sát (A)</label>
+            <select id="eigenMatrixSelect" style="width: 100%; height: 36px; border: 1px solid var(--border); border-radius: 2px; padding: 0 10px; background: var(--card); color: var(--fg); font-size: 13px; font-weight: 600;"></select>
 
-            <div style="margin-bottom: 10px;">
-              <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Các phần tử ma trận A</label>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hàng 1 Cột 1:</span>
-                  <input type="number" id="eigen_a11" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="3" step="any">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hàng 1 Cột 2:</span>
-                  <input type="number" id="eigen_a12" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="1" step="any">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hàng 2 Cột 1:</span>
-                  <input type="number" id="eigen_a21" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="0" step="any">
-                </div>
-                <div>
-                  <span style="font-size: 11px; color: var(--muted);">Hàng 2 Cột 2:</span>
-                  <input type="number" id="eigen_a22" class="matrix-size-input" style="width: 100%; box-sizing: border-box;" value="2" step="any">
-                </div>
-              </div>
+            <div id="eigenMatrixPreview" style="margin-top: 8px; padding: 8px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
+
+            <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
+              <button type="button" id="btnEigenCompute" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px; white-space: nowrap;">Tính trị riêng</button>
+              <button type="button" id="btnEigenAnimate" class="btn btn-secondary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button type="button" id="btnEigenSolution" class="btn btn-solution" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Lời giải</button>
             </div>
 
-            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;">
-              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
-                <input type="checkbox" id="chkEigenShowLines" checked style="accent-color: var(--primary-base);">
-                <span>Đường thẳng không gian riêng</span>
-              </label>
-              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
-                <input type="checkbox" id="chkEigenShowTrans" checked style="accent-color: var(--primary-base);">
-                <span>Vector ảnh sau biến đổi</span>
-              </label>
-              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
-                <input type="checkbox" id="chkEigenShowUnitCircle" checked style="accent-color: var(--primary-base);">
-                <span>Đường tròn đơn vị</span>
-              </label>
-            </div>
-
-            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
-              <button type="button" id="btnEigenCompute" class="btn primary" style="width: 100%; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">
-                Khảo sát trị riêng &amp; vector riêng
-              </button>
-              <div style="display: flex; gap: 6px;">
-                <button type="button" id="btnEigenSweep" class="btn btn-secondary" style="flex: 1; padding: 9px 8px; font-size: 12.5px; font-weight: 600; border-radius: 4px; white-space: nowrap;">
-                  <i class="ph ph-compass" style="margin-right: 4px;"></i> Quét hướng
-                </button>
-                <button type="button" id="btnEigenSolution" class="btn btn-solution" style="flex: 1; padding: 9px 8px; font-size: 12.5px; font-weight: 600; border-radius: 4px; white-space: nowrap;">
-                  Lời giải
-                </button>
-              </div>
-            </div>
-
-            <div id="result_eigen_info" style="display: none; font-size: 12px; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
-
-        </div>
+            <div id="result_eigen_info" style="display: none; width: 100%; margin-top: 10px;"></div>
+          </div>
       </div>
     </div>
 
@@ -1807,7 +1627,7 @@
             </button>
 
             <!-- Segment 4b: Bật/Tắt thực thể Nori trong không gian 2D -->
-            <button type="button" id="btnNoriEntity" class="hud-btn" title="Bật/Tắt thực thể Nori trong mặt phẳng 2D" onclick="if(window.App &amp;&amp; window.App.toggleNoriEntity) window.App.toggleNoriEntity()">
+            <button type="button" id="btnNoriEntity" class="hud-btn" title="Bật/Tắt thực thể Nori trong mặt phẳng 2D" onclick="if (window.App && window.App.toggleNoriEntity) window.App.toggleNoriEntity()">
               <i class="ph ph-paw-print"></i>
             </button>
 
@@ -1986,6 +1806,12 @@
   <script src="js/app/playback/operation_animation.js"></script>
   <script src="./js/app/playback/basis_animation.js"></script>
   <script src="./js/app/playback/coord_animation.js"></script>
+  <script src="./js/app/playback/eigen_animation.js"></script>
+  <script src="js/app/playback/indep_animation.js"></script>
+  <script src="js/app/playback/rank_animation.js"></script>
+  <script src="js/app/playback/gs_animation.js"></script>
+  <script src="js/app/playback/lt_animation.js"></script>
+  <script src="js/app/playback/conic_animation.js"></script>
   <script src="js/app/playback/linear_transform.js"></script>
   <script src="js/app/bootstrap.js"></script>
   <!-- 7 Topics Modules Registry & Topic Handlers -->
@@ -2504,6 +2330,13 @@
                         // Check xem là 2D hay 3D để bật Mode cho đúng
                         const is3D = restoreData.matrix.some(v => v.length >= 3);
                         App.mode = is3D ? "3D" : "2D";
+                        if (document.body) {
+                            document.body.classList.toggle("mode-3d", is3D);
+                            document.body.classList.toggle("mode-2d", !is3D);
+                        }
+                        if (is3D && window.App && window.App.noriFloatingCompanion) {
+                            window.App.noriFloatingCompanion.hide();
+                        }
                         const mbt = document.getElementById("modeBadgeText");
                         if (mbt) mbt.textContent = `${App.mode}`;
                         const mbi = document.getElementById("modeBadgeIcon");
@@ -2533,6 +2366,7 @@
 
 <script src="js/utils/toast.js"></script>
   <script src="js/utils/global-search.js"></script>
+  <script src="js/app/nori/nori_floating_companion.js"></script>
 </body>
 
 

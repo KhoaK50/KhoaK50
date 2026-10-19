@@ -311,6 +311,7 @@
 
   /* ============== NORI LIVING ENTITY STATE (2D & 3D) ============== */
   App.noriEntityActive = false;
+  App.noriIsFloating = false;
   App.isNoriRelieved = false;
   App._noriReliefTimeout = null;
 
@@ -320,8 +321,23 @@
       App.toggleMode();
     }
     App.noriEntityActive = !App.noriEntityActive;
-    const btn = document.getElementById("btnNoriEntity");
-    if (btn) {
+
+    // Khi bật/tắt: nếu tắt thì dẹp cả con lơ lửng và đưa trạng thái về gốc
+    if (!App.noriEntityActive) {
+      App.noriIsFloating = false;
+      if (window.App && window.App.noriFloatingCompanion) {
+        window.App.noriFloatingCompanion.hide();
+      }
+    } else {
+      // Khi vừa bật: mặc định Nori xuất hiện tại gốc (0, 0) trên canvas
+      App.noriIsFloating = false;
+      if (window.App && window.App.noriFloatingCompanion) {
+        window.App.noriFloatingCompanion.hide();
+      }
+    }
+
+    const noriBtns = document.querySelectorAll("#btnNoriEntity, #btnNoriEntitySidebar, .btn-nori-pencil");
+    noriBtns.forEach((btn) => {
       if (App.noriEntityActive) {
         btn.classList.add("active");
         btn.title = "Đang hiển thị Nori trong mặt phẳng 2D (Bấm để ẩn)";
@@ -329,7 +345,7 @@
         btn.classList.remove("active");
         btn.title = "Bật/Tắt thực thể Nori trong mặt phẳng 2D";
       }
-    }
+    });
     const chk = document.getElementById("chkLTShowNori");
     if (chk) {
       chk.checked = App.noriEntityActive;
@@ -354,6 +370,7 @@
   App.triggerNoriRelief = function () {
     if (!App.noriEntityActive) return;
     App.isNoriRelieved = true;
+    App.noriReliefStartTime = performance.now();
     if (App._noriReliefTimeout) {
       clearTimeout(App._noriReliefTimeout);
     }
@@ -364,6 +381,7 @@
 
     App._noriReliefTimeout = setTimeout(() => {
       App.isNoriRelieved = false;
+      App.noriReliefStartTime = null;
       App._noriReliefTimeout = null;
       if (App.mode === "2D" && window.Vec2D?.draw2DAllVectors) {
         window.Vec2D.draw2DAllVectors();

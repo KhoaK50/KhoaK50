@@ -60,7 +60,7 @@
       it.haloCss = s.haloCss;
       it.highlighted = s.highlighted;
     }
-    if (typeof App.renderVectorList === "function") App.renderVectorList();
+    if (typeof App.renderVectorList === "function") App.renderVectorList(false);
     if (App.mode === "2D" && window.Vec2D) Vec2D.draw2DAllVectors();
     else if (window.Vec3D) Vec3D.hardRefresh3D(false);
   }
@@ -198,12 +198,11 @@
     }
   };
 
+  App.ensureBasisAnimControls();
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () =>
       App.ensureBasisAnimControls(),
     );
-  } else {
-    App.ensureBasisAnimControls();
   }
 
   // =========================
@@ -505,6 +504,15 @@
         out.innerHTML = resultHTML;
       }
 
+      // [QUAN TRỌNG] Không tự ý chèn auto-vector (1, 0), (0, 1) lên canvas.
+      // Lưu lại dữ liệu để khi người dùng bấm nút "Trực quan" sẽ khởi chạy hoạt cảnh
+      App._lastBasisAnimData = {
+        selectedIds: checkedIds,
+        dependentIds: dependentIds,
+        basisVectors: basisItems.map((it) => it.vec),
+        phaseMs: App.basisAnimPhaseMs,
+      };
+
       cachedConfig = {
         title: "Cơ sở & số chiều",
         math: `\\( \\mathbb{R}^${selectedItems[0].vec.length} \\)`,
@@ -533,27 +541,20 @@
         if (btnSol) btnSol.style.display = "inline-block";
         
         // --- TÍCH HỢP SỔ TAY GHI CHÉP ---
-        if (window.App.PaperLogger) {
-          const ltx = `\\text{Dim} = ${dim}`;
-          const animData = { 
-              type: 'basis', 
-              selectedIds: checkedIds,
-              dependentIds: dependentIds,
-              basisVectors: basisItems.map((it) => it.vec),
-              phaseMs: App.basisAnimPhaseMs
-          };
-          App.PaperLogger.log("Tìm Cơ sở & Số chiều", ltx, "", cachedConfig, animData);
+        if (window.App && window.App.PaperLogger && typeof window.App.PaperLogger.log === "function") {
+          try {
+            const ltx = `\\text{Dim} = ${dim}`;
+            const animData = { 
+                type: 'basis', 
+                selectedIds: checkedIds,
+                dependentIds: dependentIds,
+                basisVectors: basisItems.map((it) => it.vec),
+                phaseMs: App.basisAnimPhaseMs
+            };
+            App.PaperLogger.log("Tìm Cơ sở & Số chiều", ltx, "", cachedConfig, animData);
+          } catch (_) {}
         }
       }
-
-      // [QUAN TRỌNG] Không tự ý chèn auto-vector (1, 0), (0, 1) lên canvas.
-      // Lưu lại dữ liệu để khi người dùng bấm nút "Trực quan" sẽ khởi chạy hoạt cảnh
-      App._lastBasisAnimData = {
-        selectedIds: checkedIds,
-        dependentIds: dependentIds,
-        basisVectors: basisItems.map((it) => it.vec),
-        phaseMs: App.basisAnimPhaseMs,
-      };
     } catch (err) {
       if (out) out.innerText = "Lỗi: " + err.message;
       if (typeof App.showToast === "function") App.showToast(err.message);
@@ -589,15 +590,21 @@
 
     App._basisModeActive = true;
     if (typeof App.startBasisAnimation === "function") {
-      App.startBasisAnimation(App._lastBasisAnimData);
+      await App.startBasisAnimation(App._lastBasisAnimData);
     }
     if (wrap) wrap.style.display = "block";
   };
 
   // --- INIT ---
-  document.addEventListener("DOMContentLoaded", () => {
-    // 1. XỬ LÝ NÚT TÍNH CƠ SỞ
+  let _basisBtnsInitialized = false;
+  function initBasisButtons() {
+    if (_basisBtnsInitialized) return;
     const btnCalc = $("btnBasis") || $("btnCalcBasis");
+    const btnAnimate = $("btnBasisAnimate");
+    if (!btnCalc && !btnAnimate) return;
+    _basisBtnsInitialized = true;
+
+    // 1. XỬ LÝ NÚT TÍNH CƠ SỞ
     if (btnCalc) {
       const newBtn = btnCalc.cloneNode(true);
       if (btnCalc.parentNode) btnCalc.parentNode.replaceChild(newBtn, btnCalc);
@@ -605,7 +612,6 @@
     }
 
     // 2. XỬ LÝ NÚT TRỰC QUAN (Tách riêng khỏi Tính cơ sở)
-    const btnAnimate = $("btnBasisAnimate");
     if (btnAnimate) {
       const newBtnAnimate = btnAnimate.cloneNode(true);
       if (btnAnimate.parentNode) btnAnimate.parentNode.replaceChild(newBtnAnimate, btnAnimate);
@@ -649,5 +655,10 @@
         }
       });
     }
-  });
+  }
+
+  initBasisButtons();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initBasisButtons);
+  }
 })();

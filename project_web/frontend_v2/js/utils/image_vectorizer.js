@@ -11,7 +11,7 @@
   window.App = App;
 
   // --- 1. THUẬT TOÁN TAM GIÁC HÓA DELAUNAY SIÊU TỐC (DELAUNATOR) ---
-  const EDGE_STACK = new Int32Array(512);
+  const EDGE_STACK = new Int32Array(4096);
 
   function dist(ax, ay, bx, by) {
     const dx = ax - bx, dy = ay - by;
@@ -283,14 +283,15 @@
     // Biến đổi ảnh thành dữ liệu Mesh vector toán học
     vectorizeImage: function (img, options) {
       options = options || {};
-      const targetPoints = options.targetPoints || 7500; // Số điểm mẫu mong muốn
-      const depthScale = options.depthScale !== undefined ? options.depthScale : 1.8;
+      const targetPoints = options.targetPoints || 18000; // Số điểm mẫu mong muốn
+      const depthScale = options.depthScale !== undefined ? options.depthScale : 2.4;
       const worldW = options.worldWidth || 16.0;
 
-      // 1. Phân giải kích thước phân tích theo cấp độ chi tiết
-      let maxDim = 400;
-      if (targetPoints >= 6000) maxDim = 560;
-      if (targetPoints >= 12000) maxDim = 720;
+      // 1. Phân giải kích thước phân tích theo cấp độ chi tiết (tối ưu hóa cho phần cứng mạnh)
+      let maxDim = 600;
+      if (targetPoints >= 15000) maxDim = 900;
+      if (targetPoints >= 35000) maxDim = 1280;
+      if (targetPoints >= 65000) maxDim = 1600;
 
       const aspect = img.naturalWidth / (img.naturalHeight || 1);
       let w = maxDim, h = Math.round(maxDim / aspect);
@@ -375,13 +376,14 @@
       // Sắp xếp ưu tiên các điểm có gradient mạnh nhất (viền nét, chữ, chi tiết cao)
       candidates.sort((a, b) => b.g - a.g);
 
-      const numEdgePoints = Math.min(candidates.length, Math.round(targetPoints * 0.80));
-      const minDistanceSq = targetPoints >= 12000 ? 1.8 : (targetPoints >= 6000 ? 2.4 : 3.4);
-      for (let i = 0; i < candidates.length && points.length < numEdgePoints + 100; i++) {
+      const numEdgePoints = Math.min(candidates.length, Math.round(targetPoints * 0.82));
+      const minDistanceSq = targetPoints >= 65000 ? 0.75 : (targetPoints >= 35000 ? 1.15 : (targetPoints >= 15000 ? 1.7 : 2.5));
+      const searchLookback = targetPoints >= 35000 ? 65 : 45;
+      for (let i = 0; i < candidates.length && points.length < numEdgePoints + 150; i++) {
         const cand = candidates[i];
         let tooClose = false;
-        // Kiểm tra nhanh với 45 điểm gần nhất
-        for (let k = Math.max(0, points.length - 45); k < points.length; k++) {
+        // Kiểm tra nhanh với các điểm gần nhất
+        for (let k = Math.max(0, points.length - searchLookback); k < points.length; k++) {
           const dx = points[k][0] - cand.x;
           const dy = points[k][1] - cand.y;
           if (dx * dx + dy * dy < minDistanceSq) {
@@ -397,7 +399,7 @@
       // 3.3. Lấy mẫu rải đều (Jittered Grid) trong các vùng phẳng mịn (nền, da)
       const remaining = targetPoints - points.length;
       if (remaining > 0) {
-        const stepGrid = Math.max(2.5, Math.sqrt((w * h) / remaining));
+        const stepGrid = Math.max(1.8, Math.sqrt((w * h) / remaining));
         for (let y = stepGrid / 2; y < h; y += stepGrid) {
           for (let x = stepGrid / 2; x < w; x += stepGrid) {
             const jx = x + (Math.random() - 0.5) * (stepGrid * 0.8);
@@ -533,18 +535,25 @@
               
               <div class="vec-modal-opts" id="vecModalOpts" style="display:none; margin-top:14px;">
                 <div class="vec-opt-row">
-                  <span class="vec-opt-label">Mức độ chi tiết:</span>
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="vec-opt-label">Mức độ chi tiết (Lưới tam giác):</span>
+                    <span style="font-size:11px; color:var(--text-muted, #9ba1a6); font-weight:500;">Tối ưu hóa i7 / RTX</span>
+                  </div>
                   <div class="vec-opt-pills" id="vecDetailPills">
-                    <button type="button" class="vec-opt-pill" data-pts="3200">Tiêu chuẩn: 6.000 tam giác</button>
-                    <button type="button" class="vec-opt-pill active" data-pts="7500">Sắc nét cao: 14.000 tam giác</button>
-                    <button type="button" class="vec-opt-pill" data-pts="13500">Siêu sắc nét: 26.000 tam giác</button>
+                    <button type="button" class="vec-opt-pill" data-pts="7500">Tiêu chuẩn: 14.000 tam giác</button>
+                    <button type="button" class="vec-opt-pill active" data-pts="18000">Sắc nét cao: 35.000 tam giác</button>
+                    <button type="button" class="vec-opt-pill" data-pts="38000">Siêu chi tiết: 75.000 tam giác</button>
+                    <button type="button" class="vec-opt-pill" data-pts="72000">Cực hạn RTX: 140.000 tam giác</button>
                   </div>
                 </div>
-                <div class="vec-opt-row" style="margin-top:10px;">
-                  <span class="vec-opt-label">Độ nổi khối 3D Relief:</span>
-                  <div style="display:flex; align-items:center; gap:8px; flex:1;">
-                    <input type="range" id="vecDepthSlider" min="0" max="4.0" step="0.2" value="1.8" style="flex:1;" />
-                    <span id="vecDepthVal" style="font-family:monospace; font-weight:700; font-size:12px; min-width:32px;">1.8</span>
+                <div class="vec-opt-row" style="margin-top:12px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="vec-opt-label">Độ nổi khối 3D Relief:</span>
+                    <span style="font-size:11px; color:var(--text-muted, #9ba1a6); font-weight:500;">Kéo thanh trượt hoặc gõ số tự do</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <input type="range" id="vecDepthSlider" min="0" max="16.0" step="0.2" value="2.4" style="flex:1;" />
+                    <input type="number" id="vecDepthInput" min="0" max="50.0" step="0.2" value="2.4" class="vec-depth-input" />
                   </div>
                 </div>
               </div>
@@ -568,11 +577,11 @@
         const modalOpts = modal.querySelector("#vecModalOpts");
         const processBtn = modal.querySelector("#btnVecModalProcess");
         const depthSlider = modal.querySelector("#vecDepthSlider");
-        const depthVal = modal.querySelector("#vecDepthVal");
+        const depthInput = modal.querySelector("#vecDepthInput");
         const pills = modal.querySelectorAll(".vec-opt-pill");
 
         let selectedImg = null;
-        let selectedPts = 7500;
+        let selectedPts = 18000;
 
         function closeModal() {
           modal.style.display = "none";
@@ -623,12 +632,18 @@
           p.onclick = () => {
             pills.forEach((x) => x.classList.remove("active"));
             p.classList.add("active");
-            selectedPts = parseInt(p.dataset.pts, 10) || 3200;
+            selectedPts = parseInt(p.dataset.pts, 10) || 18000;
           };
         });
 
         depthSlider.oninput = (e) => {
-          depthVal.textContent = parseFloat(e.target.value).toFixed(1);
+          const val = parseFloat(e.target.value) || 0;
+          depthInput.value = val.toFixed(1);
+        };
+
+        depthInput.oninput = (e) => {
+          const val = parseFloat(e.target.value) || 0;
+          depthSlider.value = Math.min(16.0, Math.max(0, val));
         };
 
         processBtn.onclick = () => {
@@ -638,7 +653,7 @@
 
           setTimeout(() => {
             try {
-              const depth = parseFloat(depthSlider.value) || 1.8;
+              const depth = parseFloat(depthInput.value) || parseFloat(depthSlider.value) || 2.4;
               const meshData = App.ImageVectorizer.vectorizeImage(selectedImg, {
                 targetPoints: selectedPts,
                 depthScale: depth,

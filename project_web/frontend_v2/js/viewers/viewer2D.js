@@ -246,6 +246,20 @@
       const mouseY = e.clientY - rect.top;
 
       if (n === 1) {
+        // KIỂM TRA BƯNG NORI TẠI GỐC TỌA ĐỘ (0, 0)
+        if (window.App && App.noriEntityActive && !App.noriIsFloating && Vec2D.gridInfo2D) {
+          const { cx, cy } = Vec2D.gridInfo2D;
+          const dx = mouseX - cx;
+          const dy = mouseY - (cy - 6);
+          // Vùng nhấp chuột dễ dàng bao quát toàn bộ thân, đầu, tai, chân (bán kính 54x58px)
+          if ((dx * dx) / (54 * 54) + (dy * dy) / (58 * 58) <= 1.0) {
+            if (window.App.noriFloatingCompanion && typeof window.App.noriFloatingCompanion.liftFromCanvas === 'function') {
+              window.App.noriFloatingCompanion.liftFromCanvas(e, rect.left + cx, rect.top + cy);
+              return;
+            }
+          }
+        }
+
         // RADAR BAT VAT THE (Mui ten hoac Nhan)
         const hitId = getHitVectorId(mouseX, mouseY);
         const isBlocked = typeof App.isInteractionBlocked === "function" && App.isInteractionBlocked();
@@ -305,10 +319,23 @@
         const rect = canvas2d.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
+
+        // Hover tren Nori tai goc toa do
+        let isHoverNori = false;
+        if (!isBlocked && App.noriEntityActive && !App.noriIsFloating && Vec2D.gridInfo2D) {
+          const { cx, cy } = Vec2D.gridInfo2D;
+          const dx = mx - cx;
+          const dy = my - (cy - 6);
+          if ((dx * dx) / (54 * 54) + (dy * dy) / (58 * 58) <= 1.0) {
+            isHoverNori = true;
+          }
+        }
+
         const hitId = isBlocked ? null : getHitVectorId(mx, my);
-        if (hitId !== Vec2D.S2D.hoveredVectorId) {
+        if (hitId !== Vec2D.S2D.hoveredVectorId || isHoverNori !== Vec2D.S2D.hoveredNori) {
           Vec2D.S2D.hoveredVectorId = hitId;
-          canvas2d.style.cursor = (!isBlocked && hitId) ? "grab" : "default";
+          Vec2D.S2D.hoveredNori = isHoverNori;
+          canvas2d.style.cursor = (!isBlocked && (hitId || isHoverNori)) ? "grab" : "default";
           Vec2D.draw2DAllVectors();
         }
         return;
@@ -736,11 +763,17 @@
 
       const isBasisAnim = window.App && (App._basisAnimActive || (App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive()));
       const isCoordAnim = window.App && (App._coordAnimActive || (App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()));
+      const isIndepAnim = window.App && (App._indepAnimActive || (App.IndepAnimator && typeof App.IndepAnimator.isActive === "function" && App.IndepAnimator.isActive()));
+      const isRankAnim = window.App && (App._rankAnimActive || (App.RankAnimator && typeof App.RankAnimator.isActive === "function" && App.RankAnimator.isActive()));
       const labelColor = (isBasisAnim && item._basisColorCss)
         ? item._basisColorCss
         : ((isCoordAnim && item._coordColorCss)
           ? item._coordColorCss
-          : (item.colorCss || item.colorHex || (isDark ? "#ffffff" : "#111827")));
+          : ((isIndepAnim && item._indepColorCss)
+            ? item._indepColorCss
+            : ((isRankAnim && item._rankColorCss)
+              ? item._rankColorCss
+              : (item.colorCss || item.colorHex || (isDark ? "#ffffff" : "#111827")))));
       const latex = App.getVectorLatexLabel ? App.getVectorLatexLabel(item, showCoord) : (item.name || "v");
 
       if (overlay) {
@@ -2192,7 +2225,7 @@
     ctx.stroke();
   }
 
-  // Sắc thái 6: Thở phào nhẹ nhõm sau biến đổi (Relieved 1.5s)
+  // Sắc thái 6: Thở phào nhẹ nhõm sau biến đổi (Relieved 1.5s với cụm mây khói tan dần)
   function drawNoriRelievedFace(ctx, living) {
     drawNoriCommonBase(ctx, living);
 
@@ -2201,19 +2234,19 @@
     ctx.lineWidth = 1.8;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(34, 41); ctx.quadraticCurveTo(39, 39.5, 45, 41);
-    ctx.moveTo(55, 41); ctx.quadraticCurveTo(61, 39.5, 66, 41);
+    ctx.moveTo(34, 40); ctx.quadraticCurveTo(39, 37.5, 45, 40);
+    ctx.moveTo(55, 40); ctx.quadraticCurveTo(61, 37.5, 66, 40);
     ctx.stroke();
 
-    // Đôi mắt nhắm thư thái êm đềm (u u)
+    // Đôi mắt cười tít hình vòng cung ^ ^ vui sướng vì hạ cánh an toàn
     ctx.strokeStyle = "#292524";
     ctx.lineWidth = 2.2;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.arc(38, 47.5, 4.8, 0, Math.PI);
+    ctx.moveTo(33, 49.5); ctx.quadraticCurveTo(38, 45.5, 43, 49.5);
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(62, 47.5, 4.8, 0, Math.PI);
+    ctx.moveTo(57, 49.5); ctx.quadraticCurveTo(62, 45.5, 67, 49.5);
     ctx.stroke();
 
     // Miệng cười nhẹ nhõm an lòng
@@ -2221,15 +2254,50 @@
     ctx.lineWidth = 1.9;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(46, 60.5); ctx.quadraticCurveTo(50, 62.2, 54, 60.5);
+    ctx.moveTo(45.5, 60); ctx.quadraticCurveTo(50, 62.5, 54.5, 60);
     ctx.stroke();
 
-    // Vệt làn hơi thở phào nhẹ nhõm nhỏ xinh
-    ctx.strokeStyle = "#38bdf8";
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(68, 58); ctx.quadraticCurveTo(72, 56, 75, 59);
-    ctx.stroke();
+    // Hoạt cảnh cụm mây khói trắng thở phào bay ra nhẹ nhàng và tan biến trong 0.75s
+    const startTime = window.App?.noriReliefStartTime || 0;
+    const elapsed = startTime > 0 ? (performance.now() - startTime) / 1000 : 0.25;
+    const pDuration = 0.75;
+    const p = Math.min(1.0, elapsed / pDuration);
+
+    if (p < 1.0) {
+      const driftX = 56 + p * 16;
+      const driftY = 60.5 - p * 5.5;
+      const puffScale = 0.45 + p * 0.75;
+      const alpha = p < 0.2 ? (p / 0.2) * 0.9 : Math.max(0, (1.0 - p) * 0.9);
+
+      ctx.save();
+      ctx.translate(driftX, driftY);
+      ctx.scale(puffScale, puffScale);
+      ctx.globalAlpha = alpha;
+
+      // Cụm mây trắng bồng bềnh 3 múi
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(0, 0, 3.8, 0, Math.PI * 2);
+      ctx.arc(3.4, -1.2, 2.8, 0, Math.PI * 2);
+      ctx.arc(2.0, 1.8, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Viền xanh phấn siêu nhạt mềm mại
+      ctx.strokeStyle = "rgba(186, 230, 253, 0.8)";
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+
+      // Bong bóng khí li ti đuôi khói
+      if (p > 0.15 && p < 0.85) {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+        ctx.beginPath();
+        ctx.arc(-4.2, 1.0, 1.1, 0, Math.PI * 2);
+        ctx.arc(-7.0, 2.0, 0.75, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
   }
 
   // Sắc thái 7: Mặt sau lưng chuột hamster khi lật không gian (Reflection det < 0)
@@ -2698,8 +2766,12 @@
 
   function drawNoriPencilEntity2D(ctx, gridInfo, ltMatrix) {
     if (!gridInfo) return;
+    // Nếu Nori đang bưng đi lơ lửng bên ngoài, không vẽ tại gốc (0, 0)
+    if (window.App && App.noriIsFloating) return;
+
     const { cx, cy, px } = gridInfo;
     const isDark = (window.App && App.theme === "dark");
+
     const isRelieved = !!(window.App && App.isNoriRelieved);
 
     const M = ltMatrix || [[1, 0], [0, 1]];
@@ -2898,6 +2970,27 @@
     if (window.App && App.CoordAnimator && App.CoordAnimator.isActive()) {
       App.CoordAnimator.render2DSubspace(ctx2d, Vec2D.gridInfo2D);
     }
+    // [EIGENVALUE & DIAGONALIZATION SUBSPACE HOOK]
+    if (window.App && App.EigenAnimator && App.EigenAnimator.isActive()) {
+      App.EigenAnimator.render2DSubspace(ctx2d, Vec2D.gridInfo2D);
+    }
+    // [INDEPENDENCE ANIMATION SUBSPACE HOOK]
+    if (window.App && App.IndepAnimator && App.IndepAnimator.isActive()) {
+      App.IndepAnimator.render2DSubspace(ctx2d, Vec2D.gridInfo2D);
+    }
+    // [RANK & GAUSS ANIMATION SUBSPACE HOOK]
+    if (window.App && App.RankAnimator && App.RankAnimator.isActive()) {
+      App.RankAnimator.render2DSubspace(ctx2d, Vec2D.gridInfo2D);
+    }
+    // [GRAM - SCHMIDT ANIMATION SUBSPACE HOOK]
+    if (window.App && App.GSAnimator && App.GSAnimator.isActive()) {
+      App.GSAnimator.render2DSubspace(ctx2d, Vec2D.gridInfo2D);
+    }
+    // [LINEAR TRANSFORMATION ANIMATION SUBSPACE HOOK]
+    if (window.App && App.LTAnimator && App.LTAnimator.isActive()) {
+      App.LTAnimator.render2DSubspace(ctx2d, Vec2D.gridInfo2D);
+    }
+
 
     // [NORI PENCIL LIVING ENTITY HOOK]
     if (App.noriEntityActive) {
@@ -2953,8 +3046,12 @@
       if (it.showArrow !== false) {
         const isBasisAnim = window.App && (App._basisAnimActive || (App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive()));
         const isCoordAnim = window.App && (App._coordAnimActive || (App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()));
-        const drawColor = (isBasisAnim && it._basisColorCss) ? it._basisColorCss : ((isCoordAnim && it._coordColorCss) ? it._coordColorCss : it.colorCss);
-        const drawAlpha = (isBasisAnim && typeof it._basisAlpha === "number") ? it._basisAlpha : ((isCoordAnim && typeof it._coordAlpha === "number") ? it._coordAlpha : alpha);
+        const isIndepAnim = window.App && (App._indepAnimActive || (App.IndepAnimator && typeof App.IndepAnimator.isActive === "function" && App.IndepAnimator.isActive()));
+        const isRankAnim = window.App && (App._rankAnimActive || (App.RankAnimator && typeof App.RankAnimator.isActive === "function" && App.RankAnimator.isActive()));
+        const isGSAnim = window.App && (App._gsAnimActive || (App.GSAnimator && typeof App.GSAnimator.isActive === "function" && App.GSAnimator.isActive()));
+        const isLTAnim = window.App && (App._ltAnimActive || (App.LTAnimator && typeof App.LTAnimator.isActive === "function" && App.LTAnimator.isActive()));
+        const drawColor = (isBasisAnim && it._basisColorCss) ? it._basisColorCss : ((isCoordAnim && it._coordColorCss) ? it._coordColorCss : ((isIndepAnim && it._indepColorCss) ? it._indepColorCss : ((isRankAnim && it._rankColorCss) ? it._rankColorCss : ((isGSAnim && it._gsColorCss) ? it._gsColorCss : ((isLTAnim && it._ltColorCss) ? it._ltColorCss : it.colorCss)))));
+        const drawAlpha = (isBasisAnim && typeof it._basisAlpha === "number") ? it._basisAlpha : ((isCoordAnim && typeof it._coordAlpha === "number") ? it._coordAlpha : ((isIndepAnim && typeof it._indepAlpha === "number") ? it._indepAlpha : ((isRankAnim && typeof it._rankAlpha === "number") ? it._rankAlpha : ((isGSAnim && typeof it._gsAlpha === "number") ? it._gsAlpha : ((isLTAnim && typeof it._ltAlpha === "number") ? it._ltAlpha : alpha)))));
         const isHoveredOrActive = (Vec2D.S2D.hoveredVectorId === it.id) || (Vec2D.S2D.draggedVectorId === it.id) || !!it.focus;
         draw2DVectorSingle(
           v2,
@@ -2980,6 +3077,27 @@
     if (window.App && App.CoordAnimator && App.CoordAnimator.isActive()) {
       App.CoordAnimator.render2DProjections(ctx2d, Vec2D.gridInfo2D);
     }
+    // [EIGENVALUE & DIAGONALIZATION PROJECTIONS HOOK]
+    if (window.App && App.EigenAnimator && App.EigenAnimator.isActive()) {
+      App.EigenAnimator.render2DProjections(ctx2d, Vec2D.gridInfo2D);
+    }
+    // [INDEPENDENCE ANIMATION PROJECTIONS HOOK]
+    if (window.App && App.IndepAnimator && App.IndepAnimator.isActive()) {
+      App.IndepAnimator.render2DProjections(ctx2d, Vec2D.gridInfo2D);
+    }
+    // [RANK & GAUSS ANIMATION PROJECTIONS HOOK]
+    if (window.App && App.RankAnimator && App.RankAnimator.isActive()) {
+      App.RankAnimator.render2DProjections(ctx2d, Vec2D.gridInfo2D);
+    }
+    // [GRAM - SCHMIDT ANIMATION PROJECTIONS HOOK]
+    if (window.App && App.GSAnimator && App.GSAnimator.isActive()) {
+      App.GSAnimator.render2DProjections(ctx2d, Vec2D.gridInfo2D);
+    }
+    // [LINEAR TRANSFORMATION ANIMATION PROJECTIONS HOOK]
+    if (window.App && App.LTAnimator && App.LTAnimator.isActive()) {
+      App.LTAnimator.render2DProjections(ctx2d, Vec2D.gridInfo2D);
+    }
+
     if (App.tempGhosts && Array.isArray(App.tempGhosts)) {
       for (const g of App.tempGhosts) {
         if (g.isFlashlight) {

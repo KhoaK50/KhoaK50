@@ -194,6 +194,7 @@
   // Lay ten vector chuan (tu dong dong bo theo thu tu danh sach #1 -> v_1, #2 -> v_2 neu khong co ten rieng)
   App.getVectorName = function (it) {
     if (!it) return "v";
+    if (it._customLabelLatex) return String(it._customLabelLatex);
     // Neu co ten tuy chinh do nguoi dung dat rieng (khong phai mac dinh v, v1, v_1):
     if (it.name && !/^v_?\{?\d+\}?$/i.test(it.name)) {
       return String(it.name).replace(/^([a-zA-Z])(\d+)$/, "$1_{$2}");

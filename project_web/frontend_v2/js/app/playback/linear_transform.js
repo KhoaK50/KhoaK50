@@ -371,6 +371,11 @@
       const playbackBox = document.getElementById("sidebarTransformPlayback");
       if (playbackBox) playbackBox.style.display = "block";
 
+      // Nếu Nori đang ở trạng thái lơ lửng bên ngoài, thông báo cho người dùng
+      if (window.App && App.noriIsFloating && window.App.noriFloatingCompanion) {
+        window.App.noriFloatingCompanion.say("Tui đang lơ lửng ngoài canvas nên được an toàn, không bị ma trận kéo dãn nè! Nhấp đúp vào người tui để về gốc (0, 0) xem biến dạng nhé!", 4200);
+      }
+
       const updateTransformBtns = (isRunning) => {
         const btns = [
           document.getElementById("btnStartTransform"),
@@ -465,6 +470,9 @@
       if (typeof window.App?.triggerNoriRelief === "function") {
         window.App.triggerNoriRelief();
       }
+      if (window.App) {
+        window.App.activeNoriTransformMatrix = null;
+      }
 
       // Dừng đồng bộ tất cả hoạt ảnh ma trận và vector tham số đang chạy
       if (window.App) {
@@ -527,6 +535,11 @@
         }
       } else if (window.Vec2D && Vec2D.draw2DAllVectors) {
         Vec2D.draw2DAllVectors();
+      }
+
+      this._activeMatrixId = null;
+      if (typeof window.App?.renderMatrixList === "function") {
+        window.App.renderMatrixList();
       }
     },
 

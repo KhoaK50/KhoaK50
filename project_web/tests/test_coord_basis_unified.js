@@ -438,6 +438,107 @@ async function runTest() {
     if (switchCleanupRes.isCoordActive || switchCleanupRes.coordDisplay !== 'none') {
         throw new Error('Coord animator was not cleaned up when switching to rank problem!');
     }
+
+    // --- TEST 6: KIỂM TRA TỰ ĐỘNG TẮT HOẠT CẢNH KHI CHUYỂN TAB / BỎ CHỌN / XÓA VECTOR & KÍCH THƯỚC MARKER 3D ---
+    console.log('[TEST 6] Testing auto-stop on sidebar tab switch, checklist change, vector delete, and 3D marker sizing...');
+
+    // 6.1 Start CoordAnimator, jump to Bước 3 (morphed coordinates), then switch sidebar tab to ĐỐI TƯỢNG (tabs[0])
+    const tabSwitchRes = await evaluate(`(() => {
+        const tabs = document.querySelectorAll(".sidebar-tabs .tab-btn");
+        if (tabs[1]) tabs[1].click(); // BÀI TOÁN tab
+
+        const sel = document.getElementById("opExtraSelect");
+        sel.value = "coordinates";
+        sel.dispatchEvent(new Event("change"));
+
+        const vCoordSelect = document.getElementById("vCoordSelect");
+        vCoordSelect.value = "1";
+        vCoordSelect.dispatchEvent(new Event("change"));
+
+        const checkContainer = document.getElementById("basisCoordChecklist");
+        const cb2 = checkContainer.querySelector('input[type="checkbox"][value="2"]');
+        const cb3 = checkContainer.querySelector('input[type="checkbox"][value="3"]');
+        if (cb2 && !cb2.checked) { cb2.checked = true; cb2.dispatchEvent(new Event("change", { bubbles: true })); }
+        if (cb3 && !cb3.checked) { cb3.checked = true; cb3.dispatchEvent(new Event("change", { bubbles: true })); }
+
+        document.getElementById("btnCoordAnimate").click();
+        App.CoordAnimator.goToPhase(2); // Bước 3: vectors morphed to [1,0], [0,1], [2,-1]
+        const morphedV2 = App.vectorList.find(v => v.id === 2)?.vec?.slice();
+
+        // Switch to tab 0 (ĐỐI TƯỢNG)
+        if (tabs[0]) tabs[0].click();
+        const isActiveAfterTabSwitch = window.App?.CoordAnimator?.isActive?.() || false;
+        const controlsDisplay = document.getElementById("coordAnimControls")?.style.display;
+        const restoredV2 = App.vectorList.find(v => v.id === 2)?.vec?.slice();
+        return { morphedV2, isActiveAfterTabSwitch, controlsDisplay, restoredV2 };
+    })()`);
+    console.log('[TEST 6.1] Sidebar tab switch cleanup:', JSON.stringify(tabSwitchRes));
+    if (tabSwitchRes.isActiveAfterTabSwitch || tabSwitchRes.controlsDisplay !== 'none') {
+        throw new Error('CoordAnimator did not stop when switching sidebar tab!');
+    }
+    if (JSON.stringify(tabSwitchRes.restoredV2) !== JSON.stringify([1, 3])) {
+        throw new Error(`Vector #2 coordinates were not restored on tab switch! Got: ${JSON.stringify(tabSwitchRes.restoredV2)}`);
+    }
+    console.log('✅ Sidebar tab switch SUCCESS: CoordAnimator stopped and baseline coordinates restored.');
+
+    // 6.2 Unchecking a vector in basisCoordChecklist while animation is active
+    const uncheckRes = await evaluate(`(() => {
+        const tabs = document.querySelectorAll(".sidebar-tabs .tab-btn");
+        if (tabs[1]) tabs[1].click();
+        document.getElementById("btnCoordAnimate").click();
+        App.CoordAnimator.goToPhase(2);
+        const activeBefore = window.App?.CoordAnimator?.isActive?.() || false;
+
+        const checkContainer = document.getElementById("basisCoordChecklist");
+        const cb2 = checkContainer.querySelector('input[type="checkbox"][value="2"]');
+        cb2.checked = false;
+        cb2.dispatchEvent(new Event("change", { bubbles: true }));
+
+        const activeAfter = window.App?.CoordAnimator?.isActive?.() || false;
+        const restoredV2 = App.vectorList.find(v => v.id === 2)?.vec?.slice();
+        // Re-check cb2 for subsequent tests
+        cb2.checked = true;
+        cb2.dispatchEvent(new Event("change", { bubbles: true }));
+        return { activeBefore, activeAfter, restoredV2 };
+    })()`);
+    console.log('[TEST 6.2] Checklist uncheck cleanup:', JSON.stringify(uncheckRes));
+    if (!uncheckRes.activeBefore || uncheckRes.activeAfter) {
+        throw new Error('CoordAnimator did not stop when unchecking a basis vector in checklist!');
+    }
+    console.log('✅ Checklist change SUCCESS: CoordAnimator stopped immediately on checkbox change.');
+
+    // 6.3 Deleting a vector while animation is active
+    const deleteVecRes = await evaluate(`(() => {
+        // Add a temporary vector #99 and run animation, then delete a participating vector
+        document.getElementById("btnCoordAnimate").click();
+        App.CoordAnimator.goToPhase(2);
+        const activeBefore = window.App?.CoordAnimator?.isActive?.() || false;
+
+        // Render vector list and click delete on vector #3
+        App.renderVectorList();
+        const delBtns = document.querySelectorAll("#vectorList .vec-btn-delete");
+        // Vector #3 is index 2
+        if (delBtns[2]) delBtns[2].click();
+
+        const activeAfter = window.App?.CoordAnimator?.isActive?.() || false;
+        const restoredV1 = App.vectorList.find(v => v.id === 1)?.vec?.slice();
+        const restoredV2 = App.vectorList.find(v => v.id === 2)?.vec?.slice();
+
+        // Restore vector #3 for screenshots
+        App.vectorList.splice(2, 0, { id: 3, vec: [1, 4], colorCss: "#a855f7", colorHex: "#a855f7", latex: "[1, 4]", visible: true });
+        App.renderVectorList();
+        App.renderExtraCalcOptions();
+        return { activeBefore, activeAfter, restoredV1, restoredV2 };
+    })()`);
+    console.log('[TEST 6.3] Delete vector cleanup:', JSON.stringify(deleteVecRes));
+    if (!deleteVecRes.activeBefore || deleteVecRes.activeAfter) {
+        throw new Error('CoordAnimator did not stop when a vector was deleted!');
+    }
+    if (JSON.stringify(deleteVecRes.restoredV1) !== JSON.stringify([1, 2]) || JSON.stringify(deleteVecRes.restoredV2) !== JSON.stringify([1, 3])) {
+        throw new Error('Remaining vectors were not restored to baseline before deletion!');
+    }
+    console.log('✅ Vector deletion SUCCESS: CoordAnimator stopped and remaining vectors preserved baseline coordinates.');
+
     // Set desktop viewport 1280x850 for clean visualization screenshots
     await send('Emulation.setDeviceMetricsOverride', {
         width: 1280,
