@@ -1,560 +1,603 @@
 // =========================================================================
 // topic7_quadratic_forms_conics.js - Module Chủ Đề 7: Dạng Toàn Phương
-// Bài toán: Dạng toàn phương, nhận diện và chéo hóa nắn thẳng Parabol / Conic
+// Khảo sát Dạng Toàn Phương x^T A x, Trục Đối Xứng và Đưa về Dạng Chính Tắc
+// Đồng bộ 2D (2x2 Conic) và 3D (3x3 Quadric) với App.matrixList & App.ConicAnimator
+// Tuân thủ triệt để Zero Em-dash (\u2014) và chuẩn mực Anti-Slop.
 // =========================================================================
 (function () {
   window.App = window.App || {};
 
-  // Trạng thái lưu trữ của Conic hiện tại
-  let conicState = {
-    a: 1,
-    b: -1,
-    c: 1,
-    d: -5.65685, // -4*sqrt(2)
-    e: -5.65685, // -4*sqrt(2)
-    f: 0,
-    lambda1: 2,
-    lambda2: 0,
-    u1: [Math.SQRT1_2, -Math.SQRT1_2],
-    u2: [Math.SQRT1_2, Math.SQRT1_2],
-    theta: -Math.PI / 4, // -45 deg
-    currentAngle: -Math.PI / 4,
-    conicType: "Parabol",
-    isRotated: false,
-    animProgress: 0,
-    animating: false
-  };
+  function $(id) {
+    return document.getElementById(id);
+  }
 
-  App.activeConicState = null;
+  function fmtScalarLatex(val) {
+    if (!Number.isFinite(val) || Math.abs(val) < 1e-7) return "0";
+    const sign = val < 0 ? "-" : "";
+    const abs = Math.abs(val);
+    if (Math.abs(abs - Math.round(abs)) < 1e-6) {
+      return sign + String(Math.round(abs));
+    }
+    for (let den = 2; den <= 24; den++) {
+      const num = Math.round(abs * den);
+      if (Math.abs(abs - num / den) < 1e-6) {
+        return `${sign}\\frac{${num}}{${den}}`;
+      }
+    }
+    return (val < 0 ? "-" : "") + parseFloat(abs.toFixed(3)).toString();
+  }
 
-  // --- 1. THUẬT TOÁN ĐẠI SỐ TUYẾN TÍNH ---
-  function solveConicParameters(a, b, c, d, e, f) {
-    // Ma trận đối xứng A = [[a, b], [b, c]]
-    const trace = a + c;
-    const detA = a * c - b * b;
-    const disc = Math.max(0, (a - c) * (a - c) + 4 * b * b);
-    const sqrtDisc = Math.sqrt(disc);
+  function fmtScalarPlain(val) {
+    if (!Number.isFinite(val) || Math.abs(val) < 1e-6) return "0";
+    if (Math.abs(val - Math.round(val)) < 1e-5) return String(Math.round(val));
+    for (let den = 2; den <= 16; den++) {
+      const num = Math.round(val * den);
+      if (Math.abs(val - num / den) < 1e-5) {
+        return `${num}/${den}`;
+      }
+    }
+    return parseFloat(val.toFixed(2)).toString();
+  }
 
-    // Trị riêng
-    let l1 = (trace + sqrtDisc) / 2;
-    let l2 = (trace - sqrtDisc) / 2;
+  function matrixToBmatrixLatex(M) {
+    if (!Array.isArray(M) || !M.length) return "\\begin{bmatrix} 0 \\end{bmatrix}";
+    const rows = M.map((r) => r.map(fmtScalarLatex).join(" & ")).join(" \\\\ ");
+    return `\\begin{bmatrix} ${rows} \\end{bmatrix}`;
+  }
 
-    // Làm tròn số gần nguyên (ví dụ 1.999999 -> 2)
-    if (Math.abs(l1 - Math.round(l1)) < 1e-5) l1 = Math.round(l1);
-    if (Math.abs(l2 - Math.round(l2)) < 1e-5) l2 = Math.round(l2);
+  function vecToColLatex(v) {
+    if (!Array.isArray(v)) return "\\begin{bmatrix} 0 \\end{bmatrix}";
+    return `\\begin{bmatrix} ${v.map(fmtScalarLatex).join(" \\\\ ")} \\end{bmatrix}`;
+  }
 
-    // Vector riêng chuẩn hóa
-    let u1 = [1, 0];
-    let u2 = [0, 1];
+  function normVec(v) {
+    return Math.hypot(v[0] || 0, v[1] || 0, v[2] || 0);
+  }
 
-    if (Math.abs(b) > 1e-7) {
-      const v1 = [l1 - c, b];
-      const len1 = Math.hypot(v1[0], v1[1]) || 1;
-      u1 = [v1[0] / len1, v1[1] / len1];
-      u2 = [-u1[1], u1[0]];
-    } else {
-      if (a >= c) {
-        u1 = [1, 0];
-        u2 = [0, 1];
-      } else {
-        u1 = [0, 1];
-        u2 = [-1, 0];
+  function cross3(a, b) {
+    return [
+      (a[1] || 0) * (b[2] || 0) - (a[2] || 0) * (b[1] || 0),
+      (a[2] || 0) * (b[0] || 0) - (a[0] || 0) * (b[2] || 0),
+      (a[0] || 0) * (b[1] || 0) - (a[1] || 0) * (b[0] || 0)
+    ];
+  }
+
+  // --- THUẬT TOÁN ĐẠI SỐ TUYẾN TÍNH PHÂN TÍCH DẠNG TOÀN PHƯƠNG ---
+  function computeConicAnalysis(rawValues, n) {
+    const dim = n === 3 ? 3 : 2;
+    const origMatrix = [];
+    for (let i = 0; i < dim; i++) {
+      origMatrix[i] = [];
+      for (let j = 0; j < dim; j++) {
+        origMatrix[i][j] = Number(rawValues?.[i]?.[j] ?? 0);
       }
     }
 
-    const theta = Math.atan2(u1[1], u1[0]);
-
-    // Phân loại conic theo dấu trị riêng (Định lý Sylvester)
-    let type = "Parabol";
-    if (Math.abs(l1) < 1e-5 || Math.abs(l2) < 1e-5) {
-      type = "Parabol";
-    } else if (l1 * l2 > 0) {
-      type = "Elip";
-    } else {
-      type = "Hyperbol";
+    // 1. Kiểm tra đối xứng và trích xuất ma trận đối xứng A_sym = 1/2 (A + A^T)
+    let isSymmetric = true;
+    for (let i = 0; i < dim; i++) {
+      for (let j = i + 1; j < dim; j++) {
+        if (Math.abs(origMatrix[i][j] - origMatrix[j][i]) > 1e-5) {
+          isSymmetric = false;
+          break;
+        }
+      }
+      if (!isSymmetric) break;
     }
 
+    const A = [];
+    for (let i = 0; i < dim; i++) {
+      A[i] = [];
+      for (let j = 0; j < dim; j++) {
+        A[i][j] = (origMatrix[i][j] + origMatrix[j][i]) / 2;
+      }
+    }
+
+    let eigenvalues = [];
+    let eigenvectors = [];
+    let P = [];
+    let theta2D = 0;
+
+    if (dim === 2) {
+      const a = A[0][0];
+      const b = A[0][1];
+      const c = A[1][1];
+      const tr = a + c;
+      const disc = Math.sqrt(Math.max(0, (a - c) * (a - c) + 4 * b * b));
+      let l1 = (tr + disc) / 2;
+      let l2 = (tr - disc) / 2;
+      if (Math.abs(l1 - Math.round(l1)) < 1e-5) l1 = Math.round(l1);
+      if (Math.abs(l2 - Math.round(l2)) < 1e-5) l2 = Math.round(l2);
+
+      let e1 = [1, 0];
+      let e2 = [0, 1];
+      if (Math.abs(b) > 1e-6) {
+        const vx = b;
+        const vy = l1 - a;
+        const len = Math.hypot(vx, vy) || 1;
+        e1 = [vx / len, vy / len];
+        if (e1[0] < -1e-6 || (Math.abs(e1[0]) <= 1e-6 && e1[1] < 0)) {
+          e1 = [-e1[0], -e1[1]];
+        }
+        e2 = [-e1[1], e1[0]];
+      } else if (a < c) {
+        e1 = [0, 1];
+        e2 = [-1, 0];
+      }
+
+      theta2D = Math.atan2(e1[1], e1[0]);
+      eigenvalues = [l1, l2];
+      eigenvectors = [e1, e2];
+      P = [
+        [e1[0], e2[0]],
+        [e1[1], e2[1]]
+      ];
+    } else {
+      // Ma trận đối xứng 3x3: Thuật toán Jacobi tìm trị riêng và vector riêng trực chuẩn
+      const D = A.map((r) => r.slice());
+      const V = [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1]
+      ];
+      for (let iter = 0; iter < 50; iter++) {
+        let p = 0, q = 1;
+        let maxOff = Math.abs(D[0][1]);
+        if (Math.abs(D[0][2]) > maxOff) { p = 0; q = 2; maxOff = Math.abs(D[0][2]); }
+        if (Math.abs(D[1][2]) > maxOff) { p = 1; q = 2; maxOff = Math.abs(D[1][2]); }
+        if (maxOff < 1e-10) break;
+
+        const diff = D[q][q] - D[p][p];
+        let t;
+        if (Math.abs(diff) < 1e-12) {
+          t = D[p][q] > 0 ? 1 : -1;
+        } else {
+          const phi = diff / (2 * D[p][q]);
+          t = 1 / (Math.abs(phi) + Math.sqrt(phi * phi + 1));
+          if (phi < 0) t = -t;
+        }
+        const c = 1 / Math.sqrt(1 + t * t);
+        const s = t * c;
+        const tau = s / (1 + c);
+        const h = t * D[p][q];
+        D[p][p] -= h;
+        D[q][q] += h;
+        D[p][q] = 0;
+        D[q][p] = 0;
+
+        for (let r = 0; r < 3; r++) {
+          if (r !== p && r !== q) {
+            const g = D[r][p];
+            const m = D[r][q];
+            D[r][p] = D[p][r] = g - s * (m + g * tau);
+            D[r][q] = D[q][r] = m + s * (g - m * tau);
+          }
+          const vp = V[r][p];
+          const vq = V[r][q];
+          V[r][p] = vp - s * (vq + vp * tau);
+          V[r][q] = vq + s * (vp - vq * tau);
+        }
+      }
+
+      const pairs = [0, 1, 2].map((idx) => {
+        let lam = D[idx][idx];
+        if (Math.abs(lam - Math.round(lam)) < 1e-5) lam = Math.round(lam);
+        return {
+          lam,
+          vec: [V[0][idx], V[1][idx], V[2][idx]]
+        };
+      });
+      pairs.sort((x, y) => y.lam - x.lam);
+
+      eigenvalues = pairs.map((p) => p.lam);
+      let e1 = pairs[0].vec;
+      let e2 = pairs[1].vec;
+      const n1 = normVec(e1) || 1;
+      e1 = e1.map((x) => x / n1);
+      const n2 = normVec(e2) || 1;
+      e2 = e2.map((x) => x / n2);
+      const e3 = cross3(e1, e2); // Đảm bảo hệ trục thuận det(P) = +1
+      eigenvectors = [e1, e2, e3];
+      P = [
+        [e1[0], e2[0], e3[0]],
+        [e1[1], e2[1], e3[1]],
+        [e1[2], e2[2], e3[2]]
+      ];
+    }
+
+    // Chỉ số quán tính Sylvester (p: số trị riêng dương, q: số trị riêng âm)
+    const pPos = eigenvalues.filter((x) => x > 1e-5).length;
+    const qNeg = eigenvalues.filter((x) => x < -1e-5).length;
+    const rank = pPos + qNeg;
+
+    // Phân loại đường bậc hai / mặt bậc hai x^T A x = 1
+    let conicType = "";
+    let statusColor = "var(--primary-base, #0284c7)";
+    if (dim === 2) {
+      const [l1, l2] = eigenvalues;
+      if (l1 > 1e-5 && l2 > 1e-5) {
+        conicType = Math.abs(l1 - l2) < 1e-5 ? "Đường tròn (Elip cân)" : "Elip xác định dương";
+        statusColor = "#10b981";
+      } else if (l1 * l2 < -1e-5) {
+        conicType = "Hyperbol (Đổi dấu)";
+        statusColor = "#f59e0b";
+      } else if (l1 <= 1e-5 && l2 <= 1e-5) {
+        conicType = "Xác định âm (Tập mức = 1 rỗng)";
+        statusColor = "#ef4444";
+      } else {
+        conicType = "Suy biến (Cặp đường thẳng song song)";
+        statusColor = "#8b5cf6";
+      }
+    } else {
+      if (pPos === 3) {
+        conicType = "Mặt Elipsoid (Xác định dương)";
+        statusColor = "#10b981";
+      } else if (pPos === 2 && qNeg === 1) {
+        conicType = "Hyperboloid 1 tầng";
+        statusColor = "#f59e0b";
+      } else if (pPos === 1 && qNeg === 2) {
+        conicType = "Hyperboloid 2 tầng";
+        statusColor = "#0284c7";
+      } else if (rank < 3 && pPos > 0) {
+        conicType = "Mặt trụ bậc hai (Suy biến)";
+        statusColor = "#8b5cf6";
+      } else {
+        conicType = "Mặt bậc hai xác định âm";
+        statusColor = "#ef4444";
+      }
+    }
+
+    // Chuỗi LaTeX của dạng toàn phương ban đầu Q(x) = x^T A x
+    const varNames = dim === 3 ? ["x_1", "x_2", "x_3"] : ["x", "y"];
+    const qTerms = [];
+    for (let i = 0; i < dim; i++) {
+      const aii = A[i][i];
+      if (Math.abs(aii) > 1e-6) {
+        const coeff = fmtScalarLatex(Math.abs(aii));
+        const sign = aii < 0 ? "-" : qTerms.length > 0 ? "+" : "";
+        const cStr = coeff === "1" ? "" : coeff;
+        qTerms.push(`${sign} ${cStr}${varNames[i]}^2`);
+      }
+    }
+    for (let i = 0; i < dim; i++) {
+      for (let j = i + 1; j < dim; j++) {
+        const twoAij = 2 * A[i][j];
+        if (Math.abs(twoAij) > 1e-6) {
+          const coeff = fmtScalarLatex(Math.abs(twoAij));
+          const sign = twoAij < 0 ? "-" : qTerms.length > 0 ? "+" : "";
+          const cStr = coeff === "1" ? "" : coeff;
+          qTerms.push(`${sign} ${cStr}${varNames[i]}${varNames[j]}`);
+        }
+      }
+    }
+    const qOrigLatex = `Q(${varNames.join(",")}) = ${qTerms.length ? qTerms.join(" ") : "0"}`;
+
+    // Chuỗi LaTeX của dạng chính tắc Q(Y) = sum lambda_i Y_i^2
+    const yVars = dim === 3 ? ["Y_1", "Y_2", "Y_3"] : ["X", "Y"];
+    const canTerms = [];
+    for (let i = 0; i < dim; i++) {
+      const lam = eigenvalues[i];
+      if (Math.abs(lam) > 1e-6) {
+        const coeff = fmtScalarLatex(Math.abs(lam));
+        const sign = lam < 0 ? "-" : canTerms.length > 0 ? "+" : "";
+        const cStr = coeff === "1" ? "" : coeff;
+        canTerms.push(`${sign} ${cStr}${yVars[i]}^2`);
+      }
+    }
+    const canonicalLatex = `${canTerms.length ? canTerms.join(" ") : "0"} = 1`;
+
     return {
-      a, b, c, d, e, f,
-      lambda1: l1,
-      lambda2: l2,
-      u1,
-      u2,
-      theta,
-      currentAngle: theta,
-      conicType: type,
-      isRotated: false
+      dim,
+      is3D: dim === 3,
+      origMatrix,
+      matrix: A,
+      isSymmetric,
+      eigenvalues,
+      eigenvectors,
+      P,
+      theta2D,
+      thetaDeg: Number(((theta2D * 180) / Math.PI).toFixed(1)),
+      pPos,
+      qNeg,
+      rank,
+      conicType,
+      statusColor,
+      qOrigLatex,
+      canonicalLatex
     };
   }
 
-  // --- 2. VẼ ĐỒ THỊ TRÊN CANVAS 2D (HOOK VÀO Vec2D) ---
-  function drawConicOnCanvas2D(ctx, gridInfo, size) {
-    if (!App.activeConicState) return;
+  // --- KẾT XUẤT KHUNG KẾT QUẢ MATH-CLEAN-CARD ---
+  function renderConicInfoCard(matItem, analysis) {
+    const box = $("result_conic_info");
+    if (!box || !analysis) return;
 
-    const s = App.activeConicState;
-    const { cx, cy, px } = gridInfo;
-    const { w, h } = size;
+    box.style.display = "block";
+    box.style.padding = "0";
+    box.style.background = "transparent";
+    box.style.border = "none";
 
-    // Giới hạn tọa độ thực trên màn hình (World Coordinates)
-    const minX = -cx / px;
-    const maxX = (w - cx) / px;
-    const minY = (cy - h) / px;
-    const maxY = cy / px;
+    const mfStyle =
+      "background: var(--bg-paper, var(--card, #fff)); border: 1px solid var(--border-subtle, var(--border, #ccc)); border-radius: 4px; padding: 6px 12px; font-size: 1.05em; color: var(--text-main, var(--fg, #333)); pointer-events: none; width: 100%; box-sizing: border-box;";
 
-    ctx.save();
+    const eigListLatex = analysis.eigenvalues
+      .map((lam, idx) => `\\lambda_${idx + 1} = ${fmtScalarLatex(lam)}`)
+      .join(", \\quad ");
 
-    // 1. Vẽ 2 trục đối xứng vector riêng
-    const rot = s.currentAngle;
-    const cosR = Math.cos(rot);
-    const sinR = Math.sin(rot);
+    const pMatrixLatex = `P = ${matrixToBmatrixLatex(analysis.P)}, \\quad \\det(P) = +1`;
 
-    const axisLen = Math.max(w, h) / px;
+    const symWarningHtml = !analysis.isSymmetric
+      ? `<div style="margin-bottom: 10px; padding: 6px 10px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 4px; font-size: 11.5px; color: var(--fg);">
+           Ma trận gốc chưa đối xứng ($A \\neq A^T$). Hệ thống đã tự động trích xuất ma trận đối xứng liên kết $A_{\\text{sym}} = \\frac{1}{2}(A + A^T)$ giữ nguyên dạng toàn phương $x^T A x$.
+         </div>`
+      : "";
 
-    // Trục chính 1 (theo vector u1)
-    ctx.beginPath();
-    ctx.strokeStyle = "rgba(0, 180, 255, 0.4)";
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([6, 6]);
-    ctx.moveTo(cx - cosR * axisLen * px, cy + sinR * axisLen * px);
-    ctx.lineTo(cx + cosR * axisLen * px, cy - sinR * axisLen * px);
-    ctx.stroke();
+    box.innerHTML = `
+      <div class="math-Clean-Card" style="margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border-subtle, var(--border));">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: var(--bg-hover, rgba(0,0,0,0.03)); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle, var(--border));">
+          <span style="font-size: 0.78em; color: var(--text-muted, var(--muted)); font-weight: 700;">CHỈ SỐ QUÁN TÍNH: <strong style="color: var(--primary-base, var(--fg)); font-size: 1.1em;">(${analysis.pPos}, ${analysis.qNeg})</strong></span>
+          <span style="font-size: 0.8em; font-weight: 600; color: ${analysis.statusColor};">${analysis.conicType}</span>
+        </div>
 
-    // Trục chính 2 (theo vector u2)
-    ctx.beginPath();
-    ctx.strokeStyle = "rgba(245, 158, 11, 0.4)";
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([6, 6]);
-    ctx.moveTo(cx + sinR * axisLen * px, cy + cosR * axisLen * px);
-    ctx.lineTo(cx - sinR * axisLen * px, cy - cosR * axisLen * px);
-    ctx.stroke();
-    ctx.setLineDash([]); // Reset line dash
+        ${symWarningHtml}
 
-    // 2. Vẽ 2 vector riêng trực chuẩn (Mũi tên u1, u2)
-    const arrowScale = Math.min(2.5, Math.max(1.2, 120 / px));
-    drawArrow(ctx, cx, cy, cx + cosR * arrowScale * px, cy - sinR * arrowScale * px, "#00e5ff", 2.5);
-    drawArrow(ctx, cx, cy, cx - sinR * arrowScale * px, cy - cosR * arrowScale * px, "#f59e0b", 2.5);
+        <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">DẠNG TOÀN PHƯƠNG BAN ĐẦU:</div>
+        <div style="margin-bottom: 10px;">
+          <math-field read-only style="${mfStyle}">${analysis.qOrigLatex}</math-field>
+        </div>
 
-    // Nhãn vector riêng
-    ctx.font = "bold 11px sans-serif";
-    ctx.fillStyle = "#00e5ff";
-    ctx.fillText("u1 (λ1=" + s.lambda1.toFixed(1) + ")", cx + cosR * (arrowScale + 0.3) * px, cy - sinR * (arrowScale + 0.3) * px);
-    ctx.fillStyle = "#f59e0b";
-    ctx.fillText("u2 (λ2=" + s.lambda2.toFixed(1) + ")", cx - sinR * (arrowScale + 0.3) * px, cy - cosR * (arrowScale + 0.3) * px);
+        <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">PHƯƠNG TRÌNH CHÍNH TẮC (SAU PHÉP QUAY X = PY):</div>
+        <div style="margin-bottom: 10px;">
+          <math-field read-only style="${mfStyle}">${analysis.canonicalLatex}</math-field>
+        </div>
 
-    // 3. Vẽ đường cong Conic (Parabol / Elip / Hyperbol)
-    // Dùng kỹ thuật quét hàm ẩn F(x,y) = 0 trên lưới điểm hoặc tham số hóa
-    ctx.lineWidth = 2.8;
-    if (s.conicType === "Parabol") {
-      ctx.strokeStyle = "#8b5cf6"; // Tím Radix cho Parabol
-    } else if (s.conicType === "Elip") {
-      ctx.strokeStyle = "#10b981"; // Lục ngọc cho Elip
-    } else {
-      ctx.strokeStyle = "#f59e0b"; // Hổ phách cho Hyperbol
-    }
+        <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">CÁC TRỊ RIÊNG ĐẶC TRƯNG:</div>
+        <div style="margin-bottom: 10px;">
+          <math-field read-only style="${mfStyle}">${eigListLatex}</math-field>
+        </div>
 
-    renderImplicitConic(ctx, s, minX, maxX, minY, maxY, cx, cy, px);
+        <div style="border-top: 1px dashed var(--border-subtle, var(--border)); padding-top: 8px;">
+          <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">MA TRẬN XOAY TRỰC GIAO P = [e₁ e₂ ...]:</div>
+          <math-field read-only style="${mfStyle}">${pMatrixLatex}</math-field>
+        </div>
 
-    ctx.restore();
+        <div style="margin-top: 10px; font-size: 0.78em; color: var(--text-muted, var(--muted)); font-style: italic; text-align: center;">Nhấn "Trực quan" để xem hoạt cảnh xoay hệ trục 3 bước hoặc "Lời giải" để xem chứng minh chi tiết!</div>
+      </div>
+    `;
   }
 
-  function drawArrow(ctx, x1, y1, x2, y2, color, width) {
-    const headLen = 10;
-    const angle = Math.atan2(y2 - y1, x2 - x1);
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.lineWidth = width;
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
+  // --- BỘ SINH LỜI GIẢI HỌC THUẬT 2 TAB (solution_panel.js) ---
+  function generateConicAcademicSolution(matItem, analysis) {
+    const n = analysis.dim;
+    const A_latex = matrixToBmatrixLatex(analysis.matrix);
+    const P_latex = matrixToBmatrixLatex(analysis.P);
+    const eigLatex = analysis.eigenvalues
+      .map((lam, i) => `\\lambda_${i + 1} = ${fmtScalarLatex(lam)}`)
+      .join(", \\quad ");
+    const eColsLatex = analysis.eigenvectors
+      .map((vec, i) => `e_${i + 1} = ${vecToColLatex(vec)}`)
+      .join(", \\quad ");
 
-    ctx.beginPath();
-    ctx.moveTo(x2, y2);
-    ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
-    ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  // Quét đường cong bậc hai mượt mà
-  function renderImplicitConic(ctx, s, minX, maxX, minY, maxY, cx, cy, px) {
-    // Nếu là góc xoay biến thiên trong lúc hoạt họa (Rotate to Canonical)
-    // Ta biến đổi phương trình sang hệ trục hiện tại
-    const rot = s.currentAngle;
-    const deltaTheta = rot - s.theta; // Góc bù khi xoay
-    const cosD = Math.cos(deltaTheta);
-    const sinD = Math.sin(deltaTheta);
-
-    // Đơn giản hóa: Vẽ theo tham số trong hệ trục riêng rồi quay ngược lại
-    // Nếu là Parabol (một trị riêng bằng 0 hoặc xấp xỉ 0)
-    if (s.conicType === "Parabol") {
-      // Giả sử lambda1 != 0, lambda2 ~ 0: phương trình chính tắc dạng lambda1 * x'^2 + e' * y' + d' * x' + f' = 0
-      // Tham số hóa x' từ -20 đến 20
-      ctx.beginPath();
-      let started = false;
-      const step = 0.05;
-      const bound = Math.max(15, (maxX - minX) * 1.2);
-
-      // Tính các hệ số trong hệ trục riêng (u1, u2)
-      const dPrime = s.d * s.u1[0] + s.e * s.u1[1];
-      const ePrime = s.d * s.u2[0] + s.e * s.u2[1];
-
-      for (let xP = -bound; xP <= bound; xP += step) {
-        let yP = 0;
-        if (Math.abs(s.lambda2) < 1e-5) {
-          // lambda1 * x'^2 + d'*x' + e'*y' + f = 0  => y' = -(lambda1 * x'^2 + d'*x' + f) / e'
-          const div = Math.abs(ePrime) > 1e-4 ? ePrime : (Math.abs(s.d) > 1e-4 ? s.d : -1);
-          yP = -(s.lambda1 * xP * xP + dPrime * xP + s.f) / div;
-        } else {
-          // lambda2 * y'^2 + d'*x' + e'*y' + f = 0 => x' = -(lambda2 * y'^2 + e'*y' + f) / d'
-          const div = Math.abs(dPrime) > 1e-4 ? dPrime : -1;
-          yP = xP;
-          xP = -(s.lambda2 * yP * yP + ePrime * yP + s.f) / div;
-        }
-
-        // Biến đổi tọa độ theo góc hiện tại rot
-        const cosR = Math.cos(rot);
-        const sinR = Math.sin(rot);
-        const worldX = xP * cosR - yP * sinR;
-        const worldY = xP * sinR + yP * cosR;
-
-        const scrX = cx + worldX * px;
-        const scrY = cy - worldY * px;
-
-        if (!started) {
-          ctx.moveTo(scrX, scrY);
-          started = true;
-        } else {
-          ctx.lineTo(scrX, scrY);
-        }
-      }
-      ctx.stroke();
-    } else if (s.conicType === "Elip") {
-      // Elip: lambda1 * x'^2 + lambda2 * y'^2 = C
-      const C = Math.max(0.1, -s.f || 8);
-      const aAxis = Math.sqrt(Math.max(0.01, C / Math.max(0.01, s.lambda1)));
-      const bAxis = Math.sqrt(Math.max(0.01, C / Math.max(0.01, s.lambda2)));
-
-      ctx.beginPath();
-      const steps = 120;
-      for (let i = 0; i <= steps; i++) {
-        const phi = (i / steps) * Math.PI * 2;
-        const xP = aAxis * Math.cos(phi);
-        const yP = bAxis * Math.sin(phi);
-
-        const cosR = Math.cos(rot);
-        const sinR = Math.sin(rot);
-        const worldX = xP * cosR - yP * sinR;
-        const worldY = xP * sinR + yP * cosR;
-
-        const scrX = cx + worldX * px;
-        const scrY = cy - worldY * px;
-
-        if (i === 0) ctx.moveTo(scrX, scrY);
-        else ctx.lineTo(scrX, scrY);
-      }
-      ctx.closePath();
-      ctx.stroke();
-    } else {
-      // Hyperbol: lambda1 * x'^2 + lambda2 * y'^2 = C (lambda1 > 0, lambda2 < 0)
-      const C = Math.abs(s.f) > 0.01 ? Math.abs(s.f) : 3;
-      const aAxis = Math.sqrt(Math.max(0.01, C / Math.abs(s.lambda1)));
-      const bAxis = Math.sqrt(Math.max(0.01, C / Math.abs(s.lambda2)));
-
-      // 2 nhánh hyperbol
-      [-1, 1].forEach((branch) => {
-        ctx.beginPath();
-        let started = false;
-        for (let t = -2.5; t <= 2.5; t += 0.05) {
-          const xP = branch * aAxis * Math.cosh(t);
-          const yP = bAxis * Math.sinh(t);
-
-          const cosR = Math.cos(rot);
-          const sinR = Math.sin(rot);
-          const worldX = xP * cosR - yP * sinR;
-          const worldY = xP * sinR + yP * cosR;
-
-          const scrX = cx + worldX * px;
-          const scrY = cy - worldY * px;
-
-          if (!started) {
-            ctx.moveTo(scrX, scrY);
-            started = true;
-          } else {
-            ctx.lineTo(scrX, scrY);
-          }
-        }
-        ctx.stroke();
-      });
-    }
-  }
-
-  // --- 3. HOẠT HỌA CHÉO HÓA TRỰC GIAO (NẮN THẲNG CONIC) ---
-  function animateRotateToCanonical() {
-    if (!App.activeConicState) return;
-    const s = App.activeConicState;
-    if (s.animating) return;
-
-    s.animating = true;
-    const startAngle = s.currentAngle;
-    const targetAngle = 0; // Đưa về trục chuẩn 0 rad (song song Ox, Oy)
-    const duration = 1200; // 1.2 giây
-    const startTime = performance.now();
-
-    function step(now) {
-      const elapsed = now - startTime;
-      const t = Math.min(1, elapsed / duration);
-      // Easing: cubic-bezier mượt mà
-      const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-      s.currentAngle = startAngle + (targetAngle - startAngle) * ease;
-      s.isRotated = t >= 1;
-
-      // Vẽ lại canvas
-      if (window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {
-        Vec2D.draw2DAllVectors();
-      }
-
-      if (t < 1) {
-        requestAnimationFrame(step);
-      } else {
-        s.animating = false;
-        s.currentAngle = targetAngle;
-        if (window.App && typeof App.showToast === "function") {
-          App.showToast("Chéo hóa hoàn tất: Hệ trục đã được nắn về dạng chính tắc!", "success");
-        }
-      }
-    }
-
-    requestAnimationFrame(step);
-  }
-
-  // --- 4. BỘ SINH LỜI GIẢI CHI TIẾT (CHO SOLUTION PANEL) ---
-  function generateConicSolution(s) {
-    const deg = ((s.theta * 180) / Math.PI).toFixed(1);
-    const signType = s.conicType;
-
-    const htmlContent = `
-      <div style="font-family: var(--font-academic); line-height: 1.8; color: var(--fg);">
-        <h3 style="color: var(--primary-base); font-size: 1.15rem; margin-bottom: 12px;">
-          Khảo sát Dạng Toàn Phương và Đưa về Dạng Chính Tắc
-        </h3>
-        <p style="margin-bottom: 14px;">
-          Cho phương trình đường cong bậc hai tổng quát:
+    const tab1Html = `
+      <div style="padding: 6px 0; font-size: 13.5px; line-height: 1.7; color: var(--fg);">
+        <p style="margin-bottom: 12px;">
+          Xét dạng toàn phương trên $\\mathbb{R}^${n}$ có biểu thức giải tích:
+          $$${analysis.qOrigLatex}$$
+          Ma trận đối xứng thực liên kết với dạng toàn phương là:
+          $$A = ${A_latex}$$
         </p>
-        <div class="sol-math-block">
-          $$${s.a}x^2 + ${2 * s.b}xy + ${s.c}y^2 + (${s.d})x + (${s.e})y + (${s.f}) = 0$$
+
+        <div style="background: var(--bg-hover); border-left: 3px solid var(--primary-base); padding: 10px 14px; margin-bottom: 14px; border-radius: 2px;">
+          <strong>Mục tiêu:</strong> Chéo hóa trực giao ma trận đối xứng $A = P D P^T$ để khử hoàn toàn các số hạng chéo $x_i x_j$ ($i \\neq j$) và xác định các trục đối xứng hình học.
         </div>
 
-        <div style="margin: 20px 0 10px 0; font-weight: 700; color: var(--primary-hover);">
-          Bước 1: Thiết lập ma trận đối xứng của dạng toàn phương
-        </div>
-        <p>Phần thuần nhất bậc hai $q(x, y) = ${s.a}x^2 + ${2 * s.b}xy + ${s.c}y^2$ có ma trận đối xứng biểu diễn:</p>
-        <div class="sol-math-block">
-          $$A = \\begin{pmatrix} ${s.a} & ${s.b} \\\\ ${s.b} & ${s.c} \\end{pmatrix}$$
-        </div>
+        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
+          Bước 1: Giải Phương trình Đặc trưng tìm Trị riêng
+        </h4>
+        <p>
+          Xét đa thức đặc trưng $\\det(A - \\lambda I_${n}) = 0$. Vì $A = A^T$ là ma trận đối xứng thực nên toàn bộ nghiệm đặc trưng đều là số thực:
+          $$${eigLatex}$$
+        </p>
 
-        <div style="margin: 20px 0 10px 0; font-weight: 700; color: var(--primary-hover);">
-          Bước 2: Tìm đa thức đặc trưng và các trị riêng
-        </div>
-        <p>Giải phương trình đặc trưng $\\det(A - \\lambda I) = 0$:</p>
-        <div class="sol-math-block">
-          $$\\det\\begin{pmatrix} ${s.a} - \\lambda & ${s.b} \\\\ ${s.b} & ${s.c} - \\lambda \\end{pmatrix} = \\lambda^2 - (${s.a + s.c})\\lambda + (${s.a * s.c - s.b * s.b}) = 0$$
-        </div>
-        <p>Phương trình có 2 nghiệm trị riêng:</p>
-        <div class="sol-math-block">
-          $$\\lambda_1 = ${s.lambda1}, \\quad \\lambda_2 = ${s.lambda2}$$
-        </div>
+        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
+          Bước 2: Tìm Hệ Cơ sở Trực chuẩn gồm các Vector riêng
+        </h4>
+        <p>
+          Ứng với mỗi trị riêng $\\lambda_i$, giải hệ $(A - \\lambda_i I)\\mathbf{v} = \\mathbf{0}$ rồi chuẩn hóa độ dài về 1, ta thu được hệ cơ sở trực chuẩn:
+          $$${eColsLatex}$$
+          Các vector riêng này đôi một vuông góc ($e_i \\perp e_j$) và chỉ đúng phương của các trục đối xứng chính của đường/mặt bậc hai.
+        </p>
 
-        <div style="margin: 20px 0 10px 0; font-weight: 700; color: var(--primary-hover);">
-          Bước 3: Xác định cơ sở trực chuẩn các vector riêng và ma trận trực giao P
-        </div>
-        <p>Các vector riêng trực chuẩn tương ứng với 2 trị riêng:</p>
-        <div class="sol-math-block">
-          $$\\vec{u}_1 = \\begin{pmatrix} ${s.u1[0].toFixed(4)} \\\\ ${s.u1[1].toFixed(4)} \\end{pmatrix}, \\quad \\vec{u}_2 = \\begin{pmatrix} ${s.u2[0].toFixed(4)} \\\\ ${s.u2[1].toFixed(4)} \\end{pmatrix}$$
-        </div>
-        <p>Ma trận trực giao làm chéo $P = [\\vec{u}_1, \\vec{u}_2]$ (tương ứng phép quay một góc $\\theta \\approx ${deg}^\\circ$):</p>
-        <div class="sol-math-block">
-          $$P = \\begin{pmatrix} ${s.u1[0].toFixed(4)} & ${s.u2[0].toFixed(4)} \\\\ ${s.u1[1].toFixed(4)} & ${s.u2[1].toFixed(4)} \\end{pmatrix}, \\quad P^T A P = \\begin{pmatrix} ${s.lambda1} & 0 \\\\ 0 & ${s.lambda2} \\end{pmatrix}$$
-        </div>
-
-        <div style="margin: 20px 0 10px 0; font-weight: 700; color: var(--primary-hover);">
-          Bước 4: Thực hiện phép đổi biến trực giao và đưa về dạng chính tắc
-        </div>
-        <p>Thực hiện đổi biến tọa độ $\\begin{pmatrix} x \\\\ y \\end{pmatrix} = P \\begin{pmatrix} x' \\\\ y' \\end{pmatrix}$, số hạng chéo $xy$ hoàn toàn bị triệt tiêu:</p>
-        <div class="sol-math-block">
-          $$${s.lambda1}(x')^2 + ${s.lambda2}(y')^2 + d'x' + e'y' + f = 0$$
-        </div>
-
-        <div style="margin: 20px 0 10px 0; font-weight: 700; color: var(--primary-hover);">
-          Bước 5: Phân loại hình học đường conic (Tiêu chuẩn Sylvester)
-        </div>
-        <p>Dựa trên tích 2 trị riêng $\\lambda_1 \\cdot \\lambda_2$:</p>
-        <div style="padding: 12px; border-left: 3px solid var(--primary-base); background: var(--bg-hover); margin: 10px 0; border-radius: 2px;">
-          <strong>Kết luận:</strong> Đây là một <strong>${signType.toUpperCase()}</strong>. Sau phép chéo hóa trực giao, trục đối xứng của đường cong trùng với phương của các vector riêng $\\vec{u}_1, \\vec{u}_2$.
-        </div>
+        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
+          Bước 3: Lập Ma trận Chuyển cơ sở Trực giao P và Đưa về Chính tắc
+        </h4>
+        <p>
+          Ghép các vector riêng trực chuẩn làm các cột của ma trận $P$ (sắp thứ tự sao cho $\\det(P) = +1$ để bảo toàn phép quay cứng):
+          $$P = ${P_latex}$$
+          Thực hiện phép đổi biến trực giao $\\mathbf{x} = P \\mathbf{Y}$, dạng toàn phương rút gọn về dạng chính tắc:
+          $$${analysis.canonicalLatex}$$
+          Phân loại hình học: <strong>${analysis.conicType}</strong>.
+        </p>
       </div>
     `;
 
-    return {
-      title: "Lời giải Dạng toàn phương & Conic",
-      math: `\\lambda_1=${s.lambda1},\\,\\lambda_2=${s.lambda2}`,
-      content1: htmlContent,
-      tab1Label: "Phương pháp Ma trận trực giao",
-      showSubTabs: false
-    };
+    const tab2Html = `
+      <div style="padding: 6px 0; font-size: 13.5px; line-height: 1.7; color: var(--fg);">
+        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 8px 0 6px; letter-spacing: 0.5px;">
+          1. Ý nghĩa Hình học của Số hạng chéo và Phép quay Trực giao
+        </h4>
+        <p>
+          Sự xuất hiện của các phần tử ngoài đường chéo chính $a_{ij} \\neq 0$ ($i \\neq j$) trong ma trận $A$ chính là nguyên nhân làm đường bậc hai (2D) hoặc mặt bậc hai (3D) bị xoay lệch khỏi hệ trục tọa độ chuẩn $Oxy${n === 3 ? "z" : ""}${n === 2 ? ` một góc $\\theta = ${analysis.thetaDeg}^\\circ$` : ""}.
+          <br>
+          Phép biến đổi trực giao $\\mathbf{x} = P \\mathbf{Y}$ với $P^T P = I, \\det(P) = +1$ là một <strong>phép đẳng cự (isometry)</strong>: nó giữ nguyên khoảng cách, góc và hình dạng của thiết diện, chỉ xoay hệ trục tọa độ về trùng khít với các trục riêng $e_i$.
+        </p>
+
+        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
+          2. Luật Quán tính Sylvester (Sylvester's Law of Inertia)
+        </h4>
+        <div style="background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.25); padding: 12px; border-radius: 4px; margin: 10px 0;">
+          <p style="margin: 0; font-weight: 600;">
+            Số lượng hệ số dương ($p$) và số lượng hệ số âm ($q$) trong dạng chính tắc của một dạng toàn phương thực là bất biến, không phụ thuộc vào cách chọn phép biến đổi tuyến tính không suy biến đưa nó về dạng chính tắc.
+          </p>
+        </div>
+        <p>
+          Đối với ma trận $A$ đang khảo sát:
+          <br>- Chỉ số dương quán tính: $p = ${analysis.pPos}$
+          <br>- Chỉ số âm quán tính: $q = ${analysis.qNeg}$
+          <br>- Hạng của dạng toàn phương: $r = p + q = ${analysis.rank}$
+          <br>- Cặp chỉ số quán tính $(p, q) = (${analysis.pPos}, ${analysis.qNeg})$ quyết định duy nhất hình thái hình học là <strong>${analysis.conicType}</strong>.
+        </p>
+      </div>
+    `;
+
+    if (window.App && typeof App.openSolutionPanel === "function") {
+      App.openSolutionPanel({
+        title: "Chéo Hóa Trực Giao & Chính Tắc Hóa Dạng Toàn Phương",
+        math: analysis.qOrigLatex,
+        content1: tab1Html,
+        content2: tab2Html,
+        content2Sub: "",
+        tab1Label: "Cách 1: Khử số hạng chéo & Chéo hóa trực giao",
+        tab2Label: "Cách 2: Phương pháp Lagrange & Dấu quán tính",
+        showSubTabs: false,
+        autoOpen: true
+      });
+    } else if (typeof App.openCustomSolution === "function") {
+      App.openCustomSolution("Chéo Hóa Trực Giao & Dạng Toàn Phương", tab1Html);
+    }
   }
 
-  // --- 5. ĐĂNG KÝ MODULE VÀ GẮN SỰ KIỆN UI ---
+  // =========================================================================
+  // MODULE ĐIỀU HÀNH CHỦ ĐỀ 7 (Topic7Module)
+  // =========================================================================
   const Topic7Module = {
-    id: "t7",
-    name: "Chủ đề 7: Dạng toàn phương",
-    tasks: [
-      { id: "quadratic_form_conic", title: "Dạng toàn phương và nắn thẳng Parabol / Conic" }
-    ],
+    _isInitialized: false,
+    _lastAnalysis: null,
 
     init: function () {
-      this.bindUI();
-    },
+      if (this._isInitialized) return;
+      const btnDraw = $("btnConicDraw");
+      if (!btnDraw) return;
+      this._isInitialized = true;
 
-    bindUI: function () {
-      const btnDraw = document.getElementById("btnConicDraw");
-      const btnRotate = document.getElementById("btnConicRotate");
-      const btnSol = document.getElementById("btnConicSolution");
-
-      // Preset buttons
-      const btnPParabol = document.getElementById("presetParabol");
-      const btnPEllipse = document.getElementById("presetEllipse");
-      const btnPHyperbola = document.getElementById("presetHyperbola");
-
-      if (btnPParabol) {
-        btnPParabol.onclick = () => {
-          this.setInputs(1, -1, 1, -5.65685, -5.65685, 0); // Parabol xoay nghiêng 45 deg
-          this.execute();
-        };
-      }
-      if (btnPEllipse) {
-        btnPEllipse.onclick = () => {
-          this.setInputs(5, -3, 5, 0, 0, -8); // Elip xoay 45 deg
-          this.execute();
-        };
-      }
-      if (btnPHyperbola) {
-        btnPHyperbola.onclick = () => {
-          this.setInputs(1, -2, 1, 0, 0, -3); // Hyperbol
-          this.execute();
-        };
+      if (typeof App.refreshConicMatrixDropdown === "function") {
+        App.refreshConicMatrixDropdown();
       }
 
-      if (btnDraw) {
-        btnDraw.onclick = () => this.execute();
-      }
-
-      if (btnRotate) {
-        btnRotate.onclick = () => animateRotateToCanonical();
-      }
-
-      if (btnSol) {
-        btnSol.onclick = () => {
-          if (!App.activeConicState) this.execute();
-          if (typeof App.openSolutionPanel === "function") {
-            const solData = generateConicSolution(App.activeConicState);
-            App.openSolutionPanel(solData);
+      const sel = $("conicMatrixSelect");
+      const previewEl = $("conicMatrixPreview");
+      if (sel) {
+        sel.addEventListener("change", () => {
+          if (typeof App.stopConicAnimation === "function") {
+            try { App.stopConicAnimation(); } catch (_) {}
           }
-        };
+          const selData = App.getOrEnsureSelectedSquareMatrix
+            ? App.getOrEnsureSelectedSquareMatrix("conicMatrixSelect", { requireSymmetric: true })
+            : null;
+          if (selData && typeof App.renderMatrixPreviewGrid === "function") {
+            App.renderMatrixPreviewGrid(previewEl, selData.item, { isConic: true });
+          }
+          const resBox = $("result_conic_info");
+          if (resBox && resBox.style.display !== "none") {
+            this.execute();
+          }
+        });
       }
-    },
 
-    setInputs: function (a, b, c, d, e, f) {
-      const setVal = (id, v) => {
-        const el = document.getElementById(id);
-        if (el) el.value = v;
-      };
-      setVal("conic_a", a);
-      setVal("conic_b", b);
-      setVal("conic_c", c);
-      setVal("conic_d", d);
-      setVal("conic_e", e);
-      setVal("conic_f", f);
+      // 1. Nút Chính tắc hóa (#btnConicDraw)
+      btnDraw.addEventListener("click", () => {
+        this.execute();
+      });
+
+      // 2. Nút Trực quan (#btnConicAnimate)
+      const btnAnimate = $("btnConicAnimate");
+      if (btnAnimate) {
+        btnAnimate.addEventListener("click", () => {
+          const selData = App.getOrEnsureSelectedSquareMatrix
+            ? App.getOrEnsureSelectedSquareMatrix("conicMatrixSelect", { requireSymmetric: true })
+            : null;
+          if (!selData) return;
+
+          if (window.App && App.ConicAnimator) {
+            if (App.ConicAnimator.isActive()) {
+              App.ConicAnimator.stop();
+            } else {
+              this.execute();
+              App.ConicAnimator.start(selData.item);
+            }
+          }
+        });
+      }
+
+      // 3. Nút Lời giải (#btnConicSolution)
+      const btnSol = $("btnConicSolution");
+      if (btnSol) {
+        btnSol.addEventListener("click", () => {
+          const selData = App.getOrEnsureSelectedSquareMatrix
+            ? App.getOrEnsureSelectedSquareMatrix("conicMatrixSelect", { requireSymmetric: true })
+            : null;
+          if (!selData) return;
+          const analysis = computeConicAnalysis(selData.values, selData.n);
+          generateConicAcademicSolution(selData.item, analysis);
+        });
+      }
     },
 
     execute: function () {
-      const getVal = (id, def) => {
-        const el = document.getElementById(id);
-        if (!el) return def;
-        const v = parseFloat(el.value);
-        return isNaN(v) ? def : v;
-      };
+      if (!this._isInitialized) this.init();
 
-      const a = getVal("conic_a", 1);
-      const b = getVal("conic_b", -1);
-      const c = getVal("conic_c", 1);
-      const d = getVal("conic_d", -5.65685);
-      const e = getVal("conic_e", -5.65685);
-      const f = getVal("conic_f", 0);
+      const selData = App.getOrEnsureSelectedSquareMatrix
+        ? App.getOrEnsureSelectedSquareMatrix("conicMatrixSelect", { requireSymmetric: true })
+        : null;
+      if (!selData) return;
 
-      conicState = solveConicParameters(a, b, c, d, e, f);
-      App.activeConicState = conicState;
+      const analysis = computeConicAnalysis(selData.values, selData.n);
+      this._lastAnalysis = analysis;
 
-      // Đăng ký hook vẽ 2D
-      App.custom2DDrawHook = drawConicOnCanvas2D;
-
-      // Cập nhật nhãn kết quả trên UI
-      const resEl = document.getElementById("result_conic_info");
-      if (resEl) {
-        const deg = ((conicState.theta * 180) / Math.PI).toFixed(1);
-        resEl.innerHTML = `
-          <div style="font-weight:700; color:var(--primary-base); margin-bottom:4px;">
-            Nhận diện: ${conicState.conicType.toUpperCase()} - Góc nghiêng ${deg}°
-          </div>
-          <div>Trị riêng: λ₁ = ${conicState.lambda1.toFixed(2)}, λ₂ = ${conicState.lambda2.toFixed(2)}</div>
-          <div style="font-size:11.5px; color:var(--muted); margin-top:2px;">
-            Vector riêng u₁=[${conicState.u1[0].toFixed(2)}, ${conicState.u1[1].toFixed(2)}], u₂=[${conicState.u2[0].toFixed(2)}, ${conicState.u2[1].toFixed(2)}]
-          </div>
-        `;
-        resEl.style.display = "block";
+      // Đồng bộ chế độ 2D / 3D
+      if (analysis.is3D && App.mode !== "3D") {
+        if (typeof App.setMode === "function") App.setMode("3D");
+        else if (typeof App.toggleMode === "function") App.toggleMode();
+      } else if (!analysis.is3D && App.mode === "3D") {
+        if (typeof App.setMode === "function") App.setMode("2D");
+        else if (typeof App.toggleMode === "function") App.toggleMode();
       }
 
-      // Kích hoạt vẽ lại 2D
+      renderConicInfoCard(selData.item, analysis);
+
+      const previewEl = $("conicMatrixPreview");
+      if (previewEl && typeof App.renderMatrixPreviewGrid === "function") {
+        App.renderMatrixPreviewGrid(previewEl, selData.item, { isConic: true });
+      }
+
       if (window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {
         Vec2D.draw2DAllVectors();
       }
-
-      if (window.App && typeof App.showToast === "function") {
-        App.showToast("Đã tính xong trị riêng và hiển thị đường " + conicState.conicType + "!", "success");
+      if (window.Vec3D && typeof Vec3D.hardRefresh3D === "function") {
+        Vec3D.hardRefresh3D();
       }
     },
 
     onTaskSelect: function (taskId) {
-      if (
-        taskId === "quadratic_form_conic" ||
-        taskId === "quadratic_form_canonical" ||
-        taskId === "quadratic_form_sylvester"
-      ) {
-        this.execute();
-        if (taskId === "quadratic_form_canonical") {
-          const btn = document.getElementById("btnConicRotate");
-          if (btn) {
-            btn.style.boxShadow = "0 0 0 2px var(--primary-base)";
-            setTimeout(() => { if (btn) btn.style.boxShadow = ""; }, 1500);
-          }
-        } else if (taskId === "quadratic_form_sylvester") {
-          const btn = document.getElementById("btnConicSolution");
-          if (btn) {
-            btn.style.boxShadow = "0 0 0 2px var(--amber, #f59e0b)";
-            setTimeout(() => { if (btn) btn.style.boxShadow = ""; }, 1500);
-          }
+      if (taskId === "quadratic_form_conic" || taskId === "s28" || taskId === "s29") {
+        if (!this._isInitialized) this.init();
+        if (typeof App.refreshConicMatrixDropdown === "function") {
+          App.refreshConicMatrixDropdown();
         }
       } else {
-        App.activeConicState = null;
-        if (App.custom2DDrawHook === drawConicOnCanvas2D) {
-          App.custom2DDrawHook = null;
+        if (typeof App.stopConicAnimation === "function") {
+          try { App.stopConicAnimation(); } catch (_) {}
         }
       }
     }
   };
 
-  // Đăng ký vào registry
+  App.stopConicAnimation = function () {
+    if (window.App && App.ConicAnimator && App.ConicAnimator.isActive()) {
+      App.ConicAnimator.stop();
+    }
+  };
+
   if (typeof App.registerTopicModule === "function") {
     App.registerTopicModule("t7", Topic7Module);
   } else {

@@ -1141,6 +1141,10 @@
           }
           const ec = document.getElementById("eigenAnimControls");
           if (ec) ec.style.display = "none";
+
+          if (typeof App.stopAllExtraAnimators === "function") {
+            try { App.stopAllExtraAnimators(null); } catch (_) {}
+          }
         }
       };
     });

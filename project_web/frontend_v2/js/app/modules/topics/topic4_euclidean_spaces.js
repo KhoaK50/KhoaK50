@@ -75,21 +75,29 @@
     return `\\begin{bmatrix} ${comps.join(" \\\\ ")} \\end{bmatrix}`;
   }
 
-  // Lay danh sach vector da chon tu #gsChecklist
+  // Lay danh sach vector da chon tu #gsChecklist (tra ve dung tham chieu item trong App.vectorList)
   function getGSSelectedItems() {
-    const container = document.getElementById("gsChecklist");
-    let items = [];
-    if (container && typeof App.getCheckedVectors === "function") {
-      const checked = App.getCheckedVectors(container);
-      if (checked && checked.length) {
-        items = checked.map((vec) => {
-          const found = (App.vectorList || []).find((v) => v.vec === vec || (v.vec && vec && v.vec[0] === vec[0] && v.vec[1] === vec[1]));
-          return found || { vec: vec, name: "v" };
-        });
+    let container = document.getElementById("gsChecklist");
+    const vList = Array.isArray(App.vectorList) ? App.vectorList.filter((v) => v.id > 0) : [];
+    if (container && !container.querySelector('input[type="checkbox"]') && vList.length > 0) {
+      if (typeof App.renderExtraCalcOptions === "function") {
+        App.renderExtraCalcOptions();
       }
     }
-    if ((!items || !items.length) && Array.isArray(App.vectorList) && App.vectorList.length >= 2) {
-      items = App.vectorList.slice(0, 3);
+    const items = [];
+    if (container && vList.length > 0) {
+      container.querySelectorAll('input[type="checkbox"]:checked').forEach((cb) => {
+        const id = Number(cb.value);
+        const found = vList.find((v) => v.id === id);
+        if (found) items.push(found);
+      });
+      if (items.length === 0 && vList.length >= 2) {
+        const autoPick = vList.slice(0, 3);
+        container.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+          if (autoPick.some((it) => it.id === Number(cb.value))) cb.checked = true;
+        });
+        return autoPick;
+      }
     }
     return items;
   }
@@ -502,7 +510,10 @@
 
     onTaskSelect: function (taskId) {
       if (taskId === "topic4_gram_schmidt" || taskId === "s21" || taskId === "topic4_orthogonality" || taskId === "s20") {
-        this.execute();
+        if (typeof App.renderExtraCalcOptions === "function") {
+          App.renderExtraCalcOptions();
+        }
+        this.init();
       } else {
         if (App.GSAnimator && typeof App.GSAnimator.stop === "function" && App.GSAnimator.isActive()) {
           App.GSAnimator.stop();

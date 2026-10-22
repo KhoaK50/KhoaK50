@@ -1852,10 +1852,29 @@
        PHẦN 5: LOGIC GỌI API MENU 1 (EXTRA UTILS)
        ======================================================================= */
 
+  App.stopAllExtraAnimators = function (exceptVal) {
+    const map = [
+      ["linear_independence", "IndepAnimator"],
+      ["rank", "RankAnimator"],
+      ["basis", "BasisAnimator"],
+      ["coordinates", "CoordAnimator"],
+      ["topic4_gram_schmidt", "GSAnimator"],
+      ["topic5_linear_transformation", "LTAnimator"],
+      ["topic6_eigen", "EigenAnimator"],
+      ["quadratic_form_conic", "ConicAnimator"],
+    ];
+    for (const [key, animName] of map) {
+      if (key !== exceptVal && window.App?.[animName]?.isActive?.()) {
+        try { window.App[animName].stop(); } catch (_) {}
+      }
+    }
+  };
+
   App.refreshExtraUI = function () {
     const el = document.getElementById("opExtraSelect");
     if (!el) return;
     const val = el.value;
+    if (typeof App.stopAllExtraAnimators === "function") App.stopAllExtraAnimators(val);
     document.querySelectorAll(".extra-form").forEach(function (f) {
       f.style.display = "none";
     });

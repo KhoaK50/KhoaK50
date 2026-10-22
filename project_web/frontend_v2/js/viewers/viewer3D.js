@@ -2199,6 +2199,10 @@
     if (window.App && App.LTAnimator && App.LTAnimator.isActive()) {
       App.LTAnimator.render3D(Vec3D._mathGroup);
     }
+    // [QUADRATIC FORMS & CONICS ANIMATION HOOK 3D]
+    if (window.App && App.ConicAnimator && App.ConicAnimator.isActive()) {
+      App.ConicAnimator.render3D(Vec3D._mathGroup);
+    }
   };
 
   // --- THỰC THỂ LINH VẬT NORI: ĐÃ DẸP KHỎI KHÔNG GIAN 3D (CHỈ HOẠT ĐỘNG Ở 2D CHUẨN MỰC) ---

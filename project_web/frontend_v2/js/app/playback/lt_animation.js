@@ -1,12 +1,12 @@
 // ==================================================================================
-// LINEAR TRANSFORMATION 3-STEP PLAYBACK ENGINE (ACADEMIC ARCHITECTURE)
-// Trực quan hóa bản chất Ánh xạ tuyến tính, Hạt nhân Ker(T) & Không gian ảnh Im(T)
-// Hỗ trợ đồng bộ cả 2D Canvas (ma trận 2x2) và 3D Three.js (ma trận 3x3)
-// Kịch bản 3 bước liên hoàn chuẩn bản chất Đại số Tuyến tính:
-//   Bước 1: Ánh xạ Cơ sở chuẩn e_j -> T(e_j) sinh ra các Cột của Ma trận A
-//   Bước 2: Sự sụp đổ của Hạt nhân Ker(T) = {x | Ax = 0} về Gốc tọa độ O
-//   Bước 3: Kết tinh Không gian ảnh Im(T) & Định lý Hạng - Số khuyết
-// Tuân thủ triệt để Zero Em-dash (\u2014) và chuẩn mực Anti-Slop.
+// LINEAR TRANSFORMATION 3-STEP PLAYBACK ENGINE (PURE GEOMETRY)
+// Truc quan hoa ban chat Anh xa tuyen tinh, Hat nhan Ker(T) & Khong gian anh Im(T)
+// Ho tro dong bo ca 2D Canvas (ma tran 2x2) va 3D Three.js (ma tran 3x3)
+// Kich ban 3 buoc lien hoan chuan ban chat Dai so Tuyen tinh (0 chu giai tren Canvas):
+//   Buoc 1: Anh xa Co so chuan e_j -> T(e_j) sinh ra cac Cot cua Ma tran A
+//   Buoc 2: Su sup do cua Hat nhan Ker(T) = {x | Ax = 0} ve Goc toa do O
+//   Buoc 3: Ket tinh Khong gian anh Im(T) & Dinh ly Hang - So khuyet
+// Tuan thu triet de Zero Em-dash (\u2014) va chuan muc Anti-Slop.
 // ==================================================================================
 (function () {
   window.App = window.App || {};
@@ -26,15 +26,23 @@
     return Math.hypot(v[0] || 0, v[1] || 0, v[2] || 0);
   }
 
-  function dot(a, b) {
-    return (a[0] || 0) * (b[0] || 0) + (a[1] || 0) * (b[1] || 0) + (a[2] || 0) * (b[2] || 0);
-  }
-
   function cross(a, b) {
     return [
       (a[1] || 0) * (b[2] || 0) - (a[2] || 0) * (b[1] || 0),
       (a[2] || 0) * (b[0] || 0) - (a[0] || 0) * (b[2] || 0),
       (a[0] || 0) * (b[1] || 0) - (a[1] || 0) * (b[0] || 0)
+    ];
+  }
+
+  function scaleVec(v, s) {
+    return [(v[0] || 0) * s, (v[1] || 0) * s, (v[2] || 0) * s];
+  }
+
+  function lerpVec(a, b, t) {
+    return [
+      (a[0] || 0) * (1 - t) + (b[0] || 0) * t,
+      (a[1] || 0) * (1 - t) + (b[1] || 0) * t,
+      (a[2] || 0) * (1 - t) + (b[2] || 0) * t
     ];
   }
 
@@ -45,20 +53,6 @@
       const num = Math.round(val * den);
       if (Math.abs(val - num / den) < 1e-3) {
         return num < 0 ? `-${Math.abs(num)}/${den}` : `${num}/${den}`;
-      }
-    }
-    return val.toFixed(2).replace(/\.?0+$/, "");
-  }
-
-  function formatScalarLatex(val) {
-    if (!Number.isFinite(val) || Math.abs(val) < 1e-4) return "0";
-    const sign = val < 0 ? "-" : "";
-    const abs = Math.abs(val);
-    if (Math.abs(abs - Math.round(abs)) < 1e-3) return sign + String(Math.round(abs));
-    for (let den = 2; den <= 16; den++) {
-      const num = Math.round(abs * den);
-      if (Math.abs(abs - num / den) < 1e-3) {
-        return `${sign}\\frac{${num}}{${den}}`;
       }
     }
     return val.toFixed(2).replace(/\.?0+$/, "");
@@ -92,7 +86,7 @@
     return scaled.map((x) => (Math.abs(x) < 1e-5 ? 0 : Number(x.toFixed(3))));
   }
 
-  // --- THUẬT TOÁN ĐẠI SỐ TUYẾN TÍNH PHÂN TÍCH ÁNH XẠ TUYẾN TÍNH ---
+  // --- THUAT TOAN DAI SO TUYEN TINH PHAN TICH ANH XA TUYEN TINH ---
   function analyzeLinearTransformation(rawValues, n) {
     const dim = n === 3 ? 3 : 2;
     const matrix = [];
@@ -103,7 +97,6 @@
       }
     }
 
-    // 1. Tính định thức det(A)
     let det = 0;
     if (dim === 2) {
       det = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
@@ -114,11 +107,9 @@
         matrix[0][2] * (matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0]);
     }
 
-    // 2. Tính vết ma trận trace(A)
     let trace = 0;
     for (let i = 0; i < dim; i++) trace += matrix[i][i];
 
-    // 3. Cơ sở chính tắc ban đầu {e_j} và các cột ảnh T(e_j) = A e_j
     const standardBasis = [];
     const columns = [];
     for (let j = 0; j < dim; j++) {
@@ -133,7 +124,7 @@
       columns.push(col);
     }
 
-    // 4. Khử Gauss - Jordan tìm RREF, hạng (rank) và số khuyết (nullity)
+    // Khu Gauss - Jordan tim RREF, hang (rank) va so khuyet (nullity)
     const RREF = matrix.map((row) => row.slice());
     const pivotCols = [];
     const pivotRows = [];
@@ -176,7 +167,6 @@
       if (!pivotCols.includes(c)) freeCols.push(c);
     }
 
-    // 5. Cơ sở Không gian Hạt nhân Ker(T) = {x | Ax = 0}
     const kerBasis = [];
     if (nullity > 0) {
       for (const freeCol of freeCols) {
@@ -191,31 +181,30 @@
       }
     }
 
-    // 6. Cơ sở Không gian Ảnh Im(T) = span{cols(A)}
     const imBasis = pivotCols.map((c) => columns[c]);
 
-    // 7. Sinh tập điểm mẫu trên Hạt nhân Ker(T) phục vụ hoạt cảnh sụp đổ ở Bước 2
     const sampleKerPoints = [];
     if (nullity === 1 && kerBasis.length >= 1) {
       const k = kerBasis[0];
       const kLen = norm(to3D(k));
       if (kLen > 1e-6) {
         const u = k.map((coord) => coord / kLen);
-        const steps = [-3.0, -2.0, -1.0, 1.0, 2.0, 3.0];
-        steps.forEach((s) => {
+        [-3.2, -2.1, -1.05, 1.05, 2.1, 3.2].forEach((s) => {
           sampleKerPoints.push(u.map((c) => c * s));
         });
       }
     } else if (nullity === 2 && kerBasis.length >= 2) {
-      const k1 = kerBasis[0];
-      const k2 = kerBasis[1];
-      const coords = [-1.8, 1.8];
-      coords.forEach((s1) => {
-        coords.forEach((s2) => {
+      const k1 = to3D(kerBasis[0]);
+      const k2 = to3D(kerBasis[1]);
+      const l1 = norm(k1) || 1;
+      const l2 = norm(k2) || 1;
+      [-2.0, 0, 2.0].forEach((s1) => {
+        [-2.0, 0, 2.0].forEach((s2) => {
+          if (Math.abs(s1) < 1e-3 && Math.abs(s2) < 1e-3) return;
           sampleKerPoints.push([
-            s1 * k1[0] + s2 * k2[0],
-            s1 * k1[1] + s2 * k2[1],
-            s1 * (k1[2] || 0) + s2 * (k2[2] || 0)
+            (s1 * k1[0]) / l1 + (s2 * k2[0]) / l2,
+            (s1 * k1[1]) / l1 + (s2 * k2[1]) / l2,
+            (s1 * k1[2]) / l1 + (s2 * k2[2]) / l2
           ]);
         });
       });
@@ -240,28 +229,24 @@
     };
   }
 
-  // --- CẤU HÌNH THUYẾT MINH 3 BƯỚC ĐẠI SỐ TUYẾN TÍNH ---
   const PHASES = [
     {
       index: 0,
-      title: "Bước 1: Ánh xạ Cơ sở chuẩn e_j -> T(e_j) & Cột Ma trận",
-      desc: "Lưới không gian biến dạng theo M(t) = (1-t)I + tA. Các vector cơ sở chuẩn e_j dịch chuyển đến ảnh T(e_j), chính là các cột của ma trận A."
+      title: "Bước 1: Ánh xạ cơ sở chuẩn eⱼ → T(eⱼ) sinh ra các cột ma trận A",
+      desc: "Lưới không gian biến dạng liên tục từ ma trận đơn vị I sang ma trận A theo M(t) = (1 - t)I + tA. Các vector cơ sở chuẩn eⱼ dịch chuyển đến ảnh T(eⱼ), chính là các cột của A."
     },
     {
       index: 1,
-      title: "Bước 2: Hạt nhân Ker(T) = {x | Ax = 0} sụp đổ về Gốc O",
-      desc: "Không gian hạt nhân Ker(T) (đỏ hoa hồng) chứa các nghiệm Ax = 0. Khi ma trận tác động, mọi vector trên Ker(T) bị co xẹp hoàn toàn về gốc tọa độ O."
+      title: "Bước 2: Sự sụp đổ của hạt nhân Ker(T) = {x | Ax = 0} về gốc O",
+      desc: "Không gian hạt nhân Ker(T) (đỏ hoa hồng) chứa mọi vector bị ánh xạ triệt tiêu. Khi A tác động, toàn bộ các điểm trên Ker(T) bị nén dọc theo phương hạt nhân và hút tụt hoàn toàn về gốc tọa độ O."
     },
     {
       index: 2,
-      title: "Bước 3: Kết tinh Không gian ảnh Im(T) & Định lý Hạng - Số khuyết",
-      desc: "Không gian ảnh Im(T) = span(cols(A)) (xanh ngọc lục bảo). Định lý bảo toàn số chiều: dim Ker(T) + dim Im(T) = n."
+      title: "Bước 3: Kết tinh không gian ảnh Im(T) & Định lý Hạng - Số khuyết",
+      desc: "Không gian ảnh Im(T) = span(Cols(A)) (xanh lục bảo) là phần không gian còn trụ lại sau biến đổi. Số chiều bị ép mất dim Ker(T) cộng với số chiều ảnh dim Im(T) luôn bằng đúng số chiều nguồn n."
     }
   ];
 
-  // =========================================================================
-  // BỘ ĐIỀU KHIỂN HOẠT CẢNH ÁNH XẠ TUYẾN TÍNH (App.LTAnimator)
-  // =========================================================================
   const LTAnimator = {
     _active: false,
     _paused: false,
@@ -272,6 +257,8 @@
     _speed: 1.0,
     _analysis: null,
     _matrixItem: null,
+    _savedVecVis: null,
+    _tempVecIds: [],
     _savedCamPos3D: null,
     _threeGroup: null,
 
@@ -291,7 +278,30 @@
       return this._analysis;
     },
 
-    // --- KHỞI ĐỘNG VÀ THIẾT LẬP ---
+    _frame3DCameraIfNeeded() {
+      if (App.mode !== "3D" || !window.Vec3D || !Vec3D._camera || !Vec3D._controls || !this._analysis) return;
+      if (this._savedCamPos3D) return;
+
+      if (Vec3D._resetAnimId) {
+        cancelAnimationFrame(Vec3D._resetAnimId);
+        Vec3D._resetAnimId = null;
+      }
+      this._savedCamPos3D = Vec3D._camera.position.clone();
+      let maxReach = 3.0;
+      for (const col of this._analysis.columns) {
+        maxReach = Math.max(maxReach, norm(to3D(col)));
+      }
+      const dist = Math.max(11.0, Math.min(24.0, maxReach * 2.55));
+      Vec3D._camera.position.set(dist * 1.32, dist * 0.58, dist * 0.76);
+      Vec3D._camera.up.set(0, 0, 1);
+      Vec3D._controls.target.set(0, 0, 0);
+      Vec3D._camera.lookAt(0, 0, 0);
+      Vec3D._controls.update();
+      if (typeof Vec3D.addAxisLabelsDynamic === "function") {
+        Vec3D.addAxisLabelsDynamic();
+      }
+    },
+
     start(selectedItem) {
       let item = selectedItem;
       let values = null;
@@ -322,7 +332,58 @@
       this._analysis = analysis;
       this._matrixItem = item;
 
-      // Đồng bộ chế độ 2D / 3D phù hợp với cấp ma trận
+      // An tam thoi vector cua nguoi dung va them vector co so/anh tam thoi
+      this._savedVecVis = (App.vectorList || []).map((v) => ({
+        id: v.id,
+        visible: v.visible
+      }));
+      (App.vectorList || []).forEach((v) => {
+        v.visible = false;
+      });
+
+      this._tempVecIds = [];
+      const colors = ["#0284c7", "#10b981", "#f59e0b"];
+
+      if (Array.isArray(App.vectorList)) {
+        for (let j = 0; j < analysis.dim; j++) {
+          const tempId = -9701 - j;
+          this._tempVecIds.push(tempId);
+          App.vectorList.push({
+            id: tempId,
+            vec: analysis.standardBasis[j].slice(),
+            name: `e_${j + 1}`,
+            _customLabelLatex: `e_${j + 1}`,
+            colorCss: colors[j % 3],
+            colorHex: colors[j % 3],
+            visible: true,
+            alpha: 1.0,
+            showProjection: false,
+            _isLTTemp: true
+          });
+        }
+
+        // Vector mau tren Ker(T) cho Buoc 2
+        if (analysis.nullity > 0 && analysis.kerBasis.length > 0) {
+          const kVec = to3D(analysis.kerBasis[0]);
+          const kLen = norm(kVec);
+          const scaledK = kLen > 1e-5 ? scaleVec(kVec, 2.0 / kLen) : kVec;
+          const kId = -9711;
+          this._tempVecIds.push(kId);
+          App.vectorList.push({
+            id: kId,
+            vec: scaledK.slice(0, analysis.dim),
+            name: "x_ker",
+            _customLabelLatex: "x_{\\text{Ker}}",
+            colorCss: "#f43f5e",
+            colorHex: "#f43f5e",
+            visible: false,
+            alpha: 0,
+            showProjection: false,
+            _isLTTemp: true
+          });
+        }
+      }
+
       if (analysis.is3D && App.mode !== "3D") {
         if (typeof App.setMode === "function") App.setMode("3D");
         else if (typeof App.toggleMode === "function") App.toggleMode();
@@ -331,28 +392,8 @@
         else if (typeof App.toggleMode === "function") App.toggleMode();
       }
 
-      // Căn chỉnh góc nhìn Camera 3D lệch phương (x != y != z) để các vector không che lấp nhau
       this._savedCamPos3D = null;
-      if (window.Vec3D && Vec3D._camera && Vec3D._controls && App.mode === "3D") {
-        if (Vec3D._resetAnimId) {
-          cancelAnimationFrame(Vec3D._resetAnimId);
-          Vec3D._resetAnimId = null;
-        }
-        this._savedCamPos3D = Vec3D._camera.position.clone();
-        let maxReach = 3.0;
-        for (const col of analysis.columns) {
-          maxReach = Math.max(maxReach, norm(to3D(col)));
-        }
-        const dist = Math.max(11.0, Math.min(24.0, maxReach * 2.65));
-        Vec3D._camera.position.set(dist * 1.32, dist * 0.58, dist * 0.76);
-        Vec3D._camera.up.set(0, 0, 1);
-        Vec3D._controls.target.set(0, 0, 0);
-        Vec3D._camera.lookAt(0, 0, 0);
-        Vec3D._controls.update();
-        if (typeof Vec3D.addAxisLabelsDynamic === "function") {
-          Vec3D.addAxisLabelsDynamic();
-        }
-      }
+      this._frame3DCameraIfNeeded();
 
       this.ensureControls();
       const wrap = document.getElementById("ltAnimControls");
@@ -364,6 +405,7 @@
       this._phaseProgress = 0;
       App._ltAnimActive = true;
 
+      this.applyPhaseVectors(0, 0);
       this.updateSidebarUI();
       this.runCurrentPhase();
       return true;
@@ -379,13 +421,13 @@
         this._raf = null;
       }
 
+      const wasActive = this._active;
       this._active = false;
       this._paused = false;
       this._currentPhase = 0;
       this._phaseProgress = 0;
       App._ltAnimActive = false;
 
-      // Dọn dẹp Three.js Group 3D
       if (this._threeGroup) {
         if (this._threeGroup.parent) {
           this._threeGroup.parent.remove(this._threeGroup);
@@ -398,25 +440,107 @@
         this._threeGroup = null;
       }
 
-      // Khôi phục Camera 3D nếu có
       if (this._savedCamPos3D && window.Vec3D && Vec3D._camera && Vec3D._controls) {
         Vec3D._camera.position.copy(this._savedCamPos3D);
         Vec3D._controls.update();
         this._savedCamPos3D = null;
       }
 
-      // Làm mới Viewer
+      if (Array.isArray(App.vectorList)) {
+        for (let i = App.vectorList.length - 1; i >= 0; i--) {
+          if (App.vectorList[i]._isLTTemp || this._tempVecIds.includes(App.vectorList[i].id)) {
+            App.vectorList.splice(i, 1);
+          }
+        }
+        if (this._savedVecVis) {
+          for (const s of this._savedVecVis) {
+            const found = App.vectorList.find((v) => v.id === s.id);
+            if (found) found.visible = s.visible;
+          }
+        }
+      }
+      this._tempVecIds = [];
+      this._savedVecVis = null;
+      this._analysis = null;
+
+      const wrap = document.getElementById("ltAnimControls");
+      if (wrap) wrap.style.display = "none";
+
+      if (wasActive) {
+        this.redraw();
+      }
+    },
+
+    applyPhaseVectors(phase, progress) {
+      if (!this._analysis || !Array.isArray(App.vectorList)) return;
+      const an = this._analysis;
+      const d = an.dim;
+      const t = smoothstep(progress);
+
+      for (let j = 0; j < d; j++) {
+        const vItem = App.vectorList.find((v) => v.id === -9701 - j);
+        if (!vItem) continue;
+
+        const ej = to3D(an.standardBasis[j]);
+        const colj = to3D(an.columns[j]);
+
+        if (phase === 0) {
+          const cur = lerpVec(ej, colj, t);
+          vItem.vec = cur.slice(0, d);
+          vItem._customLabelLatex = t > 0.55 ? `T(e_${j + 1})` : `e_${j + 1}`;
+          vItem._ltAlpha = norm(cur) > 1e-3 ? 1.0 : 0.05;
+          vItem.alpha = vItem._ltAlpha;
+          vItem.visible = norm(cur) > 1e-3;
+        } else if (phase === 1) {
+          // O Buoc 2: Bien doi lai tu e_j -> T(e_j) trong nua sau de thay su nen cung hat nhan
+          const tCollapse = smoothstep((progress - 0.25) / 0.75);
+          const cur = lerpVec(ej, colj, tCollapse);
+          vItem.vec = cur.slice(0, d);
+          vItem._customLabelLatex = `T(e_${j + 1})`;
+          vItem._ltAlpha = norm(cur) > 1e-3 ? 0.65 : 0.02;
+          vItem.alpha = vItem._ltAlpha;
+          vItem.visible = norm(cur) > 1e-3;
+        } else if (phase === 2) {
+          const isPivot = an.pivotCols.includes(j);
+          vItem.vec = colj.slice(0, d);
+          vItem._customLabelLatex = `T(e_${j + 1})`;
+          vItem._ltAlpha = isPivot ? 1.0 : 0.45;
+          vItem.alpha = vItem._ltAlpha;
+          vItem.visible = norm(colj) > 1e-3;
+        }
+      }
+
+      // Vector mau tren Ker(T)
+      const kItem = App.vectorList.find((v) => v.id === -9711);
+      if (kItem) {
+        if (phase === 1 && an.nullity > 0 && an.kerBasis.length > 0) {
+          const kVec = to3D(an.kerBasis[0]);
+          const kLen = norm(kVec);
+          const scaledK = kLen > 1e-5 ? scaleVec(kVec, 2.2 / kLen) : kVec;
+          const tCollapse = smoothstep((progress - 0.25) / 0.75);
+          const remain = Math.max(0, 1.0 - tCollapse);
+          const curK = scaleVec(scaledK, remain);
+          kItem.vec = curK.slice(0, d);
+          kItem.visible = remain > 0.04;
+          kItem._ltAlpha = Math.max(0.1, remain);
+          kItem.alpha = kItem._ltAlpha;
+        } else {
+          kItem.visible = false;
+          kItem.alpha = 0;
+        }
+      }
+    },
+
+    redraw() {
+      this._frame3DCameraIfNeeded();
       if (window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {
         Vec2D.draw2DAllVectors();
       }
       if (window.Vec3D && typeof Vec3D.hardRefresh3D === "function") {
-        Vec3D.hardRefresh3D();
+        Vec3D.hardRefresh3D(false);
       }
-
-      this.updateSidebarUI();
     },
 
-    // --- ĐIỀU KHIỂN BƯỚC & TỐC ĐỘ ---
     goToPhase(phaseIdx) {
       if (!this._analysis) return;
       if (this._phaseTimer) {
@@ -428,20 +552,56 @@
         this._raf = null;
       }
 
+      this._frame3DCameraIfNeeded();
       this._currentPhase = Math.max(0, Math.min(2, phaseIdx));
       this._phaseProgress = 0;
+      this.applyPhaseVectors(this._currentPhase, 0);
       this.updateSidebarUI();
-
-      if (window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {
-        Vec2D.draw2DAllVectors();
-      }
-      if (window.Vec3D && typeof Vec3D.hardRefresh3D === "function") {
-        Vec3D.hardRefresh3D();
-      }
+      this.redraw();
 
       if (this._active && !this._paused) {
         this.runCurrentPhase();
+      } else if (this._paused) {
+        this._phaseProgress = 1.0;
+        this.applyPhaseVectors(this._currentPhase, 1.0);
+        this.redraw();
       }
+    },
+
+    pause() {
+      this._paused = true;
+      if (this._raf) {
+        cancelAnimationFrame(this._raf);
+        this._raf = null;
+      }
+      if (this._phaseTimer) {
+        clearTimeout(this._phaseTimer);
+        this._phaseTimer = null;
+      }
+      this.updateSidebarUI();
+    },
+
+    resume() {
+      if (!this._active) return;
+      this._paused = false;
+      this.updateSidebarUI();
+      if (this._phaseProgress >= 0.999) {
+        if (this._currentPhase < 2) {
+          this.goToPhase(this._currentPhase + 1);
+        } else {
+          this.goToPhase(0);
+        }
+      } else {
+        this.runCurrentPhase();
+      }
+    },
+
+    togglePlay() {
+      this.togglePlayPause();
+    },
+
+    applyPhaseStyles(phase, progress) {
+      this.applyPhaseVectors(phase, progress);
     },
 
     togglePlayPause() {
@@ -453,7 +613,15 @@
       this.updateSidebarUI();
 
       if (!this._paused) {
-        this.runCurrentPhase();
+        if (this._phaseProgress >= 0.999) {
+          if (this._currentPhase < 2) {
+            this.goToPhase(this._currentPhase + 1);
+          } else {
+            this.goToPhase(0);
+          }
+        } else {
+          this.runCurrentPhase();
+        }
       } else {
         if (this._raf) {
           cancelAnimationFrame(this._raf);
@@ -472,7 +640,6 @@
       if (valEl) valEl.textContent = `${this._speed.toFixed(1)}×`;
     },
 
-    // --- VÒNG LẶP RAF CHUYỂN BƯỚC LIÊN HOÀN 3 BƯỚC ---
     runCurrentPhase() {
       if (!this._active || this._paused) return;
 
@@ -486,7 +653,7 @@
       }
 
       let lastTime = performance.now();
-      const baseDuration = 2600; // ms mỗi bước
+      const baseDurations = [2600, 2900, 2500];
 
       const tick = (now) => {
         if (!this._active || this._paused) return;
@@ -495,32 +662,28 @@
         lastTime = now;
 
         const speed = Math.max(0.2, this._speed || 1.0);
-        this._phaseProgress = Math.min(1.0, this._phaseProgress + (dt * speed) / baseDuration);
+        const dur = baseDurations[this._currentPhase] || 2600;
+        this._phaseProgress = Math.min(1.0, this._phaseProgress + (dt * speed) / dur);
 
-        // Vẽ lại trên cả 2D và 3D
-        if (window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {
-          Vec2D.draw2DAllVectors();
-        }
-        if (window.Vec3D && typeof Vec3D.hardRefresh3D === "function") {
-          Vec3D.hardRefresh3D();
-        }
+        this.applyPhaseVectors(this._currentPhase, this._phaseProgress);
+        this.redraw();
 
         if (this._phaseProgress < 1.0) {
           this._raf = requestAnimationFrame(tick);
         } else {
-          // Hoàn thành bước hiện tại
+          this.applyPhaseVectors(this._currentPhase, 1.0);
+          this.redraw();
           if (this._currentPhase < 2) {
-            // Tự động chuyển tiếp sang bước sau (nghỉ 380ms để người học quan sát kết quả)
             this._phaseTimer = setTimeout(() => {
               if (this._active && !this._paused) {
                 this._currentPhase++;
                 this._phaseProgress = 0;
+                this.applyPhaseVectors(this._currentPhase, 0);
                 this.updateSidebarUI();
                 this.runCurrentPhase();
               }
-            }, 380 / speed);
+            }, 420 / speed);
           } else {
-            // Kết thúc Bước 3: Giữ khung hình hoàn tất và chuyển sang trạng thái Pause
             this._paused = true;
             this.updateSidebarUI();
           }
@@ -530,22 +693,13 @@
       this._raf = requestAnimationFrame(tick);
     },
 
-    // --- CẬP NHẬT GIAO DIỆN KHỐI ĐIỀU KHIỂN SIDEBAR ---
     updateSidebarUI() {
       const counter = document.getElementById("ltStepCounter");
       if (counter) counter.textContent = `Bước ${this._currentPhase + 1} / 3`;
 
       const pills = document.querySelectorAll("#ltPhasePills .coord-phase-btn");
       pills.forEach((p, idx) => {
-        if (idx === this._currentPhase) {
-          p.classList.add("active");
-          p.style.background = "var(--primary-base, #0284c7)";
-          p.style.color = "#ffffff";
-        } else {
-          p.classList.remove("active");
-          p.style.background = "var(--bg-card)";
-          p.style.color = "var(--fg)";
-        }
+        p.classList.toggle("active", idx === this._currentPhase);
       });
 
       const playBtn = document.getElementById("btnLTPlay");
@@ -553,16 +707,16 @@
       if (playBtn && playIcon) {
         const isPlaying = this._active && !this._paused;
         if (isPlaying) {
-          playBtn.classList.add("pause-btn-red");
+          playIcon.className = "ph ph-pause";
           playBtn.style.background = "#ef4444";
           playBtn.style.borderColor = "#ef4444";
-          playIcon.className = "ph ph-pause";
+          playBtn.style.color = "#ffffff";
           playBtn.title = "Tạm dừng";
         } else {
-          playBtn.classList.remove("pause-btn-red");
-          playBtn.style.background = "var(--primary-base, #0284c7)";
-          playBtn.style.borderColor = "var(--primary-base, #0284c7)";
           playIcon.className = "ph ph-play";
+          playBtn.style.background = "";
+          playBtn.style.borderColor = "";
+          playBtn.style.color = "";
           playBtn.title = "Phát";
         }
       }
@@ -570,11 +724,36 @@
       const pInfo = PHASES[this._currentPhase] || PHASES[0];
       const titleEl = document.getElementById("ltStepTitle");
       const descEl = document.getElementById("ltStepDesc");
+      const an = this._analysis;
       if (titleEl) titleEl.textContent = pInfo.title;
-      if (descEl) descEl.textContent = pInfo.desc;
+
+      if (descEl) {
+        if (!an) {
+          descEl.textContent = pInfo.desc;
+          return;
+        }
+        if (this._currentPhase === 0) {
+          const colsStr = an.columns
+            .map((c, idx) => `<b>T(e<sub>${idx + 1}</sub>) = [${c.map(formatScalar).join(", ")}]</b>`)
+            .join(", ");
+          descEl.innerHTML = `Lưới tọa độ biến dạng liên tục từ <b>I → A</b>.<br>Các cột của ma trận A chính là tọa độ ảnh của cơ sở chuẩn: ${colsStr}. Định thức <b>det(A) = ${formatScalar(an.det)}</b>.`;
+        } else if (this._currentPhase === 1) {
+          if (an.nullity === 0) {
+            descEl.innerHTML = `Vì <b>det(A) = ${formatScalar(an.det)} ≠ 0</b> nên hệ phương trình thuần nhất <b>Ax = 0</b> chỉ có nghiệm tầm thường.<br>Hạt nhân <b>Ker(T) = {0}</b> (số khuyết <b>nullity = 0</b>, ánh xạ là đơn ánh).`;
+          } else {
+            const kerStr = an.kerBasis.map((v) => `[${v.map(formatScalar).join(", ")}]`).join(", ");
+            descEl.innerHTML = `Hạt nhân <b>Ker(T) = span{${kerStr}}</b> (đường/mặt màu đỏ hoa hồng, <b>dim Ker(T) = ${an.nullity}</b>).<br>Khi ma trận A tác động, toàn bộ các vector thuộc <b>Ker(T)</b> bị ép dọc theo phương hạt nhân và hút tụt hoàn toàn về gốc <b>O(0, 0)</b>.`;
+          }
+        } else if (this._currentPhase === 2) {
+          const imStr =
+            an.imBasis.length > 0
+              ? `span{${an.imBasis.map((v) => `[${v.map(formatScalar).join(", ")}]`).join(", ")}}`
+              : "{0}";
+          descEl.innerHTML = `Không gian ảnh <b>Im(T) = ${imStr}</b> (màu xanh lục bảo, <b>dim Im(T) = rank(A) = ${an.rank}</b>).<br>Định lý Hạng - Số khuyết: <b>dim Ker(T) (${an.nullity}) + dim Im(T) (${an.rank}) = ${an.dim}</b>.`;
+        }
+      }
     },
 
-    // --- KHỞI TẠO VÀ GẮN SỰ KIỆN KHỐI CONTROLS ---
     ensureControls() {
       let wrap = document.getElementById("ltAnimControls");
       if (!wrap) {
@@ -590,7 +769,7 @@
 
         wrap.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
-            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted, #64748b);">Khảo sát Ánh xạ Tuyến tính</span>
+            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted, #64748b);">Trực quan Ánh xạ Tuyến tính</span>
             <div style="display: flex; align-items: center; gap: 6px;">
               <span class="basis-step-pill" id="ltStepCounter">Bước 1 / 3</span>
               <button type="button" id="btnLTCloseAnim" class="basis-anim-close-btn" title="Đóng trực quan" style="background: transparent; border: none; cursor: pointer; color: var(--text-muted, #64748b); font-size: 13px; padding: 2px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;">
@@ -634,18 +813,17 @@
           </div>
         `;
 
-        if (out && out.nextSibling) {
-          host.insertBefore(wrap, out.nextSibling);
+        // Dat ngay TRƯỚC #result_lt_info
+        if (out) {
+          host.insertBefore(wrap, out);
         } else {
           host.appendChild(wrap);
         }
 
-        // Gắn sự kiện
         const btnClose = document.getElementById("btnLTCloseAnim");
         if (btnClose) {
           btnClose.addEventListener("click", () => {
             this.stop();
-            wrap.style.display = "none";
           });
         }
 
@@ -679,6 +857,7 @@
         const btnReplay = document.getElementById("btnLTReplay");
         if (btnReplay) {
           btnReplay.addEventListener("click", () => {
+            this._paused = false;
             this.goToPhase(0);
           });
         }
@@ -693,63 +872,47 @@
     },
 
     // =========================================================================
-    // KẾT XUẤT 2D CANVAS (viewer2D.js Hooks)
+    // KET XUAT 2D CANVAS (viewer2D.js Hooks - 0 PROSE TEXT ON CANVAS)
     // =========================================================================
     render2DSubspace(ctx2d, gridInfo2D) {
       if (!this._active || !this._analysis || this._analysis.is3D) return;
       if (!ctx2d || !gridInfo2D) return;
 
-      const { originPx, pixelsPerUnit } = gridInfo2D;
-      const cx = originPx.x;
-      const cy = originPx.y;
-      const px = pixelsPerUnit;
-
+      const { cx, cy, px } = gridInfo2D;
       const wX = (x) => cx + x * px;
       const wY = (y) => cy - y * px;
 
       const an = this._analysis;
-      const p = this._phaseProgress;
-      const t = smoothstep(p);
+      const rawP = this._phaseProgress;
+      const t = smoothstep(rawP);
 
       ctx2d.save();
 
-      if (this._currentPhase === 0) {
-        // Bước 1: Lưới biến dạng M(t) = (1-t)I + tA
-        const e1 = [1, 0];
-        const e2 = [0, 1];
-        const c1 = an.columns[0];
-        const c2 = an.columns[1];
-
-        const v1 = [(1 - t) * e1[0] + t * c1[0], (1 - t) * e1[1] + t * c1[1]];
-        const v2 = [(1 - t) * e2[0] + t * c2[0], (1 - t) * e2[1] + t * c2[1]];
-
-        // A. Lưới tọa độ biến dạng
-        ctx2d.strokeStyle = "rgba(2, 132, 199, 0.15)";
-        ctx2d.lineWidth = 1;
+      const drawDeformedGrid2D = (v1, v2, strokeStyle, fillStyle, borderStyle) => {
+        ctx2d.strokeStyle = strokeStyle;
+        ctx2d.lineWidth = 1.05;
         ctx2d.beginPath();
-        for (let k = -7; k <= 7; k++) {
-          // Các đường song song v1
-          const startX1 = k * v2[0] - 10 * v1[0];
-          const startY1 = k * v2[1] - 10 * v1[1];
-          const endX1 = k * v2[0] + 10 * v1[0];
-          const endY1 = k * v2[1] + 10 * v1[1];
-          ctx2d.moveTo(wX(startX1), wY(startY1));
-          ctx2d.lineTo(wX(endX1), wY(endY1));
+        for (let k = -8; k <= 8; k++) {
+          const sx1 = k * v2[0] - 12 * v1[0];
+          const sy1 = k * v2[1] - 12 * v1[1];
+          const ex1 = k * v2[0] + 12 * v1[0];
+          const ey1 = k * v2[1] + 12 * v1[1];
+          ctx2d.moveTo(wX(sx1), wY(sy1));
+          ctx2d.lineTo(wX(ex1), wY(ey1));
 
-          // Các đường song song v2
-          const startX2 = k * v1[0] - 10 * v2[0];
-          const startY2 = k * v1[1] - 10 * v2[1];
-          const endX2 = k * v1[0] + 10 * v2[0];
-          const endY2 = k * v1[1] + 10 * v2[1];
-          ctx2d.moveTo(wX(startX2), wY(startY2));
-          ctx2d.lineTo(wX(endX2), wY(endY2));
+          const sx2 = k * v1[0] - 12 * v2[0];
+          const sy2 = k * v1[1] - 12 * v2[1];
+          const ex2 = k * v1[0] + 12 * v2[0];
+          const ey2 = k * v1[1] + 12 * v2[1];
+          ctx2d.moveTo(wX(sx2), wY(sy2));
+          ctx2d.lineTo(wX(ex2), wY(ey2));
         }
         ctx2d.stroke();
 
-        // B. Hình bình hành đơn vị biến dạng căng bởi v1, v2
-        ctx2d.fillStyle = "rgba(2, 132, 199, 0.14)";
-        ctx2d.strokeStyle = "rgba(2, 132, 199, 0.45)";
-        ctx2d.lineWidth = 1.5;
+        // Hinh binh hanh don vi cang boi v1, v2
+        ctx2d.fillStyle = fillStyle;
+        ctx2d.strokeStyle = borderStyle;
+        ctx2d.lineWidth = 1.6;
         ctx2d.beginPath();
         ctx2d.moveTo(wX(0), wY(0));
         ctx2d.lineTo(wX(v1[0]), wY(v1[1]));
@@ -758,124 +921,93 @@
         ctx2d.closePath();
         ctx2d.fill();
         ctx2d.stroke();
+      };
 
-        // C. Bóng mờ ô vuông đơn vị ban đầu [0,1]^2
+      const e1 = [1, 0];
+      const e2 = [0, 1];
+      const c1 = an.columns[0];
+      const c2 = an.columns[1];
+
+      if (this._currentPhase === 0) {
+        // Bong mo o vuong don vi ban dau [0,1]^2
         ctx2d.strokeStyle = "rgba(148, 163, 184, 0.45)";
+        ctx2d.fillStyle = "rgba(148, 163, 184, 0.06)";
         ctx2d.lineWidth = 1.2;
         ctx2d.setLineDash([4, 4]);
+        ctx2d.fillRect(wX(0), wY(1), px, px);
         ctx2d.strokeRect(wX(0), wY(1), px, px);
         ctx2d.setLineDash([]);
+
+        const v1 = [(1 - t) * e1[0] + t * c1[0], (1 - t) * e1[1] + t * c1[1]];
+        const v2 = [(1 - t) * e2[0] + t * c2[0], (1 - t) * e2[1] + t * c2[1]];
+        drawDeformedGrid2D(v1, v2, "rgba(2, 132, 199, 0.16)", "rgba(2, 132, 199, 0.15)", "rgba(2, 132, 199, 0.55)");
       } else if (this._currentPhase === 1) {
-        // Bước 2: Sự sụp đổ của Hạt nhân Ker(T) về gốc O
-        if (an.nullity === 0) {
-          // Ker(T) chỉ có điểm gốc {0}
-          ctx2d.fillStyle = "rgba(244, 63, 94, 0.9)";
-          ctx2d.beginPath();
-          ctx2d.arc(cx, cy, 6, 0, Math.PI * 2);
-          ctx2d.fill();
+        // Buoc 2: Hat nhan Ker(T) sup do ve goc O
+        const tCollapse = smoothstep((rawP - 0.25) / 0.75);
+        const v1 = [(1 - tCollapse) * e1[0] + tCollapse * c1[0], (1 - tCollapse) * e1[1] + tCollapse * c1[1]];
+        const v2 = [(1 - tCollapse) * e2[0] + tCollapse * c2[0], (1 - tCollapse) * e2[1] + tCollapse * c2[1]];
+        drawDeformedGrid2D(v1, v2, "rgba(148, 163, 184, 0.14)", "rgba(2, 132, 199, 0.08)", "rgba(2, 132, 199, 0.30)");
 
-          ctx2d.font = "700 12px system-ui, sans-serif";
-          ctx2d.fillStyle = "#f43f5e";
-          ctx2d.fillText("Ker(T) = {0} (Ánh xạ đơn ánh)", cx + 12, cy - 8);
-        } else if (an.nullity === 1 && an.kerBasis.length >= 1) {
+        if (an.nullity >= 1 && an.kerBasis.length >= 1) {
           const k = an.kerBasis[0];
-          const far = 40;
+          const kLen = Math.hypot(k[0], k[1]) || 1;
+          const kx = k[0] / kLen;
+          const ky = k[1] / kLen;
+          const far = 30;
 
-          // A. Đường thẳng Hạt nhân Ker(T)
+          // Duong thang Hat nhan Ker(T) di qua goc O
           ctx2d.strokeStyle = "rgba(244, 63, 94, 0.85)";
-          ctx2d.lineWidth = 2.5;
+          ctx2d.lineWidth = 2.4;
           ctx2d.setLineDash([7, 5]);
           ctx2d.beginPath();
-          ctx2d.moveTo(wX(-far * k[0]), wY(-far * k[1]));
-          ctx2d.lineTo(wX(far * k[0]), wY(far * k[1]));
+          ctx2d.moveTo(wX(-far * kx), wY(-far * ky));
+          ctx2d.lineTo(wX(far * kx), wY(far * ky));
           ctx2d.stroke();
           ctx2d.setLineDash([]);
-
-          // B. Nhãn Ker(T)
-          ctx2d.font = "700 12px system-ui, sans-serif";
-          ctx2d.fillStyle = "#f43f5e";
-          ctx2d.fillText("Ker(T) = span{" + k[0] + ", " + k[1] + "}", wX(3.2 * k[0]) + 8, wY(3.2 * k[1]) - 8);
-
-          // C. Các điểm mẫu co xẹp về gốc (0,0): x(t) = (1 - t) x_0
-          const collapseRatio = 1.0 - t;
-          an.sampleKerPoints.forEach((pt) => {
-            const curX = pt[0] * collapseRatio;
-            const curY = pt[1] * collapseRatio;
-
-            // Điểm đang chuyển động
-            ctx2d.fillStyle = "#f43f5e";
-            ctx2d.beginPath();
-            ctx2d.arc(wX(curX), wY(curY), 4, 0, Math.PI * 2);
-            ctx2d.fill();
-
-            // Mũi tên hướng về gốc 0
-            const dx = cx - wX(curX);
-            const dy = cy - wY(curY);
-            const dist = Math.hypot(dx, dy);
-            if (dist > 18) {
-              const arrowLen = 14;
-              const ax = wX(curX) + (dx / dist) * arrowLen;
-              const ay = wY(curY) + (dy / dist) * arrowLen;
-              ctx2d.strokeStyle = "rgba(244, 63, 94, 0.55)";
-              ctx2d.lineWidth = 1.5;
-              ctx2d.beginPath();
-              ctx2d.moveTo(wX(curX), wY(curY));
-              ctx2d.lineTo(ax, ay);
-              ctx2d.stroke();
-            }
-          });
         }
       } else if (this._currentPhase === 2) {
-        // Bước 3: Không gian ảnh Im(T) & Bảo toàn số chiều
+        // Buoc 3: Khong gian anh Im(T) & Bao toan so chieu
+        const pShow = smoothstep(rawP);
+
         if (an.rank === 1 && an.imBasis.length >= 1) {
           const im = an.imBasis[0];
-          const far = 40;
+          const imLen = Math.hypot(im[0], im[1]) || 1;
+          const ix = im[0] / imLen;
+          const iy = im[1] / imLen;
+          const far = 30 * pShow;
 
-          // A. Đường thẳng Không gian ảnh Im(T)
-          ctx2d.strokeStyle = "rgba(16, 185, 129, 0.9)";
-          ctx2d.lineWidth = 3.0;
-          ctx2d.beginPath();
-          ctx2d.moveTo(wX(-far * im[0]), wY(-far * im[1]));
-          ctx2d.lineTo(wX(far * im[0]), wY(far * im[1]));
-          ctx2d.stroke();
-
-          // Nhãn Im(T)
-          ctx2d.font = "700 12px system-ui, sans-serif";
-          ctx2d.fillStyle = "#10b981";
-          ctx2d.fillText("Im(T) = span{T(e)} (Đường 1D)", wX(3.5 * im[0]) + 8, wY(3.5 * im[1]) - 8);
-
-          // B. Ghost đường Ker(T) để so sánh đối ngẫu
+          // Ghost duong Ker(T) bi ep mat
           if (an.kerBasis.length >= 1) {
             const k = an.kerBasis[0];
-            ctx2d.strokeStyle = "rgba(244, 63, 94, 0.45)";
+            const kLen = Math.hypot(k[0], k[1]) || 1;
+            const kx = k[0] / kLen;
+            const ky = k[1] / kLen;
+            ctx2d.strokeStyle = "rgba(244, 63, 94, 0.42)";
             ctx2d.lineWidth = 1.8;
             ctx2d.setLineDash([6, 5]);
             ctx2d.beginPath();
-            ctx2d.moveTo(wX(-far * k[0]), wY(-far * k[1]));
-            ctx2d.lineTo(wX(far * k[0]), wY(far * k[1]));
+            ctx2d.moveTo(wX(-28 * kx), wY(-28 * ky));
+            ctx2d.lineTo(wX(28 * kx), wY(28 * ky));
             ctx2d.stroke();
             ctx2d.setLineDash([]);
           }
-        } else if (an.rank === 2) {
-          // Im(T) là toàn bộ mặt phẳng R^2
-          const c1 = an.columns[0];
-          const c2 = an.columns[1];
 
-          ctx2d.fillStyle = "rgba(16, 185, 129, 0.16)";
-          ctx2d.strokeStyle = "rgba(16, 185, 129, 0.55)";
-          ctx2d.lineWidth = 2.0;
+          // Duong thang Khong gian anh Im(T) (Xanh luc bao dam)
+          ctx2d.strokeStyle = "rgba(16, 185, 129, 0.25)";
+          ctx2d.lineWidth = 8.0;
           ctx2d.beginPath();
-          ctx2d.moveTo(wX(0), wY(0));
-          ctx2d.lineTo(wX(c1[0]), wY(c1[1]));
-          ctx2d.lineTo(wX(c1[0] + c2[0]), wY(c1[1] + c2[1]));
-          ctx2d.lineTo(wX(c2[0]), wY(c2[1]));
-          ctx2d.closePath();
-          ctx2d.fill();
+          ctx2d.moveTo(wX(-far * ix), wY(-far * iy));
+          ctx2d.lineTo(wX(far * ix), wY(far * iy));
           ctx2d.stroke();
 
-          ctx2d.font = "700 12px system-ui, sans-serif";
-          ctx2d.fillStyle = "#10b981";
-          ctx2d.fillText("Im(T) = R^2 (rank = 2)", wX(c1[0] + c2[0]) + 10, wY(c1[1] + c2[1]));
+          ctx2d.strokeStyle = "#10b981";
+          ctx2d.lineWidth = 2.8;
+          ctx2d.beginPath();
+          ctx2d.moveTo(wX(-far * ix), wY(-far * iy));
+          ctx2d.lineTo(wX(far * ix), wY(far * iy));
+          ctx2d.stroke();
+        } else if (an.rank === 2) {
+          drawDeformedGrid2D(c1, c2, "rgba(16, 185, 129, 0.18)", "rgba(16, 185, 129, 0.16)", "rgba(16, 185, 129, 0.65)");
         }
       }
 
@@ -886,101 +1018,98 @@
       if (!this._active || !this._analysis || this._analysis.is3D) return;
       if (!ctx2d || !gridInfo2D) return;
 
-      const { originPx, pixelsPerUnit } = gridInfo2D;
-      const cx = originPx.x;
-      const cy = originPx.y;
-      const px = pixelsPerUnit;
-
+      const { cx, cy, px } = gridInfo2D;
       const wX = (x) => cx + x * px;
       const wY = (y) => cy - y * px;
 
       const an = this._analysis;
-      const p = this._phaseProgress;
-      const t = smoothstep(p);
+      const rawP = this._phaseProgress;
 
       ctx2d.save();
 
-      // Hàm vẽ mũi tên sắc nét kèm nhãn
-      function drawArrow2D(x0, y0, x1, y1, color, labelText) {
-        const dx = x1 - x0;
-        const dy = y1 - y0;
-        const len = Math.hypot(dx, dy);
-        if (len < 1e-4) return;
-
-        ctx2d.beginPath();
-        ctx2d.strokeStyle = color;
-        ctx2d.lineWidth = 2.8;
-        ctx2d.moveTo(x0, y0);
-        ctx2d.lineTo(x1, y1);
-        ctx2d.stroke();
-
-        const headLen = Math.min(11, len * 0.35);
-        const angle = Math.atan2(dy, dx);
-        ctx2d.fillStyle = color;
-        ctx2d.beginPath();
-        ctx2d.moveTo(x1, y1);
-        ctx2d.lineTo(
-          x1 - headLen * Math.cos(angle - Math.PI / 7),
-          y1 - headLen * Math.sin(angle - Math.PI / 7)
-        );
-        ctx2d.lineTo(
-          x1 - headLen * Math.cos(angle + Math.PI / 7),
-          y1 - headLen * Math.sin(angle + Math.PI / 7)
-        );
-        ctx2d.closePath();
-        ctx2d.fill();
-
-        if (labelText) {
-          ctx2d.font = "700 12px system-ui, sans-serif";
-          ctx2d.fillStyle = color;
-          ctx2d.fillText(labelText, x1 + 8, y1 - 4);
-        }
-      }
-
       if (this._currentPhase === 0) {
-        // Vẽ 2 vector đang biến dạng từ e_j sang T(e_j)
+        // Quy dao net dut tu ngon e_j den ngon T(e_j)
+        const t = smoothstep(rawP);
         const e1 = [1, 0];
         const e2 = [0, 1];
         const c1 = an.columns[0];
         const c2 = an.columns[1];
 
-        const v1 = [(1 - t) * e1[0] + t * c1[0], (1 - t) * e1[1] + t * c1[1]];
-        const v2 = [(1 - t) * e2[0] + t * c2[0], (1 - t) * e2[1] + t * c2[1]];
+        ctx2d.setLineDash([4, 3]);
+        ctx2d.lineWidth = 1.4;
 
-        const lbl1 = t > 0.8 ? "T(e1) = Cột 1" : "v1(t)";
-        const lbl2 = t > 0.8 ? "T(e2) = Cột 2" : "v2(t)";
+        ctx2d.strokeStyle = "rgba(2, 132, 199, 0.55)";
+        ctx2d.beginPath();
+        ctx2d.moveTo(wX(e1[0]), wY(e1[1]));
+        ctx2d.lineTo(wX((1 - t) * e1[0] + t * c1[0]), wY((1 - t) * e1[1] + t * c1[1]));
+        ctx2d.stroke();
 
-        drawArrow2D(cx, cy, wX(v1[0]), wY(v1[1]), "#0090ff", lbl1);
-        drawArrow2D(cx, cy, wX(v2[0]), wY(v2[1]), "#10b981", lbl2);
-      } else {
-        // Ở Bước 2 và Bước 3: Luôn hiển thị hai vector cột ảnh đích T(e1), T(e2)
-        const c1 = an.columns[0];
-        const c2 = an.columns[1];
-        drawArrow2D(cx, cy, wX(c1[0]), wY(c1[1]), "#0090ff", "T(e1)");
-        drawArrow2D(cx, cy, wX(c2[0]), wY(c2[1]), "#10b981", "T(e2)");
+        ctx2d.strokeStyle = "rgba(16, 185, 129, 0.55)";
+        ctx2d.beginPath();
+        ctx2d.moveTo(wX(e2[0]), wY(e2[1]));
+        ctx2d.lineTo(wX((1 - t) * e2[0] + t * c2[0]), wY((1 - t) * e2[1] + t * c2[1]));
+        ctx2d.stroke();
+        ctx2d.setLineDash([]);
+      } else if (this._currentPhase === 1) {
+        const tCollapse = smoothstep((rawP - 0.25) / 0.75);
+        const remain = 1.0 - tCollapse;
+
+        // Vong tam ngam hap thu tai goc O(0,0)
+        ctx2d.strokeStyle = "rgba(244, 63, 94, 0.85)";
+        ctx2d.lineWidth = 1.8;
+        ctx2d.beginPath();
+        ctx2d.arc(cx, cy, 6 + 6 * Math.sin(rawP * Math.PI), 0, Math.PI * 2);
+        ctx2d.stroke();
+
+        ctx2d.fillStyle = "#f43f5e";
+        ctx2d.beginPath();
+        ctx2d.arc(cx, cy, 3.5, 0, Math.PI * 2);
+        ctx2d.fill();
+
+        // Cac hat mau tren Ker(T) bi hut tut ve goc O
+        if (an.nullity >= 1) {
+          an.sampleKerPoints.forEach((pt) => {
+            const curX = pt[0] * remain;
+            const curY = pt[1] * remain;
+            const sx = wX(curX);
+            const sy = wY(curY);
+
+            ctx2d.fillStyle = "#f43f5e";
+            ctx2d.beginPath();
+            ctx2d.arc(sx, sy, 4.0, 0, Math.PI * 2);
+            ctx2d.fill();
+          });
+        }
+      } else if (this._currentPhase === 2) {
+        // Vong nhan goc O(0,0)
+        ctx2d.fillStyle = "#f43f5e";
+        ctx2d.beginPath();
+        ctx2d.arc(cx, cy, 4.0, 0, Math.PI * 2);
+        ctx2d.fill();
       }
 
       ctx2d.restore();
     },
 
     // =========================================================================
-    // KẾT XUẤT 3D THREE.JS (viewer3D.js Hooks)
+    // KET XUAT 3D THREE.JS (viewer3D.js Hooks)
     // =========================================================================
     render3D(parentGroup) {
       if (!this._active || !this._analysis) return;
       if (!window.THREE || !parentGroup) return;
 
-      const an = this._analysis;
-      const p = this._phaseProgress;
-      const t = smoothstep(p);
+      this._frame3DCameraIfNeeded();
 
-      // 1. Tạo hoặc làm sạch Three Group
+      const an = this._analysis;
+      const rawP = this._phaseProgress;
+      const t = smoothstep(rawP);
+      const u = (window.Vec3D && Vec3D.S3D && Vec3D.S3D.unitsPerWorld) || 1;
+
       if (!this._threeGroup) {
         this._threeGroup = new THREE.Group();
         this._threeGroup.name = "LTAnimator_Group";
       }
 
-      // Xóa và giải phóng tài nguyên cũ
       while (this._threeGroup.children.length > 0) {
         const obj = this._threeGroup.children[0];
         this._threeGroup.remove(obj);
@@ -993,126 +1122,130 @@
         parentGroup.add(this._threeGroup);
       }
 
-      // Hàm tiện ích tạo mũi tên vector 3D
-      const makeArrow3D = (vec, colorHex, headSize = 0.35) => {
-        const grp = new THREE.Group();
-        const vLen = norm(vec);
-        if (vLen < 1e-4) return grp;
-
-        const pts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(vec[0], vec[1], vec[2])];
-        const lineGeom = new THREE.BufferGeometry().setFromPoints(pts);
-        const lineMat = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 2.5 });
-        grp.add(new THREE.Line(lineGeom, lineMat));
-
-        const coneGeom = new THREE.ConeGeometry(headSize * 0.35, headSize, 12);
-        const coneMat = new THREE.MeshBasicMaterial({ color: colorHex });
-        const cone = new THREE.Mesh(coneGeom, coneMat);
-        cone.position.set(vec[0], vec[1], vec[2]);
-        const dir = new THREE.Vector3(vec[0], vec[1], vec[2]).normalize();
-        cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-        grp.add(cone);
-        return grp;
-      };
-
-      if (this._currentPhase === 0) {
-        // Bước 1: Khối biến dạng 3D từ I sang A
-        const cols = an.columns.map((c) => to3D(c));
-        const std = [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
+      const addParallelepiped3D = (v1, v2, v3, colorHex, fillOpacity, edgeOpacity) => {
+        const V = [
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(v1[0] * u, v1[1] * u, v1[2] * u),
+          new THREE.Vector3(v2[0] * u, v2[1] * u, v2[2] * u),
+          new THREE.Vector3((v1[0] + v2[0]) * u, (v1[1] + v2[1]) * u, (v1[2] + v2[2]) * u),
+          new THREE.Vector3(v3[0] * u, v3[1] * u, v3[2] * u),
+          new THREE.Vector3((v1[0] + v3[0]) * u, (v1[1] + v3[1]) * u, (v1[2] + v3[2]) * u),
+          new THREE.Vector3((v2[0] + v3[0]) * u, (v2[1] + v3[1]) * u, (v2[2] + v3[2]) * u),
+          new THREE.Vector3(
+            (v1[0] + v2[0] + v3[0]) * u,
+            (v1[1] + v2[1] + v3[1]) * u,
+            (v1[2] + v2[2] + v3[2]) * u
+          )
         ];
 
-        const v1 = [
-          (1 - t) * std[0][0] + t * cols[0][0],
-          (1 - t) * std[0][1] + t * cols[0][1],
-          (1 - t) * std[0][2] + t * cols[0][2]
-        ];
-        const v2 = [
-          (1 - t) * std[1][0] + t * cols[1][0],
-          (1 - t) * std[1][1] + t * cols[1][1],
-          (1 - t) * std[1][2] + t * cols[1][2]
-        ];
-        const v3 = [
-          (1 - t) * std[2][0] + t * (cols[2] ? cols[2][0] : 0),
-          (1 - t) * std[2][1] + t * (cols[2] ? cols[2][1] : 0),
-          (1 - t) * std[2][2] + t * (cols[2] ? cols[2][2] : 1)
-        ];
-
-        // 3 Mũi tên biến dạng
-        this._threeGroup.add(makeArrow3D(v1, 0x0090ff));
-        this._threeGroup.add(makeArrow3D(v2, 0x10b981));
-        if (an.is3D) {
-          this._threeGroup.add(makeArrow3D(v3, 0xf59e0b));
+        const indices = [0, 1, 3, 0, 3, 2, 4, 6, 7, 4, 7, 5, 0, 4, 5, 0, 5, 1, 2, 3, 7, 2, 7, 6, 0, 2, 6, 0, 6, 4, 1, 5, 7, 1, 7, 3];
+        const positions = [];
+        for (let i = 0; i < indices.length; i++) {
+          const pt = V[indices[i]];
+          positions.push(pt.x, pt.y, pt.z);
         }
 
-        // Khung dây hình hộp biến dạng
-        const ptsBox = [
-          [0, 0, 0],
-          v1,
-          [v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]],
-          v2,
-          [0, 0, 0],
-          v3,
-          [v1[0] + v3[0], v1[1] + v3[1], v1[2] + v3[2]],
-          [v1[0] + v2[0] + v3[0], v1[1] + v2[1] + v3[1], v1[2] + v2[2] + v3[2]],
-          [v2[0] + v3[0], v2[1] + v3[1], v2[2] + v3[2]],
-          v3
-        ];
-        const boxGeom = new THREE.BufferGeometry().setFromPoints(
-          ptsBox.map((p) => new THREE.Vector3(p[0], p[1], p[2]))
-        );
-        const boxMat = new THREE.LineBasicMaterial({ color: 0x0284c7, transparent: true, opacity: 0.45 });
-        this._threeGroup.add(new THREE.Line(boxGeom, boxMat));
+        const boxGeom = new THREE.BufferGeometry();
+        boxGeom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+        boxGeom.computeVertexNormals();
+
+        if (fillOpacity > 0.01) {
+          const boxMat = new THREE.MeshBasicMaterial({
+            color: colorHex,
+            transparent: true,
+            opacity: fillOpacity,
+            side: THREE.DoubleSide,
+            depthWrite: false
+          });
+          this._threeGroup.add(new THREE.Mesh(boxGeom, boxMat));
+        }
+
+        const edgeGeom = new THREE.EdgesGeometry(boxGeom);
+        const edgeMat = new THREE.LineBasicMaterial({
+          color: colorHex,
+          transparent: true,
+          opacity: edgeOpacity
+        });
+        this._threeGroup.add(new THREE.LineSegments(edgeGeom, edgeMat));
+      };
+
+      const cols = an.columns.map((c) => to3D(c));
+      const std = [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1]
+      ];
+      const c1 = cols[0] || [1, 0, 0];
+      const c2 = cols[1] || [0, 1, 0];
+      const c3 = cols[2] || [0, 0, 1];
+
+      if (this._currentPhase === 0) {
+        // Bong mo khoi lap phuong don vi [0,1]^3 ban dau
+        addParallelepiped3D(std[0], std[1], std[2], 0x94a3b8, 0.04, 0.3);
+
+        const v1 = lerpVec(std[0], c1, t);
+        const v2 = lerpVec(std[1], c2, t);
+        const v3 = an.is3D ? lerpVec(std[2], c3, t) : [0, 0, 0];
+        if (an.is3D) {
+          addParallelepiped3D(v1, v2, v3, 0x0284c7, 0.16, 0.65);
+        }
       } else if (this._currentPhase === 1) {
-        // Bước 2: Hạt nhân Ker(T) sụp đổ 3D
-        if (an.nullity === 0) {
-          const sphGeom = new THREE.SphereGeometry(0.2, 16, 16);
-          const sphMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
-          this._threeGroup.add(new THREE.Mesh(sphGeom, sphMat));
-        } else if (an.nullity === 1 && an.kerBasis.length >= 1) {
+        const tCollapse = smoothstep((rawP - 0.25) / 0.75);
+        const remain = 1.0 - tCollapse;
+
+        if (an.is3D) {
+          const v1 = lerpVec(std[0], c1, tCollapse);
+          const v2 = lerpVec(std[1], c2, tCollapse);
+          const v3 = lerpVec(std[2], c3, tCollapse);
+          addParallelepiped3D(v1, v2, v3, 0x0284c7, 0.08, 0.35);
+        }
+
+        // Diem goc O(0,0,0) mau do hoa hong
+        const originSph = new THREE.Mesh(
+          new THREE.SphereGeometry(0.14 * u, 16, 16),
+          new THREE.MeshBasicMaterial({ color: 0xf43f5e })
+        );
+        this._threeGroup.add(originSph);
+
+        if (an.nullity === 1 && an.kerBasis.length >= 1) {
           const k = to3D(an.kerBasis[0]);
           const kLen = norm(k);
           if (kLen > 1e-4) {
-            const dir = [k[0] / kLen, k[1] / kLen, k[2] / kLen];
-            const pts = [
-              new THREE.Vector3(-dir[0] * 16, -dir[1] * 16, -dir[2] * 16),
-              new THREE.Vector3(dir[0] * 16, dir[1] * 16, dir[2] * 16)
-            ];
+            const dir = scaleVec(k, (14 * u) / kLen);
+            const pts = [new THREE.Vector3(-dir[0], -dir[1], -dir[2]), new THREE.Vector3(dir[0], dir[1], dir[2])];
             const lineGeom = new THREE.BufferGeometry().setFromPoints(pts);
             const lineMat = new THREE.LineDashedMaterial({
               color: 0xf43f5e,
-              dashSize: 0.4,
-              gapSize: 0.2
+              dashSize: 0.35 * u,
+              gapSize: 0.18 * u
             });
             const line = new THREE.Line(lineGeom, lineMat);
             line.computeLineDistances();
             this._threeGroup.add(line);
 
-            // Các hạt co xẹp
-            const collapseRatio = 1.0 - t;
             an.sampleKerPoints.forEach((pt) => {
               const p3 = to3D(pt);
-              const sphGeom = new THREE.SphereGeometry(0.12, 12, 12);
-              const sphMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
-              const sph = new THREE.Mesh(sphGeom, sphMat);
-              sph.position.set(p3[0] * collapseRatio, p3[1] * collapseRatio, p3[2] * collapseRatio);
+              const sph = new THREE.Mesh(
+                new THREE.SphereGeometry(0.1 * u, 12, 12),
+                new THREE.MeshBasicMaterial({ color: 0xf43f5e })
+              );
+              sph.position.set(p3[0] * remain * u, p3[1] * remain * u, p3[2] * remain * u);
               this._threeGroup.add(sph);
             });
           }
         } else if (an.nullity === 2 && an.kerBasis.length >= 2) {
-          // Mặt phẳng Hạt nhân Ker(T)
           const k1 = to3D(an.kerBasis[0]);
           const k2 = to3D(an.kerBasis[1]);
           const nVec = cross(k1, k2);
           const nLen = norm(nVec);
           if (nLen > 1e-6) {
-            const planeGeom = new THREE.PlaneGeometry(16, 16);
+            const planeGeom = new THREE.PlaneGeometry(14 * u, 14 * u);
             const planeMat = new THREE.MeshBasicMaterial({
               color: 0xf43f5e,
               transparent: true,
-              opacity: 0.22,
-              side: THREE.DoubleSide
+              opacity: 0.2,
+              side: THREE.DoubleSide,
+              depthWrite: false
             });
             const planeMesh = new THREE.Mesh(planeGeom, planeMat);
             planeMesh.quaternion.setFromUnitVectors(
@@ -1120,36 +1253,63 @@
               new THREE.Vector3(nVec[0] / nLen, nVec[1] / nLen, nVec[2] / nLen)
             );
             this._threeGroup.add(planeMesh);
+
+            an.sampleKerPoints.forEach((pt) => {
+              const p3 = to3D(pt);
+              const sph = new THREE.Mesh(
+                new THREE.SphereGeometry(0.1 * u, 12, 12),
+                new THREE.MeshBasicMaterial({ color: 0xf43f5e })
+              );
+              sph.position.set(p3[0] * remain * u, p3[1] * remain * u, p3[2] * remain * u);
+              this._threeGroup.add(sph);
+            });
           }
         }
       } else if (this._currentPhase === 2) {
-        // Bước 3: Không gian ảnh Im(T) 3D
+        // Buoc 3: Khong gian anh Im(T) 3D + Ghost Ker(T)
+        if (an.nullity === 1 && an.kerBasis.length >= 1) {
+          const k = to3D(an.kerBasis[0]);
+          const kLen = norm(k);
+          if (kLen > 1e-4) {
+            const dir = scaleVec(k, (13 * u) / kLen);
+            const pts = [new THREE.Vector3(-dir[0], -dir[1], -dir[2]), new THREE.Vector3(dir[0], dir[1], dir[2])];
+            const lineGeom = new THREE.BufferGeometry().setFromPoints(pts);
+            const lineMat = new THREE.LineDashedMaterial({
+              color: 0xf43f5e,
+              transparent: true,
+              opacity: 0.55,
+              dashSize: 0.35 * u,
+              gapSize: 0.18 * u
+            });
+            const line = new THREE.Line(lineGeom, lineMat);
+            line.computeLineDistances();
+            this._threeGroup.add(line);
+          }
+        }
+
         if (an.rank === 1 && an.imBasis.length >= 1) {
           const im = to3D(an.imBasis[0]);
           const imLen = norm(im);
           if (imLen > 1e-4) {
-            const dir = [im[0] / imLen, im[1] / imLen, im[2] / imLen];
-            const pts = [
-              new THREE.Vector3(-dir[0] * 16, -dir[1] * 16, -dir[2] * 16),
-              new THREE.Vector3(dir[0] * 16, dir[1] * 16, dir[2] * 16)
-            ];
+            const dir = scaleVec(im, (14 * u * t) / imLen);
+            const pts = [new THREE.Vector3(-dir[0], -dir[1], -dir[2]), new THREE.Vector3(dir[0], dir[1], dir[2])];
             const lineGeom = new THREE.BufferGeometry().setFromPoints(pts);
             const lineMat = new THREE.LineBasicMaterial({ color: 0x10b981, linewidth: 3 });
             this._threeGroup.add(new THREE.Line(lineGeom, lineMat));
           }
         } else if (an.rank === 2 && an.imBasis.length >= 2) {
-          // Mặt phẳng ảnh Im(T)
-          const c1 = to3D(an.imBasis[0]);
-          const c2 = to3D(an.imBasis[1]);
-          const nVec = cross(c1, c2);
+          const b1 = to3D(an.imBasis[0]);
+          const b2 = to3D(an.imBasis[1]);
+          const nVec = cross(b1, b2);
           const nLen = norm(nVec);
           if (nLen > 1e-6) {
-            const planeGeom = new THREE.PlaneGeometry(18, 18);
+            const planeGeom = new THREE.PlaneGeometry(15 * u * t, 15 * u * t);
             const planeMat = new THREE.MeshBasicMaterial({
               color: 0x10b981,
               transparent: true,
               opacity: 0.22,
-              side: THREE.DoubleSide
+              side: THREE.DoubleSide,
+              depthWrite: false
             });
             const planeMesh = new THREE.Mesh(planeGeom, planeMat);
             planeMesh.quaternion.setFromUnitVectors(
@@ -1158,17 +1318,15 @@
             );
             this._threeGroup.add(planeMesh);
           }
+        } else if (an.rank === 3 && an.is3D) {
+          addParallelepiped3D(c1, c2, c3, 0x10b981, 0.16 * t, 0.65 * t);
         }
-
-        // Vẽ các vector cột của A
-        an.columns.forEach((col, idx) => {
-          const col3 = to3D(col);
-          const colorHex = idx === 0 ? 0x0090ff : idx === 1 ? 0x10b981 : 0xf59e0b;
-          this._threeGroup.add(makeArrow3D(col3, colorHex));
-        });
       }
     }
   };
 
   App.LTAnimator = LTAnimator;
+  App.stopLTAnimation = function () {
+    if (LTAnimator.isActive()) LTAnimator.stop();
+  };
 })();

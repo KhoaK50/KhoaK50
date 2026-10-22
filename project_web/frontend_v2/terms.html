@@ -1,20 +1,24 @@
 <!doctype html>
 <html lang="vi">
   <head>
-  <script>
-    (function() {
-      try {
-        var theme = localStorage.getItem('vec_theme');
-        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-          document.documentElement.classList.add('dark');
-          document.documentElement.style.backgroundColor = '#111113';
-        } else {
-          document.documentElement.classList.remove('dark');
-          document.documentElement.style.backgroundColor = '#fcfcfd';
-        }
-      } catch (e) {}
-    })();
-  </script>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("vec_theme");
+          if (
+            theme === "dark" ||
+            (!theme &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches)
+          ) {
+            document.documentElement.classList.add("dark");
+            document.documentElement.style.backgroundColor = "#111113";
+          } else {
+            document.documentElement.classList.remove("dark");
+            document.documentElement.style.backgroundColor = "#fcfcfd";
+          }
+        } catch (e) {}
+      })();
+    </script>
     <!-- Google tag (gtag.js) -->
     <script
       async
@@ -28,18 +32,22 @@
       gtag("js", new Date());
       gtag("config", "G-GRZR4Y6VFQ");
     </script>
-    
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Điều khoản dịch vụ và quy tắc sử dụng của nền tảng học tập Vectoria." />
-    <title>Điều khoản Dịch vụ | Vectoria</title>
+    <meta
+      name="description"
+      content="Điều khoản dịch vụ và quy định sử dụng của nền tảng học tập Đại số tuyến tính Vectoria."
+    />
+    <title>Điều khoản dịch vụ | Vectoria</title>
     <link rel="icon" type="image/png" href="assets/images/logo.png" />
 
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="css/footer.css" />
     <link rel="stylesheet" href="css/radix_colors.css" />
     <link rel="stylesheet" href="css/components.css" />
-    
+    <link rel="stylesheet" href="css/global-search.css" />
+
     <script src="js/utils/theme-manager.js"></script>
 
     <style>
@@ -47,268 +55,930 @@
         scroll-behavior: smooth;
       }
 
-      h1, h2, h3, h4, h5, h6, p, li, body {
-        font-family: var(--font-ui);
-      }
       body {
-        background-color: transparent !important;
+        font-family: var(--font-ui);
+        background-color: var(--bg-base);
         color: var(--text-main);
         margin: 0;
-        padding-top: var(--topbar-h);
         min-height: 100vh;
+        display: flex;
+        flex-direction: column;
         transition:
-          background-color 0.3s,
-          color 0.3s;
+          background-color 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+          color 0.25s cubic-bezier(0.22, 1, 0.36, 1);
       }
 
-      /* =================== BACKGROUND HỌC THUẬT =================== */
-      .academic-bg {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: -2;
-        background-color: var(--bg-base);
-        background-image: radial-gradient(
-          var(--border-subtle) 1.5px,
-          transparent 1.5px
-        );
-        background-size: 30px 30px;
-        background-position: 0 0;
-        transition: background-color 0.3s;
-      }
-
-      .ambient-glow-1,
-      .ambient-glow-2 {
-        position: fixed;
-        border-radius: 50%;
-        filter: blur(120px);
-        z-index: -1;
-        pointer-events: none;
-        animation: floatGlow 15s ease-in-out infinite alternate;
-      }
-
-      .ambient-glow-1 {
-        top: -15%;
-        left: -10%;
-        width: 50vw;
-        height: 50vw;
-        background: rgba(58, 120, 255, 0.06);
-      }
-
-      .ambient-glow-2 {
-        bottom: -20%;
-        right: -10%;
-        width: 60vw;
-        height: 60vw;
-        background: rgba(16, 185, 129, 0.04);
-        animation-delay: -5s;
-      }
-
-      body.dark-theme .ambient-glow-1 {
-        background: rgba(59, 130, 246, 0.12);
-      }
-
-      body.dark-theme .ambient-glow-2 {
-        background: rgba(139, 92, 246, 0.08);
-      }
-
-      @keyframes floatGlow {
-        0% {
-          transform: translate(0, 0) scale(1);
-        }
-        100% {
-          transform: translate(60px, 40px) scale(1.1);
-        }
-      }
-
-      /* CONTENT CONTAINER */
-      .privacy-container {
-        max-width: 900px;
+      /* =================== KHUNG TRANG TÀI LIỆU HỌC THUẬT PHẲNG =================== */
+      .legal-page-shell {
+        max-width: 1120px;
+        width: 100%;
         margin: 0 auto;
-        padding: 60px 20px;
-        line-height: 1.7;
+        padding: 48px 24px 96px;
+        box-sizing: border-box;
+        flex: 1;
       }
 
-      .privacy-container h1 {
-        font-size: 2.5rem;
-        margin-bottom: 0.5rem;
+      /* THANH CHUYỂN ĐỔI VĂN BẢN TỐI GIẢN */
+      .legal-doc-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border-subtle);
+        margin-bottom: 40px;
+        gap: 16px;
+      }
+
+      .legal-doc-tabs {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+
+      .legal-doc-tab {
+        padding: 12px 0;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        transition:
+          color 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+          border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .legal-doc-tab:hover {
         color: var(--text-main);
       }
-      
-      .privacy-container .last-updated {
-        font-size: 1rem;
-        color: var(--text-muted);
-        margin-bottom: 3rem;
-        font-style: italic;
+
+      .legal-doc-tab.active {
+        color: var(--text-main);
+        font-weight: 600;
+        border-bottom-color: var(--text-main);
       }
 
-      .privacy-container h2 {
-        font-size: 1.8rem;
-        margin-top: 2.5rem;
-        margin-bottom: 1rem;
+      .legal-print-action {
+        padding: 6px 12px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        background: transparent;
+        border: 1px solid var(--border-subtle);
+        border-radius: 2px;
+        cursor: pointer;
+        transition:
+          color 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+          border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .legal-print-action:hover {
+        color: var(--text-main);
+        border-color: var(--border-strong);
+      }
+
+      /* TIÊU ĐỀ VĂN BẢN */
+      .legal-header {
+        padding-bottom: 36px;
+        margin-bottom: 44px;
+        border-bottom: 1px solid var(--border-strong);
+      }
+
+      .legal-header h1 {
+        font-size: clamp(2rem, 3.5vw, 2.65rem);
+        font-weight: 700;
+        line-height: 1.18;
+        letter-spacing: -0.025em;
+        color: var(--text-main);
+        margin: 0 0 12px 0;
+      }
+
+      .legal-effective-date {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        margin: 0 0 20px 0;
+      }
+
+      .legal-lead {
+        font-size: 1.025rem;
+        line-height: 1.72;
+        color: var(--text-main);
+        max-width: 760px;
+        margin: 0;
+      }
+
+      /* BỐ CỤC 2 CỘT: MỤC LỤC BÊN TRÁI - VĂN BẢN BÊN PHẢI */
+      .legal-layout {
+        display: grid;
+        grid-template-columns: 230px minmax(0, 740px);
+        justify-content: space-between;
+        gap: 56px;
+        align-items: start;
+      }
+
+      /* MỤC LỤC CỐ ĐỊNH (DESKTOP) */
+      .legal-toc {
+        position: sticky;
+        top: 92px;
+      }
+
+      .legal-toc-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--text-muted);
+        margin: 0 0 14px 0;
+      }
+
+      .legal-toc-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        border-left: 1px solid var(--border-subtle);
+      }
+
+      .legal-toc-list li {
+        margin: 0;
+      }
+
+      .legal-toc-link {
+        display: block;
+        padding: 7px 0 7px 16px;
+        margin-left: -1px;
+        font-size: 0.84rem;
+        line-height: 1.45;
+        font-weight: 400;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-left: 2px solid transparent;
+        transition:
+          color 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+          border-color 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .legal-toc-link:hover {
+        color: var(--text-main);
+      }
+
+      .legal-toc-link.active {
+        color: var(--text-main);
+        font-weight: 600;
+        border-left-color: var(--text-main);
+      }
+
+      /* MỤC LỤC DI ĐỘNG */
+      .legal-mobile-toc {
+        display: none;
+        border-top: 1px solid var(--border-subtle);
+        border-bottom: 1px solid var(--border-subtle);
+        margin-bottom: 32px;
+      }
+
+      .legal-mobile-toc summary {
+        padding: 14px 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-main);
+        cursor: pointer;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .legal-mobile-toc summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .legal-mobile-toc-list {
+        list-style: none;
+        margin: 0;
+        padding: 4px 0 16px 0;
+      }
+
+      .legal-mobile-toc-list a {
+        display: block;
+        padding: 6px 0;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        text-decoration: none;
+      }
+
+      .legal-mobile-toc-list a:hover {
+        color: var(--text-main);
+      }
+
+      /* VĂN BẢN CHÍNH */
+      .legal-article {
+        min-width: 0;
+      }
+
+      .legal-section {
+        scroll-margin-top: 88px;
+        padding-bottom: 36px;
+        margin-bottom: 36px;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+
+      .legal-section:last-of-type {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      .legal-section h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        line-height: 1.35;
+        letter-spacing: -0.015em;
+        color: var(--text-main);
+        margin: 0 0 16px 0;
+      }
+
+      .legal-section h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.45;
+        color: var(--text-main);
+        margin: 24px 0 10px 0;
+      }
+
+      .legal-section p {
+        font-size: 0.96875rem;
+        line-height: 1.78;
+        color: var(--text-main);
+        margin: 0 0 14px 0;
+      }
+
+      .legal-section p:last-child {
+        margin-bottom: 0;
+      }
+
+      .legal-section ul,
+      .legal-section ol {
+        margin: 0 0 16px 0;
+        padding-left: 20px;
+      }
+
+      .legal-section li {
+        font-size: 0.96875rem;
+        line-height: 1.75;
+        color: var(--text-main);
+        margin-bottom: 8px;
+      }
+
+      .legal-section a {
+        color: var(--primary-base);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .legal-section a:hover {
+        border-bottom-color: var(--primary-base);
+      }
+
+      /* BẢNG KẺ NGANG CHUẨN HỌC THUẬT LATEX BOOKTABS (\toprule, \midrule, \bottomrule) */
+      .legal-table-scroll {
+        width: 100%;
+        overflow-x: auto;
+        margin: 20px 0 24px 0;
+      }
+
+      .legal-booktabs {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+        text-align: left;
+        min-width: 580px;
+        border-top: 1.5px solid var(--text-main);
+        border-bottom: 1.5px solid var(--text-main);
+      }
+
+      .legal-booktabs thead th {
+        padding: 10px 16px 10px 0;
+        font-weight: 600;
+        font-size: 0.8125rem;
+        color: var(--text-main);
+        border-bottom: 1px solid var(--border-strong);
+      }
+
+      .legal-booktabs thead th:last-child,
+      .legal-booktabs tbody td:last-child {
+        padding-right: 0;
+      }
+
+      .legal-booktabs tbody td {
+        padding: 12px 16px 12px 0;
+        line-height: 1.6;
         color: var(--text-main);
         border-bottom: 1px solid var(--border-subtle);
-        padding-bottom: 0.5rem;
+        vertical-align: top;
       }
 
-      .privacy-container p, .privacy-container li {
-        font-size: 1.1rem;
-        color: var(--text-main);
-        margin-bottom: 1rem;
+      .legal-booktabs tbody tr:last-child td {
+        border-bottom: none;
       }
 
-      .privacy-container ul {
-        margin-bottom: 1.5rem;
-        padding-left: 1.5rem;
+      /* =================== RESPONSIVE =================== */
+      @media (max-width: 960px) {
+        .legal-page-shell {
+          padding: 32px 20px 64px;
+        }
+
+        .legal-layout {
+          grid-template-columns: 1fr;
+          gap: 0;
+        }
+
+        .legal-toc {
+          display: none;
+        }
+
+        .legal-mobile-toc {
+          display: block;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .legal-doc-nav {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .legal-print-action {
+          display: none;
+        }
+      }
+
+      /* =================== TÔN TRỌNG PREFERS-REDUCED-MOTION =================== */
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+      }
+
+      /* =================== BẢN IN / PDF =================== */
+      @media print {
+        .vec-topbar,
+        .legal-doc-nav,
+        .legal-toc,
+        .legal-mobile-toc,
+        .vectoria-footer {
+          display: none !important;
+        }
+
+        body {
+          background: #ffffff !important;
+          color: #000000 !important;
+        }
+
+        .legal-page-shell {
+          padding: 0;
+          max-width: 100%;
+        }
+
+        .legal-layout {
+          display: block;
+        }
+
+        .legal-section {
+          page-break-inside: avoid;
+        }
       }
     </style>
-    <link rel="stylesheet" href="css/global-search.css">
-</head>
+  </head>
   <body>
-    
-    <div class="academic-bg"></div>
-    <div class="ambient-glow-1"></div>
-    <div class="ambient-glow-2"></div>
-
     <header class="vec-topbar" id="globalTopbar">
       <div class="vec-topbar-left">
-        <button class="vec-sidebar-toggle" id="globalMobileToggleBtn" title="Menu sidebar">
+        <button
+          class="vec-sidebar-toggle"
+          id="globalMobileToggleBtn"
+          title="Menu điều hướng"
+        >
           <i class="ph ph-compass"></i>
-        </button><a href="index.html" class="vec-brand-group">
-          <img src="assets/images/logo+name.png" alt="Vectoria" onerror="this.src='assets/images/logo.png'">
+        </button>
+        <a href="index.html" class="vec-brand-group">
+          <img
+            src="assets/images/logo+name.png"
+            alt="Biểu trưng nền tảng học thuật Vectoria"
+            onerror="this.src='assets/images/logo.png'"
+          />
         </a>
-        
+
         <nav class="vec-nav-links">
-          <a href="index.html" class="vec-nav-link" id="navHome"><i class="ph ph-house"></i> <span data-i18n="nav.home">Trang chủ</span></a>
-          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard"><i class="ph ph-stack"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
-          <a href="calculation.html" class="vec-nav-link" id="navCalc"><i class="ph ph-calculator"></i> <span data-i18n="nav.calc">Tính toán</span></a>
-          
+          <a href="index.html" class="vec-nav-link" id="navHome">
+            <i class="ph ph-house"></i>
+            <span data-i18n="nav.home">Trang chủ</span>
+          </a>
+          <a href="user-dashboard.html" class="vec-nav-link" id="navDashboard">
+            <i class="ph ph-stack"></i>
+            <span data-i18n="nav.dashboard">Dashboard</span>
+          </a>
+          <a href="calculation.html" class="vec-nav-link" id="navCalc">
+            <i class="ph ph-calculator"></i>
+            <span data-i18n="nav.calc">Tính toán</span>
+          </a>
+
           <div class="vec-dropdown-container">
-            <span class="vec-nav-link"><i class="ph ph-compass"></i> Khám phá <i class="ph ph-caret-down" style="font-size: 0.7em;"></i></span>
+            <span class="vec-nav-link">
+              <i class="ph ph-compass"></i> Khám phá
+              <i class="ph ph-caret-down" style="font-size: 0.7em"></i>
+            </span>
             <div class="vec-dropdown-menu">
-              <a href="knowledge_info.html" class="vec-dropdown-item" data-i18n="nav.knowledge"><i class="ph ph-graduation-cap"></i> Thư viện kiến thức</a>
-              <a href="hdsd.html" class="vec-dropdown-item" data-i18n="nav.manual"><i class="ph ph-question"></i> Hướng dẫn sử dụng</a>
-              <a href="tltk.html" class="vec-dropdown-item" data-i18n="nav.docs"><i class="ph ph-file-pdf"></i> Tài liệu tham khảo</a>
-              <div class="dropdown-divider" style="height: 1px; background: var(--border-strong, #cbd5e1); margin: 5px 0;"></div>
-              <a href="about_us.html" class="vec-dropdown-item" data-i18n="nav.about"><i class="ph ph-users"></i> Về chúng tôi</a>
-              <a href="contact.html" class="vec-dropdown-item" data-i18n="nav.contact"><i class="ph ph-envelope"></i> Liên hệ</a>
+              <a
+                href="knowledge_info.html"
+                class="vec-dropdown-item"
+                data-i18n="nav.knowledge"
+              >
+                <i class="ph ph-graduation-cap"></i> Thư viện kiến thức
+              </a>
+              <a
+                href="hdsd.html"
+                class="vec-dropdown-item"
+                data-i18n="nav.manual"
+              >
+                <i class="ph ph-question"></i> Hướng dẫn sử dụng
+              </a>
+              <a
+                href="tltk.html"
+                class="vec-dropdown-item"
+                data-i18n="nav.docs"
+              >
+                <i class="ph ph-file-pdf"></i> Tài liệu tham khảo
+              </a>
+              <div
+                class="dropdown-divider"
+                style="
+                  height: 1px;
+                  background: var(--border-strong, #cbd5e1);
+                  margin: 5px 0;
+                "
+              ></div>
+              <a
+                href="about_us.html"
+                class="vec-dropdown-item"
+                data-i18n="nav.about"
+              >
+                <i class="ph ph-users"></i> Về chúng tôi
+              </a>
+              <a
+                href="contact.html"
+                class="vec-dropdown-item"
+                data-i18n="nav.contact"
+              >
+                <i class="ph ph-envelope"></i> Liên hệ
+              </a>
             </div>
           </div>
         </nav>
       </div>
-      
+
       <div class="vec-topbar-right">
-        <button class="vec-icon-btn" id="themeToggleBtn" title="Chuyển giao diện">
-          <i class="ph ph-moon icon-light-mode"></i><i class="ph ph-sun icon-dark-mode"></i>
+        <button
+          class="vec-icon-btn"
+          id="themeToggleBtn"
+          title="Chuyển giao diện Sáng/Tối"
+        >
+          <i class="ph ph-moon icon-light-mode"></i>
+          <i class="ph ph-sun icon-dark-mode"></i>
         </button>
 
         <div class="vec-dropdown-container right-align">
           <button class="vec-icon-btn" title="Ngôn ngữ">
             <i class="ph ph-globe"></i>
           </button>
-          <div class="vec-dropdown-menu" style="min-width: 150px;">
-            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('vi')">Tiếng Việt</a>
-            <a href="#" class="vec-dropdown-item" onclick="if(window.setLang) setLang('en')">English</a>
+          <div class="vec-dropdown-menu" style="min-width: 150px">
+            <a
+              href="#"
+              class="vec-dropdown-item"
+              onclick="if(window.setLang) setLang('vi')"
+              >Tiếng Việt</a
+            >
+            <a
+              href="#"
+              class="vec-dropdown-item"
+              onclick="if(window.setLang) setLang('en')"
+              >English</a
+            >
           </div>
         </div>
-        
-        <div class="vec-dropdown-container right-align" id="notificationDropdownContainer" style="display: none;">
-          <button class="vec-icon-btn" title="Thông báo" id="notificationBellBtn" style="position: relative;">
+
+        <div
+          class="vec-dropdown-container right-align"
+          id="notificationDropdownContainer"
+          style="display: none"
+        >
+          <button
+            class="vec-icon-btn"
+            title="Thông báo"
+            id="notificationBellBtn"
+            style="position: relative"
+          >
             <i class="ph ph-bell"></i>
-            <span id="unreadBadge" style="display: none; position: absolute; top: 0px; right: 0px; min-width: 16px; height: 16px; background-color: #ef4444; color: white; border-radius: 10px; font-size: 10px; font-weight: bold; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; font-family: var(--font-ui); box-shadow: 0 0 0 2px var(--bg-card, #fff);"></span>
+            <span
+              id="unreadBadge"
+              style="
+                display: none;
+                position: absolute;
+                top: 0px;
+                right: 0px;
+                min-width: 16px;
+                height: 16px;
+                background-color: #ef4444;
+                color: white;
+                border-radius: 10px;
+                font-size: 10px;
+                font-weight: bold;
+                align-items: center;
+                justify-content: center;
+                padding: 0 4px;
+                box-sizing: border-box;
+                font-family: var(--font-ui);
+                box-shadow: 0 0 0 2px var(--bg-card, #fff);
+              "
+            ></span>
           </button>
-          <div class="vec-dropdown-menu" id="notificationMenu" style="min-width: 320px; max-height: 400px; overflow-y: auto; padding: 0;">
-            <div style="padding: 12px 16px; border-bottom: 1px solid var(--s3); font-weight: 600; font-family: var(--font); display: flex; justify-content: space-between; align-items: center;">
+          <div
+            class="vec-dropdown-menu"
+            id="notificationMenu"
+            style="
+              min-width: 320px;
+              max-height: 400px;
+              overflow-y: auto;
+              padding: 0;
+            "
+          >
+            <div
+              style="
+                padding: 12px 16px;
+                border-bottom: 1px solid var(--s3);
+                font-weight: 600;
+                font-family: var(--font);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
               <span>Thông báo</span>
-              <button id="markAllReadBtn" style="font-size: 0.8em; color: var(--b9); background: none; border: none; cursor: pointer; display: none;">Đánh dấu đã đọc</button>
+              <button
+                id="markAllReadBtn"
+                style="
+                  font-size: 0.8em;
+                  color: var(--b9);
+                  background: none;
+                  border: none;
+                  cursor: pointer;
+                  display: none;
+                "
+              >
+                Đánh dấu đã đọc
+              </button>
             </div>
             <div id="notificationList">
-              <div style="padding: 16px; text-align: center; color: var(--s6); font-family: var(--font);">Không có thông báo mới</div>
+              <div
+                style="
+                  padding: 16px;
+                  text-align: center;
+                  color: var(--s6);
+                  font-family: var(--font);
+                "
+              >
+                Không có thông báo mới
+              </div>
             </div>
           </div>
         </div>
-        
+
         <div class="vec-dropdown-container right-align">
-          <div class="top-avatar-btn" id="btnTopAvatar" style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary-base); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; background-size: cover; background-position: center;">
+          <div
+            class="top-avatar-btn"
+            id="btnTopAvatar"
+            style="
+              width: 38px;
+              height: 38px;
+              border-radius: 50%;
+              background: var(--primary-base);
+              color: white;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: bold;
+              cursor: pointer;
+              background-size: cover;
+              background-position: center;
+            "
+          >
             <i class="ph ph-user"></i>
           </div>
-          <div class="top-dropdown vec-dropdown-menu" id="menuTopAvatar" style="width: 260px; min-width: 260px;">
-          </div>
+          <div
+            class="top-dropdown vec-dropdown-menu"
+            id="menuTopAvatar"
+            style="width: 260px; min-width: 260px"
+          ></div>
         </div>
       </div>
     </header>
 
-    <main class="privacy-container">
-      <h1>Điều khoản Dịch vụ</h1>
-      <p class="last-updated">Cập nhật lần cuối: 02/09/2026</p>
+    <div class="legal-page-shell">
+      <nav class="legal-doc-nav" aria-label="Tài liệu pháp lý">
+        <div class="legal-doc-tabs">
+          <a href="privacy.html" class="legal-doc-tab">Chính sách bảo mật</a>
+          <a href="terms.html" class="legal-doc-tab active">Điều khoản dịch vụ</a>
+        </div>
+        <button
+          type="button"
+          class="legal-print-action"
+          onclick="window.print()"
+        >
+          In văn bản / Lưu PDF
+        </button>
+      </nav>
 
-      <p>Chào mừng bạn đến với Vectoria (vectoria.io.vn). Bằng việc truy cập hoặc sử dụng nền tảng của chúng tôi, bạn đồng ý tuân thủ các Điều khoản Dịch vụ này. Nếu bạn không đồng ý với bất kỳ điều khoản nào, vui lòng ngừng sử dụng dịch vụ.</p>
+      <header class="legal-header">
+        <h1>Điều khoản dịch vụ</h1>
+        <p class="legal-effective-date">
+          Cập nhật lần cuối và có hiệu lực từ ngày 22 tháng 10 năm 2026
+        </p>
+        <p class="legal-lead">
+          Điều khoản dịch vụ này quy định các quyền, nghĩa vụ của người học và các quy tắc sử dụng đối với nền tảng học tập, tính toán và trực quan hóa Đại số tuyến tính Vectoria (vectoria.io.vn). Bằng việc truy cập hoặc đăng ký tài khoản trên nền tảng, bạn xác nhận đã đọc, hiểu và đồng ý tuân thủ các điều khoản dưới đây.
+        </p>
+      </header>
 
-      <h2>1. Mô Tả Dịch Vụ</h2>
-      <p>Vectoria là một nền tảng giáo dục hỗ trợ học đại số tuyến tính và trực quan hóa vector. Dịch vụ cung cấp các tính năng bao gồm:</p>
-      <ul>
-        <li>Công cụ tính toán và trực quan hóa vector 2D, 3D.</li>
-        <li>Hệ thống bài học, bài giảng và tài liệu học tập.</li>
-        <li>Hệ thống bài kiểm tra, câu đố.</li>
-        <li>Hệ thống điểm thưởng Gamification bao gồm VEX, VP và danh hiệu.</li>
-      </ul>
+      <details class="legal-mobile-toc">
+        <summary>
+          <span>Mục lục nội dung</span>
+          <span>10 điều khoản</span>
+        </summary>
+        <ol class="legal-mobile-toc-list">
+          <li><a href="#section-1">1. Chấp thuận điều khoản sử dụng</a></li>
+          <li><a href="#section-2">2. Phạm vi dịch vụ học thuật</a></li>
+          <li><a href="#section-3">3. Đăng ký và bảo mật tài khoản</a></li>
+          <li><a href="#section-4">4. Quy tắc sử dụng và liêm chính học thuật</a></li>
+          <li><a href="#section-5">5. Điểm thưởng và danh hiệu học tập</a></li>
+          <li><a href="#section-6">6. Tiêu chuẩn thảo luận cộng đồng</a></li>
+          <li><a href="#section-7">7. Quyền sở hữu trí tuệ và học liệu</a></li>
+          <li><a href="#section-8">8. Giới hạn trách nhiệm dịch vụ</a></li>
+          <li><a href="#section-9">9. Tạm ngừng và chấm dứt dịch vụ</a></li>
+          <li><a href="#section-10">10. Sửa đổi điều khoản và liên hệ</a></li>
+        </ol>
+      </details>
 
-      <h2>2. Tài Khoản Người Dùng</h2>
-      <p>Để sử dụng đầy đủ các tính năng, bạn cần tạo tài khoản. Bằng việc đăng ký, bạn đồng ý:</p>
-      <ul>
-        <li>Cung cấp thông tin chính xác và đầy đủ.</li>
-        <li>Tự chịu trách nhiệm bảo mật mật khẩu và thông tin đăng nhập của mình.</li>
-        <li>Không chia sẻ tài khoản hoặc cho phép người khác sử dụng tài khoản của bạn để gian lận.</li>
-        <li>Không tạo tài khoản giả mạo hoặc sử dụng bot để khai thác hệ thống.</li>
-      </ul>
+      <div class="legal-layout">
+        <aside class="legal-toc" aria-label="Mục lục">
+          <p class="legal-toc-title">Mục lục</p>
+          <ul class="legal-toc-list" id="desktopTocList">
+            <li>
+              <a href="#section-1" class="legal-toc-link active">
+                1. Chấp thuận điều khoản
+              </a>
+            </li>
+            <li>
+              <a href="#section-2" class="legal-toc-link">
+                2. Phạm vi dịch vụ học thuật
+              </a>
+            </li>
+            <li>
+              <a href="#section-3" class="legal-toc-link">
+                3. Đăng ký và bảo mật tài khoản
+              </a>
+            </li>
+            <li>
+              <a href="#section-4" class="legal-toc-link">
+                4. Liêm chính học thuật
+              </a>
+            </li>
+            <li>
+              <a href="#section-5" class="legal-toc-link">
+                5. Điểm thưởng và danh hiệu
+              </a>
+            </li>
+            <li>
+              <a href="#section-6" class="legal-toc-link">
+                6. Thảo luận cộng đồng
+              </a>
+            </li>
+            <li>
+              <a href="#section-7" class="legal-toc-link">
+                7. Quyền sở hữu trí tuệ
+              </a>
+            </li>
+            <li>
+              <a href="#section-8" class="legal-toc-link">
+                8. Giới hạn trách nhiệm
+              </a>
+            </li>
+            <li>
+              <a href="#section-9" class="legal-toc-link">
+                9. Tạm ngừng và chấm dứt
+              </a>
+            </li>
+            <li>
+              <a href="#section-10" class="legal-toc-link">
+                10. Sửa đổi và liên hệ
+              </a>
+            </li>
+          </ul>
+        </aside>
 
-      <h2>3. Quy Tắc Sử Dụng</h2>
-      <p>Bạn không được phép thực hiện các hành vi sau khi sử dụng Vectoria:</p>
-      <ul>
-        <li>Tấn công, phá hoại, hoặc cố gắng truy cập trái phép vào hệ thống, máy chủ, hoặc cơ sở dữ liệu của chúng tôi.</li>
-        <li>Khai thác lỗ hổng phần mềm để trục lợi cá nhân, ví dụ như tăng điểm VP/VEX gian lận.</li>
-        <li>Sử dụng các công cụ tự động để spam API hoặc gửi hàng loạt request gây quá tải hệ thống.</li>
-        <li>Sao chép, phân phối hoặc sửa đổi mã nguồn, tài liệu, hoặc nội dung bài học mà không có sự đồng ý của Vectoria.</li>
-        <li>Đăng tải nội dung độc hại, xúc phạm hoặc vi phạm pháp luật.</li>
-      </ul>
+        <main class="legal-article">
+          <section class="legal-section" id="section-1">
+            <h2>1. Chấp thuận điều khoản sử dụng</h2>
+            <p>
+              Khi truy cập và sử dụng nền tảng Vectoria tại tên miền <strong>vectoria.io.vn</strong>, bạn đồng ý chịu sự ràng buộc của Điều khoản dịch vụ này cùng với <a href="privacy.html">Chính sách bảo mật</a> của chúng tôi. Nếu bạn không đồng ý với bất kỳ nội dung nào trong văn bản này, vui lòng ngừng sử dụng dịch vụ.
+            </p>
+          </section>
 
-      <h2>4. Gamification (Hệ Thống Điểm Thưởng VP/VEX)</h2>
-      <p>Vectoria sử dụng hệ thống điểm thưởng để khuyến khích học tập:</p>
-      <ul>
-        <li><strong>VP (Vectoria Points) & VEX (Vectoria Experience):</strong> Đây là các điểm số nội bộ chỉ có giá trị sử dụng trên nền tảng Vectoria.</li>
-        <li>Chúng hoàn toàn không phải là tiền thật, không có giá trị quy đổi thành tiền tệ, tài sản hoặc phần thưởng vật chất nào ngoài hệ thống.</li>
-        <li>Nghiêm cấm mọi hình thức mua bán, chuyển nhượng VP/VEX giữa các người dùng dưới bất kỳ hình thức nào.</li>
-        <li>Chúng tôi có toàn quyền thu hồi điểm, reset xếp hạng hoặc khóa tài khoản nếu phát hiện hành vi gian lận kết quả quiz để cày điểm.</li>
-      </ul>
+          <section class="legal-section" id="section-2">
+            <h2>2. Phạm vi dịch vụ học thuật</h2>
+            <p>
+              Vectoria là nền tảng giáo dục trực tuyến hỗ trợ sinh viên, học sinh và giảng viên trong việc học tập, giảng dạy và trực quan hóa môn Đại số tuyến tính thông qua bốn nhóm tính năng chính:
+            </p>
+            <ul>
+              <li>
+                <strong>Không gian trực quan hóa 2D và 3D:</strong> Mô phỏng hình học tương tác cho các phép toán vector, tổ hợp tuyến tính, phép chiếu trực giao, định thức và các phép biến đổi tuyến tính trong không gian.
+              </li>
+              <li>
+                <strong>Công cụ giải toán từng bước:</strong> Hỗ trợ trình bày lời giải chi tiết theo từng bước biến đổi cho các bài toán ma trận, hệ phương trình tuyến tính, định thức, trực giao hóa Gram-Schmidt, trị riêng - vector riêng và phân rã ma trận.
+              </li>
+              <li>
+                <strong>Thư viện bài giảng điện tử:</strong> Cung cấp hệ thống giáo trình lý thuyết, định nghĩa, định lý và ví dụ minh họa được trình bày theo chuẩn tài liệu toán học.
+              </li>
+              <li>
+                <strong>Hệ thống đánh giá năng lực và lộ trình học:</strong> Cung cấp các bài kiểm tra trắc nghiệm, theo dõi tiến độ làm chủ kiến thức và gợi ý lộ trình ôn tập cá nhân hóa.
+              </li>
+            </ul>
+          </section>
 
-      <h2>5. Quyền Sở Hữu Trí Tuệ</h2>
-      <p>Tất cả mã nguồn, thiết kế giao diện, logo, nội dung bài giảng và tài liệu trên Vectoria đều thuộc bản quyền của chúng tôi hoặc các đối tác hợp pháp.</p>
-      <p>Vectoria có sử dụng một số thư viện mã nguồn mở (ví dụ: MathJax, Three.js). Các thư viện này thuộc về chủ sở hữu hợp pháp của chúng và tuân thủ các giấy phép mã nguồn mở tương ứng.</p>
+          <section class="legal-section" id="section-3">
+            <h2>3. Đăng ký và bảo mật tài khoản</h2>
+            <p>
+              Bạn có thể sử dụng công cụ tính toán và đọc bài giảng mà không cần đăng nhập. Tuy nhiên, để lưu trữ tiến độ học tập, tham gia làm bài kiểm tra và thảo luận tại bài giảng, bạn cần đăng ký tài khoản và tuân thủ các quy định sau:
+            </p>
+            <ul>
+              <li>
+                <strong>Thông tin chính xác:</strong> Cung cấp địa chỉ email hợp lệ để nhận liên kết kích hoạt tài khoản và các cảnh báo bảo mật quan trọng.
+              </li>
+              <li>
+                <strong>Quy định về tên hiển thị và hồ sơ:</strong> Không đặt tên hiển thị hoặc sử dụng ảnh đại diện mạo danh giảng viên, quản trị viên, tổ chức giáo dục hoặc chứa từ ngữ phản cảm. Để đảm bảo tính minh bạch trong trao đổi học thuật, mỗi tài khoản chỉ được phép thay đổi tên hiển thị tối đa 02 lần mỗi tháng.
+              </li>
+              <li>
+                <strong>Trách nhiệm bảo mật:</strong> Bạn có trách nhiệm tự bảo quản mật khẩu của mình và không chia sẻ tài khoản cho người khác sử dụng chung. Khi nhận được email cảnh báo đăng nhập từ thiết bị lạ không phải do bạn thực hiện, bạn cần sử dụng ngay liên kết khóa tài khoản khẩn cấp trong email hoặc đổi mật khẩu để bảo vệ tài khoản.
+              </li>
+            </ul>
+          </section>
 
-      <h2>6. Miễn Trừ Trách Nhiệm</h2>
-      <p>Vectoria được xây dựng nhằm mục đích hỗ trợ học tập và trực quan hóa toán học. Kết quả tính toán hoặc các mô phỏng được cung cấp trên nền tảng nhằm mục đích giáo dục, chúng tôi không đảm bảo tính chính xác tuyệt đối 100% trong mọi trường hợp phức tạp. Dịch vụ được cung cấp "nguyên trạng" và không thay thế cho các tư vấn hay công cụ chuyên ngành khắt khe.</p>
+          <section class="legal-section" id="section-4">
+            <h2>4. Quy tắc sử dụng và liêm chính học thuật</h2>
+            <p>
+              Vectoria hướng tới việc xây dựng môi trường học tập trung thực và bền vững. Khi sử dụng nền tảng, bạn cam kết không thực hiện các hành vi sau:
+            </p>
+            <ul>
+              <li>
+                Sử dụng các công cụ tự động, kịch bản (scripts/bots) hoặc phần mềm can thiệp để tự động nộp bài kiểm tra, làm sai lệch kết quả đánh giá năng lực hoặc gian lận điểm thưởng.
+              </li>
+              <li>
+                Thực hiện các hành vi tấn công kỹ thuật, gửi yêu cầu hàng loạt gây quá tải máy chủ, quét lỗ hổng hoặc cố gắng truy cập trái phép vào dữ liệu của người dùng khác.
+              </li>
+              <li>
+                Sao chép tự động hàng loạt (scraping), phát tán trái phép hoặc sử dụng nội dung bài giảng, mã nguồn của Vectoria cho mục đích thương mại khi chưa có sự đồng ý bằng văn bản của chúng tôi.
+              </li>
+            </ul>
+          </section>
 
-      <h2>7. Chấm Dứt Tài Khoản</h2>
-      <p>Chúng tôi có quyền đình chỉ hoặc xóa vĩnh viễn tài khoản của bạn mà không cần báo trước nếu bạn vi phạm nghiêm trọng các Điều khoản Dịch vụ này, đặc biệt là các hành vi tấn công mạng, phá hoại hệ thống hoặc gian lận có tổ chức.</p>
+          <section class="legal-section" id="section-5">
+            <h2>5. Điểm thưởng và danh hiệu học tập</h2>
+            <p>
+              Vectoria sử dụng hệ thống chỉ số học tập bao gồm Điểm kinh nghiệm (VEX), Điểm thưởng (VP), Chuỗi ngày học liên tiếp (Streak) và các Danh hiệu nhằm ghi nhận nỗ lực rèn luyện của người học:
+            </p>
+            <ul>
+              <li>
+                <strong>Bản chất phi tiền tệ:</strong> Toàn bộ điểm VEX, VP và các danh hiệu chỉ có ý nghĩa hiển thị và sử dụng nội bộ trong phạm vi nền tảng Vectoria. Các chỉ số này hoàn toàn không phải là tiền tệ, tài sản ảo hay chứng chỉ pháp lý, và không có giá trị quy đổi thành tiền mặt hay hiện vật dưới bất kỳ hình thức nào.
+              </li>
+              <li>
+                <strong>Cấm giao dịch thương mại:</strong> Nghiêm cấm mọi hành vi mua bán, trao đổi hoặc chuyển nhượng tài khoản và điểm số giữa những người dùng.
+              </li>
+              <li>
+                <strong>Quyền điều chỉnh khi có gian lận:</strong> Hệ thống có quyền khấu trừ, đặt lại điểm số hoặc thu hồi danh hiệu nếu phát hiện người dùng lợi dụng lỗi kỹ thuật hoặc sử dụng công cụ gian lận để tích lũy điểm không trung thực.
+              </li>
+            </ul>
+          </section>
 
-      <h2>8. Thay Đổi Điều Khoản</h2>
-      <p>Vectoria có thể cập nhật Điều khoản Dịch vụ này bất cứ lúc nào. Ngày cập nhật sẽ được hiển thị ở đầu trang. Việc bạn tiếp tục sử dụng nền tảng sau khi điều khoản mới được đăng tải đồng nghĩa với việc bạn chấp nhận các thay đổi đó.</p>
+          <section class="legal-section" id="section-6">
+            <h2>6. Tiêu chuẩn thảo luận cộng đồng và xử lý vi phạm</h2>
+            <p>
+              Khu vực bình luận dưới mỗi bài giảng được dành riêng cho việc trao đổi kiến thức và giải đáp thắc mắc toán học. Người dùng không được đăng tải các nội dung chứa ngôn từ thô tục, xúc phạm cá nhân, quảng cáo rác (spam) hoặc phát tán đường dẫn độc hại.
+            </p>
+            <p>
+              Hệ thống áp dụng cơ chế lọc tự động kết hợp với việc hậu kiểm của Ban Quản trị. Tùy theo mức độ và tần suất vi phạm, tài khoản sẽ bị áp dụng một trong ba mức xử lý sau:
+            </p>
 
-      <h2>9. Liên Hệ</h2>
-      <p>Nếu bạn có bất kỳ câu hỏi nào về Điều khoản Dịch vụ, vui lòng liên hệ với chúng tôi qua email: <a href="mailto:support@vectoria.io.vn" style="color: var(--primary-base);">support@vectoria.io.vn</a>.</p>
-    </main>
+            <div class="legal-table-scroll">
+              <table class="legal-booktabs">
+                <thead>
+                  <tr>
+                    <th style="width: 26%">Mức độ xử lý</th>
+                    <th style="width: 40%">Hành vi vi phạm</th>
+                    <th style="width: 34%">Biện pháp áp dụng</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Mức 1: Nhắc nhở và cảnh cáo</td>
+                    <td>Sử dụng từ ngữ thiếu chuẩn mực lần đầu hoặc đăng bình luận lạc đề, spam nhẹ.</td>
+                    <td>Che tự động các từ ngữ vi phạm và gửi thông báo nhắc nhở đến tài khoản người dùng.</td>
+                  </tr>
+                  <tr>
+                    <td>Mức 2: Hạn chế quyền thảo luận</td>
+                    <td>Tái phạm nhiều lần sau khi đã nhận cảnh cáo hoặc cố tình xúc phạm người học khác.</td>
+                    <td>Khóa quyền gửi bình luận tại các bài giảng; người dùng vẫn có thể đọc tài liệu và dùng công cụ tính toán.</td>
+                  </tr>
+                  <tr>
+                    <td>Mức 3: Đình chỉ tài khoản</td>
+                    <td>Tấn công kỹ thuật, chèn mã độc, mạo danh nghiêm trọng hoặc phá hoại môi trường học tập.</td>
+                    <td>Chấm dứt quyền đăng nhập và thu hồi toàn bộ các phiên truy cập của tài khoản trên hệ thống.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="legal-section" id="section-7">
+            <h2>7. Quyền sở hữu trí tuệ và học liệu</h2>
+            <p>
+              Toàn bộ giao diện thiết kế, mã nguồn, thuật toán giải toán từng bước, hệ thống bài giảng, bài tập, biểu trưng thương hiệu và hình ảnh minh họa trên Vectoria thuộc bản quyền của đội ngũ phát triển Vectoria hoặc các tác giả được cấp phép hợp pháp. Bạn được phép trích dẫn hoặc in ấn từng phần học liệu cho mục đích tự học và giảng dạy phi lợi nhuận với điều kiện ghi rõ nguồn từ Vectoria.
+            </p>
+            <p>
+              Các thư viện toán học và đồ họa mã nguồn mở được tích hợp trên nền tảng (như KaTeX, Three.js, Phosphor Icons) thuộc bản quyền của các tác giả tương ứng và được sử dụng tuân thủ đúng giấy phép mã nguồn mở của từng dự án.
+            </p>
+          </section>
+
+          <section class="legal-section" id="section-8">
+            <h2>8. Giới hạn trách nhiệm dịch vụ</h2>
+            <p>
+              Vectoria được xây dựng với mục tiêu hỗ trợ trực quan hóa và nâng cao hiệu quả tự học môn Đại số tuyến tính. Khi sử dụng dịch vụ, người dùng cần lưu ý:
+            </p>
+            <ul>
+              <li>
+                <strong>Sai số làm tròn số học:</strong> Đối với các ma trận kích thước lớn hoặc ma trận gần suy biến, các phép tính số học trên máy tính có thể phát sinh sai số làm tròn rất nhỏ ở các chữ số thập phân cuối cùng. Người học cần đối chiếu với phương pháp biến đổi đại số chính xác khi áp dụng vào các bài thi hoặc nghiên cứu chuyên sâu.
+              </li>
+              <li>
+                <strong>Tính chất tham khảo của gợi ý tự động:</strong> Các nhận xét ôn tập và gợi ý lộ trình học tập được hệ thống đưa ra nhằm mục đích hỗ trợ định hướng cá nhân, không thay thế cho giáo trình bắt buộc hay hướng dẫn chính thức từ giảng viên tại cơ sở đào tạo của bạn.
+              </li>
+            </ul>
+          </section>
+
+          <section class="legal-section" id="section-9">
+            <h2>9. Tạm ngừng và chấm dứt dịch vụ</h2>
+            <p>
+              Chúng tôi luôn nỗ lực duy trì hệ thống hoạt động ổn định 24/7, nhưng có thể tạm ngừng dịch vụ trong thời gian ngắn để bảo trì định kỳ hoặc nâng cấp hạ tầng kỹ thuật.
+            </p>
+            <p>
+              Bạn có quyền ngừng sử dụng nền tảng và yêu cầu xóa tài khoản bất kỳ lúc nào theo hướng dẫn tại <a href="privacy.html">Chính sách bảo mật</a>. Ngược lại, Vectoria bảo lưu quyền tạm khóa hoặc chấm dứt vĩnh viễn các tài khoản có hành vi vi phạm nghiêm trọng Điều 4 và Điều 6 của văn bản này.
+            </p>
+          </section>
+
+          <section class="legal-section" id="section-10">
+            <h2>10. Sửa đổi điều khoản, luật áp dụng và liên hệ</h2>
+            <p>
+              Vectoria có thể cập nhật Điều khoản dịch vụ này khi bổ sung tính năng mới hoặc để phù hợp với quy định pháp luật hiện hành của nước Cộng hòa Xã hội Chủ nghĩa Việt Nam. Ngày cập nhật mới nhất sẽ luôn được hiển thị rõ ở đầu trang. Việc bạn tiếp tục sử dụng nền tảng sau khi điều khoản mới có hiệu lực đồng nghĩa với việc bạn đồng ý với các nội dung cập nhật đó.
+            </p>
+            <p>
+              Mọi thắc mắc, góp ý hoặc khiếu nại liên quan đến Điều khoản dịch vụ, vui lòng liên hệ với chúng tôi qua thư điện tử <a href="mailto:support@vectoria.io.vn">support@vectoria.io.vn</a> hoặc gửi thông tin tại trang <a href="contact.html">Liên hệ</a>.
+            </p>
+          </section>
+        </main>
+      </div>
+    </div>
 
     <footer class="vectoria-footer distraction-element">
       <div class="footer-container">
         <div class="brand-col">
-          <div class="partner-logo" style="display: flex; align-items: center; gap: 10px">
-            <img src="assets/images/logoMoi.png" alt="Logo Nhóm/Trường" />
-            <img src="assets/images/logoChu.png" id="textLogo" alt="Logo Chữ Vectoria" style="height: 35px; width: auto" />
+          <div
+            class="partner-logo"
+            style="display: flex; align-items: center; gap: 10px"
+          >
+            <img
+              src="assets/images/logoMoi.png"
+              alt="Biểu trưng Học thuật Vectoria"
+            />
+            <img
+              src="assets/images/logoChu.png"
+              id="textLogo"
+              alt="Chữ ký thương hiệu Vectoria"
+              style="height: 35px; width: auto"
+            />
           </div>
           <p>
-            Vectoria — Vương quốc của những Vector — được kiến tạo để thay đổi
+            Vectoria - Vương quốc của những Vector, được kiến tạo để thay đổi
             hoàn toàn cách chúng ta nhìn nhận về vector. Không còn là những khái
             niệm khô khan, tại nơi đây, mỗi vector đều mang một hình hài, một
             hướng đi và sinh khí riêng. Chúng tôi khao khát trao cho bạn một góc
@@ -347,11 +1017,60 @@
       </div>
     </footer>
 
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var sections = document.querySelectorAll(".legal-section[id]");
+        var tocLinks = document.querySelectorAll(
+          "#desktopTocList .legal-toc-link"
+        );
+        var mobileToc = document.querySelector(".legal-mobile-toc");
+        var mobileLinks = document.querySelectorAll(
+          ".legal-mobile-toc-list a"
+        );
+
+        mobileLinks.forEach(function (link) {
+          link.addEventListener("click", function () {
+            if (mobileToc && mobileToc.hasAttribute("open")) {
+              mobileToc.removeAttribute("open");
+            }
+          });
+        });
+
+        if ("IntersectionObserver" in window && sections.length > 0) {
+          var observer = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                  var activeHref = "#" + entry.target.getAttribute("id");
+                  tocLinks.forEach(function (link) {
+                    if (link.getAttribute("href") === activeHref) {
+                      link.classList.add("active");
+                    } else {
+                      link.classList.remove("active");
+                    }
+                  });
+                }
+              });
+            },
+            {
+              root: null,
+              rootMargin: "-100px 0px -65% 0px",
+              threshold: 0,
+            }
+          );
+
+          sections.forEach(function (sec) {
+            observer.observe(sec);
+          });
+        }
+      });
+    </script>
+
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="js/utils/live-collab.js"></script>
     <script src="js/app/auth.js"></script>
     <script src="js/app/ui/topbar_avatar.js"></script>
-  <script src="js/utils/toast.js"></script>
-  <script src="js/utils/global-search.js"></script>
-</body>
+    <script src="js/utils/toast.js"></script>
+    <script src="js/utils/global-search.js"></script>
+  </body>
 </html>

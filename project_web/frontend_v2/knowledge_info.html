@@ -5605,19 +5605,9 @@ D.graph.nodes.forEach(n => {
   }
 });
 
-// Transitive reduction for clean UI
+// Preserve 100% of all 92 edges in D.graph.edges
 const reducedAdj = {};
 D.graph.nodes.forEach(n => reducedAdj[n.id] = [...adj[n.id]]);
-D.graph.nodes.forEach(i => {
-  D.graph.nodes.forEach(j => {
-    D.graph.nodes.forEach(k => {
-      if (adj[i.id].includes(j.id) && adj[j.id].includes(k.id)) {
-        const idx = reducedAdj[i.id].indexOf(k.id);
-        if (idx > -1) reducedAdj[i.id].splice(idx, 1);
-      }
-    });
-  });
-});
 
 const GROUP_COLORS = {
   t1: { stroke: '#0090ff', fillLight: '#edf6ff', fillDark: '#0d2847', textLight: '#006adc', textDark: '#5eb1ef' }, // Radix Blue
@@ -5629,14 +5619,14 @@ const GROUP_COLORS = {
   t7: { stroke: '#ffb224', fillLight: '#fff8e8', fillDark: '#392200', textLight: '#ad5700', textDark: '#ffd15c' }  // Radix Amber
 };
 
-// Inject CSS variables for all topics to fix black nodes
+// Inject CSS variables for all topics (Light & Dark mode)
 const styleTag = document.createElement('style');
 let cssStr = ':root {\n';
 Object.keys(GROUP_COLORS).forEach(k => {
   const c = GROUP_COLORS[k];
   cssStr += `  --${k}-fill: ${c.fillLight}; --${k}-text: ${c.textLight}; --${k}-stroke: ${c.stroke};\n`;
 });
-cssStr += '}\nbody.dark-theme {\n';
+cssStr += '}\nbody.dark-theme, html.dark body {\n';
 Object.keys(GROUP_COLORS).forEach(k => {
   const c = GROUP_COLORS[k];
   cssStr += `  --${k}-fill: ${c.fillDark}; --${k}-text: ${c.textDark}; --${k}-stroke: ${c.stroke};\n`;
@@ -5662,19 +5652,19 @@ function gc(id) {
   return GROUP_COLORS[grp] || GROUP_COLORS.t1;
 }
 
-const isDark = () => document.body.classList.contains('dark-theme');
+const isDark = () => document.body.classList.contains('dark-theme') || document.documentElement.classList.contains('dark');
 
 /*
- * Báo cáo Luận án: Phương trình Trọng s� Cognitive Cost
+ * Báo cáo Luận án: Phương trình Trọng số Cognitive Cost
  * W_u = (C * T) / \beta_u * (1 + P_u)
  */
 function getWeight(id) { 
   const n = nodeMap[id]; 
   if (!n) return 1;
-  const C = n.value || 5; // Đ�" phức tạp (Complexity)
-  const T = n.time || 45; // Thời gian (Time)
-  const beta = 1.0; // NĒng lực học viên
-  const P_u = 0.25; // H�! s� phạt �ứt gãy tiên quyết (1 - S_mastery)
+  const C = n.value || 5;
+  const T = n.time || 45;
+  const beta = 1.0;
+  const P_u = 0.25;
   return (C * T / beta) * (1 + P_u); 
 }
 
@@ -5692,11 +5682,200 @@ function getTree(startId, forward = true) {
   return tree;
 }
 
-// �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
-//  PAN & ZOOM ENGINE
-// �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+// =========================================================================
+//  PAN, ZOOM, VIEW SWITCHER & CLUSTER CAMERA ENGINE (3 DISTINCT PARADIGMS)
+// =========================================================================
 let zs = { s:1, x:0, y:0 }, pan = { on:false, sx:0, sy:0 };
+let activeTopicFilter = null;
+let cameraAnimFrame = null;
+window.GRAPH_BOUNDS = null;
+window.CLUSTER_BOUNDS = {};
+window.graphViewMode = (function() {
+  try {
+    const saved = localStorage.getItem('vec_graph_view_mode');
+    if (saved === 'clusters' || saved === 'layered' || saved === 'radial') return saved;
+  } catch (e) {}
+  return 'clusters';
+})();
 
+window.setGraphViewMode = function(mode, ev) {
+  if (ev) ev.stopPropagation();
+  if (mode !== 'clusters' && mode !== 'layered' && mode !== 'radial') return;
+  window.graphViewMode = mode;
+  try { localStorage.setItem('vec_graph_view_mode', mode); } catch (e) {}
+  activeTopicFilter = null;
+  const c = document.getElementById('d-canvas');
+  if (c) {
+    c.innerHTML = renderDiagram();
+    initZP();
+    updateVisualState();
+    refreshLegend();
+  }
+};
+
+function animateCameraTo(targetS, targetX, targetY, duration = 260) {
+  const svg = document.querySelector('#d-canvas svg');
+  if (!svg) return;
+  const g = svg.querySelector('#zg');
+  if (!g) return;
+  if (cameraAnimFrame) cancelAnimationFrame(cameraAnimFrame);
+
+  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReduced || duration <= 0) {
+    zs.s = targetS; zs.x = targetX; zs.y = targetY;
+    g.setAttribute('transform', "translate(" + zs.x + "," + zs.y + ") scale(" + zs.s + ")");
+    return;
+  }
+
+  const startS = zs.s, startX = zs.x, startY = zs.y;
+  const startTime = performance.now();
+  function step(now) {
+    const t = Math.min(1, (now - startTime) / duration);
+    const ease = 1 - Math.pow(1 - t, 3);
+    zs.s = startS + (targetS - startS) * ease;
+    zs.x = startX + (targetX - startX) * ease;
+    zs.y = startY + (targetY - startY) * ease;
+    g.setAttribute('transform', "translate(" + zs.x + "," + zs.y + ") scale(" + zs.s + ")");
+    if (t < 1) cameraAnimFrame = requestAnimationFrame(step);
+    else cameraAnimFrame = null;
+  }
+  cameraAnimFrame = requestAnimationFrame(step);
+}
+
+window.fitGraphToCanvas = function(animate = false) {
+  const c = document.getElementById('d-canvas');
+  if (!c || !window.GRAPH_BOUNDS) return;
+  const cRect = c.getBoundingClientRect();
+  if (cRect.width === 0 || cRect.height === 0) return;
+
+  const padX = 24, topReserve = 46, bottomReserve = 28;
+  const availW = Math.max(120, cRect.width - padX * 2);
+  const availH = Math.max(120, cRect.height - topReserve - bottomReserve);
+  const scaleX = availW / window.GRAPH_BOUNDS.width;
+  const scaleY = availH / window.GRAPH_BOUNDS.height;
+  const targetS = Math.max(0.2, Math.min(1.25, Math.min(scaleX, scaleY)));
+  const targetX = (cRect.width - window.GRAPH_BOUNDS.width * targetS) / 2 - window.GRAPH_BOUNDS.x * targetS;
+  const targetY = topReserve + (availH - window.GRAPH_BOUNDS.height * targetS) / 2 - window.GRAPH_BOUNDS.y * targetS;
+
+  if (animate) {
+    animateCameraTo(targetS, targetX, targetY, 260);
+  } else {
+    zs.s = targetS; zs.x = targetX; zs.y = targetY;
+    const g = c.querySelector('svg #zg');
+    if (g) g.setAttribute('transform', "translate(" + zs.x + "," + zs.y + ") scale(" + zs.s + ")");
+  }
+};
+
+window.focusTopicCluster = function(topicId, ev) {
+  if (ev) ev.stopPropagation();
+  const c = document.getElementById('d-canvas');
+  if (!c) return;
+  const cRect = c.getBoundingClientRect();
+
+  if (!topicId || activeTopicFilter === topicId) {
+    activeTopicFilter = null;
+    window.fitGraphToCanvas(true);
+    updateVisualState();
+    refreshLegend();
+    return;
+  }
+  const b = window.CLUSTER_BOUNDS && window.CLUSTER_BOUNDS[topicId];
+  if (!b || cRect.width === 0) return;
+  activeTopicFilter = topicId;
+  const padX = 40, topReserve = 52, bottomReserve = 36;
+  const availW = Math.max(100, cRect.width - padX * 2);
+  const availH = Math.max(100, cRect.height - topReserve - bottomReserve);
+  const scaleX = availW / b.w;
+  const scaleY = availH / b.h;
+  const targetS = Math.max(0.25, Math.min(1.4, Math.min(scaleX, scaleY)));
+  const targetX = (cRect.width - b.w * targetS) / 2 - b.x * targetS;
+  const targetY = topReserve + (availH - b.h * targetS) / 2 - b.y * targetS;
+  animateCameraTo(targetS, targetX, targetY, 320);
+  updateVisualState();
+  refreshLegend();
+  const topicHeaderEl = document.getElementById('lg-topic-' + topicId);
+  if (topicHeaderEl) topicHeaderEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
+};
+
+window.zoomCanvasStep = function(factor) {
+  const svg = document.querySelector('#d-canvas svg');
+  if (!svg) return;
+  const r = svg.getBoundingClientRect();
+  const cx = r.width / 2, cy = r.height / 2;
+  const ns = Math.max(0.15, Math.min(4, zs.s * factor));
+  const ratio = ns / zs.s;
+  const tx = cx - (cx - zs.x) * ratio;
+  const ty = cy - (cy - zs.y) * ratio;
+  animateCameraTo(ns, tx, ty, 180);
+};
+
+function updateModeSwitcherUI() {
+  const sw = document.getElementById('graph-mode-switcher');
+  if (!sw) return;
+  const mode = window.graphViewMode || 'clusters';
+  const modes = [
+    { id: 'clusters', label: tr('knowledge.view_clusters', 'Phân cụm') },
+    { id: 'layered',  label: tr('knowledge.view_layered', 'Phân tầng') },
+    { id: 'radial',   label: tr('knowledge.view_radial', 'Đồng tâm') }
+  ];
+  let html = '';
+  modes.forEach(m => {
+    const active = (m.id === mode);
+    const bg = active ? 'var(--s1)' : 'transparent';
+    const col = active ? 'var(--s12)' : 'var(--s9)';
+    const border = active ? '1px solid var(--s4)' : '1px solid transparent';
+    const fw = active ? '700' : '500';
+    html += '<button type="button" onclick="setGraphViewMode(\'' + m.id + '\', event)" style="padding: 5px 11px; font-family: var(--font-modern-ui); font-size: 0.78rem; font-weight: ' + fw + '; color: ' + col + '; background: ' + bg + '; border: ' + border + '; border-radius: 2px; cursor: pointer; transition: color 0.15s ease, background 0.15s ease; line-height: 1.2;">' + m.label + '</button>';
+  });
+  sw.innerHTML = html;
+}
+
+window.unpinGraphNode = function(ev) {
+  if (ev) ev.stopPropagation();
+  pinnedNode = null;
+  updateVisualState();
+  focusLegend(null, true);
+};
+
+function updateNodeHud(focusId) {
+  const hud = document.getElementById('graph-node-hud');
+  if (!hud) return;
+  if (!focusId || !nodeMap[focusId]) {
+    hud.style.display = 'none';
+    return;
+  }
+  const n = nodeMap[focusId];
+  const grp = n.group || 't1';
+  const stroke = (GROUP_COLORS[grp] && GROUP_COLORS[grp].stroke) || '#0090ff';
+  const rawTxt = tr('library_terms.' + n.id, n.label).replace(/^[0-9.]+\s*/, '');
+  let secTitle = '';
+  if (D.topics) {
+    for (const t of D.topics) {
+      for (const s of (t.sections || [])) {
+        if ((s.lessons || []).some(l => l.id === focusId)) {
+          secTitle = tr('library_terms.' + s.id, s.title);
+          break;
+        }
+      }
+      if (secTitle) break;
+    }
+  }
+  const ancCount = Math.max(0, getTree(focusId, false).size - 1);
+  const descCount = Math.max(0, getTree(focusId, true).size - 1);
+  const isPinnedNow = Boolean(pinnedNode);
+  hud.style.display = 'flex';
+  hud.style.borderColor = stroke;
+  hud.innerHTML =
+    '<span style="width: 22px; height: 22px; border-radius: 2px; background: ' + stroke + '; color: #fff; font-family: var(--font-academic); font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">' + n.num + '</span>' +
+    '<span style="font-family: var(--font-academic); font-size: 0.86rem; font-weight: 700; color: var(--s12); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + escapeSvgText(rawTxt) + '</span>' +
+    (secTitle ? '<span style="font-family: var(--font-academic); font-size: 0.78rem; color: var(--s9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">&middot; ' + escapeSvgText(secTitle) + '</span>' : '') +
+    '<span style="font-family: var(--font-modern-ui); font-size: 0.72rem; font-weight: 600; white-space: nowrap; margin-left: 4px; display: inline-flex; align-items: center; gap: 5px;">' +
+      '<span style="color: #0090ff; font-weight: 700;">' + ancCount + ' bài trước</span>' +
+      '<span style="color: var(--s8);">&rarr;</span>' +
+      '<span style="color: #f76b15; font-weight: 700;">' + descCount + ' bài sau</span>' +
+    '</span>' +
+    (isPinnedNow ? '<button type="button" onclick="unpinGraphNode(event)" title="Bỏ ghim bài học đang chọn" style="margin-left: 6px; padding: 3px 8px; font-family: var(--font-modern-ui); font-size: 0.72rem; font-weight: 700; color: #ffffff; background: ' + stroke + '; border: none; border-radius: 2px; cursor: pointer; flex-shrink: 0;">Bỏ ghim &times;</button>' : '');
+}
 
 function initZP() {
     const svg = document.querySelector('#d-canvas svg');
@@ -5706,261 +5885,506 @@ function initZP() {
     
     const apply = () => g.setAttribute('transform', "translate(" + zs.x + "," + zs.y + ") scale(" + zs.s + ")");
     
-    // Initial center - Auto-fit whole graph
     if (zs.s === 1 && zs.x === 0 && zs.y === 0) {
        setTimeout(() => {
-         const cRect = svg.getBoundingClientRect();
-         const bbox = g.getBBox();
-         if (bbox.width > 0 && bbox.height > 0 && cRect.width > 0) {
-           const padding = 40;
-           const lgBar = document.getElementById('f-legend');
-           const availW = cRect.width;
-           const scaleX = (availW - padding*2) / bbox.width;
-           const scaleY = (cRect.height - padding*2) / bbox.height;
-           const minScale = Math.min(scaleX, scaleY);
-           zs.s = Math.max(0.1, Math.min(1.2, minScale));
-           zs.x = (availW - (bbox.width * zs.s)) / 2 - (bbox.x * zs.s);
-           zs.y = (cRect.height - (bbox.height * zs.s)) / 2 - (bbox.y * zs.s);
-         } else {
-           zs.x = cRect.width / 2 - 100;
-           zs.y = 40;
-         }
-         apply();
+         window.fitGraphToCanvas(false);
          svg.style.opacity = '1';
-       }, 50);
+       }, 30);
     } else {
        apply();
        svg.style.opacity = '1';
     }
 
-    let zoomHint = document.getElementById('zoom-hint');
-    if (!zoomHint) {
-      zoomHint = document.createElement('div');
-      zoomHint.id = 'zoom-hint';
-      zoomHint.innerHTML = tr('knowledge.zoom_hint', '<i class="ph ph-info"></i> Giữ <b>Ctrl</b> và cuộn chuột để Thu phóng sơ đồ');
-      zoomHint.style.cssText = 'position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.85); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 10; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);';
-      svg.parentElement.appendChild(zoomHint);
+    const parentBox = svg.parentElement;
+
+    // Top-Right View Mode Switcher ("sát mép trên bên phải khu sơ đồ")
+    let modeSw = document.getElementById('graph-mode-switcher');
+    if (!modeSw) {
+      modeSw = document.createElement('div');
+      modeSw.id = 'graph-mode-switcher';
+      modeSw.style.cssText = 'position: absolute; top: 10px; right: 10px; z-index: 20; display: flex; align-items: center; gap: 2px; background: var(--s2); border: 1px solid var(--s4); border-radius: 3px; padding: 2px;';
+      parentBox.appendChild(modeSw);
     }
-    let hintTimeout;
+    updateModeSwitcherUI();
+
+    // Top-Left Academic Node HUD
+    let nodeHud = document.getElementById('graph-node-hud');
+    if (!nodeHud) {
+      nodeHud = document.createElement('div');
+      nodeHud.id = 'graph-node-hud';
+      nodeHud.style.cssText = 'position: absolute; top: 10px; left: 10px; z-index: 19; display: none; align-items: center; gap: 8px; background: var(--s1); border: 1px solid var(--s4); border-radius: 2px; padding: 5px 10px; max-width: calc(100% - 270px); pointer-events: auto;';
+      parentBox.appendChild(nodeHud);
+    }
+
+    // Bottom-Right Zoom & Fit Control Bar
+    let zpCtrl = document.getElementById('zp-controls');
+    if (!zpCtrl) {
+      zpCtrl = document.createElement('div');
+      zpCtrl.id = 'zp-controls';
+      zpCtrl.style.cssText = 'position: absolute; bottom: 10px; right: 10px; z-index: 15; display: flex; align-items: center; gap: 2px; background: var(--s2); border: 1px solid var(--s4); border-radius: 3px; padding: 2px;';
+      parentBox.appendChild(zpCtrl);
+    }
+    zpCtrl.innerHTML =
+      '<button type="button" onclick="zoomCanvasStep(1.22)" title="Phóng to" style="width: 28px; height: 26px; border: 1px solid transparent; background: var(--s1); color: var(--s12); border-radius: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: var(--font-modern-ui); font-weight: 700; font-size: 0.9rem;">+</button>' +
+      '<button type="button" onclick="zoomCanvasStep(0.82)" title="Thu nhỏ" style="width: 28px; height: 26px; border: 1px solid transparent; background: var(--s1); color: var(--s12); border-radius: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: var(--font-modern-ui); font-weight: 700; font-size: 0.9rem;">-</button>' +
+      '<button type="button" onclick="focusTopicCluster(null, event)" title="Khớp toàn cảnh" style="height: 26px; padding: 0 9px; border: 1px solid transparent; background: var(--s1); color: var(--s11); border-radius: 2px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: var(--font-modern-ui); font-weight: 600; font-size: 0.75rem;">' + tr('knowledge.fit_view', 'Toàn cảnh') + '</button>';
 
     svg.onwheel = e => {
       e.preventDefault();
-      zoomHint.style.opacity = '0';
+      if (cameraAnimFrame) { cancelAnimationFrame(cameraAnimFrame); cameraAnimFrame = null; }
       const r = svg.getBoundingClientRect();
       const mx = e.clientX - r.left, my = e.clientY - r.top;
-      const d = e.deltaY > 0 ? 0.9 : 1.1;
-      const ns = Math.max(0.1, Math.min(5, zs.s * d));
-      const ratio = ns / zs.s;
-      zs.x = mx - (mx - zs.x) * ratio;
-      zs.y = my - (my - zs.y) * ratio;
+      const d = e.deltaY < 0 ? 1.13 : 0.88;
+      const ns = Math.max(0.15, Math.min(4, zs.s * d));
+      zs.x = mx - (mx - zs.x) * (ns / zs.s);
+      zs.y = my - (my - zs.y) * (ns / zs.s);
       zs.s = ns;
       apply();
     };
-    let clickStartX = 0, clickStartY = 0;
-    svg.onmousedown = e => {
-      if (e.button !== 0) return;
-      if (e.target.closest('g.n-g')) return;
-      e.preventDefault();
-      clickStartX = e.clientX;
-      clickStartY = e.clientY;
-      pan = { on:true, sx: e.clientX - zs.x, sy: e.clientY - zs.y };
+    svg.onmousedown = e => { 
+      if(e.button !== 0 || e.target.closest('.n-g') || e.target.closest('.cluster-hdr') || e.target.closest('.sec-card')) return; 
+      if (cameraAnimFrame) { cancelAnimationFrame(cameraAnimFrame); cameraAnimFrame = null; }
+      pan.on = true; pan.sx = e.clientX - zs.x; pan.sy = e.clientY - zs.y; 
+      svg.style.cursor = 'grabbing'; 
     };
-    window.addEventListener('mousemove', e => {
-      if (!pan.on) return;
-      zs.x = e.clientX - pan.sx;
-      zs.y = e.clientY - pan.sy;
-      apply();
+    window.addEventListener('mousemove', e => { 
+      if(!pan.on) return; 
+      zs.x = e.clientX - pan.sx; zs.y = e.clientY - pan.sy; 
+      apply(); 
     });
-    window.addEventListener('mouseup', () => { pan.on = false; });
+    window.addEventListener('mouseup', () => { 
+      if(pan.on) { pan.on = false; if(svg) svg.style.cursor = 'grab'; } 
+    });
 
-    let initialPinchDist = null;
-    let initialPinchS = null;
-    let initialPinchCenter = null;
-    let twoFingerPanSx = null;
-    let twoFingerPanSy = null;
+    let touchMode = 0;
+    let startDist = 0, startScale = 1, pinchCenter = {x:0, y:0};
 
     svg.addEventListener('touchstart', e => {
-      if (e.touches.length === 1) {
-        if (window.innerWidth <= 900) {
-          pan = { on: true, sx: e.touches[0].clientX - zs.x, sy: e.touches[0].clientY - zs.y };
-        } else {
-          zoomHint.style.opacity = '1';
-          clearTimeout(hintTimeout);
-          hintTimeout = setTimeout(() => zoomHint.style.opacity = '0', 2000);
-        }
-      } else if (e.touches.length === 2) {
-        e.preventDefault();
-        zoomHint.style.opacity = '0';
-        pan = { on: true };
-        let dx = e.touches[0].clientX - e.touches[1].clientX;
-        let dy = e.touches[0].clientY - e.touches[1].clientY;
-        initialPinchDist = Math.sqrt(dx*dx + dy*dy);
-        initialPinchS = zs.s;
-        
+      if(e.target.closest('.n-g') || e.target.closest('.cluster-hdr') || e.target.closest('.sec-card')) return;
+      if (cameraAnimFrame) { cancelAnimationFrame(cameraAnimFrame); cameraAnimFrame = null; }
+      if(e.touches.length === 1) {
+        touchMode = 1;
+        pan.on = true;
+        pan.sx = e.touches[0].clientX - zs.x;
+        pan.sy = e.touches[0].clientY - zs.y;
+      } else if(e.touches.length === 2) {
+        touchMode = 2;
+        pan.on = false;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        startDist = Math.hypot(dx, dy);
+        startScale = zs.s;
         const r = svg.getBoundingClientRect();
-        initialPinchCenter = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - r.top };
-        twoFingerPanSx = initialPinchCenter.x - zs.x;
-        twoFingerPanSy = initialPinchCenter.y - zs.y;
+        pinchCenter = {
+          x: (e.touches[0].clientX + e.touches[1].clientX)/2 - r.left,
+          y: (e.touches[0].clientY + e.touches[1].clientY)/2 - r.top
+        };
       }
     }, {passive: false});
 
-    window.addEventListener('touchmove', e => {
-      if (e.touches.length === 1 && pan.on && window.innerWidth <= 900) {
-        e.preventDefault();
+    svg.addEventListener('touchmove', e => {
+      if(touchMode === 0) return;
+      e.preventDefault();
+      if(touchMode === 1 && pan.on && e.touches.length === 1) {
         zs.x = e.touches[0].clientX - pan.sx;
         zs.y = e.touches[0].clientY - pan.sy;
         apply();
-      } else if (e.touches.length === 2 && initialPinchDist && pan.on) {
-        e.preventDefault();
-        let dx = e.touches[0].clientX - e.touches[1].clientX;
-        let dy = e.touches[0].clientY - e.touches[1].clientY;
-        let dist = Math.sqrt(dx*dx + dy*dy);
-        
-        const r = svg.getBoundingClientRect();
-        let currentCenter = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - r.top };
-        let ratio = dist / initialPinchDist;
-        let ns = Math.max(0.1, Math.min(5, initialPinchS * ratio));
-        
-        zs.x = currentCenter.x - twoFingerPanSx;
-        zs.y = currentCenter.y - twoFingerPanSy;
-
-        const scaleRatio = ns / zs.s;
-        zs.x = currentCenter.x - (currentCenter.x - zs.x) * scaleRatio;
-        zs.y = currentCenter.y - (currentCenter.y - zs.y) * scaleRatio;
-        zs.s = ns;
-        apply();
+      } else if(touchMode === 2 && e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        if(startDist > 0) {
+          const factor = dist / startDist;
+          const ns = Math.max(0.15, Math.min(4, startScale * factor));
+          zs.x = pinchCenter.x - (pinchCenter.x - zs.x) * (ns / zs.s);
+          zs.y = pinchCenter.y - (pinchCenter.y - zs.y) * (ns / zs.s);
+          zs.s = ns;
+          apply();
+        }
       }
     }, {passive: false});
 
-    window.addEventListener('touchend', e => {
-      if (e.touches.length < 2) { initialPinchDist = null; pan.on = false; }
+    svg.addEventListener('touchend', e => {
+      if(e.touches.length === 0) {
+        touchMode = 0;
+        pan.on = false;
+      } else if(e.touches.length === 1) {
+        touchMode = 1;
+        pan.on = true;
+        pan.sx = e.touches[0].clientX - zs.x;
+        pan.sy = e.touches[0].clientY - zs.y;
+      }
     });
-  
-  svg.onclick = e => {
-    if (typeof clickStartX !== 'undefined' && (Math.abs(e.clientX - clickStartX) > 5 || Math.abs(e.clientY - clickStartY) > 5)) return;
-    if (!e.target.closest('g.n-g') && typeof pinnedNode !== 'undefined' && pinnedNode) {
-      pinnedNode = null;
-      if (typeof updateVisualState === 'function') updateVisualState();
-    }
-  };
 }
 
-function renderDiagram() {
-  const inDeg = {};
-  D.graph.nodes.forEach(n => inDeg[n.id] = 0);
-  D.graph.nodes.forEach(n => reducedAdj[n.id].forEach(to => inDeg[to]++));
-  
-  const q = D.graph.nodes.filter(n => inDeg[n.id] === 0).map(n => n.id);
-  const sorted = [];
-  while(q.length) {
-    const u = q.shift();
-    sorted.push(u);
-    reducedAdj[u].forEach(v => {
-      inDeg[v]--;
-      if (inDeg[v] === 0) q.push(v);
-    });
-  }
-  
-  D.graph.nodes.forEach(n => {
-    if (!sorted.includes(n.id)) sorted.push(n.id);
-  });
+// =========================================================================
+//  DIAGRAM ENGINE v11: 3 PARADIGMS + ORTHOGONAL BUS ROUTING + 2-COLOR FLOW
+// =========================================================================
+function escapeSvgText(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
-  const nodeW = 210, nodeH = 36, gapX = 40, gapY = 80;
-  const cols = 5; 
-  const pos = {};
-  
-  sorted.forEach((nid, i) => {
-    const row = Math.floor(i / cols);
-    const col = (row % 2 === 0) ? (i % cols) : (cols - 1 - (i % cols));
-    pos[nid] = {
-      x: col * (nodeW + gapX) + 40,
-      y: row * (nodeH + gapY) + 40,
-      row: row,
-      col: col
-    };
-  });
-
-  let svg = '<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="font-family: var(--font-academic); background: transparent; opacity: 0; transition: opacity 0.2s ease-in-out;">';
-  
-  svg += '<style>' +
-    '.n-g { transition: opacity 0.25s ease; cursor: pointer; }' +
-    '.n-rect { transition: all 0.25s ease; }' +
-    '.e-line { transition: opacity 0.25s ease, stroke 0.25s ease, stroke-width 0.25s ease; fill: none; }' +
-    '.e-default { stroke: var(--s6); stroke-width: 1.8px; opacity: 0.6; }' +
-    '.dark-theme .e-default { stroke: var(--s5); stroke-width: 1.2px; opacity: 0.45; }' +
-    '.e-marker { stroke: var(--s6); stroke-width: 1.5px; }' +
-    '.dark-theme .e-marker { stroke: var(--s5); stroke-width: 1.2px; }' +
-    '.dimmed { opacity: 0.15; }' +
-    '.highlighted { opacity: 1; }' +
-    '@keyframes solid-glow { 0% { filter: drop-shadow(0 0 6px currentColor); } 50% { filter: drop-shadow(0 0 25px currentColor); } 100% { filter: drop-shadow(0 0 6px currentColor); } }' +
-    '.path-active .n-rect { stroke: #f59e0b !important; stroke-width: 3px !important; }' +
-    '.pin-active { animation: solid-glow 1.5s infinite ease-in-out; }' +
-    '.pin-active .n-rect { fill: currentColor !important; stroke: currentColor !important; }' +
-    '.pin-active text { fill: #ffffff !important; font-weight: 800 !important; }' +
-    '.e-highlight { stroke: #f59e0b !important; stroke-width: 3.5px !important; opacity: 1 !important; z-index: 10; }' +
-    '.e-pin { stroke: #3b82f6 !important; stroke-width: 2.5px !important; opacity: 1 !important; }' +
-    '.e-hidden { opacity: 0.05 !important; }' +
-    '.n-g:hover .n-rect { stroke-width: 2px; }' +
-  '  svg text { font-family: var(--font-academic) !important; }' + '\n</style>';
-
-  svg += '<defs>' +
-    '<marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 2 L8 5 L0 8" fill="none" class="e-marker"/></marker>' +
-    '<marker id="arrH" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 2 L8 5 L0 8" fill="none" stroke="#f59e0b" stroke-width="2"/></marker>' +
-    '<marker id="arrP" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 2 L8 5 L0 8" fill="none" stroke="#3b82f6" stroke-width="2"/></marker>' +
-  '</defs><g id="zg">';
-
-  const edgeList = [];
-  D.graph.nodes.forEach(u => {
-    reducedAdj[u.id].forEach(v => edgeList.push({ from: u.id, to: v }));
-  });
-
-  edgeList.forEach(e => {
-    const from = pos[e.from], to = pos[e.to];
-    if (!from || !to) return;
-    
-    const startX = from.x + nodeW/2;
-    const startY = from.y + nodeH;
-    const endX = to.x + nodeW/2;
-    const endY = to.y;
-    
-    let pathD = '';
-    let rowDiff = Math.abs(to.row - from.row);
-    let dash = '';
-
-    if (rowDiff === 0) {
-      const cpX = (startX + endX) / 2;
-      pathD = 'M' + startX + ' ' + startY + ' C' + cpX + ' ' + (startY + 40) + ', ' + cpX + ' ' + (endY - 40) + ', ' + endX + ' ' + (endY - 3);
-    } else if (rowDiff === 1) {
-      const c1Y = startY + (endY - startY) * 0.4;
-      const c2Y = endY - (endY - startY) * 0.4;
-      pathD = 'M' + startX + ' ' + startY + ' C' + startX + ' ' + c1Y + ', ' + endX + ' ' + c2Y + ', ' + endX + ' ' + (endY - 3);
-    } else {
-      const bowLeft = (from.col + to.col) / 2 < 2.5;
-      const outX = bowLeft ? -80 : (cols * (nodeW + gapX) + 40);
-      const c1Y = startY + (endY - startY) * 0.15;
-      const c2Y = endY - (endY - startY) * 0.15;
-      pathD = 'M' + startX + ' ' + startY + ' C' + outX + ' ' + c1Y + ', ' + outX + ' ' + c2Y + ', ' + endX + ' ' + (endY - 3);
-      dash = ' stroke-dasharray="4 3"';
+// Converts an array of orthogonal points [[x0,y0], [x1,y1], ...] into a smooth rounded-corner SVG path
+function roundedOrthoPath(pts, radius = 6) {
+  if (!pts || pts.length === 0) return '';
+  if (pts.length === 1) return 'M' + pts[0][0] + ' ' + pts[0][1];
+  // Remove consecutive duplicate points
+  const clean = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    if (Math.hypot(pts[i][0] - clean[clean.length - 1][0], pts[i][1] - clean[clean.length - 1][1]) > 0.5) {
+      clean.push(pts[i]);
     }
-    
-    svg += '<path id="edge-' + e.from + '-' + e.to + '" data-from="' + e.from + '" data-to="' + e.to + '" class="e-line e-default" d="' + pathD + '" marker-end="url(#arr)"' + dash + '/>';
+  }
+  if (clean.length === 1) return 'M' + clean[0][0] + ' ' + clean[0][1];
+  let d = 'M' + clean[0][0].toFixed(1) + ' ' + clean[0][1].toFixed(1);
+  for (let i = 1; i < clean.length - 1; i++) {
+    const prev = clean[i - 1], cur = clean[i], next = clean[i + 1];
+    const vx1 = cur[0] - prev[0], vy1 = cur[1] - prev[1];
+    const vx2 = next[0] - cur[0], vy2 = next[1] - cur[1];
+    const len1 = Math.hypot(vx1, vy1), len2 = Math.hypot(vx2, vy2);
+    if (len1 < 1 || len2 < 1) {
+      d += ' L' + cur[0].toFixed(1) + ' ' + cur[1].toFixed(1);
+      continue;
+    }
+    const r = Math.min(radius, len1 * 0.45, len2 * 0.45);
+    const sx = cur[0] - (vx1 / len1) * r, sy = cur[1] - (vy1 / len1) * r;
+    const ex = cur[0] + (vx2 / len2) * r, ey = cur[1] + (vy2 / len2) * r;
+    d += ' L' + sx.toFixed(1) + ' ' + sy.toFixed(1) + ' Q' + cur[0].toFixed(1) + ' ' + cur[1].toFixed(1) + ' ' + ex.toFixed(1) + ' ' + ey.toFixed(1);
+  }
+  const last = clean[clean.length - 1];
+  d += ' L' + last[0].toFixed(1) + ' ' + last[1].toFixed(1);
+  return d;
+}
+
+function buildCommonSvgHeader() {
+  let svg = '<svg width="100%" height="100%" style="cursor:grab; background: var(--s1); opacity: 0; transition: opacity 0.15s ease;">';
+  svg += '<defs>';
+  svg += '<marker id="arr" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="var(--s8)"/></marker>';
+  svg += '<marker id="arrUp" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="#0090ff"/></marker>';
+  svg += '<marker id="arrH" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="#f76b15"/></marker>';
+  svg += '<marker id="arrPin" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="#e54666"/></marker>';
+  Object.keys(GROUP_COLORS).forEach(k => {
+    const st = GROUP_COLORS[k].stroke;
+    svg += '<marker id="arr-' + k + '" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="' + st + '"/></marker>';
+  });
+  svg += '</defs>';
+
+  svg += '<style>';
+  svg += '.e-line { fill: none; stroke-linecap: round; stroke-linejoin: round; transition: opacity 0.18s cubic-bezier(0.22, 1, 0.36, 1), stroke-width 0.18s cubic-bezier(0.22, 1, 0.36, 1); pointer-events: none; }';
+  svg += '.e-default.e-chain { stroke-width: 1.6px; opacity: 0.78; }';
+  svg += '.e-default.e-branch { stroke-width: 1.25px; opacity: 0.38; }';
+  svg += '.e-default.e-bridge { stroke: var(--s8); stroke-width: 1.15px; stroke-dasharray: 4 3; opacity: 0.24; }';
+  svg += '.e-default.e-cross-tier { stroke: var(--s8); stroke-width: 1.1px; stroke-dasharray: 3 4; opacity: 0.16; }';
+  svg += '.e-upstream-direct { stroke: #0090ff !important; stroke-width: 2.5px !important; stroke-dasharray: none !important; opacity: 1 !important; z-index: 12; }';
+  svg += '.e-downstream-direct, .e-highlight { stroke: #f76b15 !important; stroke-width: 2.5px !important; stroke-dasharray: none !important; opacity: 1 !important; z-index: 12; }';
+  svg += '.e-upstream { stroke: #0090ff !important; stroke-width: 1.45px !important; stroke-dasharray: none !important; opacity: 0.44 !important; z-index: 9; }';
+  svg += '.e-downstream { stroke: #f76b15 !important; stroke-width: 1.45px !important; stroke-dasharray: none !important; opacity: 0.44 !important; z-index: 9; }';
+  svg += '.e-hidden { opacity: 0.04 !important; }';
+
+  svg += '.n-g { cursor: pointer; transition: opacity 0.18s cubic-bezier(0.22, 1, 0.36, 1); }';
+  svg += '.n-g .n-rect { transition: stroke-width 0.15s ease, stroke 0.15s ease, fill 0.15s ease; }';
+  svg += '.n-g:hover .n-rect { stroke-width: 2px; stroke: var(--s12); }';
+  svg += '.n-g.n-active { opacity: 1; }';
+  svg += '.n-g.n-upstream-direct .n-rect { stroke: #0090ff !important; stroke-width: 2.3px !important; }';
+  svg += '.n-g.n-downstream-direct .n-rect { stroke: #f76b15 !important; stroke-width: 2.3px !important; }';
+  svg += '.n-g.n-upstream { opacity: 0.78; }';
+  svg += '.n-g.n-upstream .n-rect { stroke: #0090ff !important; stroke-width: 1.6px !important; }';
+  svg += '.n-g.n-downstream { opacity: 0.78; }';
+  svg += '.n-g.n-downstream .n-rect { stroke: #f76b15 !important; stroke-width: 1.6px !important; }';
+  svg += '.n-g.path-active .n-rect { stroke: #f76b15 !important; stroke-width: 2.4px !important; }';
+  svg += '.n-g.pin-active { filter: drop-shadow(0 0 9px currentColor); }';
+  svg += '.n-g.pin-active .n-rect { fill: currentColor !important; stroke: var(--s12) !important; stroke-width: 2.2px !important; }';
+  svg += '.n-g.pin-active text { fill: #ffffff !important; font-weight: 800 !important; }';
+  svg += '.n-g.n-dimmed { opacity: 0.13; }';
+  svg += '.n-g text { font-family: var(--font-academic), "STIX Two Text", serif; user-select: none; pointer-events: none; }';
+
+  svg += '.cluster-box { transition: opacity 0.2s ease; }';
+  svg += '.cluster-box.cluster-dimmed { opacity: 0.22; }';
+  svg += '.cluster-box.cluster-focused .cluster-border { stroke-width: 2px; }';
+  svg += '.cluster-hdr { cursor: pointer; }';
+  svg += '.cluster-hdr text, .sec-hdr text, .ruler-txt { font-family: var(--font-academic), "STIX Two Text", serif; user-select: none; }';
+  svg += '</style>';
+  svg += '<g id="zg">';
+  return svg;
+}
+
+function renderClusterFrameSvg(c, tId, headerH) {
+  const stroke = (GROUP_COLORS[tId] && GROUP_COLORS[tId].stroke) || '#0090ff';
+  const rawTitle = tr('library_terms.' + tId, c.rawTitle).replace(/^CHƯƠNG\s+[IVX]+\s*[:\-]?\s*/i, '');
+  const fullHeader = 'CHƯƠNG ' + c.roman + ' · ' + rawTitle.toUpperCase();
+  const maxChars = Math.max(18, Math.floor((c.w - 30) / 6.7));
+  const displayHeader = fullHeader.length > maxChars ? fullHeader.substring(0, maxChars - 2) + '...' : fullHeader;
+
+  let s = '';
+  s += '<rect class="cluster-border" x="' + c.x + '" y="' + c.y + '" width="' + c.w + '" height="' + c.h + '" rx="2" fill="var(--s2)" fill-opacity="0.28" stroke="var(--s4)" stroke-width="1"/>';
+  s += '<g class="cluster-hdr" onclick="focusTopicCluster(\'' + tId + '\', event)">';
+  s += '<title>' + escapeSvgText(fullHeader) + '</title>';
+  s += '<rect x="' + c.x + '" y="' + c.y + '" width="' + c.w + '" height="' + headerH + '" rx="2" fill="var(--s2)"/>';
+  s += '<line x1="' + c.x + '" y1="' + (c.y + headerH) + '" x2="' + (c.x + c.w) + '" y2="' + (c.y + headerH) + '" stroke="var(--s4)" stroke-width="1"/>';
+  s += '<rect x="' + (c.x + 12) + '" y="' + (c.y + 11) + '" width="8" height="8" rx="1" fill="' + stroke + '"/>';
+  s += '<text x="' + (c.x + 26) + '" y="' + (c.y + 19) + '" font-size="10.5" font-weight="800" fill="var(--s12)" letter-spacing="0.04em">' + escapeSvgText(displayHeader) + '</text>';
+  s += '</g>';
+  return s;
+}
+
+// -------------------------------------------------------------------------
+//  PARADIGM 1: "PHÂN CỤM" (CLUSTERS) - Orthogonal PCB Bus Routing
+//  Generous station gaps (20px), Left-gutter vertical routing (zero text crossing),
+//  and Multi-track Highway lanes between Tier 0 and Tier 1
+// -------------------------------------------------------------------------
+function renderClustersDiagram(secMap, topicMap) {
+  const METRO_SPEC = {
+    t1: { roman: 'I',   tier: 0, order: 0, cols: [['s1', 's2', 's3']] },
+    t2: { roman: 'II',  tier: 0, order: 1, cols: [['s4', 's5', 's6'], ['s7', 's8']] },
+    t3: { roman: 'III', tier: 0, order: 2, cols: [['s9', 's10', 's11', 's12', 's13'], ['s14', 's15', 's16', 's17']] },
+    t4: { roman: 'IV',  tier: 1, order: 0, cols: [['s18', 's19', 's20', 's21', 's22']] },
+    t5: { roman: 'V',   tier: 1, order: 1, cols: [['s23', 's24', 's25', 's26']] },
+    t6: { roman: 'VI',  tier: 1, order: 2, cols: [['s27', 's28', 's29', 's30'], ['s31', 's32', 's33']] },
+    t7: { roman: 'VII', tier: 1, order: 3, cols: [['s34', 's35', 's36', 's37']] }
+  };
+
+  const stW = 34, stH = 28, stGapX = 20; // 20px gap between stations so horizontal arrows are crisp and spacious
+  const colGap = 42; // 42px routing corridor between Col 0 and Col 1
+  const padX = 26, headerH = 30, padTop = 46, padBottom = 20;
+  const secTitleH = 18, secBlockGapY = 26; // 26px vertical channel between sections
+  const tierGapY = 92; // 92px multi-track horizontal highway between Tier 0 and Tier 1
+
+  const clusters = {};
+  const pos = {};
+
+  Object.keys(METRO_SPEC).forEach(tId => {
+    const spec = METRO_SPEC[tId];
+    const tObj = topicMap[tId] || { id: tId, title: tId };
+    const colWidths = spec.cols.map(secIds => {
+      let maxSt = 3;
+      secIds.forEach(sId => {
+        const sObj = secMap[sId];
+        if (sObj && sObj.lessons) maxSt = Math.max(maxSt, sObj.lessons.length);
+      });
+      return Math.max(228, maxSt * stW + (maxSt - 1) * stGapX + 16);
+    });
+
+    const clusterW = padX * 2 + colWidths.reduce((a, b) => a + b, 0) + (colWidths.length - 1) * colGap;
+    const colLayouts = [];
+    let maxColBottom = padTop + 60;
+    let curLocalX = padX;
+
+    spec.cols.forEach((secIds, colIdx) => {
+      const localX = curLocalX;
+      const colW = colWidths[colIdx];
+      curLocalX += colW + colGap;
+
+      let curY = padTop;
+      const secBlocks = [];
+
+      secIds.forEach((sId, sIdx) => {
+        const sObj = secMap[sId];
+        if (!sObj || !sObj.lessons || !sObj.lessons.length) return;
+        if (sIdx > 0) curY += secBlockGapY;
+        const headerY = curY;
+        curY += secTitleH;
+        const lPositions = [];
+        sObj.lessons.forEach((l, lIdx) => {
+          lPositions.push({
+            id: l.id,
+            localX: localX + lIdx * (stW + stGapX),
+            localY: curY,
+            col: colIdx,
+            secIdxInCol: sIdx,
+            idxInSec: lIdx,
+            secLen: sObj.lessons.length,
+            secId: sId,
+            topicId: tId
+          });
+        });
+        curY += stH;
+        secBlocks.push({ sId, rawTitle: sObj.title, localX, headerY, lessons: lPositions });
+      });
+
+      const colBottom = curY + padBottom;
+      if (colBottom > maxColBottom) maxColBottom = colBottom;
+      colLayouts.push({ colIdx, localX, colW, secBlocks, colBottom });
+    });
+
+    clusters[tId] = { id: tId, roman: spec.roman, tier: spec.tier, order: spec.order, rawTitle: tObj.title, w: clusterW, naturalH: maxColBottom, h: maxColBottom, colLayouts };
   });
 
+  const tier0Ids = ['t1', 't2', 't3'], tier1Ids = ['t4', 't5', 't6', 't7'];
+  const tier0MaxH = Math.max(...tier0Ids.map(id => clusters[id].naturalH));
+  const tier1MaxH = Math.max(...tier1Ids.map(id => clusters[id].naturalH));
+  tier0Ids.forEach(id => { clusters[id].h = tier0MaxH; });
+  tier1Ids.forEach(id => { clusters[id].h = tier1MaxH; });
+
+  const tier0BoxesW = tier0Ids.reduce((a, id) => a + clusters[id].w, 0);
+  const tier1BoxesW = tier1Ids.reduce((a, id) => a + clusters[id].w, 0);
+  const gap1 = 36;
+  const totalGridW = Math.max(tier0BoxesW + 72, tier1BoxesW + gap1 * (tier1Ids.length - 1));
+  const gap0 = (totalGridW - tier0BoxesW) / (tier0Ids.length - 1);
+  const gap1Actual = (totalGridW - tier1BoxesW) / (tier1Ids.length - 1);
+  const marginX = 32, marginY = 28;
+
+  let cx0 = marginX;
+  tier0Ids.forEach(id => { clusters[id].x = cx0; clusters[id].y = marginY; cx0 += clusters[id].w + gap0; });
+  let cx1 = marginX;
+  const tier1Y = marginY + tier0MaxH + tierGapY;
+  tier1Ids.forEach(id => { clusters[id].x = cx1; clusters[id].y = tier1Y; cx1 += clusters[id].w + gap1Actual; });
+
+  window.CLUSTER_BOUNDS = {};
+  Object.keys(clusters).forEach(tId => {
+    const c = clusters[tId];
+    window.CLUSTER_BOUNDS[tId] = { x: c.x, y: c.y, w: c.w, h: c.h };
+    c.colLayouts.forEach(col => {
+      col.secBlocks.forEach(sb => {
+        sb.x = c.x + sb.localX;
+        sb.y = c.y + sb.headerY;
+        sb.lessons.forEach(lp => {
+          pos[lp.id] = {
+            x: c.x + lp.localX,
+            y: c.y + lp.localY,
+            w: stW,
+            h: stH,
+            col: lp.col,
+            secIdxInCol: lp.secIdxInCol,
+            idxInSec: lp.idxInSec,
+            secLen: lp.secLen,
+            secId: lp.secId,
+            topicId: lp.topicId,
+            tier: c.tier,
+            topicOrder: c.order,
+            colBaseX: c.x + col.localX
+          };
+        });
+      });
+    });
+  });
+
+  window.GRAPH_BOUNDS = { x: 0, y: 0, width: totalGridW + marginX * 2, height: tier1Y + tier1MaxH + marginY };
+  zs = { s: 1, x: 0, y: 0 };
+
+  let svg = buildCommonSvgHeader();
+  const highwayTop = marginY + tier0MaxH + 14;
+
+  Object.keys(clusters).forEach(tId => {
+    const c = clusters[tId];
+    svg += '<g id="cluster-' + tId + '" data-topic="' + tId + '" class="cluster-box">';
+    svg += renderClusterFrameSvg(c, tId, headerH);
+    c.colLayouts.forEach(col => {
+      col.secBlocks.forEach(sb => {
+        const rawSec = tr('library_terms.' + sb.sId, sb.rawTitle);
+        const maxCh = Math.floor(col.colW / 6.3);
+        const shortSec = rawSec.length > maxCh ? rawSec.substring(0, maxCh - 2) + '...' : rawSec;
+        svg += '<g class="sec-hdr"><title>' + escapeSvgText(rawSec) + '</title>';
+        svg += '<text x="' + sb.x + '" y="' + (sb.y + 12) + '" font-size="10.8" font-weight="600" fill="var(--s11)">' + escapeSvgText(shortSec) + '</text></g>';
+      });
+    });
+    svg += '</g>';
+  });
+
+  // Track counters for clean multi-lane separation (no overlapping parallel wires)
+  const colChannelCount = {};
+  let crossTierCount = 0;
+
+  D.graph.nodes.forEach(u => {
+    reducedAdj[u.id].forEach(v => {
+      const from = pos[u.id], to = pos[v];
+      if (!from || !to) return;
+      let pathD = '', tierCls = 'e-chain', markerId = 'arr-' + from.topicId, extraStyle = 'stroke: var(--' + from.topicId + '-stroke);';
+
+      if (from.secId === to.secId && to.idxInSec === from.idxInSec + 1) {
+        // 1. Direct horizontal station-to-station track inside same section (20px wide open gap)
+        const sx = from.x + stW, sy = from.y + stH / 2;
+        const ex = to.x - 3, ey = to.y + stH / 2;
+        pathD = 'M' + sx + ' ' + sy + ' L' + ex + ' ' + ey;
+        tierCls = 'e-chain';
+      } else if (from.topicId === to.topicId && from.col === to.col) {
+        // 2. Same-column transition to a lower section:
+        // Route down 9px into the inter-section gap (above the next section's title),
+        // then left to the column's outer left gutter (colBaseX - 11),
+        // then vertically down past the section title without touching any text,
+        // and finally right into the target station's left port!
+        const secDiff = Math.abs(to.secIdxInCol - from.secIdxInCol);
+        const sx = from.x + stW / 2, sy = from.y + stH;
+        const gapY = from.y + stH + 9;
+        const gutterX = to.colBaseX - (secDiff > 1 ? 18 : 11);
+        const ey = to.y + stH / 2 + (secDiff > 1 ? 4 : 0);
+        const ex = to.x - 3;
+        pathD = roundedOrthoPath([
+          [sx, sy],
+          [sx, gapY],
+          [gutterX, gapY],
+          [gutterX, ey],
+          [ex, ey]
+        ], 5);
+        tierCls = 'e-branch';
+      } else if (from.topicId === to.topicId) {
+        // 3. Cross-column transition inside same chapter:
+        // Route through the 42px vertical corridor between Col 0 and Col 1 with dedicated lane offsets
+        const key = from.topicId;
+        const laneIdx = (colChannelCount[key] || 0);
+        colChannelCount[key] = laneIdx + 1;
+        const sx = from.x + stW, sy = from.y + stH / 2;
+        const ex = to.x - 3, ey = to.y + stH / 2;
+        const midX = to.colBaseX - 14 - (laneIdx % 4) * 5.5;
+        pathD = roundedOrthoPath([
+          [sx, sy],
+          [midX, sy],
+          [midX, ey],
+          [ex, ey]
+        ], 6);
+        tierCls = 'e-branch';
+      } else if (from.tier === to.tier && to.topicOrder === from.topicOrder + 1) {
+        // 4. Bridge between adjacent chapters on the same tier
+        tierCls = 'e-bridge'; markerId = 'arr'; extraStyle = '';
+        const key = 'br-' + from.topicId + '-' + to.topicId;
+        const laneIdx = (colChannelCount[key] || 0);
+        colChannelCount[key] = laneIdx + 1;
+        const cFrom = clusters[from.topicId], cTo = clusters[to.topicId];
+        const corrX = (cFrom.x + cFrom.w + cTo.x) / 2 + (laneIdx - 1) * 6;
+        const sx = from.x + stW, sy = from.y + stH / 2;
+        const ex = to.x - 3, ey = to.y + stH / 2;
+        pathD = roundedOrthoPath([
+          [sx, sy],
+          [corrX, sy],
+          [corrX, ey],
+          [ex, ey]
+        ], 7);
+      } else {
+        // 5. Cross-tier highway bus (Tier 0 -> Tier 1)
+        tierCls = 'e-cross-tier'; markerId = 'arr'; extraStyle = '';
+        const trackY = highwayTop + (crossTierCount % 13) * 4.8;
+        crossTierCount++;
+        const sx = from.x + stW / 2, sy = from.y + stH;
+        const ex = to.x + stW / 2, ey = to.y - 3;
+        pathD = roundedOrthoPath([
+          [sx, sy],
+          [sx, trackY],
+          [ex, trackY],
+          [ex, ey]
+        ], 8);
+      }
+      svg += '<path id="edge-' + u.id + '-' + v + '" data-from="' + u.id + '" data-to="' + v + '" data-tier="' + tierCls + '" data-marker="' + markerId + '" class="e-line e-default ' + tierCls + '" style="' + extraStyle + '" d="' + pathD + '" marker-end="url(#' + markerId + ')"/>';
+    });
+  });
+
+  // Station Nodes (1..78)
   D.graph.nodes.forEach(n => {
     const p = pos[n.id];
-    const grp = nodeMap[n.id]?.group || 't1';
-    const rawTxt = tr('library_terms.' + n.id, n.label);
-      const shortLabel = rawTxt.replace(/^[0-9.]+\s*/,'');
-    const fillBg = 'var(--' + grp + '-fill)';
+    if (!p) return;
+    const grp = p.topicId || 't1';
+    const rawTxt = tr('library_terms.' + n.id, n.label).replace(/^[0-9.]+\s*/, '');
+    const secTitle = secMap[p.secId] ? tr('library_terms.' + p.secId, secMap[p.secId].title) : '';
     const border = 'var(--' + grp + '-stroke)';
+    const fillBg = 'var(--' + grp + '-fill)';
     const textMain = 'var(--' + grp + '-text)';
 
-    svg += '<g id="node-' + n.id + '" data-id="' + n.id + '" class="n-g" style="color: ' + border + ';" transform="translate(' + p.x + ',' + p.y + ')" onclick="clickNode(event, \'' + n.id + '\')" onmouseenter="hoverNode(\'' + n.id + '\')" onmouseleave="hoverNode(null)">';
-    svg += '<rect class="n-ring" width="' + nodeW + '" height="' + nodeH + '" rx="' + (nodeH/2) + '" fill="none" stroke="currentColor" stroke-width="3" style="opacity:0; pointer-events:none;"/>';
-    svg += '<rect class="n-rect" width="' + nodeW + '" height="' + nodeH + '" rx="' + (nodeH/2) + '" fill="' + fillBg + '" stroke="' + border + '" stroke-width="1.5"/>';
-    svg += '<circle cx="' + (nodeH/2) + '" cy="' + (nodeH/2) + '" r="' + (nodeH/2 - 4) + '" fill="' + border + '"/>';
-    svg += '<text x="' + (nodeH/2) + '" y="' + (nodeH/2 + 4) + '" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">' + n.num + '</text>';
-    svg += '<text x="' + (nodeH + 6) + '" y="' + (nodeH/2 + 4) + '" font-size="12" font-weight="600" fill="' + textMain + '">' + (shortLabel.length > 22 ? shortLabel.substring(0,20)+'...' : shortLabel) + '</text>';
+    svg += '<g id="node-' + n.id + '" data-id="' + n.id + '" data-topic="' + grp + '" class="n-g" style="color: ' + border + ';" transform="translate(' + p.x + ',' + p.y + ')" onclick="clickNode(event, \'' + n.id + '\')" onmouseenter="hoverNode(\'' + n.id + '\')" onmouseleave="hoverNode(null)">';
+    svg += '<title>' + escapeSvgText(n.num + '. ' + rawTxt + (secTitle ? ' · ' + secTitle : '')) + '</title>';
+    svg += '<rect class="n-rect" width="' + stW + '" height="' + stH + '" rx="2" fill="' + fillBg + '" stroke="' + border + '" stroke-width="1.2"/>';
+    svg += '<text x="' + (stW / 2) + '" y="18.5" font-size="11.5" font-weight="700" fill="' + textMain + '" text-anchor="middle">' + n.num + '</text>';
     svg += '</g>';
   });
 
@@ -5968,6 +6392,492 @@ function renderDiagram() {
   return svg;
 }
 
+// -------------------------------------------------------------------------
+//  PARADIGM 2: "PHÂN TẦNG" (LAYERED) - Adaptive Corridor Topological Swimlanes
+//  Automatically widens rank gaps (+28px) wherever cross-lane/cross-section
+//  edges occur so there are zero cramped vertical slits!
+// -------------------------------------------------------------------------
+function renderLayeredDiagram(secMap, topicMap) {
+  const rank = {};
+  D.graph.nodes.forEach(n => { rank[n.id] = 0; });
+  for (let iter = 0; iter < 85; iter++) {
+    D.graph.edges.forEach(e => {
+      if (rank[e.to] <= rank[e.from]) rank[e.to] = rank[e.from] + 1;
+    });
+  }
+  const maxRank = Math.max(...Object.values(rank)); // 37
+
+  const SUB_TRACK = {
+    s1: 0, s2: 1, s3: 2,
+    s4: 0, s5: 0, s6: 1, s7: 0, s8: 0,
+    s9: 0, s10: 0, s11: 0, s12: 0, s13: 0, s14: 1, s15: 1, s16: 1, s17: 1,
+    s18: 0, s19: 0, s20: 0, s21: 0, s22: 0,
+    s23: 0, s24: 0, s25: 1, s26: 0,
+    s27: 0, s28: 0, s29: 0, s30: 0, s31: 0, s32: 0, s33: 0,
+    s34: 0, s35: 0, s36: 0, s37: 0
+  };
+  const LANE_SPECS = [
+    { id: 't1', roman: 'I',   tracks: 3 },
+    { id: 't2', roman: 'II',  tracks: 2 },
+    { id: 't3', roman: 'III', tracks: 2 },
+    { id: 't4', roman: 'IV',  tracks: 1 },
+    { id: 't5', roman: 'V',   tracks: 2 },
+    { id: 't6', roman: 'VI',  tracks: 1 },
+    { id: 't7', roman: 'VII', tracks: 1 }
+  ];
+
+  const lessonToSec = {};
+  (D.topics || []).forEach(t => (t.sections || []).forEach(s => (s.lessons || []).forEach(l => { lessonToSec[l.id] = s.id; })));
+
+  // Detect which rank transitions (r -> r+1) carry cross-section or cross-chapter edges
+  const rankNeedsWideCorridor = {};
+  D.graph.edges.forEach(e => {
+    const rFrom = rank[e.from], rTo = rank[e.to];
+    if (lessonToSec[e.from] !== lessonToSec[e.to] && rTo === rFrom + 1) {
+      rankNeedsWideCorridor[rFrom] = true;
+    }
+  });
+
+  const marginX = 28, marginY = 24;
+  const rulerH = 34;
+  const headerW = 216;
+  const trackStartX = marginX + headerW + 28;
+  const nodeW = 30, nodeH = 24;
+  const baseStepX = 48; // 18px gap for normal horizontal links
+  const wideExtraX = 24; // +24px extra corridor width where cross-lane branches occur
+
+  const rankX = {};
+  let curRankX = trackStartX;
+  for (let r = 0; r <= maxRank; r++) {
+    rankX[r] = curRankX;
+    curRankX += baseStepX + (rankNeedsWideCorridor[r] ? wideExtraX : 0);
+  }
+  const totalW = curRankX + marginX;
+
+  const trackH = 56, lanePadY = 16;
+  let curY = marginY + rulerH;
+  const lanes = {};
+  window.CLUSTER_BOUNDS = {};
+  const pos = {};
+  const secFirstPos = {};
+
+  LANE_SPECS.forEach((ls, lIdx) => {
+    const laneH = ls.tracks * trackH + lanePadY * 2;
+    const tObj = topicMap[ls.id] || { id: ls.id, title: ls.id };
+    lanes[ls.id] = {
+      id: ls.id,
+      roman: ls.roman,
+      idx: lIdx,
+      rawTitle: tObj.title,
+      x: marginX,
+      y: curY,
+      w: totalW - marginX * 2,
+      h: laneH
+    };
+    window.CLUSTER_BOUNDS[ls.id] = { x: marginX, y: curY, w: totalW - marginX * 2, h: laneH };
+
+    (tObj.sections || []).forEach(s => {
+      const trk = SUB_TRACK[s.id] || 0;
+      (s.lessons || []).forEach((l, idxInSec) => {
+        const r = rank[l.id] || 0;
+        const nx = rankX[r];
+        const ny = curY + lanePadY + trk * trackH + 18;
+        pos[l.id] = {
+          x: nx,
+          y: ny,
+          w: nodeW,
+          h: nodeH,
+          rank: r,
+          track: trk,
+          idxInSec,
+          secId: s.id,
+          topicId: ls.id
+        };
+        if (idxInSec === 0) {
+          secFirstPos[s.id] = { x: nx, y: ny - 6, title: s.title, topicId: ls.id };
+        }
+      });
+    });
+
+    curY += laneH;
+  });
+
+  const totalH = curY + marginY;
+  window.GRAPH_BOUNDS = { x: 0, y: 0, width: totalW, height: totalH };
+  zs = { s: 1, x: 0, y: 0 };
+
+  let svg = buildCommonSvgHeader();
+
+  // Top Topological Rank Ruler
+  svg += '<rect x="' + marginX + '" y="' + marginY + '" width="' + (totalW - marginX * 2) + '" height="' + rulerH + '" fill="var(--s2)" stroke="var(--s4)" stroke-width="1"/>';
+  svg += '<text class="ruler-txt" x="' + (marginX + 14) + '" y="' + (marginY + 21) + '" font-size="10.5" font-weight="800" fill="var(--s12)" letter-spacing="0.04em">PHÂN TẦNG TIÊN QUYẾT (BẬC 1 &rarr; BẬC ' + (maxRank + 1) + ')</text>';
+
+  for (let r = 0; r <= maxRank; r++) {
+    const gx = rankX[r] + nodeW / 2;
+    if (r % 3 === 0 || r === maxRank) {
+      svg += '<line x1="' + gx + '" y1="' + (marginY + rulerH) + '" x2="' + gx + '" y2="' + (totalH - marginY) + '" stroke="var(--s3)" stroke-width="1" stroke-dasharray="2 4"/>';
+      svg += '<text class="ruler-txt" x="' + gx + '" y="' + (marginY + 21) + '" font-size="9.5" font-weight="700" fill="var(--s9)" text-anchor="middle">B' + (r + 1) + '</text>';
+    }
+  }
+
+  // Render 7 Horizontal Chapter Swimlanes
+  LANE_SPECS.forEach(ls => {
+    const ln = lanes[ls.id];
+    const stroke = (GROUP_COLORS[ls.id] && GROUP_COLORS[ls.id].stroke) || '#0090ff';
+    const rawTitle = tr('library_terms.' + ls.id, ln.rawTitle).replace(/^CHƯƠNG\s+[IVX]+\s*[:\-]?\s*/i, '');
+    const shortTitle = rawTitle.length > 26 ? rawTitle.substring(0, 24) + '...' : rawTitle;
+    const bandFill = (ln.idx % 2 === 0) ? 'var(--s1)' : 'var(--s2)';
+    const bandOpacity = (ln.idx % 2 === 0) ? '0.15' : '0.42';
+
+    svg += '<g id="cluster-' + ls.id + '" data-topic="' + ls.id + '" class="cluster-box">';
+    svg += '<rect class="cluster-border" x="' + ln.x + '" y="' + ln.y + '" width="' + ln.w + '" height="' + ln.h + '" fill="' + bandFill + '" fill-opacity="' + bandOpacity + '" stroke="var(--s4)" stroke-width="1"/>';
+    svg += '<g class="cluster-hdr" onclick="focusTopicCluster(\'' + ls.id + '\', event)">';
+    svg += '<rect x="' + ln.x + '" y="' + ln.y + '" width="' + headerW + '" height="' + ln.h + '" fill="var(--s2)" fill-opacity="0.75" stroke="var(--s4)" stroke-width="1"/>';
+    svg += '<rect x="' + (ln.x + 12) + '" y="' + (ln.y + 14) + '" width="22" height="18" rx="2" fill="' + stroke + '"/>';
+    svg += '<text x="' + (ln.x + 23) + '" y="' + (ln.y + 27) + '" font-size="10" font-weight="800" fill="#ffffff" text-anchor="middle">' + ln.roman + '</text>';
+    svg += '<text x="' + (ln.x + 42) + '" y="' + (ln.y + 27) + '" font-size="10.5" font-weight="800" fill="var(--s12)">' + escapeSvgText(shortTitle.toUpperCase()) + '</text>';
+    svg += '</g>';
+
+    Object.keys(secFirstPos).forEach(sId => {
+      const sp = secFirstPos[sId];
+      if (sp.topicId !== ls.id) return;
+      const rawSec = tr('library_terms.' + sId, sp.title);
+      const shortSec = rawSec.length > 26 ? rawSec.substring(0, 24) + '...' : rawSec;
+      svg += '<g class="sec-hdr"><title>' + escapeSvgText(rawSec) + '</title>';
+      svg += '<text x="' + sp.x + '" y="' + sp.y + '" font-size="9.8" font-weight="600" fill="var(--s10)">' + escapeSvgText(shortSec) + '</text></g>';
+    });
+    svg += '</g>';
+  });
+
+  // Render all 92 Left-to-Right Topological Edges using clean rounded orthogonal corridors
+  const corridorCount = {};
+  D.graph.nodes.forEach(u => {
+    reducedAdj[u.id].forEach(v => {
+      const from = pos[u.id], to = pos[v];
+      if (!from || !to) return;
+      const sx = from.x + nodeW, sy = from.y + nodeH / 2;
+      const ex = to.x - 3, ey = to.y + nodeH / 2;
+      let pathD = '', tierCls = 'e-chain', markerId = 'arr-' + from.topicId, extraStyle = 'stroke: var(--' + from.topicId + '-stroke);';
+
+      if (from.topicId === to.topicId && Math.abs(sy - ey) < 2 && to.rank === from.rank + 1) {
+        pathD = 'M' + sx + ' ' + sy + ' L' + ex + ' ' + ey;
+        tierCls = 'e-chain';
+      } else if (from.topicId === to.topicId && Math.abs(sy - ey) < 2 && to.rank > from.rank + 1) {
+        // Same horizontal track, skipping over intermediate rank (l52->l54, l68->l72)
+        const archY = sy + 20;
+        pathD = roundedOrthoPath([
+          [from.x + nodeW / 2, from.y + nodeH],
+          [from.x + nodeW / 2, archY],
+          [to.x + nodeW / 2, archY],
+          [to.x + nodeW / 2, to.y + nodeH + 3]
+        ], 6);
+        tierCls = 'e-branch';
+      } else {
+        if (from.topicId !== to.topicId) {
+          tierCls = 'e-bridge';
+          markerId = 'arr';
+          extraStyle = '';
+        } else {
+          tierCls = 'e-branch';
+        }
+        const cKey = from.rank + '-' + to.rank;
+        const cIdx = (corridorCount[cKey] || 0);
+        corridorCount[cKey] = cIdx + 1;
+        const midX = sx + Math.max(12, (ex - sx) * 0.45) + (cIdx % 3 - 1) * 5;
+        pathD = roundedOrthoPath([
+          [sx, sy],
+          [midX, sy],
+          [midX, ey],
+          [ex, ey]
+        ], 7);
+      }
+      svg += '<path id="edge-' + u.id + '-' + v + '" data-from="' + u.id + '" data-to="' + v + '" data-tier="' + tierCls + '" data-marker="' + markerId + '" class="e-line e-default ' + tierCls + '" style="' + extraStyle + '" d="' + pathD + '" marker-end="url(#' + markerId + ')"/>';
+    });
+  });
+
+  // Render all 78 Swimlane Station Nodes
+  D.graph.nodes.forEach(n => {
+    const p = pos[n.id];
+    if (!p) return;
+    const grp = p.topicId || 't1';
+    const rawTxt = tr('library_terms.' + n.id, n.label).replace(/^[0-9.]+\s*/, '');
+    const secTitle = secMap[p.secId] ? tr('library_terms.' + p.secId, secMap[p.secId].title) : '';
+    const border = 'var(--' + grp + '-stroke)';
+    const fillBg = 'var(--' + grp + '-fill)';
+    const textMain = 'var(--' + grp + '-text)';
+
+    svg += '<g id="node-' + n.id + '" data-id="' + n.id + '" data-topic="' + grp + '" class="n-g" style="color: ' + border + ';" transform="translate(' + p.x + ',' + p.y + ')" onclick="clickNode(event, \'' + n.id + '\')" onmouseenter="hoverNode(\'' + n.id + '\')" onmouseleave="hoverNode(null)">';
+    svg += '<title>' + escapeSvgText(n.num + '. ' + rawTxt + ' (Bậc ' + (p.rank + 1) + ')' + (secTitle ? ' · ' + secTitle : '')) + '</title>';
+    svg += '<rect class="n-rect" width="' + nodeW + '" height="' + nodeH + '" rx="2" fill="' + fillBg + '" stroke="' + border + '" stroke-width="1.2"/>';
+    svg += '<text x="' + (nodeW / 2) + '" y="16" font-size="10.5" font-weight="700" fill="' + textMain + '" text-anchor="middle">' + n.num + '</text>';
+    svg += '</g>';
+  });
+
+  svg += '</g></svg>';
+  return svg;
+}
+
+// -------------------------------------------------------------------------
+//  PARADIGM 3: "ĐỒNG TÂM" (RADIAL) - Concentric Polar Knowledge Web
+//  Spacious orbits + True Circular Arc routing for orbital chains
+// -------------------------------------------------------------------------
+function polarToCartesian(cx, cy, r, deg) {
+  const rad = deg * Math.PI / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function describeSvgArc(cx, cy, r, startDeg, endDeg) {
+  const start = polarToCartesian(cx, cy, r, startDeg);
+  const end = polarToCartesian(cx, cy, r, endDeg);
+  const diff = endDeg - startDeg;
+  const largeArc = Math.abs(diff) <= 180 ? '0' : '1';
+  const sweep = diff >= 0 ? '1' : '0';
+  return 'M ' + start.x.toFixed(1) + ' ' + start.y.toFixed(1) + ' A ' + r + ' ' + r + ' 0 ' + largeArc + ' ' + sweep + ' ' + end.x.toFixed(1) + ' ' + end.y.toFixed(1);
+}
+
+function renderRadialDiagram(secMap, topicMap) {
+  const cx = 860, cy = 600;
+  const R = [148, 252, 348, 444, 540];
+  const nodeBox = 32, nodeR = 15;
+  const pos = {};
+  window.CLUSTER_BOUNDS = {};
+
+  const lessonToSec = {};
+  (D.topics || []).forEach(t => (t.sections || []).forEach(s => (s.lessons || []).forEach(l => { lessonToSec[l.id] = s.id; })));
+
+  // Inner Core: Topic 1 (Chương I: Kiến thức chuẩn bị, 10 lessons on Ring 0)
+  const t1Lessons = ['l1','l2','l3','l4','l5','l6','l7','l8','l9','l10'];
+  t1Lessons.forEach((id, i) => {
+    const deg = -90 + i * (360 / t1Lessons.length);
+    const pt = polarToCartesian(cx, cy, R[0], deg);
+    pos[id] = {
+      x: pt.x - nodeBox / 2,
+      y: pt.y - nodeBox / 2,
+      cx: pt.x,
+      cy: pt.y,
+      r: R[0],
+      ringIdx: 0,
+      deg,
+      idxInRing: i,
+      secId: lessonToSec[id] || 's1',
+      topicId: 't1'
+    };
+  });
+  window.CLUSTER_BOUNDS.t1 = { x: cx - R[0] - 45, y: cy - R[0] - 45, w: (R[0] + 45) * 2, h: (R[0] + 45) * 2 };
+
+  // Section-aligned 4 outer rings per sector (zero backward carriage-return wraps!)
+  const SECTORS = [
+    { id: 't2', roman: 'II',  a0: -78, a1: -6, rings: [
+      ['l11','l12','l13'],
+      ['l14','l15','l16','l17','l18','l19'],
+      ['l20','l21','l22'],
+      ['l23','l24','l25','l26','l27','l28']
+    ]},
+    { id: 't3', roman: 'III', a0: 6,   a1: 86, rings: [
+      ['l29','l30','l31','l32','l33','l34'],
+      ['l35','l36','l37','l38','l39'],
+      ['l40','l41','l42'],
+      ['l43','l44','l45','l46']
+    ]},
+    { id: 't4', roman: 'IV',  a0: 98,  a1: 142, rings: [
+      ['l47','l48'],
+      ['l49','l50'],
+      ['l51','l52'],
+      ['l53','l54']
+    ]},
+    { id: 't5', roman: 'V',   a0: 154, a1: 196, rings: [
+      ['l55','l56'],
+      ['l57','l58'],
+      ['l59','l60'],
+      ['l61','l62','l63']
+    ]},
+    { id: 't6', roman: 'VI',  a0: 208, a1: 242, rings: [
+      ['l64','l65'],
+      ['l66','l67','l68'],
+      ['l69','l70','l71'],
+      ['l72']
+    ]},
+    { id: 't7', roman: 'VII', a0: 254, a1: 268, rings: [
+      ['l73'],
+      ['l74'],
+      ['l75','l76','l77'],
+      ['l78']
+    ]}
+  ];
+
+  SECTORS.forEach(sec => {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    sec.rings.forEach((arr, rIdx) => {
+      const radius = R[1 + rIdx];
+      arr.forEach((id, idxInRing) => {
+        const frac = arr.length === 1 ? 0.5 : idxInRing / (arr.length - 1);
+        const deg = sec.a0 + frac * (sec.a1 - sec.a0);
+        const pt = polarToCartesian(cx, cy, radius, deg);
+        const bx = pt.x - nodeBox / 2, by = pt.y - nodeBox / 2;
+        pos[id] = {
+          x: bx,
+          y: by,
+          cx: pt.x,
+          cy: pt.y,
+          r: radius,
+          ringIdx: 1 + rIdx,
+          deg,
+          idxInRing,
+          secId: lessonToSec[id] || 's4',
+          topicId: sec.id
+        };
+        if (bx < minX) minX = bx;
+        if (by < minY) minY = by;
+        if (bx + nodeBox > maxX) maxX = bx + nodeBox;
+        if (by + nodeBox > maxY) maxY = by + nodeBox;
+      });
+    });
+
+    const padB = 48;
+    window.CLUSTER_BOUNDS[sec.id] = {
+      x: minX - padB,
+      y: minY - padB,
+      w: (maxX - minX) + padB * 2,
+      h: (maxY - minY) + padB * 2
+    };
+  });
+
+  window.GRAPH_BOUNDS = { x: 200, y: 0, width: 1320, height: 1200 };
+  zs = { s: 1, x: 0, y: 0 };
+
+  let svg = buildCommonSvgHeader();
+
+  // Concentric Polar Coordinate Rings
+  const ringLabels = ['VÀNH I · LÕI CƠ BẢN', 'VÀNH II', 'VÀNH III', 'VÀNH IV', 'VÀNH V · CHUYÊN SÂU'];
+  R.forEach((radius, idx) => {
+    svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius + '" fill="none" stroke="var(--s3)" stroke-width="' + (idx === 0 ? '1.4' : '1') + '" stroke-dasharray="' + (idx === 0 ? 'none' : '3 5') + '"/>';
+    svg += '<text class="ruler-txt" x="' + cx + '" y="' + (cy - radius + 12) + '" font-size="8.5" font-weight="700" fill="var(--s8)" text-anchor="middle" letter-spacing="0.05em">' + ringLabels[idx] + '</text>';
+  });
+
+  // Center Hub Medallion (Chương I Trigger)
+  const c1Stroke = GROUP_COLORS.t1.stroke;
+  svg += '<g id="cluster-t1" data-topic="t1" class="cluster-box">';
+  svg += '<g class="cluster-hdr" onclick="focusTopicCluster(\'t1\', event)">';
+  svg += '<circle class="cluster-border" cx="' + cx + '" cy="' + cy + '" r="72" fill="var(--s2)" stroke="' + c1Stroke + '" stroke-width="1.5"/>';
+  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="65" fill="none" stroke="var(--s4)" stroke-width="1"/>';
+  svg += '<text x="' + cx + '" y="' + (cy - 12) + '" font-size="9.5" font-weight="800" fill="' + c1Stroke + '" text-anchor="middle" letter-spacing="0.04em">LÕI CHƯƠNG I</text>';
+  svg += '<text x="' + cx + '" y="' + (cy + 4) + '" font-size="10.5" font-weight="800" fill="var(--s12)" text-anchor="middle">KIẾN THỨC CHUẨN BỊ</text>';
+  svg += '<text x="' + cx + '" y="' + (cy + 20) + '" font-size="8.5" font-weight="600" fill="var(--s9)" text-anchor="middle">78 ĐỈNH · 92 CUNG</text>';
+  svg += '</g></g>';
+
+  // 6 Outer Sector Dividers & Perimeter Arc Headers
+  const outerArcR = 588;
+  SECTORS.forEach(sec => {
+    const stroke = (GROUP_COLORS[sec.id] && GROUP_COLORS[sec.id].stroke) || '#0090ff';
+    const tObj = topicMap[sec.id] || { id: sec.id, title: sec.id };
+    const rawTitle = tr('library_terms.' + sec.id, tObj.title).replace(/^CHƯƠNG\s+[IVX]+\s*[:\-]?\s*/i, '');
+    const fullLabel = 'CHƯƠNG ' + sec.roman + ' · ' + rawTitle.toUpperCase();
+
+    const rayIn = polarToCartesian(cx, cy, 200, sec.a0 - 5);
+    const rayOut = polarToCartesian(cx, cy, outerArcR, sec.a0 - 5);
+    svg += '<line x1="' + rayIn.x + '" y1="' + rayIn.y + '" x2="' + rayOut.x + '" y2="' + rayOut.y + '" stroke="var(--s4)" stroke-width="1" stroke-dasharray="4 4"/>';
+
+    const arcPath = describeSvgArc(cx, cy, outerArcR, sec.a0, sec.a1);
+    const midDeg = (sec.a0 + sec.a1) / 2;
+    const lblPt = polarToCartesian(cx, cy, outerArcR + 22, midDeg);
+    const anchor = Math.abs(Math.cos(midDeg * Math.PI / 180)) < 0.25 ? 'middle' : (Math.cos(midDeg * Math.PI / 180) > 0 ? 'start' : 'end');
+
+    svg += '<g id="cluster-' + sec.id + '" data-topic="' + sec.id + '" class="cluster-box">';
+    svg += '<path class="cluster-border" d="' + arcPath + '" fill="none" stroke="' + stroke + '" stroke-width="3"/>';
+    svg += '<g class="cluster-hdr" onclick="focusTopicCluster(\'' + sec.id + '\', event)">';
+    svg += '<title>' + escapeSvgText(fullLabel) + '</title>';
+    svg += '<text x="' + lblPt.x + '" y="' + lblPt.y + '" font-size="10.5" font-weight="800" fill="' + stroke + '" text-anchor="' + anchor + '" letter-spacing="0.03em">' + escapeSvgText(fullLabel) + '</text>';
+    svg += '</g></g>';
+  });
+
+  // Render all 92 Polar Edges using Shortest-Angle Orbital Cubic Béziers (never cutting through the center hub!)
+  D.graph.nodes.forEach(u => {
+    reducedAdj[u.id].forEach(v => {
+      const from = pos[u.id], to = pos[v];
+      if (!from || !to) return;
+
+      let tierCls = 'e-chain', markerId = 'arr-' + from.topicId, extraStyle = 'stroke: var(--' + from.topicId + '-stroke);';
+      if (from.topicId !== to.topicId) {
+        tierCls = 'e-bridge';
+        markerId = 'arr';
+        extraStyle = '';
+      } else if (from.secId !== to.secId) {
+        tierCls = 'e-branch';
+      }
+
+      let pathD = '';
+      // Shortest signed angular difference in [-180, +180]
+      const deltaDeg = ((to.deg - from.deg + 540) % 360) - 180;
+      const dAngFrom = (nodeR + 2) * 180 / (Math.PI * from.r);
+      const dAngTo = (nodeR + 4) * 180 / (Math.PI * to.r);
+
+      if (from.r === to.r && from.topicId === to.topicId && Math.abs(to.idxInRing - from.idxInRing) === 1) {
+        // Pure circular arc directly along the concentric ring!
+        const dir = deltaDeg >= 0 ? 1 : -1;
+        pathD = describeSvgArc(cx, cy, from.r, from.deg + dir * dAngFrom, to.deg - dir * dAngTo);
+      } else if (Math.abs(deltaDeg) <= 38) {
+        // Short radial/diagonal step within the same or adjacent sector
+        const dx = to.cx - from.cx, dy = to.cy - from.cy;
+        const dist = Math.hypot(dx, dy) || 1;
+        const sx = from.cx + (dx / dist) * (nodeR + 1);
+        const sy = from.cy + (dy / dist) * (nodeR + 1);
+        const ex = to.cx - (dx / dist) * (nodeR + 4);
+        const ey = to.cy - (dy / dist) * (nodeR + 4);
+        const midR = (from.r + to.r) / 2;
+        const ctrlPt = polarToCartesian(cx, cy, midR, from.deg + deltaDeg * 0.5);
+        pathD = 'M' + sx.toFixed(1) + ' ' + sy.toFixed(1) + ' Q' + ctrlPt.x.toFixed(1) + ' ' + ctrlPt.y.toFixed(1) + ' ' + ex.toFixed(1) + ' ' + ey.toFixed(1);
+      } else {
+        // Long cross-sector orbital curve: uses 2 polar control points along the concentric corridor
+        // at radius >= 200px so it orbits smoothly AROUND the core and NEVER cuts through the Center Medallion!
+        const dir = deltaDeg >= 0 ? 1 : -1;
+        const startPt = polarToCartesian(cx, cy, from.r, from.deg + dir * dAngFrom * 0.8);
+        const endPt = polarToCartesian(cx, cy, to.r, to.deg - dir * dAngTo * 0.9);
+        const orbitR = Math.max(202, (from.r + to.r) * 0.52);
+        const c1 = polarToCartesian(cx, cy, orbitR, from.deg + deltaDeg * 0.33);
+        const c2 = polarToCartesian(cx, cy, orbitR, from.deg + deltaDeg * 0.67);
+        pathD = 'M' + startPt.x.toFixed(1) + ' ' + startPt.y.toFixed(1) +
+                ' C' + c1.x.toFixed(1) + ' ' + c1.y.toFixed(1) + ', ' +
+                       c2.x.toFixed(1) + ' ' + c2.y.toFixed(1) + ', ' +
+                       endPt.x.toFixed(1) + ' ' + endPt.y.toFixed(1);
+      }
+
+      svg += '<path id="edge-' + u.id + '-' + v + '" data-from="' + u.id + '" data-to="' + v + '" data-tier="' + tierCls + '" data-marker="' + markerId + '" class="e-line e-default ' + tierCls + '" style="' + extraStyle + '" d="' + pathD + '" marker-end="url(#' + markerId + ')"/>';
+    });
+  });
+
+  // Render all 78 Circular Graph Vertices (<circle r="15">)
+  D.graph.nodes.forEach(n => {
+    const p = pos[n.id];
+    if (!p) return;
+    const grp = p.topicId || 't1';
+    const rawTxt = tr('library_terms.' + n.id, n.label).replace(/^[0-9.]+\s*/, '');
+    const secTitle = secMap[p.secId] ? tr('library_terms.' + p.secId, secMap[p.secId].title) : '';
+    const border = 'var(--' + grp + '-stroke)';
+    const fillBg = 'var(--' + grp + '-fill)';
+    const textMain = 'var(--' + grp + '-text)';
+
+    svg += '<g id="node-' + n.id + '" data-id="' + n.id + '" data-topic="' + grp + '" class="n-g" style="color: ' + border + ';" transform="translate(' + p.x + ',' + p.y + ')" onclick="clickNode(event, \'' + n.id + '\')" onmouseenter="hoverNode(\'' + n.id + '\')" onmouseleave="hoverNode(null)">';
+    svg += '<title>' + escapeSvgText(n.num + '. ' + rawTxt + (secTitle ? ' · ' + secTitle : '')) + '</title>';
+    svg += '<circle class="n-rect" cx="16" cy="16" r="' + nodeR + '" fill="' + fillBg + '" stroke="' + border + '" stroke-width="1.4"/>';
+    svg += '<text x="16" y="20" font-size="10.5" font-weight="700" fill="' + textMain + '" text-anchor="middle">' + n.num + '</text>';
+    svg += '</g>';
+  });
+
+  svg += '</g></svg>';
+  return svg;
+}
+
+function renderDiagram() {
+  const secMap = {}, topicMap = {};
+  (D.topics || []).forEach(t => {
+    topicMap[t.id] = t;
+    (t.sections || []).forEach(s => { secMap[s.id] = { ...s, topicId: t.id }; });
+  });
+  const mode = window.graphViewMode || 'clusters';
+  if (mode === 'layered') return renderLayeredDiagram(secMap, topicMap);
+  if (mode === 'radial') return renderRadialDiagram(secMap, topicMap);
+  return renderClustersDiagram(secMap, topicMap);
+}
 
 window.clickNode = function(e, id) {
   e.stopPropagation();
@@ -5996,24 +6906,45 @@ function updateVisualState() {
   
   if (activePath) {
     focusId = null;
-  } else if (hoveredNode) {
-    focusId = hoveredNode;
   } else if (pinnedNode) {
     focusId = pinnedNode;
     isPinned = true;
+  } else if (hoveredNode) {
+    focusId = hoveredNode;
   }
 
+  updateNodeHud(hoveredNode || pinnedNode);
+
+  let activeNodesSet = new Set();
   let ancestors = new Set(), descendants = new Set();
+  let directIn = new Set(), directOut = new Set();
+
   if (focusId) {
     ancestors = getTree(focusId, false);
     descendants = getTree(focusId, true);
+    ancestors.forEach(x => activeNodesSet.add(x));
+    descendants.forEach(x => activeNodesSet.add(x));
+    (revAdj[focusId] || []).forEach(p => directIn.add(p));
+    (reducedAdj[focusId] || []).forEach(ch => directOut.add(ch));
   }
 
-  // Update edges
+  c.querySelectorAll('g.cluster-box').forEach(cb => {
+    const tId = cb.dataset.topic;
+    cb.classList.remove('cluster-focused', 'cluster-dimmed');
+    if (activeTopicFilter && !activePath && !focusId) {
+      if (tId === activeTopicFilter) cb.classList.add('cluster-focused');
+      else cb.classList.add('cluster-dimmed');
+    }
+  });
+
+  // Update all 92 edges with 2-Tier Visual Hierarchy + 2-Color Directional Flow:
+  // - Direct 1-hop incoming/outgoing edges of focusId: 2.5px, opacity 1.0 (sharp & immediate)
+  // - Multi-hop transitive ancestor/descendant edges: 1.45px, opacity 0.44 (calm background context)
   c.querySelectorAll('path.e-line').forEach(el => {
     const from = el.dataset.from;
     const to = el.dataset.to;
-    el.classList.remove('e-highlight', 'e-pin', 'e-hidden', 'e-default');
+    const defaultMarker = el.dataset.marker || 'arr';
+    el.classList.remove('e-highlight', 'e-upstream', 'e-downstream', 'e-upstream-direct', 'e-downstream-direct', 'e-pin', 'e-hidden', 'e-default');
     
     const isOnActivePath = activePath && activePath.includes(from) && activePath.includes(to) && 
                            activePath.indexOf(to) === activePath.indexOf(from) + 1;
@@ -6024,44 +6955,77 @@ function updateVisualState() {
         el.setAttribute('marker-end', 'url(#arrH)');
       } else {
         el.classList.add('e-hidden');
-        el.setAttribute('marker-end', 'url(#arr)');
+        el.setAttribute('marker-end', 'url(#' + defaultMarker + ')');
       }
     } else if (focusId) {
+      const isDirectAnc = (to === focusId && directIn.has(from));
+      const isDirectDesc = (from === focusId && directOut.has(to));
       const isAncEdge = ancestors.has(from) && ancestors.has(to) && reducedAdj[from].includes(to);
       const isDescEdge = descendants.has(from) && descendants.has(to) && reducedAdj[from].includes(to);
-      
-      if (isAncEdge || isDescEdge) {
-        if (isPinned) {
-          el.classList.add('e-pin');
-          el.setAttribute('marker-end', 'url(#arrP)');
-        } else {
-          el.classList.add('e-highlight');
-          el.setAttribute('marker-end', 'url(#arrH)');
-        }
+
+      if (isDirectAnc) {
+        el.classList.add('e-upstream-direct');
+        el.setAttribute('marker-end', 'url(#arrUp)');
+      } else if (isDirectDesc) {
+        el.classList.add('e-downstream-direct');
+        el.setAttribute('marker-end', 'url(#arrH)');
+      } else if (isAncEdge) {
+        el.classList.add('e-upstream');
+        el.setAttribute('marker-end', 'url(#arrUp)');
+      } else if (isDescEdge) {
+        el.classList.add('e-downstream');
+        el.setAttribute('marker-end', 'url(#arrH)');
       } else {
         el.classList.add('e-hidden');
-        el.setAttribute('marker-end', 'url(#arr)');
+        el.setAttribute('marker-end', 'url(#' + defaultMarker + ')');
       }
+    } else if (activeTopicFilter) {
+      const fGrp = nodeMap[from] && nodeMap[from].group;
+      const tGrp = nodeMap[to] && nodeMap[to].group;
+      if (fGrp === activeTopicFilter || tGrp === activeTopicFilter) {
+        el.classList.add('e-default');
+      } else {
+        el.classList.add('e-hidden');
+      }
+      el.setAttribute('marker-end', 'url(#' + defaultMarker + ')');
     } else {
       el.classList.add('e-default');
-      el.setAttribute('marker-end', 'url(#arr)');
+      el.setAttribute('marker-end', 'url(#' + defaultMarker + ')');
     }
   });
 
-  // Update nodes
+  // Update all 78 nodes
   c.querySelectorAll('g.n-g').forEach(el => {
-    const nid = el.dataset.id;
-    el.classList.remove('highlighted', 'dimmed', 'path-active', 'pin-active');
-    
+    const id = el.dataset.id;
+    const tId = el.dataset.topic;
+    el.classList.remove('n-active', 'n-upstream', 'n-downstream', 'n-upstream-direct', 'n-downstream-direct', 'n-pinned', 'n-dimmed', 'pin-active', 'path-active');
+
     if (activePath) {
-      if (activePath.includes(nid)) el.classList.add('highlighted', 'path-active');
-      else el.classList.add('dimmed');
-    } else if (focusId) {
-      if (nid === focusId || ancestors.has(nid) || descendants.has(nid)) {
-        el.classList.add('highlighted');
-        if (isPinned && nid === focusId) el.classList.add('pin-active');
+      if (activePath.includes(id)) {
+        el.classList.add('n-active', 'path-active');
+        if (id === activePath[0] || id === activePath[activePath.length - 1]) {
+          el.classList.add('pin-active');
+        }
       } else {
-        el.classList.add('dimmed');
+        el.classList.add('n-dimmed');
+      }
+    } else if (focusId) {
+      if (id === focusId) {
+        el.classList.add('n-active', 'pin-active');
+      } else if (directIn.has(id)) {
+        el.classList.add('n-active', 'n-upstream-direct');
+      } else if (directOut.has(id)) {
+        el.classList.add('n-active', 'n-downstream-direct');
+      } else if (ancestors.has(id)) {
+        el.classList.add('n-upstream');
+      } else if (descendants.has(id)) {
+        el.classList.add('n-downstream');
+      } else {
+        el.classList.add('n-dimmed');
+      }
+    } else if (activeTopicFilter) {
+      if (tId !== activeTopicFilter) {
+        el.classList.add('n-dimmed');
       }
     }
   });
@@ -6249,10 +7213,17 @@ function refreshLegend() {
     let topHtml = '';
     const colorKeys = ['t1','t2','t3','t4','t5','t6','t7'];
     MOCK_LIBRARY_DATA.topics.forEach((t, idx) => {
-      const cid = colorKeys[idx % colorKeys.length];
+      const cid = t.id || colorKeys[idx % colorKeys.length];
       const color = GROUP_COLORS[cid] ? GROUP_COLORS[cid].stroke : '#333';
-      topHtml += `<span style="display:flex; align-items:center; gap:8px; font-size:0.85rem; font-weight:600; color:var(--s11); padding: 4px 8px; background: var(--s2); border-radius: 6px; border: 1px solid var(--s3);"><span style="width:12px; height:12px; border-radius:50%; background:${color}; display:inline-block; flex-shrink:0;"></span>${tr('library_terms.' + t.id, t.title)}</span>`;
+      const isFocused = (typeof activeTopicFilter !== 'undefined' && activeTopicFilter === cid);
+      const borderStyle = isFocused ? `2px solid ${color}` : '1px solid var(--s3)';
+      const bgStyle = isFocused ? `var(--${cid}-fill)` : 'var(--s2)';
+      const textStyle = isFocused ? `var(--${cid}-text)` : 'var(--s11)';
+      topHtml += `<button type="button" onclick="if(typeof focusTopicCluster==='function') focusTopicCluster('${cid}', event)" title="Bấm để phóng to khu vực chương này" style="display:flex; align-items:center; gap:8px; font-size:0.84rem; font-weight:700; color:${textStyle}; padding: 6px 12px; background: ${bgStyle}; border-radius: 6px; border: ${borderStyle}; cursor: pointer; transition: all 0.18s ease;"><span style="width:10px; height:10px; border-radius:2px; background:${color}; display:inline-block; flex-shrink:0;"></span>${tr('library_terms.' + t.id, t.title)}</button>`;
     });
+    if (typeof activeTopicFilter !== 'undefined' && activeTopicFilter) {
+      topHtml += `<button type="button" onclick="if(typeof focusTopicCluster==='function') focusTopicCluster(null, event)" style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; color:var(--s12); padding: 6px 12px; background: var(--s3); border-radius: 6px; border: 1px solid var(--s4); cursor: pointer;"><i class="ph ph-corners-out"></i> Toàn cảnh</button>`;
+    }
     topBar.innerHTML = topHtml;
   }
 
@@ -6260,9 +7231,11 @@ function refreshLegend() {
   if (dynLegend && typeof MOCK_LIBRARY_DATA !== 'undefined') {
     let html = '';
     MOCK_LIBRARY_DATA.topics.forEach(t => {
-      html += `<div style="font-weight: 800; margin-top: 16px; margin-bottom: 8px; padding-left: 8px; color: var(--s12); font-size: 0.95rem; border-bottom: 1px solid var(--s3); padding-bottom: 4px;">${tr('library_terms.' + t.id, t.title)}</div>`;
+      const cid = t.id || 't1';
+      const tColor = GROUP_COLORS[cid] ? GROUP_COLORS[cid].stroke : 'var(--s12)';
+      html += `<div id="lg-topic-${t.id}" onclick="if(typeof focusTopicCluster==='function') focusTopicCluster('${t.id}', event)" style="font-weight: 800; margin-top: 16px; margin-bottom: 8px; padding-left: 8px; color: var(--s12); font-size: 0.95rem; border-bottom: 1px solid var(--s3); padding-bottom: 4px; cursor: pointer;">${tr('library_terms.' + t.id, t.title)}</div>`;
       t.sections.forEach(s => {
-        html += `<div style="font-weight: 700; margin-left: 12px; margin-top: 8px; margin-bottom: 4px; color: var(--s9); font-size: 0.8rem; text-transform: uppercase;">${tr('library_terms.' + s.id, s.title)}</div>`;
+        html += `<div style="font-weight: 700; margin-left: 10px; margin-top: 8px; margin-bottom: 4px; color: var(--s9); font-size: 0.78rem; text-transform: uppercase;">${tr('library_terms.' + s.id, s.title)}</div>`;
         s.lessons.forEach(l => {
           const n = typeof D !== 'undefined' && D.graph && D.graph.nodes ? D.graph.nodes.find(node => node.id === l.id) : null;
           if (!n) return;
@@ -6274,8 +7247,8 @@ function refreshLegend() {
           if (isPf) cls = 'path-active';
           else if (isPin) cls = 'hl';
 
-          html += `<div class="lg-item ${cls}" style="margin-left: 16px; margin-bottom: 4px; padding: 6px 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; border: 1px solid transparent;" id="lg-${n.id}" onclick="if(typeof clickNode==='function') clickNode(event, '${n.id}')" onmouseenter="if(typeof hoverNode==='function') hoverNode('${n.id}')" onmouseleave="if(typeof hoverNode==='function') hoverNode(null)">
-            <div style="width:24px;height:24px;border-radius:50%;background:${nodeColor};color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;">${n.num}</div>
+          html += `<div class="lg-item ${cls}" style="margin-left: 12px; margin-bottom: 4px; padding: 6px 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; border: 1px solid transparent;" id="lg-${n.id}" onclick="if(typeof clickNode==='function') clickNode(event, '${n.id}')" onmouseenter="if(typeof hoverNode==='function') hoverNode('${n.id}')" onmouseleave="if(typeof hoverNode==='function') hoverNode(null)">
+            <div style="width:24px;height:24px;border-radius:4px;background:${nodeColor};color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;">${n.num}</div>
             <span style="font-size:0.85rem;font-weight:500;color:var(--s11);flex:1;line-height:1.3;">${tr('library_terms.' + n.id, n.label)}</span>
           </div>`;
         });
@@ -6284,12 +7257,7 @@ function refreshLegend() {
     dynLegend.innerHTML = html;
   }
 }
-  
 
-
-// �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
-//  CUSTOM COMBOBOX CLASS
-// �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
 class CustomCombobox {
   constructor(containerId, options, isMulti = false, placeholder = 'Chọn...') {
     this.container = document.getElementById(containerId);

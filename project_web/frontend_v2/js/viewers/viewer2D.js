@@ -2990,6 +2990,10 @@
     if (window.App && App.LTAnimator && App.LTAnimator.isActive()) {
       App.LTAnimator.render2DSubspace(ctx2d, Vec2D.gridInfo2D);
     }
+    // [QUADRATIC FORMS & CONICS ANIMATION SUBSPACE HOOK]
+    if (window.App && App.ConicAnimator && App.ConicAnimator.isActive()) {
+      App.ConicAnimator.render2DSubspace(ctx2d, Vec2D.gridInfo2D);
+    }
 
 
     // [NORI PENCIL LIVING ENTITY HOOK]
@@ -3060,6 +3064,9 @@
           drawAlpha,
           pulseFactor,
           [0, 0],
+          false,
+          false,
+          Boolean(it._isDashed),
         );
       }
     }
@@ -3096,6 +3103,10 @@
     // [LINEAR TRANSFORMATION ANIMATION PROJECTIONS HOOK]
     if (window.App && App.LTAnimator && App.LTAnimator.isActive()) {
       App.LTAnimator.render2DProjections(ctx2d, Vec2D.gridInfo2D);
+    }
+    // [QUADRATIC FORMS & CONICS ANIMATION PROJECTIONS HOOK]
+    if (window.App && App.ConicAnimator && App.ConicAnimator.isActive()) {
+      App.ConicAnimator.render2DProjections(ctx2d, Vec2D.gridInfo2D);
     }
 
     if (App.tempGhosts && Array.isArray(App.tempGhosts)) {

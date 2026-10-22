@@ -561,10 +561,10 @@
         taskId === "topic5_matrix_transform" ||
         taskId === "s26"
       ) {
+        if (!this._isInitialized) this.init();
         if (typeof App.refreshLTMatrixDropdown === "function") {
           App.refreshLTMatrixDropdown();
         }
-        this.execute();
       } else {
         if (typeof App.stopLTAnimation === "function") {
           try { App.stopLTAnimation(); } catch (_) {}
