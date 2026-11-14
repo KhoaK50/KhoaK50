@@ -420,20 +420,41 @@
       }
 
       @media (max-width: 768px) {
+        html, body {
+          max-width: 100%;
+          overflow-x: clip;
+        }
+
+        .archive-container {
+          padding: 28px 14px;
+          box-sizing: border-box;
+        }
+
+        .archive-header h1 {
+          font-size: 1.65rem;
+        }
+
+        .archive-meta {
+          font-size: 0.96rem;
+        }
+
         .bib-item {
           flex-direction: column;
           align-items: flex-start;
-          padding: 20px 15px;
+          padding: 16px 14px;
+          gap: 10px;
         }
 
         .bib-text {
           text-align: left;
+          font-size: 0.98rem;
+          overflow-wrap: anywhere;
         }
 
         .bib-action {
           width: 100%;
           text-align: right;
-          margin-top: 10px;
+          margin-top: 6px;
           opacity: 1;
         }
       }
@@ -448,16 +469,22 @@
         margin-top: 40px;
       }
     </style>
+    <link rel="stylesheet" href="css/radix_colors.css" />
     <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/global-search.css">
 </head>
 
   <body>
     <script>
-      if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.remove('light-theme');
-        document.body.classList.add('dark-theme', 'dark');
-      }
+      (function () {
+        try {
+          var theme = localStorage.getItem('vec_theme') || localStorage.getItem('theme');
+          if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.remove('light-theme');
+            document.body.classList.add('dark-theme', 'dark');
+          }
+        } catch (e) {}
+      })();
     </script>
     <div class="academic-bg"></div>
     <div class="ambient-glow-1"></div>
@@ -542,41 +569,6 @@
         </div>
   </div>
 </header>
-<script>
-  // Script to handle mobile nav when there's no sidebar
-  document.addEventListener("DOMContentLoaded", () => {
-    const toggleBtn = document.getElementById("mobileSidebarToggle");
-    const navLinks = document.querySelector(".vec-nav-links");
-    const oldHamburger = document.getElementById("hamburger");
-    
-    if (toggleBtn) {
-      toggleBtn.addEventListener("click", (e) => {
-        // If there's an old hamburger (like in calculation.html), trigger it
-        if (oldHamburger && oldHamburger.style.display !== "none" && typeof oldHamburger.click === "function") {
-          // It's handled by inline onclick in calculation.html usually
-          // But wait, the inline onclick is only in calculation.html.
-          // Let's not override if calculation.html uses it.
-        }
-        
-        // Toggle mobile menu for global links
-        if (navLinks) {
-          navLinks.classList.toggle("show-mobile");
-        }
-      });
-    }
-
-    // Handle dropdown clicks on mobile
-    const dropdownContainers = document.querySelectorAll(".vec-nav-links .vec-dropdown-container");
-    dropdownContainers.forEach(container => {
-      container.addEventListener("click", (e) => {
-        if (window.innerWidth <= 1024) {
-          e.stopPropagation();
-          container.classList.toggle("open");
-        }
-      });
-    });
-  });
-</script>
 <!-- ==================== END UNIFIED TOPBAR ==================== -->
 
 

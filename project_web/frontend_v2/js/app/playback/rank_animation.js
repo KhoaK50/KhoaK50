@@ -1,14 +1,23 @@
 // ==================================================================================
 // RANK & GAUSSIAN ELIMINATION 3-STEP PLAYBACK ENGINE (ACADEMIC MATHEMATICAL ESSENCE)
-// Trực quan hóa bản chất Hạng và Biến đổi sơ cấp dòng khử Gauss (2D Canvas & 3D Three.js)
-// Kịch bản 3 bước liên hoàn thuần hình học (Zero Canvas Prose):
-//   Bước 1: Hệ vector ban đầu & Phép trượt sơ cấp dòng R_i <- R_i - k*R_j bảo toàn Span
-//   Bước 2: Triệt tiêu Dòng phụ thuộc về gốc O(0,0) & Lộ diện Cấu trúc Bậc thang (Pivot REF)
-//   Bước 3: Kết tinh Không gian sinh & Khẳng định rank(A) = dim(span) = r
-// Tuân thủ triệt để Zero Em-dash (\u2014) và chuẩn mực Anti-Slop.
+// Truc quan hoa ban chat Hang va Bien doi so cap dong khu Gauss (2D Canvas & 3D Three.js)
+// Kich ban 3 buoc lien hoan thuan hinh hoc (Zero Canvas Prose):
+//   Buoc 1: He vector ban dau & Phep truot so cap dong R_i <- R_i - k*R_j (Khu cot tru 1)
+//   Buoc 2: Khu bac thang tiep theo & Triet tieu Dong phu thuoc ve goc O(0,0,0) (Pivot REF)
+//   Buoc 3: Ket tinh Khong gian sinh (1D / 2D / 3D) & Khang dinh rank(A) = dim(span) = r
+// Tuan thu triet de Zero Em-dash (\u2014) va chuan muc Anti-Slop.
 // ==================================================================================
 (function () {
   window.App = window.App || {};
+
+  const safeRAF =
+    typeof window.requestAnimationFrame === "function"
+      ? (cb) => window.requestAnimationFrame(cb)
+      : (cb) => setTimeout(() => cb(performance.now()), 16);
+  const safeCAF =
+    typeof window.cancelAnimationFrame === "function"
+      ? (id) => window.cancelAnimationFrame(id)
+      : (id) => clearTimeout(id);
 
   function smoothstep(t) {
     const x = Math.max(0, Math.min(1, t));
@@ -52,7 +61,7 @@
   function resolveRankItems(selectedItems) {
     const vList = Array.isArray(App.vectorList) ? App.vectorList : [];
 
-    // 1. Nếu truyền trực tiếp mảng đối tượng từ App.vectorList
+    // 1. Neu truyen truc tiep mang doi tuong tu App.vectorList
     if (
       Array.isArray(selectedItems) &&
       selectedItems.length > 0 &&
@@ -64,7 +73,7 @@
       return selectedItems;
     }
 
-    // 2. Ưu tiên đọc từ các checkbox được tick trong #rankChecklist (khớp chính xác v.id)
+    // 2. Uu tien doc tu cac checkbox duoc tick trong #rankChecklist (khop chinh xac v.id)
     const container = document.getElementById("rankChecklist");
     if (container) {
       const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked');
@@ -79,28 +88,30 @@
       }
     }
 
-    // 3. Nếu truyền mảng tọa độ (VD từ App.getCheckedVectors), đối chiếu số thực với App.vectorList
+    // 3. Neu truyen mang toa do (VD tu App.getCheckedVectors), doi chieu so thuc voi App.vectorList
     if (Array.isArray(selectedItems) && selectedItems.length > 0) {
       const usedIds = new Set();
-      const matched = selectedItems.map((el, idx) => {
-        const raw = Array.isArray(el) ? el : el && Array.isArray(el.vec) ? el.vec : null;
-        if (!raw) return null;
-        const numVec = raw.map((x) => Number(x) || 0);
-        const found = vList.find((v) => {
-          if (usedIds.has(v.id) || !Array.isArray(v.vec)) return false;
-          if (v.vec.length !== numVec.length) return false;
-          return v.vec.every((val, k) => Math.abs((Number(val) || 0) - numVec[k]) < 1e-4);
-        });
-        if (found) {
-          usedIds.add(found.id);
-          return found;
-        }
-        return { id: -(idx + 1), vec: numVec };
-      }).filter(Boolean);
+      const matched = selectedItems
+        .map((el, idx) => {
+          const raw = Array.isArray(el) ? el : el && Array.isArray(el.vec) ? el.vec : null;
+          if (!raw) return null;
+          const numVec = raw.map((x) => Number(x) || 0);
+          const found = vList.find((v) => {
+            if (usedIds.has(v.id) || !Array.isArray(v.vec)) return false;
+            if (v.vec.length !== numVec.length) return false;
+            return v.vec.every((val, k) => Math.abs((Number(val) || 0) - numVec[k]) < 1e-4);
+          });
+          if (found) {
+            usedIds.add(found.id);
+            return found;
+          }
+          return { id: -(idx + 1), vec: numVec };
+        })
+        .filter(Boolean);
       if (matched.length > 0) return matched;
     }
 
-    // 4. Fallback: lấy tối đa 3 vector đầu tiên trong App.vectorList và tự động tick
+    // 4. Fallback: lay toi da 3 vector dau tien trong App.vectorList va tu dong tick
     if (vList.length > 0) {
       const autoItems = vList.filter((v) => v.id > 0).slice(0, 3);
       if (container) {
@@ -115,7 +126,7 @@
     return [];
   }
 
-  // --- THUẬT TOÁN KHỬ GAUSS THEO DÒNG & GHI NHẬN QUỸ ĐẠO TRƯỢT HÌNH HỌC ---
+  // --- THUAT TOAN KHU GAUSS THEO DONG & GHI NHAN QUY DAO TRUOT HINH HOC TUNG BUOC ---
   function computeGaussianElimination(items) {
     const m = items.length;
     const vectors = items.map((it) => to3D(it.vec || it));
@@ -125,10 +136,11 @@
     const A = vectors.map((v) => v.slice(0, n));
     const initialRows = A.map((row) => row.slice());
 
-    // Theo dõi lịch sử từng dòng gốc ban đầu (rowIdx)
+    // Theo doi lich su tung dong goc ban dau (origIdx)
     const rowOrder = A.map((_, idx) => idx);
     const steps = [];
     const pivotPositions = [];
+    const elimHistoryByOrig = Array.from({ length: m }, () => []);
     let pr = 0;
     const eps = 1e-5;
 
@@ -175,8 +187,10 @@
             if (Math.abs(A[r][j]) < 1e-10) A[r][j] = 0;
           }
 
-          steps.push({
+          const stepObj = {
             type: "ELIMINATE",
+            passIdx: pr,
+            col: c,
             targetRow: r,
             origTargetIdx: rowOrder[r],
             pivotRow: pr,
@@ -186,7 +200,9 @@
             afterVec: to3D(A[r]),
             pivotVec: to3D(A[pr]),
             matrix: A.map((row) => row.slice())
-          });
+          };
+          steps.push(stepObj);
+          elimHistoryByOrig[rowOrder[r]].push(stepObj);
         }
       }
       pr++;
@@ -194,7 +210,7 @@
 
     const rank = pivotPositions.length;
 
-    // Ánh xạ kết quả cuối cùng về đúng thứ tự từng vector gốc ban đầu (0..m-1)
+    // Anh xa ket qua cuoi cung ve dung thu tu tung vector goc ban dau (0..m-1)
     const finalByOrig = new Array(m).fill(null);
     for (let r = 0; r < m; r++) {
       finalByOrig[rowOrder[r]] = to3D(A[r]);
@@ -209,19 +225,28 @@
       else nonZeroRowIndices.push(i);
     }
 
-    // Điểm dừng trung gian cuối Bước 1:
-    // - Các dòng trụ bậc thang (non-zero) trượt 100% về vị trí bậc thang (toạ độ đầu về 0).
-    // - Các dòng phụ thuộc (sẽ về 0) trượt 62% quãng đường trên quỹ đạo song song với dòng trụ ở Bước 1,
-    //   sau đó ở Bước 2 mới co tụt nốt 38% cuối cùng vào tâm hấp thụ tại gốc O(0,0)!
+    // Xac dinh quy dao 2 chang (Buoc 1 -> step1EndByOrig, Buoc 2 -> finalByOrig):
+    // - Neu vector i trai qua >= 2 phep khu (VD khu x ve 0 o Pass 1, roi khu y ve 0 o Pass 2):
+    //   Buoc 1 truot dung den ket qua sau Pass 1 (afterVec cua phep khu dau tien: x = 0),
+    //   Buoc 2 truot tiep theo phuong tru thu hai ve vi tri cuoi cung (hoac ve O(0,0,0) neu phu thuoc).
+    // - Neu vector i chi co 1 phep khu va la dong tru doc lap (non-zero):
+    //   Buoc 1 truot 100% ve vi tri bac thang, Buoc 2 khoa co dinh tren truc bac thang.
+    // - Neu vector i chi co 1 phep khu nhung bi triet tieu ve 0 (cung phuong voi tru 1):
+    //   Buoc 1 truot 65% quang duong doc theo tru 1, Buoc 2 co tut not 35% cuoi cung vao tam hap thu O(0,0,0).
     const step1EndByOrig = new Array(m).fill(null);
     for (let i = 0; i < m; i++) {
       const v0 = vectors[i];
       const vf = finalByOrig[i];
-      if (zeroRowIndices.includes(i)) {
+      const hist = elimHistoryByOrig[i];
+      const isZero = zeroRowIndices.includes(i);
+
+      if (hist.length >= 2) {
+        step1EndByOrig[i] = [...hist[0].afterVec];
+      } else if (isZero) {
         step1EndByOrig[i] = [
-          v0[0] + 0.62 * (vf[0] - v0[0]),
-          v0[1] + 0.62 * (vf[1] - v0[1]),
-          v0[2] + 0.62 * (vf[2] - v0[2])
+          v0[0] + 0.65 * (vf[0] - v0[0]),
+          v0[1] + 0.65 * (vf[1] - v0[1]),
+          v0[2] + 0.65 * (vf[2] - v0[2])
         ];
       } else {
         step1EndByOrig[i] = [...vf];
@@ -237,6 +262,7 @@
       initialRows,
       finalRows: finalByOrig,
       step1EndRows: step1EndByOrig,
+      elimHistoryByOrig,
       steps,
       pivotPositions,
       rank,
@@ -245,27 +271,27 @@
     };
   }
 
-  // --- THÔNG TIN THUYẾT MINH 3 BƯỚC SƯ PHẠM ---
+  // --- THONG TIN THUYET MINH 3 BUOC SU PHAM ---
   const PHASES_INFO = [
     {
       index: 0,
-      title: "Bước 1: Hệ vector Ban đầu & Phép trượt Sơ cấp dòng Bảo toàn Span",
-      desc: "Mỗi phép khử Gauss Rᵢ ← Rᵢ - k·Rⱼ trượt ngọn vector vᵢ song song theo phương vector trụ vⱼ nhưng luôn nằm trọn trong không gian sinh ban đầu."
+      title: "Bước 1: Hệ vector Ban đầu & Phép trượt Khử Gauss (Rᵢ ← Rᵢ - k·Rⱼ)",
+      desc: "Mỗi phép biến đổi sơ cấp dòng trượt ngọn vector vᵢ song song theo phương vector trụ vⱼ để khử tọa độ đầu về 0 mà không làm đổi hạng."
     },
     {
       index: 1,
-      title: "Bước 2: Triệt tiêu Dòng Phụ thuộc về Gốc O & Lộ diện Bậc thang Pivot",
+      title: "Bước 2: Triệt tiêu Dòng Phụ thuộc về Gốc O & Lộ diện Bậc thang",
       desc: "Các dòng phụ thuộc co tụt hoàn toàn về gốc O(0,0) thành dòng 0 ở đáy ma trận REF. Các dòng độc lập khóa vào cấu trúc bậc thang tọa độ."
     },
     {
       index: 2,
-      title: "Bước 3: Kết tinh Không gian sinh & Khẳng định rank(A) = dim(span) = r",
-      desc: "Từ r vector bậc thang khác 0 còn trụ lại, không gian con thực sự được kết tinh trọn vẹn, chứng minh số dòng khác 0 của REF chính là số chiều hình học."
+      title: "Bước 3: Giữ lại các Vector Bậc thang Khác 0 & Kết luận rank(A) = r",
+      desc: "Loại bỏ các dòng đã sập về 0, hệ chỉ giữ lại đúng r vector bậc thang khác 0 (rᵢ ≠ 0) khóa trên khung tọa độ, suy ra hạng của hệ là rank(A) = r."
     }
   ];
 
   // =========================================================================
-  // BỘ ĐIỀU KHIỂN HOẠT CẢNH HẠNG & KHỬ GAUSS (App.RankAnimator)
+  // BO DIEU KHIEN HOAT CANH HANG & KHU GAUSS (App.RankAnimator)
   // =========================================================================
   const RankAnimator = {
     _active: false,
@@ -295,7 +321,7 @@
     _frame3DCameraIfNeeded() {
       if (!window.Vec3D || !Vec3D._camera || !Vec3D._controls || App.mode !== "3D" || !this._gaussData) return;
       if (Vec3D._resetAnimId) {
-        cancelAnimationFrame(Vec3D._resetAnimId);
+        safeCAF(Vec3D._resetAnimId);
         Vec3D._resetAnimId = null;
       }
       if (!this._savedCamPos3D) {
@@ -305,8 +331,10 @@
       for (const v of this._gaussData.initialVectors) {
         maxReach = Math.max(maxReach, norm(v));
       }
-      const dist = Math.max(10.5, Math.min(24.0, maxReach * 2.55));
-      Vec3D._camera.position.set(dist * 1.32, dist * 0.58, dist * 0.76);
+      const u = (Vec3D.S3D && Vec3D.S3D.unitsPerWorld) || 1;
+      const maxReachWorld = maxReach * u;
+      const dist = Math.max(10.5, Math.min(30.0, maxReachWorld * 2.25));
+      Vec3D._camera.position.set(dist * 1.18, dist * 0.72, dist * 0.85);
       Vec3D._camera.up.set(0, 0, 1);
       Vec3D._controls.target.set(0, 0, 0);
       Vec3D._camera.lookAt(0, 0, 0);
@@ -317,6 +345,14 @@
     },
 
     start(selectedItems) {
+      if (typeof App.stopAllAnimations === "function") {
+        try {
+          App.stopAllAnimations();
+        } catch (_) {}
+      } else {
+        this.stop();
+      }
+
       const items = resolveRankItems(selectedItems);
       if (!items || !items.length) {
         if (typeof App.showToast === "function") {
@@ -324,8 +360,6 @@
         }
         return false;
       }
-
-      this.stop();
 
       const gaussData = computeGaussianElimination(items);
       this._gaussData = gaussData;
@@ -344,7 +378,7 @@
         _isDashed: Boolean(v._isDashed)
       }));
 
-      // Ẩn các vector không được chọn
+      // An cac vector khong duoc chon
       const selectedIds = new Set(items.map((it) => it.id));
       (App.vectorList || []).forEach((v) => {
         v.showProjection = false;
@@ -368,11 +402,19 @@
       const wrap = document.getElementById("rankAnimControls");
       if (wrap) wrap.style.display = "block";
 
+      if (window.Vec2D && window.Vec2D.S2D) {
+        window.Vec2D.S2D.draggedVectorId = null;
+      }
+      if (window.Vec3D && window.Vec3D.S3D) {
+        window.Vec3D.S3D.draggedVectorId = null;
+      }
+
       this._active = true;
       this._paused = false;
       this._currentPhase = 0;
       this._phaseProgress = 0;
       App._rankAnimActive = true;
+      App.isAnimating = true;
 
       this.applyPhaseStyles(0, 0);
       this.updateSidebarUI();
@@ -386,7 +428,7 @@
         this._phaseTimer = null;
       }
       if (this._raf) {
-        cancelAnimationFrame(this._raf);
+        safeCAF(this._raf);
         this._raf = null;
       }
 
@@ -396,6 +438,14 @@
       this._currentPhase = 0;
       this._phaseProgress = 0;
       App._rankAnimActive = false;
+      App.isAnimating = false;
+
+      if (window.Vec2D && window.Vec2D.S2D) {
+        window.Vec2D.S2D.draggedVectorId = null;
+      }
+      if (window.Vec3D && window.Vec3D.S3D) {
+        window.Vec3D.S3D.draggedVectorId = null;
+      }
 
       if (this._threeGroup) {
         if (this._threeGroup.parent) {
@@ -435,6 +485,13 @@
             delete it._rankIsZero;
           }
         }
+      } else if (Array.isArray(App.vectorList)) {
+        for (const it of App.vectorList) {
+          delete it._rankAlpha;
+          delete it._rankColorCss;
+          delete it._rankIsPivot;
+          delete it._rankIsZero;
+        }
       }
       this._snapshot = null;
       this._gaussData = null;
@@ -454,7 +511,7 @@
         this._phaseTimer = null;
       }
       if (this._raf) {
-        cancelAnimationFrame(this._raf);
+        safeCAF(this._raf);
         this._raf = null;
       }
       this.updateSidebarUI();
@@ -521,7 +578,7 @@
         this._phaseTimer = null;
       }
       if (this._raf) {
-        cancelAnimationFrame(this._raf);
+        safeCAF(this._raf);
         this._raf = null;
       }
 
@@ -544,7 +601,7 @@
         return;
       }
 
-      const baseDurations = [2600, 2600, 2200];
+      const baseDurations = [2800, 2800, 2400];
       let lastTime = performance.now();
       let currentProgress = this._phaseProgress;
 
@@ -554,7 +611,7 @@
         const delta = Math.max(0, now - lastTime);
         lastTime = now;
 
-        const baseDuration = baseDurations[this._currentPhase] || 2500;
+        const baseDuration = baseDurations[this._currentPhase] || 2800;
         currentProgress += (delta * this._speed) / baseDuration;
         const p = Math.min(1.0, currentProgress);
         this._phaseProgress = p;
@@ -563,7 +620,7 @@
         this.redraw();
 
         if (p < 1.0) {
-          this._raf = requestAnimationFrame(stepLoop);
+          this._raf = safeRAF(stepLoop);
         } else {
           this._phaseProgress = 1.0;
           this.applyPhaseStyles(this._currentPhase, 1.0);
@@ -574,7 +631,7 @@
               if (this._active && !this._paused) {
                 this.goToPhase(this._currentPhase + 1);
               }
-            }, 380 / this._speed);
+            }, 420 / this._speed);
           } else {
             this._paused = true;
             this.updateSidebarUI();
@@ -582,7 +639,7 @@
         }
       };
 
-      this._raf = requestAnimationFrame(stepLoop);
+      this._raf = safeRAF(stepLoop);
     },
 
     applyPhaseStyles(phase, progress) {
@@ -606,7 +663,7 @@
         vItem._isDashed = false;
 
         if (phase === 0) {
-          // Bước 1: Trượt song song theo phương vector trụ từ vInit -> vStep1End
+          // Buoc 1: Truot song song theo phuong vector tru tu vInit -> vStep1End
           const curVec = [
             vInit[0] + p * (vStep1End[0] - vInit[0]),
             vInit[1] + p * (vStep1End[1] - vInit[1]),
@@ -614,31 +671,31 @@
           ];
           vItem.vec = toDim(curVec);
           vItem._rankAlpha = 1.0;
-          vItem._rankColorCss = i === 0 ? "#0284c7" : isZero ? "#f59e0b" : "#10b981";
+          vItem._rankColorCss = isZero ? "#f59e0b" : "#10b981";
           vItem._customLabelLatex = `v_${i + 1}`;
         } else if (phase === 1) {
-          // Bước 2: Dòng phụ thuộc co tụt từ vStep1End về đúng gốc O(0,0); dòng trụ giữ vững vị trí bậc thang REF
+          // Buoc 2: Truot tiep tu vStep1End -> vFinal (dong phu thuoc co tut ve O(0,0,0); dong tru khoa vao bac thang REF)
+          const curVec = [
+            vStep1End[0] + p * (vFinal[0] - vStep1End[0]),
+            vStep1End[1] + p * (vFinal[1] - vStep1End[1]),
+            vStep1End[2] + p * (vFinal[2] - vStep1End[2])
+          ];
+          vItem.vec = toDim(curVec);
+
           if (isZero) {
-            const shrink = 1.0 - p;
-            vItem.vec = toDim([
-              vStep1End[0] * shrink,
-              vStep1End[1] * shrink,
-              vStep1End[2] * shrink
-            ]);
             vItem._rankAlpha = Math.max(0.05, 1.0 - p * 0.88);
             vItem._rankColorCss = "#ef4444";
             vItem._rankIsZero = true;
             vItem._customLabelLatex = p > 0.75 ? "0" : `v_${i + 1}`;
             if (p > 0.94) vItem.visible = false;
           } else {
-            vItem.vec = toDim(vFinal);
             vItem._rankAlpha = 1.0;
-            vItem._rankColorCss = i === 0 ? "#0284c7" : "#10b981";
+            vItem._rankColorCss = "#10b981";
             vItem._rankIsPivot = true;
             vItem._customLabelLatex = `r_${i + 1}`;
           }
         } else if (phase === 2) {
-          // Bước 3: Chỉ còn r vector bậc thang khác 0 kết tinh không gian sinh
+          // Buoc 3: Chi con r vector bac thang khac 0 ket tinh va lan toa khong gian sinh
           if (isZero) {
             vItem.vec = toDim([0, 0, 0]);
             vItem.visible = false;
@@ -647,7 +704,7 @@
             vItem.vec = toDim(vFinal);
             vItem.visible = true;
             vItem._rankAlpha = 1.0;
-            vItem._rankColorCss = i === 0 ? "#0284c7" : "#10b981";
+            vItem._rankColorCss = "#10b981";
             vItem._customLabelLatex = `r_${i + 1}`;
           }
         }
@@ -656,9 +713,9 @@
 
     redraw() {
       if (App.mode === "2D" && window.Vec2D) {
-        Vec2D.draw2DAllVectors();
+        if (typeof Vec2D.draw2DAllVectors === "function") Vec2D.draw2DAllVectors();
       } else if (window.Vec3D) {
-        Vec3D.hardRefresh3D(false);
+        if (typeof Vec3D.hardRefresh3D === "function") Vec3D.hardRefresh3D(false);
       }
     },
 
@@ -666,7 +723,7 @@
       let wrap = document.getElementById("rankAnimControls");
       if (wrap) return wrap;
 
-      const host = document.getElementById("form-rank");
+      const host = document.getElementById("form-rank") || document.getElementById("result_rank");
       const out = document.getElementById("result_rank");
       if (!host) return null;
 
@@ -688,9 +745,9 @@
         </div>
 
         <div class="coord-phase-pills" id="rankPhasePills">
-          <button type="button" class="coord-phase-btn active" data-phase="0" title="Bước 1: Trượt khử Gauss bảo toàn Span">Bước 1</button>
+          <button type="button" class="coord-phase-btn active" data-phase="0" title="Bước 1: Trượt khử Gauss bảo toàn Hạng">Bước 1</button>
           <button type="button" class="coord-phase-btn" data-phase="1" title="Bước 2: Triệt tiêu dòng 0 & Bậc thang Pivot">Bước 2</button>
-          <button type="button" class="coord-phase-btn" data-phase="2" title="Bước 3: Kết tinh không gian rank(A) = r">Bước 3</button>
+          <button type="button" class="coord-phase-btn" data-phase="2" title="Bước 3: Giữ lại r vector khác 0 & Kết luận rank(A) = r">Bước 3</button>
         </div>
 
         <div class="basis-anim-btn-row">
@@ -729,6 +786,16 @@
       }
 
       this.bindControlsEvents(wrap);
+
+      const initSlider = wrap.querySelector("#rankSpeedSlider");
+      if (initSlider) {
+        const min = parseFloat(initSlider.min) || 0.2;
+        const max = parseFloat(initSlider.max) || 2.5;
+        const pct = Math.max(0, Math.min(100, ((this._speed - min) / (max - min)) * 100));
+        initSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+        initSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+      }
+
       return wrap;
     },
 
@@ -750,7 +817,19 @@
 
       const speedSlider = wrap.querySelector("#rankSpeedSlider");
       if (speedSlider) {
-        speedSlider.oninput = (e) => this.setSpeed(e.target.value);
+        const updateSliderStyle = (val) => {
+          const min = parseFloat(speedSlider.min) || 0.2;
+          const max = parseFloat(speedSlider.max) || 2.5;
+          const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+          speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+          speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+        };
+        updateSliderStyle(parseFloat(speedSlider.value) || this._speed);
+        speedSlider.oninput = (e) => {
+          const val = parseFloat(e.target.value) || 1.0;
+          updateSliderStyle(val);
+          this.setSpeed(val);
+        };
       }
 
       const pills = wrap.querySelectorAll("#rankPhasePills .coord-phase-btn");
@@ -794,6 +873,18 @@
       const speedVal = wrap.querySelector("#rankSpeedValue");
       if (speedVal) speedVal.textContent = `${this._speed.toFixed(1)}×`;
 
+      const speedSlider = wrap.querySelector("#rankSpeedSlider");
+      if (speedSlider) {
+        if (Math.abs(parseFloat(speedSlider.value) - this._speed) > 0.05) {
+          speedSlider.value = String(this._speed);
+        }
+        const min = parseFloat(speedSlider.min) || 0.2;
+        const max = parseFloat(speedSlider.max) || 2.5;
+        const pct = Math.max(0, Math.min(100, ((this._speed - min) / (max - min)) * 100));
+        speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+        speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+      }
+
       const titleEl = wrap.querySelector("#rankStepTitle");
       const descEl = wrap.querySelector("#rankStepDesc");
       const gd = this._gaussData;
@@ -808,19 +899,30 @@
         }
 
         if (this._currentPhase === 0) {
-          const elimList = gd.steps
-            .filter((st) => st.type === "ELIMINATE")
+          const swapList = gd.steps
+            .filter((st) => st.type === "SWAP")
+            .map((st) => `R<sub>${st.row1 + 1}</sub> ↔ R<sub>${st.row2 + 1}</sub>`)
+            .join(", ");
+          const elimPass0 = gd.steps.filter((st) => st.type === "ELIMINATE" && st.passIdx === 0);
+          const elimSource = elimPass0.length > 0 ? elimPass0 : gd.steps.filter((st) => st.type === "ELIMINATE");
+          const elimList = elimSource
             .map((st) => `R<sub>${st.targetRow + 1}</sub> ← R<sub>${st.targetRow + 1}</sub> - (${formatScalar(st.factor)})R<sub>${st.pivotRow + 1}</sub>`)
             .join(", ");
-          descEl.innerHTML = `Phép khử Gauss (${elimList || "giữ nguyên dòng trụ"}): ngọn vector <b>trượt trên đường ray nét đứt song song với vector trụ</b>.<br>Vì chỉ cộng bội của vector nằm trong hệ, <b>không gian sinh (span) được bảo toàn tuyệt đối</b>.`;
+          const opsSummary = [swapList ? `hoán vị ${swapList}` : "", elimList].filter(Boolean).join("; ") || "giữ nguyên dòng trụ";
+          descEl.innerHTML = `Phép khử Gauss (${opsSummary}): ngọn vector <b>trượt trên đường ray nét đứt song song với dòng trụ</b> để khử tọa độ đầu về 0.<br>Các phép biến đổi sơ cấp dòng luôn <b>bảo toàn hạng</b> của hệ vector.`;
         } else if (this._currentPhase === 1) {
           if (gd.zeroRowIndices.length > 0) {
-            descEl.innerHTML = `<b>${gd.zeroRowIndices.length} dòng phụ thuộc</b> bị triệt tiêu hoàn toàn vào tâm ngắm đỏ tại <b>gốc O(0,0)</b> (ứng với hàng toàn số 0 ở đáy ma trận REF).<br>Chỉ còn lại <b>r = ${gd.rank} vector bậc thang (r<sub>i</sub>)</b> có tọa độ đầu bị khử về 0.`;
+            descEl.innerHTML = `<b>${gd.zeroRowIndices.length} dòng phụ thuộc</b> bị triệt tiêu hoàn toàn vào tâm ngắm đỏ tại <b>gốc O(0,0)</b> (ứng với hàng toàn số 0 ở đáy ma trận REF).<br>Chỉ còn lại <b>r = ${gd.rank} vector bậc thang (r<sub>i</sub>)</b> khóa trên khung tọa độ.`;
           } else {
-            descEl.innerHTML = `Không có dòng nào bị triệt tiêu về 0.<br>Các dòng dưới trượt về đúng vị trí <b>bậc thang tọa độ (x = 0 trên trục Oy)</b>, lộ diện <b>r = ${gd.rank} dòng Pivot độc lập</b>.`;
+            descEl.innerHTML = `Không có dòng nào bị triệt tiêu về 0.<br>Các dòng dưới trượt về đúng vị trí <b>bậc thang tọa độ (tọa độ đầu bằng 0)</b>, lộ diện <b>r = ${gd.rank} dòng Pivot độc lập</b>.`;
           }
         } else if (this._currentPhase === 2) {
-          descEl.innerHTML = `Từ <b>r = ${gd.rank} vector bậc thang khác 0</b> còn trụ lại (cùng bóng mờ của hệ vector ban đầu), không gian con <b>${gd.rank}D</b> được kết tinh.<br>Khẳng định: <b>Số dòng khác 0 của REF = dim(span) = rank(A) = ${gd.rank}</b>.`;
+          if (gd.rank === 0) {
+            descEl.innerHTML = `Toàn bộ các vector trong hệ đều sập về <b>gốc O(0,0)</b> sau khi khử Gauss.<br>Không còn vector khác 0 nào được giữ lại, suy ra <b>rank(A) = 0</b>.`;
+          } else {
+            const keptLabels = gd.nonZeroRowIndices.map((idx) => `<b>r<sub>${idx + 1}</sub></b>`).join(", ");
+            descEl.innerHTML = `Loại bỏ ${gd.zeroRowIndices.length} dòng đã sập về 0, hệ giữ lại đúng <b>r = ${gd.rank} vector bậc thang khác 0</b> (${keptLabels}) khóa trên bậc thang tọa độ.<br>Kết luận: <b>Số vector khác 0 được giữ lại = rank(A) = ${gd.rank}</b>.`;
+          }
         }
       }
     },
@@ -832,7 +934,6 @@
       if (!this._active || !gridInfo || App.mode !== "2D" || !this._gaussData) return;
       const { cx, cy, px } = gridInfo;
       const gd = this._gaussData;
-      const p = smoothstep(this._phaseProgress);
       const isDark = document.body.classList.contains("dark");
 
       const toScreen = (vx, vy) => ({
@@ -840,63 +941,34 @@
         y: cy - vy * px
       });
 
-      // Vẽ bóng mờ nét đứt của các vector ban đầu v_i^(0) để đối chiếu bảo toàn Span
       ctx.save();
-      ctx.strokeStyle = isDark ? "rgba(148, 163, 184, 0.35)" : "rgba(100, 116, 139, 0.32)";
-      ctx.lineWidth = 1.4;
-      ctx.setLineDash([4, 4]);
+
+      // Ve bong doi chieu net dut cua cac vector ban dau v_i^(0) de doi chieu
+      ctx.strokeStyle = isDark ? "rgba(148, 163, 184, 0.42)" : "rgba(100, 116, 139, 0.38)";
+      ctx.fillStyle = isDark ? "rgba(148, 163, 184, 0.42)" : "rgba(100, 116, 139, 0.38)";
+      ctx.lineWidth = 1.5;
       const pO = toScreen(0, 0);
       for (let i = 0; i < gd.initialVectors.length; i++) {
         const v0 = gd.initialVectors[i];
         const pV0 = toScreen(v0[0], v0[1]);
-        ctx.beginPath();
-        ctx.moveTo(pO.x, pO.y);
-        ctx.lineTo(pV0.x, pV0.y);
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      // Vẽ không gian sinh (Span) được bảo toàn xuyên suốt cả 3 bước
-      ctx.save();
-      if (gd.rank === 1 && gd.nonZeroRowIndices.length > 0) {
-        const pv = gd.initialVectors[gd.nonZeroRowIndices[0]];
-        const len = Math.hypot(pv[0], pv[1]);
-        if (len > 1e-9) {
-          const dirX = pv[0] / len;
-          const dirY = pv[1] / len;
-          const p1 = toScreen(-dirX * 30, -dirY * 30);
-          const p2 = toScreen(dirX * 30, dirY * 30);
-          ctx.strokeStyle = this._currentPhase === 2 ? "rgba(16, 185, 129, 0.65)" : "rgba(2, 132, 199, 0.35)";
-          ctx.lineWidth = this._currentPhase === 2 ? 2.4 : 1.6;
-          ctx.setLineDash([7, 5]);
+        const dx = pV0.x - pO.x;
+        const dy = pV0.y - pO.y;
+        const lenPx = Math.hypot(dx, dy);
+        if (lenPx > 4) {
+          ctx.setLineDash([4, 4]);
           ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
+          ctx.moveTo(pO.x, pO.y);
+          ctx.lineTo(pV0.x, pV0.y);
           ctx.stroke();
-        }
-      } else if (gd.rank >= 2 && this._currentPhase === 2) {
-        ctx.fillStyle = isDark ? "rgba(16, 185, 129, 0.07)" : "rgba(16, 185, 129, 0.05)";
-        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+          ctx.setLineDash([]);
 
-        const r1 = gd.finalRows[gd.nonZeroRowIndices[0]];
-        const r2 = gd.finalRows[gd.nonZeroRowIndices[1]];
-        if (r1 && r2) {
-          ctx.strokeStyle = isDark ? "rgba(16, 185, 129, 0.16)" : "rgba(16, 185, 129, 0.14)";
-          ctx.lineWidth = 1.0;
-          for (let k = -4; k <= 4; k++) {
-            const a1 = toScreen(k * r1[0] - 4 * r2[0], k * r1[1] - 4 * r2[1]);
-            const a2 = toScreen(k * r1[0] + 4 * r2[0], k * r1[1] + 4 * r2[1]);
-            const b1 = toScreen(-4 * r1[0] + k * r2[0], -4 * r1[1] + k * r2[1]);
-            const b2 = toScreen(4 * r1[0] + k * r2[0], 4 * r1[1] + k * r2[1]);
-            ctx.beginPath();
-            ctx.moveTo(a1.x, a1.y);
-            ctx.lineTo(a2.x, a2.y);
-            ctx.moveTo(b1.x, b1.y);
-            ctx.lineTo(b2.x, b2.y);
-            ctx.stroke();
-          }
+          // Cham tron nho tai ngon vector goc ban dau
+          ctx.beginPath();
+          ctx.arc(pV0.x, pV0.y, 3.2, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
+
       ctx.restore();
     },
 
@@ -940,14 +1012,17 @@
       };
 
       if (this._currentPhase === 0) {
-        // Bước 1: Đường ray trượt song song theo phương vector trụ từ vInit -> vFinal
+        // Buoc 1: Duong ray truot song song theo phuong vector tru tu vInit -> vStep1End
         for (let i = 0; i < gd.m; i++) {
           const v0 = gd.initialVectors[i];
-          const vf = gd.finalRows[i];
           const vEnd1 = gd.step1EndRows[i];
-          if (Math.hypot(vf[0] - v0[0], vf[1] - v0[1]) > 1e-4) {
+          const vf = gd.finalRows[i];
+          if (Math.hypot(vEnd1[0] - v0[0], vEnd1[1] - v0[1]) > 1e-4) {
             const scStart = toScreen(v0[0], v0[1]);
-            const scFullEnd = toScreen(vf[0], vf[1]);
+            const scTarget = toScreen(
+              gd.elimHistoryByOrig[i].length >= 2 ? vEnd1[0] : vf[0],
+              gd.elimHistoryByOrig[i].length >= 2 ? vEnd1[1] : vf[1]
+            );
             const scCur = toScreen(
               v0[0] + p * (vEnd1[0] - v0[0]),
               v0[1] + p * (vEnd1[1] - v0[1])
@@ -955,7 +1030,7 @@
             const isZero = gd.zeroRowIndices.includes(i);
             const trackCol = isZero ? "#f59e0b" : "#10b981";
 
-            drawTrackArrow2D(scStart, scFullEnd, trackCol);
+            drawTrackArrow2D(scStart, scTarget, trackCol);
 
             ctx.save();
             ctx.fillStyle = trackCol;
@@ -965,32 +1040,47 @@
             ctx.restore();
           }
         }
-      } else if (this._currentPhase === 1) {
+      } else if (this._currentPhase === 1 || this._currentPhase === 2) {
         const pO = toScreen(0, 0);
 
-        // Tâm ngắm hấp thụ dòng phụ thuộc tại gốc O(0,0)
-        if (gd.zeroRowIndices.length > 0) {
-          ctx.save();
-          ctx.strokeStyle = "#ef4444";
-          ctx.lineWidth = 1.8;
-          ctx.beginPath();
-          ctx.arc(pO.x, pO.y, 6 + 6 * Math.sin(p * Math.PI), 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.arc(pO.x, pO.y, 13, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.restore();
+        if (this._currentPhase === 1) {
+          // Duong ray truot chang 2 (neu co) tu vStep1End -> vFinal
+          for (let i = 0; i < gd.m; i++) {
+            const v1 = gd.step1EndRows[i];
+            const vf = gd.finalRows[i];
+            if (Math.hypot(vf[0] - v1[0], vf[1] - v1[1]) > 1e-4) {
+              const scStart = toScreen(v1[0], v1[1]);
+              const scEnd = toScreen(vf[0], vf[1]);
+              const isZero = gd.zeroRowIndices.includes(i);
+              drawTrackArrow2D(scStart, scEnd, isZero ? "#ef4444" : "#10b981");
+            }
+          }
+
+          // Tam ngam hap thu dong phu thuoc tai goc O(0,0)
+          if (gd.zeroRowIndices.length > 0) {
+            ctx.save();
+            ctx.strokeStyle = "#ef4444";
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            ctx.arc(pO.x, pO.y, 6 + 6 * Math.sin(p * Math.PI), 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(pO.x, pO.y, 13, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          }
         }
 
-        // Đường bậc thang tọa độ cho các dòng Pivot khác 0
+        // Duong gióng bac thang toa do va vong khoa cho r vector khac 0 duoc giu lai
+        const guideAlpha = this._currentPhase === 2 ? 0.78 : 0.55;
         for (const rIdx of gd.nonZeroRowIndices) {
           const rf = gd.finalRows[rIdx];
+          const scTip = toScreen(rf[0], rf[1]);
           if (Math.abs(rf[0]) > 1e-4 && Math.abs(rf[1]) > 1e-4) {
             const scX = toScreen(rf[0], 0);
-            const scTip = toScreen(rf[0], rf[1]);
             ctx.save();
-            ctx.strokeStyle = "rgba(2, 132, 199, 0.55)";
-            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = `rgba(16, 185, 129, ${guideAlpha})`;
+            ctx.lineWidth = 1.6;
             ctx.setLineDash([4, 3]);
             ctx.beginPath();
             ctx.moveTo(pO.x, pO.y);
@@ -998,12 +1088,11 @@
             ctx.lineTo(scTip.x, scTip.y);
             ctx.stroke();
             ctx.restore();
-          } else if (Math.abs(rf[0]) < 1e-4 && Math.abs(rf[1]) > 1e-4) {
-            // Vector bậc thang thứ 2 đã nằm hẳn trên trục Oy (x = 0): vẽ tâm khóa trên trục Oy
-            const scTip = toScreen(0, rf[1]);
+          }
+          if (this._currentPhase === 2 || (Math.abs(rf[0]) < 1e-4 && Math.abs(rf[1]) > 1e-4)) {
             ctx.save();
             ctx.strokeStyle = "#10b981";
-            ctx.lineWidth = 1.6;
+            ctx.lineWidth = 1.8;
             ctx.beginPath();
             ctx.arc(scTip.x, scTip.y, 6, 0, Math.PI * 2);
             ctx.stroke();
@@ -1017,8 +1106,7 @@
     // 3D THREE.JS RENDERING HOOK (viewer3D.js)
     // =========================================================================
     render3D(mathGroup) {
-      if (!this._active || !mathGroup || App.mode !== "3D" || !this._gaussData) return;
-      if (!window.THREE) return;
+      if (!this._active || !mathGroup || App.mode !== "3D" || !this._gaussData || typeof THREE === "undefined") return;
 
       if (!this._threeGroup) {
         this._threeGroup = new THREE.Group();
@@ -1028,103 +1116,175 @@
       while (this._threeGroup.children.length > 0) {
         const obj = this._threeGroup.children[0];
         this._threeGroup.remove(obj);
-        if (obj.geometry) obj.geometry.dispose?.();
-        if (Array.isArray(obj.material)) obj.material.forEach((m) => m?.dispose?.());
-        else obj.material?.dispose?.();
+        if (typeof obj.traverse === "function") {
+          obj.traverse((child) => {
+            if (child.geometry) child.geometry.dispose?.();
+            if (Array.isArray(child.material)) child.material.forEach((m) => m?.dispose?.());
+            else if (child.material) child.material.dispose?.();
+          });
+        } else {
+          if (obj.geometry) obj.geometry.dispose?.();
+          if (Array.isArray(obj.material)) obj.material.forEach((m) => m?.dispose?.());
+          else if (obj.material) obj.material.dispose?.();
+        }
       }
 
       const gd = this._gaussData;
       const p = smoothstep(this._phaseProgress);
+      const u = (window.Vec3D && Vec3D.S3D && Vec3D.S3D.unitsPerWorld) || 1;
 
-      // Bóng mờ nét đứt của các vector ban đầu trong 3D
+      const cam = window.Vec3D && Vec3D._camera;
+      const camDist = cam ? cam.position.length() : 25;
+      const vFOV = ((cam ? cam.fov : 24) * Math.PI) / 180;
+      const screenH = Math.max(1, (window.Vec3D && Vec3D._renderer?.domElement?.clientHeight) || 760);
+      const worldPerPx = (2 * Math.tan(vFOV / 2) * camDist) / screenH;
+
+      const makeDashedLine = (p1, p2, color, opacity = 0.85, dashSize = 0.45 * u, gapSize = 0.22 * u) => {
+        const geom = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+        const mat = new THREE.LineDashedMaterial({
+          color,
+          dashSize,
+          gapSize,
+          transparent: opacity < 1.0,
+          opacity,
+          depthWrite: false
+        });
+        const l = new THREE.Line(geom, mat);
+        l.computeLineDistances();
+        l.renderOrder = 2;
+        return l;
+      };
+
+      const makeMarker = (pos, radius, color, haloRadius = 0, haloOpacity = 0.35) => {
+        const effRadius = Math.min(radius, 4.0 * worldPerPx);
+        const effHalo = haloRadius > 0 ? Math.min(haloRadius, 7.0 * worldPerPx) : 0;
+        const grp = new THREE.Group();
+        const sphereGeo = new THREE.SphereGeometry(effRadius, 16, 12);
+        const sphereMat = new THREE.MeshBasicMaterial({ color, depthWrite: false });
+        const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+        sphere.position.copy(pos);
+        sphere.renderOrder = 5;
+        grp.add(sphere);
+
+        if (effHalo > 0) {
+          const haloGeo = new THREE.SphereGeometry(effHalo, 16, 12);
+          const haloMat = new THREE.MeshBasicMaterial({
+            color,
+            transparent: true,
+            opacity: haloOpacity,
+            depthWrite: false
+          });
+          const halo = new THREE.Mesh(haloGeo, haloMat);
+          halo.position.copy(pos);
+          halo.renderOrder = 4;
+          grp.add(halo);
+        }
+        return grp;
+      };
+
+      const vO = new THREE.Vector3(0, 0, 0);
+
+      // 1. Bong doi chieu net dut cua cac vector ban dau v_i^(0) trong 3D
       for (let i = 0; i < gd.initialVectors.length; i++) {
         const v0 = gd.initialVectors[i];
-        const pts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(v0[0], v0[1], v0[2])];
-        const geom = new THREE.BufferGeometry().setFromPoints(pts);
-        const mat = new THREE.LineDashedMaterial({
-          color: 0x94a3b8,
-          dashSize: 0.25,
-          gapSize: 0.15,
-          transparent: true,
-          opacity: 0.45
-        });
-        const line = new THREE.Line(geom, mat);
-        line.computeLineDistances();
-        this._threeGroup.add(line);
+        if (norm(v0) > 1e-5) {
+          const pV0 = new THREE.Vector3(v0[0] * u, v0[1] * u, v0[2] * u);
+          this._threeGroup.add(makeDashedLine(vO, pV0, 0x94a3b8, 0.45, 0.3 * u, 0.18 * u));
+          this._threeGroup.add(makeMarker(pV0, 0.038 * u, 0x94a3b8));
+        }
       }
 
       if (this._currentPhase === 0) {
+        // BUOC 1: Duong ray truot khu Gauss song song voi vector tru
         for (let i = 0; i < gd.m; i++) {
           const v0 = gd.initialVectors[i];
+          const v1 = gd.step1EndRows[i];
           const vf = gd.finalRows[i];
-          if (norm([vf[0] - v0[0], vf[1] - v0[1], vf[2] - v0[2]]) > 1e-4) {
-            const pts = [
-              new THREE.Vector3(v0[0], v0[1], v0[2]),
-              new THREE.Vector3(vf[0], vf[1], vf[2])
-            ];
-            const lineGeom = new THREE.BufferGeometry().setFromPoints(pts);
+          if (norm([v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2]]) > 1e-4) {
+            const pStart = new THREE.Vector3(v0[0] * u, v0[1] * u, v0[2] * u);
+            const targetRaw = gd.elimHistoryByOrig[i].length >= 2 ? v1 : vf;
+            const pTarget = new THREE.Vector3(targetRaw[0] * u, targetRaw[1] * u, targetRaw[2] * u);
+            const pCur = new THREE.Vector3(
+              (v0[0] + p * (v1[0] - v0[0])) * u,
+              (v0[1] + p * (v1[1] - v0[1])) * u,
+              (v0[2] + p * (v1[2] - v0[2])) * u
+            );
             const isZero = gd.zeroRowIndices.includes(i);
-            const lineMat = new THREE.LineDashedMaterial({
-              color: isZero ? 0xf59e0b : 0x10b981,
-              dashSize: 0.3,
-              gapSize: 0.15
-            });
-            const line = new THREE.Line(lineGeom, lineMat);
-            line.computeLineDistances();
-            this._threeGroup.add(line);
+            const col = isZero ? 0xf59e0b : 0x10b981;
+
+            this._threeGroup.add(makeDashedLine(pStart, pTarget, col, 0.85, 0.4 * u, 0.2 * u));
+            this._threeGroup.add(makeMarker(pCur, 0.05 * u, col, 0.09 * u, 0.35));
           }
         }
-      } else if (this._currentPhase === 1) {
-        if (gd.zeroRowIndices.length > 0) {
-          const ringGeom = new THREE.RingGeometry(0.18, 0.32, 28);
-          const ringMat = new THREE.MeshBasicMaterial({
-            color: 0xef4444,
-            side: THREE.DoubleSide,
-            transparent: true,
-            opacity: 0.85
-          });
-          const ring = new THREE.Mesh(ringGeom, ringMat);
-          this._threeGroup.add(ring);
+      } else if (this._currentPhase === 1 || this._currentPhase === 2) {
+        if (this._currentPhase === 1) {
+          // BUOC 2: Duong ray truot chang 2 & Tam hap thu dong 0 tai goc O
+          for (let i = 0; i < gd.m; i++) {
+            const v1 = gd.step1EndRows[i];
+            const vf = gd.finalRows[i];
+            if (norm([vf[0] - v1[0], vf[1] - v1[1], vf[2] - v1[2]]) > 1e-4) {
+              const pStart = new THREE.Vector3(v1[0] * u, v1[1] * u, v1[2] * u);
+              const pEnd = new THREE.Vector3(vf[0] * u, vf[1] * u, vf[2] * u);
+              const pCur = pStart.clone().lerp(pEnd, p);
+              const isZero = gd.zeroRowIndices.includes(i);
+              const col = isZero ? 0xef4444 : 0x10b981;
+
+              this._threeGroup.add(makeDashedLine(pStart, pEnd, col, 0.85, 0.35 * u, 0.18 * u));
+              this._threeGroup.add(makeMarker(pCur, 0.05 * u, col, 0.09 * u, 0.35));
+            }
+          }
+
+          if (gd.zeroRowIndices.length > 0) {
+            this._threeGroup.add(makeMarker(vO, 0.065 * u, 0xef4444, 0.13 * u, 0.45));
+          }
+        } else if (gd.rank === 0) {
+          this._threeGroup.add(makeMarker(vO, 0.07 * u, 0xef4444, 0.12 * u, 0.45));
         }
-      } else if (this._currentPhase === 2) {
-        if (gd.rank === 2 && gd.nonZeroRowIndices.length >= 2) {
-          const u = gd.finalRows[gd.nonZeroRowIndices[0]];
-          const v = gd.finalRows[gd.nonZeroRowIndices[1]];
-          const normVec = cross(u, v);
-          const nLen = norm(normVec);
-          if (nLen > 1e-6) {
-            const planeGeom = new THREE.PlaneGeometry(14, 14);
-            const planeMat = new THREE.MeshBasicMaterial({
-              color: 0x10b981,
-              transparent: true,
-              opacity: 0.15 * p,
-              side: THREE.DoubleSide,
-              depthWrite: false
-            });
-            const planeMesh = new THREE.Mesh(planeGeom, planeMat);
-            const normal = new THREE.Vector3(normVec[0] / nLen, normVec[1] / nLen, normVec[2] / nLen);
-            planeMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
-            this._threeGroup.add(planeMesh);
+
+        // BUOC 2 & BUOC 3: Khung gióng bac thang toa do cho r vector khac 0 duoc giu lai
+        const lineOp = this._currentPhase === 2 ? 0.78 : 0.55;
+        for (const rIdx of gd.nonZeroRowIndices) {
+          const rf = gd.finalRows[rIdx];
+          const pTip = new THREE.Vector3(rf[0] * u, rf[1] * u, rf[2] * u);
+          const pXY = new THREE.Vector3(rf[0] * u, rf[1] * u, 0);
+          const pX = new THREE.Vector3(rf[0] * u, 0, 0);
+          const pY = new THREE.Vector3(0, rf[1] * u, 0);
+
+          if (Math.abs(rf[2]) > 1e-4 && (Math.abs(rf[0]) > 1e-4 || Math.abs(rf[1]) > 1e-4)) {
+            this._threeGroup.add(makeDashedLine(pTip, pXY, 0x10b981, lineOp, 0.3 * u, 0.15 * u));
+            if (this._currentPhase === 2) {
+              this._threeGroup.add(makeMarker(pXY, 0.032 * u, 0x10b981));
+            }
           }
-        } else if (gd.rank === 1 && gd.nonZeroRowIndices.length >= 1) {
-          const u = gd.finalRows[gd.nonZeroRowIndices[0]];
-          const uLen = norm(u);
-          if (uLen > 1e-6) {
-            const dir = [u[0] / uLen, u[1] / uLen, u[2] / uLen];
-            const pts = [
-              new THREE.Vector3(-dir[0] * 12, -dir[1] * 12, -dir[2] * 12),
-              new THREE.Vector3(dir[0] * 12, dir[1] * 12, dir[2] * 12)
-            ];
-            const geom = new THREE.BufferGeometry().setFromPoints(pts);
-            const mat = new THREE.LineDashedMaterial({ color: 0x10b981, dashSize: 0.35, gapSize: 0.18 });
-            const line = new THREE.Line(geom, mat);
-            line.computeLineDistances();
-            this._threeGroup.add(line);
+          if (Math.abs(rf[0]) > 1e-4 && Math.abs(rf[1]) > 1e-4) {
+            this._threeGroup.add(makeDashedLine(pXY, pX, 0x10b981, lineOp, 0.3 * u, 0.15 * u));
+            if (this._currentPhase === 2) {
+              this._threeGroup.add(makeDashedLine(vO, pX, 0x10b981, lineOp, 0.3 * u, 0.15 * u));
+              this._threeGroup.add(makeMarker(pX, 0.032 * u, 0x10b981));
+            }
+          } else if (Math.abs(rf[0]) < 1e-4 && Math.abs(rf[1]) > 1e-4 && this._currentPhase === 2) {
+            this._threeGroup.add(makeDashedLine(vO, pY, 0x10b981, lineOp, 0.3 * u, 0.15 * u));
+            this._threeGroup.add(makeMarker(pY, 0.032 * u, 0x10b981));
           }
+          this._threeGroup.add(
+            makeMarker(
+              pTip,
+              this._currentPhase === 2 ? 0.052 * u : 0.048 * u,
+              0x10b981,
+              this._currentPhase === 2 ? 0.095 * u : 0.085 * u,
+              0.38
+            )
+          );
         }
       }
     }
   };
 
   App.RankAnimator = RankAnimator;
+  App.startRankAnimation = function (items) {
+    return RankAnimator.start(items);
+  };
+  App.stopRankAnimation = function () {
+    return RankAnimator.stop();
+  };
 })();

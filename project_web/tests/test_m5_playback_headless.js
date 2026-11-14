@@ -61,6 +61,9 @@ async function runTest() {
     '--headless=new',
     '--disable-gpu',
     '--no-sandbox',
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--user-data-dir=' + path.join(ROOT_DIR, '.tmp_edge_m5_profile'),
     `http://127.0.0.1:${HTTP_PORT}/frontend_v2/calculation.html`
   ]);
 
@@ -68,8 +71,9 @@ async function runTest() {
 
   const cdpRes = await fetch(`http://127.0.0.1:${CDP_PORT}/json`);
   const tabs = await cdpRes.json();
-  const targetTab = tabs.find(t => t.url.includes('calculation.html'));
+  const targetTab = tabs.find(t => t.type === 'page' && t.url.includes('calculation.html')) || tabs.find(t => t.type === 'page');
   if (!targetTab) throw new Error('calculation.html tab not found in CDP');
+  await sleep(1500);
 
   const WS = typeof WebSocket !== 'undefined' ? WebSocket : global.WebSocket;
   const ws = new WS(targetTab.webSocketDebuggerUrl);

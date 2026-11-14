@@ -723,7 +723,20 @@
     setSpeed(mult) {
       const val = parseFloat(mult);
       if (!isNaN(val) && val > 0) {
-        this._speed = val;
+        this._speed = Math.max(0.2, Math.min(2.5, val));
+        const valEl = document.getElementById("eigenSpeedValue");
+        if (valEl) valEl.textContent = `${this._speed.toFixed(1)}×`;
+        const speedSlider = document.getElementById("eigenSpeedSlider");
+        if (speedSlider) {
+          if (Math.abs(parseFloat(speedSlider.value) - this._speed) > 0.05) {
+            speedSlider.value = String(this._speed);
+          }
+          const min = parseFloat(speedSlider.min) || 0.2;
+          const max = parseFloat(speedSlider.max) || 2.5;
+          const pct = Math.max(0, Math.min(100, ((this._speed - min) / (max - min)) * 100));
+          speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+          speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+        }
       }
     },
 
@@ -1025,8 +1038,18 @@
       }
       if (speedSlider && !speedSlider._eigenBound) {
         speedSlider._eigenBound = true;
+        const updateSliderStyle = (val) => {
+          const min = parseFloat(speedSlider.min) || 0.2;
+          const max = parseFloat(speedSlider.max) || 2.5;
+          const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+          speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+          speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+        };
+        updateSliderStyle(parseFloat(speedSlider.value) || this._speed);
         speedSlider.addEventListener("input", (e) => {
-          this.setSpeed(e.target.value);
+          const val = parseFloat(e.target.value) || 1.0;
+          updateSliderStyle(val);
+          this.setSpeed(val);
         });
       }
     },
@@ -1820,6 +1843,9 @@
 
   App.EigenAnimator = EigenAnimator;
   App.solveEigenSystem = solveEigenSystem;
+  App.stopEigenAnimation = function () {
+    return EigenAnimator.stop();
+  };
 
   const _prevIsBlockedEigen = App.isInteractionBlocked;
   App.isInteractionBlocked = function () {

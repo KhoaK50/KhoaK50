@@ -187,28 +187,38 @@
     /* --- RESPONSIVE MOBILE --- */
     @media (max-width: 768px) {
         #controls { 
-            width: 100vw !important; 
+            width: 100% !important; 
             max-width: 100vw !important; 
             border-right: none !important;
             box-sizing: border-box !important;
-            overflow-x: hidden !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
         }
-        .sidebar-master-layout { flex-direction: column-reverse !important; }
-        .sidebar-content-area { height: calc(100% - 65px); }
+        .sidebar-master-layout { flex-direction: column-reverse !important; height: 100% !important; min-height: 0 !important; }
+        .sidebar-content-area { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; overflow: hidden !important; }
         .sidebar-tabs.vertical {
-            flex: 0 0 65px; flex-direction: row; justify-content: space-around;
-            border-right: none; border-top: 1px solid var(--border); padding-top: 0; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); z-index: 1000;
+            flex: 0 0 54px; flex-direction: row; justify-content: space-around;
+            border-right: none; border-top: 1px solid var(--border); padding-top: 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.04); z-index: 1000;
         }
-        .sidebar-tabs.vertical .tab-btn { width: auto; flex: 1; height: 100%; margin-bottom: 0; border-radius: 0; gap: 4px; }
-        .sidebar-tabs.vertical .tab-btn.active { box-shadow: inset 0 3px 0 var(--primary-base); }
-        .tab-content { padding: 16px 14px 80px 14px !important; }
+        .sidebar-tabs.vertical .tab-btn { width: auto; flex: 1; height: 100%; margin-bottom: 0; border-radius: 0; gap: 3px; }
+        .sidebar-tabs.vertical .tab-btn i { font-size: 18px; }
+        .sidebar-tabs.vertical .tab-btn.active { box-shadow: inset 0 2px 0 var(--primary-base); }
+        .tab-content { height: 100% !important; box-sizing: border-box !important; overflow-y: auto !important; overflow-x: hidden !important; padding: 12px 12px 32px 12px !important; }
         #tabContentObjects {
-            height: auto !important;
+            height: 100% !important;
+            box-sizing: border-box !important;
             overflow-y: auto !important;
+            overflow-x: hidden !important;
+            padding: 12px 12px 32px 12px !important;
             display: none !important;
         }
         #tabContentObjects.active {
             display: block !important;
+        }
+        body.has-keypad .tab-content.active,
+        body.has-keypad #tabContentObjects.active {
+            padding-bottom: 270px !important;
         }
         #createVectorPanel.calc-mode-panel.active,
         #createMatrixPanel.calc-mode-panel.active {
@@ -223,6 +233,23 @@
         #createVectorPanel #vectorList,
         #createMatrixPanel #matrixList {
             max-height: 350px !important;
+        }
+        .matrix-grid-container {
+            padding: 8px !important;
+            gap: 5px !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+        .v-select-options,
+        .vec-dropdown {
+            max-width: calc(100vw - 20px) !important;
+        }
+        .playback-ctrl-row {
+            flex-wrap: wrap !important;
+            gap: 6px !important;
+        }
+        .playback-slider-wrap {
+            flex: 1 1 140px !important;
         }
     }
     
@@ -928,8 +955,9 @@
               </div>
             </div>
             <div style="display:flex; gap:8px;">
-              <button id="btnCompute" class="btn primary" data-require-vectors="true" style="flex:1; padding:9px 12px; font-size:13px; font-weight:600; box-shadow:none !important; border-radius:2px;">Thực hiện</button>
-              <button id="btnVectorReplay" class="btn secondary" style="display:none; padding:9px 14px; font-size:13px; font-weight:600; border-radius:2px; align-items:center; gap:6px; cursor:pointer;" title="Phát lại hoạt họa của phép tính vừa thực hiện"><i class="ph ph-arrow-counter-clockwise"></i> Phát lại</button>
+              <button id="btnCompute" class="btn primary" type="button" data-require-vectors="true" style="flex:1; padding:9px 12px; font-size:13px; font-weight:600; box-shadow:none !important; border-radius:2px;">Thực hiện</button>
+              <button id="btnVectorReplay" class="btn secondary" type="button" style="display:none; padding:9px 12px; font-size:13px; font-weight:600; border-radius:2px; align-items:center; gap:6px; cursor:pointer;" title="Phát lại hoạt họa của phép tính vừa thực hiện"><i class="ph ph-arrow-counter-clockwise"></i> Phát lại</button>
+              <button id="btnVectorCalcSolution" class="btn btn-secondary btn-solution" type="button" data-sync-managed="1" style="padding:9px 14px; font-size:13px; font-weight:600; border-radius:2px; white-space:nowrap;">Lời giải</button>
             </div>
             <div id="calcSteps" class="help" style="margin-top:2px;">Kết quả phép tính sẽ hiển thị ở đây.</div>
           </div>
@@ -979,15 +1007,18 @@
               <div id="matrixCalcGridB" class="matrix-grid-container"></div>
               <div id="matrixCalcParamContainerB" class="mixed-matrix-param-wrap" style="display:none; margin-top:4px;"></div>
             </div>
-            <div style="display: flex; gap: 8px; align-items: stretch; width: 100%;">
-              <button id="btnMatrixCompute" class="btn primary" data-require-vectors="false" style="flex: 1; padding: 9px 10px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+            <div style="display: flex; gap: 8px; align-items: stretch; width: 100%; flex-wrap: wrap;">
+              <button id="btnMatrixCompute" class="btn primary" type="button" data-require-vectors="false" style="flex: 1; min-width: 108px; padding: 9px 10px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
                 <i class="ph ph-play"></i> <span>Thực hiện</span>
               </button>
-              <button id="btnMatrixReplay" class="btn secondary" style="display: none; padding: 9px 10px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 2px; align-items: center; justify-content: center; gap: 6px; cursor: pointer;" title="Phát lại hoạt họa của phép tính vừa thực hiện">
+              <button id="btnMatrixReplay" class="btn secondary" type="button" data-require-vectors="false" style="display: none; padding: 9px 10px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 2px; align-items: center; justify-content: center; gap: 6px; cursor: pointer;" title="Phát lại hoạt họa của phép tính vừa thực hiện">
                 <i class="ph ph-arrow-counter-clockwise"></i> <span>Phát lại</span>
               </button>
-              <button id="btnMatrixSpeed" class="btn secondary" style="padding: 9px 10px; font-size: 12px; font-weight: 600; box-shadow: none !important; border-radius: 2px; align-items: center; justify-content: center; min-width: 44px; cursor: pointer;" title="Thay đổi tốc độ mô phỏng (0.5x, 1x, 2x)">
+              <button id="btnMatrixSpeed" class="btn secondary" type="button" data-require-vectors="false" style="padding: 9px 10px; font-size: 12px; font-weight: 600; box-shadow: none !important; border-radius: 2px; align-items: center; justify-content: center; min-width: 42px; cursor: pointer;" title="Thay đổi tốc độ mô phỏng (0.5x, 1x, 2x)">
                 1x
+              </button>
+              <button id="btnMatrixCalcSolution" class="btn btn-secondary btn-solution" type="button" data-require-vectors="false" data-sync-managed="1" style="padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 2px; white-space: nowrap;">
+                Lời giải
               </button>
             </div>
           </div>
@@ -1013,7 +1044,10 @@
               </div>
             </div>
             <div id="mixedMatrixParamContainer" class="mixed-matrix-param-wrap" style="display:none; margin-top:2px;"></div>
-            <button id="btnMixedCompute" class="btn primary" style="width:100%; padding:9px 12px; font-size:13px; font-weight:600; box-shadow:none !important; border-radius:2px;">Thực hiện</button>
+            <div style="display:flex; gap:8px;">
+              <button id="btnMixedCompute" class="btn primary" type="button" data-require-vectors="false" style="flex:1; padding:9px 12px; font-size:13px; font-weight:600; box-shadow:none !important; border-radius:2px;">Thực hiện</button>
+              <button id="btnMixedCalcSolution" class="btn btn-secondary btn-solution" type="button" data-require-vectors="false" data-sync-managed="1" style="padding:9px 14px; font-size:13px; font-weight:600; border-radius:2px; white-space:nowrap;">Lời giải</button>
+            </div>
             <div id="mixedResultBox" class="help" style="margin-top:2px;">Kết quả phép tính sẽ hiển thị ở đây.</div>
 
             <!-- Cụm điều khiển Playback mô phỏng biến đổi tuyến tính -->
@@ -1058,7 +1092,7 @@
                 </div>
 
                 <!-- Layer toggles: bộ lọc lớp hiển thị chống rối thị giác -->
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--border-subtle, rgba(150,150,150,0.15)); font-size:10.5px;">
+                <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 10px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--border-subtle, rgba(150,150,150,0.15)); font-size:10.5px;">
                   <span style="font-weight:700; color:var(--text-muted); text-transform:uppercase; font-size:9px;">Lớp:</span>
                   <label style="display:inline-flex; align-items:center; gap:3px; margin:0; cursor:pointer;" title="Hình bình hành diện tích / khối hộp thể tích">
                     <input type="checkbox" id="chkShowVolume" checked style="width:13px; height:13px; margin:0; cursor:pointer; accent-color:var(--primary-base, #3b82f6);">
@@ -1101,49 +1135,35 @@
 
     tabs.forEach((btn, index) => {
       btn.onclick = () => {
+        const wasActive = btn.classList.contains("active");
         tabs.forEach((t) => t.classList.remove("active"));
         panels.forEach((p) => p.classList.remove("active"));
         btn.classList.add("active");
         panels[index].classList.add("active");
 
-        // Khi ở tab Phép tính: nếu đang ở chế độ mixed, làm mới danh sách ma trận & vector
-        if (index === 2) {
-          if (document.getElementById("calcObjectSelect")?.value === "mixed" && typeof App.refreshTransformTab === "function") {
+        if (!wasActive) {
+          if (typeof App.stopAllAnimations === "function") {
+            try { App.stopAllAnimations(null); } catch (_) {}
+          }
+          if (window.App?.LinearTransform?.isActive?.()) {
+            try { window.App.LinearTransform.stop(); } catch (_) {}
+          }
+          if (window.App?.OperationAnimator?.stop) {
+            try { window.App.OperationAnimator.stop({ clearStaticOverlays: true, skipRedraw: true }); } catch (_) {}
+          }
+        }
+
+        // Khi rời tab Phép tính, khôi phục toàn bộ vector bị ẩn tạm thời bởi bộ chọn v1/v2
+        if (index !== 2) {
+          if (typeof App.restoreCalcVisibility === "function") {
+            App.restoreCalcVisibility(false);
+          }
+        } else {
+          const calcMode = document.getElementById("calcObjectSelect")?.value || "vector";
+          if (calcMode === "mixed" && typeof App.refreshTransformTab === "function") {
             App.refreshTransformTab();
-          }
-        }
-        // Nếu rời khỏi tab Phép tính mà đang chạy biến đổi: dừng mô phỏng
-        if (index !== 2 && window.App?.LinearTransform?.isActive?.()) {
-          window.App.LinearTransform.stop();
-        }
-        // Nếu rời khỏi tab Bài toán (index !== 1): dừng ngay hoạt cảnh cơ sở / tọa độ và ẩn công cụ
-        if (index !== 1) {
-          if (typeof App.stopBasisAnimation === "function") {
-            try { App.stopBasisAnimation(); } catch (_) {}
-          } else if (window.App?.BasisAnimator?.isActive?.()) {
-            try { window.App.BasisAnimator.stop(); } catch (_) {}
-          }
-          const c = document.getElementById("basisAnimControls");
-          if (c) c.style.display = "none";
-
-          if (typeof App.stopCoordAnimation === "function") {
-            try { App.stopCoordAnimation(); } catch (_) {}
-          } else if (window.App?.CoordAnimator?.isActive?.()) {
-            try { window.App.CoordAnimator.stop(); } catch (_) {}
-          }
-          const cc = document.getElementById("coordAnimControls");
-          if (cc) cc.style.display = "none";
-
-          if (typeof App.stopEigenAnimation === "function") {
-            try { App.stopEigenAnimation(); } catch (_) {}
-          } else if (window.App?.EigenAnimator?.isActive?.()) {
-            try { window.App.EigenAnimator.stop(); } catch (_) {}
-          }
-          const ec = document.getElementById("eigenAnimControls");
-          if (ec) ec.style.display = "none";
-
-          if (typeof App.stopAllExtraAnimators === "function") {
-            try { App.stopAllExtraAnimators(null); } catch (_) {}
+          } else if (calcMode === "vector" && typeof App.updateVisibilityByCalc === "function") {
+            App.updateVisibilityByCalc();
           }
         }
       };
@@ -1193,11 +1213,23 @@
       if (matrixPanel) matrixPanel.classList.toggle("active", mode === "matrix");
       if (mixedPanel) mixedPanel.classList.toggle("active", mode === "mixed");
 
+      if (window.App?.OperationAnimator?.stop) {
+        window.App.OperationAnimator.stop({ clearStaticOverlays: true, skipRedraw: true });
+      }
+      if (window.App?.LinearTransform?.isActive?.()) {
+        window.App.LinearTransform.stop();
+      }
+
+      if (mode !== "vector") {
+        if (typeof App.restoreCalcVisibility === "function") {
+          App.restoreCalcVisibility(false);
+        }
+      } else if (typeof App.updateVisibilityByCalc === "function") {
+        App.updateVisibilityByCalc();
+      }
+
       if (mode === "mixed" && typeof App.refreshTransformTab === "function") {
         App.refreshTransformTab();
-      }
-      if (mode !== "mixed" && window.App?.LinearTransform?.isActive?.()) {
-        window.App.LinearTransform.stop();
       }
     };
 
@@ -1216,6 +1248,20 @@
     const btnCompute = document.getElementById("btnCompute");
     if (btnCompute) {
       btnCompute.onclick = () => App.runCalc(true);
+    }
+    const btnVectorCalcSolution = document.getElementById("btnVectorCalcSolution");
+    if (btnVectorCalcSolution) {
+      btnVectorCalcSolution.onclick = () => {
+        if (window.App?.SolutionSync?.openWithSync) {
+          App.SolutionSync.openWithSync({
+            key: "calc_vector",
+            getSig: () => (typeof App.getVectorCalcSig === "function" ? App.getVectorCalcSig() : ""),
+            recomputeStatic: () => (typeof App.recomputeVectorCalcStatic === "function" ? App.recomputeVectorCalcStatic() : null),
+            emptyTitle: "Phép tính vector",
+            emptyHintHtml: "Hãy tạo và chọn vector hợp lệ để xem lời giải từng bước."
+          });
+        }
+      };
     }
     const btnVectorReplay = document.getElementById("btnVectorReplay");
     if (btnVectorReplay) {
@@ -1236,6 +1282,22 @@
           return;
         }
         App.runMatrixCalc(true);
+      };
+    }
+
+    const btnMatrixCalcSolution = document.getElementById("btnMatrixCalcSolution");
+    if (btnMatrixCalcSolution) {
+      btnMatrixCalcSolution.dataset.requireVectors = "false";
+      btnMatrixCalcSolution.onclick = () => {
+        if (window.App?.SolutionSync?.openWithSync) {
+          App.SolutionSync.openWithSync({
+            key: "calc_matrix",
+            getSig: () => (typeof App.getMatrixCalcSig === "function" ? App.getMatrixCalcSig() : ""),
+            recomputeStatic: () => (typeof App.runMatrixCalc === "function" ? App.runMatrixCalc(false, { logHistory: false }) : null),
+            emptyTitle: "Phép toán ma trận",
+            emptyHintHtml: "Hãy nhập đầy đủ các phần tử của ma trận để xem lời giải chi tiết."
+          });
+        }
       };
     }
 
@@ -1267,6 +1329,22 @@
           return;
         }
         App.runMixedCalc(true);
+      };
+    }
+
+    const btnMixedCalcSolution = document.getElementById("btnMixedCalcSolution");
+    if (btnMixedCalcSolution) {
+      btnMixedCalcSolution.dataset.requireVectors = "false";
+      btnMixedCalcSolution.onclick = () => {
+        if (window.App?.SolutionSync?.openWithSync) {
+          App.SolutionSync.openWithSync({
+            key: "calc_mixed",
+            getSig: () => (typeof App.getMixedCalcSig === "function" ? App.getMixedCalcSig() : ""),
+            recomputeStatic: () => (typeof App.runMixedCalc === "function" ? App.runMixedCalc(false, { skipSceneMutate: true, logHistory: false }) : null),
+            emptyTitle: "Biến đổi tuyến tính Ma trận - Vector",
+            emptyHintHtml: "Hãy chọn một ma trận và một đối tượng vector hợp lệ để xem lời giải chi tiết."
+          });
+        }
       };
     }
 
@@ -1313,6 +1391,14 @@
       }
       const btnMatReplay = document.getElementById("btnMatrixReplay");
       if (btnMatReplay) btnMatReplay.style.display = "none";
+      const matResBox = document.getElementById("matrixResultBox");
+      if (matResBox) {
+        matResBox.style.display = "none";
+        matResBox.innerHTML = "";
+      }
+      if (window.App?.SolutionSync?.clear) {
+        App.SolutionSync.clear("calc_matrix");
+      }
     };
     matrixOpSelect?.addEventListener("change", toggleMatrixSecondaryGrid);
     toggleMatrixSecondaryGrid();
@@ -3187,6 +3273,9 @@
 
       // 4. Gắn sự kiện: Hễ chọn là chạy hàm ẩn/hiện, xóa vết cũ và ẩn nút Phát lại
       sel.onchange = function () {
+        if (window.App?.OperationAnimator?.stop) {
+          window.App.OperationAnimator.stop({ clearStaticOverlays: true, skipRedraw: true });
+        }
         const btnReplay = document.getElementById("btnVectorReplay");
         if (btnReplay) btnReplay.style.display = "none";
         App._lastVectorOp = null;
@@ -3521,6 +3610,9 @@
   };
 
   App.showExtraForm = function (op) {
+    if (typeof App.stopAllAnimations === "function") {
+      try { App.stopAllAnimations(op); } catch (_) {}
+    }
     if (op !== "basis") {
       if (typeof App.stopBasisAnimation === "function") {
         try { App.stopBasisAnimation(); } catch (_) {}
@@ -3666,13 +3758,16 @@
     const buttons = document.querySelectorAll("button");
     const isNoriTarget = (document.getElementById("mixedVectorSelect")?.value === "nori_entity") || !!App.noriEntityActive;
     for (let btn of buttons) {
+      if (btn.closest && (btn.closest("#solutionOverlay") || btn.closest(".res-card"))) continue;
       if (btn.textContent.trim() === "Xem trước") btn.remove();
 
       // Kiểm tra xem nút có thuộc form ma trận hay không
       const isMatrixScoped =
         btn.dataset.requireVectors === "false" ||
         btn.id === "btnMatrixCompute" ||
+        btn.id === "btnMatrixCalcSolution" ||
         btn.id === "btnMixedCompute" ||
+        btn.id === "btnMixedCalcSolution" ||
         btn.id === "btnMixedComputeAndTransform" ||
         btn.id === "btnEigenCompute" ||
         btn.id === "btnEigenAnimate" ||
@@ -3711,7 +3806,8 @@
         btn.id === "btnCoordAnimate" ||
         btn.id === "btnIndepSolution" ||
         btn.id === "btnRankSolution" ||
-        btn.id === "btnGSSolution";
+        btn.id === "btnGSSolution" ||
+        btn.id === "btnVectorCalcSolution";
 
       const btnText = btn.textContent.trim();
       const needsVectorGuard = vectorKeywords.some((k) => btnText.includes(k)) || isVectorAnimateOrSol;
@@ -3736,6 +3832,7 @@
     // 3. Làm đẹp kết quả (như cũ)
     const divs = document.querySelectorAll("div");
     for (let div of divs) {
+      if (div.closest && (div.closest("#solutionOverlay") || div.closest(".res-card") || div.closest("#paperWrap"))) continue;
       if (
         div.textContent.trim().startsWith("Kết quả:") &&
         !div.classList.contains("nice-result-box")
@@ -4475,569 +4572,210 @@
     return { C, steps };
   }
 
-  App.runMatrixCalc = function (triggerAnimation = true) {
+  App.getMatrixCalcSig = function () {
+    const op = document.getElementById("matrixOpSelect")?.value || "det";
+    const AData = parseMatrixGridValues("matrixCalcGridA", "matrixCalcRowsA", "matrixCalcColsA");
+    const BData = op === "mul_matrix"
+      ? parseMatrixGridValues("matrixCalcGridB", "matrixCalcRowsB", "matrixCalcColsB")
+      : null;
+    const sync = window.App?.SolutionSync;
+    const sigA = AData
+      ? ((sync?.matrixSig ? sync.matrixSig(AData.values) : JSON.stringify(AData.values)) + ":" + JSON.stringify(AData.rawValues))
+      : "none";
+    const sigB = BData
+      ? ((sync?.matrixSig ? sync.matrixSig(BData.values) : JSON.stringify(BData.values)) + ":" + JSON.stringify(BData.rawValues))
+      : "none";
+    return `matop:${op}|${sigA}|${sigB}`;
+  };
+
+  App.runMatrixCalc = function (triggerAnimation = true, opts = {}) {
+    const shouldLog = opts.logHistory !== undefined ? !!opts.logHistory : !!triggerAnimation;
     const op = document.getElementById("matrixOpSelect")?.value || "det";
     const resultBox = document.getElementById("matrixResultBox");
+    const calcGen = window.App?.TasksGen?.CalcOps;
+    const resCard = window.App?.ResultCard;
+    const sync = window.App?.SolutionSync;
+
     const AData = parseMatrixGridValues("matrixCalcGridA", "matrixCalcRowsA", "matrixCalcColsA");
     if (!AData) {
-      if (resultBox) {
+      const errMsg = "Vui lòng nhập đầy đủ các phần tử của ma trận \\(A\\).";
+      if (resultBox && resCard) {
         resultBox.className = "";
         resultBox.style.display = "block";
         resultBox.style.padding = "0";
         resultBox.style.border = "none";
         resultBox.style.background = "transparent";
-        resultBox.innerHTML = App.renderUnifiedResult(
-          "LỖI DỮ LIỆU",
-          `<span style="color:var(--danger, #e5484d); font-size:12px;">Vui lòng nhập đầy đủ các phần tử của ma trận A.</span>`
-        );
+        resCard.mountError(resultBox, errMsg, "Lỗi dữ liệu ma trận");
       }
-      return;
+      const fallbackModal = {
+        titleText: "Phép toán ma trận",
+        titleMath: "A",
+        content1: `<div class="sol-step-container"><div class="sol-text">${errMsg}</div></div>`,
+        content2: ""
+      };
+      if (sync) sync.save("calc_matrix", App.getMatrixCalcSig(), fallbackModal);
+      return fallbackModal;
     }
 
     const fmtVal = (num) => {
       const x = Number(num);
-      if (isNaN(x)) return "0";
+      if (!Number.isFinite(x)) return "0";
       if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x));
       return String(parseFloat(x.toFixed(4)));
     };
 
-    const toMatrixLatex = (mat) => {
-      if (!Array.isArray(mat) || !mat.length) return "";
-      return "\\begin{bmatrix} " + mat.map(row => row.map(fmtVal).join(" & ")).join(" \\\\ ") + " \\end{bmatrix}";
+    const buildParamInfo = (matData) => {
+      if (!matData || !matData.isParametric || !matData.paramMat) return null;
+      const pMat = matData.paramMat;
+      const paramDescLatex = (pMat.vars && pMat.vars.length > 1)
+        ? Object.entries(pMat.scopeValues || {})
+            .filter(([k]) => pMat.vars.includes(k))
+            .map(([k, v]) => `${k} = ${fmtVal(v)}`)
+            .join(",\\; ")
+        : `${pMat.paramVar || "t"} = ${fmtVal(pMat.paramVal)}`;
+      return {
+        isParametric: true,
+        rawValues: matData.rawValues,
+        paramDescLatex
+      };
     };
 
-    const rawMatToLatex = (data, label = "A") => {
-      if (!data || !data.rawValues || !data.rawValues.length) return "";
-      return `\\( ${label} = \\begin{bmatrix} ` + data.rawValues.map(row => row.join(" & ")).join(" \\\\ ") + ` \\end{bmatrix} \\)`;
-    };
+    const BData = op === "mul_matrix"
+      ? parseMatrixGridValues("matrixCalcGridB", "matrixCalcRowsB", "matrixCalcColsB")
+      : null;
 
-    let paramContextHtml = "";
-    if (AData.isParametric && AData.paramMat) {
-      const pMat = AData.paramMat;
-      const pDesc = pMat.vars && pMat.vars.length > 1
-        ? Object.entries(pMat.scopeValues).filter(([k]) => pMat.vars.includes(k)).map(([k, v]) => `${k} = ${fmtVal(v)}`).join(", ")
-        : `${pMat.paramVar || 't'} = ${fmtVal(pMat.paramVal)}`;
-      paramContextHtml = `
-        <div style="margin-bottom:8px; padding:6px 8px; background:var(--bg-subtle, rgba(255,255,255,0.04)); border:1px solid var(--border-subtle, rgba(255,255,255,0.08)); border-radius:2px; font-size:12px;">
-          • Ma trận tham số: ${rawMatToLatex(AData, "A")}<br/>
-          • Giá trị tham số hiện tại: \\( ${pDesc} \\)
-        </div>
-      `;
-    }
+    if (!calcGen || typeof calcGen.buildMatrixOp !== "function") return null;
 
-    let title = "KẾT QUẢ MA TRẬN";
-    let resultLatex = "";
-    let detailsHtml = "";
-    let animOptions = null;
-    let animMatrix = null;
-    let isAnimSupported = false;
+    const bundle = calcGen.buildMatrixOp(op, {
+      A: AData.values,
+      B: BData ? BData.values : null,
+      nameA: "A",
+      nameB: "B",
+      paramInfoA: buildParamInfo(AData),
+      paramInfoB: buildParamInfo(BData)
+    });
 
-    if (op === "det") {
-      title = "ĐỊNH THỨC MA TRẬN";
-      if (AData.rows !== AData.cols) {
-        detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Theo tiên đề đại số tuyến tính, định thức là dạng đa tuyến tính thay phiên chuẩn hóa chỉ được xác định trên các ma trận vuông.
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            Ma trận hiện tại có kích thước ${AData.rows} × ${AData.cols} (số hàng khác số cột), không thỏa mãn điều kiện tồn tại định thức.
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            Toán tử ánh xạ giữa hai không gian khác số chiều (${AData.cols} chiều sang ${AData.rows} chiều). Do số chiều không gian nguồn và đích không đồng nhất, không tồn tại khối đa diện cùng chiều để đo lường hệ số co dãn thể tích.
-          </div>
-        `;
-        resultLatex = "\\text{Không khả dụng}";
-      } else {
-        const res = computeDetWithSteps(AData.values);
-        const det = res.det;
-        const fmtDet = fmtVal(det);
-        const absDet = fmtVal(Math.abs(det));
-        resultLatex = `\\det(A) = ${fmtDet}`;
-
-        let geomDesc = "";
-        if (AData.rows === 2) {
-          const a = Number(AData.values[0][0]) || 0;
-          const c = Number(AData.values[0][1]) || 0;
-          const b = Number(AData.values[1][0]) || 0;
-          const d = Number(AData.values[1][1]) || 0;
-          let orientDesc = "";
-          if (Math.abs(det) < 1e-4) {
-            orientDesc = "Định thức triệt tiêu (\\( \\det(A) = 0 \\)): Hai vector cột phụ thuộc tuyến tính, ánh xạ suy biến làm sụp số chiều không gian, diện tích hình bình hành bằng 0.";
-          } else if (det < 0) {
-            orientDesc = `Định thức mang giá trị âm (${fmtDet} < 0): Ánh xạ đảo chiều định hướng không gian qua phép đối xứng trục, chiều quét từ vector thứ nhất sang vector thứ hai chuyển thành cùng chiều kim đồng hồ.`;
-          } else {
-            orientDesc = `Định thức mang giá trị dương (${fmtDet} > 0): Ánh xạ bảo toàn chiều định hướng chuẩn của mặt phẳng (ngược chiều kim đồng hồ).`;
-          }
-          geomDesc = `
-            • <b>Tỉ lệ dãn nở diện tích:</b> Độ lớn \\( |\\det(A)| = ${absDet} \\) biểu thị tỉ số biến thiên diện tích của mọi hình phẳng qua toán tử tuyến tính \\( A \\). Cụ thể, hình vuông đơn vị ban đầu (diện tích 1) được hai vector cột \\( \\vec{i}' = [${fmtVal(a)}, ${fmtVal(b)}]^T \\) và \\( \\vec{j}' = [${fmtVal(c)}, ${fmtVal(d)}]^T \\) chuyển hóa thành hình bình hành có diện tích đúng bằng ${absDet} đơn vị diện tích.<br/>
-            • <b>Định hướng không gian:</b> ${orientDesc}
-          `;
-        } else if (AData.rows === 3) {
-          let orientDesc = "";
-          if (Math.abs(det) < 1e-4) {
-            orientDesc = "Định thức triệt tiêu (\\( \\det(A) = 0 \\)): Ba vector cột đồng phẳng (phụ thuộc tuyến tính), khối đa diện 3 chiều bị ép suy biến thành mặt phẳng hoặc đường thẳng có thể tích bằng 0.";
-          } else if (det < 0) {
-            orientDesc = `Định thức mang giá trị âm (${fmtDet} < 0): Không gian bị đảo chiều định hướng (chuyển từ hệ tam diện thuận theo quy tắc bàn tay phải sang hệ tam diện nghịch theo quy tắc bàn tay trái).`;
-          } else {
-            orientDesc = `Định thức mang giá trị dương (${fmtDet} > 0): Không gian bảo toàn định hướng thuận theo quy tắc bàn tay phải.`;
-          }
-          geomDesc = `
-            • <b>Tỉ lệ dãn nở thể tích:</b> Độ lớn \\( |\\det(A)| = ${absDet} \\) biểu thị hệ số biến thiên thể tích của khối đa diện qua toán tử tuyến tính. Khối lập phương đơn vị ba chiều (thể tích 1) được ba vector cột chuyển hóa thành khối hộp ba chiều có thể tích đúng bằng ${absDet} đơn vị thể tích.<br/>
-            • <b>Định hướng không gian 3 chiều:</b> ${orientDesc}
-          `;
-        } else {
-          geomDesc = `• <b>Hệ số siêu thể tích \\( |\\det(A)| = ${absDet} \\):</b> Khối siêu lập phương đơn vị ${AData.rows} chiều sau biến đổi có siêu thể tích bằng đúng ${absDet}.`;
-        }
-
-        detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Định thức của ma trận vuông \\( A \\in \\mathcal{M}_{${AData.rows} \\times ${AData.cols}}(\\mathbb{R}) \\) là dạng đa tuyến tính thay phiên chuẩn hóa duy nhất trên không gian các vector cột:<br/>
-            \\( \\det(A) = \\sum_{\\sigma \\in S_n} \\text{sgn}(\\sigma) \\prod_{i=1}^n a_{i, \\sigma(i)} \\)
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            ${paramContextHtml}
-            ${res.steps.join("<br/>")}
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            ${geomDesc}
-          </div>
-        `;
-
-        if (AData.rows === 2 || AData.rows === 3) {
-          isAnimSupported = true;
-          animMatrix = AData.values;
-          animOptions = { mode: "det", title: `Định thức: det = ${fmtDet}` };
-        }
-      }
-    } else if (op === "inv") {
-      title = "MA TRẬN NGHỊCH ĐẢO";
-      if (AData.rows !== AData.cols) {
-        detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Khái niệm ma trận nghịch đảo chỉ tồn tại đối với các ma trận vuông thông qua đẳng thức song phương \\( A \\cdot A^{-1} = A^{-1} \\cdot A = I_n \\).
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            Ma trận hiện tại có kích thước ${AData.rows} × ${AData.cols}, không phải ma trận vuông nên không thỏa mãn điều kiện cần để khả nghịch.
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            Toán tử chuyển giữa hai không gian khác số chiều dẫn đến mất mát chiều không gian hoặc xuất hiện bậc tự do dôi dư, do đó không thể thiết lập ánh xạ ngược đơn ánh duy nhất.
-          </div>
-        `;
-        resultLatex = "\\text{Không khả dụng}";
-      } else {
-        const res = computeInverseWithSteps(AData.values);
-        if (!res.inv) {
-          resultLatex = "\\text{Không tồn tại } A^{-1}";
-          const rankRes = computeRankWithSteps(AData.values);
-          detailsHtml = `
-            <div class="calc-section-title">Khung định nghĩa đại số</div>
-            <div class="calc-explanation-block">
-              Theo định lý khả nghịch đại số tuyến tính, ma trận vuông \\( A \\in \\mathcal{M}_{n \\times n}(\\mathbb{R}) \\) tồn tại ma trận nghịch đảo khi và chỉ khi định thức khác không (\\( \\det(A) \\neq 0 \\)).
-            </div>
-            <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-            <div class="calc-explanation-block">
-              Tính toán định thức cho kết quả \\( \\det(A) = 0 \\). Do định thức triệt tiêu, ma trận \\( A \\) suy biến (singular matrix), không tồn tại ma trận nghịch đảo \\( A^{-1} \\).
-            </div>
-            <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-            <div class="calc-explanation-block">
-              • <b>Sụp đổ số chiều không gian:</b> Không gian ảnh \\( \\text{Im}(A) \\) chỉ có số chiều bằng \\( \\text{Rank}(A) = ${rankRes.rank} < ${AData.cols} \\).<br/>
-              • <b>Không gian hạt nhân khác không:</b> Hạt nhân \\( \\ker(A) \\) có số chiều \\( \\dim(\\ker A) = ${rankRes.nullity} \\ge 1 \\), vô số vector khác nhau bị ánh xạ co cụm về vector không \\( \\vec{0} \\).<br/>
-              • <b>Tính bất khả nghịch:</b> Do ánh xạ không phải là đơn ánh, không tồn tại bất kỳ toán tử tuyến tính ngược nào có thể khôi phục lại trạng thái ban đầu của không gian.
-            </div>
-          `;
-          if (AData.rows === 2 || AData.rows === 3) {
-            isAnimSupported = true;
-            animMatrix = AData.values;
-            animOptions = { mode: "rank", rank: rankRes.rank, title: "Suy biến: det = 0 (Không khả nghịch)" };
-          }
-        } else {
-          resultLatex = `A^{-1} = ${toMatrixLatex(res.inv)}`;
-          const detRes = computeDetWithSteps(AData.values);
-          const detVal = detRes ? detRes.det : 1;
-          const absDetStr = fmtVal(Math.abs(detVal));
-          const invDetStr = fmtVal(Math.abs(1 / detVal));
-
-          let geomInvDesc = "";
-          if (AData.rows === 2) {
-            geomInvDesc = `
-              • <b>Hệ vector cơ sở nghịch đảo:</b> Toán tử tuyến tính xác định bởi ma trận nghịch đảo \\( A^{-1} \\) biến đổi hệ vector đơn vị trực chuẩn \\( \\vec{i} = [1, 0]^T \\), \\( \\vec{j} = [0, 1]^T \\) thành hai vector cột của \\( A^{-1} \\).<br/>
-              • <b>Hệ số co dãn diện tích đối ngẫu:</b> Tỉ lệ biến thiên diện tích của \\( A^{-1} \\) bằng đúng nghịch đảo độ lớn định thức của ma trận ban đầu: \\( |\\det(A^{-1})| = \\frac{1}{|\\det(A)|} = \\frac{1}{${absDetStr}} = ${invDetStr} \\).<br/>
-              • <b>Quan hệ khôi phục đối ngẫu:</b> Khi áp dụng liên tiếp phép biến đổi \\( A \\) và \\( A^{-1} \\), mọi điểm trên mặt phẳng được đưa về vị trí ban đầu theo đẳng thức hợp thành \\( A^{-1}A = I_2 \\).
-            `;
-          } else if (AData.rows === 3) {
-            geomInvDesc = `
-              • <b>Hệ vector cơ sở nghịch đảo:</b> Toán tử tuyến tính xác định bởi ma trận nghịch đảo \\( A^{-1} \\) biến đổi hệ vector đơn vị trực chuẩn ba chiều \\( \\vec{i}, \\vec{j}, \\vec{k} \\) thành ba vector cột của \\( A^{-1} \\).<br/>
-              • <b>Hệ số co dãn thể tích đối ngẫu:</b> Tỉ lệ biến thiên thể tích khối hộp của \\( A^{-1} \\) bằng đúng nghịch đảo độ lớn định thức của ma trận ban đầu: \\( |\\det(A^{-1})| = \\frac{1}{|\\det(A)|} = \\frac{1}{${absDetStr}} = ${invDetStr} \\).<br/>
-              • <b>Quan hệ khôi phục đối ngẫu:</b> Khi áp dụng liên tiếp phép biến đổi \\( A \\) và \\( A^{-1} \\), toàn bộ không gian ba chiều được khôi phục nguyên vẹn theo đẳng thức hợp thành \\( A^{-1}A = I_3 \\).
-            `;
-          } else {
-            geomInvDesc = `
-              • <b>Bảo toàn tính khả nghịch:</b> Ma trận vuông cấp ${AData.rows} có định thức khác 0 bảo toàn đầy đủ ${AData.rows} chiều không gian và tồn tại duy nhất toán tử biến đổi ngược \\( A^{-1} \\).
-            `;
-          }
-
-          detailsHtml = `
-            <div class="calc-section-title">Khung định nghĩa đại số</div>
-            <div class="calc-explanation-block">
-              Ma trận vuông \\( A \\in \\mathcal{M}_{${AData.rows} \\times ${AData.cols}}(\\mathbb{R}) \\) khả nghịch do \\( \\det(A) \\neq 0 \\). Ma trận nghịch đảo \\( A^{-1} \\) được xác định duy nhất qua phương trình song phương \\( A \\cdot A^{-1} = A^{-1} \\cdot A = I_n \\) theo thuật toán khử Gauss - Jordan hoặc ma trận phụ hợp:<br/>
-              \\( A^{-1} = \\frac{1}{\\det(A)} C^T, \\quad (A \\mid I_n) \\xrightarrow{\\text{Gauss-Jordan}} (I_n \\mid A^{-1}) \\)
-            </div>
-            <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-            <div class="calc-explanation-block">
-              ${paramContextHtml}
-              ${res.steps.join("<br/>")}
-            </div>
-            <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-            <div class="calc-explanation-block">
-              ${geomInvDesc}
-            </div>
-          `;
-          if (AData.rows === 2 || AData.rows === 3) {
-            isAnimSupported = true;
-            animMatrix = res.inv;
-            animOptions = {
-              mode: "inv",
-              originalMatrix: AData.values,
-              invMatrix: res.inv,
-              title: "Ma trận Nghịch đảo A⁻¹"
-            };
-          }
-        }
-      }
-    } else if (op === "rank") {
-      title = "HẠNG MA TRẬN";
-      const res = computeRankWithSteps(AData.values);
-      resultLatex = `\\text{Rank}(A) = ${res.rank} \\quad \\text{trên } ${AData.cols} \\text{ cột}`;
-
-      let geomRankDesc = "";
-      if (AData.rows === 2 && AData.cols === 2) {
-        if (res.rank === 2) {
-          geomRankDesc = `
-            • <b>Không gian ảnh:</b> Toàn bộ mặt phẳng 2 chiều được bảo toàn số chiều (\\( \\text{Rank}(A) = 2 \\), ánh xạ là đẳng cấu).<br/>
-            • <b>Không gian hạt nhân:</b> Hạt nhân chỉ gồm duy nhất vector không \\( \\vec{0} \\) (\\( \\dim(\\ker A) = 0 \\)).
-          `;
-        } else if (res.rank === 1) {
-          geomRankDesc = `
-            • <b>Không gian ảnh:</b> Mặt phẳng 2 chiều bị ánh xạ suy biến thành một đường thẳng đi qua gốc tọa độ (\\( \\text{Rank}(A) = 1 \\)).<br/>
-            • <b>Không gian hạt nhân:</b> Một không gian con 1 chiều bị triệt tiêu về vector không (\\( \\dim(\\ker A) = 1 \\)).
-          `;
-        } else {
-          geomRankDesc = `
-            • <b>Không gian ảnh:</b> Toàn bộ mặt phẳng bị co rút về điểm gốc tọa độ (\\( \\text{Rank}(A) = 0 \\)).<br/>
-            • <b>Không gian hạt nhân:</b> Cả hai chiều không gian bị triệt tiêu về vector không (\\( \\dim(\\ker A) = 2 \\)).
-          `;
-        }
-      } else if (AData.rows === 3 && AData.cols === 3) {
-        if (res.rank === 3) {
-          geomRankDesc = `
-            • <b>Không gian ảnh:</b> Không gian ba chiều được bảo toàn đầy đủ 3 chiều (\\( \\text{Rank}(A) = 3 \\)).<br/>
-            • <b>Không gian hạt nhân:</b> Hạt nhân tầm thường chỉ gồm vector không (\\( \\dim(\\ker A) = 0 \\)).
-          `;
-        } else if (res.rank === 2) {
-          geomRankDesc = `
-            • <b>Không gian ảnh:</b> Toàn bộ không gian 3D bị ánh xạ thành một mặt phẳng đi qua gốc tọa độ (\\( \\text{Rank}(A) = 2 \\)).<br/>
-            • <b>Không gian hạt nhân:</b> Một trục đường thẳng định hướng bị triệt tiêu về vector không (\\( \\dim(\\ker A) = 1 \\)).
-          `;
-        } else if (res.rank === 1) {
-          geomRankDesc = `
-            • <b>Không gian ảnh:</b> Toàn bộ không gian 3D bị thu hẹp thành một đường thẳng đi qua gốc tọa độ (\\( \\text{Rank}(A) = 1 \\)).<br/>
-            • <b>Không gian hạt nhân:</b> Một mặt phẳng 2 chiều bị triệt tiêu về vector không (\\( \\dim(\\ker A) = 2 \\)).
-          `;
-        } else {
-          geomRankDesc = `
-            • <b>Không gian ảnh:</b> Toàn bộ không gian ba chiều co rút về điểm gốc tọa độ (\\( \\text{Rank}(A) = 0 \\)).<br/>
-            • <b>Không gian hạt nhân:</b> Cả ba chiều không gian bị triệt tiêu về vector không (\\( \\dim(\\ker A) = 3 \\)).
-          `;
-        }
-      } else {
-        geomRankDesc = `
-          • <b>Số chiều không gian ảnh:</b> Hạng \\( \\text{Rank}(A) = ${res.rank} \\) là số chiều của không gian ảnh sau biến đổi (\\( \\dim(\\text{Im } A) \\)).<br/>
-          • <b>Số chiều không gian hạt nhân:</b> Số chiều hạt nhân \\( \\dim(\\ker A) = ${res.nullity} \\) là số chiều của không gian con bị triệt tiêu về vector không.
-        `;
-      }
-
-      detailsHtml = `
-        <div class="calc-section-title">Khung định nghĩa đại số</div>
-        <div class="calc-explanation-block">
-          Hạng của ma trận \\( A \\in \\mathcal{M}_{${AData.rows} \\times ${AData.cols}}(\\mathbb{R}) \\), ký hiệu \\( \\text{Rank}(A) \\), là số chiều cực đại của không gian vector con sinh bởi các cột của \\( A \\):<br/>
-          \\( \\text{Rank}(A) = \\dim(\\text{Col } A) = \\dim(\\text{Row } A) \\)<br/>
-          Theo định lý về số chiều (Rank - Nullity Theorem):<br/>
-          \\( \\text{Rank}(A) + \\dim(\\ker A) = n \\iff ${res.rank} + ${res.nullity} = ${AData.cols} \\)
-        </div>
-        <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-        <div class="calc-explanation-block">
-          ${paramContextHtml}
-          ${res.steps.join("<br/>")}
-        </div>
-        <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-        <div class="calc-explanation-block">
-          ${geomRankDesc}
-        </div>
-      `;
-
-      if (AData.rows === 2 && AData.cols === 2) {
-        isAnimSupported = true;
-        animMatrix = AData.values;
-        animOptions = {
-          mode: "rank",
-          rank: res.rank,
-          nullity: res.nullity,
-          originalMatrix: AData.values,
-          title: `Hạng Ma trận: Rank = ${res.rank}/2`
-        };
-      } else if (AData.rows === 3 && AData.cols === 3) {
-        isAnimSupported = true;
-        animMatrix = AData.values;
-        animOptions = {
-          mode: "rank",
-          rank: res.rank,
-          nullity: res.nullity,
-          originalMatrix: AData.values,
-          title: `Hạng Ma trận: Rank = ${res.rank}/3`
-        };
-      }
-    } else if (op === "transpose") {
-      title = "MA TRẬN CHUYỂN VỊ";
-      const res = computeTransposeWithSteps(AData.values);
-      resultLatex = `A^T = ${toMatrixLatex(res.AT)}`;
-      let part2Geom = "";
-      if (AData.rows === 2 && AData.cols === 2) {
-        part2Geom = `
-          • <b>Hệ vector cơ sở chuyển vị:</b> Các cột cơ sở của \\( A^T \\) nhận giá trị từ các hàng tương ứng của \\( A \\): \\( \\vec{i}' = [${fmtVal(AData.values[0][0])}, ${fmtVal(AData.values[0][1])}]^T \\) và \\( \\vec{j}' = [${fmtVal(AData.values[1][0])}, ${fmtVal(AData.values[1][1])}]^T \\).<br/>
-          • <b>Bảo toàn tỉ lệ diện tích:</b> Định thức được bảo toàn bất biến \\( \\det(A^T) = \\det(A) \\). Tỉ lệ co dãn diện tích của phép biến đổi \\( A^T \\) bằng đúng tỉ lệ của ma trận gốc \\( A \\).<br/>
-          • <b>Toán tử liên hợp đối ngẫu:</b> Thỏa mãn hệ thức liên hợp chính tắc \\( \\langle A\\vec{x}, \\vec{y} \\rangle = \\langle \\vec{x}, A^T\\vec{y} \\rangle \\).
-        `;
-      } else if (AData.rows === 3 && AData.cols === 3) {
-        part2Geom = `
-          • <b>Hệ vector cơ sở chuyển vị:</b> Ba vector cột cơ sở của \\( A^T \\) nhận giá trị từ ba vector hàng của \\( A \\): \\( \\vec{i}' \\) từ Hàng 1, \\( \\vec{j}' \\) từ Hàng 2, và \\( \\vec{k}' \\) từ Hàng 3 của \\( A \\).<br/>
-          • <b>Bảo toàn tỉ lệ thể tích:</b> Định thức được bảo toàn tuyệt đối \\( \\det(A^T) = \\det(A) \\). Tỉ lệ dãn nở thể tích khối hộp của phép biến đổi \\( A^T \\) hoàn toàn bằng tỉ lệ của ma trận gốc \\( A \\).<br/>
-          • <b>Đặc tính trực giao:</b> Khi ma trận \\( A \\) là phép quay trực chuẩn (ma trận trực giao), ma trận chuyển vị \\( A^T \\) trùng với ma trận nghịch đảo \\( A^{-1} \\), đóng vai trò phép quay ngược chiều.
-        `;
-      } else if (AData.rows === 2 && AData.cols === 3) {
-        part2Geom = `
-          • <b>Hệ vector cơ sở chuyển vị:</b> Hai vector hàng của ma trận \\( A \\) (kích thước 2×3) trở thành hai vector cột của \\( A^T \\) (kích thước 3×2) trong không gian 3 chiều.<br/>
-          • <b>Chuyển đổi số chiều:</b> Ma trận \\( A \\) chiếu không gian 3D xuống mặt phẳng 2D, trong khi ma trận chuyển vị \\( A^T \\) nhúng mặt phẳng 2D thành một không gian con 2 chiều trong không gian 3D.
-        `;
-      } else if (AData.rows === 3 && AData.cols === 2) {
-        part2Geom = `
-          • <b>Hệ vector cơ sở chuyển vị:</b> Ba vector hàng của ma trận \\( A \\) (kích thước 3×2) trở thành ba vector cột của \\( A^T \\) (kích thước 2×3) trên mặt phẳng 2 chiều.<br/>
-          • <b>Chuyển đổi số chiều:</b> Ma trận \\( A \\) nhúng mặt phẳng 2D vào không gian 3D, trong khi ma trận chuyển vị \\( A^T \\) chiếu không gian 3D xuống mặt phẳng 2D.
-        `;
-      } else {
-        part2Geom = `
-          • <b>Hệ vector cơ sở chuyển vị:</b> Các hàng của ma trận \\( A \\) trở thành các cột cơ sở tương ứng của \\( A^T \\): \\( (A^T)_{ji} = A_{ij} \\).<br/>
-          • <b>Bảo toàn định thức:</b> Với ma trận vuông, \\( \\det(A^T) = \\det(A) \\).
-        `;
-      }
-
-      detailsHtml = `
-        <div class="calc-section-title">Khung định nghĩa đại số</div>
-        <div class="calc-explanation-block">
-          Ma trận chuyển vị \\( A^T \\) của ma trận \\( A \\in \\mathcal{M}_{${AData.rows} \\times ${AData.cols}}(\\mathbb{R}) \\) là ma trận cấp \\( ${AData.cols} \\times ${AData.rows} \\) thu được bằng cách hoán đổi dòng thành cột:<br/>
-          \\( (A^T)_{ij} = A_{ji}, \\quad \\forall i \\in \\{1, \\dots, ${AData.cols}\\}, \\; j \\in \\{1, \\dots, ${AData.rows}\\} \\)
-        </div>
-        <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-        <div class="calc-explanation-block">
-          ${paramContextHtml}
-          ${res.steps.join("<br/>")}
-        </div>
-        <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-        <div class="calc-explanation-block">
-          ${part2Geom}
-        </div>
-      `;
-      if ((AData.rows === 2 && AData.cols === 2) || (AData.rows === 3 && AData.cols === 3)) {
-        isAnimSupported = true;
-        animMatrix = res.AT;
-        animOptions = {
-          mode: "transpose",
-          originalMatrix: AData.values,
-          transposeMatrix: res.AT,
-          title: "Ma trận Chuyển vị Aᵀ"
-        };
-      } else if (AData.rows === 2 && AData.cols === 3) {
-        isAnimSupported = true;
-        animMatrix = res.AT;
-        animOptions = { mode: "embed_2d_to_3d", originalMatrix: AData.values, title: "Chuyển vị Aᵀ: Nhúng mặt phẳng 2D vào không gian 3D" };
-      } else if (AData.rows === 3 && AData.cols === 2) {
-        isAnimSupported = true;
-        animMatrix = res.AT;
-        animOptions = { mode: "project_3d_to_2d", originalMatrix: AData.values, title: "Chuyển vị Aᵀ: Chiếu không gian 3D xuống mặt phẳng 2D" };
-      }
-    } else if (op === "mul_matrix") {
-      title = "TÍCH HAI MA TRẬN";
-      const BData = parseMatrixGridValues("matrixCalcGridB", "matrixCalcRowsB", "matrixCalcColsB");
-      if (!BData) {
-        detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Phép nhân hai ma trận tương ứng với phép hợp thành hai ánh xạ tuyến tính liên tiếp trong không gian: \\( (T_A \\circ T_B)(\\vec{x}) = A(B\\vec{x}) \\).
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            Vui lòng nhập đầy đủ các phần tử của ma trận B để thực hiện phép nhân.
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            Cần xác định đầy đủ ma trận thứ hai để tính toán ánh xạ hợp thành và vị trí hệ vector cơ sở đích.
-          </div>
-        `;
-        resultLatex = "\\text{Chưa nhập ma trận B}";
-      } else if (AData.cols !== BData.rows) {
-        detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Điều kiện nhân ma trận: Ma trận \\( A \\in \\mathcal{M}_{m \\times p} \\) chỉ có thể nhân với ma trận \\( B \\in \\mathcal{M}_{q \\times n} \\) khi và chỉ khi \\( p = q \\) (số cột của A bằng số hàng của B).
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            Số cột của ma trận A (${AData.cols}) khác số hàng của ma trận B (${BData.rows}). Phép nhân ma trận \\( A \\times B \\) không thể thực hiện do không đồng nhất số chiều liên kết.
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            Biến đổi hợp thành đòi hỏi không gian đích của biến đổi thứ nhất (do B thực hiện) phải trùng với không gian nguồn của biến đổi thứ hai (do A thực hiện). Sự sai lệch kích thước khiến chuỗi biến đổi không thể liên kết liên tiếp.
-          </div>
-        `;
-        resultLatex = "\\text{Lỗi kích thước}";
-      } else {
-        const res = computeMulMatrixWithSteps(AData.values, BData.values);
-        resultLatex = `A \\times B = ${toMatrixLatex(res.C)}`;
-        let part1Steps = res.steps.join("<br/>");
-        let part2Geom = `
-          • <b>Hợp thành ánh xạ tuyến tính:</b> Phép nhân ma trận \\( A \\times B \\) đại diện cho phép hợp thành hai biến đổi tuyến tính: áp dụng biến đổi B trước, sau đó tiếp tục áp dụng biến đổi A lên kết quả thu được: \\( (T_A \\circ T_B)(\\vec{x}) = A(B\\vec{x}) \\).<br/>
-          • <b>Các cột của ma trận tích C:</b> Vị trí đích của vector cơ sở thứ j là ảnh của vector cột thứ j của B qua ma trận A: \\( \\text{Col}_j(C) = A \\cdot \\text{Col}_j(B) \\).<br/>
-          • <b>Tính không giao hoán:</b> Việc biến đổi theo B rồi theo A nhìn chung cho kết quả khác với biến đổi theo A rồi theo B, thể hiện tính chất \\( A \\times B \\neq B \\times A \\).
-        `;
-        if (AData.rows === 2 && AData.cols === 3 && BData.rows === 3 && BData.cols === 2) {
-          part2Geom += `<br/>• <b>Tiến trình liên tiếp (2D lên 3D rồi về 2D):</b><br/>
-          - Giai đoạn 1 (ma trận B kích thước 3×2): Nhúng mặt phẳng 2D ban đầu thành một không gian con 2 chiều trong không gian ba chiều.<br/>
-          - Giai đoạn 2 (ma trận A kích thước 2×3): Chiếu không gian 3D trở lại mặt phẳng hai chiều. Kết quả là ma trận tích C cấp 2×2.`;
-        } else if (AData.rows === 3 && AData.cols === 2 && BData.rows === 2 && BData.cols === 3) {
-          part2Geom += `<br/>• <b>Tiến trình liên tiếp (3D xuống 2D rồi lên 3D):</b><br/>
-          - Giai đoạn 1 (ma trận B kích thước 2×3): Chiếu không gian 3D xuống mặt phẳng 2D, thể tích triệt tiêu về 0.<br/>
-          - Giai đoạn 2 (ma trận A kích thước 3×2): Nhúng mặt phẳng 2D trở lại không gian 3D thành một không gian con 2 chiều (hạng của ma trận tích C bằng 2 và định thức bằng 0).`;
-        }
-
-        let mulParamContextHtml = paramContextHtml;
-        if (BData && BData.isParametric && BData.paramMat) {
-          const pMatB = BData.paramMat;
-          const pDescB = pMatB.vars && pMatB.vars.length > 1
-            ? Object.entries(pMatB.scopeValues).filter(([k]) => pMatB.vars.includes(k)).map(([k, v]) => `${k} = ${fmtVal(v)}`).join(", ")
-            : `${pMatB.paramVar || 't'} = ${fmtVal(pMatB.paramVal)}`;
-          mulParamContextHtml += `
-            <div style="margin-bottom:8px; padding:6px 8px; background:var(--bg-subtle, rgba(255,255,255,0.04)); border:1px solid var(--border-subtle, rgba(255,255,255,0.08)); border-radius:2px; font-size:12px;">
-              • Ma trận tham số: ${rawMatToLatex(BData, "B")}<br/>
-              • Giá trị tham số hiện tại: \\( ${pDescB} \\)
-            </div>
-          `;
-        }
-
-        detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Tích của hai ma trận \\( A \\in \\mathcal{M}_{${AData.rows} \\times ${AData.cols}}(\\mathbb{R}) \\) và \\( B \\in \\mathcal{M}_{${BData.rows} \\times ${BData.cols}}(\\mathbb{R}) \\) là ma trận \\( C = AB \\in \\mathcal{M}_{${AData.rows} \\times ${BData.cols}}(\\mathbb{R}) \\) với phần tử tại dòng i, cột j là tích vô hướng của dòng i của A với cột j của B:<br/>
-            \\( c_{ij} = \\sum_{k=1}^{${AData.cols}} a_{ik} b_{kj} = a_{i1}b_{1j} + a_{i2}b_{2j} + \\dots + a_{i${AData.cols}}b_{${AData.cols}j} \\)
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            ${mulParamContextHtml}
-            ${part1Steps}
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            ${part2Geom}
-          </div>
-        `;
-        if (AData.rows === 2 && AData.cols === 2 && BData.rows === 2 && BData.cols === 2) {
-          isAnimSupported = true;
-          animMatrix = res.C;
-          animOptions = {
-            mode: "compound",
-            matrix1: BData.values,
-            matrix2: res.C,
-            title: "A ✕ B (Biến đổi liên hoàn)"
-          };
-        } else if (AData.rows === 3 && AData.cols === 3 && BData.rows === 3 && BData.cols === 3) {
-          isAnimSupported = true;
-          animMatrix = res.C;
-          animOptions = {
-            mode: "compound",
-            matrix1: BData.values,
-            matrix2: res.C,
-            title: "A ✕ B (Biến đổi liên hoàn)"
-          };
-        } else if (AData.rows === 2 && AData.cols === 3 && BData.rows === 3 && BData.cols === 2) {
-          isAnimSupported = true;
-          animMatrix = res.C;
-          animOptions = {
-            mode: "cross_compound_2d_3d_2d",
-            matrixB: BData.values,
-            matrixA: AData.values,
-            matrixC: res.C,
-            resultC: res.C,
-            title: "A(2✕3) ✕ B(3✕2): Nhúng 2D lên 3D rồi chiếu về 2D"
-          };
-        } else if (AData.rows === 3 && AData.cols === 2 && BData.rows === 2 && BData.cols === 3) {
-          isAnimSupported = true;
-          animMatrix = res.C;
-          animOptions = {
-            mode: "cross_compound_3d_2d_3d",
-            matrixB: BData.values,
-            matrixA: AData.values,
-            matrixC: res.C,
-            resultC: res.C,
-            title: "A(3✕2) ✕ B(2✕3): Nén 3D xuống 2D rồi nâng lên mặt phẳng nghiêng"
-          };
-        }
-      }
-    }
-
-    if (resultBox) {
-      let latexHtml = `\\( ${resultLatex} \\)`;
-      if (window.katex && typeof window.katex.renderToString === "function") {
-        try {
-          latexHtml = window.katex.renderToString(resultLatex, { displayMode: true, throwOnError: false });
-        } catch (e) {
-          latexHtml = `\\( ${resultLatex} \\)`;
-        }
-      }
-
+    if (resultBox && resCard) {
       resultBox.className = "";
       resultBox.style.display = "block";
       resultBox.style.padding = "0";
       resultBox.style.border = "none";
       resultBox.style.background = "transparent";
-      resultBox.innerHTML = App.renderUnifiedResult(
-        title,
-        `<div class="calc-result-latex" style="overflow-x: auto; padding: 4px 0; font-size: 15px;">${latexHtml}</div>`
-      ) + App.renderExplanationBox(detailsHtml);
-
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        if (triggerAnimation) {
-          if (App._matCalcMathJaxTimer) clearTimeout(App._matCalcMathJaxTimer);
-          window.MathJax.typesetPromise([resultBox]).catch(console.warn);
-        } else {
-          if (App._matCalcMathJaxTimer) clearTimeout(App._matCalcMathJaxTimer);
-          App._matCalcMathJaxTimer = setTimeout(() => {
-            if (window.MathJax && window.MathJax.typesetPromise) {
-              window.MathJax.typesetPromise([resultBox]).catch(console.warn);
-            }
-          }, 200);
-        }
+      if (bundle.isError) {
+        resCard.mountError(resultBox, bundle.errorMessageHtml, bundle.errorTitle);
+      } else {
+        resCard.mount(resultBox, bundle.cardOptions);
       }
     }
 
-    if (window.App?.PaperLogger && resultLatex && !resultLatex.includes("Lỗi") && !resultLatex.includes("Chưa") && !resultLatex.includes("Không")) {
-      App.PaperLogger.log(title, resultLatex, "");
+    if (sync && bundle && bundle.modalConfig) {
+      sync.save("calc_matrix", App.getMatrixCalcSig(), bundle.modalConfig);
+    }
+
+    if (shouldLog && !bundle.isError && window.App?.PaperLogger && bundle.logLatex) {
+      App.PaperLogger.log(bundle.logTitle || "Phép tính ma trận", bundle.logLatex, "", bundle.modalConfig);
+    }
+
+    let animOptions = null;
+    let animMatrix = null;
+    let isAnimSupported = false;
+
+    if (!bundle.isError) {
+      if (op === "det" && (AData.rows === 2 || AData.rows === 3)) {
+        isAnimSupported = true;
+        animMatrix = AData.values;
+        animOptions = { mode: "det", title: `Định thức: det = ${fmtVal(bundle.det)}` };
+      } else if (op === "inv" && (AData.rows === 2 || AData.rows === 3)) {
+        if (!bundle.invertible) {
+          isAnimSupported = true;
+          animMatrix = AData.values;
+          animOptions = { mode: "rank", rank: bundle.rank, title: "Suy biến: det = 0 (Không khả nghịch)" };
+        } else if (bundle.invMatrix) {
+          isAnimSupported = true;
+          animMatrix = bundle.invMatrix;
+          animOptions = {
+            mode: "inv",
+            originalMatrix: AData.values,
+            invMatrix: bundle.invMatrix,
+            title: "Ma trận Nghịch đảo A⁻¹"
+          };
+        }
+      } else if (op === "rank") {
+        if ((AData.rows === 2 && AData.cols === 2) || (AData.rows === 3 && AData.cols === 3)) {
+          isAnimSupported = true;
+          animMatrix = AData.values;
+          animOptions = {
+            mode: "rank",
+            rank: bundle.rank,
+            nullity: bundle.nullity,
+            originalMatrix: AData.values,
+            title: `Hạng Ma trận: Rank = ${bundle.rank}/${AData.cols}`
+          };
+        }
+      } else if (op === "transpose" && bundle.transposeMatrix) {
+        if ((AData.rows === 2 && AData.cols === 2) || (AData.rows === 3 && AData.cols === 3)) {
+          isAnimSupported = true;
+          animMatrix = bundle.transposeMatrix;
+          animOptions = {
+            mode: "transpose",
+            originalMatrix: AData.values,
+            transposeMatrix: bundle.transposeMatrix,
+            title: "Ma trận Chuyển vị Aᵀ"
+          };
+        } else if (AData.rows === 2 && AData.cols === 3) {
+          isAnimSupported = true;
+          animMatrix = bundle.transposeMatrix;
+          animOptions = {
+            mode: "embed_2d_to_3d",
+            originalMatrix: AData.values,
+            title: "Chuyển vị Aᵀ: Nhúng mặt phẳng 2D vào không gian 3D"
+          };
+        } else if (AData.rows === 3 && AData.cols === 2) {
+          isAnimSupported = true;
+          animMatrix = bundle.transposeMatrix;
+          animOptions = {
+            mode: "project_3d_to_2d",
+            originalMatrix: AData.values,
+            title: "Chuyển vị Aᵀ: Chiếu không gian 3D xuống mặt phẳng 2D"
+          };
+        }
+      } else if (op === "mul_matrix" && BData && bundle.productMatrix) {
+        if (
+          (AData.rows === 2 && AData.cols === 2 && BData.rows === 2 && BData.cols === 2) ||
+          (AData.rows === 3 && AData.cols === 3 && BData.rows === 3 && BData.cols === 3)
+        ) {
+          isAnimSupported = true;
+          animMatrix = bundle.productMatrix;
+          animOptions = {
+            mode: "compound",
+            matrix1: BData.values,
+            matrix2: bundle.productMatrix,
+            title: "A ✕ B (Biến đổi liên hoàn)"
+          };
+        } else if (AData.rows === 2 && AData.cols === 3 && BData.rows === 3 && BData.cols === 2) {
+          isAnimSupported = true;
+          animMatrix = bundle.productMatrix;
+          animOptions = {
+            mode: "cross_compound_2d_3d_2d",
+            matrixB: BData.values,
+            matrixA: AData.values,
+            matrixC: bundle.productMatrix,
+            resultC: bundle.productMatrix,
+            title: "A(2✕3) ✕ B(3✕2): Nhúng 2D lên 3D rồi chiếu về 2D"
+          };
+        } else if (AData.rows === 3 && AData.cols === 2 && BData.rows === 2 && BData.cols === 3) {
+          isAnimSupported = true;
+          animMatrix = bundle.productMatrix;
+          animOptions = {
+            mode: "cross_compound_3d_2d_3d",
+            matrixB: BData.values,
+            matrixA: AData.values,
+            matrixC: bundle.productMatrix,
+            resultC: bundle.productMatrix,
+            title: "A(3✕2) ✕ B(2✕3): Nén 3D xuống 2D rồi nâng lên mặt phẳng nghiêng"
+          };
+        }
+      }
     }
 
     const playbackHUD = document.getElementById("sidebarTransformPlayback");
@@ -5069,13 +4807,15 @@
       if (window.App?.LinearTransform) {
         App.LinearTransform.start(animMatrix, [], animOptions);
       }
-    } else {
+    } else if (triggerAnimation) {
       if (btnMatrixReplay) btnMatrixReplay.style.display = "none";
       if (playbackHUD) playbackHUD.style.display = "none";
-      if (triggerAnimation && !isAnimSupported && window.App?.showToast) {
+      if (!bundle.isError && !isAnimSupported && window.App?.showToast) {
         App.showToast(`Phép tính ma trận hiện tại chỉ hỗ trợ hiển thị số học, không trực quan hóa động trong không gian 2D/3D.`, "info");
       }
     }
+
+    return bundle ? bundle.modalConfig : null;
   };
 
   // Hoạt cảnh biến đổi hình học Nori mượt mà - Độc lập 100% không tạo vector cơ sở hay khung hộp
@@ -5128,30 +4868,99 @@
     App._noriAnimFrame = requestAnimationFrame(step);
   };
 
-  App.runMixedCalc = function (triggerAnimation = true) {
+  App.getMixedCalcSig = function () {
+    const matSel = document.getElementById("mixedMatrixSelect");
+    const vecSel = document.getElementById("mixedVectorSelect");
+    const sync = window.App?.SolutionSync;
+
+    const matVal = matSel ? String(matSel.value || "") : "";
+    const mObj = (App.matrixList || []).find((m) => String(m.id) === matVal) || null;
+    const matSig = mObj
+      ? `${matVal}:${mObj.name || "A"}:${sync?.matrixSig ? sync.matrixSig(mObj.values) : JSON.stringify(mObj.values)}`
+      : `none:${matVal}`;
+
+    const vecVal = vecSel ? String(vecSel.value || "") : "";
+    let vecSig = `none:${vecVal}`;
+    if (vecVal === "all") {
+      vecSig = "all:" + (sync?.vectorItemsSig ? sync.vectorItemsSig(App.vectorList || []) : String((App.vectorList || []).length));
+    } else if (vecVal === "nori_entity") {
+      vecSig = "nori_entity";
+    } else if (vecVal) {
+      const vObj = (App.vectorList || []).find((v) => String(v.id) === vecVal) || null;
+      if (vObj && vObj.isImageMesh) {
+        vecSig = `mesh:${vObj.id}:${(vObj.baseWorldPoints || vObj.worldPoints || []).length}`;
+      } else if (vObj) {
+        vecSig = "vec:" + (sync?.vectorItemsSig ? sync.vectorItemsSig([vObj]) : JSON.stringify(vObj.vec));
+      }
+    }
+    return `mixedop:${matSig}|${vecSig}`;
+  };
+
+  App.runMixedCalc = function (triggerAnimation = true, opts = {}) {
+    const skipSceneMutate = !!opts.skipSceneMutate;
+    const shouldLog = opts.logHistory !== undefined ? !!opts.logHistory : !!triggerAnimation;
     const resultBox = document.getElementById("mixedResultBox");
     const matSel = document.getElementById("mixedMatrixSelect");
     const vecSel = document.getElementById("mixedVectorSelect");
+    const calcGen = window.App?.TasksGen?.CalcOps;
+    const resCard = window.App?.ResultCard;
+    const sync = window.App?.SolutionSync;
+
+    const mountMixedBundle = (bundle) => {
+      if (!resultBox || !resCard || !bundle) return;
+      resultBox.className = "";
+      resultBox.style.display = "block";
+      resultBox.style.padding = "0";
+      resultBox.style.border = "none";
+      resultBox.style.background = "transparent";
+      if (bundle.isError) {
+        resCard.mountError(resultBox, bundle.errorMessageHtml, bundle.errorTitle);
+      } else {
+        resCard.mount(resultBox, bundle.cardOptions);
+      }
+    };
 
     if (!matSel || !matSel.value) {
-      if (window.App?.showToast) App.showToast("Chưa chọn ma trận. Hãy tạo ma trận ở tab Khởi tạo trước.", "warning");
-      return;
-    }
-    if (!vecSel || !vecSel.value) {
-      if (window.App?.showToast) App.showToast("Chưa chọn vector. Hãy tạo vector ở tab Khởi tạo trước.", "warning");
-      return;
+      if (!opts.silentToast && window.App?.showToast) {
+        App.showToast("Chưa chọn ma trận. Hãy tạo ma trận ở tab Khởi tạo trước.", "warning");
+      }
+      const errBundle = calcGen?.buildMixedOp
+        ? calcGen.buildMixedOp({ mode: "single", A: [], matrixName: "A", targetVectors: [] })
+        : null;
+      if (skipSceneMutate && errBundle) mountMixedBundle(errBundle);
+      if (sync && errBundle?.modalConfig) sync.save("calc_mixed", App.getMixedCalcSig(), errBundle.modalConfig);
+      return errBundle ? errBundle.modalConfig : null;
     }
 
     const mObj = (App.matrixList || []).find((m) => String(m.id) === String(matSel.value));
     if (!mObj || !Array.isArray(mObj.values) || mObj.values.length === 0) {
-      if (window.App?.showToast) App.showToast("Ma trận đã chọn không hợp lệ.", "error");
-      return;
+      if (!opts.silentToast && window.App?.showToast) {
+        App.showToast("Ma trận đã chọn không hợp lệ.", "error");
+      }
+      const errBundle = calcGen?.buildMixedOp
+        ? calcGen.buildMixedOp({ mode: "single", A: [], matrixName: "A", targetVectors: [] })
+        : null;
+      if (skipSceneMutate && errBundle) mountMixedBundle(errBundle);
+      if (sync && errBundle?.modalConfig) sync.save("calc_mixed", App.getMixedCalcSig(), errBundle.modalConfig);
+      return errBundle ? errBundle.modalConfig : null;
     }
 
     const matrixValues = mObj.values;
     const matrixName = mObj.name || "A";
     const rowsA = matrixValues.length;
     const colsA = matrixValues[0].length;
+
+    if (!vecSel || !vecSel.value) {
+      if (!opts.silentToast && window.App?.showToast) {
+        App.showToast("Chưa chọn vector. Hãy tạo vector ở tab Khởi tạo trước.", "warning");
+      }
+      const errBundle = calcGen?.buildMixedOp
+        ? calcGen.buildMixedOp({ mode: "single", A: matrixValues, matrixName, targetVectors: [] })
+        : null;
+      if (skipSceneMutate && errBundle) mountMixedBundle(errBundle);
+      if (sync && errBundle?.modalConfig) sync.save("calc_mixed", App.getMixedCalcSig(), errBundle.modalConfig);
+      return errBundle ? errBundle.modalConfig : null;
+    }
 
     let targetVectors = [];
     if (vecSel.value === "all") {
@@ -5167,132 +4976,77 @@
       });
     } else {
       const vObj = (App.vectorList || []).find((v) => String(v.id) === String(vecSel.value));
-      
-      // XỬ LÝ BIẾN ĐỔI TUYẾN TÍNH CHO TRANH VECTOR MESH
+
+      // 1. BIẾN ĐỔI TUYẾN TÍNH CHO TRANH VECTOR MESH
       if (vObj && vObj.isImageMesh) {
-        if (colsA < 2 || colsA > 3 || rowsA < 2 || rowsA > 3) {
-          const msg = `Ma trận biến đổi tranh vector cần có kích thước 2x2 hoặc 3x3 (hiện tại: ${rowsA}x${colsA}).`;
-          if (window.App?.showToast) App.showToast(msg, "warning");
-          if (resultBox) {
-            resultBox.className = "";
-            resultBox.style.display = "block";
-            resultBox.innerHTML = App.renderUnifiedResult(
-              "LỖI KÍCH THƯỚC",
-              `<span style="color:var(--danger, #e5484d); font-size:12px;">${msg}</span>`
-            );
+        const numPts = (vObj.baseWorldPoints || vObj.worldPoints || []).length;
+        const meshBundle = calcGen?.buildMixedOp
+          ? calcGen.buildMixedOp({ mode: "mesh", A: matrixValues, matrixName, numPoints: numPts })
+          : null;
+
+        if (meshBundle && meshBundle.isError) {
+          if (!opts.silentToast && window.App?.showToast) {
+            App.showToast(`Ma trận biến đổi tranh vector cần có kích thước 2x2 hoặc 3x3 (hiện tại: ${rowsA}x${colsA}).`, "warning");
           }
-          return;
+          mountMixedBundle(meshBundle);
+          if (sync && meshBundle.modalConfig) sync.save("calc_mixed", App.getMixedCalcSig(), meshBundle.modalConfig);
+          return meshBundle.modalConfig;
         }
 
-        // Đảm bảo có lưu tọa độ đỉnh gốc (baseWorldPoints)
-        if (!vObj.baseWorldPoints || vObj.baseWorldPoints.length !== vObj.worldPoints.length) {
-          vObj.baseWorldPoints = vObj.worldPoints.map(p => [p[0], p[1], p[2] || 0]);
-        }
-
-        const basePts = vObj.baseWorldPoints;
-        const numPts = basePts.length;
-        const newWorldPoints = new Array(numPts);
-
-        const m00 = Number(matrixValues[0][0]) || 0;
-        const m01 = Number(matrixValues[0][1]) || 0;
-        const m02 = colsA >= 3 ? (Number(matrixValues[0][2]) || 0) : 0;
-
-        const m10 = Number(matrixValues[1][0]) || 0;
-        const m11 = Number(matrixValues[1][1]) || 0;
-        const m12 = colsA >= 3 ? (Number(matrixValues[1][2]) || 0) : 0;
-
-        const m20 = rowsA >= 3 ? (Number(matrixValues[2][0]) || 0) : 0;
-        const m21 = rowsA >= 3 ? (Number(matrixValues[2][1]) || 0) : 0;
-        const m22 = rowsA >= 3 && colsA >= 3 ? (Number(matrixValues[2][2]) || 0) : 1;
-
-        if (rowsA === 2 && colsA === 2) {
-          for (let i = 0; i < numPts; i++) {
-            const bp = basePts[i];
-            const nx = m00 * bp[0] + m01 * bp[1];
-            const ny = m10 * bp[0] + m11 * bp[1];
-            newWorldPoints[i] = [nx, ny, bp[2]];
+        if (!skipSceneMutate) {
+          if (!vObj.baseWorldPoints || vObj.baseWorldPoints.length !== vObj.worldPoints.length) {
+            vObj.baseWorldPoints = vObj.worldPoints.map((p) => [p[0], p[1], p[2] || 0]);
           }
-        } else {
-          for (let i = 0; i < numPts; i++) {
-            const bp = basePts[i];
-            const nx = m00 * bp[0] + m01 * bp[1] + m02 * bp[2];
-            const ny = m10 * bp[0] + m11 * bp[1] + m12 * bp[2];
-            const nz = m20 * bp[0] + m21 * bp[1] + m22 * bp[2];
-            newWorldPoints[i] = [nx, ny, nz];
+
+          const basePts = vObj.baseWorldPoints;
+          const totalPts = basePts.length;
+          const newWorldPoints = new Array(totalPts);
+
+          const m00 = Number(matrixValues[0][0]) || 0;
+          const m01 = Number(matrixValues[0][1]) || 0;
+          const m02 = colsA >= 3 ? (Number(matrixValues[0][2]) || 0) : 0;
+
+          const m10 = Number(matrixValues[1][0]) || 0;
+          const m11 = Number(matrixValues[1][1]) || 0;
+          const m12 = colsA >= 3 ? (Number(matrixValues[1][2]) || 0) : 0;
+
+          const m20 = rowsA >= 3 ? (Number(matrixValues[2][0]) || 0) : 0;
+          const m21 = rowsA >= 3 ? (Number(matrixValues[2][1]) || 0) : 0;
+          const m22 = rowsA >= 3 && colsA >= 3 ? (Number(matrixValues[2][2]) || 0) : 1;
+
+          if (rowsA === 2 && colsA === 2) {
+            for (let i = 0; i < totalPts; i++) {
+              const bp = basePts[i];
+              newWorldPoints[i] = [m00 * bp[0] + m01 * bp[1], m10 * bp[0] + m11 * bp[1], bp[2]];
+            }
+          } else {
+            for (let i = 0; i < totalPts; i++) {
+              const bp = basePts[i];
+              newWorldPoints[i] = [
+                m00 * bp[0] + m01 * bp[1] + m02 * bp[2],
+                m10 * bp[0] + m11 * bp[1] + m12 * bp[2],
+                m20 * bp[0] + m21 * bp[1] + m22 * bp[2]
+              ];
+            }
+          }
+
+          vObj.worldPoints = newWorldPoints;
+          vObj.activeTransformMatrix = matrixValues;
+
+          if (App.mode === "3D" && window.Vec3D?.hardRefresh3D) {
+            Vec3D.hardRefresh3D(false);
+          } else if (window.Vec2D?.draw2DAllVectors) {
+            Vec2D.draw2DAllVectors();
           }
         }
 
-        vObj.worldPoints = newWorldPoints;
-        vObj.activeTransformMatrix = matrixValues;
-
-        // Vẽ lại đồ thị
-        if (App.mode === "3D" && window.Vec3D?.hardRefresh3D) {
-          Vec3D.hardRefresh3D(false);
-        } else if (window.Vec2D?.draw2DAllVectors) {
-          Vec2D.draw2DAllVectors();
-        }
-
-        // Tính định thức và giải thích hình học
-        let det = 0;
-        if (rowsA === 2 && colsA === 2) {
-          det = m00 * m11 - m01 * m10;
-        } else if (rowsA === 3 && colsA === 3) {
-          det = m00 * (m11 * m22 - m12 * m21) - m01 * (m10 * m22 - m12 * m20) + m02 * (m10 * m21 - m11 * m20);
-        }
-
-        const detVal = parseFloat(det.toFixed(4));
-        const isSingular = Math.abs(det) < 1e-6;
-        const isNegative = det < -1e-6;
-
-        let geomExplanation = "";
-        if (isSingular) {
-          geomExplanation = `<b>Toán tử suy biến (Hạng &lt; ${rowsA}):</b> Định thức \\( \\det(A) = 0 \\). Không gian bị sụp số chiều, tập hợp ${numPts.toLocaleString()} vector đỉnh bị ánh xạ co cụm vào không gian con có số chiều thấp hơn (đường thẳng hoặc gốc tọa độ).`;
-        } else if (isNegative) {
-          geomExplanation = `<b>Ánh xạ đảo chiều định hướng (Orientation Reversing):</b> Định thức \\( \\det(A) = ${detVal} &lt; 0 \\). Không gian bị phản xạ qua một trục đối xứng, đồng thời diện tích co dãn theo tỉ lệ \\( |\\det(A)| = ${Math.abs(detVal)} \\).`;
-        } else {
-          geomExplanation = `<b>Ánh xạ bảo toàn định hướng:</b> Định thức \\( \\det(A) = ${detVal} > 0 \\). Toàn bộ lưới tam giác bảo toàn chiều định hướng chuẩn và co dãn diện tích theo hệ số \\( \\det(A) = ${detVal} \\).`;
-        }
-
-        const col1 = rowsA === 2 ? `\\begin{pmatrix} ${m00.toFixed(2)} \\\\ ${m10.toFixed(2)} \\end{pmatrix}` : `\\begin{pmatrix} ${m00.toFixed(2)} \\\\ ${m10.toFixed(2)} \\\\ ${m20.toFixed(2)} \\end{pmatrix}`;
-        const col2 = rowsA === 2 ? `\\begin{pmatrix} ${m01.toFixed(2)} \\\\ ${m11.toFixed(2)} \\end{pmatrix}` : `\\begin{pmatrix} ${m01.toFixed(2)} \\\\ ${m11.toFixed(2)} \\\\ ${m21.toFixed(2)} \\end{pmatrix}`;
-
-        let detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Toán tử tuyến tính \\( T: \\mathbb{R}^{${colsA}} \\to \\mathbb{R}^{${rowsA}} \\) biểu diễn bởi ma trận chính tắc \\( ${matrixName} \\) tác động lên từng vector vị trí đỉnh \\( \\vec{p} \\):<br/>
-            \\( T(\\vec{p}) = ${matrixName} \\cdot \\vec{p} \\)
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            Áp dụng ánh xạ lên toàn bộ <b>${numPts.toLocaleString()} vector đỉnh</b> của mô hình:<br/>
-            • Vector cơ sở thứ nhất: \\( \\vec{i}' = ${col1} \\)<br/>
-            • Vector cơ sở thứ hai: \\( \\vec{j}' = ${col2} \\)<br/>
-            • Định thức ma trận toán tử: \\( \\det(${matrixName}) = ${detVal} \\)
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            ${geomExplanation}
-          </div>
-          <div style="margin-top:10px; display:flex; gap:8px;">
-            <button type="button" id="btnResetMeshTransform" class="btn" style="flex:1; padding:7px 10px; font-size:12px; font-weight:600; border-radius:2px; border:1px solid var(--border-subtle, #33383f); background:var(--bg-card, #18191b); color:var(--text-main, #eee); cursor:pointer;">
-              <i class="ph ph-arrow-counter-clockwise"></i> Khôi phục hình dạng gốc
-            </button>
-          </div>
-        `;
-
+        mountMixedBundle(meshBundle);
         if (resultBox) {
-          resultBox.className = "";
-          resultBox.style.display = "block";
-          resultBox.innerHTML = App.renderUnifiedResult(
-            `BIẾN ĐỔI TRANH VECTOR (${matrixName} · TRANH)`,
-            detailsHtml
-          );
-
           const resetBtn = resultBox.querySelector("#btnResetMeshTransform");
           if (resetBtn) {
             resetBtn.onclick = () => {
               if (vObj.baseWorldPoints) {
-                vObj.worldPoints = vObj.baseWorldPoints.map(p => [...p]);
+                vObj.worldPoints = vObj.baseWorldPoints.map((p) => [...p]);
                 vObj.activeTransformMatrix = null;
                 if (App.mode === "3D" && window.Vec3D?.hardRefresh3D) {
                   Vec3D.hardRefresh3D(false);
@@ -5305,88 +5059,30 @@
           }
         }
 
-        if (window.MathJax && window.MathJax.typesetPromise) {
-          window.MathJax.typesetPromise([resultBox]).catch(() => {});
+        if (sync && meshBundle?.modalConfig) sync.save("calc_mixed", App.getMixedCalcSig(), meshBundle.modalConfig);
+        if (shouldLog && meshBundle && !meshBundle.isError && window.App?.PaperLogger && meshBundle.logLatex) {
+          App.PaperLogger.log(meshBundle.logTitle, meshBundle.logLatex, "", meshBundle.modalConfig);
         }
-        return;
+        return meshBundle ? meshBundle.modalConfig : null;
       }
 
+      // 2. BIẾN ĐỔI TUYẾN TÍNH CHO THỰC THỂ NORI 2D
       if (vecSel.value === "nori_entity") {
-        if (!App.noriEntityActive && typeof App.toggleNoriEntity === "function") {
-          App.toggleNoriEntity();
-        }
+        const noriBundle = calcGen?.buildMixedOp
+          ? calcGen.buildMixedOp({ mode: "nori", A: matrixValues, matrixName })
+          : null;
 
-        if (colsA !== 2 || rowsA !== 2) {
-          const msg = `Linh vật Nori là thực thể 2D phẳng, chỉ hỗ trợ biến đổi với ma trận vuông 2x2 (hiện tại: ${rowsA}x${colsA}).`;
-          if (window.App?.showToast) App.showToast(msg, "warning");
-          if (resultBox) {
-            resultBox.className = "";
-            resultBox.style.display = "block";
-            resultBox.innerHTML = App.renderUnifiedResult(
-              "LỖI KÍCH THƯỚC",
-              `<span style="color:var(--danger, #e5484d); font-size:12px;">${msg}</span>`
-            );
+        if (noriBundle && noriBundle.isError) {
+          if (!opts.silentToast && window.App?.showToast) {
+            App.showToast(`Linh vật Nori là thực thể 2D phẳng, chỉ hỗ trợ biến đổi với ma trận vuông 2x2 (hiện tại: ${rowsA}x${colsA}).`, "warning");
           }
-          return;
+          mountMixedBundle(noriBundle);
+          if (sync && noriBundle.modalConfig) sync.save("calc_mixed", App.getMixedCalcSig(), noriBundle.modalConfig);
+          return noriBundle.modalConfig;
         }
 
-        const a = Number(matrixValues[0][0]) || 0;
-        const b = Number(matrixValues[0][1]) || 0;
-        const c = Number(matrixValues[1][0]) || 0;
-        const d = Number(matrixValues[1][1]) || 0;
-        const det = a * d - b * c;
-        const detVal = parseFloat(det.toFixed(4));
-        const isSingular = Math.abs(det) < 0.06;
-        const isNegative = det < -1e-6;
-
-        let geomExplanation = "";
-        if (isSingular) {
-          geomExplanation = `<b>Toán tử suy biến (det ≈ 0):</b> Định thức \\( \\det(${matrixName}) = 0 \\). Mặt phẳng bị suy biến số chiều, thực thể 2 chiều bị ánh xạ co cụm vào không gian con 1 chiều.`;
-        } else if (detVal < 0) {
-          geomExplanation = `<b>Phép biến đổi đảo định hướng (det = ${detVal} &lt; 0):</b> Định thức âm biểu diễn phép phản xạ qua đường thẳng, đảo ngược chiều quay chuẩn của mặt phẳng tọa độ.`;
-        } else {
-          geomExplanation = `<b>Toán tử tuyến tính bảo toàn định hướng:</b> Định thức \\( \\det(${matrixName}) = ${detVal} > 0 \\). Toàn bộ thực thể co dãn diện tích theo tỉ lệ \\( \\det(${matrixName}) = ${detVal} \\).`;
-        }
-
-        const fmtValLocal = (n) => {
-          let x = Number(n);
-          if (isNaN(x)) return "0";
-          if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x));
-          return String(parseFloat(x.toFixed(4)));
-        };
-        const matLatexLocal = "\\begin{bmatrix} " + matrixValues.map(row => row.map(fmtValLocal).join(" & ")).join(" \\\\ ") + " \\end{bmatrix}";
-
-        let detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Toán tử tuyến tính trong mặt phẳng \\( T: \\mathbb{R}^2 \\to \\mathbb{R}^2 \\) xác định bởi ma trận cấp 2:\\( ${matrixName} \\):<br/>
-            \\( T(\\vec{x}) = ${matrixName} \\cdot \\vec{x} \\)
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            Tác động ma trận chuyển cơ sở lên các điểm tọa độ của thực thể:
-            <div style="margin: 6px 0; overflow-x:auto;">\\( ${matrixName} = ${matLatexLocal} \\)</div>
-            • Định thức ma trận: \\( \\det(${matrixName}) = ${detVal} \\)
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            ${geomExplanation}
-          </div>
-          <div style="margin-top:10px; display:flex; gap:8px;">
-            <button type="button" id="btnResetNoriTransform" class="btn" style="flex:1; padding:7px 10px; font-size:12px; font-weight:600; border-radius:2px; border:1px solid var(--border-subtle, #33383f); background:var(--bg-card, #18191b); color:var(--text-main, #eee); cursor:pointer;">
-              <i class="ph ph-arrow-counter-clockwise"></i> Khôi phục hình dạng Nori
-            </button>
-          </div>
-        `;
-
+        mountMixedBundle(noriBundle);
         if (resultBox) {
-          resultBox.className = "";
-          resultBox.style.display = "block";
-          resultBox.innerHTML = App.renderUnifiedResult(
-            `BIẾN ĐỔI LINH VẬT NORI (${matrixName} · NORI)`,
-            detailsHtml
-          );
-
           const resetBtn = resultBox.querySelector("#btnResetNoriTransform");
           if (resetBtn) {
             resetBtn.onclick = () => {
@@ -5411,13 +5107,156 @@
           }
         }
 
-        if (window.MathJax && window.MathJax.typesetPromise) {
-          window.MathJax.typesetPromise([resultBox]).catch(() => {});
+        if (sync && noriBundle?.modalConfig) sync.save("calc_mixed", App.getMixedCalcSig(), noriBundle.modalConfig);
+        if (shouldLog && noriBundle && !noriBundle.isError && window.App?.PaperLogger && noriBundle.logLatex) {
+          App.PaperLogger.log(noriBundle.logTitle, noriBundle.logLatex, "", noriBundle.modalConfig);
         }
 
-        const playbackHUD = document.getElementById("sidebarTransformPlayback");
+        if (!skipSceneMutate) {
+          if (!App.noriEntityActive && typeof App.toggleNoriEntity === "function") {
+            App.toggleNoriEntity();
+          }
 
-        if (App.mode !== "2D" && typeof App.toggleMode === "function") {
+          const playbackHUD = document.getElementById("sidebarTransformPlayback");
+          if (App.mode !== "2D" && typeof App.toggleMode === "function") {
+            App.toggleMode();
+          }
+
+          if (window.innerWidth < 768) {
+            const sidebar = document.getElementById("sidebar");
+            const hamburger = document.getElementById("floatingHamburger");
+            if (sidebar && sidebar.classList.contains("open")) sidebar.classList.remove("open");
+            if (hamburger && hamburger.classList.contains("active")) hamburger.classList.remove("active");
+          }
+
+          App.isNoriRelieved = false;
+
+          if (triggerAnimation) {
+            if (playbackHUD) playbackHUD.style.display = "block";
+            if (window.App?.LinearTransform) {
+              App.LinearTransform.start(matrixValues, []);
+            } else {
+              App.activeNoriTransformMatrix = matrixValues;
+              if (window.Vec2D?.draw2DAllVectors) Vec2D.draw2DAllVectors();
+            }
+          } else {
+            if (window.App?.LinearTransform && App.LinearTransform.isActive()) {
+              App.LinearTransform.updateLiveMatrix(matrixValues);
+            } else {
+              App.activeNoriTransformMatrix = matrixValues;
+              if (window.Vec2D?.draw2DAllVectors) Vec2D.draw2DAllVectors();
+            }
+          }
+        }
+        return noriBundle ? noriBundle.modalConfig : null;
+      }
+
+      if (vObj && Array.isArray(vObj.vec)) {
+        targetVectors.push({
+          id: vObj.id,
+          name: vObj.name || "v",
+          color: vObj.color || vObj.colorCss || "#0090ff",
+          rawVec: vObj.vec,
+          vec: vObj.vec.slice(0, colsA)
+        });
+      }
+    }
+
+    if (targetVectors.length === 0) {
+      if (!opts.silentToast && window.App?.showToast) {
+        App.showToast("Không tìm thấy vector phù hợp.", "warning");
+      }
+      const errBundle = calcGen?.buildMixedOp
+        ? calcGen.buildMixedOp({ mode: "single", A: matrixValues, matrixName, targetVectors: [] })
+        : null;
+      if (skipSceneMutate && errBundle) mountMixedBundle(errBundle);
+      if (sync && errBundle?.modalConfig) sync.save("calc_mixed", App.getMixedCalcSig(), errBundle.modalConfig);
+      return errBundle ? errBundle.modalConfig : null;
+    }
+
+    let addParamVecBtnHtml = "";
+    let symbolicVectorExpr = "";
+    const isSingleValidDim = targetVectors.length === 1 && (!targetVectors[0].rawVec || targetVectors[0].rawVec.length === colsA);
+    if (mObj.isParametric && isSingleValidDim) {
+      const tv = targetVectors[0];
+      const v = tv.vec;
+      const exprComponents = [];
+      for (let i = 0; i < rowsA; i++) {
+        const parts = [];
+        for (let j = 0; j < colsA; j++) {
+          const rawCell = (mObj.latexValues && mObj.latexValues[i] && mObj.latexValues[i][j])
+            ? mObj.latexValues[i][j]
+            : String(mObj.values[i][j]);
+          const vj = v[j] !== undefined ? v[j] : 0;
+          if (vj === 0) continue;
+          if (vj === 1) parts.push(`(${rawCell})`);
+          else if (vj === -1) parts.push(`(-(${rawCell}))`);
+          else parts.push(`(${vj})*(${rawCell})`);
+        }
+        exprComponents.push(parts.length > 0 ? parts.join(" + ") : "0");
+      }
+      symbolicVectorExpr = `[${exprComponents.join(", ")}]`;
+      addParamVecBtnHtml = `
+        <div style="display: flex; justify-content: flex-end;">
+          <button type="button" id="btnAddTransformedParamVec" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="ph ph-plus-circle" style="font-size: 15px;"></i> Lưu thành vector tham số
+          </button>
+        </div>
+      `;
+    }
+
+    if (!calcGen || typeof calcGen.buildMixedOp !== "function") return null;
+
+    const bundle = calcGen.buildMixedOp({
+      mode: vecSel.value === "all" ? "all" : "single",
+      A: matrixValues,
+      matrixName,
+      targetVectors,
+      extraFooterHtml: addParamVecBtnHtml
+    });
+
+    if (bundle.isError) {
+      if (!opts.silentToast && window.App?.showToast) {
+        App.showToast(bundle.errorTitle || "Kích thước ma trận và vector không khớp.", "warning");
+      }
+      mountMixedBundle(bundle);
+      if (sync && bundle.modalConfig) sync.save("calc_mixed", App.getMixedCalcSig(), bundle.modalConfig);
+      return bundle.modalConfig;
+    }
+
+    mountMixedBundle(bundle);
+    if (symbolicVectorExpr && resultBox) {
+      const btn = resultBox.querySelector("#btnAddTransformedParamVec");
+      if (btn) {
+        btn.onclick = () => {
+          const inp = document.getElementById("vectorInput");
+          if (inp) inp.value = symbolicVectorExpr;
+          if (typeof App.onAddVector === "function") {
+            App.onAddVector();
+            if (App.showToast) App.showToast("Đã thêm vector tham số từ kết quả biến đổi ma trận!");
+          }
+        };
+      }
+    }
+
+    if (sync && bundle.modalConfig) {
+      sync.save("calc_mixed", App.getMixedCalcSig(), bundle.modalConfig);
+    }
+    if (shouldLog && window.App?.PaperLogger && bundle.logLatex) {
+      App.PaperLogger.log(bundle.logTitle || "Biến đổi tuyến tính", bundle.logLatex, "", bundle.modalConfig);
+    }
+
+    if (!skipSceneMutate) {
+      const is2D = (rowsA === 2 && colsA === 2);
+      const is3D = (rowsA === 3 && colsA === 3);
+      const playbackHUD = document.getElementById("sidebarTransformPlayback");
+
+      if (triggerAnimation && (is2D || is3D)) {
+        if (playbackHUD) playbackHUD.style.display = "block";
+
+        if (is3D && App.mode !== "3D" && typeof App.toggleMode === "function") {
+          App.toggleMode();
+        } else if (is2D && App.mode !== "2D" && typeof App.toggleMode === "function") {
           App.toggleMode();
         }
 
@@ -5428,432 +5267,18 @@
           if (hamburger && hamburger.classList.contains("active")) hamburger.classList.remove("active");
         }
 
-        App.isNoriRelieved = false;
-
-        if (triggerAnimation) {
-          if (playbackHUD) playbackHUD.style.display = "block";
-          if (window.App?.LinearTransform) {
-            App.LinearTransform.start(matrixValues, []);
-          } else {
-            App.activeNoriTransformMatrix = matrixValues;
-            if (window.Vec2D?.draw2DAllVectors) Vec2D.draw2DAllVectors();
-          }
-        } else {
-          if (window.App?.LinearTransform && App.LinearTransform.isActive()) {
-            App.LinearTransform.updateLiveMatrix(matrixValues);
-          } else {
-            App.activeNoriTransformMatrix = matrixValues;
-            if (window.Vec2D?.draw2DAllVectors) Vec2D.draw2DAllVectors();
-          }
+        if (window.App?.LinearTransform) {
+          App.LinearTransform.start(matrixValues, targetVectors);
         }
-        return;
-      } else if (vObj && Array.isArray(vObj.vec)) {
-        if (vObj.vec.length !== colsA) {
-          const msg = `Kích thước không khớp: Ma trận ${matrixName} có ${colsA} cột nhưng vector ${vObj.name || "v"} có ${vObj.vec.length} phần tử.`;
-          if (window.App?.showToast) App.showToast(msg, "warning");
-          if (resultBox) {
-            resultBox.className = "";
-            resultBox.style.display = "block";
-            resultBox.innerHTML = App.renderUnifiedResult(
-              "LỖI KÍCH THƯỚC",
-              `<span style="color:var(--danger, #e5484d); font-size:12px;">${msg}</span>`
-            );
-          }
-          return;
-        }
-        targetVectors.push({
-          id: vObj.id,
-          name: vObj.name || "v",
-          color: vObj.color || vObj.colorCss || "#0090ff",
-          vec: vObj.vec.slice(0, colsA)
-        });
-      }
-    }
-
-    if (targetVectors.length === 0) {
-      if (window.App?.showToast) App.showToast("Không tìm thấy vector phù hợp.", "warning");
-      return;
-    }
-
-    const fmtVal = (n) => {
-      let x = Number(n);
-      if (isNaN(x)) return "0";
-      if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x));
-      return String(parseFloat(x.toFixed(4)));
-    };
-
-    const matLatex = "\\begin{bmatrix} " + matrixValues.map(row => row.map(fmtVal).join(" & ")).join(" \\\\ ") + " \\end{bmatrix}";
-
-    let resultLatex = "";
-    let detailsHtml = "";
-
-    if (targetVectors.length === 1) {
-      const tv = targetVectors[0];
-      const v = tv.vec;
-      const vPrime = [];
-      for (let i = 0; i < rowsA; i++) {
-        let sum = 0;
-        for (let j = 0; j < colsA; j++) {
-          sum += (Number(matrixValues[i][j]) || 0) * (Number(v[j]) || 0);
-        }
-        vPrime.push(sum);
-      }
-
-      resultLatex = `\\left( ${vPrime.map(fmtVal).join(",\\; ")} \\right)`;
-      const vecColLatex = "\\begin{bmatrix} " + v.map(fmtVal).join(" \\\\ ") + " \\end{bmatrix}";
-      const resColLatex = "\\begin{bmatrix} " + vPrime.map(fmtVal).join(" \\\\ ") + " \\end{bmatrix}";
-
-      if (rowsA === 2 && colsA === 2) {
-        const a = Number(matrixValues[0][0]) || 0;
-        const c = Number(matrixValues[0][1]) || 0;
-        const b = Number(matrixValues[1][0]) || 0;
-        const d = Number(matrixValues[1][1]) || 0;
-        const vx = Number(v[0]) || 0;
-        const vy = Number(v[1]) || 0;
-
-        const col1 = `\\begin{bmatrix} ${fmtVal(a)} \\\\ ${fmtVal(b)} \\end{bmatrix}`;
-        const col2 = `\\begin{bmatrix} ${fmtVal(c)} \\\\ ${fmtVal(d)} \\end{bmatrix}`;
-        const xVal = fmtVal(vx);
-        const yVal = fmtVal(vy);
-        const c11 = fmtVal(a * vx);
-        const c12 = fmtVal(c * vy);
-        const c21 = fmtVal(b * vx);
-        const c22 = fmtVal(d * vy);
-
-        // Các chỉ số hình học của 2 trục
-        const len1 = Math.hypot(a, b);
-        const deg1 = Math.round((Math.atan2(b, a) * 180) / Math.PI);
-        const deg1Sign = deg1 > 0 ? "+" : "";
-
-        const len2 = Math.hypot(c, d);
-        const deg2 = Math.round((Math.atan2(d, c) * 180) / Math.PI);
-        const deg2Sign = deg2 > 0 ? "+" : "";
-
-        // Góc giữa hai trục mới (đoạn biến dạng trượt - shear)
-        const dotCols = a * c + b * d;
-        let angleBetween = 90;
-        if (len1 > 1e-6 && len2 > 1e-6) {
-          const cosPhi = Math.max(-1, Math.min(1, dotCols / (len1 * len2)));
-          angleBetween = Math.round((Math.acos(cosPhi) * 180) / Math.PI);
-        }
-
-        const det = a * d - b * c;
-        const fmtDet = fmtVal(det);
-        const absDet = fmtVal(Math.abs(det));
-
-        let orientDesc = "";
-        if (Math.abs(det) < 1e-4) {
-          orientDesc = "Định thức triệt tiêu (\\( \\det(A) = 0 \\)): Toàn bộ mặt phẳng bị suy biến số chiều thành một đường thẳng hoặc gốc tọa độ.";
-        } else if (det < 0) {
-          orientDesc = `Định thức mang giá trị âm (${fmtDet} < 0): Không gian bị đảo chiều định hướng qua phép đối xứng trục, chiều quay chuẩn bị đảo ngược.`;
-        } else {
-          orientDesc = `Định thức mang giá trị dương (${fmtDet} > 0): Không gian bảo toàn chiều định hướng chuẩn ngược chiều kim đồng hồ.`;
-        }
-
-        detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Toán tử tuyến tính \\( T: \\mathbb{R}^2 \\to \\mathbb{R}^2 \\) xác định qua ma trận \\( ${matrixName} \\) tác động lên vector cột \\( \\vec{v} \\):<br/>
-            \\( T(\\vec{v}) = ${matrixName} \\cdot \\vec{v} = v_1 \\text{Col}_1(${matrixName}) + v_2 \\text{Col}_2(${matrixName}) \\)
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            Nhân ma trận với vector cột theo quy tắc dòng nhân cột:<br/>
-            • Tọa độ hoành mới: \\( x' = (${fmtVal(a)})(${xVal}) + (${fmtVal(c)})(${yVal}) = ${c11} + ${c12} = ${fmtVal(vPrime[0])} \\)<br/>
-            • Tọa độ tung mới: \\( y' = (${fmtVal(b)})(${xVal}) + (${fmtVal(d)})(${yVal}) = ${c21} + ${c22} = ${fmtVal(vPrime[1])} \\)<br/>
-            Kết quả: \\( \\vec{${tv.name}}' = \\left( ${vPrime.map(fmtVal).join(",\\; ")} \\right) \\)
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            • <b>Hệ trục cơ sở mới:</b><br/>
-            - Trục hoành mới: \\( \\vec{i}' = ${col1} \\) có độ dài ${fmtVal(len1)} đơn vị, góc quay ${deg1Sign}${deg1}°.<br/>
-            - Trục tung mới: \\( \\vec{j}' = ${col2} \\) có độ dài ${fmtVal(len2)} đơn vị, góc quay ${deg2Sign}${deg2}°.<br/>
-            - Góc kẹp giữa hai trục cơ sở mới là ${angleBetween}°.<br/>
-            • <b>Vector kết quả:</b> Tọa độ \\( [${fmtVal(vPrime[0])}, ${fmtVal(vPrime[1])}]^T \\) xác định điểm ngọn của vector \\( \\vec{${tv.name}}' \\). Vector này là tổ hợp tuyến tính của hai vector cơ sở mới với các hệ số tọa độ ban đầu:<br/>
-            \\( \\vec{${tv.name}}' = ${xVal}\\vec{i}' + ${yVal}\\vec{j}' = ${xVal}${col1} + ${yVal}${col2} = \\begin{bmatrix} ${fmtVal(vPrime[0])} \\\\ ${fmtVal(vPrime[1])} \\end{bmatrix} \\)<br/>
-            • <b>Hình bình hành cơ sở:</b> Diện tích hình bình hành căng bởi hai trục mới bằng \\( |\\det(${matrixName})| = ${absDet} \\) đơn vị diện tích. ${orientDesc}
-          </div>
-        `;
-      } else if (rowsA === 3 && colsA === 3) {
-        const m = matrixValues;
-        const col1 = `\\begin{bmatrix} ${fmtVal(m[0][0])} \\\\ ${fmtVal(m[1][0])} \\\\ ${fmtVal(m[2][0])} \\end{bmatrix}`;
-        const col2 = `\\begin{bmatrix} ${fmtVal(m[0][1])} \\\\ ${fmtVal(m[1][1])} \\\\ ${fmtVal(m[2][1])} \\end{bmatrix}`;
-        const col3 = `\\begin{bmatrix} ${fmtVal(m[0][2])} \\\\ ${fmtVal(m[1][2])} \\\\ ${fmtVal(m[2][2])} \\end{bmatrix}`;
-        const xVal = fmtVal(v[0]);
-        const yVal = fmtVal(v[1]);
-        const zVal = fmtVal(v[2]);
-
-        const len1 = fmtVal(Math.hypot(m[0][0], m[1][0], m[2][0]));
-        const len2 = fmtVal(Math.hypot(m[0][1], m[1][1], m[2][1]));
-        const len3 = fmtVal(Math.hypot(m[0][2], m[1][2], m[2][2]));
-
-        const det = m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
-                  - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
-                  + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
-        const absDet = fmtVal(Math.abs(det));
-
-        detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Toán tử tuyến tính trong không gian ba chiều \\( T: \\mathbb{R}^3 \\to \\mathbb{R}^3 \\) xác định qua ma trận \\( ${matrixName} \\) tác động lên vector cột \\( \\vec{v} \\):<br/>
-            \\( T(\\vec{v}) = ${matrixName} \\cdot \\vec{v} = v_1 \\text{Col}_1(${matrixName}) + v_2 \\text{Col}_2(${matrixName}) + v_3 \\text{Col}_3(${matrixName}) \\)
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            Nhân ma trận với vector cột trong không gian ba chiều theo quy tắc dòng nhân cột:<br/>
-            • Tọa độ x mới: \\( x' = ${fmtVal(m[0][0])}(${xVal}) + ${fmtVal(m[0][1])}(${yVal}) + ${fmtVal(m[0][2])}(${zVal}) = ${fmtVal(vPrime[0])} \\)<br/>
-            • Tọa độ y mới: \\( y' = ${fmtVal(m[1][0])}(${xVal}) + ${fmtVal(m[1][1])}(${yVal}) + ${fmtVal(m[1][2])}(${zVal}) = ${fmtVal(vPrime[1])} \\)<br/>
-            • Tọa độ z mới: \\( z' = ${fmtVal(m[2][0])}(${xVal}) + ${fmtVal(m[2][1])}(${yVal}) + ${fmtVal(m[2][2])}(${zVal}) = ${fmtVal(vPrime[2])} \\)<br/>
-            Kết quả: \\( \\vec{${tv.name}}' = \\left( ${vPrime.map(fmtVal).join(",\\; ")} \\right) \\)
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            • <b>Hệ trục cơ sở mới:</b><br/>
-            - Ba cột của ma trận xác định tọa độ điểm ngọn của ba vector cơ sở mới: \\( \\vec{i}' = ${col1} \\), \\( \\vec{j}' = ${col2} \\), \\( \\vec{k}' = ${col3} \\).<br/>
-            - Độ dài tương ứng của ba trục cơ sở: \\( \\|\\vec{i}'\\| = ${len1} \\), \\( \\|\\vec{j}'\\| = ${len2} \\), \\( \\|\\vec{k}'\\| = ${len3} \\) đơn vị.<br/>
-            • <b>Vector kết quả:</b> Tọa độ \\( [${fmtVal(vPrime[0])}, ${fmtVal(vPrime[1])}, ${fmtVal(vPrime[2])}]^T \\) xác định điểm ngọn của vector \\( \\vec{${tv.name}}' \\). Vector này là tổ hợp tuyến tính của ba vector cơ sở mới:<br/>
-            \\( \\vec{${tv.name}}' = ${xVal}\\vec{i}' + ${yVal}\\vec{j}' + ${zVal}\\vec{k}' = \\begin{bmatrix} ${fmtVal(vPrime[0])} \\\\ ${fmtVal(vPrime[1])} \\\\ ${fmtVal(vPrime[2])} \\end{bmatrix} \\)<br/>
-            • <b>Khối hộp cơ sở:</b> Khối lập phương đơn vị biến đổi thành khối hộp có thể tích bằng \\( |\\det(${matrixName})| = ${absDet} \\) đơn vị thể tích.
-          </div>
-        `;
-      } else {
-        detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Toán tử tuyến tính \\( T: \\mathbb{R}^{${colsA}} \\to \\mathbb{R}^{${rowsA}} \\) xác định qua ma trận \\( ${matrixName} \\) tác động lên vector cột \\( \\vec{v} \\):<br/>
-            \\( T(\\vec{v}) = ${matrixName} \\cdot \\vec{v} = \\sum_{j=1}^{${colsA}} v_j \\text{Col}_j(${matrixName}) \\)
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            Ma trận đầu vào: \\( ${matrixName} = ${matLatex} \\)<br/>
-            Vector đầu vào: \\( \\vec{${tv.name}} = [${v.map(fmtVal).join(", ")}] \\)<br/>
-            Thực hiện phép nhân ma trận với vector cột:<br/>
-            \\( ${matrixName} \\cdot \\vec{${tv.name}} = ${matLatex} ${vecColLatex} = ${resColLatex} \\)<br/>
-            Kết quả: \\( \\vec{${tv.name}}' = \\left( ${vPrime.map(fmtVal).join(",\\; ")} \\right) \\)
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            • <b>Vector kết quả:</b> Tọa độ \\( [${vPrime.map(fmtVal).join(",\\; ")}] \\) xác định điểm ngọn của vector kết quả sau biến đổi.<br/>
-            • <b>Hệ vector cơ sở:</b> Mỗi cột của ma trận biểu diễn tọa độ điểm ngọn của một vector cơ sở mới trong không gian đích.
-          </div>
-        `;
-      }
-    } else {
-      const resultsSummary = [];
-      let steps = "";
-      targetVectors.forEach((tv) => {
-        const v = tv.vec;
-        const vPrime = [];
-        for (let i = 0; i < rowsA; i++) {
-          let sum = 0;
-          for (let j = 0; j < colsA; j++) {
-            sum += (Number(matrixValues[i][j]) || 0) * (Number(v[j]) || 0);
-          }
-          vPrime.push(sum);
-        }
-        resultsSummary.push(`\\vec{${tv.name}}' = \\left( ${vPrime.map(fmtVal).join(",\\; ")} \\right)`);
-        if (rowsA === 2 && colsA === 2) {
-          steps += `\\( \\vec{${tv.name}}' = ${fmtVal(v[0])}\\vec{i}' + ${fmtVal(v[1])}\\vec{j}' = \\left( ${vPrime.map(fmtVal).join(",\\; ")} \\right) \\)<br/>`;
-        } else if (rowsA === 3 && colsA === 3) {
-          steps += `\\( \\vec{${tv.name}}' = ${fmtVal(v[0])}\\vec{i}' + ${fmtVal(v[1])}\\vec{j}' + ${fmtVal(v[2])}\\vec{k}' = \\left( ${vPrime.map(fmtVal).join(",\\; ")} \\right) \\)<br/>`;
-        } else {
-          steps += `\\( ${matrixName} \\cdot \\vec{${tv.name}} = \\left( ${vPrime.map(fmtVal).join(",\\; ")} \\right) \\)<br/>`;
-        }
-      });
-      resultLatex = resultsSummary.join(",\\quad ");
-
-      if (rowsA === 2 && colsA === 2) {
-        const a = Number(matrixValues[0][0]) || 0;
-        const c = Number(matrixValues[0][1]) || 0;
-        const b = Number(matrixValues[1][0]) || 0;
-        const d = Number(matrixValues[1][1]) || 0;
-        const col1 = `\\begin{bmatrix} ${fmtVal(a)} \\\\ ${fmtVal(b)} \\end{bmatrix}`;
-        const col2 = `\\begin{bmatrix} ${fmtVal(c)} \\\\ ${fmtVal(d)} \\end{bmatrix}`;
-        const len1 = fmtVal(Math.hypot(a, b));
-        const len2 = fmtVal(Math.hypot(c, d));
-        const deg1 = Math.round((Math.atan2(b, a) * 180) / Math.PI);
-        const deg2 = Math.round((Math.atan2(d, c) * 180) / Math.PI);
-        const det = a * d - b * c;
-        const absDet = fmtVal(Math.abs(det));
-
-        detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Toán tử tuyến tính \\( T: \\mathbb{R}^2 \\to \\mathbb{R}^2 \\) tác động đồng thời lên tập hợp các vector thông qua ma trận chính tắc \\( ${matrixName} \\).
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            Biến đổi từng vector theo tổ hợp tuyến tính các vector cột mới:<br/>
-            ${steps}
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            • <b>Hệ trục cơ sở mới:</b><br/>
-            - Trục hoành mới: \\( \\vec{i}' = ${col1} \\), độ dài ${len1} đơn vị, góc quay ${deg1 > 0 ? "+" : ""}${deg1}°.<br/>
-            - Trục tung mới: \\( \\vec{j}' = ${col2} \\), độ dài ${len2} đơn vị, góc quay ${deg2 > 0 ? "+" : ""}${deg2}°.<br/>
-            - Diện tích hình bình hành cơ sở bằng \\( |\\det(${matrixName})| = ${absDet} \\) đơn vị diện tích.<br/>
-            • <b>Tập hợp vector kết quả:</b> Mỗi vector chuyển đến điểm ngọn có tọa độ tương ứng đã tính, bảo toàn vị trí tương đối trên hệ lưới bị biến dạng tuyến tính.
-          </div>
-        `;
-      } else if (rowsA === 3 && colsA === 3) {
-        const m = matrixValues;
-        const col1 = `\\begin{bmatrix} ${fmtVal(m[0][0])} \\\\ ${fmtVal(m[1][0])} \\\\ ${fmtVal(m[2][0])} \\end{bmatrix}`;
-        const col2 = `\\begin{bmatrix} ${fmtVal(m[0][1])} \\\\ ${fmtVal(m[1][1])} \\\\ ${fmtVal(m[2][1])} \\end{bmatrix}`;
-        const col3 = `\\begin{bmatrix} ${fmtVal(m[0][2])} \\\\ ${fmtVal(m[1][2])} \\\\ ${fmtVal(m[2][2])} \\end{bmatrix}`;
-        const len1 = fmtVal(Math.hypot(m[0][0], m[1][0], m[2][0]));
-        const len2 = fmtVal(Math.hypot(m[0][1], m[1][1], m[2][1]));
-        const len3 = fmtVal(Math.hypot(m[0][2], m[1][2], m[2][2]));
-        const det = m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
-                  - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
-                  + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
-        const absDet = fmtVal(Math.abs(det));
-
-        detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Toán tử tuyến tính \\( T: \\mathbb{R}^3 \\to \\mathbb{R}^3 \\) tác động đồng bộ lên tập hợp các vector trong không gian ba chiều qua ma trận \\( ${matrixName} \\).
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            Biến đổi từng vector theo tổ hợp tuyến tính ba vector cột mới:<br/>
-            ${steps}
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            • <b>Hệ trục cơ sở mới:</b><br/>
-            - Trục Ox mới: \\( \\vec{i}' = ${col1} \\), độ dài ${len1} đơn vị.<br/>
-            - Trục Oy mới: \\( \\vec{j}' = ${col2} \\), độ dài ${len2} đơn vị.<br/>
-            - Trục Oz mới: \\( \\vec{k}' = ${col3} \\), độ dài ${len3} đơn vị.<br/>
-            - Thể tích khối hộp cơ sở bằng \\( |\\det(${matrixName})| = ${absDet} \\) đơn vị thể tích.<br/>
-            • <b>Tập hợp vector kết quả:</b> Mỗi vector trong không gian ba chiều chuyển dịch đồng bộ đến tọa độ mới dưới tác động của toán tử tuyến tính.
-          </div>
-        `;
-      } else {
-        detailsHtml = `
-          <div class="calc-section-title">Khung định nghĩa đại số</div>
-          <div class="calc-explanation-block">
-            Toán tử tuyến tính \\( T: \\mathbb{R}^{${colsA}} \\to \\mathbb{R}^{${rowsA}} \\) tác động đồng bộ lên tập hợp vector qua ma trận \\( ${matrixName} = ${matLatex} \\).
-          </div>
-          <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-          <div class="calc-explanation-block">
-            Kết quả tính toán từng vector:<br/>
-            ${steps}
-          </div>
-          <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-          <div class="calc-explanation-block">
-            • <b>Tập hợp vector kết quả:</b> Điểm ngọn của mỗi vector tương ứng với bộ tọa độ kết quả đã tính.<br/>
-            • <b>Cấu trúc không gian:</b> Các vector cùng chuyển dịch đồng bộ theo toán tử tuyến tính đại diện bởi ma trận.
-          </div>
-        `;
-      }
-    }
-
-    if (resultBox) {
-      let addParamVecBtnHtml = "";
-      let symbolicVectorExpr = "";
-      if (mObj.isParametric && targetVectors.length === 1) {
-        const tv = targetVectors[0];
-        const v = tv.vec;
-        const exprComponents = [];
-        for (let i = 0; i < rowsA; i++) {
-          const parts = [];
-          for (let j = 0; j < colsA; j++) {
-            const rawCell = (mObj.latexValues && mObj.latexValues[i] && mObj.latexValues[i][j]) ? mObj.latexValues[i][j] : String(mObj.values[i][j]);
-            const vj = v[j] !== undefined ? v[j] : 0;
-            if (vj === 0) continue;
-            if (vj === 1) parts.push(`(${rawCell})`);
-            else if (vj === -1) parts.push(`(-(${rawCell}))`);
-            else parts.push(`(${vj})*(${rawCell})`);
-          }
-          exprComponents.push(parts.length > 0 ? parts.join(" + ") : "0");
-        }
-        symbolicVectorExpr = `[${exprComponents.join(", ")}]`;
-        addParamVecBtnHtml = `
-          <div style="margin-top: 10px; display: flex; justify-content: flex-end;">
-            <button id="btnAddTransformedParamVec" class="btn" style="padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 2px; background: rgba(0, 144, 255, 0.1); color: var(--primary-base); border: 1px solid rgba(0, 144, 255, 0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-              <i class="ph ph-plus-circle" style="font-size: 15px;"></i> Lưu thành vector tham số
-            </button>
-          </div>
-        `;
-      }
-
-      let latexHtml = `\\( ${resultLatex} \\)`;
-      if (window.katex && typeof window.katex.renderToString === "function") {
-        try {
-          latexHtml = window.katex.renderToString(resultLatex, { displayMode: true, throwOnError: false });
-        } catch (e) {
-          latexHtml = `\\( ${resultLatex} \\)`;
-        }
-      }
-
-      resultBox.className = "";
-      resultBox.style.display = "block";
-      resultBox.style.padding = "0";
-      resultBox.style.border = "none";
-      resultBox.style.background = "transparent";
-      resultBox.innerHTML = App.renderUnifiedResult(
-        "VECTOR KẾT QUẢ",
-        `<div class="calc-result-latex" style="overflow-x: auto; padding: 4px 0; font-size: 15px;">${latexHtml}</div>`
-      ) + App.renderExplanationBox(detailsHtml) + addParamVecBtnHtml;
-
-      if (symbolicVectorExpr) {
-        const btn = document.getElementById("btnAddTransformedParamVec");
-        if (btn) {
-          btn.onclick = () => {
-            const inp = document.getElementById("vectorInput");
-            if (inp) inp.value = symbolicVectorExpr;
-            if (typeof App.onAddVector === "function") {
-              App.onAddVector();
-              if (App.showToast) App.showToast("Đã thêm vector tham số từ kết quả biến đổi ma trận!");
-            }
-          };
-        }
-      }
-
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        if (triggerAnimation) {
-          if (App._mixedCalcMathJaxTimer) clearTimeout(App._mixedCalcMathJaxTimer);
-          window.MathJax.typesetPromise([resultBox]).catch(console.warn);
-        } else {
-          if (App._mixedCalcMathJaxTimer) clearTimeout(App._mixedCalcMathJaxTimer);
-          App._mixedCalcMathJaxTimer = setTimeout(() => {
-            if (window.MathJax && window.MathJax.typesetPromise) {
-              window.MathJax.typesetPromise([resultBox]).catch(console.warn);
-            }
-          }, 200);
+      } else if (triggerAnimation) {
+        if (playbackHUD) playbackHUD.style.display = "none";
+        if (!is2D && !is3D && window.App?.showToast) {
+          App.showToast(`Ma trận ${rowsA}×${colsA} chỉ tính toán số học, không hỗ trợ trực quan hóa biến đổi.`, "info");
         }
       }
     }
 
-    const is2D = (rowsA === 2 && colsA === 2);
-    const is3D = (rowsA === 3 && colsA === 3);
-    const playbackHUD = document.getElementById("sidebarTransformPlayback");
-
-    if (triggerAnimation && (is2D || is3D)) {
-      if (playbackHUD) playbackHUD.style.display = "block";
-
-      if (is3D && App.mode !== "3D" && typeof App.toggleMode === "function") {
-        App.toggleMode();
-      } else if (is2D && App.mode !== "2D" && typeof App.toggleMode === "function") {
-        App.toggleMode();
-      }
-
-      if (window.innerWidth < 768) {
-        const sidebar = document.getElementById("sidebar");
-        const hamburger = document.getElementById("floatingHamburger");
-        if (sidebar && sidebar.classList.contains("open")) sidebar.classList.remove("open");
-        if (hamburger && hamburger.classList.contains("active")) hamburger.classList.remove("active");
-      }
-
-      if (window.App?.LinearTransform) {
-        App.LinearTransform.start(matrixValues, targetVectors);
-      }
-    } else {
-      if (playbackHUD) playbackHUD.style.display = "none";
-      if (!is2D && !is3D && window.App?.showToast) {
-        App.showToast(`Ma trận ${rowsA}×${colsA} chỉ tính toán số học, không hỗ trợ trực quan hóa biến đổi.`, "info");
-      }
-    }
+    return bundle.modalConfig;
   };
 
   // LOGIC ĐIỀU KHIỂN SINH LƯỚI MA TRẬN ĐỘNG (DYNAMIC GRID ENGINE)
@@ -5881,7 +5306,7 @@
     // Tuyệt đối không tự ý ghi đè rowsInput.value / colsInput.value ở đây để tránh làm kẹt thao tác gõ của người dùng
 
     grid.innerHTML = "";
-    grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    grid.style.gridTemplateColumns = `repeat(${cols}, minmax(58px, 1fr))`;
 
     // Hàm chuyển focus tới ô đích và bật chế độ sẵn sàng ghi đè (Excel-like)
     const moveToCell = (targetI, targetJ) => {

@@ -516,35 +516,28 @@
   App.switchTopicTask = function (taskId) {
     if (!taskId) return;
 
-    // Dung hoat canh co so va toa do neu chuyen sang bai toan khac
-    if (taskId !== "basis") {
-      if (typeof App.stopBasisAnimation === "function") {
-        try { App.stopBasisAnimation(); } catch (_) {}
-      } else if (window.App?.BasisAnimator?.isActive?.()) {
-        try { window.App.BasisAnimator.stop(); } catch (_) {}
+    // Dung toan bo hoat canh cua bai toan truoc khi chuyen sang bai toan khac
+    if (typeof App.stopAllAnimations === "function") {
+      try { App.stopAllAnimations(taskId); } catch (_) {}
+    } else {
+      if (taskId !== "basis") {
+        if (typeof App.stopBasisAnimation === "function") {
+          try { App.stopBasisAnimation(); } catch (_) {}
+        } else if (window.App?.BasisAnimator?.isActive?.()) {
+          try { window.App.BasisAnimator.stop(); } catch (_) {}
+        }
       }
-    }
-    if (taskId !== "coordinates") {
-      if (typeof App.stopCoordAnimation === "function") {
-        try { App.stopCoordAnimation(); } catch (_) {}
-      } else if (window.App?.CoordAnimator?.isActive?.()) {
-        try { window.App.CoordAnimator.stop(); } catch (_) {}
+      if (taskId !== "coordinates") {
+        if (typeof App.stopCoordAnimation === "function") {
+          try { App.stopCoordAnimation(); } catch (_) {}
+        } else if (window.App?.CoordAnimator?.isActive?.()) {
+          try { window.App.CoordAnimator.stop(); } catch (_) {}
+        }
       }
     }
 
-    // 1. Dọn dẹp hook vẽ 2D tùy chỉnh khi chuyển khỏi bài toán đồ thị
-    const isGraphicTask =
-      taskId === "quadratic_form_conic" ||
-      taskId === "topic1_parametric_vector" ||
-      taskId === "topic1_dot_product" ||
-      taskId === "topic2_matrix_param" ||
-      taskId === "topic4_gram_schmidt" ||
-      taskId === "topic5_linear_transformation" ||
-      taskId === "topic6_eigen";
-
-    if (!isGraphicTask) {
-      App.custom2DDrawHook = null;
-    }
+    // 1. Dọn dẹp hook vẽ 2D tùy chỉnh khi chuyển đổi bài toán (sẽ được gán lại nếu bài toán mới cần)
+    App.custom2DDrawHook = null;
 
     // 2. Chuyển đổi hiển thị form tương ứng trong #extraForms
     if (typeof App.showExtraForm === "function") {

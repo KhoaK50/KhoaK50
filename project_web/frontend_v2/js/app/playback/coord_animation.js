@@ -1598,4 +1598,7 @@
 
   App.CoordAnimator = CoordAnimator;
   App.solveCoordinates = solveCoordinates;
+  App.stopCoordAnimation = function () {
+    return CoordAnimator.stop();
+  };
 })();

@@ -32,7 +32,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0"
     />
     <title data-i18n="nav.title_guide">Vectoria</title>
     <link rel="icon" type="image/png" href="assets/images/logo.png" />
@@ -253,9 +253,11 @@
           display: none !important;
         }
         .sidebar h3.nav-title::after {
-          content: "\f054";
-          font-family: "Font Awesome 6 Free";
-          font-weight: 900;
+          content: "\203A";
+          font-family: var(--font-ui, system-ui, sans-serif);
+          font-size: 1.25rem;
+          line-height: 1;
+          font-weight: 700;
           transition: transform 0.3s ease;
         }
         .sidebar.mobile-open h3.nav-title::after {
@@ -798,6 +800,47 @@
         }
       }
 
+      @media (max-width: 640px) {
+        html, body {
+          max-width: 100%;
+          overflow-x: clip;
+        }
+        .main-content {
+          padding: 12px !important;
+          box-sizing: border-box;
+        }
+        .chapter-card {
+          padding: 18px 14px !important;
+        }
+        .lesson-title {
+          font-size: 1.5rem;
+        }
+        .section-title {
+          font-size: 1.2rem;
+        }
+        .hd-h1 {
+          font-size: 1.35rem;
+          margin-top: 28px;
+        }
+        .hd-h2 {
+          font-size: 1.15rem;
+        }
+        .hd-h3 {
+          font-size: 1.05rem;
+        }
+        #ly-thuyet {
+          font-size: 1.02rem;
+        }
+        .hd-btn-text {
+          white-space: normal;
+          display: inline-block;
+        }
+        .hd-box-info,
+        .hd-box-warning {
+          padding: 12px 14px;
+        }
+      }
+
       /* ================= CẤU HÌNH ẢNH HƯỚNG DẪN ================= */
       .hd-img-container {
         margin: 25px 0;
@@ -854,19 +897,16 @@
 
   <body class="preload">
     <script>
-      if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.remove('light-theme');
-        document.body.classList.add('dark-theme', 'dark');
-      }
-    </script>
-    <script>
-      if (
-        localStorage.getItem("theme") === "dark" ||
-        localStorage.getItem("theme-mode") === "dark"
-      ) {
-        document.documentElement.classList.add("dark");
-        document.body.classList.add("dark", "dark-mode");
-      }
+      (function () {
+        try {
+          var theme = localStorage.getItem("vec_theme") || localStorage.getItem("theme") || localStorage.getItem("theme-mode");
+          if (theme === "dark" || (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+            document.documentElement.classList.add("dark");
+            document.body.classList.remove("light-theme");
+            document.body.classList.add("dark-theme", "dark", "dark-mode");
+          }
+        } catch (e) {}
+      })();
     </script>
 
     
@@ -948,41 +988,6 @@
         </div>
   </div>
 </header>
-<script>
-  // Script to handle mobile nav when there's no sidebar
-  document.addEventListener("DOMContentLoaded", () => {
-    const toggleBtn = document.getElementById("mobileSidebarToggle");
-    const navLinks = document.querySelector(".vec-nav-links");
-    const oldHamburger = document.getElementById("hamburger");
-    
-    if (toggleBtn) {
-      toggleBtn.addEventListener("click", (e) => {
-        // If there's an old hamburger (like in calculation.html), trigger it
-        if (oldHamburger && oldHamburger.style.display !== "none" && typeof oldHamburger.click === "function") {
-          // It's handled by inline onclick in calculation.html usually
-          // But wait, the inline onclick is only in calculation.html.
-          // Let's not override if calculation.html uses it.
-        }
-        
-        // Toggle mobile menu for global links
-        if (navLinks) {
-          navLinks.classList.toggle("show-mobile");
-        }
-      });
-    }
-
-    // Handle dropdown clicks on mobile
-    const dropdownContainers = document.querySelectorAll(".vec-nav-links .vec-dropdown-container");
-    dropdownContainers.forEach(container => {
-      container.addEventListener("click", (e) => {
-        if (window.innerWidth <= 1024) {
-          e.stopPropagation();
-          container.classList.toggle("open");
-        }
-      });
-    });
-  });
-</script>
 <!-- ==================== END UNIFIED TOPBAR ==================== -->
 
 

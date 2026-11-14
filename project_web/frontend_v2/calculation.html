@@ -29,6 +29,7 @@
   <meta charset="utf-8" />
   <title data-i18n="nav.title_calc">Tính toán | Vectoria</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preload" href="fonts/STIXTwoText-Regular.woff2" as="font" type="font/woff2" crossorigin>
   
   <link rel="stylesheet" href="css/radix_colors.css">
   <link rel="stylesheet" href="css/components.css" />
@@ -428,430 +429,64 @@
       }
     }
     /* ================================================================= */
-    /* 3. SOLUTION PANEL - LIGHT & DARK MODE */
+    /* 3. LEGACY RESULT BOX & DARK MODE HELPERS (MODAL IN solution_panel.css) */
     /* ================================================================= */
 
-    .sol-panel {
-      background-color: var(--bg-base);
-      border: 1px solid var(--border-strong);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-      color: var(--text-main);
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      width: 90%;
-      max-width: 800px;
-      max-height: 85vh;
-      margin: auto;
-      position: relative;
-      animation: slideUp 0.3s ease-out;
-    }
-
-    .sol-header {
-      background-color: var(--bg-card);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-radius: 10px 10px 0 0;
-    }
-
-    .sol-h1 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--text-main);
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .sol-h1 .MathJax,
-    .sol-h1 mjx-container,
-    .sol-h1 .MathJax span,
-    .sol-h1 mjx-container path {
-      color: var(--primary-base) !important;
-      fill: var(--primary-base) !important;
-      stroke: var(--primary-base) !important;
-      font-size: 1.1em;
-    }
-
-    .sol-badge {
-      background-color: var(--primary-base);
-      color: var(--bg-base);
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 6px;
-      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-      margin-bottom: 4px;
-      display: inline-block;
-    }
-
-    .sol-close {
-      background: transparent;
-      border: none;
-      font-size: 1.5rem;
-      color: var(--text-muted);
-      cursor: pointer;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .sol-close:hover {
-      background-color: rgba(229, 72, 77, 0.1);
-      color: var(--danger-base);
-      transform: rotate(90deg);
-    }
-
-    .sol-toolbar {
-      background-color: var(--bg-base);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 12px 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .sol-label {
-      font-weight: 600;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-    }
-
-    .sol-tab {
-      padding: 8px 16px;
-      border: 1px solid var(--border-strong);
-      background: #f9fafb;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      transition: all 0.2s;
-      font-weight: 500;
-    }
-
-    .sol-tab:hover {
-      background: var(--bg-card);
-      color: var(--text-main);
-      border-color: var(--border-strong);
-    }
-
-    .sol-tab.is-active {
-      background-color: rgba(0, 144, 255, 0.1);
-      color: var(--primary-hover);
-      border-color: var(--primary-base);
-      font-weight: 600;
-    }
-
-    .sol-body {
-      padding: 24px;
-      overflow-y: auto;
-      background-color: var(--bg-card);
-      font-size: 1rem;
-      line-height: 1.6;
-      color: var(--text-main);
-    }
-
-    .sol-text {
-      margin-bottom: 12px;
-    }
-
-    .sol-bold {
-      font-weight: 700;
-      color: var(--primary-hover);
-      margin-top: 24px;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .sol-math-block {
-      background-color: var(--bg-hover);
-      border-left: 4px solid var(--primary-base);
-      padding: 16px;
-      border-radius: 4px;
-      margin: 12px 0;
-      overflow-x: auto;
-      border: 1px solid var(--border-subtle);
-      border-left-width: 4px;
-    }
-
-    .sol-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 999999;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: all 0.3s ease-out;
-      backdrop-filter: blur(2px);
-    }
-
-    .sol-overlay.is-visible,
-    .sol-overlay.active,
-    .sol-overlay.show,
-    .sol-overlay.open,
-    .sol-overlay[aria-hidden="false"] {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(30px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    /* Dark Mode Solution Panel */
-    body.dark-theme .sol-panel {
-      background-color: var(--bg-card) !important;
-      border: 1px solid var(--border-strong) !important;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8) !important;
-      color: var(--text-main) !important;
-    }
-
-    body.dark-theme .sol-header {
-      background-color: var(--bg-card) !important;
-      border-bottom: 1px solid var(--border-strong) !important;
-      padding: 15px 20px;
-    }
-
-    body.dark-theme .sol-h1,
-    body.dark-theme .sol-title span {
-      color: var(--bg-base) !important;
-      font-weight: 600;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-    body.dark-theme .sol-header .MathJax,
-    body.dark-theme .sol-header mjx-container {
-      color: var(--primary-hover) !important;
-      font-size: 1.2em !important;
-    }
-
-    body.dark-theme .sol-header mjx-container path {
-      stroke: var(--primary-hover) !important;
-      fill: var(--primary-hover) !important;
-    }
-
-    body.dark-theme .sol-badge {
-      background-color: var(--primary-base) !important;
-      color: var(--bg-base) !important;
-      border: 1px solid #64b5f6 !important;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-weight: bold;
-    }
-
-    body.dark-theme .sol-close {
-      color: var(--text-muted) !important;
-      transition: all 0.2s;
-    }
-
-    body.dark-theme .sol-close:hover {
-      color: var(--bg-base) !important;
-      background-color: var(--danger-base) !important;
-      border-radius: 50%;
-      transform: rotate(90deg);
-    }
-
-    body.dark-theme .sol-toolbar {
-      background-color: var(--bg-base) !important;
-      border-bottom: 1px solid var(--border-subtle) !important;
-    }
-
-    body.dark-theme .sol-label {
-      color: var(--text-muted) !important;
-    }
-
-    body.dark-theme .sol-tab {
-      background: transparent !important;
-      color: var(--text-muted) !important;
-      border: 1px solid var(--border-strong) !important;
-    }
-
-    body.dark-theme .sol-tab:hover {
-      background: var(--bg-hover) !important;
-      color: #fff !important;
-    }
-
-    body.dark-theme .sol-tab.is-active {
-      background: rgba(0, 144, 255, 0.2) !important;
-      color: #fff !important;
-      border-color: var(--primary-base) !important;
-      box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
-    }
-
-    body.dark-theme .sol-body {
-      background-color: var(--bg-card) !important;
-      color: #d4d4d4 !important;
-    }
-
-    body.dark-theme .sol-text,
-    body.dark-theme .sol-body ul,
-    body.dark-theme .sol-body li,
-    body.dark-theme .sol-body p,
-    body.dark-theme .sol-body span {
-      color: var(--text-main) !important;
-    }
-
-    body.dark-theme .sol-bold {
-      color: var(--primary-hover) !important;
-      font-weight: 700;
-      margin-top: 15px;
-      display: block;
-    }
-
-    body.dark-theme .sol-math-block {
-      background-color: var(--bg-hover) !important;
-      border-left: 4px solid var(--primary-base) !important;
-      padding: 12px !important;
-      margin: 10px 0 !important;
-      border-radius: 4px;
-      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
-    }
-
-    body.dark-theme .sol-body mjx-container,
-    body.dark-theme .sol-body .MathJax {
-      color: var(--text-main) !important;
-    }
-
-    body.dark-theme .sol-body mjx-container path {
-      stroke: var(--text-main) !important;
-      fill: var(--text-main) !important;
-    }
-
-    body.dark-theme .sol-body::-webkit-scrollbar { width: 8px; }
-    body.dark-theme .sol-body::-webkit-scrollbar-track { background: var(--bg-card); }
-    body.dark-theme .sol-body::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
-    body.dark-theme .sol-body::-webkit-scrollbar-thumb:hover { background: #777; }
-
-    body.dark-theme .sol-math-block::-webkit-scrollbar { height: 10px; }
-    body.dark-theme .sol-math-block::-webkit-scrollbar-track { background: #252526; border-radius: 4px; }
-    body.dark-theme .sol-math-block::-webkit-scrollbar-thumb {
-      background: #666; border-radius: 4px; border: 2px solid #252526;
-    }
-    body.dark-theme .sol-math-block::-webkit-scrollbar-thumb:hover { background: #999; }
-
-    .sol-body ul, .sol-body ol {
-      list-style: none !important;
-      padding-left: 0 !important;
-      margin: 0 !important;
-    }
-
-    .sol-body li {
-      display: block !important;
-      margin-bottom: 10px !important;
-      padding: 0 !important;
-    }
-
-    body.dark-theme .sol-body ul,
-    body.dark-theme .sol-body li {
-      color: var(--text-main) !important;
-    }
-
-    .sol-bullet {
-      display: flex;
-      margin-bottom: 8px;
-      line-height: 1.5;
-      align-items: baseline;
-      gap: 8px;
-    }
-
-    .sol-bullet::before {
-      content: "•";
-      color: var(--primary-base);
-      font-weight: bold;
-      font-size: 1.2em;
-    }
-
-    body.dark-theme .sol-bullet { color: var(--text-main) !important; }
-    body.dark-theme .sol-bullet::before { color: var(--primary-hover); }
-
     .calc-result-box {
-      background-color: rgba(48, 164, 108, 0.1);
-      border-left: 5px solid var(--success-base);
-      padding: 12px 16px;
-      border-radius: 4px;
-      margin-top: 12px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      background-color: rgba(48, 164, 108, 0.08);
+      border: 1px solid rgba(48, 164, 108, 0.3);
+      border-left: 2px solid var(--success-base);
+      padding: 10px 14px;
+      border-radius: 2px;
+      margin-top: 10px;
       display: flex;
       flex-direction: column;
       gap: 6px;
-      transition: all 0.3s ease;
     }
 
     .calc-result-label {
       font-weight: 700;
       color: var(--success-base);
       text-transform: uppercase;
-      font-size: 0.85em;
-      letter-spacing: 0.5px;
+      font-size: 0.8em;
+      letter-spacing: 0.04em;
     }
 
     .calc-result-math {
       background: transparent;
       border: none;
       width: 100%;
-      font-size: 1.5em;
-      color: var(--success-base);
-      padding: 4px 0;
+      font-size: 1.3em;
+      color: var(--text-main);
+      padding: 2px 0;
       pointer-events: none;
       box-shadow: none;
       --caret-color: transparent;
     }
 
+    :root.dark .calc-result-box,
+    body.dark .calc-result-box,
     body.dark-theme .calc-result-box {
-      background-color: rgba(48, 164, 108, 0.2);
+      background-color: rgba(48, 164, 108, 0.14);
+      border-color: rgba(48, 164, 108, 0.36);
       border-left-color: var(--success-base);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
 
-    body.dark-theme .calc-result-label {
-      color: var(--success-base);
-    }
-
-    body.dark-theme .calc-result-math {
-      color: var(--success-base) !important;
-      --highlight-color: rgba(255, 255, 255, 0.1);
-    }
-
-    body.dark-theme .calc-result-math::part(content) {
-      color: var(--success-base) !important;
-    }
-
-    body.dark-theme #result_basis,
-    body.dark-theme #result_basis div,
-    body.dark-theme #result_basis span {
-      color: #e2e8f0 !important;
-    }
-
+    :root.dark mjx-container,
+    :root.dark mjx-container path,
+    body.dark mjx-container,
+    body.dark mjx-container path,
     body.dark-theme mjx-container,
     body.dark-theme mjx-container path {
-      fill: #e2e8f0 !important;
-      stroke: #e2e8f0 !important;
-      color: #e2e8f0 !important;
+      fill: var(--text-main) !important;
+      stroke: var(--text-main) !important;
+      color: var(--text-main) !important;
     }
 
-    body.dark-theme b,
-    body.dark-theme strong,
+    :root.dark .highlight-value,
+    body.dark .highlight-value,
     body.dark-theme .highlight-value {
-      color: #60a5fa !important;
+      color: var(--primary-hover) !important;
     }
 
     /* ================================================================= */
@@ -881,48 +516,109 @@
     /* Make #app full screen behind transparent topbar */
     
 
+    .mobile-split-modes {
+      display: none;
+    }
+
     @media (max-width: 768px) {
-      #btnTogglePanel { display: flex !important; left: 15px !important; bottom: 15px !important; z-index: 100 !important; }
-      #btnResetView { right: 15px !important; bottom: 15px !important; }
+      #btnTogglePanel { display: flex !important; left: 12px !important; bottom: 12px !important; width: 40px !important; height: 40px !important; z-index: 100 !important; }
+      #btnResetView { right: 12px !important; bottom: 12px !important; }
 
       #app {
         display: grid !important;
-        --panel-height: 45vh; 
-        grid-template-rows: 1fr 12px var(--panel-height) !important; 
+        --panel-height: 52dvh;
+        grid-template-rows: minmax(0, 1fr) 30px var(--panel-height) !important;
+        height: calc(100vh - var(--topbar-h, 60px)) !important;
         height: calc(100dvh - var(--topbar-h, 60px)) !important;
-        min-height: calc(100dvh - var(--topbar-h, 60px)) !important; 
+        min-height: calc(100dvh - var(--topbar-h, 60px)) !important;
         overflow: hidden !important;
-        transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        transition: grid-template-rows 0.32s cubic-bezier(0.22, 1, 0.36, 1) !important;
       }
       #app.panel-collapsed {
-        grid-template-rows: 1fr 0px 0px !important;
+        grid-template-rows: minmax(0, 1fr) 0px 0px !important;
       }
       #app.panel-collapsed #resizer {
         display: none !important;
       }
 
       #viewerWrap {
-        grid-row: 1 !important; 
-        height: 100% !important; 
+        grid-row: 1 !important;
+        height: 100% !important;
+        min-height: 0 !important;
         position: relative !important;
       }
 
       #resizer {
         grid-row: 2 !important;
+        height: 30px !important;
+        padding: 0 10px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+        background: var(--bg-card) !important;
+      }
+
+      #resizer .resizer-handle {
+        width: 28px !important;
+        height: 4px !important;
+        flex-shrink: 0;
+      }
+
+      .mobile-split-modes {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: auto;
+      }
+
+      .split-mode-btn {
+        border: 1px solid var(--border-subtle);
+        background: var(--bg-base);
+        color: var(--text-muted);
+        font-family: var(--font-ui);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1;
+        height: 22px;
+        padding: 0 8px;
+        border-radius: 2px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .split-mode-btn.active {
+        background: var(--primary-base);
+        border-color: var(--primary-base);
+        color: #ffffff;
       }
 
       #controls {
         grid-row: 3 !important;
         height: 100% !important;
+        min-height: 0 !important;
         max-height: none !important;
-        overflow-y: auto !important; 
-        display: block !important; 
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
         background: var(--bg-base) !important;
-        padding: 0 !important; 
+        padding: 0 !important;
       }
-      
-      .sidebar-tabs { position: sticky; top: 0; z-index: 100; }
-      .tab-content { padding: 10px 12px 50px 12px !important; height: auto !important; }
+
+      #paperWrap {
+        padding: 48px 10px 16px !important;
+      }
+
+      #paperWrap .paper-container {
+        padding: 16px 14px !important;
+        border-radius: 2px !important;
+        min-height: 280px !important;
+      }
+
+      #paperTitle {
+        font-size: 17px !important;
+      }
 
       .topbar-left a.topbar-icon[title="Thư viện kiến thức"],
       .topbar-left a.topbar-icon[title="Tài liệu tham khảo"] { display: none !important; }
@@ -930,8 +626,7 @@
       .mobile-only-hr-book, .mobile-only-link-book,
       .mobile-only-hr-file, .mobile-only-link-file { display: flex !important; }
 
-      /* [QUAN TRỌNG]: TÔI ĐÃ XÓA ĐOẠN ẨN NÚT 3 GẠCH Ở ĐÂY ĐỂ NÓ HIỆN LẠI TRÊN MOBILE */
-      math-field { padding-right: 44px !important; } 
+      #vecInput { padding-right: 44px !important; }
     }
 
     /* BÀN PHÍM VECTORIA */
@@ -981,7 +676,6 @@
     body.dark-theme .k-btn.switch-btn { background: var(--primary-base); color: var(--text-main); border-color: var(--primary-hover); }
 
     body.dark-theme #mathKeypad img { filter: brightness(0) invert(1); opacity: 1 !important; }
-    body.has-keypad #controls { padding-bottom: 70vh !important; }
 
     .fake-cursor {
       position: fixed;
@@ -1135,36 +829,6 @@
     <button id="floatingHamburger" onclick="document.getElementById('hamburger').click()">
       <i class="ph ph-list"></i>
     </button>
-    <script>
-      // Script to handle mobile nav when there's no sidebar
-      document.addEventListener("DOMContentLoaded", () => {
-        const toggleBtn = document.getElementById("mobileSidebarToggle");
-        const navLinks = document.querySelector(".vec-nav-links");
-        const oldHamburger = document.getElementById("hamburger");
-        
-        if (toggleBtn) {
-          toggleBtn.addEventListener("click", (e) => {
-            if (oldHamburger && oldHamburger.style.display !== "none" && typeof oldHamburger.click === "function") {
-              // calculation.html specific
-            }
-            if (navLinks) {
-              navLinks.classList.toggle("show-mobile");
-            }
-          });
-        }
-
-        // Handle dropdown clicks on mobile
-        const dropdownContainers = document.querySelectorAll(".vec-nav-links .vec-dropdown-container");
-        dropdownContainers.forEach(container => {
-          container.addEventListener("click", (e) => {
-            if (window.innerWidth <= 1024) {
-              e.stopPropagation();
-              container.classList.toggle("open");
-            }
-          });
-        });
-      });
-    </script>
     <button id="btnSettings" style="display:none;"></button>
 
 
@@ -1262,29 +926,29 @@
           <div id="form-linear_independence" class="extra-form">
             <div id="indepChecklist" class="checklist"></div>
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button id="btnIndep" class="btn primary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px; white-space: nowrap;">Kiểm tra</button>
-              <button id="btnIndepAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
-              <button id="btnIndepSolution" class="btn btn-secondary btn-solution" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Lời giải</button>
+              <button id="btnIndep" class="btn primary" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Kiểm tra</button>
+              <button id="btnIndepAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button id="btnIndepSolution" class="btn btn-secondary btn-solution" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Lời giải</button>
             </div>
             <div id="result_indep" style="width: 100%; margin-top: 10px;"></div>
           </div>
           <div id="form-rank" class="extra-form">
             <div id="rankChecklist" class="checklist"></div>
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button id="btnRank" class="btn primary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px; white-space: nowrap;">Tính hạng</button>
-              <button id="btnRankAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
-              <button id="btnRankSolution" class="btn btn-secondary btn-solution" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Lời giải</button>
+              <button id="btnRank" class="btn primary" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Tính hạng</button>
+              <button id="btnRankAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button id="btnRankSolution" class="btn btn-secondary btn-solution" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Lời giải</button>
             </div>
             <div id="result_rank" style="width: 100%; margin-top: 10px;"></div>
           </div>
           <div id="form-basis" class="extra-form">
             <div id="basisChecklist" class="checklist"></div>
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button id="btnBasis" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px;">Tính cơ sở</button>
-              <button id="btnBasisAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px;"><i class="ph ph-play-circle"></i> Trực quan</button>
-              <button id="btnOpenSolution" class="btn btn-solution" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px;">Lời giải</button>
+              <button id="btnBasis" class="btn primary" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Tính cơ sở</button>
+              <button id="btnBasisAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button id="btnOpenSolution" class="btn btn-secondary btn-solution" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Lời giải</button>
             </div>
-            <div id="result_basis" style="width:100%"></div>
+            <div id="result_basis" style="width: 100%; margin-top: 10px;"></div>
           </div>
           <div id="form-coordinates" class="extra-form">
             <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Vector cần tính tọa độ</label>
@@ -1296,9 +960,9 @@
             </div>
 
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button id="btnCoord" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px;">Xuất tọa độ</button>
-              <button id="btnCoordAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px;"><i class="ph ph-play-circle"></i> Trực quan</button>
-              <button id="btnCoordSolution" class="btn btn-solution" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px;">Lời giải</button>
+              <button id="btnCoord" class="btn primary" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Xuất tọa độ</button>
+              <button id="btnCoordAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button id="btnCoordSolution" class="btn btn-secondary btn-solution" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Lời giải</button>
             </div>
             <div id="result_coord" style="width: 100%; margin-top: 10px;"></div>
           </div>
@@ -1310,40 +974,20 @@
             <div id="conicMatrixPreview" style="margin-top: 8px; padding: 8px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
 
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button id="btnConicDraw" class="btn primary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Chính tắc hóa</button>
-              <button id="btnConicAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
-              <button id="btnConicSolution" class="btn btn-solution" type="button" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Lời giải</button>
+              <button id="btnConicDraw" class="btn primary" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Chính tắc hóa</button>
+              <button id="btnConicAnimate" class="btn btn-secondary" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button id="btnConicSolution" class="btn btn-secondary btn-solution" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Lời giải</button>
             </div>
 
             <div id="result_conic_info" style="display: none; width: 100%; margin-top: 10px;"></div>
           </div>
           <div id="form-topic4_gram_schmidt" class="extra-form">
-            
-
-            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">Chọn hệ vector trực giao hóa</label>
             <div id="gsChecklist" class="checklist"></div>
-
-            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
-              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
-                <input type="checkbox" id="chkGSShowOrig" checked style="accent-color: var(--primary-base);">
-                <span>Vẽ vector gốc ban đầu</span>
-              </label>
-              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--fg);">
-                <input type="checkbox" id="chkGSShowProj" checked style="accent-color: var(--primary-base);">
-                <span>Hiển thị hình chiếu vuông góc</span>
-              </label>
-              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--primary-base); font-weight: 600;">
-                <input type="checkbox" id="chkGSNormalize" style="accent-color: var(--primary-base);">
-                <span>Chuẩn hóa về độ dài 1 (Cơ sở trực chuẩn)</span>
-              </label>
-            </div>
-
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button type="button" id="btnGSOrthogonalize" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Trực giao hóa</button>
-              <button type="button" id="btnGSAnimate" class="btn btn-secondary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
-              <button type="button" id="btnGSSolution" class="btn btn-solution" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Lời giải</button>
+              <button type="button" id="btnGSOrthogonalize" class="btn primary" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Trực giao hóa</button>
+              <button type="button" id="btnGSAnimate" class="btn btn-secondary" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button type="button" id="btnGSSolution" class="btn btn-secondary btn-solution" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Lời giải</button>
             </div>
-
             <div id="result_gs_info" style="display: none; width: 100%; margin-top: 10px;"></div>
           </div>
           <div id="form-topic5_linear_transformation" class="extra-form">
@@ -1354,29 +998,11 @@
 
             <div id="ltMatrixPreview" style="margin-top: 8px; padding: 8px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
 
-            <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;">
-              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
-                <input type="checkbox" id="chkLTShowKer" checked style="accent-color: var(--primary-base);">
-                <span>Không gian hạt nhân Ker(T)</span>
-              </label>
-              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
-                <input type="checkbox" id="chkLTShowIm" checked style="accent-color: var(--primary-base);">
-                <span>Không gian ảnh Im(T)</span>
-              </label>
-              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
-                <input type="checkbox" id="chkLTShowComp" checked style="accent-color: var(--primary-base);">
-                <span>Điểm co xẹp về gốc 0</span>
-              </label>
-              <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; color: var(--fg); white-space: nowrap;">
-                <input type="checkbox" id="chkLTShowNori" style="accent-color: var(--primary-base);" onchange="if (window.App && window.App.toggleNoriEntity && (App.noriEntityActive !== this.checked)) window.App.toggleNoriEntity()">
-                <span>Vật thể Nori trong trường biến dạng</span>
-              </label>
-            </div>
 
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button type="button" id="btnLTInspect" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Khảo sát</button>
-              <button type="button" id="btnLTAnimate" class="btn btn-secondary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
-              <button type="button" id="btnLTSolution" class="btn btn-solution" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Lời giải</button>
+              <button type="button" id="btnLTInspect" class="btn primary" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Khảo sát</button>
+              <button type="button" id="btnLTAnimate" class="btn btn-secondary" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button type="button" id="btnLTSolution" class="btn btn-secondary btn-solution" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Lời giải</button>
             </div>
 
             <div id="result_lt_info" style="display: none; width: 100%; margin-top: 10px;"></div>
@@ -1388,9 +1014,9 @@
             <div id="eigenMatrixPreview" style="margin-top: 8px; padding: 8px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 2px;"></div>
 
             <div class="row" style="margin-top: 10px; display: flex; gap: 6px;">
-              <button type="button" id="btnEigenCompute" class="btn primary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 4px; white-space: nowrap;">Tính trị riêng</button>
-              <button type="button" id="btnEigenAnimate" class="btn btn-secondary" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
-              <button type="button" id="btnEigenSolution" class="btn btn-solution" style="flex: 1; padding: 9px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; white-space: nowrap;">Lời giải</button>
+              <button type="button" id="btnEigenCompute" class="btn primary" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; box-shadow: none !important; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Tính trị riêng</button>
+              <button type="button" id="btnEigenAnimate" class="btn btn-secondary" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; gap: 4px; white-space: nowrap;"><i class="ph ph-play-circle"></i> Trực quan</button>
+              <button type="button" id="btnEigenSolution" class="btn btn-secondary btn-solution" type="button" style="flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">Lời giải</button>
             </div>
 
             <div id="result_eigen_info" style="display: none; width: 100%; margin-top: 10px;"></div>
@@ -1579,6 +1205,11 @@
       <!-- RESIZER (SPLIT PANE) -->
       <div id="resizer" class="split-resizer" title="Kéo để thay đổi kích thước">
         <div class="resizer-handle"></div>
+        <div class="mobile-split-modes" id="mobileSplitModes" aria-label="Chế độ chia màn hình">
+          <button type="button" class="split-mode-btn" data-split="graph">Đồ thị</button>
+          <button type="button" class="split-mode-btn active" data-split="balanced">Cân bằng</button>
+          <button type="button" class="split-mode-btn" data-split="input">Nhập liệu</button>
+        </div>
       </div>
 
       <div id="viewerWrap" style="position: relative; overflow: hidden;">
@@ -1760,6 +1391,7 @@
   </div>
 
   <script src="js/utils/math.js"></script>
+  <script src="js/utils/latex_format.js"></script>
   <script src="js/utils/parse.js"></script>
   <script src="js/utils/image_vectorizer.js"></script>
   <script src="js/app/api/endpoints.js"></script>
@@ -1769,6 +1401,7 @@
   <script src="js/app/api/client.js"></script>
   <script src="js/app/logic/matrix_controller.js"></script>
   <script src="js/app/ui/steps_renderer.js"></script>
+  <script src="js/app/ui/result_card_renderer.js"></script>
   <script src="js/app/ui/sidebar.js"></script>
   <script src="js/app/ui/solution_panel.js"></script>
   <script src="js/app/paper_mode.js"></script>
@@ -1782,6 +1415,7 @@
 
   <script src="js/app/ui/tasks_generator/indep_generator.js"></script>
   <script src="js/app/ui/tasks_generator/rank_generator.js"></script>
+  <script src="js/app/ui/tasks_generator/calc_ops_generator.js"></script>
 
   <script src="js/app/playback/animator.js"></script>
   <script src="js/app/logic/logger.js"></script>
@@ -2108,34 +1742,54 @@
             if (e.cancelable) e.preventDefault(); 
             activeInput.focus();
 
+            const appEl = document.getElementById('app');
+            if (appEl && window.innerWidth <= 768 && !document.body.classList.contains('has-keypad')) {
+              window._preKeypadPanelHeight = appEl.style.getPropertyValue('--panel-height') || '52dvh';
+              appEl.classList.remove('panel-collapsed');
+              window.isPanelCollapsed = false;
+              appEl.style.setProperty('--panel-height', 'calc(100dvh - var(--topbar-h, 60px) - 104px)');
+            }
+
             keypad.classList.add('open');
             document.body.classList.add('has-keypad'); 
-            spacer.style.height = "500px"; 
+            spacer.style.height = "260px"; 
 
             setTimeout(() => {
-               const tabs = document.querySelector('.sidebar-tabs');
-               if (controlsArea && tabs) {
+               const scroller = targetEl.closest('.tab-content') || controlsArea;
+               if (scroller) {
                    const rect = targetEl.getBoundingClientRect();
-                   const tabsRect = tabs.getBoundingClientRect();
-                   const distanceToScroll = rect.top - tabsRect.bottom - 15;
-                   controlsArea.scrollBy({ top: distanceToScroll, behavior: 'smooth' });
+                   const keypadTop = keypad.getBoundingClientRect().top || (window.innerHeight - 230);
+                   const scrollerTop = scroller.getBoundingClientRect().top;
+                   const targetBandY = scrollerTop + Math.max(36, (keypadTop - scrollerTop) * 0.36);
+                   const distanceToScroll = rect.top - targetBandY;
+                   scroller.scrollBy({ top: distanceToScroll, behavior: 'smooth' });
                }
-            }, 300); 
+               window.dispatchEvent(new Event('resize'));
+            }, 320); 
           }
         }
       }, { passive: false });
 
+      function closeCustomMathKeypad() {
+        const wasOpen = document.body.classList.contains('has-keypad');
+        keypad.classList.remove('open');
+        document.body.classList.remove('has-keypad');
+        spacer.style.height = "0px";
+        const appEl = document.getElementById('app');
+        if (wasOpen && appEl && window.innerWidth <= 768 && window._preKeypadPanelHeight) {
+          appEl.style.setProperty('--panel-height', window._preKeypadPanelHeight);
+          window._preKeypadPanelHeight = null;
+          setTimeout(() => window.dispatchEvent(new Event('resize')), 320);
+        }
+        if (activeInput) {
+          activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+          activeInput = null;
+        }
+      }
+
       // Nút Xong (Đóng bàn phím)
       if (btnClose) {
-        btnClose.addEventListener('click', () => {
-          keypad.classList.remove('open');
-          document.body.classList.remove('has-keypad');
-          spacer.style.height = "0px";
-          if (activeInput) {
-            activeInput.dispatchEvent(new Event('input', { bubbles: true }));
-            activeInput = null;
-          }
-        });
+        btnClose.addEventListener('click', closeCustomMathKeypad);
       }
 
       // Xử lý Gõ phím & Lật mặt
@@ -2155,11 +1809,7 @@
 
           // Nút OK
           if (cmd === 'enter') {
-            keypad.classList.remove('open');
-            document.body.classList.remove('has-keypad');
-            spacer.style.height = "0px";
-            activeInput.dispatchEvent(new Event('input', { bubbles: true }));
-            activeInput = null;
+            closeCustomMathKeypad();
             return;
           }
 
@@ -2228,13 +1878,46 @@
       const appContainer = document.getElementById("app");
       // Dùng biến toàn cục window để không bị mất khi lùi trang
       window.isPanelCollapsed = false;
+      window.currentMobileSplitMode = 'balanced';
+
+      const SPLIT_PRESETS = {
+        graph: '28dvh',
+        balanced: '52dvh',
+        input: '74dvh'
+      };
+
+      function applyMobileSplitMode(mode) {
+        if (!appContainer || window.innerWidth > 768) return;
+        const heightVal = SPLIT_PRESETS[mode] || SPLIT_PRESETS.balanced;
+        window.currentMobileSplitMode = SPLIT_PRESETS[mode] ? mode : 'balanced';
+        window.isPanelCollapsed = false;
+        appContainer.classList.remove('panel-collapsed');
+        appContainer.style.setProperty("--panel-height", heightVal);
+        document.querySelectorAll('.split-mode-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-split') === window.currentMobileSplitMode);
+        });
+        if (btnToggle) btnToggle.innerHTML = '<i class="ph ph-caret-down"></i>';
+        void appContainer.offsetHeight;
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 340);
+      }
+
+      window.setMobileSplitMode = applyMobileSplitMode;
+
+      document.querySelectorAll('.split-mode-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const mode = btn.getAttribute('data-split');
+          if (mode) applyMobileSplitMode(mode);
+        });
+      });
 
       // Hàm ép chiều cao chuẩn
       function enforcePanelHeight() {
           if (appContainer && window.innerWidth <= 768) {
               if (!window.isPanelCollapsed) {
-                  appContainer.style.setProperty("--panel-height", "45vh");
-                  // Ép trình duyệt vẽ lại khung
+                  const h = SPLIT_PRESETS[window.currentMobileSplitMode] || '52dvh';
+                  appContainer.classList.remove('panel-collapsed');
+                  appContainer.style.setProperty("--panel-height", h);
                   void appContainer.offsetHeight; 
               }
           }
@@ -2253,18 +1936,22 @@
             const keypad = document.getElementById('mathKeypad');
             if(keypad) keypad.classList.remove('open');
             document.body.classList.remove('has-keypad');
+            window._preKeypadPanelHeight = null;
 
+            appContainer.classList.add('panel-collapsed');
             appContainer.style.setProperty("--panel-height", "0px"); 
             btnToggle.innerHTML = '<i class="ph ph-caret-up"></i>'; 
           } else {
             // MỞ RỘNG:
-            appContainer.style.setProperty("--panel-height", "45vh");
+            const h = SPLIT_PRESETS[window.currentMobileSplitMode] || '52dvh';
+            appContainer.classList.remove('panel-collapsed');
+            appContainer.style.setProperty("--panel-height", h);
             btnToggle.innerHTML = '<i class="ph ph-caret-down"></i>'; 
           }
 
           setTimeout(() => {
             window.dispatchEvent(new Event('resize'));
-          }, 450); 
+          }, 360); 
         });
       }
 

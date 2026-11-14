@@ -307,19 +307,57 @@
       }
 
       @media (max-width: 850px) {
-        .flip-card-front, .flip-card-back {
+        body {
+          align-items: flex-start;
+          padding: 64px 12px 28px;
+          min-height: 100dvh;
+          box-sizing: border-box;
+        }
+        .auth-container,
+        .auth-container.wide {
+          width: 100% !important;
+          max-width: 460px !important;
+          height: auto !important;
+          max-height: none !important;
+          margin: 0 auto !important;
+          perspective: none !important;
+        }
+        .flip-card-inner,
+        .flip-card-inner.is-flipped {
+          transform: none !important;
+          transform-style: flat !important;
+          height: auto !important;
+        }
+        .flip-card-front,
+        .flip-card-back {
+          position: relative !important;
+          height: auto !important;
+          transform: none !important;
+          backface-visibility: visible !important;
+          -webkit-backface-visibility: visible !important;
+          border-radius: 16px;
+          overflow: visible !important;
           flex-direction: column;
         }
-        .auth-container.wide {
-          height: 720px !important; /* Fixed height tall enough for mobile */
+        .flip-card-inner:not(.is-flipped) .flip-card-back {
+          display: none !important;
+        }
+        .flip-card-inner.is-flipped .flip-card-front {
+          display: none !important;
         }
         .auth-left-panel {
           display: none !important;
         }
-        .auth-right-panel {
-          padding: 20px 25px !important;
+        .auth-right-panel,
+        .flip-card-back .auth-right-panel {
+          padding: 24px 20px !important;
           flex: 1;
           justify-content: flex-start !important;
+          overflow-y: visible !important;
+          border-radius: 16px;
+        }
+        .auth-card {
+          padding: 28px 20px;
         }
         .desktop-flip-link {
           display: none !important;
@@ -338,12 +376,15 @@
         .mobile-only-logo img {
           max-width: 180px;
         }
+        body.dark-theme .mobile-only-logo img {
+          filter: brightness(0) invert(1);
+        }
         .form-group {
           margin-bottom: 12px;
         }
         .back-arrow {
-          top: 15px;
-          left: 15px;
+          top: 14px;
+          left: 12px;
           width: 40px;
           height: 40px;
           font-size: 1.1rem;
@@ -504,6 +545,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
         margin-bottom: 20px;
         font-size: 0.85rem;
       }
@@ -606,6 +649,17 @@
         visibility: visible;
         opacity: 1;
         transform: translateX(0);
+      }
+      @media (max-width: 640px) {
+        #static-toast {
+          min-width: 0;
+          width: calc(100vw - 24px);
+          max-width: 380px;
+          right: 12px;
+          top: 16px;
+          padding: 14px 16px;
+          box-sizing: border-box;
+        }
       }
       .toast-icon {
         font-size: 24px;
@@ -771,16 +825,16 @@
   <link rel="stylesheet" href="css/global-search.css">
 </head>
   <body>
-  <script>
-    if (localStorage.getItem('vec_theme') === 'dark') {
-      document.body.classList.add('dark-theme', 'dark');
-    }
-  </script>
     <script>
-      if (localStorage.getItem('vec_theme') === 'dark') {
-        document.body.classList.remove('light-theme');
-        document.body.classList.add('dark-theme', 'dark');
-      }
+      (function () {
+        try {
+          var theme = localStorage.getItem('vec_theme') || localStorage.getItem('theme');
+          if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.remove('light-theme');
+            document.body.classList.add('dark-theme', 'dark');
+          }
+        } catch (e) {}
+      })();
     </script>
     <button class="back-arrow" onclick="history.back()" title="Quay lại">
       <i class="ph ph-arrow-left"></i>

@@ -33,11 +33,125 @@
     return !!(
       App.isAnimating ||
       App._basisAnimActive ||
-      (App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive()) ||
       App._coordAnimActive ||
+      App._indepAnimActive ||
+      App._rankAnimActive ||
+      App._gsAnimActive ||
+      App._ltAnimActive ||
+      App._eigenAnimActive ||
+      App._conicAnimActive ||
+      (App.IndepAnimator && typeof App.IndepAnimator.isActive === "function" && App.IndepAnimator.isActive()) ||
+      (App.RankAnimator && typeof App.RankAnimator.isActive === "function" && App.RankAnimator.isActive()) ||
+      (App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive()) ||
       (App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()) ||
-      (App.LinearTransform && typeof App.LinearTransform.isActive === "function" && App.LinearTransform.isActive())
+      (App.GSAnimator && typeof App.GSAnimator.isActive === "function" && App.GSAnimator.isActive()) ||
+      (App.LTAnimator && typeof App.LTAnimator.isActive === "function" && App.LTAnimator.isActive()) ||
+      (App.EigenAnimator && typeof App.EigenAnimator.isActive === "function" && App.EigenAnimator.isActive()) ||
+      (App.ConicAnimator && typeof App.ConicAnimator.isActive === "function" && App.ConicAnimator.isActive()) ||
+      (App.LinearTransform && typeof App.LinearTransform.isActive === "function" && App.LinearTransform.isActive()) ||
+      (App.OperationAnimator && typeof App.OperationAnimator.isActive === "function" && App.OperationAnimator.isActive())
     );
+  };
+
+  // Dung toan bo cac hoat canh dang chay tren moi tab va moi bai toan
+  App.stopAllAnimations = function (exceptTask) {
+    if (exceptTask !== "linear_independence") {
+      if (typeof App.stopIndepAnimation === "function") {
+        try { App.stopIndepAnimation(); } catch (_) {}
+      } else if (window.App?.IndepAnimator?.isActive?.()) {
+        try { window.App.IndepAnimator.stop(); } catch (_) {}
+      }
+      const c = document.getElementById("indepAnimControls");
+      if (c) c.style.display = "none";
+    }
+
+    if (exceptTask !== "rank") {
+      if (typeof App.stopRankAnimation === "function") {
+        try { App.stopRankAnimation(); } catch (_) {}
+      } else if (window.App?.RankAnimator?.isActive?.()) {
+        try { window.App.RankAnimator.stop(); } catch (_) {}
+      }
+      const c = document.getElementById("rankAnimControls");
+      if (c) c.style.display = "none";
+    }
+
+    if (exceptTask !== "basis") {
+      if (typeof App.stopBasisAnimation === "function") {
+        try { App.stopBasisAnimation(); } catch (_) {}
+      } else if (window.App?.BasisAnimator?.isActive?.()) {
+        try { window.App.BasisAnimator.stop(); } catch (_) {}
+      }
+      const c = document.getElementById("basisAnimControls");
+      if (c) c.style.display = "none";
+    }
+
+    if (exceptTask !== "coordinates") {
+      if (typeof App.stopCoordAnimation === "function") {
+        try { App.stopCoordAnimation(); } catch (_) {}
+      } else if (window.App?.CoordAnimator?.isActive?.()) {
+        try { window.App.CoordAnimator.stop(); } catch (_) {}
+      }
+      const c = document.getElementById("coordAnimControls");
+      if (c) c.style.display = "none";
+    }
+
+    if (exceptTask !== "topic4_gram_schmidt") {
+      if (typeof App.stopGSAnimation === "function") {
+        try { App.stopGSAnimation(); } catch (_) {}
+      } else if (window.App?.GSAnimator?.isActive?.()) {
+        try { window.App.GSAnimator.stop(); } catch (_) {}
+      }
+      const c = document.getElementById("gsAnimControls");
+      if (c) c.style.display = "none";
+    }
+
+    if (exceptTask !== "topic5_linear_transformation") {
+      if (typeof App.stopLTAnimation === "function") {
+        try { App.stopLTAnimation(); } catch (_) {}
+      } else if (window.App?.LTAnimator?.isActive?.()) {
+        try { window.App.LTAnimator.stop(); } catch (_) {}
+      }
+      const c = document.getElementById("ltAnimControls");
+      if (c) c.style.display = "none";
+    }
+
+    if (exceptTask !== "topic6_eigen") {
+      if (typeof App.stopEigenAnimation === "function") {
+        try { App.stopEigenAnimation(); } catch (_) {}
+      } else if (window.App?.EigenAnimator?.isActive?.()) {
+        try { window.App.EigenAnimator.stop(); } catch (_) {}
+      }
+      const ec = document.getElementById("eigenAnimControls");
+      if (ec) ec.style.display = "none";
+    }
+
+    if (exceptTask !== "quadratic_form_conic") {
+      if (typeof App.stopConicAnimation === "function") {
+        try { App.stopConicAnimation(); } catch (_) {}
+      } else if (window.App?.ConicAnimator?.isActive?.()) {
+        try { window.App.ConicAnimator.stop(); } catch (_) {}
+      }
+      const c = document.getElementById("conicAnimControls");
+      if (c) c.style.display = "none";
+    }
+
+    if (exceptTask !== "LinearTransform" && window.App?.LinearTransform?.isActive?.()) {
+      try { window.App.LinearTransform.stop(); } catch (_) {}
+    }
+    if (exceptTask !== "OperationAnimator" && window.App?.OperationAnimator?.stop) {
+      try { window.App.OperationAnimator.stop({ clearStaticOverlays: true, skipRedraw: true }); } catch (_) {}
+    }
+
+    App.isAnimating = false;
+    if (window.Vec2D && window.Vec2D.S2D) {
+      window.Vec2D.S2D.draggedVectorId = null;
+    }
+    if (window.Vec3D && window.Vec3D.S3D) {
+      window.Vec3D.S3D.draggedVectorId = null;
+    }
+    if (typeof App.redrawAll === "function") {
+      App.redrawAll({ frame: false });
+    }
   };
 })();
 

@@ -215,7 +215,14 @@
     if (!it) return "";
     const vName = typeof App.getVectorName === "function" ? App.getVectorName(it) : `v_{${it.id || 1}}`;
 
-    const vColor = it.colorHex || it.colorCss || "";
+    const isBasisAnim = window.App && (App._basisAnimActive || (App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive()));
+    const isCoordAnim = window.App && (App._coordAnimActive || (App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()));
+    const isIndepAnim = window.App && (App._indepAnimActive || (App.IndepAnimator && typeof App.IndepAnimator.isActive === "function" && App.IndepAnimator.isActive()));
+    const isRankAnim = window.App && (App._rankAnimActive || (App.RankAnimator && typeof App.RankAnimator.isActive === "function" && App.RankAnimator.isActive()));
+    const isGSAnim = window.App && (App._gsAnimActive || (App.GSAnimator && typeof App.GSAnimator.isActive === "function" && App.GSAnimator.isActive()));
+    const isLTAnim = window.App && (App._ltAnimActive || (App.LTAnimator && typeof App.LTAnimator.isActive === "function" && App.LTAnimator.isActive()));
+    const animColor = (isBasisAnim && it._basisColorCss) ? it._basisColorCss : ((isCoordAnim && it._coordColorCss) ? it._coordColorCss : ((isIndepAnim && it._indepColorCss) ? it._indepColorCss : ((isRankAnim && it._rankColorCss) ? it._rankColorCss : ((isGSAnim && it._gsColorCss) ? it._gsColorCss : ((isLTAnim && it._ltColorCss) ? it._ltColorCss : "")))));
+    const vColor = animColor || it.colorHex || it.colorCss || "";
     const coloredName = (vColor && (vColor.startsWith("#") || /^[a-z]+$/i.test(vColor)))
       ? `{\\color{${vColor}}${vName}}`
       : vName;

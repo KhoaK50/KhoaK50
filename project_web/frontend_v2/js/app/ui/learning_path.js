@@ -3365,7 +3365,15 @@ window.openPathDetail = function(pathObjOrId, containerOverrideId) {
         `;
     }
     
-    html += `<div id="svg-timeline-wrapper" data-path-id="${pathId}" style="position: relative; margin-left: 20px;">`;
+    html += `<style>
+      @media (max-width: 600px) {
+        #svg-timeline-wrapper { margin-left: 4px !important; }
+        #svg-timeline-wrapper .tl-content-node { padding-left: 30px !important; padding-bottom: 32px !important; }
+        #svg-timeline-wrapper .tl-anchor-task1,
+        #svg-timeline-wrapper .tl-anchor-task2 { padding: 12px 12px !important; }
+      }
+    </style>
+    <div id="svg-timeline-wrapper" data-path-id="${pathId}" style="position: relative; margin-left: 20px;">`;
 
     for (let i = 0; i < pathNodes.length; i++) {
         let nId = pathNodes[i];
@@ -3452,7 +3460,7 @@ window.openPathDetail = function(pathObjOrId, containerOverrideId) {
             
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 <div class="tl-anchor-task1" style="position: relative; ${t1Border} border-radius: 0px; padding: 14px 18px; background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; transition: border-color 0.2s ease;">
-                    <div style="max-width: 65%;">
+                    <div style="flex: 1 1 210px; min-width: 0;">
                         <div style="font-weight: 700; font-family: var(--font-ui); color: var(--text-main); font-size: 14px; margin-bottom: 3px;">
                             Nhiệm vụ ${lessonNum}.1: Nghiên cứu lý thuyết trọng tâm
                         </div>
@@ -3464,7 +3472,7 @@ window.openPathDetail = function(pathObjOrId, containerOverrideId) {
                 </div>
                 
                 <div class="tl-anchor-task2" style="position: relative; ${t2Border} border-radius: 0px; padding: 14px 18px; background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; transition: border-color 0.2s ease;">
-                    <div style="max-width: 65%;">
+                    <div style="flex: 1 1 210px; min-width: 0;">
                         <div style="font-weight: 700; font-family: var(--font-ui); color: var(--text-main); font-size: 14px; margin-bottom: 3px;">
                             Nhiệm vụ ${lessonNum}.2: Luyện tập giải bài tập
                         </div>
@@ -4008,15 +4016,15 @@ window.openRetrospectiveTimeline = function(pathId) {
     pathNodes.forEach((nId, idx) => {
         const lData = getLessonData(nId);
         nodesHtml += `
-            <div style="display: flex; gap: 14px; align-items: center; padding: 12px 16px; border: 1px solid var(--border-strong); background: var(--bg-body);">
+            <div style="display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; padding: 12px 14px; border: 1px solid var(--border-strong); background: var(--bg-body);">
                 <div style="width: 24px; height: 24px; border-radius: 0px; background: rgba(48, 164, 108, 0.1); border: 1px solid var(--success-base, #30a46c); color: var(--success-base, #30a46c); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0;">
                     <i class="ph ph-check"></i>
                 </div>
-                <div style="flex: 1;">
+                <div style="flex: 1 1 180px; min-width: 0;">
                     <div style="font-weight: 600; font-size: 13.5px; color: var(--text-main);">Bài ${idx + 1}: ${lData.title}</div>
                     <div style="font-size: 12px; color: var(--text-muted);">Lý thuyết: Đã học · Bài tập: Đạt yêu cầu</div>
                 </div>
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                     <button onclick="window.location.href='knowledge_info.html?id=${nId}&type=lesson'" style="padding: 4px 10px; border: 1px solid var(--border-strong); background: transparent; font-size: 12px; color: var(--text-main); cursor: pointer;">
                         Đọc lại
                     </button>
@@ -4065,30 +4073,32 @@ window.openRetrospectiveDetail = function(pathId) {
     });
 
     const modalHtml = `
-        <div id="retro-detail-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.65); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 16px;">
-            <div style="background: var(--bg-card); border: 1px solid var(--border-strong); width: 100%; max-width: 580px; padding: 24px; border-radius: 0px; max-height: 90vh; overflow-y: auto;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px solid var(--border-strong); padding-bottom: 12px;">
-                    <div>
-                        <h3 style="margin: 0 0 4px 0; font-size: 1.15rem; font-weight: 700; color: var(--text-main); font-family: var(--font-ui);">Tổng kết lộ trình</h3>
+        <div id="retro-detail-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.65); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 12px;">
+            <div style="background: var(--bg-card); border: 1px solid var(--border-strong); width: 100%; max-width: 580px; padding: 18px 16px; border-radius: 0px; max-height: 90dvh; overflow-y: auto; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid var(--border-strong); padding-bottom: 12px;">
+                    <div style="min-width: 0;">
+                        <h3 style="margin: 0 0 4px 0; font-size: 1.12rem; font-weight: 700; color: var(--text-main); font-family: var(--font-ui);">Tổng kết lộ trình</h3>
                         <div style="font-size: 12.5px; color: var(--text-muted);">${sData.title} ➔ ${eData.title}</div>
                     </div>
-                    <button onclick="document.getElementById('retro-detail-modal').remove()" style="background: transparent; border: none; font-size: 16px; color: var(--text-muted); cursor: pointer;">✕</button>
+                    <button onclick="document.getElementById('retro-detail-modal').remove()" style="background: transparent; border: none; font-size: 16px; color: var(--text-muted); cursor: pointer; flex-shrink: 0;">✕</button>
                 </div>
 
                 <!-- Table of lessons -->
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px;">
+                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin-bottom: 18px;">
+                <table style="width: 100%; min-width: 420px; border-collapse: collapse;">
                     <thead>
                         <tr style="border-bottom: 1px solid var(--border-strong); text-align: left; font-size: 11.5px; text-transform: uppercase; color: var(--text-muted);">
-                            <th style="padding: 8px 12px;">Bài học</th>
-                            <th style="padding: 8px 12px;">Lý thuyết</th>
-                            <th style="padding: 8px 12px;">Điểm bài tập</th>
-                            <th style="padding: 8px 12px;">Kết quả</th>
+                            <th style="padding: 8px 10px;">Bài học</th>
+                            <th style="padding: 8px 10px;">Lý thuyết</th>
+                            <th style="padding: 8px 10px;">Điểm bài tập</th>
+                            <th style="padding: 8px 10px;">Kết quả</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${rowsHtml}
                     </tbody>
                 </table>
+                </div>
 
                 <!-- Simple feedback box from Nori -->
                 <div style="background: var(--bg-body); border: 1px solid var(--border-strong); padding: 14px 16px; margin-bottom: 18px; font-size: 13px; color: var(--text-main); line-height: 1.6;">

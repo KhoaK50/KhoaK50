@@ -120,54 +120,114 @@
       }
     }
 
-    return resolved.slice(0, 3);
+    return resolved;
   }
 
-  // --- THUAT TOAN TRUC GIAO HOA GRAM - SCHMIDT DAY DU ---
+  // --- THUAT TOAN TRUC GIAO HOA GRAM - SCHMIDT DAY DU (HO TRO M >= 2 VECTOR & TRIET TIEU VECTOR PHU THUOC VE 0) ---
   function computeGramSchmidtDetailed(items) {
     const vectors = items.map((it) => to3D(it.vec || it));
     const is3D =
       items.some((it) => {
         const v = it.vec || it;
         return v.length >= 3;
-      }) || vectors.length >= 3;
+      }) || App.mode === "3D";
 
     const m = vectors.length;
-    const v1 = vectors[0] || [0, 0, 0];
-    const v2 = vectors[1] || [0, 0, 0];
-    const v3 = m >= 3 ? vectors[2] : null;
+    const maxDim = is3D ? 3 : 2;
+    const basisPalette = [
+      { css: "#0284c7", hex: 0x0284c7 },
+      { css: "#10b981", hex: 0x10b981 },
+      { css: "#8b5cf6", hex: 0x8b5cf6 }
+    ];
 
-    // Buoc 1: u1 = v1
-    const u1 = [...v1];
-    const nU1 = norm(u1);
+    const steps = [];
+    const nonZeroBasis = [];
 
-    // Hinh chieu cua v2 len u1
-    const p1 = projVec(v2, u1);
-    const coeff21 = dot(u1, u1) > 1e-9 ? dot(v2, u1) / dot(u1, u1) : 0;
+    for (let i = 0; i < m; i++) {
+      const v = vectors[i] || [0, 0, 0];
+      let pTotal = [0, 0, 0];
+      const components = [];
 
-    // Buoc 2: u2 = v2 - p1
-    const u2 = subVec(v2, p1);
-    const nU2 = norm(u2);
+      for (let bIdx = 0; bIdx < nonZeroBasis.length; bIdx++) {
+        const b = nonZeroBasis[bIdx];
+        const dUU = dot(b.u, b.u);
+        const coeff = dUU > 1e-9 ? dot(v, b.u) / dUU : 0;
+        const proj = dUU > 1e-9 ? scaleVec(b.u, coeff) : [0, 0, 0];
+        pTotal = addVec(pTotal, proj);
+        components.push({
+          basisStepIndex: b.stepIndex,
+          coeff,
+          proj
+        });
+      }
 
-    // Buoc 2b: O 3D neu co v3
+      const rawU = subVec(v, pTotal);
+      const rawNU = norm(rawU);
+      const isZero = rawNU < 1e-5 || nonZeroBasis.length >= maxDim;
+      const u = isZero ? [0, 0, 0] : rawU;
+      const nU = isZero ? 0 : rawNU;
+      const e = isZero ? [0, 0, 0] : normalizeVec(u);
+
+      const paletteEntry = basisPalette[Math.min(nonZeroBasis.length, basisPalette.length - 1)];
+      const stepObj = {
+        index: i,
+        stepIndex: i + 1,
+        v,
+        pTotal: isZero && rawNU < 1e-5 ? pTotal : (isZero ? [...v] : pTotal),
+        components,
+        u,
+        nU,
+        e,
+        isZero,
+        color: isZero ? "#ef4444" : paletteEntry.css,
+        colorHex: isZero ? 0xef4444 : paletteEntry.hex
+      };
+      steps.push(stepObj);
+
+      if (!isZero) {
+        nonZeroBasis.push({
+          stepIndex: i + 1,
+          vecIndex: i,
+          u,
+          nU,
+          e,
+          color: paletteEntry.css,
+          colorHex: paletteEntry.hex
+        });
+      }
+    }
+
+    const v1 = steps[0] ? steps[0].v : [0, 0, 0];
+    const v2 = steps[1] ? steps[1].v : [0, 0, 0];
+    const v3 = steps[2] ? steps[2].v : null;
+
+    const u1 = steps[0] ? steps[0].u : [0, 0, 0];
+    const u2 = steps[1] ? steps[1].u : [0, 0, 0];
+    const u3 = steps[2] ? steps[2].u : null;
+
+    const u1IsZero = steps[0] ? steps[0].isZero : true;
+    const u2IsZero = steps[1] ? steps[1].isZero : true;
+    const u3IsZero = steps[2] ? steps[2].isZero : true;
+
+    const nU1 = steps[0] ? steps[0].nU : 0;
+    const nU2 = steps[1] ? steps[1].nU : 0;
+    const nU3 = steps[2] ? steps[2].nU : 0;
+
+    const p1 = steps[1] ? steps[1].pTotal : [0, 0, 0];
+    const coeff21 = !u1IsZero && dot(u1, u1) > 1e-9 ? dot(v2, u1) / dot(u1, u1) : 0;
+
     let p31 = [0, 0, 0];
     let p32 = [0, 0, 0];
     let p12 = [0, 0, 0];
-    let u3 = null;
-    let nU3 = 0;
-
-    if (v3) {
-      p31 = projVec(v3, u1);
-      p32 = projVec(v3, u2);
-      p12 = addVec(p31, p32);
-      u3 = subVec(v3, p12);
-      nU3 = norm(u3);
+    if (v3 && steps[2]) {
+      p31 = u1IsZero ? [0, 0, 0] : projVec(v3, u1);
+      p32 = u2IsZero ? [0, 0, 0] : projVec(v3, u2);
+      p12 = steps[2].pTotal;
     }
 
-    // Buoc 3: Chuan hoa thanh e1, e2, (e3)
-    const e1 = normalizeVec(u1);
-    const e2 = normalizeVec(u2);
-    const e3 = u3 ? normalizeVec(u3) : null;
+    const e1 = steps[0] ? steps[0].e : [0, 0, 0];
+    const e2 = steps[1] ? steps[1].e : [0, 0, 0];
+    const e3 = steps[2] ? steps[2].e : null;
 
     const dotV1V2 = dot(v1, v2);
     const dotU1U2 = dot(u1, u2);
@@ -175,6 +235,7 @@
     return {
       items,
       vectors,
+      steps,
       is3D,
       m,
       v1,
@@ -183,6 +244,10 @@
       u1,
       u2,
       u3,
+      u1IsZero,
+      u2IsZero,
+      u3IsZero,
+      nonZeroBasis,
       p1,
       coeff21,
       p31,
@@ -332,7 +397,7 @@
           this._tempVecIds.push(p12Id);
           App.vectorList.push({
             id: p12Id,
-            vec: [0, 0, 0],
+            vec: analysis.is3D ? [0, 0, 0] : [0, 0],
             name: "p_{12}",
             _customLabelLatex: "p_{12}",
             colorCss: "#f59e0b",
@@ -343,15 +408,6 @@
             _isGSTemp: true
           });
         }
-      }
-
-      // Chuyen sang 3D neu co vector 3D, hoac 2D neu la 2 vector 2D
-      if (analysis.is3D && App.mode !== "3D") {
-        if (typeof App.setMode === "function") App.setMode("3D");
-        else if (typeof App.toggleMode === "function") App.toggleMode();
-      } else if (!analysis.is3D && App.mode === "3D") {
-        if (typeof App.setMode === "function") App.setMode("2D");
-        else if (typeof App.toggleMode === "function") App.toggleMode();
       }
 
       this._savedCamPos3D = null;
@@ -539,6 +595,60 @@
       this.runCurrentPhase();
     },
 
+    // Tinh nhip thoi gian 2 giai doan tach biet cho vector thu k (k >= 1, ung voi v_{k+1}) trong Buoc 2 (Phase 1):
+    // - Voi k = 1 (v2): p1 da moc xong o Buoc 1, nen o dau Buoc 2 giu nhe 14% de nhin ro p1, sau do moi truot v2 va thu p1 cung nhau.
+    // - Voi k >= 2 (v3, v4, ...):
+    //   + Giai doan A (localT trong [0.00 .. 0.40]): v_{k+1} DUNG YEN, ha duong giong va moc vector hinh chieu p tu O len 100% (pProj: 0 -> 1).
+    //   + Giai doan giu (localT trong [0.40 .. 0.50]): Giu nguyen p o 100% va v_{k+1} dung yen de nguoi hoc thay ro p (dac biet khi p = v_{k+1}).
+    //   + Giai doan B (localT trong [0.50 .. 0.98]): Tru p, vector v_{k+1} (cung p) truot ve u_{k+1} hoac rut cung nhau ve 0 tai goc O (pSlide: 0 -> 1).
+    _getStepTiming(k, rawP) {
+      const an = this._analysis;
+      const totalSlides = Math.max(1, (an ? an.m : 2) - 1);
+      if (totalSlides === 1) {
+        const clamped = Math.max(0, Math.min(1, rawP));
+        const pSlide = smoothstep((clamped - 0.14) / 0.84);
+        return {
+          active: true,
+          localT: clamped,
+          pProj: 1.0,
+          pSlide
+        };
+      }
+
+      const w1 = 1.0;
+      const wk = 1.75;
+      const totalW = w1 + (totalSlides - 1) * wk;
+      const startW = k === 1 ? 0 : w1 + (k - 2) * wk;
+      const curW = k === 1 ? w1 : wk;
+      const slotStart = startW / totalW;
+      const slotDur = curW / totalW;
+      const rawLocal = (rawP - slotStart) / Math.max(1e-4, slotDur);
+      const clamped = Math.max(0, Math.min(1, rawLocal));
+
+      if (k === 1) {
+        const pSlide = smoothstep((clamped - 0.12) / 0.86);
+        return {
+          active: rawLocal >= -0.01 && rawLocal <= 1.01,
+          localT: clamped,
+          pProj: 1.0,
+          pSlide
+        };
+      }
+
+      const pProj = smoothstep(clamped / 0.40);
+      const pSlide = smoothstep((clamped - 0.50) / 0.48);
+      return {
+        active: rawLocal >= 0 && rawLocal <= 1.01,
+        localT: clamped,
+        pProj,
+        pSlide
+      };
+    },
+
+    _getStepSlideProgress(k, rawP) {
+      return this._getStepTiming(k, rawP).pSlide;
+    },
+
     // --- VONG LAP RAF CHAY HOAT CANH LIEN HOAN 3 BUOC ---
     runCurrentPhase() {
       if (!this._active) return;
@@ -549,7 +659,8 @@
         return;
       }
 
-      const baseDurations = [2600, 3000, 2600];
+      const extraVecs = Math.max(0, ((this._analysis && this._analysis.m) || 2) - 2);
+      const baseDurations = [2800, 2800 + extraVecs * 3400, 2600];
       let lastTime = performance.now();
       let currentProgress = this._phaseProgress;
 
@@ -559,7 +670,7 @@
         const delta = Math.max(0, now - lastTime);
         lastTime = now;
 
-        const baseDuration = baseDurations[this._currentPhase] || 2600;
+        const baseDuration = baseDurations[this._currentPhase] || 2800;
         currentProgress += (delta * this._speed) / baseDuration;
         const p = Math.min(1.0, currentProgress);
         this._phaseProgress = p;
@@ -579,7 +690,7 @@
               if (this._active && !this._paused) {
                 this.goToPhase(this._currentPhase + 1);
               }
-            }, 420 / this._speed);
+            }, 450 / this._speed);
           } else {
             this._paused = true;
             this.updateSidebarUI();
@@ -600,22 +711,32 @@
       const p12Item = App.vectorList.find((v) => v.id === -9802);
 
       // Quy uoc thoi gian con trong tung pha:
-      // Phase 0: [0..0.30] truc u1, [0.30..1.0] ha duong giong va moc vector p1
-      const pDrop = smoothstep((progress - 0.25) / 0.75);
-      // Phase 1: neu 2 vector thi truot v2 trong [0..1]; neu 3 vector thi v2 truot [0..0.5], v3 truot [0.5..1.0]
-      const pSlide2 = an.v3 ? smoothstep(progress / 0.52) : smoothstep(progress);
-      const pSlide3 = an.v3 ? smoothstep((progress - 0.48) / 0.52) : 0;
-      // Phase 2: [0..0.30] hien duong tron/mat cau don vi, [0.30..1.0] co gian u_i -> e_i
+      // Phase 0: [0..0.22] truc u1, [0.22..0.88] ha duong giong va moc vector p1, [0.88..1.0] giu p1 o 100%
+      const pDrop = smoothstep((progress - 0.22) / 0.66);
+      const tStep1 = this._getStepTiming(1, progress);
+      // Phase 2: [0..0.25] hien duong tron/mat cau don vi, [0.25..1.0] co gian u_i -> e_i
       const pNorm = smoothstep((progress - 0.25) / 0.75);
 
       if (p1Item) {
         if (phase === 0 && pDrop > 0.02 && norm(an.p1) > 1e-4) {
           p1Item.visible = true;
+          p1Item.showProjection = false;
           p1Item.vec = scaleVec(an.p1, pDrop).slice(0, d);
           p1Item._gsColorCss = "#f59e0b";
           p1Item.colorHex = "#f59e0b";
           p1Item._gsAlpha = 0.95;
           p1Item.alpha = 0.95;
+          p1Item._customLabelLatex = "p_1";
+        } else if (phase === 1 && tStep1.active && tStep1.pSlide < 0.97 && norm(an.p1) > 1e-4) {
+          // O dau Buoc 2, p1 giu nguyen 100% roi thu ngan cung luc khi v2 tru p1
+          const remScale = Math.max(0, 1 - tStep1.pSlide);
+          p1Item.visible = remScale > 0.02;
+          p1Item.showProjection = false;
+          p1Item.vec = scaleVec(an.p1, remScale).slice(0, d);
+          p1Item._gsColorCss = "#f59e0b";
+          p1Item.colorHex = "#f59e0b";
+          p1Item._gsAlpha = 0.9 * (0.35 + 0.65 * remScale);
+          p1Item.alpha = p1Item._gsAlpha;
           p1Item._customLabelLatex = "p_1";
         } else {
           p1Item.visible = false;
@@ -624,94 +745,133 @@
       }
 
       if (p12Item) {
-        if (phase === 1 && an.v3 && progress >= 0.42 && progress <= 0.96 && norm(an.p12) > 1e-4) {
-          const pSub = smoothstep((progress - 0.42) / 0.25);
-          p12Item.visible = true;
-          p12Item.vec = scaleVec(an.p12, pSub).slice(0, 3);
+        let activeProjStep = null;
+        let activeTiming = null;
+        if (phase === 1 && an.m >= 3) {
+          for (let i = 2; i < an.steps.length; i++) {
+            const ti = this._getStepTiming(i, progress);
+            if (ti.active) {
+              activeProjStep = an.steps[i];
+              activeTiming = ti;
+              break;
+            }
+          }
+        }
+
+        if (
+          activeProjStep &&
+          activeTiming &&
+          activeTiming.pProj > 0.02 &&
+          activeTiming.pSlide < 0.97 &&
+          norm(activeProjStep.pTotal) > 1e-4
+        ) {
+          // Giai doan A: p moc tu 0 -> 100% (khi pSlide = 0). Giai doan giu: p = 100%. Giai doan B: p thu tu 100% -> 0 cung v_{i+1}!
+          const pScale = activeTiming.pProj * Math.max(0, 1 - activeTiming.pSlide);
+          p12Item.visible = pScale > 0.02;
+          p12Item.showProjection = false;
+          p12Item.vec = scaleVec(activeProjStep.pTotal, pScale).slice(0, d);
           p12Item._gsColorCss = "#f59e0b";
           p12Item.colorHex = "#f59e0b";
-          p12Item._gsAlpha = 0.9 * (1 - 0.4 * pSlide3);
+          p12Item._gsAlpha = 0.95 * (1 - 0.35 * activeTiming.pSlide);
           p12Item.alpha = p12Item._gsAlpha;
-          p12Item._customLabelLatex = "p_{12}";
+          const kIdx = activeProjStep.index;
+          p12Item._customLabelLatex = kIdx === 2 ? "p_{12}" : kIdx === 3 ? "p_{123}" : `p_{1..${kIdx}}`;
         } else {
           p12Item.visible = false;
           p12Item.alpha = 0;
         }
       }
 
+      const initColors = ["#0284c7", "#6366f1", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
+
       for (let i = 0; i < an.items.length; i++) {
         const item = an.items[i];
+        const step = an.steps[i];
         const vItem = App.vectorList.find((v) => v.id === item.id);
-        if (!vItem) continue;
+        if (!vItem || !step) continue;
+        vItem.showProjection = false;
 
         if (i === 0) {
           // Vector 1: u1 = v1 -> e1 (Xanh duong #0284c7)
-          vItem._gsColorCss = "#0284c7";
-          vItem.colorHex = "#0284c7";
-          vItem._gsAlpha = 1.0;
-          vItem.alpha = 1.0;
-          if (phase === 0) {
-            vItem.vec = an.u1.slice(0, d);
-            vItem._customLabelLatex = "u_1";
-          } else if (phase === 1) {
-            vItem.vec = an.u1.slice(0, d);
-            vItem._customLabelLatex = "u_1";
-          } else if (phase === 2) {
-            const cur = lerpVec(an.u1, an.e1, pNorm);
-            vItem.vec = cur.slice(0, d);
-            vItem._customLabelLatex = pNorm > 0.5 ? "e_1" : "u_1";
-          }
-        } else if (i === 1) {
-          // Vector 2: v2 -> u2 = v2 - p1 -> e2 (Xanh ngoc #10b981)
-          if (phase === 0) {
-            vItem._gsColorCss = "#6366f1";
-            vItem.colorHex = "#6366f1";
-            vItem._gsAlpha = 0.95;
-            vItem.alpha = 0.95;
-            vItem.vec = an.v2.slice(0, d);
-            vItem._customLabelLatex = "v_2";
-          } else if (phase === 1) {
-            vItem._gsColorCss = "#10b981";
-            vItem.colorHex = "#10b981";
-            vItem._gsAlpha = 1.0;
-            vItem.alpha = 1.0;
-            const cur = subVec(an.v2, scaleVec(an.p1, pSlide2));
-            vItem.vec = cur.slice(0, d);
-            vItem._customLabelLatex = pSlide2 > 0.65 ? "u_2" : "v_2";
-          } else if (phase === 2) {
-            vItem._gsColorCss = "#10b981";
-            vItem.colorHex = "#10b981";
-            vItem._gsAlpha = 1.0;
-            vItem.alpha = 1.0;
-            const cur = lerpVec(an.u2, an.e2, pNorm);
-            vItem.vec = cur.slice(0, d);
-            vItem._customLabelLatex = pNorm > 0.5 ? "e_2" : "u_2";
-          }
-        } else if (i === 2 && an.v3 && an.u3) {
-          // Vector 3: v3 -> u3 = v3 - p12 -> e3 (Tim #8b5cf6)
-          if (phase === 0) {
-            vItem._gsColorCss = "#8b5cf6";
-            vItem.colorHex = "#8b5cf6";
-            vItem._gsAlpha = 0.45;
-            vItem.alpha = 0.45;
-            vItem.vec = an.v3.slice(0, 3);
-            vItem._customLabelLatex = "v_3";
-          } else if (phase === 1) {
-            vItem._gsColorCss = "#8b5cf6";
-            vItem.colorHex = "#8b5cf6";
-            vItem._gsAlpha = progress < 0.45 ? 0.55 : 1.0;
+          if (step.isZero) {
+            vItem.visible = phase < 2;
+            vItem._gsColorCss = "#ef4444";
+            vItem.colorCss = "#ef4444";
+            vItem.colorHex = "#ef4444";
+            vItem._gsAlpha = phase === 2 ? 0 : 0.25;
             vItem.alpha = vItem._gsAlpha;
-            const cur = subVec(an.v3, scaleVec(an.p12, pSlide3));
-            vItem.vec = cur.slice(0, 3);
-            vItem._customLabelLatex = pSlide3 > 0.65 ? "u_3" : "v_3";
-          } else if (phase === 2 && an.e3) {
-            vItem._gsColorCss = "#8b5cf6";
-            vItem.colorHex = "#8b5cf6";
+            vItem.vec = step.u.slice(0, d);
+            vItem._customLabelLatex = "u_1 = 0";
+          } else {
+            vItem.visible = true;
+            vItem._gsColorCss = step.color;
+            vItem.colorCss = step.color;
+            vItem.colorHex = step.color;
             vItem._gsAlpha = 1.0;
             vItem.alpha = 1.0;
-            const cur = lerpVec(an.u3, an.e3, pNorm);
-            vItem.vec = cur.slice(0, 3);
-            vItem._customLabelLatex = pNorm > 0.5 ? "e_3" : "u_3";
+            if (phase === 0 || phase === 1) {
+              vItem.vec = step.u.slice(0, d);
+              vItem._customLabelLatex = "u_1";
+            } else if (phase === 2) {
+              const cur = lerpVec(step.u, step.e, pNorm);
+              vItem.vec = cur.slice(0, d);
+              vItem._customLabelLatex = pNorm > 0.5 ? "e_1" : "u_1";
+            }
+          }
+        } else {
+          // Vector thu k+1 (i >= 1): v_{i+1} -> u_{i+1} = v_{i+1} - pTotal -> e_{i+1} (hoac triet tieu ve 0 neu phu thuoc)
+          const idxLabel = i + 1;
+          const initCol = initColors[i % initColors.length];
+          const tInfo = this._getStepTiming(i, progress);
+          const pSlide = tInfo.pSlide;
+
+          if (phase === 0) {
+            vItem.visible = true;
+            vItem._gsColorCss = initCol;
+            vItem.colorCss = initCol;
+            vItem.colorHex = initCol;
+            vItem._gsAlpha = i === 1 ? 0.95 : 0.45;
+            vItem.alpha = vItem._gsAlpha;
+            vItem.vec = step.v.slice(0, d);
+            vItem._customLabelLatex = `v_${idxLabel}`;
+          } else if (phase === 1) {
+            const cur = subVec(step.v, scaleVec(step.pTotal, pSlide));
+            vItem.vec = cur.slice(0, d);
+            if (step.isZero) {
+              vItem.visible = pSlide < 0.98;
+              const col = pSlide > 0.25 ? "#ef4444" : initCol;
+              vItem._gsColorCss = col;
+              vItem.colorCss = col;
+              vItem.colorHex = col;
+              vItem._gsAlpha = !tInfo.active && pSlide === 0 && i >= 2 ? 0.45 : Math.max(0.15, 1.0 - 0.85 * pSlide);
+              vItem.alpha = vItem._gsAlpha;
+              vItem._customLabelLatex = pSlide > 0.62 ? `u_${idxLabel} = 0` : `v_${idxLabel}`;
+            } else {
+              vItem.visible = true;
+              const col = pSlide > 0.15 ? step.color : initCol;
+              vItem._gsColorCss = col;
+              vItem.colorCss = col;
+              vItem.colorHex = col;
+              vItem._gsAlpha = !tInfo.active && pSlide === 0 && i >= 2 ? 0.45 : 1.0;
+              vItem.alpha = vItem._gsAlpha;
+              vItem._customLabelLatex = pSlide > 0.62 ? `u_${idxLabel}` : `v_${idxLabel}`;
+            }
+          } else if (phase === 2) {
+            if (step.isZero) {
+              vItem.visible = false;
+              vItem._gsAlpha = 0;
+              vItem.alpha = 0;
+            } else {
+              vItem.visible = true;
+              vItem._gsColorCss = step.color;
+              vItem.colorCss = step.color;
+              vItem.colorHex = step.color;
+              vItem._gsAlpha = 1.0;
+              vItem.alpha = 1.0;
+              const cur = lerpVec(step.u, step.e, pNorm);
+              vItem.vec = cur.slice(0, d);
+              vItem._customLabelLatex = pNorm > 0.5 ? `e_${idxLabel}` : `u_${idxLabel}`;
+            }
           }
         }
       }
@@ -795,6 +955,16 @@
       }
 
       this.bindControlsEvents(wrap);
+
+      const initSlider = wrap.querySelector("#gsSpeedSlider");
+      if (initSlider) {
+        const min = parseFloat(initSlider.min) || 0.2;
+        const max = parseFloat(initSlider.max) || 2.5;
+        const pct = Math.max(0, Math.min(100, ((this._speed - min) / (max - min)) * 100));
+        initSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+        initSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+      }
+
       return wrap;
     },
 
@@ -816,7 +986,19 @@
 
       const speedSlider = wrap.querySelector("#gsSpeedSlider");
       if (speedSlider) {
-        speedSlider.oninput = (e) => this.setSpeed(e.target.value);
+        const updateSliderStyle = (val) => {
+          const min = parseFloat(speedSlider.min) || 0.2;
+          const max = parseFloat(speedSlider.max) || 2.5;
+          const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+          speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+          speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+        };
+        updateSliderStyle(parseFloat(speedSlider.value) || this._speed);
+        speedSlider.oninput = (e) => {
+          const val = parseFloat(e.target.value) || 1.0;
+          updateSliderStyle(val);
+          this.setSpeed(val);
+        };
       }
 
       const pills = wrap.querySelectorAll("#gsPhasePills .coord-phase-btn");
@@ -860,6 +1042,18 @@
       const speedVal = wrap.querySelector("#gsSpeedValue");
       if (speedVal) speedVal.textContent = `${this._speed.toFixed(1)}×`;
 
+      const speedSlider = wrap.querySelector("#gsSpeedSlider");
+      if (speedSlider) {
+        if (Math.abs(parseFloat(speedSlider.value) - this._speed) > 0.05) {
+          speedSlider.value = String(this._speed);
+        }
+        const min = parseFloat(speedSlider.min) || 0.2;
+        const max = parseFloat(speedSlider.max) || 2.5;
+        const pct = Math.max(0, Math.min(100, ((this._speed - min) / (max - min)) * 100));
+        speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+        speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+      }
+
       const titleEl = wrap.querySelector("#gsStepTitle");
       const descEl = wrap.querySelector("#gsStepDesc");
       const an = this._analysis;
@@ -874,22 +1068,34 @@
         }
 
         const d = an.is3D ? 3 : 2;
+        const subMap = { 1: "₁", 2: "₂", 3: "₃", 4: "₄", 5: "₅", 6: "₆" };
         if (this._currentPhase === 0) {
           const coeff = formatScalar(an.coeff21);
-          descEl.innerHTML = `Cố định trục chuẩn <b>u₁ = v₁ = [${an.u1.slice(0, d).map(formatScalar).join(", ")}]</b>.<br>Hạ đường gióng vuông góc từ ngọn v₂ xuống giá của u₁, thu được hình chiếu <b>p₁ = proj<sub>u₁</sub>(v₂) = ${coeff}·u₁ = [${an.p1.slice(0, d).map(formatScalar).join(", ")}]</b>.`;
+          const colNote = an.u2IsZero ? " (v₂ cùng phương u₁ nên chân chiếu p₁ trùng ngọn v₂)" : "";
+          descEl.innerHTML = `Cố định trục chuẩn <b>u₁ = v₁ = [${an.u1.slice(0, d).map(formatScalar).join(", ")}]</b>.<br>Hạ đường gióng vuông góc từ ngọn v₂ xuống giá của u₁, thu được hình chiếu <b>p₁ = proj<sub>u₁</sub>(v₂) = ${coeff}·u₁ = [${an.p1.slice(0, d).map(formatScalar).join(", ")}]</b>${colNote}.`;
         } else if (this._currentPhase === 1) {
-          const checkDot = Math.abs(an.dotU1U2).toFixed(4);
-          if (an.v3 && an.u3) {
-            descEl.innerHTML = `Khử thành phần song song: <b>u₂ = v₂ - p₁ = [${an.u2.slice(0, 3).map(formatScalar).join(", ")}] ⊥ u₁</b>.<br>Tiếp tục hạ hình chiếu <b>p₁₂</b> của v₃ xuống mặt phẳng <b>span(u₁, u₂)</b> và rút phần dư trực giao <b>u₃ = v₃ - p₁₂ = [${an.u3.slice(0, 3).map(formatScalar).join(", ")}]</b>.`;
-          } else {
-            descEl.innerHTML = `Tịnh tiến v₂ ngược theo phương p₁ để khử thành phần song song: <b>u₂ = v₂ - p₁ = [${an.u2.slice(0, 2).map(formatScalar).join(", ")}]</b>.<br>Kiểm chứng: <b>⟨u₁, u₂⟩ = ${checkDot} = 0</b> (vuông góc 90° tại gốc O).`;
+          const lines = [];
+          for (let i = 1; i < an.steps.length; i++) {
+            const st = an.steps[i];
+            const sub = subMap[st.stepIndex] || st.stepIndex;
+            const pLabel = i === 1 ? "p₁" : (i === 2 ? "p₁₂" : `p₁..${i}`);
+            if (st.isZero) {
+              lines.push(`<b>u${sub} = v${sub} - ${pLabel} = [0, ..., 0]</b> (v${sub} phụ thuộc tuyến tính vào các trục trước nên trượt về gốc O và bị loại bỏ).`);
+            } else {
+              lines.push(`Khử thành phần song song: <b>u${sub} = v${sub} - ${pLabel} = [${st.u.slice(0, d).map(formatScalar).join(", ")}]</b> vuông góc với không gian con trước đó.`);
+            }
           }
+          descEl.innerHTML = lines.join("<br>");
         } else if (this._currentPhase === 2) {
-          if (an.is3D && an.e3) {
-            descEl.innerHTML = `Co giãn các vector trực giao uᵢ về mặt cầu đơn vị <b>R = 1</b> (eᵢ = uᵢ / ‖uᵢ‖):<br><b>e₁ = [${an.e1.slice(0, 3).map((x) => x.toFixed(2)).join(", ")}], e₂ = [${an.e2.slice(0, 3).map((x) => x.toFixed(2)).join(", ")}], e₃ = [${an.e3.slice(0, 3).map((x) => x.toFixed(2)).join(", ")}]</b>.`;
-          } else {
-            descEl.innerHTML = `Co giãn 2 vector trực giao u₁, u₂ về đường tròn đơn vị <b>R = 1</b> (eᵢ = uᵢ / ‖uᵢ‖):<br><b>e₁ = [${an.e1.slice(0, 2).map((x) => x.toFixed(2)).join(", ")}], e₂ = [${an.e2.slice(0, 2).map((x) => x.toFixed(2)).join(", ")}]</b>, tạo thành ô vuông đơn vị trực chuẩn 1 × 1.`;
-          }
+          const eListStr = an.nonZeroBasis
+            .map((b) => `<b>e${subMap[b.stepIndex] || b.stepIndex} = [${b.e.slice(0, d).map((x) => x.toFixed(2)).join(", ")}]</b>`)
+            .join(", ");
+          const droppedCount = an.m - an.nonZeroBasis.length;
+          const droppedNote =
+            droppedCount > 0
+              ? ` (đã loại bỏ ${droppedCount} vector phụ thuộc triệt tiêu về 0)`
+              : "";
+          descEl.innerHTML = `Chuẩn hóa ${an.nonZeroBasis.length} trục trực giao khác không về độ dài đơn vị <b>R = 1</b> (eᵢ = uᵢ / ‖uᵢ‖)${droppedNote}:<br>${eListStr || "∅"}.`;
         }
       }
     },
@@ -931,101 +1137,126 @@
       }
 
       if (this._currentPhase === 1) {
-        // Buoc 2: Truc vuong goc vo han chua u2 + Hinh binh hanh tru vector u2 = v2 - p1
-        const pSlide = smoothstep(rawP);
-        if (an.nU2 > 1e-4) {
-          const dir2X = an.u2[0] / an.nU2;
-          const dir2Y = an.u2[1] / an.nU2;
-          const extent2 = 28 * pSlide;
-          const p2Start = toScreen(-dir2X * extent2, -dir2Y * extent2);
-          const p2End = toScreen(dir2X * extent2, dir2Y * extent2);
+        const pO = toScreen(0, 0);
+
+        for (let i = 1; i < an.steps.length; i++) {
+          const step = an.steps[i];
+          const tInfo = this._getStepTiming(i, rawP);
+          const pSlide = tInfo.pSlide;
+          if (!tInfo.active && pSlide <= 0.001 && i > 1) continue;
+
+          if (!step.isZero && step.nU > 1e-4 && pSlide > 0.001) {
+            const dirX = step.u[0] / step.nU;
+            const dirY = step.u[1] / step.nU;
+            const extent = 28 * pSlide;
+            const pS = toScreen(-dirX * extent, -dirY * extent);
+            const pE = toScreen(dirX * extent, dirY * extent);
+
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(16, 185, 129, 0.30)";
+            ctx.lineWidth = 1.4;
+            ctx.setLineDash([5, 5]);
+            ctx.moveTo(pS.x, pS.y);
+            ctx.lineTo(pE.x, pE.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+
+          // Giai doan A (cho i >= 2): Ha duong giong tu v_{i+1} xuong pTotal truoc khi truot
+          if (i >= 2 && tInfo.active && tInfo.pProj > 0.02 && pSlide < 0.05) {
+            const curFoot = lerpVec(step.v, step.pTotal, tInfo.pProj);
+            const ptV = toScreen(step.v[0], step.v[1]);
+            const ptFoot = toScreen(curFoot[0], curFoot[1]);
+            ctx.beginPath();
+            ctx.strokeStyle = "#f59e0b";
+            ctx.lineWidth = 1.7;
+            ctx.setLineDash([5, 4]);
+            ctx.moveTo(ptV.x, ptV.y);
+            ctx.lineTo(ptFoot.x, ptFoot.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = "#f59e0b";
+            ctx.beginPath();
+            ctx.arc(ptFoot.x, ptFoot.y, 3.8, 0, Math.PI * 2);
+            ctx.fill();
+            continue;
+          }
+
+          if (pSlide <= 0.001) continue;
+
+          const curV = subVec(step.v, scaleVec(step.pTotal, pSlide));
+          const pPRem = toScreen(step.pTotal[0] * (1 - pSlide), step.pTotal[1] * (1 - pSlide));
+          const pVOrig = toScreen(step.v[0], step.v[1]);
+          const pCur = toScreen(curV[0], curV[1]);
+          const pPFull = toScreen(step.pTotal[0], step.pTotal[1]);
+
+          if (!step.isZero) {
+            ctx.beginPath();
+            ctx.moveTo(pPFull.x, pPFull.y);
+            ctx.lineTo(pVOrig.x, pVOrig.y);
+            ctx.lineTo(pCur.x, pCur.y);
+            ctx.lineTo(pPRem.x, pPRem.y);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(16, 185, 129, 0.09)";
+            ctx.fill();
+          }
 
           ctx.beginPath();
-          ctx.strokeStyle = "rgba(16, 185, 129, 0.30)";
-          ctx.lineWidth = 1.4;
-          ctx.setLineDash([5, 5]);
-          ctx.moveTo(p2Start.x, p2Start.y);
-          ctx.lineTo(p2End.x, p2End.y);
+          ctx.strokeStyle = i === 1 ? "rgba(99, 102, 241, 0.38)" : "rgba(139, 92, 246, 0.35)";
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 4]);
+          ctx.moveTo(pO.x, pO.y);
+          ctx.lineTo(pVOrig.x, pVOrig.y);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.strokeStyle = step.isZero ? "rgba(239, 68, 68, 0.65)" : "rgba(245, 158, 11, 0.65)";
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 3]);
+          ctx.moveTo(pVOrig.x, pVOrig.y);
+          ctx.lineTo(pCur.x, pCur.y);
+          if (!step.isZero) {
+            ctx.moveTo(pPFull.x, pPFull.y);
+            ctx.lineTo(pVOrig.x, pVOrig.y);
+          }
           ctx.stroke();
           ctx.setLineDash([]);
         }
-
-        // Mien hinh chu nhat / hinh binh hanh giua O, p1, v2, curVec
-        const curV2 = subVec(an.v2, scaleVec(an.p1, pSlide));
-        const pO = toScreen(0, 0);
-        const pP1 = toScreen(an.p1[0] * (1 - pSlide), an.p1[1] * (1 - pSlide));
-        const pV2Orig = toScreen(an.v2[0], an.v2[1]);
-        const pCur = toScreen(curV2[0], curV2[1]);
-        const pP1Full = toScreen(an.p1[0], an.p1[1]);
-
-        ctx.beginPath();
-        ctx.moveTo(pP1Full.x, pP1Full.y);
-        ctx.lineTo(pV2Orig.x, pV2Orig.y);
-        ctx.lineTo(pCur.x, pCur.y);
-        ctx.lineTo(pP1.x, pP1.y);
-        ctx.closePath();
-        ctx.fillStyle = "rgba(16, 185, 129, 0.09)";
-        ctx.fill();
-
-        // Bong mo vector v2 ban dau va p1 ban dau
-        ctx.beginPath();
-        ctx.strokeStyle = "rgba(99, 102, 241, 0.38)";
-        ctx.lineWidth = 1.6;
-        ctx.setLineDash([4, 4]);
-        ctx.moveTo(pO.x, pO.y);
-        ctx.lineTo(pV2Orig.x, pV2Orig.y);
-        ctx.stroke();
-
-        // Duong truot song song tu ngon v2 den ngon u2(t)
-        ctx.beginPath();
-        ctx.strokeStyle = "rgba(245, 158, 11, 0.65)";
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 3]);
-        ctx.moveTo(pV2Orig.x, pV2Orig.y);
-        ctx.lineTo(pCur.x, pCur.y);
-        ctx.moveTo(pP1Full.x, pP1Full.y);
-        ctx.lineTo(pV2Orig.x, pV2Orig.y);
-        ctx.stroke();
-        ctx.setLineDash([]);
       } else if (this._currentPhase === 2) {
         const pCircle = smoothstep(rawP / 0.35);
         const pNorm = smoothstep((rawP - 0.25) / 0.75);
-
-        // Truc truc giao u2
-        if (an.nU2 > 1e-4) {
-          const dir2X = an.u2[0] / an.nU2;
-          const dir2Y = an.u2[1] / an.nU2;
-          const p2Start = toScreen(-dir2X * 28, -dir2Y * 28);
-          const p2End = toScreen(dir2X * 28, dir2Y * 28);
-          ctx.beginPath();
-          ctx.strokeStyle = "rgba(16, 185, 129, 0.25)";
-          ctx.lineWidth = 1.2;
-          ctx.setLineDash([5, 5]);
-          ctx.moveTo(p2Start.x, p2Start.y);
-          ctx.lineTo(p2End.x, p2End.y);
-          ctx.stroke();
-          ctx.setLineDash([]);
-        }
-
-        // Bong mo u1, u2 truoc khi chuan hoa
         const pO = toScreen(0, 0);
-        const pU1 = toScreen(an.u1[0], an.u1[1]);
-        const pU2 = toScreen(an.u2[0], an.u2[1]);
-        ctx.beginPath();
-        ctx.strokeStyle = "rgba(2, 132, 199, 0.30)";
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([3, 3]);
-        ctx.moveTo(pO.x, pO.y);
-        ctx.lineTo(pU1.x, pU1.y);
-        ctx.stroke();
 
-        ctx.beginPath();
-        ctx.strokeStyle = "rgba(16, 185, 129, 0.30)";
-        ctx.lineWidth = 1.5;
-        ctx.moveTo(pO.x, pO.y);
-        ctx.lineTo(pU2.x, pU2.y);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        for (let bIdx = 0; bIdx < an.nonZeroBasis.length; bIdx++) {
+          const b = an.nonZeroBasis[bIdx];
+          const lenU = norm(b.u);
+          if (lenU > 1e-4) {
+            if (bIdx > 0) {
+              const dirX = b.u[0] / lenU;
+              const dirY = b.u[1] / lenU;
+              const pS = toScreen(-dirX * 28, -dirY * 28);
+              const pE = toScreen(dirX * 28, dirY * 28);
+              ctx.beginPath();
+              ctx.strokeStyle = "rgba(16, 185, 129, 0.25)";
+              ctx.lineWidth = 1.2;
+              ctx.setLineDash([5, 5]);
+              ctx.moveTo(pS.x, pS.y);
+              ctx.lineTo(pE.x, pE.y);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+            const pU = toScreen(b.u[0], b.u[1]);
+            ctx.beginPath();
+            ctx.strokeStyle = bIdx === 0 ? "rgba(2, 132, 199, 0.30)" : "rgba(16, 185, 129, 0.30)";
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            ctx.moveTo(pO.x, pO.y);
+            ctx.lineTo(pU.x, pU.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
 
         // Duong tron don vi R = 1.0
         ctx.beginPath();
@@ -1038,26 +1269,30 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // O vuong don vi truc chuan 1 x 1
-        const curE1 = lerpVec(an.u1, an.e1, pNorm);
-        const curE2 = lerpVec(an.u2, an.e2, pNorm);
-        const pE1 = toScreen(curE1[0], curE1[1]);
-        const pSum = toScreen(curE1[0] + curE2[0], curE1[1] + curE2[1]);
-        const pE2 = toScreen(curE2[0], curE2[1]);
+        // O vuong don vi truc chuan 1 x 1 (chi ve khi co du 2 truc truc giao khac 0)
+        if (an.nonZeroBasis.length >= 2) {
+          const b1 = an.nonZeroBasis[0];
+          const b2 = an.nonZeroBasis[1];
+          const curE1 = lerpVec(b1.u, b1.e, pNorm);
+          const curE2 = lerpVec(b2.u, b2.e, pNorm);
+          const pE1 = toScreen(curE1[0], curE1[1]);
+          const pSum = toScreen(curE1[0] + curE2[0], curE1[1] + curE2[1]);
+          const pE2 = toScreen(curE2[0], curE2[1]);
 
-        ctx.beginPath();
-        ctx.moveTo(pO.x, pO.y);
-        ctx.lineTo(pE1.x, pE1.y);
-        ctx.lineTo(pSum.x, pSum.y);
-        ctx.lineTo(pE2.x, pE2.y);
-        ctx.closePath();
-        ctx.fillStyle = "rgba(16, 185, 129, 0.16)";
-        ctx.fill();
-        ctx.strokeStyle = "rgba(16, 185, 129, 0.65)";
-        ctx.lineWidth = 1.4;
-        ctx.setLineDash([3, 3]);
-        ctx.stroke();
-        ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(pO.x, pO.y);
+          ctx.lineTo(pE1.x, pE1.y);
+          ctx.lineTo(pSum.x, pSum.y);
+          ctx.lineTo(pE2.x, pE2.y);
+          ctx.closePath();
+          ctx.fillStyle = "rgba(16, 185, 129, 0.16)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(16, 185, 129, 0.65)";
+          ctx.lineWidth = 1.4;
+          ctx.setLineDash([3, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
       }
 
       ctx.restore();
@@ -1121,7 +1356,6 @@
           const curFoot = lerpVec(an.v2, an.p1, pDrop);
           const ptFoot = toScreen(curFoot[0], curFoot[1]);
 
-          // Duong giong net dut ha vuong goc tu ngon v2 xuong chan hinh chieu p1
           ctx.beginPath();
           ctx.strokeStyle = "#f59e0b";
           ctx.lineWidth = 1.8;
@@ -1131,7 +1365,6 @@
           ctx.stroke();
           ctx.setLineDash([]);
 
-          // Cham tron tai chan hinh chieu
           ctx.fillStyle = "#f59e0b";
           ctx.beginPath();
           ctx.arc(ptFoot.x, ptFoot.y, 3.8, 0, Math.PI * 2);
@@ -1144,40 +1377,58 @@
           }
         }
       } else if (this._currentPhase === 1) {
-        const pSlide = smoothstep(rawP);
+        const pSlide2 = this._getStepSlideProgress(1, rawP);
         const ptP1 = toScreen(an.p1[0], an.p1[1]);
         const ptO = toScreen(0, 0);
 
-        // Giữ góc vuông mờ tại chân chiếu cũ và bật sáng góc vuông 90° tại gốc O khi u2 về đích
-        if (an.nU1 > 1e-4 && an.nU2 > 1e-4) {
-          if (pSlide < 0.85) {
-            const dirU1 = norm(an.p1) > 1e-4 ? [-an.p1[0], -an.p1[1]] : [an.u1[0], an.u1[1]];
-            drawSquareAngleMarker(ptP1, dirU1, [an.u2[0], an.u2[1]], 11, "#f59e0b");
+        if (an.nU1 > 1e-4 && an.nU2 > 1e-4 && pSlide2 < 0.85) {
+          const dirU1 = norm(an.p1) > 1e-4 ? [-an.p1[0], -an.p1[1]] : [an.u1[0], an.u1[1]];
+          drawSquareAngleMarker(ptP1, dirU1, [an.u2[0], an.u2[1]], 11, "#f59e0b");
+        }
+
+        if (an.nonZeroBasis.length >= 2) {
+          const b1 = an.nonZeroBasis[0];
+          const b2 = an.nonZeroBasis[1];
+          const pSlideB2 = this._getStepSlideProgress(b2.vecIndex, rawP);
+          if (pSlideB2 >= 0.55) {
+            drawSquareAngleMarker(ptO, [b1.u[0], b1.u[1]], [b2.u[0], b2.u[1]], 14, "#10b981");
           }
-          if (pSlide >= 0.55) {
-            drawSquareAngleMarker(ptO, [an.u1[0], an.u1[1]], [an.u2[0], an.u2[1]], 14, "#10b981");
+        }
+
+        // Vong tron do tai goc O khi bat ky vector phu thuoc nao dang triet tieu ve 0
+        let anyZeroCollapsing = false;
+        for (let i = 1; i < an.steps.length; i++) {
+          const st = an.steps[i];
+          const pSl = this._getStepSlideProgress(i, rawP);
+          if (st.isZero && pSl > 0.55 && pSl < 0.99) {
+            anyZeroCollapsing = true;
+            break;
           }
+        }
+        if (anyZeroCollapsing) {
+          ctx.strokeStyle = "#ef4444";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(ptO.x, ptO.y, 7, 0, Math.PI * 2);
+          ctx.stroke();
         }
       } else if (this._currentPhase === 2) {
         const pNorm = smoothstep((rawP - 0.25) / 0.75);
         const ptO = toScreen(0, 0);
-        if (an.nU1 > 1e-4 && an.nU2 > 1e-4) {
-          drawSquareAngleMarker(ptO, [an.e1[0], an.e1[1]], [an.e2[0], an.e2[1]], 13, "#10b981");
+        if (an.nonZeroBasis.length >= 2) {
+          const b1 = an.nonZeroBasis[0];
+          const b2 = an.nonZeroBasis[1];
+          drawSquareAngleMarker(ptO, [b1.e[0], b1.e[1]], [b2.e[0], b2.e[1]], 13, "#10b981");
         }
 
-        // Cham sang tren duong tron don vi R = 1 khi e1, e2 cham dich
         if (pNorm > 0.7) {
-          const ptE1 = toScreen(an.e1[0], an.e1[1]);
-          const ptE2 = toScreen(an.e2[0], an.e2[1]);
-          ctx.fillStyle = "#0284c7";
-          ctx.beginPath();
-          ctx.arc(ptE1.x, ptE1.y, 4, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.fillStyle = "#10b981";
-          ctx.beginPath();
-          ctx.arc(ptE2.x, ptE2.y, 4, 0, Math.PI * 2);
-          ctx.fill();
+          for (const b of an.nonZeroBasis) {
+            const ptE = toScreen(b.e[0], b.e[1]);
+            ctx.fillStyle = b.color || "#10b981";
+            ctx.beginPath();
+            ctx.arc(ptE.x, ptE.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
       }
 
@@ -1185,7 +1436,7 @@
     },
 
     // =========================================================================
-    // 3D THREE.JS RENDERING HOOK (viewer3D.js)
+    // 3D THREE.JS RENDERING HOOK (viewer3D.js - SCREEN-SPACE PRECISION MATCHING 2D)
     // =========================================================================
     render3D(mathGroup) {
       if (!this._active || !mathGroup || App.mode !== "3D" || !this._analysis) return;
@@ -1213,7 +1464,17 @@
       const rawP = this._phaseProgress;
       const u = (window.Vec3D && Vec3D.S3D && Vec3D.S3D.unitsPerWorld) || 1;
 
-      const addDashedLine3D = (ptA, ptB, colorHex, opacity = 0.75, dash = 0.28, gap = 0.16) => {
+      // Quy doi kich thuoc pixel tren man hinh sang toa do 3D (Screen-Space Aesthetic nhu 2D)
+      const vFOV = (((window.Vec3D && Vec3D._camera && Vec3D._camera.fov) || 24) * Math.PI) / 180;
+      const screenH = Math.max(
+        1,
+        (window.Vec3D && Vec3D._renderer && Vec3D._renderer.domElement && Vec3D._renderer.domElement.clientHeight) || 760
+      );
+      const camDist = window.Vec3D && Vec3D._camera ? Vec3D._camera.position.length() : 16;
+      const worldPerPx = (2 * Math.tan(vFOV / 2) * camDist) / screenH;
+
+      // Duong net dut chuan kich thuoc pixel man hinh (mac dinh 6px dash, 4px gap giong 2D)
+      const addDashedLine3D = (ptA, ptB, colorHex, opacity = 0.75, dashPx = 6, gapPx = 4) => {
         const pts = [
           new THREE.Vector3(ptA[0] * u, ptA[1] * u, ptA[2] * u),
           new THREE.Vector3(ptB[0] * u, ptB[1] * u, ptB[2] * u)
@@ -1223,8 +1484,8 @@
           color: colorHex,
           transparent: true,
           opacity,
-          dashSize: dash * u,
-          gapSize: gap * u,
+          dashSize: Math.max(0.015 * u, dashPx * worldPerPx),
+          gapSize: Math.max(0.01 * u, gapPx * worldPerPx),
           depthWrite: false
         });
         const line = new THREE.Line(geom, mat);
@@ -1232,144 +1493,308 @@
         this._threeGroup.add(line);
       };
 
-      const add3DRightAngleMarker = (ptP, dir1, dir2, size = 0.38, colorHex = 0x10b981) => {
+      // Cham tron danh dau diem chuan pixel man hinh (mac dinh 3.8px giong 2D)
+      const addPointSphere3D = (pt, colorHex, radiusPx = 3.8, opacity = 1.0) => {
+        const rWorld = Math.min(0.045 * u, radiusPx * worldPerPx);
+        const sphGeom = new THREE.SphereGeometry(rWorld, 14, 14);
+        const sphMat = new THREE.MeshBasicMaterial({
+          color: colorHex,
+          transparent: opacity < 1.0,
+          opacity
+        });
+        const sph = new THREE.Mesh(sphGeom, sphMat);
+        sph.position.set(pt[0] * u, pt[1] * u, pt[2] * u);
+        this._threeGroup.add(sph);
+      };
+
+      // Ky hieu goc vuong 90 do chuan hinh hoc 3D (kich thuoc 13px man hinh + cham tron tam 1.6px y het 2D)
+      const add3DRightAngleMarker = (ptP, dir1, dir2, sizePx = 13, colorHex = 0x10b981) => {
         const len1 = norm(dir1);
         const len2 = norm(dir2);
         if (len1 < 1e-4 || len2 < 1e-4) return;
 
-        const u1 = scaleVec(dir1, (size * u) / len1);
-        const u2 = scaleVec(dir2, (size * u) / len2);
+        const maxByVec = Math.min(len1, len2) * u * 0.28;
+        const sideWorld = Math.max(0.025 * u, Math.min(sizePx * worldPerPx, maxByVec));
+
+        const u1 = scaleVec(dir1, sideWorld / len1);
+        const u2 = scaleVec(dir2, sideWorld / len2);
 
         const pO = new THREE.Vector3(ptP[0] * u, ptP[1] * u, ptP[2] * u);
-        const pA = new THREE.Vector3(ptP[0] * u + u1[0], ptP[1] * u + u1[1], ptP[2] * u + u1[2]);
-        const pCorner = new THREE.Vector3(
-          ptP[0] * u + u1[0] + u2[0],
-          ptP[1] * u + u1[1] + u2[1],
-          ptP[2] * u + u1[2] + u2[2]
-        );
-        const pB = new THREE.Vector3(ptP[0] * u + u2[0], ptP[1] * u + u2[1], ptP[2] * u + u2[2]);
+        const pA = new THREE.Vector3(pO.x + u1[0], pO.y + u1[1], pO.z + u1[2]);
+        const pCorner = new THREE.Vector3(pO.x + u1[0] + u2[0], pO.y + u1[1] + u2[1], pO.z + u1[2] + u2[2]);
+        const pB = new THREE.Vector3(pO.x + u2[0], pO.y + u2[1], pO.z + u2[2]);
 
         const pts = [pA, pCorner, pB];
         const geom = new THREE.BufferGeometry().setFromPoints(pts);
-        const mat = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 2 });
+        const mat = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 0.95 });
         this._threeGroup.add(new THREE.Line(geom, mat));
 
         const quadGeom = new THREE.BufferGeometry();
         quadGeom.setAttribute(
           "position",
           new THREE.Float32BufferAttribute(
-            [pO.x, pO.y, pO.z, pA.x, pA.y, pA.z, pCorner.x, pCorner.y, pCorner.z, pO.x, pO.y, pO.z, pCorner.x, pCorner.y, pCorner.z, pB.x, pB.y, pB.z],
+            [
+              pO.x, pO.y, pO.z,
+              pA.x, pA.y, pA.z,
+              pCorner.x, pCorner.y, pCorner.z,
+              pO.x, pO.y, pO.z,
+              pCorner.x, pCorner.y, pCorner.z,
+              pB.x, pB.y, pB.z
+            ],
             3
           )
         );
         const quadMat = new THREE.MeshBasicMaterial({
           color: colorHex,
           transparent: true,
-          opacity: 0.24,
+          opacity: 0.2,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        });
+        this._threeGroup.add(new THREE.Mesh(quadGeom, quadMat));
+
+        // Cham tron nho chinh giua o vuong goc vuong (giong 2D)
+        const dotR = Math.min(sideWorld * 0.14, 1.6 * worldPerPx);
+        const dotGeom = new THREE.SphereGeometry(dotR, 10, 10);
+        const dotMat = new THREE.MeshBasicMaterial({ color: colorHex });
+        const dotMesh = new THREE.Mesh(dotGeom, dotMat);
+        dotMesh.position.set(
+          pO.x + 0.5 * (u1[0] + u2[0]),
+          pO.y + 0.5 * (u1[1] + u2[1]),
+          pO.z + 0.5 * (u1[2] + u2[2])
+        );
+        this._threeGroup.add(dotMesh);
+      };
+
+      // Mien hinh binh hanh quet khi tinh tien vector v_k doc theo -pTotal ve u_k (giong 2D)
+      const addSweepQuad3D = (ptA, ptB, ptC, ptD, colorHex, opacity = 0.1) => {
+        const quadGeom = new THREE.BufferGeometry();
+        quadGeom.setAttribute(
+          "position",
+          new THREE.Float32BufferAttribute(
+            [
+              ptA[0] * u, ptA[1] * u, ptA[2] * u,
+              ptB[0] * u, ptB[1] * u, ptB[2] * u,
+              ptC[0] * u, ptC[1] * u, ptC[2] * u,
+              ptA[0] * u, ptA[1] * u, ptA[2] * u,
+              ptC[0] * u, ptC[1] * u, ptC[2] * u,
+              ptD[0] * u, ptD[1] * u, ptD[2] * u
+            ],
+            3
+          )
+        );
+        const quadMat = new THREE.MeshBasicMaterial({
+          color: colorHex,
+          transparent: true,
+          opacity,
           side: THREE.DoubleSide,
           depthWrite: false
         });
         this._threeGroup.add(new THREE.Mesh(quadGeom, quadMat));
       };
 
-      // Truc chuan u1 keo dai net dut
+      // Vong tron do tai goc O khi vector phu thuoc triet tieu ve 0
+      const addOriginZeroRing3D = () => {
+        const ringR = 8 * worldPerPx;
+        const ringGeom = new THREE.RingGeometry(ringR * 0.78, ringR, 28);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: 0xef4444,
+          transparent: true,
+          opacity: 0.9,
+          side: THREE.DoubleSide,
+          depthTest: false
+        });
+        const ringMesh = new THREE.Mesh(ringGeom, ringMat);
+        if (window.Vec3D && Vec3D._camera) {
+          ringMesh.quaternion.copy(Vec3D._camera.quaternion);
+        }
+        this._threeGroup.add(ringMesh);
+      };
+
+      // Luon hien duong truc chuan vo han chua u1 (co gian muot o dau Buoc 1 giong 2D)
       if (an.nU1 > 1e-4) {
-        const dirU1 = scaleVec(an.u1, 14 / an.nU1);
-        addDashedLine3D(scaleVec(dirU1, -1), dirU1, 0x0284c7, 0.35);
+        const pLine1 = this._currentPhase === 0 ? smoothstep(rawP / 0.35) : 1.0;
+        const dirU1 = scaleVec(an.u1, (14 * pLine1) / an.nU1);
+        addDashedLine3D(scaleVec(dirU1, -1), dirU1, 0x0284c7, 0.34, 5, 5);
       }
 
       if (this._currentPhase === 0) {
-        const pDrop = smoothstep((rawP - 0.25) / 0.75);
-        if (pDrop > 0.02) {
+        const pDrop = smoothstep((rawP - 0.22) / 0.66);
+        if (pDrop > 0.01) {
           const curFoot = lerpVec(an.v2, an.p1, pDrop);
-          addDashedLine3D(an.v2, curFoot, 0xf59e0b, 0.9, 0.25, 0.14);
-
-          const sphGeom = new THREE.SphereGeometry(0.07 * u, 12, 12);
-          const sphMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
-          const sph = new THREE.Mesh(sphGeom, sphMat);
-          sph.position.set(curFoot[0] * u, curFoot[1] * u, curFoot[2] * u);
-          this._threeGroup.add(sph);
+          addDashedLine3D(an.v2, curFoot, 0xf59e0b, 0.92, 5, 4);
+          addPointSphere3D(curFoot, 0xf59e0b, 3.8, 0.98);
 
           if (pDrop >= 0.75 && an.nU1 > 1e-4 && an.nU2 > 1e-4) {
             const dirAlongU1 = norm(an.p1) > 1e-4 ? scaleVec(an.p1, -1) : an.u1;
-            add3DRightAngleMarker(an.p1, dirAlongU1, an.u2, 0.42, 0xf59e0b);
+            add3DRightAngleMarker(an.p1, dirAlongU1, an.u2, 13, 0xf59e0b);
           }
         }
       } else if (this._currentPhase === 1) {
-        const pSlide2 = an.v3 ? smoothstep(rawP / 0.52) : smoothstep(rawP);
-        const pSlide3 = an.v3 ? smoothstep((rawP - 0.48) / 0.52) : 0;
+        let anyZeroCollapsing = false;
 
-        // Bong mo v2 va duong truot song song tu v2 ve u2
-        addDashedLine3D([0, 0, 0], an.v2, 0x6366f1, 0.38);
-        const curV2 = subVec(an.v2, scaleVec(an.p1, pSlide2));
-        addDashedLine3D(an.v2, curV2, 0xf59e0b, 0.65);
-        addDashedLine3D(an.p1, an.v2, 0xf59e0b, 0.45);
+        for (let i = 1; i < an.steps.length; i++) {
+          const step = an.steps[i];
+          const tInfo = this._getStepTiming(i, rawP);
+          const pSlide = tInfo.pSlide;
+          if (!tInfo.active && pSlide <= 0.001 && i > 1) continue;
 
-        if (pSlide2 >= 0.55 && an.nU1 > 1e-4 && an.nU2 > 1e-4) {
-          add3DRightAngleMarker([0, 0, 0], an.u1, an.u2, 0.45, 0x10b981);
+          // Neu la buoc 3 (v3 chieu xuong span(u1, u2)): ve mat phang con span(u1, u2) + hinh binh hanh thanh phan p12 = p31 + p32
+          if (i === 2 && !an.u1IsZero && !an.u2IsZero) {
+            const pPlane = tInfo.pProj;
+            const e1 = an.e1;
+            const e2 = an.e2;
+            const halfExt = 5.5 * pPlane;
+            const c00 = addVec(scaleVec(e1, -halfExt), scaleVec(e2, -halfExt));
+            const c10 = addVec(scaleVec(e1, halfExt), scaleVec(e2, -halfExt));
+            const c11 = addVec(scaleVec(e1, halfExt), scaleVec(e2, halfExt));
+            const c01 = addVec(scaleVec(e1, -halfExt), scaleVec(e2, halfExt));
+            addSweepQuad3D(c00, c10, c11, c01, 0x10b981, 0.08 * pPlane);
+
+            // Hinh binh hanh tong hop hinh chieu p12 = p31 + p32 tren mat phang span(u1, u2)
+            if (norm(an.p31) > 1e-4 && norm(an.p32) > 1e-4 && pSlide < 0.92) {
+              const curP31 = scaleVec(an.p31, pPlane);
+              const curP32 = scaleVec(an.p32, pPlane);
+              const curP12 = scaleVec(an.p12, pPlane);
+              addDashedLine3D(curP31, curP12, 0xf59e0b, 0.55 * pPlane, 4, 4);
+              addDashedLine3D(curP32, curP12, 0xf59e0b, 0.55 * pPlane, 4, 4);
+            }
+          }
+
+          // Giai doan A (cho i >= 2): Ha duong giong va moc pTotal truoc, v_{i+1} DUNG YEN
+          if (i >= 2 && tInfo.active && tInfo.pProj > 0.02 && pSlide < 0.02) {
+            const curFoot = lerpVec(step.v, step.pTotal, tInfo.pProj);
+            addDashedLine3D(step.v, curFoot, 0xf59e0b, 0.9, 5, 4);
+            addPointSphere3D(curFoot, 0xf59e0b, 3.8, 0.98);
+            if (tInfo.pProj >= 0.75 && !step.isZero && norm(step.pTotal) > 1e-4 && step.nU > 1e-4) {
+              add3DRightAngleMarker(step.pTotal, scaleVec(step.pTotal, -1), step.u, 12, 0xf59e0b);
+            }
+            continue;
+          }
+
+          if (pSlide <= 0.001) continue;
+
+          // Duong truc truc giao vo han cho vector u_{i+1} khac 0
+          if (!step.isZero && step.nU > 1e-4) {
+            const dirU = scaleVec(step.u, (14 * pSlide) / step.nU);
+            addDashedLine3D(scaleVec(dirU, -1), dirU, step.colorHex, 0.3 * pSlide, 5, 5);
+          }
+
+          // Mien hinh binh hanh quet (Sweep Quad) + Bong mo v_{i+1} + Duong truot song song -pTotal
+          const curV = subVec(step.v, scaleVec(step.pTotal, pSlide));
+          const pRem = scaleVec(step.pTotal, 1 - pSlide);
+          if (!step.isZero && pSlide > 0.01) {
+            addSweepQuad3D(step.pTotal, step.v, curV, pRem, step.colorHex, 0.1);
+          }
+
+          addDashedLine3D([0, 0, 0], step.v, i === 1 ? 0x6366f1 : 0x8b5cf6, 0.38, 4, 4);
+          addDashedLine3D(step.v, curV, step.isZero ? 0xef4444 : 0xf59e0b, 0.72, 4, 3);
+          if (!step.isZero && norm(step.pTotal) > 1e-4) {
+            addDashedLine3D(step.pTotal, step.v, 0xf59e0b, 0.52, 5, 4);
+          }
+
+          // Ky hieu goc vuong tai chan hinh chieu pTotal va tai goc O sau khi dung truc u_{i+1}
+          if (!step.isZero && step.nU > 1e-4) {
+            if (pSlide < 0.85 && norm(step.pTotal) > 1e-4) {
+              add3DRightAngleMarker(step.pTotal, scaleVec(step.pTotal, -1), step.u, 11, 0xf59e0b);
+            }
+            if (pSlide >= 0.55) {
+              for (const b of an.nonZeroBasis) {
+                if (b.vecIndex < i) {
+                  add3DRightAngleMarker([0, 0, 0], b.u, step.u, 13, step.colorHex);
+                }
+              }
+            }
+          }
+
+          if (step.isZero && pSlide > 0.55 && pSlide < 0.99) {
+            anyZeroCollapsing = true;
+          }
         }
 
-        // Neu co vector v3 trong 3D:
-        if (an.v3 && an.u3 && rawP >= 0.42) {
-          const pPlane = smoothstep((rawP - 0.42) / 0.25);
-          const normVec = cross(an.u1, an.u2);
-          const nLen = norm(normVec);
-          if (nLen > 1e-4) {
-            const planeGeom = new THREE.PlaneGeometry(14 * u, 14 * u);
-            const planeMat = new THREE.MeshBasicMaterial({
-              color: 0x10b981,
-              transparent: true,
-              opacity: 0.14 * pPlane,
-              side: THREE.DoubleSide,
-              depthWrite: false
-            });
-            const planeMesh = new THREE.Mesh(planeGeom, planeMat);
-            const normal = new THREE.Vector3(normVec[0] / nLen, normVec[1] / nLen, normVec[2] / nLen);
-            planeMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
-            this._threeGroup.add(planeMesh);
-          }
-
-          // Duong giong tu v3 xuong p12 tren mat phang span(u1, u2)
-          addDashedLine3D([0, 0, 0], an.v3, 0x8b5cf6, 0.35);
-          addDashedLine3D(an.v3, an.p12, 0xf59e0b, 0.85);
-          const curV3 = subVec(an.v3, scaleVec(an.p12, pSlide3));
-          addDashedLine3D(an.v3, curV3, 0x8b5cf6, 0.65);
-
-          if (norm(an.p12) > 1e-4 && an.nU3 > 1e-4) {
-            add3DRightAngleMarker(an.p12, scaleVec(an.p12, -1), an.u3, 0.4, 0xf59e0b);
-          }
-          if (pSlide3 >= 0.65 && an.nU3 > 1e-4) {
-            add3DRightAngleMarker([0, 0, 0], an.u1, an.u3, 0.45, 0x8b5cf6);
-            add3DRightAngleMarker([0, 0, 0], an.u2, an.u3, 0.45, 0x8b5cf6);
-          }
+        if (anyZeroCollapsing) {
+          addOriginZeroRing3D();
         }
       } else if (this._currentPhase === 2) {
         const pSphere = smoothstep(rawP / 0.35);
         const pNorm = smoothstep((rawP - 0.25) / 0.75);
 
-        // Bong mo u1, u2, (u3)
-        addDashedLine3D([0, 0, 0], an.u1, 0x0284c7, 0.32);
-        addDashedLine3D([0, 0, 0], an.u2, 0x10b981, 0.32);
-        if (an.u3) addDashedLine3D([0, 0, 0], an.u3, 0x8b5cf6, 0.32);
+        // Truc vo han va bong mo cho cac vector u_i khac 0
+        for (let bIdx = 0; bIdx < an.nonZeroBasis.length; bIdx++) {
+          const b = an.nonZeroBasis[bIdx];
+          if (b.nU > 1e-4) {
+            if (bIdx > 0) {
+              const dirU = scaleVec(b.u, 14 / b.nU);
+              addDashedLine3D(scaleVec(dirU, -1), dirU, b.colorHex, 0.24, 5, 5);
+            }
+            addDashedLine3D([0, 0, 0], b.u, b.colorHex, 0.32, 4, 4);
+          }
+        }
 
-        // Mat cau don vi R = 1.0 + 3 vong tron lon xich dao
+        // Mat cau don vi R = 1.0: Be mat trong suot tinh te + 3 vong tron lon net dut chuan sach giao khoa (khong dung luoi tam giac wireframe roi mat)
         const rSphere = Math.max(0.05, 1.0 * u * pSphere);
-        const sphereGeom = new THREE.SphereGeometry(rSphere, 28, 20);
+        const sphereGeom = new THREE.SphereGeometry(rSphere, 32, 24);
         const sphereMat = new THREE.MeshBasicMaterial({
           color: 0x0284c7,
-          wireframe: true,
           transparent: true,
-          opacity: 0.16 * pSphere,
+          opacity: 0.055 * pSphere,
           depthWrite: false
         });
         this._threeGroup.add(new THREE.Mesh(sphereGeom, sphereMat));
 
-        // Khoi hop don vi 1x1x1 (3 vector) hoac hinh vuong don vi 1x1 (2 vector)
-        const curE1 = lerpVec(an.u1, an.e1, pNorm);
-        const curE2 = lerpVec(an.u2, an.e2, pNorm);
+        const addGreatCircleDashed = (axisA, axisB, colorHex, opacity) => {
+          const segments = 64;
+          const pts = [];
+          for (let s = 0; s <= segments; s++) {
+            const theta = (s / segments) * Math.PI * 2;
+            const c = Math.cos(theta) * rSphere;
+            const sn = Math.sin(theta) * rSphere;
+            pts.push(
+              new THREE.Vector3(
+                axisA[0] * c + axisB[0] * sn,
+                axisA[1] * c + axisB[1] * sn,
+                axisA[2] * c + axisB[2] * sn
+              )
+            );
+          }
+          const geom = new THREE.BufferGeometry().setFromPoints(pts);
+          const mat = new THREE.LineDashedMaterial({
+            color: colorHex,
+            transparent: true,
+            opacity: opacity * pSphere,
+            dashSize: Math.max(0.015 * u, 5 * worldPerPx),
+            gapSize: Math.max(0.01 * u, 4 * worldPerPx),
+            depthWrite: false
+          });
+          const ring = new THREE.Line(geom, mat);
+          ring.computeLineDistances();
+          this._threeGroup.add(ring);
+        };
 
-        if (an.v3 && an.u3 && an.e3) {
-          const curE3 = lerpVec(an.u3, an.e3, pNorm);
+        if (an.nonZeroBasis.length === 3) {
+          addGreatCircleDashed(an.nonZeroBasis[0].e, an.nonZeroBasis[1].e, 0x0284c7, 0.52);
+          addGreatCircleDashed(an.nonZeroBasis[0].e, an.nonZeroBasis[2].e, 0x0284c7, 0.36);
+          addGreatCircleDashed(an.nonZeroBasis[1].e, an.nonZeroBasis[2].e, 0x10b981, 0.36);
+        } else if (an.nonZeroBasis.length === 2) {
+          const e1 = an.nonZeroBasis[0].e;
+          const e2 = an.nonZeroBasis[1].e;
+          const e3Ortho = normalizeVec(cross(e1, e2));
+          addGreatCircleDashed(e1, e2, 0x0284c7, 0.55);
+          if (norm(e3Ortho) > 1e-4) {
+            addGreatCircleDashed(e1, e3Ortho, 0x0284c7, 0.28);
+            addGreatCircleDashed(e2, e3Ortho, 0x10b981, 0.28);
+          }
+        } else {
+          addGreatCircleDashed([1, 0, 0], [0, 1, 0], 0x0284c7, 0.45);
+          addGreatCircleDashed([1, 0, 0], [0, 0, 1], 0x0284c7, 0.32);
+          addGreatCircleDashed([0, 1, 0], [0, 0, 1], 0x0284c7, 0.32);
+        }
+
+        // Khoi hop don vi 1x1x1 (khi co du 3 truc truc chuan) hoac hinh vuong don vi 1x1 (khi co 2 truc truc chuan)
+        if (an.nonZeroBasis.length === 3) {
+          const curE1 = lerpVec(an.nonZeroBasis[0].u, an.nonZeroBasis[0].e, pNorm);
+          const curE2 = lerpVec(an.nonZeroBasis[1].u, an.nonZeroBasis[1].e, pNorm);
+          const curE3 = lerpVec(an.nonZeroBasis[2].u, an.nonZeroBasis[2].e, pNorm);
           const V = [
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(curE1[0] * u, curE1[1] * u, curE1[2] * u),
@@ -1399,40 +1824,33 @@
           const boxMat = new THREE.MeshBasicMaterial({
             color: 0x10b981,
             transparent: true,
-            opacity: 0.16,
+            opacity: 0.14,
             side: THREE.DoubleSide,
             depthWrite: false
           });
           this._threeGroup.add(new THREE.Mesh(boxGeom, boxMat));
 
           const edgeGeom = new THREE.EdgesGeometry(boxGeom);
-          const edgeMat = new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.65 });
+          const edgeMat = new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.62 });
           this._threeGroup.add(new THREE.LineSegments(edgeGeom, edgeMat));
 
-          add3DRightAngleMarker([0, 0, 0], curE1, curE2, 0.35, 0x10b981);
-          add3DRightAngleMarker([0, 0, 0], curE1, curE3, 0.35, 0x8b5cf6);
-          add3DRightAngleMarker([0, 0, 0], curE2, curE3, 0.35, 0x8b5cf6);
-        } else {
-          // 2 vector trong 3D: O vuong don vi 1x1
-          const pos = [
-            0, 0, 0,
-            curE1[0] * u, curE1[1] * u, curE1[2] * u,
-            (curE1[0] + curE2[0]) * u, (curE1[1] + curE2[1]) * u, (curE1[2] + curE2[2]) * u,
-            0, 0, 0,
-            (curE1[0] + curE2[0]) * u, (curE1[1] + curE2[1]) * u, (curE1[2] + curE2[2]) * u,
-            curE2[0] * u, curE2[1] * u, curE2[2] * u
-          ];
-          const sqGeom = new THREE.BufferGeometry();
-          sqGeom.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-          const sqMat = new THREE.MeshBasicMaterial({
-            color: 0x10b981,
-            transparent: true,
-            opacity: 0.2,
-            side: THREE.DoubleSide,
-            depthWrite: false
-          });
-          this._threeGroup.add(new THREE.Mesh(sqGeom, sqMat));
-          add3DRightAngleMarker([0, 0, 0], curE1, curE2, 0.38, 0x10b981);
+          add3DRightAngleMarker([0, 0, 0], curE1, curE2, 13, 0x10b981);
+          add3DRightAngleMarker([0, 0, 0], curE1, curE3, 13, 0x8b5cf6);
+          add3DRightAngleMarker([0, 0, 0], curE2, curE3, 13, 0x8b5cf6);
+        } else if (an.nonZeroBasis.length === 2) {
+          const curE1 = lerpVec(an.nonZeroBasis[0].u, an.nonZeroBasis[0].e, pNorm);
+          const curE2 = lerpVec(an.nonZeroBasis[1].u, an.nonZeroBasis[1].e, pNorm);
+          addSweepQuad3D([0, 0, 0], curE1, addVec(curE1, curE2), curE2, 0x10b981, 0.16);
+          addDashedLine3D(curE1, addVec(curE1, curE2), 0x10b981, 0.65, 4, 4);
+          addDashedLine3D(curE2, addVec(curE1, curE2), 0x10b981, 0.65, 4, 4);
+          add3DRightAngleMarker([0, 0, 0], curE1, curE2, 13, 0x10b981);
+        }
+
+        // Cham sang tai dau mut e_i tren mat cau don vi R = 1 (giong 2D)
+        if (pNorm > 0.7) {
+          for (const b of an.nonZeroBasis) {
+            addPointSphere3D(b.e, b.colorHex || 0x10b981, 3.8, 0.98);
+          }
         }
       }
     }

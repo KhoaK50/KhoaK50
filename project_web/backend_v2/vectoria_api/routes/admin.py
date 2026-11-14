@@ -318,10 +318,15 @@ def update_lesson(topic_id, order_index):
     is_valid, username = check_auth()
     if not is_valid: return jsonify({"error": "Unauthorized"}), 401
     try:
-        data = request.json
-        content_html = data.get("content_html")
-        lang = data.get("lang", "vi")
-        title = data.get("title", "") # if they provide title
+        data = request.json or {}
+        if not isinstance(data, dict):
+            return jsonify({"error": "Invalid payload"}), 400
+        content_html = data.get("content_html", "")
+        if not isinstance(content_html, str) or len(content_html) > 20 * 1024 * 1024:
+            return jsonify({"error": "Content exceeds allowed size limit"}), 400
+        lang = str(data.get("lang", "vi")).strip()[:10] or "vi"
+        raw_title = data.get("title", "")
+        title = str(raw_title).strip()[:150] if raw_title else ""
         difficulty_level = data.get("difficulty_level")
         estimated_time = data.get("estimated_time")
         
@@ -329,16 +334,16 @@ def update_lesson(topic_id, order_index):
         c = conn.cursor()
         
         if lang == 'vi':
-            # Update base attributes along with vi content
+            # Update base attributes along with vi content & optional updated title
             if difficulty_level is not None and estimated_time is not None:
                 c.execute(
-                    "UPDATE lessons SET content_html = %s, complexity = %s, time = %s WHERE topic_id = %s AND order_index = %s RETURNING title;",
-                    (content_html, difficulty_level, estimated_time, topic_id, order_index)
+                    "UPDATE lessons SET content_html = %s, complexity = %s, time = %s, title = COALESCE(NULLIF(%s, ''), title) WHERE topic_id = %s AND order_index = %s RETURNING title;",
+                    (content_html, difficulty_level, estimated_time, title, topic_id, order_index)
                 )
             else:
                 c.execute(
-                    "UPDATE lessons SET content_html = %s WHERE topic_id = %s AND order_index = %s RETURNING title;",
-                    (content_html, topic_id, order_index)
+                    "UPDATE lessons SET content_html = %s, title = COALESCE(NULLIF(%s, ''), title) WHERE topic_id = %s AND order_index = %s RETURNING title;",
+                    (content_html, title, topic_id, order_index)
                 )
                 
             if c.rowcount == 0:
@@ -357,7 +362,7 @@ def update_lesson(topic_id, order_index):
         # Also upsert to translations
         c.execute(
             "INSERT INTO lesson_translations (topic_id, order_index, language_code, title, content_html) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (topic_id, order_index, language_code) DO UPDATE SET title = EXCLUDED.title, content_html = EXCLUDED.content_html;",
-            (topic_id, order_index, lang, title, content_html)
+            (topic_id, order_index, lang, title or lesson_title, content_html)
         )
         
         conn.commit()
@@ -365,8 +370,8 @@ def update_lesson(topic_id, order_index):
         
         log_admin_action(username, "UPDATE_LESSON", f"Updated content for lesson: {lesson_title} (Topic: {topic_id}, Lang: {lang})")
         return jsonify({"message": "Lesson updated successfully"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        return jsonify({"error": "Failed to update lesson"}), 500
 
 @admin_bp.route("/api/admin/lesson", methods=["POST"])
 def create_lesson():

@@ -1,8 +1,10 @@
 // ==========================================================================
 // FILE: js/app/logic/tasks_controller/coord_controller.js
-// MÔ TẢ: Điều khiển logic bài toán Tọa độ (Coordinates) & Tích hợp Hoạt cảnh
+// MÔ TẢ: Điều khiển bài toán Tọa độ của Vector đối với Cơ sở & Hoạt cảnh
 // ==========================================================================
 (function () {
+  "use strict";
+
   window.App = window.App || {};
   let cachedConfig = null;
 
@@ -10,126 +12,109 @@
     return document.getElementById(id);
   }
 
-  // Hàm chuyển số thực sang chuỗi LaTeX chuẩn xác (Số nguyên -> Căn thức -> Phân số -> Thập phân)
-  function fmtScalarLatex(val) {
-    if (!Number.isFinite(val) || Math.abs(val) < 1e-9) return "0";
-    const sign = val < 0 ? "-" : "";
-    const abs = Math.abs(val);
-
-    if (Math.abs(abs - Math.round(abs)) < 1e-7) {
-      return sign + String(Math.round(abs));
+  function getVecSym(it, fallbackIdx) {
+    const fmt = App.LatexFmt;
+    const rawName =
+      it && typeof App.getVectorName === "function"
+        ? App.getVectorName(it)
+        : (it && it.name ? it.name : "v_{" + (fallbackIdx + 1) + "}");
+    if (fmt && typeof fmt.normalizeVecSymbol === "function") {
+      return fmt.normalizeVecSymbol(rawName, true);
     }
-
-    // Kiểm tra phân số tối giản
-    let h1 = 1, h2 = 0, k1 = 0, k2 = 1, b = abs;
-    for (let iter = 0; iter < 24; iter++) {
-      const a = Math.floor(b);
-      const auxH = h1; h1 = a * h1 + h2; h2 = auxH;
-      const auxK = k1; k1 = a * k1 + k2; k2 = auxK;
-      if (Math.abs(abs - h1 / k1) < 1e-7 && k1 <= 100) {
-        if (k1 === 1) return sign + String(h1);
-        return `${sign}\\frac{${h1}}{${k1}}`;
-      }
-      const rem = b - a;
-      if (Math.abs(rem) < 1e-9) break;
-      b = 1 / rem;
-    }
-
-    return (val < 0 ? "-" : "") + parseFloat(abs.toFixed(3)).toString();
+    return "\\mathbf{" + rawName + "}";
   }
 
-  function getVecIndexLabel(it, fallbackNum) {
-    if (!it) return String(fallbackNum);
-    if (typeof App.displayIndexOf === "function") {
-      const d = App.displayIndexOf(it);
-      if (d) return String(d);
-    }
-    const idx = App.vectorList ? App.vectorList.indexOf(it) : -1;
-    return idx >= 0 ? String(idx + 1) : String(fallbackNum);
+  function getSelectedCoordData() {
+    const targetSelect = $("vCoordSelect");
+    if (!targetSelect) return null;
+    const targetId = parseInt(targetSelect.value, 10);
+    const targetObj = (App.vectorList || []).find(function (v) { return v.id === targetId; });
+
+    const checkContainer = $("basisCoordChecklist");
+    if (!checkContainer) return null;
+
+    const checkedInputs = Array.from(
+      checkContainer.querySelectorAll('input[type="checkbox"]:checked')
+    );
+    const basisObjs = checkedInputs
+      .map(function (inp) {
+        const vid = parseInt(inp.value, 10);
+        return (App.vectorList || []).find(function (v) { return v.id === vid; });
+      })
+      .filter(Boolean);
+
+    return { targetObj: targetObj || null, basisObjs: basisObjs };
   }
 
-  function buildLinearComboLatex(coeffs, basisObjs) {
-    const terms = [];
-    for (let i = 0; i < coeffs.length; i++) {
-      const c = coeffs[i];
-      const vIdx = getVecIndexLabel(basisObjs[i], i + 1);
-      const cLatex = fmtScalarLatex(Math.abs(c));
-      const isNeg = c < -1e-7;
-      if (i === 0) {
-        terms.push(`${isNeg ? "-" : ""}${cLatex}v_{${vIdx}}`);
-      } else {
-        terms.push(`${isNeg ? "-" : "+"} ${cLatex}v_{${vIdx}}`);
-      }
+  function getCoordSignature() {
+    if (!window.App || !App.SolutionSync) return "";
+    const data = getSelectedCoordData();
+    if (!data || !data.targetObj || !data.basisObjs || data.basisObjs.length === 0) {
+      return "incomplete";
     }
-    return terms.join(" ");
+    return (
+      "target(" + App.SolutionSync.vectorItemsSig([data.targetObj]) + ")||basis(" +
+      App.SolutionSync.checklistSig("basisCoordChecklist") + ")"
+    );
   }
 
   function renderCoordResultBox(targetObj, basisObjs, sol) {
     const resBox = $("result_coord");
     if (!resBox || !targetObj || !basisObjs || !basisObjs.length) return;
 
+    const fmt = App.LatexFmt;
+
     if (!sol || !sol.solvable) {
-      resBox.innerHTML = `
-        <div style="padding: 8px 10px; border-radius: 4px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.35); color: var(--text-main, #ef4444); font-size: 12px; line-height: 1.5;">
-          <b style="color: #ef4444;">Không thể xác định tọa độ:</b><br/>
-          ${sol?.error || "Hệ vector cơ sở phụ thuộc tuyến tính (det = 0)."}
-        </div>
-      `;
+      const errMsg = (sol && sol.error ? sol.error : "Hệ vector cơ sở phụ thuộc tuyến tính (det = 0).") +
+        '<div style="margin-top: 5px; font-size: 11.5px; color: var(--text-muted);">Bấm <b>Lời giải</b> để xem chứng minh chi tiết bằng khử Gauss - Jordan.</div>';
+      if (App.ResultCard && typeof App.ResultCard.mountError === "function") {
+        App.ResultCard.mountError(resBox, errMsg, "Không xác định được tọa độ duy nhất");
+      } else {
+        resBox.innerHTML = errMsg;
+      }
       return;
     }
 
-    const targetIdx = getVecIndexLabel(targetObj, 1);
+    const targetSym = getVecSym(targetObj, 0);
+    const basisSyms = basisObjs.map(function (b, idx) {
+      return getVecSym(b, idx);
+    });
     const coeffs = sol.coeffs || [];
-    const tupleLatex = `\\left(${coeffs.map(fmtScalarLatex).join(", ")}\\right)^T`;
-    const comboLatex = buildLinearComboLatex(coeffs, basisObjs);
+    const coeffsTex = coeffs.map(function (c) {
+      return fmt && typeof fmt.scalarToLatex === "function" ? fmt.scalarToLatex(c) : String(c);
+    });
+    const tupleLatex = "\\left(" + coeffsTex.join(",\\; ") + "\\right)^T";
+    const comboLatex = fmt && typeof fmt.linearCombLatex === "function"
+      ? fmt.linearCombLatex(coeffs, basisSyms, { keepZeros: false, zeroFallback: "\\mathbf{0}" })
+      : coeffsTex.map(function (c, i) { return c + basisSyms[i]; }).join(" + ");
 
-    resBox.innerHTML = `
-      <div style="display:flex; flex-direction:column; gap:8px; padding: 4px 0 10px 0;">
-        <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-          <math-field read-only id="mfCoordTuple" style="
-            width: 100%;
-            box-sizing: border-box;
-            background: var(--bg-paper, var(--card, #fff));
-            border: 1px solid var(--border-subtle, var(--border, #ccc));
-            border-radius: 4px;
-            padding: 6px 12px;
-            font-size: 1.18em;
-            color: var(--text-main, #333);
-            pointer-events: none;
-          ">[v_{${targetIdx}}]_B = ${tupleLatex}</math-field>
-
-          <math-field read-only id="mfCoordCombo" style="
-            width: 100%;
-            box-sizing: border-box;
-            background: var(--bg-hover, rgba(0,0,0,0.02));
-            border: 1px dashed var(--border-subtle, var(--border, #ccc));
-            border-radius: 4px;
-            padding: 6px 12px;
-            font-size: 1.12em;
-            color: var(--text-muted, #64748b);
-            pointer-events: none;
-          ">v_{${targetIdx}} = ${comboLatex}</math-field>
-        </div>
-
-        <div style="font-size:11.5px; color:var(--text-muted, #888); font-style:italic; padding:2px 0 4px 0; line-height:1.45; text-align:left; width:100%;">
-          Bấm <b>"Trực quan"</b> để xem hoạt cảnh biến đổi không gian hoặc <b>"Lời giải"</b> để xem biến đổi hệ phương trình và ma trận chuyển cơ sở.
-        </div>
-      </div>
-    `;
+    if (App.ResultCard && typeof App.ResultCard.mount === "function") {
+      App.ResultCard.mount(resBox, {
+        titleLeft: "Tọa độ đối với cơ sở B (" + basisObjs.length + " vector)",
+        badgeRightLatex: "\\mathbb{R}^{" + targetObj.vec.length + "}",
+        badgeTone: "primary",
+        primaryRows: [
+          {
+            latex: "\\left[" + targetSym + "\\right]_{B} = " + tupleLatex
+          }
+        ],
+        secondarySection: {
+          titleHtml: "Khai triển tổ hợp tuyến tính",
+          rows: [
+            {
+              latex: targetSym + " = " + comboLatex
+            }
+          ]
+        },
+        footerHintHtml: "Bấm <b>Trực quan</b> để xem hoạt cảnh đổi lưới tọa độ hoặc <b>Lời giải</b> để xem hệ phương trình và ma trận chuyển cơ sở."
+      });
+    }
   }
 
   // Đồng bộ trực tiếp ô kết quả khi người dùng kéo thả vector trong lúc bật Trực quan
   App.onCoordLiveUpdate = function (targetObj, basisObjs, sol) {
-    const mfTuple = $("mfCoordTuple");
-    const mfCombo = $("mfCoordCombo");
-    if (mfTuple && mfCombo && sol && sol.solvable) {
-      const targetIdx = getVecIndexLabel(targetObj, 1);
-      const coeffs = sol.coeffs || [];
-      const tupleLatex = `\\left(${coeffs.map(fmtScalarLatex).join(", ")}\\right)^T`;
-      const comboLatex = buildLinearComboLatex(coeffs, basisObjs);
-      mfTuple.value = `[v_{${targetIdx}}]_B = ${tupleLatex}`;
-      mfCombo.value = `v_{${targetIdx}} = ${comboLatex}`;
-    } else if ($("result_coord") && $("result_coord").innerHTML.trim() !== "") {
+    const resBox = $("result_coord");
+    if (resBox && resBox.innerHTML.trim() !== "") {
       renderCoordResultBox(targetObj, basisObjs, sol);
     }
   };
@@ -150,52 +135,39 @@
     wrap.style.display = "none";
     wrap.style.marginTop = "10px";
 
-    wrap.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
-        <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted, #64748b);">Trực quan hóa tọa độ</span>
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <span class="basis-step-pill" id="coordStepCounter">Bước 1 / 4</span>
-          <button type="button" id="btnCoordCloseAnim" class="basis-anim-close-btn" title="Đóng trực quan" style="background: transparent; border: none; cursor: pointer; color: var(--text-muted, #64748b); font-size: 13px; padding: 2px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;">
-            <i class="ph ph-x"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="coord-phase-pills" id="coordPhasePills">
-        <button type="button" class="coord-phase-btn active" data-phase="0" title="Bước 1: Thiết lập vector đơn vị mới của không gian B">Bước 1</button>
-        <button type="button" class="coord-phase-btn" data-phase="1" title="Bước 2: Dệt lưới không gian mới từ cơ sở B">Bước 2</button>
-        <button type="button" class="coord-phase-btn" data-phase="2" title="Bước 3: Biến đổi không gian - Đưa cơ sở B về trục đơn vị">Bước 3</button>
-        <button type="button" class="coord-phase-btn" data-phase="3" title="Bước 4: Đọc tọa độ mới của vector trong không gian mới">Bước 4</button>
-      </div>
-
-      <div class="basis-anim-btn-row">
-        <button type="button" id="btnCoordPrev" class="basis-ctrl-btn" title="Bước trước">
-          <i class="ph ph-skip-back"></i>
-        </button>
-        <button type="button" id="btnCoordPlay" class="basis-ctrl-btn primary" title="Phát / Tạm dừng">
-          <i class="ph ph-play" id="iconCoordPlay"></i>
-        </button>
-        <button type="button" id="btnCoordNext" class="basis-ctrl-btn" title="Bước tiếp">
-          <i class="ph ph-skip-forward"></i>
-        </button>
-        <button type="button" id="btnCoordReplay" class="basis-ctrl-btn" title="Phát lại từ đầu">
-          <i class="ph ph-arrow-counter-clockwise"></i>
-        </button>
-      </div>
-
-      <div class="hud-menu-slider-row basis-speed-slider-wrap" style="padding: 6px 0 2px; margin-top: 6px; border-top: 1px dashed var(--border-subtle, var(--border, #e2e8f0));">
-        <div class="hud-menu-slider-header" style="font-size: 11.5px; margin-bottom: 2px;">
-          <span class="hud-menu-item-text" style="color: var(--text-muted, #64748b); font-weight: 600;">Tốc độ phát</span>
-          <span class="hud-menu-slider-val" id="coordSpeedValue">1.0×</span>
-        </div>
-        <input type="range" id="coordSpeedSlider" min="0.2" max="2.5" step="0.1" value="1.0" class="hud-range-slider" />
-      </div>
-
-      <div class="basis-step-explainer" id="coordStepExplainer">
-        <div class="basis-step-title" id="coordStepTitle">Khảo sát tọa độ</div>
-        <div class="basis-step-desc" id="coordStepDesc">Bấm nút Trực quan để khởi chạy hoạt cảnh.</div>
-      </div>
-    `;
+    wrap.innerHTML =
+      '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">' +
+        '<span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted, #64748b);">Trực quan hóa tọa độ</span>' +
+        '<div style="display: flex; align-items: center; gap: 6px;">' +
+          '<span class="basis-step-pill" id="coordStepCounter">Bước 1 / 4</span>' +
+          '<button type="button" id="btnCoordCloseAnim" class="basis-anim-close-btn" title="Đóng trực quan" style="background: transparent; border: none; cursor: pointer; color: var(--text-muted, #64748b); font-size: 13px; padding: 2px; display: inline-flex; align-items: center; justify-content: center; border-radius: 2px;">' +
+            '<i class="ph ph-x"></i>' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="coord-phase-pills" id="coordPhasePills">' +
+        '<button type="button" class="coord-phase-btn active" data-phase="0" title="Bước 1: Thiết lập vector đơn vị mới của không gian B">Bước 1</button>' +
+        '<button type="button" class="coord-phase-btn" data-phase="1" title="Bước 2: Dệt lưới không gian mới từ cơ sở B">Bước 2</button>' +
+        '<button type="button" class="coord-phase-btn" data-phase="2" title="Bước 3: Biến đổi không gian - Đưa cơ sở B về trục đơn vị">Bước 3</button>' +
+        '<button type="button" class="coord-phase-btn" data-phase="3" title="Bước 4: Đọc tọa độ mới của vector trong không gian mới">Bước 4</button>' +
+      '</div>' +
+      '<div class="basis-anim-btn-row">' +
+        '<button type="button" id="btnCoordPrev" class="basis-ctrl-btn" title="Bước trước"><i class="ph ph-skip-back"></i></button>' +
+        '<button type="button" id="btnCoordPlay" class="basis-ctrl-btn primary" title="Phát / Tạm dừng"><i class="ph ph-play" id="iconCoordPlay"></i></button>' +
+        '<button type="button" id="btnCoordNext" class="basis-ctrl-btn" title="Bước tiếp"><i class="ph ph-skip-forward"></i></button>' +
+        '<button type="button" id="btnCoordReplay" class="basis-ctrl-btn" title="Phát lại từ đầu"><i class="ph ph-arrow-counter-clockwise"></i></button>' +
+      '</div>' +
+      '<div class="hud-menu-slider-row basis-speed-slider-wrap" style="padding: 6px 0 2px; margin-top: 6px; border-top: 1px dashed var(--border-subtle, var(--border, #e2e8f0));">' +
+        '<div class="hud-menu-slider-header" style="font-size: 11.5px; margin-bottom: 2px;">' +
+          '<span class="hud-menu-item-text" style="color: var(--text-muted, #64748b); font-weight: 600;">Tốc độ phát</span>' +
+          '<span class="hud-menu-slider-val" id="coordSpeedValue">1.0x</span>' +
+        '</div>' +
+        '<input type="range" id="coordSpeedSlider" min="0.2" max="2.5" step="0.1" value="1.0" class="hud-range-slider" />' +
+      '</div>' +
+      '<div class="basis-step-explainer" id="coordStepExplainer">' +
+        '<div class="basis-step-title" id="coordStepTitle">Khảo sát tọa độ</div>' +
+        '<div class="basis-step-desc" id="coordStepDesc">Bấm nút Trực quan để khởi chạy hoạt cảnh.</div>' +
+      '</div>';
 
     if (out.nextSibling) {
       host.insertBefore(wrap, out.nextSibling);
@@ -204,28 +176,28 @@
     }
 
     const speedSlider = wrap.querySelector("#coordSpeedSlider");
-    const syncSliderPct = (val) => {
+    const syncSliderPct = function (val) {
       if (!speedSlider) return;
       const min = parseFloat(speedSlider.min) || 0.2;
       const max = parseFloat(speedSlider.max) || 2.5;
       const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
-      speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
-      speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+      speedSlider.style.setProperty("--slider-pct", pct.toFixed(1) + "%");
+      speedSlider.style.setProperty("--range-pct", pct.toFixed(1) + "%");
     };
 
     if (speedSlider) {
-      speedSlider.addEventListener("input", (e) => {
+      speedSlider.addEventListener("input", function (e) {
         const val = parseFloat(e.target.value) || 1.0;
         syncSliderPct(val);
         const valLabel = wrap.querySelector("#coordSpeedValue");
-        if (valLabel) valLabel.textContent = `${val.toFixed(1)}×`;
+        if (valLabel) valLabel.textContent = val.toFixed(1) + "x";
       });
       syncSliderPct(1.0);
     }
 
     const phaseBtns = wrap.querySelectorAll(".coord-phase-btn");
-    phaseBtns.forEach((btn) => {
-      btn.addEventListener("click", () => {
+    phaseBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
         const ph = parseInt(btn.dataset.phase, 10);
         if (window.App && App.CoordAnimator && typeof App.CoordAnimator.goToPhase === "function") {
           App.CoordAnimator.goToPhase(ph);
@@ -235,7 +207,7 @@
 
     const btnClose = wrap.querySelector("#btnCoordCloseAnim");
     if (btnClose) {
-      btnClose.addEventListener("click", () => {
+      btnClose.addEventListener("click", function () {
         App.stopCoordAnimation();
       });
     }
@@ -245,7 +217,6 @@
     }
   };
 
-  // Dừng và giải phóng hoạt cảnh tọa độ
   App.stopCoordAnimation = function () {
     if (window.App && App.CoordAnimator && typeof App.CoordAnimator.stop === "function") {
       App.CoordAnimator.stop();
@@ -254,70 +225,61 @@
     if (wrap) wrap.style.display = "none";
   };
 
-  function getSelectedCoordData() {
-    const targetSelect = $("vCoordSelect");
-    if (!targetSelect) return null;
-    const targetId = parseInt(targetSelect.value, 10);
-    const targetObj = (App.vectorList || []).find((v) => v.id === targetId);
-
-    const checkContainer = $("basisCoordChecklist");
-    if (!checkContainer) return null;
-
-    const checkedInputs = Array.from(
-      checkContainer.querySelectorAll('input[type="checkbox"]:checked')
-    );
-    const basisObjs = checkedInputs
-      .map((inp) => {
-        const vid = parseInt(inp.value, 10);
-        return (App.vectorList || []).find((v) => v.id === vid);
-      })
-      .filter(Boolean);
-
-    return { targetObj, basisObjs };
+  function extractRawLatexOrVec(obj) {
+    if (obj && obj.latex) {
+      const s = obj.latex.replace(/^\\left\[|^\[|\\right\]|\]$/g, "");
+      return s.split(",").map(function (x) { return x.trim(); });
+    }
+    return obj && Array.isArray(obj.vec) ? obj.vec.slice() : [];
   }
 
-  function computeAndPrepareCoordSolution(targetObj, basisObjs) {
+  function computeAndPrepareCoordSolution(targetObj, basisObjs, opts) {
+    const options = opts || {};
     const n = targetObj.vec.length;
-    if (basisObjs.some((b) => b.vec.length !== n)) {
-      if (window.App && window.App.showToast) {
-        window.App.showToast(`Lỗi: Tất cả vector phải cùng số chiều ${n}!`, "warning");
+    if (basisObjs.some(function (b) { return b.vec.length !== n; })) {
+      if (!options.silentToast && window.App && typeof window.App.showToast === "function") {
+        window.App.showToast("Tất cả vector được chọn phải có cùng số chiều " + n + ".", "warning");
       }
       return null;
     }
 
-    const sol =
-      typeof App.solveCoordinates === "function"
-        ? App.solveCoordinates(targetObj.vec, basisObjs)
-        : null;
+    const basisVecs = basisObjs.map(function (v) { return v.vec; });
+    const targetVec = targetObj.vec;
+    const basisLatex = basisObjs.map(extractRawLatexOrVec);
+    const targetLatex = extractRawLatexOrVec(targetObj);
+
+    const gen = App.TasksGen && App.TasksGen.Coord;
+    const exactAnalysis = gen && typeof gen.analyzeCoordinates === "function"
+      ? gen.analyzeCoordinates(basisVecs, targetVec)
+      : null;
+
+    let sol = null;
+    if (exactAnalysis) {
+      sol = {
+        solvable: exactAnalysis.solvable,
+        coeffs: exactAnalysis.coeffs || [],
+        error: exactAnalysis.error || ""
+      };
+    } else if (typeof App.solveCoordinates === "function") {
+      sol = App.solveCoordinates(targetVec, basisObjs);
+    }
 
     renderCoordResultBox(targetObj, basisObjs, sol);
 
-    if (!sol || !sol.solvable) {
-      if (window.App && window.App.showToast) {
-        window.App.showToast(sol?.error || "Hệ vector cơ sở phụ thuộc tuyến tính!", "warning");
-      }
-      return null;
-    }
+    if (gen) {
+      const symOpts = {
+        basisSymbols: basisObjs.map(function (b, idx) {
+          return typeof App.getVectorName === "function" ? App.getVectorName(b) : ("u_{" + (idx + 1) + "}");
+        }),
+        targetSymbol: typeof App.getVectorName === "function" ? App.getVectorName(targetObj) : "x"
+      };
 
-    function getLatex(obj) {
-      if (obj.latex) {
-        const s = obj.latex.replace(/^\\left\[|^\[|\\right\]|\]$/g, "");
-        return s.split(",").map((x) => x.trim());
-      }
-      return obj.vec;
-    }
-    const basisLatex = basisObjs.map(getLatex);
-    const targetLatex = getLatex(targetObj);
-    const basisVecs = basisObjs.map((v) => v.vec);
-    const targetVec = targetObj.vec;
-
-    if (App.TasksGen && App.TasksGen.Coord) {
-      const content1 = App.TasksGen.Coord.buildMethod1(basisVecs, targetVec, basisLatex, targetLatex);
-      const content2 = App.TasksGen.Coord.buildMethod2(basisVecs, targetVec, basisLatex, targetLatex);
+      const content1 = gen.buildMethod1(basisVecs, targetVec, basisLatex, targetLatex, symOpts);
+      const content2 = gen.buildMethod2(basisVecs, targetVec, basisLatex, targetLatex, symOpts);
 
       cachedConfig = {
-        title: "Tọa độ vector theo cơ sở",
-        math: `\\( \\mathbb{R}^${n} \\)`,
+        title: "Tọa độ của vector theo cơ sở",
+        math: "\\mathbb{R}^{" + n + "}",
         tab1Label: "Cách 1: Lập hệ phương trình",
         tab2Label: "Cách 2: Ma trận chuyển cơ sở",
         showSubTabs: false,
@@ -326,21 +288,37 @@
         autoOpen: false
       };
 
-      if (typeof App.openSolutionPanel === "function") {
-        App.openSolutionPanel({ ...cachedConfig, autoOpen: false });
+      if (App.SolutionSync && typeof App.SolutionSync.save === "function") {
+        App.SolutionSync.save("coordinates", getCoordSignature(), cachedConfig);
       }
 
-      if (window.App.PaperLogger) {
-        const targetIdx = getVecIndexLabel(targetObj, 1);
-        const tupleLatex = `\\left(${sol.coeffs.map(fmtScalarLatex).join(", ")}\\right)^T`;
-        const ltx = `[v_{${targetIdx}}]_B = ${tupleLatex}`;
+      if (typeof App.openSolutionPanel === "function") {
+        App.openSolutionPanel(Object.assign({}, cachedConfig, { autoOpen: false }));
+      }
+    }
+
+    if (!sol || !sol.solvable) {
+      if (!options.silentToast && window.App && typeof window.App.showToast === "function") {
+        window.App.showToast(sol && sol.error ? sol.error : "Hệ vector cơ sở phụ thuộc tuyến tính.", "warning");
+      }
+      return sol;
+    }
+
+    if (!options.silentLog && window.App && window.App.PaperLogger && typeof window.App.PaperLogger.log === "function") {
+      try {
+        const fmt = App.LatexFmt;
+        const targetSym = getVecSym(targetObj, 0);
+        const coeffsTex = sol.coeffs.map(function (c) {
+          return fmt && typeof fmt.scalarToLatex === "function" ? fmt.scalarToLatex(c) : String(c);
+        });
+        const ltx = "\\left[" + targetSym + "\\right]_{B} = \\left(" + coeffsTex.join(",\\; ") + "\\right)^T";
         const animData = {
           type: "coord",
           targetId: targetObj.id,
-          basisIds: basisObjs.map((b) => b.id)
+          basisIds: basisObjs.map(function (b) { return b.id; })
         };
         App.PaperLogger.log("Tọa độ của Vector đối với Cơ sở", ltx, "", cachedConfig, animData);
-      }
+      } catch (_) {}
     }
 
     return sol;
@@ -360,9 +338,9 @@
     const vCoordSelect = $("vCoordSelect");
     if (vCoordSelect && !vCoordSelect._coordBound) {
       vCoordSelect._coordBound = true;
-      vCoordSelect.addEventListener("change", () => {
+      vCoordSelect.addEventListener("change", function () {
         App._lastCoordAnimData = null;
-        if (typeof App.stopCoordAnimation === "function" && window.App?.CoordAnimator?.isActive?.()) {
+        if (typeof App.stopCoordAnimation === "function" && window.App && App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()) {
           try { App.stopCoordAnimation(); } catch (_) {}
         }
 
@@ -370,8 +348,7 @@
         const checkContainer = $("basisCoordChecklist");
         if (!checkContainer) return;
 
-        // Tự động bỏ chọn checkbox của vector đích khỏi checklist cơ sở nếu đang tick
-        const targetCb = checkContainer.querySelector(`input[type="checkbox"][value="${targetId}"]`);
+        const targetCb = checkContainer.querySelector('input[type="checkbox"][value="' + targetId + '"]');
         if (targetCb && targetCb.checked) {
           targetCb.checked = false;
           targetCb.dispatchEvent(new Event("change", { bubbles: true }));
@@ -382,78 +359,86 @@
       });
     }
 
-    // --- 1. XỬ LÝ NÚT "XUẤT TỌA ĐỘ" ---
-    App.coordinatesUI = function () {
+    App.coordinatesUI = function (opts) {
+      const options = opts && typeof opts === "object" && !("target" in opts) ? opts : {};
       const data = getSelectedCoordData();
-      if (!data) return;
-      const { targetObj, basisObjs } = data;
+      if (!data) return null;
+      const targetObj = data.targetObj;
+      const basisObjs = data.basisObjs;
 
       if (!targetObj) {
-        if (window.App && window.App.showToast) window.App.showToast("Vui lòng chọn vector đích (x)!", "warning");
-        return;
+        if (!options.silentToast && window.App && typeof window.App.showToast === "function") {
+          window.App.showToast("Vui lòng chọn vector đích cần tìm tọa độ.", "warning");
+        }
+        return null;
       }
-      if (basisObjs.length < 2) {
-        if (window.App && window.App.showToast) window.App.showToast("Vui lòng chọn ít nhất 2 vector cho hệ cơ sở (B)!", "warning");
-        return;
+      if (!basisObjs || basisObjs.length < 1) {
+        if (!options.silentToast && window.App && typeof window.App.showToast === "function") {
+          window.App.showToast("Vui lòng tick chọn các vector cho hệ cơ sở B.", "warning");
+        }
+        return null;
       }
 
-      const isTargetInBasis = targetObj && basisObjs.some((b) => b.id === targetObj.id);
-      if (isTargetInBasis && window.App && typeof App.showToast === "function") {
-        App.showToast("Lưu ý: Vector đích x nằm trong hệ cơ sở B. Tọa độ là vector đơn vị chuẩn (hình bình hành suy biến thành đoạn thẳng).", "info");
+      const isTargetInBasis = targetObj && basisObjs.some(function (b) { return b.id === targetObj.id; });
+      if (!options.silentToast && isTargetInBasis && window.App && typeof App.showToast === "function") {
+        App.showToast("Lưu ý: Vector đích nằm ngay trong hệ cơ sở B nên tọa độ là vector đơn vị chuẩn.", "info");
       }
 
-      computeAndPrepareCoordSolution(targetObj, basisObjs);
+      return computeAndPrepareCoordSolution(targetObj, basisObjs, options);
     };
 
     if (btnCalc) {
       const newBtnCalc = btnCalc.cloneNode(true);
       if (btnCalc.parentNode) btnCalc.parentNode.replaceChild(newBtnCalc, btnCalc);
-      newBtnCalc.addEventListener("click", App.coordinatesUI);
+      newBtnCalc.addEventListener("click", function () {
+        App.coordinatesUI();
+      });
     }
 
-    // --- 2. XỬ LÝ NÚT "TRỰC QUAN HÓA" ---
     if (btnAnimate) {
       const newBtnAnimate = btnAnimate.cloneNode(true);
       if (btnAnimate.parentNode) btnAnimate.parentNode.replaceChild(newBtnAnimate, btnAnimate);
-      newBtnAnimate.addEventListener("click", () => {
+      newBtnAnimate.addEventListener("click", function () {
         App.ensureCoordAnimControls();
         const wrap = $("coordAnimControls");
 
-        // Nếu hộp trực quan đang mở hoặc hoạt cảnh đang chạy: bấm nút Trực quan sẽ dừng và tắt (Toggle)
         const isBoxOpen = wrap && wrap.style.display !== "none" && wrap.style.display !== "";
-        if (isBoxOpen || window.App?.CoordAnimator?.isActive?.()) {
+        if (isBoxOpen || (window.App && App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive())) {
           App.stopCoordAnimation();
           return;
         }
 
         const data = getSelectedCoordData();
         if (!data) return;
-        const { targetObj, basisObjs } = data;
+        const targetObj = data.targetObj;
+        const basisObjs = data.basisObjs;
 
         if (!targetObj) {
-          if (window.App && window.App.showToast) window.App.showToast("Vui lòng chọn vector đích (x)!", "warning");
+          if (window.App && typeof window.App.showToast === "function") {
+            window.App.showToast("Vui lòng chọn vector đích cần trực quan tọa độ.", "warning");
+          }
           return;
         }
-        if (basisObjs.length < 2) {
-          if (window.App && window.App.showToast) window.App.showToast("Vui lòng chọn ít nhất 2 vector cho hệ cơ sở (B)!", "warning");
+        if (basisObjs.length < 2 || basisObjs.length > 3) {
+          if (window.App && typeof window.App.showToast === "function") {
+            window.App.showToast("Hoạt cảnh đổi lưới không gian yêu cầu chọn 2 vector cơ sở (2D) hoặc 3 vector cơ sở (3D).", "warning");
+          }
           return;
         }
 
-        // Tự động xuất kết quả tọa độ ra khung kết quả nếu chưa bấm Xuất tọa độ trước đó
         const sol = computeAndPrepareCoordSolution(targetObj, basisObjs);
         if (!sol || !sol.solvable) return;
 
         if (window.App && App.CoordAnimator) {
-          // Dừng hoạt cảnh cơ sở nếu đang chạy
           if (typeof App.stopBasisAnimation === "function") {
             App.stopBasisAnimation();
-          } else if (window.App.BasisAnimator && App.BasisAnimator.isActive()) {
+          } else if (window.App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive()) {
             App.BasisAnimator.stop();
           }
 
           const ok = App.CoordAnimator.start({
             targetId: targetObj.id,
-            basisIds: basisObjs.map((b) => b.id)
+            basisIds: basisObjs.map(function (b) { return b.id; })
           });
 
           if (ok) {
@@ -464,32 +449,27 @@
       });
     }
 
-    // --- 3. XỬ LÝ NÚT "LỜI GIẢI" ---
     if (btnShow) {
       const newBtnShow = btnShow.cloneNode(true);
+      newBtnShow.dataset.syncManaged = "1";
       if (btnShow.parentNode) btnShow.parentNode.replaceChild(newBtnShow, btnShow);
 
-      newBtnShow.addEventListener("click", () => {
-        if (typeof App.openSolutionPanel !== "function") return;
-
-        if (cachedConfig) {
-          App.openSolutionPanel({ ...cachedConfig, autoOpen: true });
-        } else {
-          const data = getSelectedCoordData();
-          if (data && data.targetObj && data.basisObjs && data.basisObjs.length >= 2) {
-            const sol = computeAndPrepareCoordSolution(data.targetObj, data.basisObjs);
-            if (sol && cachedConfig) {
-              App.openSolutionPanel({ ...cachedConfig, autoOpen: true });
-              return;
-            }
-          }
-          App.openSolutionPanel({
-            title: "Tọa độ vector",
-            content1: `<div class="sol-empty">Vui lòng chọn vector đích và ít nhất 2 vector cơ sở, sau đó bấm nút <b>"Xuất tọa độ"</b>.</div>`,
-            tab1Label: "Cách 1",
-            showSubTabs: false,
-            autoOpen: true
+      newBtnShow.addEventListener("click", function () {
+        if (App.SolutionSync && typeof App.SolutionSync.openWithSync === "function") {
+          App.SolutionSync.openWithSync({
+            key: "coordinates",
+            getSig: getCoordSignature,
+            recomputeStatic: function () {
+              return App.coordinatesUI({ silentToast: true, silentLog: true });
+            },
+            emptyTitle: "Tọa độ của vector theo cơ sở",
+            emptyMath: "\\mathbb{R}^n",
+            emptyHintHtml: "Vui lòng chọn 1 vector đích và tick chọn các vector của hệ cơ sở B để xem lời giải từng bước."
           });
+          return;
+        }
+        if (cachedConfig && typeof App.openSolutionPanel === "function") {
+          App.openSolutionPanel(Object.assign({}, cachedConfig, { autoOpen: true }));
         }
       });
     }

@@ -348,6 +348,10 @@
       const n = Vec2D.S2D.pointers.size;
 
       // --- LOGIC KEO VECTOR (DRAG) ---
+      if (typeof App.isInteractionBlocked === "function" && App.isInteractionBlocked()) {
+        Vec2D.S2D.draggedVectorId = null;
+        Vec2D.S2D.dragStartOffset = null;
+      }
       if (Vec2D.S2D.draggedVectorId && n === 1) {
           canvas2d.style.cursor = "grabbing";
           const vItem = App.vectorList.find(v => v.id === Vec2D.S2D.draggedVectorId);
@@ -765,6 +769,8 @@
       const isCoordAnim = window.App && (App._coordAnimActive || (App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()));
       const isIndepAnim = window.App && (App._indepAnimActive || (App.IndepAnimator && typeof App.IndepAnimator.isActive === "function" && App.IndepAnimator.isActive()));
       const isRankAnim = window.App && (App._rankAnimActive || (App.RankAnimator && typeof App.RankAnimator.isActive === "function" && App.RankAnimator.isActive()));
+      const isGSAnim = window.App && (App._gsAnimActive || (App.GSAnimator && typeof App.GSAnimator.isActive === "function" && App.GSAnimator.isActive()));
+      const isLTAnim = window.App && (App._ltAnimActive || (App.LTAnimator && typeof App.LTAnimator.isActive === "function" && App.LTAnimator.isActive()));
       const labelColor = (isBasisAnim && item._basisColorCss)
         ? item._basisColorCss
         : ((isCoordAnim && item._coordColorCss)
@@ -773,7 +779,11 @@
             ? item._indepColorCss
             : ((isRankAnim && item._rankColorCss)
               ? item._rankColorCss
-              : (item.colorCss || item.colorHex || (isDark ? "#ffffff" : "#111827")))));
+              : ((isGSAnim && item._gsColorCss)
+                ? item._gsColorCss
+                : ((isLTAnim && item._ltColorCss)
+                  ? item._ltColorCss
+                  : (item.colorHex || item.colorCss || (isDark ? "#ffffff" : "#111827")))))));
       const latex = App.getVectorLatexLabel ? App.getVectorLatexLabel(item, showCoord) : (item.name || "v");
 
       if (overlay) {
@@ -808,6 +818,14 @@
           el.style.opacity = String(item._basisAlpha);
         } else if (isCoordAnim && typeof item._coordAlpha === "number") {
           el.style.opacity = String(item._coordAlpha);
+        } else if (isIndepAnim && typeof item._indepAlpha === "number") {
+          el.style.opacity = String(item._indepAlpha);
+        } else if (isRankAnim && typeof item._rankAlpha === "number") {
+          el.style.opacity = String(item._rankAlpha);
+        } else if (isGSAnim && typeof item._gsAlpha === "number") {
+          el.style.opacity = String(item._gsAlpha);
+        } else if (isLTAnim && typeof item._ltAlpha === "number") {
+          el.style.opacity = String(item._ltAlpha);
         } else {
           el.style.opacity = "";
         }
@@ -1334,14 +1352,20 @@
     if (isRightAngle) {
         const symbolSize = 12; 
         ctx2d.beginPath();
-        ctx2d.moveTo(x2, y2);
         
+        // Cạnh thứ nhất ngược chiều đường gióng (về phía ngọn vector cần chiếu)
         const p1x = x2 - symbolSize * Math.cos(angle);
         const p1y = y2 - symbolSize * Math.sin(angle);
-        const p2x = x2 - symbolSize * Math.cos(angle + Math.PI/2);
-        const p2y = y2 - symbolSize * Math.sin(angle + Math.PI/2);
-        const p3x = p1x - symbolSize * Math.cos(angle + Math.PI/2);
-        const p3y = p1y - symbolSize * Math.sin(angle + Math.PI/2);
+        // Cạnh thứ hai dọc theo giá của trục chiếu hướng về phía gốc tọa độ O(cx, cy)
+        const toOriginX = cx - x2;
+        const toOriginY = cy - y2;
+        const perpX = -Math.sin(angle);
+        const perpY = Math.cos(angle);
+        const signOrigin = (toOriginX * perpX + toOriginY * perpY) >= 0 ? 1 : -1;
+        const p2x = x2 + signOrigin * symbolSize * perpX;
+        const p2y = y2 + signOrigin * symbolSize * perpY;
+        const p3x = p1x + signOrigin * symbolSize * perpX;
+        const p3y = p1y + signOrigin * symbolSize * perpY;
 
         ctx2d.moveTo(p1x, p1y);
         ctx2d.lineTo(p3x, p3y);

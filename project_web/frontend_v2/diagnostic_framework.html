@@ -78,6 +78,10 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      max-width: 100%;
+      overflow-x: clip;
+    }
     body {
       background-color: var(--bg-page);
       color: var(--text-main);
@@ -88,8 +92,26 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    mjx-container {
+      max-width: 100% !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+      vertical-align: middle;
+      -webkit-overflow-scrolling: touch;
+    }
+    mjx-container[display="true"] {
+      display: block !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      -webkit-overflow-scrolling: touch;
+      padding: 6px 0;
+    }
+
     .paper-wrapper {
       max-width: 1020px;
+      width: 100%;
       margin: 40px auto;
       padding: 60px 75px;
       background: var(--bg-card);
@@ -100,8 +122,11 @@
     @media (max-width: 768px) {
       .paper-wrapper {
         margin: 0;
-        padding: 25px 16px;
+        padding: 24px 16px;
         border: none;
+      }
+      table.academic-table {
+        min-width: 540px;
       }
     }
 
@@ -466,6 +491,66 @@
       color: var(--text-soft);
       text-align: center;
       font-style: italic;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        font-size: 1rem;
+        line-height: 1.72;
+      }
+      p {
+        text-align: left;
+      }
+      ul, ol {
+        padding-left: 20px;
+      }
+      .top-bar,
+      .edge-box-title,
+      .sim-status-title,
+      .sim-slider-row {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      h1.paper-title {
+        font-size: clamp(1.42rem, 6vw, 2.2rem);
+        line-height: 1.32;
+      }
+      .paper-subtitle {
+        font-size: 1rem;
+      }
+      .paper-meta span {
+        display: inline-block;
+        margin: 2px 6px;
+      }
+      h2 {
+        font-size: 1.24rem;
+        margin: 34px 0 14px;
+      }
+      h3 {
+        font-size: 1.08rem;
+        margin: 24px 0 10px;
+      }
+      .math-card,
+      .callout,
+      .edge-box,
+      .sim-panel,
+      .sim-output-box,
+      pre.code-block {
+        padding: 14px;
+      }
+      .sim-output-box > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+      }
+      code {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      .reference-item {
+        padding-left: 18px;
+        text-indent: -18px;
+        overflow-wrap: anywhere;
+      }
     }
   </style>
 </head>

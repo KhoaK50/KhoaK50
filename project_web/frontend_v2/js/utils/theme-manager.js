@@ -8,9 +8,19 @@ const ThemeManager = (() => {
   const DARK_CLASS = "dark";
   const DARK_THEME_CLASS = "dark-theme";
 
+  function resolveIsDark() {
+    try {
+      const savedTheme = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("theme");
+      if (savedTheme === "dark") return true;
+      if (savedTheme === "light") return false;
+      return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    } catch (e) {
+      return false;
+    }
+  }
+
   function init() {
-    const savedTheme = localStorage.getItem(STORAGE_KEY);
-    const isDark = savedTheme === "dark";
+    const isDark = resolveIsDark();
     
     // Apply instantly on load (no transition) to avoid flash on load
     applyClasses(isDark);
@@ -26,11 +36,19 @@ const ThemeManager = (() => {
     if (isDark) {
       html.classList.add(DARK_CLASS, DARK_THEME_CLASS);
       html.setAttribute("data-theme", "dark");
-      if (body) body.classList.add(DARK_CLASS, DARK_THEME_CLASS);
+      html.style.backgroundColor = "#111113";
+      if (body) {
+        body.classList.remove("light-theme");
+        body.classList.add(DARK_CLASS, DARK_THEME_CLASS);
+      }
     } else {
       html.classList.remove(DARK_CLASS, DARK_THEME_CLASS);
       html.removeAttribute("data-theme");
-      if (body) body.classList.remove(DARK_CLASS, DARK_THEME_CLASS);
+      html.style.backgroundColor = "#fcfcfd";
+      if (body) {
+        body.classList.remove(DARK_CLASS, DARK_THEME_CLASS, "dark-mode");
+        body.classList.add("light-theme");
+      }
     }
   }
 
@@ -77,31 +95,37 @@ const ThemeManager = (() => {
   }
 
   function onStorageChange(e) {
-    if (e.key === STORAGE_KEY) {
+    if (e.key === STORAGE_KEY || e.key === "theme") {
       const isDark = e.newValue === "dark";
       applyTheme(isDark);
     }
   }
 
   function toggle() {
-    const isDark = getCurrent() === "dark";
+    const isDark = isDarkMode();
     const newTheme = isDark ? "light" : "dark";
-    localStorage.setItem(STORAGE_KEY, newTheme);
+    try {
+      localStorage.setItem(STORAGE_KEY, newTheme);
+      localStorage.setItem("theme", newTheme);
+    } catch (e) {}
     applyTheme(newTheme === "dark");
     return newTheme === "dark";
   }
 
   function getCurrent() {
-    return localStorage.getItem(STORAGE_KEY) || "light";
+    return resolveIsDark() ? "dark" : "light";
   }
 
   function isDarkMode() {
-    return getCurrent() === "dark";
+    return resolveIsDark();
   }
 
   function setTheme(theme) {
     if (theme !== "light" && theme !== "dark") return;
-    localStorage.setItem(STORAGE_KEY, theme);
+    try {
+      localStorage.setItem(STORAGE_KEY, theme);
+      localStorage.setItem("theme", theme);
+    } catch (e) {}
     applyTheme(theme === "dark");
   }
 
@@ -147,6 +171,37 @@ function initMobileNav() {
       navLinks.classList.add('show-mobile');
     }
   });
+
+  // Universal mobile submenu toggle ("Khám phá") across all pages
+  const navDropdowns = navLinks.querySelectorAll('.vec-dropdown-container');
+  navDropdowns.forEach((container) => {
+    if (container.dataset.mobileDropdownBound) return;
+    container.dataset.mobileDropdownBound = "true";
+    const trigger = container.querySelector(':scope > .vec-nav-link');
+    if (!trigger) return;
+    trigger.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768) {
+        e.preventDefault();
+        e.stopPropagation();
+        container.classList.toggle('open');
+      }
+    });
+  });
+
+  // Touch-friendly language dropdown toggle in right topbar
+  const rightDropdowns = document.querySelectorAll('.vec-topbar-right .vec-dropdown-container');
+  rightDropdowns.forEach((container) => {
+    if (container.id === 'notificationDropdownContainer') return;
+    if (container.querySelector('#btnTopAvatar')) return;
+    if (container.dataset.rightDropdownBound) return;
+    container.dataset.rightDropdownBound = "true";
+    const btn = container.querySelector(':scope > .vec-icon-btn');
+    if (!btn) return;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      container.classList.toggle('open');
+    });
+  });
   
   document.addEventListener('click', (e) => {
     if (navLinks.classList.contains('show-mobile')) {
@@ -154,5 +209,8 @@ function initMobileNav() {
         closeMenu();
       }
     }
+    document.querySelectorAll('.vec-topbar-right .vec-dropdown-container.open').forEach((d) => {
+      if (!d.contains(e.target)) d.classList.remove('open');
+    });
   }, true);
 }

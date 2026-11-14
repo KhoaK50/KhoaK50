@@ -44,11 +44,11 @@
 
   // Hook vẽ đồ họa 2D trên Canvas
   function drawParamMatrixOnCanvas2D(ctx, gridInfo, logicalSize) {
-    if (!matState) return;
+    if (!matState || !gridInfo) return;
 
-    const cx = gridInfo.originPx.x;
-    const cy = gridInfo.originPx.y;
-    const px = gridInfo.pixelsPerUnit;
+    const cx = gridInfo.originPx ? gridInfo.originPx.x : gridInfo.cx;
+    const cy = gridInfo.originPx ? gridInfo.originPx.y : gridInfo.cy;
+    const px = gridInfo.pixelsPerUnit || gridInfo.px || 80;
 
     const wX = (x) => cx + x * px;
     const wY = (y) => cy - y * px;

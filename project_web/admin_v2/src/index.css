@@ -1,18 +1,59 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'STIX Two Text';
+  src: url('/fonts/STIXTwoText-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 100%;
+  ascent-override: 96%;
+}
+
+@font-face {
+  font-family: 'STIX Two Text';
+  src: url('/fonts/STIXTwoText-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  size-adjust: 100%;
+  ascent-override: 96%;
+}
+
+@font-face {
+  font-family: 'STIX Two Text';
+  src: url('/fonts/STIXTwoText-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 100%;
+  ascent-override: 96%;
+}
+
+@font-face {
+  font-family: 'STIX Two Text';
+  src: url('/fonts/STIXTwoText-BoldItalic.woff2') format('woff2');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+  size-adjust: 100%;
+  ascent-override: 96%;
+}
+
 :root {
-  --bn-font-family: 'Merriweather', 'Cambria', 'Times New Roman', serif !important;
+  --bn-font-family: 'STIX Two Text', 'Latin Modern Roman', 'Times New Roman', serif !important;
+  --font-academic: 'STIX Two Text', 'Latin Modern Roman', 'Times New Roman', serif;
+  --font-ui: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 * {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   scrollbar-width: thin;
   scrollbar-color: #334155 transparent;
 }
 
 body {
   margin: 0;
+  font-family: var(--font-ui);
   background-color: #0f172a;
   color: #e2e8f0;
   -webkit-font-smoothing: antialiased;

@@ -225,6 +225,70 @@ body.dark-theme .hud-dropdown-menu {
   display: flex;
 }
 
+@media (max-width: 768px) {
+  .canvas-hud {
+    top: 8px;
+    right: 8px;
+    max-width: calc(100% - 16px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    gap: 4px;
+    padding: 3px 4px;
+  }
+
+  .canvas-hud::-webkit-scrollbar {
+    display: none;
+  }
+
+  .canvas-hud-group,
+  .canvas-hud-tools,
+  .hud-axis-group,
+  .hud-divider {
+    flex-shrink: 0;
+  }
+
+  .hud-tab-btn {
+    padding: 5px 8px;
+    font-size: 11.5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .hud-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    flex-shrink: 0;
+  }
+
+  .hud-btn-dimension {
+    width: auto;
+    min-width: 48px;
+    height: 32px;
+    padding: 0 7px;
+  }
+
+  .axis-btn {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+
+  .hud-dropdown-menu {
+    position: fixed;
+    top: calc(var(--topbar-h, 60px) + 48px);
+    right: 8px;
+    left: auto;
+    min-width: 0;
+    width: min(280px, calc(100vw - 16px));
+    max-height: calc(100dvh - 120px);
+    overflow-y: auto;
+    z-index: 9500;
+  }
+}
+
 .hud-menu-header {
   padding: 6px 14px 4px;
   font-size: 10.5px;
@@ -2525,6 +2589,7 @@ body.dark-theme .vec-pop-master-reset:hover {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background: rgba(0, 0, 0, 0.65);
   z-index: 999999;
   display: flex;

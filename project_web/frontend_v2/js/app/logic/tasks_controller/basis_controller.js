@@ -1,5 +1,7 @@
-// ===================== basis_controller.js (FULL - USER VERSION PRESERVED) =====================
+// ===================== basis_controller.js (UNIFIED SIDEBAR & SYNC ENGINE) =====================
 (function () {
+  "use strict";
+
   window.App = window.App || {};
   let cachedConfig = null;
 
@@ -7,16 +9,13 @@
     return document.getElementById(id);
   }
 
-  // [LOGIC] Lấy ID theo thứ tự DOM (thứ tự người dùng nhìn thấy trên màn hình)
-  // Khi người dùng kéo thả, DOM thay đổi, hàm này sẽ lấy đúng thứ tự mới.
   function getCheckedIds(container) {
     if (!container) return [];
-    // querySelectorAll trả về NodeList theo thứ tự từ trên xuống dưới trong HTML
     const checkboxes = Array.from(
-      container.querySelectorAll('input[type="checkbox"]:checked'),
+      container.querySelectorAll('input[type="checkbox"]:checked')
     );
     return checkboxes
-      .map((cb) => {
+      .map(function (cb) {
         const raw =
           cb.value !== undefined && cb.value !== ""
             ? cb.value
@@ -24,23 +23,72 @@
         const id = Number(raw);
         return Number.isFinite(id) ? id : null;
       })
-      .filter((id) => id !== null);
+      .filter(function (id) {
+        return id !== null;
+      });
+  }
+
+  function getBasisSignature() {
+    if (window.App && App.SolutionSync && typeof App.SolutionSync.checklistSig === "function") {
+      return App.SolutionSync.checklistSig("basisChecklist");
+    }
+    return "";
+  }
+
+  function getVecSym(it, fallbackIdx, fmt) {
+    const rawName =
+      it && typeof App.getVectorName === "function"
+        ? App.getVectorName(it)
+        : (it && it.name ? it.name : "v_{" + (fallbackIdx + 1) + "}");
+    if (fmt && typeof fmt.normalizeVecSymbol === "function") {
+      return fmt.normalizeVecSymbol(rawName, true);
+    }
+    return "\\mathbf{" + rawName + "}";
+  }
+
+  function formatItemTupleLatex(it, fmt) {
+    if (it && it.isParametric && Array.isArray(it.rawExprs) && it.rawExprs.length > 0) {
+      const parts = it.rawExprs.map(function (e) {
+        return typeof App.exprToLatex === "function" ? App.exprToLatex(e) : String(e);
+      });
+      return "\\left(" + parts.join(",\\; ") + "\\right)";
+    }
+    const v = (it && Array.isArray(it.vec)) ? it.vec : [];
+    if (fmt && typeof fmt.vecTupleLatex === "function") {
+      return fmt.vecTupleLatex(v);
+    }
+    return "\\left(" + v.join(", ") + "\\right)";
+  }
+
+  function buildColumnMatrix(items, n) {
+    const M = [];
+    for (let r = 0; r < n; r++) {
+      const row = [];
+      for (let c = 0; c < items.length; c++) {
+        const v = items[c] && Array.isArray(items[c].vec) ? items[c].vec : [];
+        row.push(Number(v[r] || 0));
+      }
+      M.push(row);
+    }
+    return M;
   }
 
   // =========================
   // A) SNAPSHOT / RESTORE
   // =========================
   function snapshotVectorList(list) {
-    return (list || []).map((v) => ({
-      id: v.id,
-      visible: v.visible !== false,
-      focus: !!v.focus,
-      alpha: typeof v.alpha === "number" ? v.alpha : 1,
-      colorCss: v.colorCss,
-      colorHex: v.colorHex,
-      haloCss: v.haloCss,
-      highlighted: !!v.highlighted,
-    }));
+    return (list || []).map(function (v) {
+      return {
+        id: v.id,
+        visible: v.visible !== false,
+        focus: !!v.focus,
+        alpha: typeof v.alpha === "number" ? v.alpha : 1,
+        colorCss: v.colorCss,
+        colorHex: v.colorHex,
+        haloCss: v.haloCss,
+        highlighted: !!v.highlighted
+      };
+    });
   }
 
   function restoreSnapshot(list, snap) {
@@ -48,8 +96,9 @@
     for (let i = list.length - 1; i >= 0; i--) {
       if (list[i] && list[i]._basisTemp) list.splice(i, 1);
     }
-    const byId = new Map((snap || []).map((s) => [s.id, s]));
-    for (const it of list) {
+    const byId = new Map((snap || []).map(function (s) { return [s.id, s]; }));
+    for (let i = 0; i < list.length; i++) {
+      const it = list[i];
       const s = byId.get(it.id);
       if (!s) continue;
       it.visible = s.visible;
@@ -73,17 +122,14 @@
       try { App.BasisAnimator.stop(); } catch (_) {}
     }
     App._basisAnimActive = false;
-    (App.vectorList || []).forEach((it) => {
+    (App.vectorList || []).forEach(function (it) {
       if (!it) return;
       delete it._basisIsBasis;
     });
     if (App._basisBaselineSnapshot) {
       restoreSnapshot(App.vectorList, App._basisBaselineSnapshot);
     }
-    if (
-      App._basisTempByKey &&
-      typeof App._basisTempByKey.clear === "function"
-    ) {
+    if (App._basisTempByKey && typeof App._basisTempByKey.clear === "function") {
       App._basisTempByKey.clear();
     }
     App._basisTempByKey = null;
@@ -92,7 +138,7 @@
   };
 
   // =========================
-  // B) ANIMATION CONTROLS (HỢP NHẤT TRỰC TIẾP TRÊN SIDEBAR)
+  // B) ANIMATION CONTROLS (SIDEBAR)
   // =========================
   App.ensureBasisAnimControls = function () {
     const checklist = $("basisChecklist");
@@ -107,51 +153,37 @@
     wrap.id = "basisAnimControls";
     wrap.className = "basis-sidebar-anim-box";
 
-    wrap.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
-        <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted, #64748b);">Trực quan hóa không gian</span>
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <span class="basis-step-pill" id="basisStepCounter">Bước 1 / 3</span>
-          <button type="button" id="btnBasisCloseAnim" class="basis-anim-close-btn" title="Đóng trực quan" style="background: transparent; border: none; cursor: pointer; color: var(--text-muted, #64748b); font-size: 13px; padding: 2px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;">
-            <i class="ph ph-x"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="coord-phase-pills basis-step-pills" id="basisStepPills"></div>
-
-      <div class="basis-anim-btn-row">
-        <button type="button" id="btnBasisPrev" class="basis-ctrl-btn" title="Bước trước">
-          <i class="ph ph-skip-back"></i>
-        </button>
-        <button type="button" id="btnBasisPlay" class="basis-ctrl-btn primary" title="Phát / Tạm dừng">
-          <i class="ph ph-play" id="iconBasisPlay"></i>
-        </button>
-        <button type="button" id="btnBasisNext" class="basis-ctrl-btn" title="Bước tiếp">
-          <i class="ph ph-skip-forward"></i>
-        </button>
-        <button type="button" id="btnBasisReplay" class="basis-ctrl-btn" title="Phát lại từ đầu">
-          <i class="ph ph-arrow-counter-clockwise"></i>
-        </button>
-      </div>
-
-      <div class="hud-menu-slider-row basis-speed-slider-wrap" style="padding: 6px 0 2px; margin-top: 6px; border-top: 1px dashed var(--border-subtle, var(--border, #e2e8f0));">
-        <div class="hud-menu-slider-header" style="font-size: 11.5px; margin-bottom: 2px;">
-          <span class="hud-menu-item-text" style="color: var(--text-muted, #64748b); font-weight: 600;">Tốc độ phát</span>
-          <span class="hud-menu-slider-val" id="basisSpeedValue">1.0×</span>
-        </div>
-        <input type="range" id="basisSpeedSlider" min="0.2" max="2.5" step="0.1" value="1.0" class="hud-range-slider" />
-      </div>
-
-      <div class="basis-step-explainer" id="basisStepExplainer">
-        <div class="basis-step-title" id="basisStepTitle">Khảo sát hệ vector</div>
-        <div class="basis-step-desc" id="basisStepDesc">Bấm nút Trực quan để bắt đầu trực quan hóa không gian.</div>
-      </div>
-    `;
+    wrap.innerHTML =
+      '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">' +
+        '<span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted, #64748b);">Trực quan hóa không gian</span>' +
+        '<div style="display: flex; align-items: center; gap: 6px;">' +
+          '<span class="basis-step-pill" id="basisStepCounter">Bước 1 / 3</span>' +
+          '<button type="button" id="btnBasisCloseAnim" class="basis-anim-close-btn" title="Đóng trực quan" style="background: transparent; border: none; cursor: pointer; color: var(--text-muted, #64748b); font-size: 13px; padding: 2px; display: inline-flex; align-items: center; justify-content: center; border-radius: 2px;">' +
+            '<i class="ph ph-x"></i>' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="coord-phase-pills basis-step-pills" id="basisStepPills"></div>' +
+      '<div class="basis-anim-btn-row">' +
+        '<button type="button" id="btnBasisPrev" class="basis-ctrl-btn" title="Bước trước"><i class="ph ph-skip-back"></i></button>' +
+        '<button type="button" id="btnBasisPlay" class="basis-ctrl-btn primary" title="Phát / Tạm dừng"><i class="ph ph-play" id="iconBasisPlay"></i></button>' +
+        '<button type="button" id="btnBasisNext" class="basis-ctrl-btn" title="Bước tiếp"><i class="ph ph-skip-forward"></i></button>' +
+        '<button type="button" id="btnBasisReplay" class="basis-ctrl-btn" title="Phát lại từ đầu"><i class="ph ph-arrow-counter-clockwise"></i></button>' +
+      '</div>' +
+      '<div class="hud-menu-slider-row basis-speed-slider-wrap" style="padding: 6px 0 2px; margin-top: 6px; border-top: 1px dashed var(--border-subtle, var(--border, #e2e8f0));">' +
+        '<div class="hud-menu-slider-header" style="font-size: 11.5px; margin-bottom: 2px;">' +
+          '<span class="hud-menu-item-text" style="color: var(--text-muted, #64748b); font-weight: 600;">Tốc độ phát</span>' +
+          '<span class="hud-menu-slider-val" id="basisSpeedValue">1.0x</span>' +
+        '</div>' +
+        '<input type="range" id="basisSpeedSlider" min="0.2" max="2.5" step="0.1" value="1.0" class="hud-range-slider" />' +
+      '</div>' +
+      '<div class="basis-step-explainer" id="basisStepExplainer">' +
+        '<div class="basis-step-title" id="basisStepTitle">Khảo sát hệ vector</div>' +
+        '<div class="basis-step-desc" id="basisStepDesc">Bấm nút Trực quan để bắt đầu trực quan hóa không gian.</div>' +
+      '</div>';
 
     wrap.style.display = "none";
 
-    // Dat khoi hoat canh nam ngay duoi khoi ket qua de giu logic thi giac mach lac
     if (out.nextSibling) {
       host.insertBefore(wrap, out.nextSibling);
     } else {
@@ -160,32 +192,31 @@
 
     const btnClose = wrap.querySelector("#btnBasisCloseAnim");
     if (btnClose) {
-      btnClose.addEventListener("click", () => {
+      btnClose.addEventListener("click", function () {
         App.stopBasisAnimation();
       });
     }
 
     const speedSlider = wrap.querySelector("#basisSpeedSlider");
-    const syncSliderPct = (val) => {
+    const syncSliderPct = function (val) {
       if (!speedSlider) return;
       const min = parseFloat(speedSlider.min) || 0.2;
       const max = parseFloat(speedSlider.max) || 2.5;
       const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
-      speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
-      speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+      speedSlider.style.setProperty("--slider-pct", pct.toFixed(1) + "%");
+      speedSlider.style.setProperty("--range-pct", pct.toFixed(1) + "%");
     };
     if (speedSlider) {
-      speedSlider.addEventListener("input", (e) => {
+      speedSlider.addEventListener("input", function (e) {
         const val = parseFloat(e.target.value) || 1.0;
         syncSliderPct(val);
         const valLabel = wrap.querySelector("#basisSpeedValue");
-        if (valLabel) valLabel.textContent = `${val.toFixed(1)}×`;
+        if (valLabel) valLabel.textContent = val.toFixed(1) + "x";
       });
       syncSliderPct(1.0);
     }
   };
 
-  // Dừng và giải phóng hoạt cảnh cơ sở
   App.stopBasisAnimation = function () {
     const wrap = $("basisAnimControls");
     if (wrap) wrap.style.display = "none";
@@ -200,16 +231,18 @@
 
   App.ensureBasisAnimControls();
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () =>
-      App.ensureBasisAnimControls(),
-    );
+    document.addEventListener("DOMContentLoaded", function () {
+      App.ensureBasisAnimControls();
+    });
   }
 
   // =========================
   // C) MAIN LOGIC: TÍNH CƠ SỞ & SỐ CHIỀU
   // =========================
-  App.basisAndDimUI = async function () {
-    if (typeof App.handleEmptyListAction === "function") {
+  App.basisAndDimUI = async function (opts) {
+    const options = opts && typeof opts === "object" && !("target" in opts) ? opts : {};
+
+    if (!options.silentWhenEmpty && typeof App.handleEmptyListAction === "function") {
       if (App.handleEmptyListAction()) return;
     }
 
@@ -218,20 +251,17 @@
     const checklist = $("basisChecklist");
     if (!checklist) return;
 
-    // 1. Lấy danh sách ID đã tick (theo đúng thứ tự trên màn hình)
-    // Lưu ý: Nếu có Drag & Drop, DOM phải được cập nhật thì hàm này mới đúng.
     const checkedIds = getCheckedIds(checklist);
-
-    // 2. Map ID sang Object Vector (Giữ nguyên thứ tự của checkedIds)
-    // Code cũ của bạn đã đúng ở chỗ này, nó sẽ tạo mảng selectedItems theo thứ tự của checkedIds
     const selectedItems = checkedIds
-      .map((id) => (App.vectorList || []).find((v) => v.id === id))
+      .map(function (id) {
+        return (App.vectorList || []).find(function (v) { return v.id === id; });
+      })
       .filter(Boolean);
 
     if (!selectedItems.length) {
-      if (typeof App.showToast === "function")
-        App.showToast("⚠️ Hãy tick chọn ít nhất 1 vector!");
-      else window.App.showToast("Tick ít nhất 1 vector.", 'warning');
+      if (!options.silentWhenEmpty && typeof App.showToast === "function") {
+        App.showToast("Vui lòng tick chọn ít nhất 1 vector để tìm cơ sở.", "warning");
+      }
       return;
     }
 
@@ -243,348 +273,235 @@
     }
 
     const out = $("result_basis");
-    if (out) out.innerText = "Đang tính toán...";
+    if (out) {
+      out.innerHTML = '<div style="font-size: 12px; color: var(--text-muted); padding: 6px 0;">Đang tính toán cơ sở...</div>';
+    }
 
     App._basisBaselineSnapshot = snapshotVectorList(App.vectorList);
 
     if (typeof App.stopBasisAnimation === "function") {
-      try {
-        App.stopBasisAnimation();
-      } catch (_) {}
+      try { App.stopBasisAnimation(); } catch (_) {}
     }
 
-    // Lấy dữ liệu vector thô để gửi đi (gửi string nếu có thể để backend dùng SymPy)
-    const vecs = selectedItems.map((it) => {
+    const vecs = selectedItems.map(function (it) {
       if (it.latex) {
-        let s = it.latex.replace(/^\\left\[|^\[|\\right\]|\]$/g, "");
-        return s.split(",").map((x) => x.trim());
+        const s = it.latex.replace(/^\\left\[|^\[|\\right\]|\]$/g, "");
+        return s.split(",").map(function (x) { return x.trim(); });
       }
       return (it.vec || []).slice();
     });
 
     try {
-      // [QUAN TRỌNG] Trích xuất cơ sở trực tiếp từ họ vector của người dùng trên đồ thị
-      const has3DVector = selectedItems.some(
-        (it) => it.vec && it.vec.length >= 3 && Math.abs(it.vec[2] || 0) > 1e-5
-      );
-      if (has3DVector && App.mode !== "3D" && typeof App.toggleMode === "function") {
+      const has3DVector = selectedItems.some(function (it) {
+        return it.vec && it.vec.length >= 3 && Math.abs(it.vec[2] || 0) > 1e-5;
+      });
+      if (!options.silentWhenEmpty && has3DVector && App.mode !== "3D" && typeof App.toggleMode === "function") {
         App.toggleMode();
       }
+
+      const nDim = (selectedItems[0] && Array.isArray(selectedItems[0].vec) && selectedItems[0].vec.length) || ((App.mode === "3D" || has3DVector) ? 3 : 2);
       const spaceDim = (App.mode === "3D" || has3DVector) ? 3 : 2;
       const basisPlan = typeof App.analyzeBasisPlan === "function"
         ? App.analyzeBasisPlan(selectedItems, spaceDim)
+        : null;
+
+      const fmt = App.LatexFmt;
+      const colMat = buildColumnMatrix(selectedItems, nDim);
+      const colGauss = fmt && typeof fmt.gaussRrefWithSteps === "function"
+        ? fmt.gaussRrefWithSteps(colMat, { mode: "rref", rowSymbol: "d", bracket: "bmatrix" })
         : null;
 
       let data = null;
       try {
         data = await App.callAPI("basis", {
           vectors: vecs,
-          pivot_strategy: "basic",
+          pivot_strategy: "basic"
         });
       } catch (apiErr) {
-        console.warn("Backend API basis call failed or offline, falling back to client-side geometric solver:", apiErr);
+        const fallbackDim = colGauss
+          ? colGauss.rank
+          : (typeof basisPlan?.finalDim === "number" ? basisPlan.finalDim : 0);
         data = {
-          basis: basisPlan?.finalBasis?.map((it) => it.vec) || [],
-          dimension: basisPlan?.finalDim || 2,
-          steps: [],
+          basis: basisPlan && Array.isArray(basisPlan.finalBasis)
+            ? basisPlan.finalBasis.map(function (it) { return it.vec; })
+            : [],
+          dimension: fallbackDim,
+          steps: []
         };
       }
 
-      // Gọi hàm sinh lời giải
       const gen = App.TasksGen && App.TasksGen.Basis;
+      const packMat = gen && gen.buildBasisByMatrix ? gen.buildBasisByMatrix(selectedItems, data) : null;
+      const packEqGeneral = gen && gen.buildBasisByEquationsGeneral ? gen.buildBasisByEquationsGeneral(selectedItems, data) : null;
+      const packEqStep = gen && gen.buildBasisByEquationsStepwise ? gen.buildBasisByEquationsStepwise(selectedItems, data) : null;
 
-      const packMat =
-        gen && gen.buildBasisByMatrix
-          ? gen.buildBasisByMatrix(selectedItems, data)
-          : null;
+      const pivotIndices = colGauss
+        ? colGauss.pivotCols
+        : (packMat && Array.isArray(packMat.pivotIndices) ? packMat.pivotIndices : []);
 
-      let packEqGeneral = gen && gen.buildBasisByEquationsGeneral ? gen.buildBasisByEquationsGeneral(selectedItems, data) : null;
-      let packEqStep = gen && gen.buildBasisByEquationsStepwise ? gen.buildBasisByEquationsStepwise(selectedItems, data) : null;
+      const basisItems = pivotIndices.length > 0
+        ? pivotIndices.map(function (idx) { return selectedItems[idx]; }).filter(Boolean)
+        : (basisPlan && Array.isArray(basisPlan.finalBasis) ? basisPlan.finalBasis : []);
 
-      const basisItems = basisPlan?.finalBasis?.length
-        ? basisPlan.finalBasis
-        : selectedItems.slice(0, typeof data?.dimension === "number" ? data.dimension : 2);
+      const dim = colGauss
+        ? colGauss.rank
+        : (typeof packMat?.dimension === "number"
+            ? packMat.dimension
+            : (typeof data?.dimension === "number" ? data.dimension : basisItems.length));
 
-      const dim = typeof basisPlan?.finalDim === "number"
-        ? basisPlan.finalDim
-        : (typeof packMat?.dimension === "number" ? packMat.dimension : (typeof data?.dimension === "number" ? data.dimension : basisItems.length));
-
-      const dependentItems = basisPlan?.steps
-        ? basisPlan.steps.filter((s) => s.type === "REDUNDANT" || s.type === "REDUNDANT_ZERO").map((s) => s.item).filter(Boolean)
-        : [];
-
-      // --- [MỚI] 1. TẠO HTML HIỂN THỊ ĐẸP (MATHLIVE READ-ONLY) ---
-
-      // Hàm chuyển vector [1, 2] thành Latex (1, 2) để hiển thị trong Mathfield
-      // [FIX FINAL] Logic hiển thị: Tham số -> Căn -> Phân số (nghiêm ngặt) -> Thập phân
-      const fmtVecForMathLive = (v, item) => {
-        if (item && item.isParametric && item.rawExprs && item.rawExprs.length) {
-          const parts = item.rawExprs.map((e) => (App.exprToLatex ? App.exprToLatex(e) : e));
-          return `\\left(${parts.join(", ")}\\right)`;
+      const pivotSet = new Set(pivotIndices);
+      const dependentPairs = [];
+      for (let j = 0; j < selectedItems.length; j++) {
+        if (!pivotSet.has(j)) {
+          dependentPairs.push({ item: selectedItems[j], colIndex: j });
         }
+      }
+      const dependentItems = dependentPairs.map(function (p) { return p.item; });
+      const dependentIds = dependentItems.map(function (it) { return it.id; });
 
-        // Helper: Rút gọn căn
-        const simplifySqrtStr = (n) => {
-          let coef = 1;
-          for (let i = Math.floor(Math.sqrt(n)); i > 1; i--) {
-            if (n % (i * i) === 0) {
-              coef = i;
-              n /= i * i;
-              break;
-            }
-          }
-          let r = n === 1 ? "" : `\\sqrt{${n}}`;
-          return coef === 1 ? r || "1" : `${coef}${r}`;
-        };
+      const allSyms = selectedItems.map(function (it, idx) {
+        return getVecSym(it, idx, fmt);
+      });
+      const basisSyms = pivotIndices.map(function (cIdx) {
+        return allSyms[cIdx];
+      });
 
-        // Helper: Tìm phân số (SIẾT CHẶT)
-        const getFrac = (val, maxD = 100) => {
-          let h1 = 1,
-            h2 = 0,
-            k1 = 0,
-            k2 = 1,
-            b = val;
-          do {
-            let a = Math.floor(b);
-            let aux = h1;
-            h1 = a * h1 + h2;
-            h2 = aux;
-            aux = k1;
-            k1 = a * k1 + k2;
-            k2 = aux;
-            b = 1 / (b - a);
-          } while (Math.abs(val - h1 / k1) > 1e-9 && k1 < maxD); // Lặp đến khi sai số cực nhỏ
-
-          // [QUAN TRỌNG] Chỉ trả về nếu sai số < 1e-9
-          if (Math.abs(val - h1 / k1) < 1e-9) return { n: h1, d: k1 };
-          return null;
-        };
-
-        const nums = v.map((x) => {
-          // Nếu backend gửi chuỗi LaTeX (căn, phân số) -> giữ nguyên
-          if (typeof x === "string" && (x.includes("\\") || x.includes("sqrt")))
-            return x;
-
-          let val = 0;
-          if (typeof x === "object" && x !== null) {
-            const n = Number(x.n);
-            const d = Number(x.d);
-            const s = x.s || 1;
-            if (d !== 0 && !isNaN(n)) val = s * (n / d);
-          } else {
-            val = Number(x);
-          }
-
-          if (isNaN(val)) return typeof x === "string" ? x : "0";
-          if (Math.abs(val) < 1e-9) return "0";
-
-          let sign = val < 0 ? "-" : "";
-          let abs = Math.abs(val);
-
-          // 1. Số nguyên
-          if (Number.isInteger(abs)) return String(val);
-
-          // 2. Căn thức (Ưu tiên)
-          let sq = abs * abs;
-          if (Math.abs(sq - Math.round(sq)) < 1e-5 && Math.round(sq) < 1000) {
-            return sign + simplifySqrtStr(Math.round(sq));
-          }
-
-          // 3. Phân số (NGHIÊM NGẶT)
-          // ln(5) sẽ fail ở bước này vì sai số > 1e-9
-          let frac = getFrac(abs, 100);
-          if (frac) {
-            if (frac.d === 1) return sign + frac.n;
-            return `${sign}\\frac{${frac.n}}{${frac.d}}`;
-          }
-
-          // 4. Số thập phân (cho Loga, Pi...)
-          return parseFloat(val.toFixed(4)).toString();
+      const primaryRows = [];
+      if (basisItems.length > 0) {
+        for (let k = 0; k < pivotIndices.length; k++) {
+          const cIdx = pivotIndices[k];
+          const it = selectedItems[cIdx];
+          primaryRows.push({
+            latex: allSyms[cIdx] + " = " + formatItemTupleLatex(it, fmt)
+          });
+        }
+      } else {
+        primaryRows.push({
+          latex: "B = \\varnothing,\\quad V = \\left\\{\\mathbf{0}\\right\\}",
+          noteHtml: "Tất cả vector được chọn đều là vector không."
         });
+      }
 
-        return `\\left(${nums.join(", ")}\\right)`;
-      };
-      const getVecIndex = (it, fallbackNum) => {
-        if (!it) return String(fallbackNum);
-        if (typeof App.displayIndexOf === "function") {
-          const d = App.displayIndexOf(it);
-          if (d) return String(d);
+      const secondaryRows = [];
+      if (dependentPairs.length > 0) {
+        for (let dIdx = 0; dIdx < dependentPairs.length; dIdx++) {
+          const pair = dependentPairs[dIdx];
+          const fc = pair.colIndex;
+          const depSym = allSyms[fc];
+          let relLatex = depSym + " = " + formatItemTupleLatex(pair.item, fmt);
+
+          if (colGauss && pivotIndices.length > 0 && fmt && typeof fmt.linearCombLatex === "function") {
+            const coeffs = [];
+            for (let r = 0; r < pivotIndices.length; r++) {
+              coeffs.push(Number(colGauss.rrefMatrix[r][fc] || 0));
+            }
+            const comb = fmt.linearCombLatex(coeffs, basisSyms, { zeroFallback: "\\mathbf{0}" });
+            relLatex = depSym + " = " + comb;
+          } else if (dim === 0) {
+            relLatex = depSym + " = \\mathbf{0}";
+          }
+
+          secondaryRows.push({
+            latex: relLatex
+          });
         }
-        const idx = App.vectorList ? App.vectorList.indexOf(it) : -1;
-        return idx >= 0 ? String(idx + 1) : String(fallbackNum);
-      };
-
-      // Tạo danh sách các thẻ <math-field> cho từng vector cơ sở từ hệ thực tế của người dùng
-      const basisMathFields = basisItems.length
-        ? basisItems
-            .map(
-              (it, idx) => `
-            <div style="margin-bottom: 6px;">
-              <math-field read-only style="
-                  width: 100%;
-                  box-sizing: border-box;
-                  background: var(--bg-paper, var(--card, #fff));
-                  border: 1px solid var(--border-subtle, var(--border, #ccc));
-                  border-radius: 4px;
-                  padding: 6px 12px;
-                  font-size: 1.2em;
-                  color: var(--text-main, #333);
-                  pointer-events: none;
-              ">
-                  v_{${getVecIndex(it, idx + 1)}} = ${fmtVecForMathLive(it.vec, it)}
-              </math-field>
-            </div>
-          `,
-            )
-            .join("")
-        : `<div style="font-style:italic; color:var(--text-muted, #888); padding: 5px;">(Không có vector cơ sở)</div>`;
-
-      // Khối danh sách vector phụ thuộc (nếu có)
-      let dependentHTML = "";
-      if (dependentItems.length > 0) {
-        const depList = dependentItems
-          .map(
-            (it, idx) => `
-          <div style="margin-bottom: 6px;">
-            <math-field read-only style="
-                width: 100%;
-                box-sizing: border-box;
-                background: var(--bg-hover, rgba(0,0,0,0.02));
-                border: 1px dashed var(--border-subtle, var(--border, #ccc));
-                border-radius: 4px;
-                padding: 6px 12px;
-                font-size: 1.15em;
-                color: var(--text-muted, #64748b);
-                pointer-events: none;
-            ">
-                v_{${getVecIndex(it, idx + 1)}} = ${fmtVecForMathLive(it.vec, it)}
-            </math-field>
-          </div>
-        `,
-          )
-          .join("");
-
-        dependentHTML = `
-          <div style="margin-top: 6px; padding-top: 8px; border-top: 1px dashed var(--border-subtle, var(--border, #ccc));">
-            <div style="font-size: 11px; font-weight: 700; color: var(--text-muted, #64748b); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.03em;">
-              Vector phụ thuộc tuyến tính (loại khỏi cơ sở):
-            </div>
-            ${depList}
-          </div>
-        `;
       }
 
-      // HTML Khung kết quả (Hoàn toàn dùng DIV, không dùng LI/UL)
-      const resultHTML = `
-        <div style="display:flex; flex-direction:column; gap:8px; padding: 4px 0 12px 0;">
-            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:var(--bg-hover, rgba(0,0,0,0.02)); border:1px solid var(--border-subtle, var(--border, #e2e8f0)); border-radius:4px;">
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <span style="font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted, #64748b);">Số chiều:</span>
-                    <span style="font-weight:700; font-size:13px; color:var(--primary-base, #10b981);">dim(V) = ${dim ?? "?"}</span>
-                </div>
-                <span style="font-size:11.5px; font-weight:600; color:var(--text-muted, #64748b);">Hệ cơ sở B (${basisItems.length} vector)</span>
-            </div>
-            
-            <div style="display:flex; flex-direction:column; width:100%;">
-                ${basisMathFields}
-            </div>
-
-            ${dependentHTML}
-            
-            <div style="font-size:11.5px; color:var(--text-muted, #888); font-style:italic; padding-top:4px; text-align: left; width: 100%;">
-                👉 Bấm <b>"Trực quan"</b> để xem hoạt cảnh không gian hoặc <b>"Lời giải"</b> để xem chi tiết biến đổi ma trận bậc thang (khử Gauss) và giải hệ phương trình.
-            </div>
-        </div>
-      `;
-
-      let dependentIds = dependentItems.map((it) => it.id);
-
-      // [FIX] Gán HTML đẹp vào ô kết quả
-      if (out) {
-        out.innerHTML = resultHTML;
+      if (App.ResultCard && typeof App.ResultCard.mount === "function") {
+        App.ResultCard.mount(out, {
+          titleLeft: "Hệ cơ sở B (" + basisItems.length + " vector)",
+          badgeRightLatex: "\\dim(V) = " + dim,
+          badgeTone: dim > 0 ? "success" : "neutral",
+          primaryRows: primaryRows,
+          secondarySection: secondaryRows.length > 0
+            ? {
+                titleHtml: "Vector phụ thuộc loại khỏi cơ sở (" + secondaryRows.length + ")",
+                rows: secondaryRows
+              }
+            : null,
+          footerHintHtml: "Bấm <b>Trực quan</b> để xem hoạt cảnh không gian hoặc <b>Lời giải</b> để xem khử Gauss và hệ phương trình."
+        });
       }
 
-      // [QUAN TRỌNG] Không tự ý chèn auto-vector (1, 0), (0, 1) lên canvas.
-      // Lưu lại dữ liệu để khi người dùng bấm nút "Trực quan" sẽ khởi chạy hoạt cảnh
       App._lastBasisAnimData = {
         selectedIds: checkedIds,
         dependentIds: dependentIds,
-        basisVectors: basisItems.map((it) => it.vec),
-        phaseMs: App.basisAnimPhaseMs,
+        basisVectors: basisItems.map(function (it) { return it.vec; }),
+        phaseMs: App.basisAnimPhaseMs
       };
 
       cachedConfig = {
-        title: "Cơ sở & số chiều",
-        math: `\\( \\mathbb{R}^${selectedItems[0].vec.length} \\)`,
+        title: "Cơ sở và số chiều",
+        math: "\\mathbb{R}^{" + nDim + "}",
         tab1Label: "Cách 1: Ma trận",
         tab2Label: "Cách 2: Hệ phương trình",
         showSubTabs: true,
-
-        // --- CÁCH 1 (Đã độ động cơ Virtual List) ---
-        content1: packMat?.htmlContent || "", 
-        htmlHeader: packMat?.htmlHeader || "",    // [MỚI] Truyền Phần đầu
-        htmlSteps: packMat?.htmlSteps || null,    // [MỚI] Truyền Mảng băm nhỏ
-        htmlFooter: packMat?.htmlFooter || "",    // [MỚI] Truyền Phần đuôi
-
-        // --- CÁCH 2 (Giữ nguyên) ---
-        content2: packEqGeneral?.htmlContent || packEqGeneral?.html || "",
-        content2Sub: packEqStep?.htmlContent || packEqStep?.html || "",
-
-        autoOpen: false,
+        content1: packMat ? packMat.htmlContent : "",
+        htmlHeader: packMat ? packMat.htmlHeader : "",
+        htmlSteps: packMat ? packMat.htmlSteps : null,
+        htmlFooter: packMat ? packMat.htmlFooter : "",
+        content2: packEqGeneral ? (packEqGeneral.htmlContent || packEqGeneral.html || "") : "",
+        content2Sub: packEqStep ? (packEqStep.htmlContent || packEqStep.html || "") : "",
+        autoOpen: false
       };
 
-      // Truyền dữ liệu HTML sang Panel
+      if (App.SolutionSync && typeof App.SolutionSync.save === "function") {
+        App.SolutionSync.save("basis", getBasisSignature(), cachedConfig);
+      }
+
       if (typeof App.openSolutionPanel === "function") {
         App.openSolutionPanel(cachedConfig);
 
         const btnSol = $("btnOpenSolution");
-        if (btnSol) btnSol.style.display = "inline-block";
-        
-        // --- TÍCH HỢP SỔ TAY GHI CHÉP ---
-        if (window.App && window.App.PaperLogger && typeof window.App.PaperLogger.log === "function") {
+        if (btnSol) btnSol.style.display = "inline-flex";
+
+        if (!options.silentWhenEmpty && window.App && window.App.PaperLogger && typeof window.App.PaperLogger.log === "function") {
           try {
-            const ltx = `\\text{Dim} = ${dim}`;
-            const animData = { 
-                type: 'basis', 
-                selectedIds: checkedIds,
-                dependentIds: dependentIds,
-                basisVectors: basisItems.map((it) => it.vec),
-                phaseMs: App.basisAnimPhaseMs
+            const ltx = "\\dim(V) = " + dim;
+            const animData = {
+              type: "basis",
+              selectedIds: checkedIds,
+              dependentIds: dependentIds,
+              basisVectors: basisItems.map(function (it) { return it.vec; }),
+              phaseMs: App.basisAnimPhaseMs
             };
-            App.PaperLogger.log("Tìm Cơ sở & Số chiều", ltx, "", cachedConfig, animData);
+            App.PaperLogger.log("Tìm Cơ sở và Số chiều", ltx, "", cachedConfig, animData);
           } catch (_) {}
         }
       }
     } catch (err) {
-      if (out) out.innerText = "Lỗi: " + err.message;
-      if (typeof App.showToast === "function") App.showToast(err.message);
+      if (App.ResultCard && typeof App.ResultCard.mountError === "function") {
+        App.ResultCard.mountError(out, String(err && err.message ? err.message : err), "Không thể tính cơ sở");
+      } else if (out) {
+        out.innerText = "Lỗi: " + err.message;
+      }
+      if (typeof App.showToast === "function") App.showToast(err.message, "error");
     }
   };
 
   // =========================
-  // D) TRỰC QUAN HÓA CƠ SỞ (TÁCH RIÊNG KHỎI TÍNH TOÁN)
+  // D) TRỰC QUAN HÓA CƠ SỞ
   // =========================
   App.startBasisAnimateUI = async function () {
     App.ensureBasisAnimControls();
     const wrap = $("basisAnimControls");
 
-    // Nếu hộp trực quan đang mở hoặc hoạt cảnh đang chạy: bấm nút Trực quan sẽ dừng và tắt (Toggle)
     const isBoxOpen = wrap && wrap.style.display !== "none" && wrap.style.display !== "";
-    if (isBoxOpen || window.App?.BasisAnimator?.isActive?.()) {
+    if (isBoxOpen || (window.App && App.BasisAnimator && typeof App.BasisAnimator.isActive === "function" && App.BasisAnimator.isActive())) {
       App.stopBasisAnimation();
       return;
     }
 
-    // Nếu chưa tính toán trước đó, gọi tính toán để trích xuất cơ sở
-    if (!App._lastBasisAnimData) {
+    const currentSig = getBasisSignature();
+    const synced = App.SolutionSync && App.SolutionSync.get("basis", currentSig);
+    if (!App._lastBasisAnimData || !synced) {
       await App.basisAndDimUI();
     }
     if (!App._lastBasisAnimData) return;
 
-    // Dừng hoạt cảnh tọa độ nếu đang chạy
     if (typeof App.stopCoordAnimation === "function") {
       App.stopCoordAnimation();
-    } else if (window.App?.CoordAnimator?.isActive?.()) {
+    } else if (window.App && App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()) {
       App.CoordAnimator.stop();
     }
 
@@ -604,54 +521,43 @@
     if (!btnCalc && !btnAnimate) return;
     _basisBtnsInitialized = true;
 
-    // 1. XỬ LÝ NÚT TÍNH CƠ SỞ
     if (btnCalc) {
       const newBtn = btnCalc.cloneNode(true);
       if (btnCalc.parentNode) btnCalc.parentNode.replaceChild(newBtn, btnCalc);
-      newBtn.addEventListener("click", App.basisAndDimUI);
+      newBtn.addEventListener("click", function () {
+        App.basisAndDimUI();
+      });
     }
 
-    // 2. XỬ LÝ NÚT TRỰC QUAN (Tách riêng khỏi Tính cơ sở)
     if (btnAnimate) {
       const newBtnAnimate = btnAnimate.cloneNode(true);
       if (btnAnimate.parentNode) btnAnimate.parentNode.replaceChild(newBtnAnimate, btnAnimate);
       newBtnAnimate.addEventListener("click", App.startBasisAnimateUI);
     }
 
-    // 3. XỬ LÝ NÚT LỜI GIẢI (Logic thông minh)
     const btnShow = $("btnOpenSolution");
     if (btnShow) {
-      // [SỬA] Luôn hiện nút này ngay từ đầu (để giống bên Tọa độ)
-      btnShow.style.display = "inline-block";
-
+      btnShow.style.display = "inline-flex";
       const newBtnShow = btnShow.cloneNode(true);
-      if (btnShow.parentNode)
-        btnShow.parentNode.replaceChild(newBtnShow, btnShow);
+      newBtnShow.dataset.syncManaged = "1";
+      if (btnShow.parentNode) btnShow.parentNode.replaceChild(newBtnShow, btnShow);
 
-      newBtnShow.addEventListener("click", () => {
-        if (typeof App.openSolutionPanel !== "function") {
-          console.error("Thiếu module solution_panel.js");
+      newBtnShow.addEventListener("click", function () {
+        if (App.SolutionSync && typeof App.SolutionSync.openWithSync === "function") {
+          App.SolutionSync.openWithSync({
+            key: "basis",
+            getSig: getBasisSignature,
+            recomputeStatic: function () {
+              return App.basisAndDimUI({ silentWhenEmpty: true });
+            },
+            emptyTitle: "Cơ sở và số chiều",
+            emptyMath: "\\mathbb{R}^n",
+            emptyHintHtml: "Vui lòng tick chọn ít nhất 1 vector trong danh sách để khảo sát cơ sở và số chiều."
+          });
           return;
         }
-
-        // Kiểm tra xem đã có kết quả trong bộ nhớ đệm chưa
-        if (cachedConfig) {
-          // CÓ: Nạp lại lời giải Cơ sở vào Panel và mở lên
-          // (Tránh trường hợp Panel đang chứa nội dung của bài Tọa độ)
-          App.openSolutionPanel({ ...cachedConfig, autoOpen: true });
-        } else {
-          // CHƯA: Hiện thông báo nhắc nhở
-          App.openSolutionPanel({
-            title: "Cơ sở & Số chiều",
-            math: "",
-            tab1Label: "Cách 1",
-            showSubTabs: false,
-            content1: `<div class="sol-empty">
-                          Chưa có dữ liệu tính toán.<br>
-                          Vui lòng chọn vector và bấm nút <b>"Tính cơ sở"</b> trước.
-                      </div>`,
-            autoOpen: true,
-          });
+        if (cachedConfig && typeof App.openSolutionPanel === "function") {
+          App.openSolutionPanel(Object.assign({}, cachedConfig, { autoOpen: true }));
         }
       });
     }

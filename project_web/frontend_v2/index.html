@@ -120,18 +120,20 @@
       .hero-section {
         position: relative;
         height: 100vh;
+        height: 100dvh;
         min-height: 700px;
         display: flex;
         align-items: center;
         padding: 0 5%;
+        background-color: #fcfcfd;
         background-image: radial-gradient(
           rgba(0, 0, 0, 0.04) 1px,
           transparent 1px
         );
         background-size: 24px 24px;
         overflow: hidden;
-        
       }
+      html.dark .hero-section,
       body.dark-theme .hero-section {
         background-color: #090b12;
       }
@@ -239,6 +241,7 @@
         transition: color 0.5s;
       }
 
+      html.dark .content h1,
       body.dark-theme .content h1 {
         color: #f8fafc;
       }
@@ -246,12 +249,13 @@
       .content p {
         font-size: 17px;
         line-height: 1.6;
-        color: var(--text-muted);
+        color: #475569;
         margin-bottom: 36px;
         font-weight: 400;
         transition: color 0.5s;
       }
 
+      html.dark .content p,
       body.dark-theme .content p {
         color: #b5c0d0;
       }
@@ -489,11 +493,12 @@
 
           .hero-section {
             align-items: center;
-            padding-top: 100px;
-            padding-bottom: 20px;
+            padding-top: 84px;
+            padding-bottom: 28px;
             flex-direction: column;
             justify-content: flex-start;
             height: auto;
+            min-height: 0;
           }
           .content {
             order: 1;
@@ -503,6 +508,16 @@
             width: 100%;
             max-width: 100%;
             min-width: 0;
+          }
+          .content h1 {
+            font-size: clamp(28px, 7.2vw, 38px);
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+          }
+          .content p {
+            font-size: 15.5px;
+            margin-bottom: 24px;
           }
           #hero-canvas {
             position: relative !important;
@@ -700,10 +715,14 @@
 </head>
   <body class="light-theme">
     <script>
-      if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.remove('light-theme');
-        document.body.classList.add('dark-theme', 'dark');
-      }
+      (function () {
+        var saved = localStorage.getItem('vec_theme') || localStorage.getItem('theme');
+        var isDark = saved ? saved === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) {
+          document.body.classList.remove('light-theme');
+          document.body.classList.add('dark-theme', 'dark');
+        }
+      })();
     </script>
     <!-- ==================== UNIFIED TOPBAR ==================== -->
 <style>
@@ -782,41 +801,6 @@
         </div>
   </div>
 </header>
-<script>
-  // Script to handle mobile nav when there's no sidebar
-  document.addEventListener("DOMContentLoaded", () => {
-    const toggleBtn = document.getElementById("mobileSidebarToggle");
-    const navLinks = document.querySelector(".vec-nav-links");
-    const oldHamburger = document.getElementById("hamburger");
-    
-    if (toggleBtn) {
-      toggleBtn.addEventListener("click", (e) => {
-        // If there's an old hamburger (like in calculation.html), trigger it
-        if (oldHamburger && oldHamburger.style.display !== "none" && typeof oldHamburger.click === "function") {
-          // It's handled by inline onclick in calculation.html usually
-          // But wait, the inline onclick is only in calculation.html.
-          // Let's not override if calculation.html uses it.
-        }
-        
-        // Toggle mobile menu for global links
-        if (navLinks) {
-          navLinks.classList.toggle("show-mobile");
-        }
-      });
-    }
-
-    // Handle dropdown clicks on mobile
-    const dropdownContainers = document.querySelectorAll(".vec-dropdown-container");
-    dropdownContainers.forEach(container => {
-      container.addEventListener("click", (e) => {
-        if (window.innerWidth <= 1024) {
-          e.stopPropagation();
-          container.classList.toggle("open");
-        }
-      });
-    });
-  });
-</script>
 <!-- ==================== END UNIFIED TOPBAR ==================== -->
 
 

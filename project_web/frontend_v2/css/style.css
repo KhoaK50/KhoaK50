@@ -189,29 +189,33 @@
   }
 
   .row {
-
-    display: grid !important;
-
-    grid-template-columns: 1fr 1fr;
-
-    gap: 10px;
-
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
   }
 
-  .row button,
+  .row > button,
+  .row > .btn {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 92px;
+    margin: 0 !important;
+    min-height: 40px;
+    font-size: 13.5px;
+  }
+
+  #extraForms .row > button {
+    flex: 1 1 calc(33.333% - 6px);
+    min-width: 84px;
+    font-size: 12.5px !important;
+    padding: 8px 6px !important;
+  }
 
   input,
-
   select {
-
     width: 100%;
-
     margin: 0 !important;
-
-    min-height: 42px;
-
-    font-size: 15px;
-
+    min-height: 40px;
+    font-size: 14.5px;
   }
 
 }
@@ -402,9 +406,13 @@ body.dark .view-tool-btn {
 
   position: fixed;
 
-  top: 80px;
+  top: 72px;
 
-  right: 20px;
+  bottom: auto;
+
+  right: 16px;
+
+  max-width: calc(100vw - 24px);
 
   z-index: 9990;
 
@@ -412,7 +420,7 @@ body.dark .view-tool-btn {
 
   flex-direction: column;
 
-  gap: 12px;
+  gap: 10px;
 
   pointer-events: none;
 
@@ -424,9 +432,11 @@ body.dark .view-tool-btn {
 
   position: relative;
 
-  min-width: 320px;
+  min-width: min(300px, calc(100vw - 24px));
 
-  max-width: 400px;
+  max-width: min(400px, calc(100vw - 24px));
+
+  box-sizing: border-box;
 
   background: var(--card);
 

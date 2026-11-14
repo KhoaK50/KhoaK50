@@ -55,6 +55,7 @@
   display: flex;
   width: 100%;
   height: calc(100vh - var(--topbar-h));
+  height: calc(100dvh - var(--topbar-h));
 }
 
 /* ----- Sidebar overlay ----- */
@@ -63,6 +64,7 @@
   top: var(--topbar-h);
   left: 0;
   height: calc(100vh - var(--topbar-h));
+  height: calc(100dvh - var(--topbar-h));
   width: min(88vw, 380px);
   max-width: 92vw;
   background: var(--card);
@@ -154,7 +156,7 @@
 }
 
 /* =================== RESPONSIVE =================== */
-@media (min-width: 768px) {
+@media (min-width: 769px) {
   #controls {
     position: relative;
     top: 0;
@@ -254,7 +256,7 @@
 .split-resizer:hover .resizer-handle, .split-resizer:active .resizer-handle {
   background: var(--primary-base);
 }
-@media (min-width: 768px) {
+@media (min-width: 769px) {
   .split-resizer {
     width: 8px;
     height: 100%;
@@ -278,7 +280,7 @@ body.is-resizing #controls {
 }
 
 /* Hide resizer when closed on Desktop */
-@media (min-width: 768px) {
+@media (min-width: 769px) {
   #controls:not(.open) + #resizer {
     display: none !important;
   }
@@ -377,7 +379,7 @@ body.is-resizing #controls {
 .split-resizer:hover .resizer-handle, .split-resizer:active .resizer-handle {
   background: var(--primary-base);
 }
-@media (min-width: 768px) {
+@media (min-width: 769px) {
   .split-resizer {
     width: 8px;
     height: 100%;
@@ -401,7 +403,7 @@ body.is-resizing #controls {
 }
 
 /* Hide resizer when closed on Desktop */
-@media (min-width: 768px) {
+@media (min-width: 769px) {
   #controls:not(.open) + #resizer {
     display: none !important;
   }

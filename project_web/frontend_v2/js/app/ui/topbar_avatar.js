@@ -452,11 +452,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!container) {
             container = document.createElement('div');
             container.id = 'toast-container';
-            container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;';
+            container.style.cssText = 'position: fixed; top: 68px; bottom: auto; right: 12px; max-width: calc(100vw - 24px); z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;';
             document.body.appendChild(container);
         }
         var toast = document.createElement('div');
-        toast.style.cssText = 'background: var(--bg-card, #ffffff); border: 1px solid var(--border-strong, #e2e8f0); border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); padding: 14px 16px; min-width: 300px; max-width: 380px; animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; font-family: var(--font, system-ui, sans-serif); position: relative; overflow: hidden; pointer-events: auto;';
+        toast.style.cssText = 'background: var(--bg-card, #ffffff); border: 1px solid var(--border-strong, #e2e8f0); border-radius: 6px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); padding: 14px 16px; min-width: min(280px, calc(100vw - 24px)); max-width: min(380px, calc(100vw - 24px)); box-sizing: border-box; animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; font-family: var(--font, system-ui, sans-serif); position: relative; overflow: hidden; pointer-events: auto;';
         
         var iconColor = type === 'WARNING' ? 'var(--danger-base, #ef4444)' : 'var(--primary-base, #3b82f6)';
         var iconClass = type === 'WARNING' ? 'fa-triangle-exclamation' : 'fa-bell';

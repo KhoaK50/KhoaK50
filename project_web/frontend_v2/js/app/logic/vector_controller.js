@@ -681,7 +681,7 @@
           else if (!is3D && window.Vec2D) Vec2D.show2D();
         }
         if (App.redrawAll) App.redrawAll({ frame: false });
-        if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
+        if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false); if (inp && typeof inp.focus === "function") inp.focus();
         return;
       }
       App.editingVectorId = null;
@@ -795,7 +795,7 @@
        document.body.classList.remove("overload-3d");
    }
     if (App.redrawAll) App.redrawAll({ frame: false });
-    if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false);
+    if (App.mode === "3D" && window.Vec3D) Vec3D.hardRefresh3D(false); if (inp && typeof inp.focus === "function") inp.focus();
   };
 
   // Hàm xóa hết vector (FIX LỖI DANH SÁCH VECTOR KHÔNG BIẾN MẤT)
@@ -849,13 +849,26 @@
     const badge = document.getElementById("vecCountBadge");
     if (badge) badge.textContent = "(0)";
 
-    // Xóa luôn text kết quả cũ đang hiển thị
-    ["result_indep", "result_rank", "result_basis", "result_coord"].forEach(
+    // Xóa luôn kết quả cũ đang hiển thị và đồng bộ trạng thái lời giải
+    ["result_indep", "result_rank", "result_basis", "result_coord", "result_gs_info"].forEach(
       (id) => {
         const el = document.getElementById(id);
-        if (el) el.innerText = "-";
+        if (el) {
+          el.innerHTML = "";
+          if (id === "result_gs_info") el.style.display = "none";
+        }
       },
     );
+    const calcStepsEl = document.getElementById("calcSteps");
+    if (calcStepsEl) {
+      calcStepsEl.className = "help";
+      calcStepsEl.innerHTML = "Kết quả phép tính sẽ hiển thị ở đây.";
+    }
+    if (window.App && window.App.SolutionSync && typeof window.App.SolutionSync.clear === "function") {
+      ["indep", "rank", "basis", "coord", "topic4_gs", "calc_vector"].forEach((k) => {
+        window.App.SolutionSync.clear(k);
+      });
+    }
 
     App.redrawAll({ frame: true });
     if (typeof App.showToast === "function") App.showToast("Đã xóa toàn bộ vector");
@@ -898,6 +911,9 @@
 
     // 1. Reset về placeholder "-- Chọn vector --" khi đổi phép tính
     if (!keepSelection) {
+      if (window.App?.OperationAnimator?.stop) {
+        window.App.OperationAnimator.stop({ clearStaticOverlays: true, skipRedraw: true });
+      }
       if (v1) { v1.value = ""; v1.selectedIndex = 0; }
       if (v2) { v2.value = ""; v2.selectedIndex = 0; }
       if (btnReplay) btnReplay.style.display = "none";
@@ -949,6 +965,7 @@
 
     const s = document.getElementById("calcSteps");
     if (s) {
+      s.className = "help";
       s.innerHTML = "Kết quả phép tính sẽ hiển thị ở đây.";
       s.style.color = "";
     }
@@ -957,28 +974,98 @@
     }
   };
 
+  App.getVectorCalcSig = function () {
+    const opEl = document.getElementById("opSelect");
+    const v1El = document.getElementById("v1Select");
+    const v2El = document.getElementById("v2Select");
+    const scalarInp = document.getElementById("scalarInp");
+    const op = opEl ? opEl.value : "add";
+    const id1 = v1El && v1El.value !== "" ? Number(v1El.value) : NaN;
+    const id2 = v2El && v2El.value !== "" ? Number(v2El.value) : NaN;
+    const needsV2 = !["scale", "normalize", "vector_norm"].includes(op);
+    const list = Array.isArray(App.vectorList) ? App.vectorList : [];
+    const v1Item = list.find((v) => v.id === id1) || null;
+    const v2Item = needsV2 ? (list.find((v) => v.id === id2) || null) : null;
+    const sync = window.App && window.App.SolutionSync;
+    const s1 = sync ? sync.vectorItemsSig(v1Item ? [v1Item] : []) : String(id1);
+    const s2 = needsV2 ? (sync ? sync.vectorItemsSig(v2Item ? [v2Item] : []) : String(id2)) : "none";
+    const kStr = op === "scale" ? (scalarInp ? scalarInp.value.trim() : "") : "";
+    return "vecop:" + op + "|" + s1 + "|" + s2 + "|" + kStr;
+  };
+
+  App.recomputeVectorCalcStatic = function () {
+    const calcGen = window.App && window.App.TasksGen && window.App.TasksGen.CalcOps;
+    const resCard = window.App && window.App.ResultCard;
+    const sync = window.App && window.App.SolutionSync;
+    if (!calcGen || typeof calcGen.buildVectorOp !== "function") return null;
+
+    const opEl = document.getElementById("opSelect");
+    const v1El = document.getElementById("v1Select");
+    const v2El = document.getElementById("v2Select");
+    const scalarInp = document.getElementById("scalarInp");
+    const calcSteps = document.getElementById("calcSteps");
+
+    const op = opEl ? opEl.value : "add";
+    const id1 = v1El && v1El.value !== "" ? Number(v1El.value) : NaN;
+    const id2 = v2El && v2El.value !== "" ? Number(v2El.value) : NaN;
+    const needsV2 = !["scale", "normalize", "vector_norm"].includes(op);
+    const list = Array.isArray(App.vectorList) ? App.vectorList : [];
+    const v1Item = list.find((v) => v.id === id1) || null;
+    const v2Item = needsV2 ? (list.find((v) => v.id === id2) || null) : null;
+
+    const bundle = calcGen.buildVectorOp(op, {
+      v1Item: v1Item,
+      v2Item: v2Item,
+      v1: v1Item ? v1Item.vec : null,
+      v2: v2Item ? v2Item.vec : null,
+      scalarRaw: scalarInp ? scalarInp.value.trim() : ""
+    });
+
+    if (calcSteps && resCard) {
+      calcSteps.className = "";
+      calcSteps.style.padding = "0";
+      calcSteps.style.border = "none";
+      calcSteps.style.background = "transparent";
+      if (bundle.isError) {
+        resCard.mountError(calcSteps, bundle.errorMessageHtml, bundle.errorTitle);
+      } else {
+        resCard.mount(calcSteps, bundle.cardOptions);
+      }
+    }
+
+    if (sync && bundle && bundle.modalConfig) {
+      sync.save("calc_vector", App.getVectorCalcSig(), bundle.modalConfig);
+    }
+    return bundle ? bundle.modalConfig : null;
+  };
+
   // --- MAIN FUNCTION: CHẠY TÍNH TOÁN ---
   App.runCalc = async function (addToList) {
     if (App.handleEmptyListAction()) return;
 
     const op = document.getElementById("opSelect").value;
-    const id1 = Number(document.getElementById("v1Select").value);
-    const id2 = Number(document.getElementById("v2Select").value);
+    const v1SelectEl = document.getElementById("v1Select");
+    const v2SelectEl = document.getElementById("v2Select");
+    const id1 = v1SelectEl && v1SelectEl.value !== "" ? Number(v1SelectEl.value) : NaN;
+    const id2 = v2SelectEl && v2SelectEl.value !== "" ? Number(v2SelectEl.value) : NaN;
     const scalarInp = document.getElementById("scalarInp");
     const calcSteps = document.getElementById("calcSteps");
 
-    const v1 = vectorById(id1);
+    const v1 = Number.isFinite(id1) ? vectorById(id1) : null;
     const needsV2 = !["scale", "normalize", "vector_norm"].includes(op);
-    const v2 = needsV2 ? vectorById(id2) : null;
+    const v2 = needsV2 && Number.isFinite(id2) ? vectorById(id2) : null;
+    const v1VecItem = (App.vectorList || []).find((v) => v.id === id1) || null;
+    const v2VecItem = needsV2 ? ((App.vectorList || []).find((v) => v.id === id2) || null) : null;
+    const rawScalarStr = scalarInp ? scalarInp.value.trim() : "";
 
     let payload = null;
     try {
-      if (!v1) throw needsV2 ? "Chưa chọn Vector 1." : "Chưa chọn vector.";
-      if (needsV2 && !v2) throw "Chưa chọn Vector 2.";
+      if (!v1 || !v1VecItem) throw needsV2 ? "Chưa chọn Vector 1." : "Chưa chọn vector.";
+      if (needsV2 && (!v2 || !v2VecItem)) throw "Chưa chọn Vector 2.";
 
       if (op === "add" || op === "sub" || op === "subtract") payload = { v1, v2 };
       else if (op === "scale") {
-        let k = scalarInp ? scalarInp.value.trim() : "";
+        let k = rawScalarStr;
         if (!k) throw "Hệ số k không được để trống.";
         k = k
           .replace(/√\s*([0-9.]+)/g, "sqrt($1)")
@@ -996,6 +1083,33 @@
       return;
     }
 
+    const calcGen = window.App && window.App.TasksGen && window.App.TasksGen.CalcOps;
+    const resCard = window.App && window.App.ResultCard;
+    const sync = window.App && window.App.SolutionSync;
+
+    const preBundle = calcGen ? calcGen.buildVectorOp(op, {
+      v1Item: v1VecItem,
+      v2Item: v2VecItem,
+      v1: v1VecItem.vec,
+      v2: v2VecItem ? v2VecItem.vec : null,
+      scalarRaw: rawScalarStr
+    }) : null;
+
+    if (preBundle && preBundle.isError) {
+      if (calcSteps && resCard) {
+        calcSteps.className = "";
+        calcSteps.style.padding = "0";
+        calcSteps.style.border = "none";
+        calcSteps.style.background = "transparent";
+        resCard.mountError(calcSteps, preBundle.errorMessageHtml, preBundle.errorTitle);
+      }
+      if (sync && preBundle.modalConfig) {
+        sync.save("calc_vector", App.getVectorCalcSig(), preBundle.modalConfig);
+      }
+      if (App.showToast) App.showToast(preBundle.errorTitle || "Dữ liệu đầu vào chưa hợp lệ.", "warning");
+      return;
+    }
+
     const mapOpToApi = {
       add: "add_vectors",
       sub: "sub_vectors",
@@ -1006,172 +1120,91 @@
       projection: "projection",
       dot: "dot_product",
       vector_norm: "vector_norm",
-
       angle_between: "angle_between",
     };
 
-    calcSteps.innerHTML = "Đang tính...";
+    if (window.App?.OperationAnimator?.stop) {
+      window.App.OperationAnimator.stop({ clearStaticOverlays: true, skipRedraw: true });
+    }
+    if (calcSteps) calcSteps.innerHTML = "Đang tính...";
+
     try {
-      let data = await App.callAPI(mapOpToApi[op], payload);
-      if (data.error) throw data.error;
+      let data = null;
+      const isScalarOp = ["dot", "vector_norm", "angle_between"].includes(op);
+      try {
+        if (typeof App.callAPI === "function") {
+          data = await App.callAPI(mapOpToApi[op], payload);
+          if (data && data.error) throw new Error(data.error);
+        }
+      } catch (apiErr) {
+        if (preBundle && !preBundle.isError) {
+          data = isScalarOp
+            ? { result: preBundle.resultScalar }
+            : {
+                result: preBundle.resultVec,
+                result_latex: preBundle.resultLatexComponents || undefined
+              };
+        } else {
+          throw apiErr;
+        }
+      }
+
+      if (!data) {
+        data = isScalarOp
+          ? { result: preBundle ? preBundle.resultScalar : 0 }
+          : { result: preBundle ? preBundle.resultVec : [] };
+      }
+
+      const bundle = calcGen ? calcGen.buildVectorOp(op, {
+        v1Item: v1VecItem,
+        v2Item: v2VecItem,
+        v1: v1VecItem.vec,
+        v2: v2VecItem ? v2VecItem.vec : null,
+        scalarRaw: rawScalarStr,
+        backendResult: data.result !== undefined ? data.result : data.result_vec,
+        backendLatex: data.result_latex
+      }) : preBundle;
+
+      if (calcSteps && resCard && bundle) {
+        calcSteps.className = "";
+        calcSteps.style.padding = "0";
+        calcSteps.style.border = "none";
+        calcSteps.style.background = "transparent";
+        resCard.mount(calcSteps, bundle.cardOptions);
+      }
+      if (sync && bundle && bundle.modalConfig) {
+        sync.save("calc_vector", App.getVectorCalcSig(), bundle.modalConfig);
+      }
 
       // 1. Xử lý kết quả vô hướng
-      if (["dot", "vector_norm", "angle_between"].includes(op)) {
-        let val = data.result;
+      if (isScalarOp) {
+        const val = Number(data.result !== undefined ? data.result : (bundle ? bundle.resultScalar : 0));
         if (op === "angle_between") {
           const deg = (val * 180) / Math.PI;
-          if (App.mode === "2D" && window.Vec2D)
+          if (App.mode === "2D" && window.Vec2D) {
             Vec2D.drawAngleArc2D(v1, v2, deg);
-          else if (window.Vec3D) Vec3D.drawAngleArc3D(v1, v2, val, deg);
-
-          const v1Vec = App.vectorList.find(v => v.id === id1);
-          const v2Vec = App.vectorList.find(v => v.id === id2);
-          let detailsHtml = "";
-          if (v1Vec && v2Vec) {
-            const v1Name = `\\vec{v}_{${id1}}`;
-            const v2Name = id1 === id2 ? `\\vec{v}_{${id1}}` : `\\vec{v}_{${id2}}`;
-            const v1NormSq = v1Vec.vec.reduce((s, x) => s + x * x, 0);
-            const v2NormSq = v2Vec.vec.reduce((s, x) => s + x * x, 0);
-            const v1Norm = Math.sqrt(v1NormSq);
-            const v2Norm = Math.sqrt(v2NormSq);
-            const dotProduct = v1Vec.vec.reduce((s, x, i) => s + x * (v2Vec.vec[i] || 0), 0);
-            const denom = v1Norm * v2Norm;
-            const cosVal = denom > 1e-9 ? (dotProduct / denom) : (dotProduct >= 0 ? 1 : -1);
-
-            let angleCategory = "";
-            if (Math.abs(deg - 90) < 1e-4) {
-              angleCategory = "Hai vector trực giao (vuông góc chính xác trong không gian Euclide, tích vô hướng bằng 0).";
-            } else if (Math.abs(deg) < 1e-4) {
-              angleCategory = "Hai vector cùng phương và cùng chiều (hệ số tương quan tuyến tính dương, góc lệch 0°).";
-            } else if (Math.abs(deg - 180) < 1e-4) {
-              angleCategory = "Hai vector cùng phương nhưng ngược chiều (hệ số tương quan tuyến tính âm, góc lệch 180°).";
-            } else if (deg < 90) {
-              angleCategory = "Góc nhọn: cos(θ) > 0, hình chiếu trực giao cùng hướng với vector chiếu.";
-            } else {
-              angleCategory = "Góc tù: cos(θ) < 0, hình chiếu trực giao ngược hướng với vector chiếu.";
-            }
-
-            detailsHtml = `
-              <div class="calc-section-title">Khung định nghĩa đại số</div>
-              <div class="calc-explanation-block">
-                Trong không gian Euclide \\( \\mathbb{R}^n \\), góc \\( \\theta \\in [0, \\pi] \\) giữa hai vector khác không được xác định duy nhất qua tích vô hướng chính tắc:<br/>
-                \\( \\cos(\\theta) = \\frac{\\langle \\vec{u}, \\vec{v} \\rangle}{\\|\\vec{u}\\| \\|\\vec{v}\\|} = \\frac{\\vec{u} \\cdot \\vec{v}}{\\|\\vec{u}\\| \\|\\vec{v}\\|} \\implies \\theta = \\arccos\\left( \\frac{\\vec{u} \\cdot \\vec{v}}{\\|\\vec{u}\\| \\|\\vec{v}\\|} \\right) \\)
-              </div>
-              <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-              <div class="calc-explanation-block">
-                ${id1 === id2 ? `• Vector: \\( ${v1Name} = [${v1Vec.vec.join(", ")}] \\)<br/>` : `• Vector thứ nhất: \\( ${v1Name} = [${v1Vec.vec.join(", ")}] \\)<br/>• Vector thứ hai: \\( ${v2Name} = [${v2Vec.vec.join(", ")}] \\)<br/>`}
-                • Tích vô hướng: \\( ${v1Name} \\cdot ${v2Name} = ` + v1Vec.vec.map((x,i) => `(${x})(${v2Vec.vec[i]})`).join(' + ') + ` = ${dotProduct} \\)<br/>
-                • Chuẩn Euclide vector 1: \\( \\|${v1Name}\\| = \\sqrt{` + v1Vec.vec.map(x => `(${x})^2`).join(' + ') + `} \\approx ${v1Norm.toFixed(4)} \\)<br/>
-                • Chuẩn Euclide vector 2: \\( \\|${v2Name}\\| = \\sqrt{` + v2Vec.vec.map(x => `(${x})^2`).join(' + ') + `} \\approx ${v2Norm.toFixed(4)} \\)<br/>
-                • Giá trị cosin: \\( \\cos(\\theta) = \\frac{${dotProduct}}{${denom.toFixed(4)}} \\approx ${cosVal.toFixed(4)} \\implies \\theta = ${deg.toFixed(2)}^\\circ \\)
-              </div>
-              <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-              <div class="calc-explanation-block">
-                • <b>Độ lệch hướng trong không gian con:</b> Số đo góc \\( \\theta = ${deg.toFixed(2)}^\\circ \\) đo lường độ lệch định hướng giữa hai vector chỉ phương trong mặt phẳng 2 chiều căng bởi \\( \\{${v1Name}, ${v2Name}\\} \\).<br/>
-                • <b>Phân loại hình học:</b> ${angleCategory}
-              </div>
-            `;
+          } else if (window.Vec3D) {
+            Vec3D.drawAngleArc3D(v1, v2, val, deg);
           }
 
-          calcSteps.innerHTML = App.renderUnifiedResult(
-            "GÓC GIỮA 2 VECTOR",
-            `${deg.toFixed(2)}°`,
-          ) + App.renderExplanationBox(detailsHtml);
-
-          if (window.MathJax && window.MathJax.typesetPromise) {
-            window.MathJax.typesetPromise([calcSteps]).catch(console.warn);
-          }
-
-          if (window.App.PaperLogger) {
-            const ltx = `\\angle(\\vec{v}_{${id1}}, \\vec{v}_{${id2}}) = ${deg.toFixed(2)}^\\circ`;
-            App.PaperLogger.log("Góc giữa 2 vector", ltx, detailsHtml, null, { type: 'angle_between', vectors: [id1, id2] });
+          if (window.App.PaperLogger && bundle) {
+            App.PaperLogger.log(
+              bundle.logTitle || "Góc giữa 2 vector",
+              bundle.logLatex,
+              "",
+              bundle.modalConfig,
+              { type: "angle_between", vectors: [id1, id2] }
+            );
           }
           if (App.useAnimation && typeof App.animateOperation === "function") {
-              App.animateOperation("angle_between", [id1, id2], val);
+            App.animateOperation("angle_between", [id1, id2], val);
           }
         } else {
-          let ltx = "";
-          let title = "Phép tính vô hướng";
-          let detailsHtml = "";
-          const v1Vec = App.vectorList.find(v => v.id === id1);
-          const v2Vec = App.vectorList.find(v => v.id === id2);
-          if (op === "dot") { 
-             title = "Tích vô hướng"; 
-             ltx = `\\vec{v}_{${id1}} \\cdot \\vec{v}_{${id2}} = ${val}`; 
-             if (v1Vec && v2Vec) {
-               const v1Name = `\\vec{v}_{${id1}}`;
-               const v2Name = id1 === id2 ? `\\vec{v}_{${id1}}` : `\\vec{v}_{${id2}}`;
-               let angleNature = "";
-               if (Math.abs(val) < 1e-6) {
-                 angleNature = "Tích vô hướng bằng 0: Hai vector trực giao (vuông góc chính xác trong không gian Euclide).";
-               } else if (val > 0) {
-                 angleNature = "Tích vô hướng dương: Góc kẹp giữa hai vector là góc nhọn (hình chiếu trực giao cùng chiều với trục chiếu).";
-               } else {
-                 angleNature = "Tích vô hướng âm: Góc kẹp giữa hai vector là góc tù (hình chiếu trực giao ngược chiều với trục chiếu).";
-               }
-
-               detailsHtml = `
-                 <div class="calc-section-title">Khung định nghĩa đại số</div>
-                 <div class="calc-explanation-block">
-                   Tích vô hướng chính tắc (Euclidean inner product) trong không gian \\( \\mathbb{R}^n \\) là ánh xạ song tuyến tính đối xứng xác định dương:<br/>
-                   \\( \\langle \\vec{u}, \\vec{v} \\rangle = \\vec{u} \\cdot \\vec{v} = \\sum_{i=1}^n u_i v_i = u_1 v_1 + u_2 v_2 + \\dots + u_n v_n \\)
-                 </div>
-                 <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-                 <div class="calc-explanation-block">
-                   ${id1 === id2 ? `• Vector: \\( ${v1Name} = [${v1Vec.vec.join(", ")}] \\)<br/>` : `• Vector thứ nhất: \\( ${v1Name} = [${v1Vec.vec.join(", ")}] \\)<br/>• Vector thứ hai: \\( ${v2Name} = [${v2Vec.vec.join(", ")}] \\)<br/>`}
-                   • Khai triển tổng tích các tọa độ tương ứng:<br/>
-                   \\( ${v1Name} \\cdot ${v2Name} = ` + v1Vec.vec.map((x,i) => `(${x})(${v2Vec.vec[i]})`).join(' + ') + ` = ${val} \\)
-                 </div>
-                 <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-                 <div class="calc-explanation-block">
-                   • <b>Mối liên hệ với chuẩn và góc:</b> \\( \\vec{u} \\cdot \\vec{v} = \\|\\vec{u}\\| \\|\\vec{v}\\| \\cos(\\theta) \\). Tích vô hướng lượng hóa mức độ cùng phương giữa hai vector định hướng.<br/>
-                   • <b>Hình chiếu trực giao:</b> Độ dài đại số của hình chiếu vuông góc điểm ngọn của \\( ${v1Name} \\) lên đường thẳng sinh bởi \\( ${v2Name} \\) nhân với độ dài của \\( ${v2Name} \\) bằng đúng \\( ${val} \\).<br/>
-                   • <b>Nhận xét vị trí tương đối:</b> ${angleNature}
-                 </div>
-               `;
-             }
-          }
-          else if (op === "vector_norm") { 
-             title = "Độ dài vector"; 
-             ltx = `\\|\\vec{v}_{${id1}}\\| = ${val}`; 
-             if (v1Vec) {
-               const normValStr = App.formatScalar ? App.formatScalar(val) : String(val);
-               detailsHtml = `
-                 <div class="calc-section-title">Khung định nghĩa đại số</div>
-                 <div class="calc-explanation-block">
-                   Chuẩn \\( L_2 \\) (chuẩn Euclide) của vector \\( \\vec{v} \\in \\mathbb{R}^n \\) được cảm ứng từ tích vô hướng chính tắc:<br/>
-                   \\( \\|\\vec{v}\\|_2 = \\sqrt{\\langle \\vec{v}, \\vec{v} \\rangle} = \\sqrt{\\sum_{i=1}^n v_i^2} = \\sqrt{v_1^2 + v_2^2 + \\dots + v_n^2} \\)
-                 </div>
-                 <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-                 <div class="calc-explanation-block">
-                   • Vector khảo sát: \\( \\vec{v}_{${id1}} = [${v1Vec.vec.join(", ")}] \\)<br/>
-                   • Tổng bình phương các thành phần tọa độ:<br/>
-                   \\( \\|\\vec{v}_{${id1}}\\| = \\sqrt{` + v1Vec.vec.map(x => `(${x})^2`).join(' + ') + `} = \\sqrt{${v1Vec.vec.reduce((s,x) => s + x*x, 0)}} = ${normValStr} \\)
-                 </div>
-                 <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-                 <div class="calc-explanation-block">
-                   • <b>Khoảng cách metric Euclide:</b> Giá trị \\( \\|\\vec{v}_{${id1}}\\| = ${normValStr} \\) xác định khoảng cách hình học từ gốc tọa độ \\( O \\) đến điểm ngọn của vector trong không gian \\( \\mathbb{R}^n \\).<br/>
-                   • <b>Hệ quả định lý Pythagoras:</b> Chuẩn Euclide là độ dài cạnh huyền của khối tam giác vuông cấu thành từ các hình chiếu trực giao trên các trục tọa độ chính tắc.<br/>
-                   • <b>Tiên đề chuẩn:</b> Thỏa mãn đầy đủ 3 tiên đề: xác định dương (\\( \\|\\vec{v}\\| \\ge 0 \\)), thuần nhất tuyệt đối (\\( \\|k\\vec{v}\\| = |k|\\|\\vec{v}\\| \\)) và bất đẳng thức tam giác.
-                 </div>
-               `;
-             }
-          }
-
-          calcSteps.innerHTML = App.renderUnifiedResult(
-            "KẾT QUẢ VÔ HƯỚNG",
-            App.formatScalar ? App.formatScalar(val) : val,
-          ) + App.renderExplanationBox(detailsHtml);
-
-          if (window.MathJax && window.MathJax.typesetPromise) {
-            window.MathJax.typesetPromise([calcSteps]).catch(console.warn);
-          }
-
-          if (window.App.PaperLogger) {
+          if (window.App.PaperLogger && bundle) {
             if (op === "dot") {
-               App.PaperLogger.log(title, ltx, detailsHtml, null, { type: 'dot', vectors: [id1, id2] });
+              App.PaperLogger.log(bundle.logTitle || "Tích vô hướng", bundle.logLatex, "", bundle.modalConfig, { type: "dot", vectors: [id1, id2] });
             } else {
-               App.PaperLogger.log(title, ltx, detailsHtml);
+              App.PaperLogger.log(bundle.logTitle || "Độ dài vector", bundle.logLatex, "", bundle.modalConfig);
             }
           }
         }
@@ -1185,295 +1218,57 @@
         const btnReplayScalar = document.getElementById("btnVectorReplay");
         if (btnReplayScalar) btnReplayScalar.style.display = "inline-flex";
 
-        if (
-          op === "dot" &&
-          App.useAnimation &&
-          typeof App.animateOperation === "function"
-        ) {
+        if (op === "dot" && App.useAnimation && typeof App.animateOperation === "function") {
           App.animateOperation("dot", [id1, id2], val);
         }
-        if (
-          op === "vector_norm" &&
-          App.useAnimation &&
-          typeof App.animateOperation === "function"
-        ) {
+        if (op === "vector_norm" && App.useAnimation && typeof App.animateOperation === "function") {
           App.animateOperation("vector_norm", [id1], val);
         }
         return;
       }
 
-      // 2. Xử lý kết quả Vector (Đã fix hiển thị MathLive + Fix lỗi 2 viền)
-      const rawRes = data.result !== undefined ? data.result : data.result_vec;
+      // 2. Xử lý kết quả Vector
+      const rawRes = data.result !== undefined ? data.result : (data.result_vec !== undefined ? data.result_vec : (bundle ? bundle.resultVec : []));
+      const vecRes = (Array.isArray(rawRes) ? rawRes : [rawRes]).map(Number);
+      const title = (bundle && bundle.logTitle) || "Phép tính vector";
+      const ltx = (bundle && bundle.logLatex) || "";
 
-      // Hàm làm tròn số
-      const fmtVal = (n) => {
-        let x = Number(n);
-        if (isNaN(x)) return "0";
-        if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x));
-        return String(parseFloat(x.toFixed(4)));
-      };
-
-      // Tạo chuỗi Latex: Vector (x, y) hoặc số
-      let latex = "";
-      if (data.result_latex !== undefined) {
-        // Nếu backend gửi kết quả LaTeX chuẩn (từ SymPy)
-        const rawLatex = data.result_latex;
-        if (Array.isArray(rawLatex)) {
-            latex = `\\left( ${rawLatex.join(",\\; ")} \\right)`;
-        } else {
-            latex = String(rawLatex);
-        }
-      } else {
-        // Fallback cũ nếu API chưa hỗ trợ SymPy trả về LaTeX
-        if (Array.isArray(rawRes)) {
-            latex = `\\left( ${rawRes.map(fmtVal).join(",\\; ")} \\right)`;
-        } else {
-            latex = fmtVal(rawRes);
-        }
-      }
-
-      // [FIX QUAN TRỌNG] Reset sạch style thẻ cha để không bị 2 viền chồng nhau
-      calcSteps.className = "";
-      calcSteps.style.padding = "0";
-      calcSteps.style.border = "none";
-      calcSteps.style.background = "transparent";
-
-      let ltx = "";
-      let title = "Phép tính vector";
-      let detailsHtml = "";
-      const v1Vec = App.vectorList.find(v => v.id === id1);
-      const v2Vec = App.vectorList.find(v => v.id === id2);
-      
-      if (op === "add") { 
-         title = "Cộng 2 vector"; 
-         ltx = `\\vec{v}_{${id1}} + \\vec{v}_{${id2}} = ${latex}`; 
-         if (v1Vec && v2Vec) {
-           const isSelfAdd = (id1 === id2);
-           const v1Name = `\\vec{v}_{${id1}}`;
-           const v2Name = isSelfAdd ? `\\vec{v}_{${id1}}` : `\\vec{v}_{${id2}}`;
-           const sumExpr = isSelfAdd
-             ? `${v1Name} + ${v1Name} = 2${v1Name} = [` + v1Vec.vec.map(x => `${x} + ${x}`).join(', ') + `] = ${latex}`
-             : `${v1Name} + ${v2Name} = [` + v1Vec.vec.map((x,i) => `${x} + ${v2Vec.vec[i]}`).join(', ') + `] = ${latex}`;
-
-           detailsHtml = `
-             <div class="calc-section-title">Khung định nghĩa đại số</div>
-             <div class="calc-explanation-block">
-               Phép cộng trong không gian vector \\( \\mathbb{R}^n \\) được định nghĩa theo từng tọa độ thành phần tương ứng:<br/>
-               \\( \\vec{u} + \\vec{v} = (u_1 + v_1, u_2 + v_2, \\dots, u_n + v_n) \\)
-             </div>
-             <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-             <div class="calc-explanation-block">
-               ${isSelfAdd ? `• Vector ban đầu: \\( ${v1Name} = [${v1Vec.vec.join(", ")}] \\)<br/>` : `• Vector thứ nhất: \\( ${v1Name} = [${v1Vec.vec.join(", ")}] \\)<br/>• Vector thứ hai: \\( ${v2Name} = [${v2Vec.vec.join(", ")}] \\)<br/>`}
-               • Cộng các tọa độ tương ứng:<br/>
-               \\( ${sumExpr} \\)
-             </div>
-             <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-             <div class="calc-explanation-block">
-               • <b>Quy tắc hình bình hành:</b> Vector tổng \\( ${v1Name} + ${v2Name} \\) xuất phát từ gốc tọa độ đóng vai trò là đường chéo chính của hình bình hành căng bởi hai vector thành phần.<br/>
-               • <b>Quy tắc tam giác (Hệ thức Chasles):</b> Điểm ngọn của vector thứ nhất được tịnh tiến nối tiếp với điểm đầu của vector thứ hai, vector tổng là đoạn thẳng định hướng từ gốc tọa độ đến điểm ngọn kết quả.<br/>
-               • <b>Tọa độ điểm ngọn:</b> Điểm ngọn của vector tổng có tọa độ \\( ${latex} \\) trên hệ trục tọa độ Affine.
-             </div>
-           `;
-         }
-      }
-      else if (op === "sub" || op === "subtract") { 
-         title = "Hiệu 2 vector"; 
-         ltx = `\\vec{v}_{${id1}} - \\vec{v}_{${id2}} = ${latex}`; 
-         if (v1Vec && v2Vec) {
-           const isSelfSub = (id1 === id2);
-           const v1Name = `\\vec{v}_{${id1}}`;
-           const v2Name = isSelfSub ? `\\vec{v}_{${id1}}` : `\\vec{v}_{${id2}}`;
-           const diffExpr = isSelfSub
-             ? `${v1Name} - ${v1Name} = \\vec{0}`
-             : `${v1Name} - ${v2Name} = [` + v1Vec.vec.map((x,i) => `${x} - (${v2Vec.vec[i]})`).join(', ') + `] = ${latex}`;
-
-           detailsHtml = `
-             <div class="calc-section-title">Khung định nghĩa đại số</div>
-             <div class="calc-explanation-block">
-               Phép trừ trong không gian vector \\( \\mathbb{R}^n \\) là phép cộng với vector đối của vector thứ hai:<br/>
-               \\( \\vec{u} - \\vec{v} = \\vec{u} + (-\\vec{v}) = (u_1 - v_1, u_2 - v_2, \\dots, u_n - v_n) \\)
-             </div>
-             <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-             <div class="calc-explanation-block">
-               ${isSelfSub ? `• Vector ban đầu: \\( ${v1Name} = [${v1Vec.vec.join(", ")}] \\)<br/>` : `• Vector thứ nhất: \\( ${v1Name} = [${v1Vec.vec.join(", ")}] \\)<br/>• Vector thứ hai: \\( ${v2Name} = [${v2Vec.vec.join(", ")}] \\)<br/>`}
-               • Trừ các tọa độ tương ứng:<br/>
-               \\( ${diffExpr} \\)
-             </div>
-             <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-             <div class="calc-explanation-block">
-               • <b>Vector nối hai điểm ngọn:</b> Vector hiệu \\( ${v1Name} - ${v2Name} \\) là đoạn thẳng định hướng nối từ điểm ngọn của \\( ${v2Name} \\) đến điểm ngọn của \\( ${v1Name} \\).<br/>
-               • <b>Quy tắc tam giác:</b> Biểu diễn hệ thức \\( ${v2Name} + (${v1Name} - ${v2Name}) = ${v1Name} \\).<br/>
-               • <b>Tọa độ điểm ngọn:</b> Điểm ngọn của vector hiệu có tọa độ \\( ${latex} \\) trên hệ trục tọa độ Affine.
-             </div>
-           `;
-         }
-      }
-      else if (op === "scale") { 
-         title = "Kéo giãn vector"; 
-         ltx = `${scalarInp.value.trim()} \\cdot \\vec{v}_{${id1}} = ${latex}`; 
-         if (v1Vec) {
-           const kVal = Number(scalarInp.value.trim()) || 0;
-           const dirDesc = kVal > 0
-             ? "Cùng hướng với vector ban đầu (do k > 0, bảo toàn định hướng)."
-             : kVal < 0
-             ? "Đảo ngược chiều định hướng 180° so với vector ban đầu (do k < 0)."
-             : "Triệt tiêu thành vector không (do k = 0).";
-
-           detailsHtml = `
-             <div class="calc-section-title">Khung định nghĩa đại số</div>
-             <div class="calc-explanation-block">
-               Phép nhân vector với vô hướng \\( k \\in \\mathbb{R} \\) trong không gian vector \\( \\mathbb{R}^n \\) là ánh xạ tuyến tính co dãn tọa độ:<br/>
-               \\( k \\cdot \\vec{v} = (k \\cdot v_1, k \\cdot v_2, \\dots, k \\cdot v_n) \\)
-             </div>
-             <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-             <div class="calc-explanation-block">
-               • Vector ban đầu: \\( \\vec{v}_{${id1}} = [${v1Vec.vec.join(", ")}] \\)<br/>
-               • Hệ số vô hướng: \\( k = ${scalarInp.value.trim()} \\)<br/>
-               • Nhân từng thành phần tọa độ với hệ số k:<br/>
-               \\( ${scalarInp.value.trim()} \\cdot \\vec{v}_{${id1}} = [` + v1Vec.vec.map(x => `${scalarInp.value.trim()} \\cdot (${x})`).join(', ') + `] = ${latex} \\)
-             </div>
-             <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-             <div class="calc-explanation-block">
-               • <b>Biến thiên độ dài:</b> Chuẩn của vector co dãn theo tỉ lệ \\( |k| = ${Math.abs(kVal)} \\) lần độ dài ban đầu: \\( \\|k\\vec{v}\\| = |k| \\cdot \\|\\vec{v}\\| \\).<br/>
-               • <b>Phương và định hướng:</b> Vector mới thuộc không gian con 1 chiều \\( \\text{Span}\\{\\vec{v}_{${id1}}\\} \\). ${dirDesc}<br/>
-               • <b>Tọa độ điểm ngọn:</b> Nằm tại vị trí \\( ${latex} \\) trên không gian tọa độ.
-             </div>
-           `;
-         }
-      }
-      else if (op === "cross") { 
-         title = "Tích có hướng"; 
-         ltx = `[\\vec{v}_{${id1}}, \\vec{v}_{${id2}}] = ${latex}`; 
-         if (v1Vec && v2Vec && v1Vec.vec.length === 3 && v2Vec.vec.length === 3) {
-           const v1Name = `\\vec{v}_{${id1}}`;
-           const v2Name = id1 === id2 ? `\\vec{v}_{${id1}}` : `\\vec{v}_{${id2}}`;
-           detailsHtml = `
-             <div class="calc-section-title">Khung định nghĩa đại số</div>
-             <div class="calc-explanation-block">
-               Tích có hướng của hai vector \\( \\vec{u}, \\vec{v} \\in \\mathbb{R}^3 \\) được xác định thông qua định thức hình thức với hệ vector đơn vị trực chuẩn \\( \\{\\mathbf{i}, \\mathbf{j}, \\mathbf{k}\\} \\):<br/>
-               \\( [\\vec{u}, \\vec{v}] = \\vec{u} \\times \\vec{v} = \\begin{vmatrix} \\mathbf{i} & \\mathbf{j} & \\mathbf{k} \\\\ u_1 & u_2 & u_3 \\\\ v_1 & v_2 & v_3 \\end{vmatrix} = \\left( \\begin{vmatrix} u_2 & u_3 \\\\ v_2 & v_3 \\end{vmatrix}, -\\begin{vmatrix} u_1 & u_3 \\\\ v_1 & v_3 \\end{vmatrix}, \\begin{vmatrix} u_1 & u_2 \\\\ v_1 & v_2 \\end{vmatrix} \\right) \\)
-             </div>
-             <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-             <div class="calc-explanation-block">
-               • Vector thứ nhất: \\( ${v1Name} = [${v1Vec.vec.join(", ")}] \\)<br/>
-               • Vector thứ hai: \\( ${v2Name} = [${v2Vec.vec.join(", ")}] \\)<br/>
-               • Khai triển các định thức con cấp 2:<br/>
-               \\( [${v1Name}, ${v2Name}] = \\begin{vmatrix} \\mathbf{i} & \\mathbf{j} & \\mathbf{k} \\\\ ${v1Vec.vec.join(' & ')} \\\\ ${v2Vec.vec.join(' & ')} \\end{vmatrix} = ${latex} \\)
-             </div>
-             <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-             <div class="calc-explanation-block">
-               • <b>Tính trực giao:</b> Vector kết quả vuông góc đồng thời với cả hai vector thành phần: \\( (\\vec{u} \\times \\vec{v}) \\perp \\vec{u} \\) và \\( (\\vec{u} \\times \\vec{v}) \\perp \\vec{v} \\), đóng vai trò vector pháp tuyến của mặt phẳng căng bởi cặp vector.<br/>
-               • <b>Định hướng không gian:</b> Chiều của vector tuân thủ nghiêm ngặt quy tắc bàn tay phải (hệ tam diện thuận).<br/>
-               • <b>Diện tích hình bình hành:</b> Chuẩn của vector tích có hướng \\( \\|\\vec{u} \\times \\vec{v}\\| \\) bằng đúng diện tích hình bình hành căng bởi hai vector trong không gian ba chiều.
-             </div>
-           `;
-         }
-      }
-      else if (op === "normalize") { 
-         title = "Chuẩn hoá vector"; 
-         ltx = `\\frac{\\vec{v}_{${id1}}}{\\|\\vec{v}_{${id1}}\\|} = ${latex}`; 
-         if (v1Vec) {
-           const mag = Math.sqrt(v1Vec.vec.reduce((s, x) => s + x * x, 0));
-           const magStr = mag.toFixed(4);
-           detailsHtml = `
-             <div class="calc-section-title">Khung định nghĩa đại số</div>
-             <div class="calc-explanation-block">
-               Vector đơn vị (unit vector) tương ứng với vector khác không \\( \\vec{v} \\in \\mathbb{R}^n \\) thu được bằng cách nhân \\( \\vec{v} \\) với nghịch đảo của chuẩn Euclide:<br/>
-               \\( \\vec{u} = \\frac{\\vec{v}}{\\|\\vec{v}\\|_2} = \\left( \\frac{v_1}{\\|\\vec{v}\\|}, \\frac{v_2}{\\|\\vec{v}\\|}, \\dots, \\frac{v_n}{\\|\\vec{v}\\|} \\right) \\)
-             </div>
-             <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-             <div class="calc-explanation-block">
-               • Vector ban đầu: \\( \\vec{v}_{${id1}} = [${v1Vec.vec.join(", ")}] \\)<br/>
-               • Chuẩn Euclide: \\( \\|\\vec{v}_{${id1}}\\| = \\sqrt{` + v1Vec.vec.map(x => `(${x})^2`).join(' + ') + `} \\approx ${magStr} \\)<br/>
-               • Chuẩn hóa từng thành phần tọa độ:<br/>
-               \\( \\frac{\\vec{v}_{${id1}}}{\\|\\vec{v}_{${id1}}\\|} = [${v1Vec.vec.map(x => `\\frac{${x}}{${magStr}}`).join(", ")}] = ${latex} \\)
-             </div>
-             <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-             <div class="calc-explanation-block">
-               • <b>Bảo toàn phương hướng:</b> Vector kết quả giữ nguyên phương và chiều của vector ban đầu nhưng có độ dài chuẩn hóa đúng bằng 1 đơn vị (\\( \\|\\vec{u}\\| = 1 \\)).<br/>
-               • <b>Vị trí trên siêu cầu đơn vị:</b> Điểm ngọn của vector nằm chính xác trên đường tròn đơn vị \\( S^1 \\) (trong \\( \\mathbb{R}^2 \\)) hoặc mặt cầu đơn vị \\( S^2 \\) (trong \\( \\mathbb{R}^3 \\)) có tâm tại gốc tọa độ.<br/>
-               • <b>Ứng dụng:</b> Đại diện thuần túy cho phương chỉ hướng mà không phụ thuộc vào độ lớn metric.
-             </div>
-           `;
-         }
-      }
-      else if (op === "projection") { 
-         title = "Hình chiếu"; 
-         ltx = `\\text{proj}_{\\vec{v}_{${id2}}} \\vec{v}_{${id1}} = ${latex}`; 
-         if (v1Vec && v2Vec) {
-           const v1Name = `\\vec{v}_{${id1}}`;
-           const v2Name = id1 === id2 ? `\\vec{v}_{${id1}}` : `\\vec{v}_{${id2}}`;
-           const dotProd = v1Vec.vec.reduce((s,x,i) => s + x*(v2Vec.vec[i]||0), 0);
-           const v2NormSq = v2Vec.vec.reduce((s,x) => s + x*x, 0);
-           detailsHtml = `
-             <div class="calc-section-title">Khung định nghĩa đại số</div>
-             <div class="calc-explanation-block">
-               Hình chiếu trực giao của vector \\( \\vec{u} \\) lên đường thẳng sinh bởi vector khác không \\( \\vec{v} \\) trong không gian Euclide được xác định bởi công thức chiếu chuẩn:<br/>
-               \\( \\text{proj}_{\\vec{v}} \\vec{u} = \\frac{\\langle \\vec{u}, \\vec{v} \\rangle}{\\|\\vec{v}\\|^2} \\vec{v} = \\frac{\\vec{u} \\cdot \\vec{v}}{\\vec{v} \\cdot \\vec{v}} \\vec{v} \\)
-             </div>
-             <div class="calc-section-title">Quá trình tính toán chi tiết</div>
-             <div class="calc-explanation-block">
-               • Vector cần chiếu: \\( ${v1Name} = [${v1Vec.vec.join(", ")}] \\)<br/>
-               • Vector phương chiếu: \\( ${v2Name} = [${v2Vec.vec.join(", ")}] \\)<br/>
-               • Tích vô hướng: \\( ${v1Name} \\cdot ${v2Name} = ` + v1Vec.vec.map((x,i) => `(${x})(${v2Vec.vec[i]})`).join(' + ') + ` = ${dotProd} \\)<br/>
-               • Bình phương chuẩn vector phương chiếu: \\( \\|${v2Name}\\|^2 = ` + v2Vec.vec.map(x => `(${x})^2`).join(' + ') + ` = ${v2NormSq} \\)<br/>
-               • Thế số tính vector hình chiếu:<br/>
-               \\( \\text{proj}_{${v2Name}} ${v1Name} = \\frac{${dotProd}}{${v2NormSq}} ${v2Name} = ${latex} \\)
-             </div>
-             <div class="calc-section-title">Ý nghĩa hình học & Bản chất không gian</div>
-             <div class="calc-explanation-block">
-               • <b>Phân rã trực giao:</b> Vector \\( ${v1Name} \\) được phân rã duy nhất thành hai thành phần trực giao: thành phần cùng phương \\( \\vec{u}_{\\parallel} = \\text{proj}_{${v2Name}} ${v1Name} \\in \\text{Span}\\{${v2Name}\\} \\) và thành phần trực giao \\( \\vec{u}_{\\perp} = ${v1Name} - \\text{proj}_{${v2Name}} ${v1Name} \\perp ${v2Name} \\).<br/>
-               • <b>Khoảng cách tối thiểu:</b> Điểm ngọn của vector hình chiếu là điểm trên đường thẳng chứa \\( ${v2Name} \\) gần điểm ngọn của \\( ${v1Name} \\) nhất theo metric khoảng cách Euclide.
-             </div>
-           `;
-         }
-      }
-
-      // Bọc kết quả vào khung Thống nhất kèm quá trình giải thích
-      calcSteps.innerHTML = App.renderUnifiedResult(
-        "VECTOR KẾT QUẢ",
-        `<math-field read-only>${latex}</math-field>`,
-      ) + App.renderExplanationBox(detailsHtml);
-
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise([calcSteps]).catch(console.warn);
-      }
-
-      if (window.App.PaperLogger) {
+      if (window.App.PaperLogger && bundle) {
         if (op === "cross" && id1 !== undefined && id2 !== undefined) {
-           App.PaperLogger.log(title, ltx, detailsHtml, null, { type: 'cross', vectors: [id1, id2], result: nextVectorId });
+          App.PaperLogger.log(title, ltx, "", bundle.modalConfig, { type: "cross", vectors: [id1, id2], result: nextVectorId });
         } else if (op === "add" && id1 !== undefined && id2 !== undefined) {
-           App.PaperLogger.log(title, ltx, detailsHtml, null, { type: 'add', vectors: [id1, id2], result: nextVectorId });
-        } else if (op === "subtract" && id1 !== undefined && id2 !== undefined) {
-           App.PaperLogger.log(title, ltx, detailsHtml, null, { type: 'subtract', vectors: [id1, id2], result: nextVectorId });
+          App.PaperLogger.log(title, ltx, "", bundle.modalConfig, { type: "add", vectors: [id1, id2], result: nextVectorId });
+        } else if ((op === "subtract" || op === "sub") && id1 !== undefined && id2 !== undefined) {
+          App.PaperLogger.log(title, ltx, "", bundle.modalConfig, { type: "subtract", vectors: [id1, id2], result: nextVectorId });
         } else if (op === "projection" && id1 !== undefined && id2 !== undefined) {
-           App.PaperLogger.log(title, ltx, detailsHtml, null, { type: 'project', vectors: [id1, id2], result: nextVectorId });
+          App.PaperLogger.log(title, ltx, "", bundle.modalConfig, { type: "project", vectors: [id1, id2], result: nextVectorId });
         } else {
-           App.PaperLogger.log(title, ltx, detailsHtml);
+          App.PaperLogger.log(title, ltx, "", bundle.modalConfig);
         }
       }
       if (addToList) {
-        // [FIX LỖI] Định nghĩa vecRes lấy từ kết quả rawRes ở trên dạng số thực
-        const vecRes = (Array.isArray(rawRes) ? rawRes : [rawRes]).map(Number);
-
         const hue = App._pickUniqueHue ? App._pickUniqueHue() : 0;
 
-        // Giờ vecRes đã có giá trị, không bị lỗi nữa
         const newItem = App._attachVectorItem(vecRes, hue);
-        
+
         // Lưu lại latex chuẩn để tính toán tiếp
         if (data.result_latex !== undefined && Array.isArray(data.result_latex)) {
-            newItem.latex = `[${data.result_latex.join(", ")}]`;
+          newItem.latex = `[${data.result_latex.join(", ")}]`;
+        } else if (bundle && Array.isArray(bundle.resultLatexComponents)) {
+          newItem.latex = `[${bundle.resultLatexComponents.join(", ")}]`;
         }
 
-        // [FIX] Đưa vào danh sách NGAY LẬP TỨC để đồng bộ ID
+        // Đưa vào danh sách ngay lập tức để đồng bộ ID
         if (App.History && typeof App.History.record === "function") {
-          App.History.record(`Tính: ${title || op} → v${newItem.id}`);
+          App.History.record(`Tính: ${title || op} -> v${newItem.id}`);
         }
         App.vectorList.push(newItem);
         App.renderVectorList();
         App.refreshCalcVectorOptions();
         if (App.renderExtraCalcOptions) App.renderExtraCalcOptions();
+        if (sync && bundle && bundle.modalConfig) {
+          sync.save("calc_vector", App.getVectorCalcSig(), bundle.modalConfig);
+        }
         if (!App.useAnimation) {
           newItem.alpha = 1; // Hiện ngay
           newItem.vec = vecRes; // Gán giá trị cuối
@@ -1488,37 +1283,45 @@
           const startVec = originalItem ? originalItem.vec.map(Number) : (Array.isArray(v1) ? v1.map(Number) : [0, 0]);
           const targetVec = Array.isArray(vecRes) ? vecRes.map(Number) : [0, 0];
 
-          if (originalItem) originalItem.alpha = 0.2; // Lưu lại cái bóng mờ để làm hệ quy chiếu
+          const sid = App.OperationAnimator ? App.OperationAnimator.startSession() : 0;
+          if (App.OperationAnimator) {
+            App.OperationAnimator.registerRestore(() => {
+              if (originalItem) originalItem.alpha = 1;
+              newItem.vec = [...targetVec];
+              newItem.alpha = 1;
+            });
+          }
+
+          if (originalItem) originalItem.alpha = 0.2;
 
           newItem.alpha = 1;
           newItem.vec = [...startVec];
           App.tempGhosts = [];
 
-          const dur = 1000; // Cho chạy 1s để thấy rõ quá trình đi xuyên qua gốc O
+          const dur = 1000;
           const t0 = performance.now();
 
-          // Hàm Easing (Nhanh ở giữa, chậm hai đầu) để mô phỏng lực kéo/đẩy
           const easeInOutQuad = (t) =>
             t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
           function animScale(now) {
+            if (App.OperationAnimator && !App.OperationAnimator.isSessionValid(sid)) return;
             const timeRatio = Math.min((now - t0) / dur, 1);
             const p = easeInOutQuad(timeRatio);
 
-            // CỐT LÕI TOÁN HỌC: Bắt đầu từ ngọn vector cũ, kéo/đẩy đến ngọn vector mới
             const currentVec = startVec.map(
               (val, i) => Number(val) + (Number(targetVec[i]) - Number(val)) * p,
             );
 
-            newItem.vec = currentVec; // Cập nhật tọa độ real-time
+            newItem.vec = currentVec;
             App.redrawAll({ frame: false });
 
             if (timeRatio < 1) {
               requestAnimationFrame(animScale);
             } else {
-              // Chốt sổ
               if (originalItem) originalItem.alpha = 1;
               newItem.vec = [...targetVec];
+              if (App.OperationAnimator) App.OperationAnimator.finishSession(sid);
               App.redrawAll({ frame: false });
             }
           }
@@ -1531,16 +1334,21 @@
           const startVec = originalItem ? originalItem.vec.map(Number) : (Array.isArray(v1) ? v1.map(Number) : [0, 0]);
           const targetVec = Array.isArray(vecRes) ? vecRes.map(Number) : [0, 0];
 
-          // Màu Hologram Sci-fi siêu ngầu
+          const sid = App.OperationAnimator ? App.OperationAnimator.startSession() : 0;
+          if (App.OperationAnimator) {
+            App.OperationAnimator.registerRestore(() => {
+              if (originalItem) originalItem.alpha = 1;
+              newItem.vec = [...targetVec];
+              newItem.alpha = 1;
+            });
+          }
+
           const isDark = document.body.classList.contains("dark");
           const refColorHex = isDark ? 0x00d4ff : 0x0055ff;
           const refColorCss = isDark ? "#00d4ff" : "#0088cc";
 
           // 1. CHUẨN BỊ GHOST VECTOR
           const stretchGhost = {
-            // [CHÌA KHÓA DIỆT MẠNG NHỆN]:
-            // Chỉ báo cho hệ thống vẽ "Đây là Chuẩn hóa" khi ở 2D.
-            // Ở 3D, ta ngắt cờ này để file viewer3D.js KHÔNG tự động đẻ ra mặt cầu lưới mặc định nữa!
             isNormalize: App.mode === "2D",
             isGhost: true,
             vec: [...startVec],
@@ -1555,77 +1363,33 @@
           // 2. TẠO MẶT CẦU HOLOGRAM BẰNG SHADER (TỰ PHÁT SÁNG, XUYÊN THẤU 100%)
           let sphereMesh = null;
           if (App.mode === "3D" && window.Vec3D && Vec3D._mathGroup) {
-            const u = Vec3D.S3D.unitsPerWorld || 1;
-            const sphereGeo = new THREE.SphereGeometry(1, 64, 64); // Phân giải cao cho mịn
-
-            // Tự viết thuật toán Ánh sáng Fresnel (Viền sáng, tâm trong suốt)
-            const vertexShader = `
-                  varying vec3 vNormal;
-                  void main() {
-                      vNormal = normalize(normalMatrix * normal);
-                      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                  }
-              `;
-            const fragmentShader = `
-                  uniform vec3 glowColor;
-                  uniform float opacityAnim;
-                  varying vec3 vNormal;
-                  void main() {
-                      // Tính độ chói ở viền (Hiệu ứng bong bóng/hologram)
-                      float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.0);
-                      gl_FragColor = vec4(glowColor, fresnel * opacityAnim);
-                  }
-              `;
+            const sphereGeo = new THREE.SphereGeometry(1, 64, 64);
 
             const sphereMat = new THREE.ShaderMaterial({
               uniforms: {
                 glowColor: { value: new THREE.Color(refColorHex) },
                 opacityAnim: { value: 0.0 },
               },
-
               vertexShader: `
         varying vec3 vNormal;
-
         void main() {
             vNormal = normalize(normalMatrix * normal);
-
-            gl_Position =
-                projectionMatrix *
-                modelViewMatrix *
-                vec4(position, 1.0);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
     `,
-
               fragmentShader: `
         uniform vec3 glowColor;
         uniform float opacityAnim;
-
         varying vec3 vNormal;
-
         void main() {
-
-            float fresnel =
-                pow(
-                    1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))),
-                    3.0
-                );
-
-            float alpha =
-                fresnel *
-                opacityAnim *
-                0.5;
-
-            gl_FragColor =
-                vec4(glowColor, alpha);
+            float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.0);
+            float alpha = fresnel * opacityAnim * 0.5;
+            gl_FragColor = vec4(glowColor, alpha);
         }
     `,
-
               transparent: true,
-
               depthWrite: false,
-
               side: THREE.FrontSide,
-
               blending: isDark ? THREE.AdditiveBlending : THREE.NormalBlending,
             });
 
@@ -1634,6 +1398,7 @@
               const dynamicU = Vec3D.S3D.unitsPerWorld || 1;
               sphereMesh.scale.setScalar(dynamicU);
             };
+            if (App.OperationAnimator) App.OperationAnimator.registerGroup3D(sphereMesh);
             Vec3D._mathGroup.add(sphereMesh);
           }
 
@@ -1646,16 +1411,15 @@
           const t0 = performance.now();
 
           function animNormalize(now) {
+            if (App.OperationAnimator && !App.OperationAnimator.isSessionValid(sid)) return;
             const t = now - t0;
 
-            // NHỊP 1: Tỏa sáng Hologram
             let p1 = Math.min(t / durFade, 1);
             stretchGhost.unitCircleAlpha = p1 * 0.5;
             if (sphereMesh) {
-              sphereMesh.material.uniforms.opacityAnim.value = p1 * 2.0; // Đẩy sáng lên
+              sphereMesh.material.uniforms.opacityAnim.value = p1 * 2.0;
             }
 
-            // NHỊP 2: Co giãn mũi tên
             let p2 = 0;
             if (t > durFade) {
               p2 = Math.min((t - durFade) / durScale, 1);
@@ -1674,15 +1438,22 @@
             if (t < durFade + durScale) {
               requestAnimationFrame(animNormalize);
             } else {
-              setTimeout(() => {
+              const finishNorm = () => {
+                if (App.OperationAnimator && !App.OperationAnimator.isSessionValid(sid)) return;
                 newItem.alpha = 1;
                 newItem.vec = [...targetVec];
                 App.tempGhosts = [];
                 if (originalItem) originalItem.alpha = 1;
                 if (sphereMesh && sphereMesh.parent)
                   sphereMesh.parent.remove(sphereMesh);
+                if (App.OperationAnimator) App.OperationAnimator.finishSession(sid);
                 App.redrawAll({ frame: false });
-              }, 400);
+              };
+              if (App.OperationAnimator) {
+                App.OperationAnimator.scheduleTimeout(finishNorm, 400, sid);
+              } else {
+                setTimeout(finishNorm, 400);
+              }
             }
           }
           requestAnimationFrame(animNormalize);
@@ -1690,7 +1461,7 @@
         // PHÉP CỘNG, CHIẾU & TÍCH CÓ HƯỚNG
         else {
           const hasAnim =
-            (op === "add" || op === "projection" || op === "cross") &&
+            (op === "add" || op === "projection" || (op === "cross" && App.mode === "3D")) &&
             App.useAnimation &&
             typeof App.animateOperation === "function";
           newItem.alpha = hasAnim ? 0 : 1;
@@ -1748,6 +1519,14 @@
         if (targetItem && originalItem && v1 && vecRes) {
           const startVec = originalItem.vec ? originalItem.vec.map(Number) : (Array.isArray(v1) ? v1.map(Number) : [0, 0]);
           const targetVec = Array.isArray(vecRes) ? vecRes.map(Number) : [0, 0];
+          const sid = App.OperationAnimator ? App.OperationAnimator.startSession() : 0;
+          if (App.OperationAnimator) {
+            App.OperationAnimator.registerRestore(() => {
+              targetItem.vec = [...targetVec];
+              targetItem.alpha = 1;
+              originalItem.alpha = 1;
+            });
+          }
           originalItem.alpha = 0.2;
           targetItem.alpha = 1;
           targetItem.vec = [...startVec];
@@ -1755,6 +1534,7 @@
           const t0 = performance.now();
           const easeInOutQuad = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
           function animScale(now) {
+            if (App.OperationAnimator && !App.OperationAnimator.isSessionValid(sid)) return;
             const p = Math.min(1, (now - t0) / dur);
             const ease = easeInOutQuad(p);
             targetItem.vec = startVec.map((c, i) => Number(c) + (Number(targetVec[i]) - Number(c)) * ease);
@@ -1764,6 +1544,7 @@
             } else {
               targetItem.vec = [...targetVec];
               originalItem.alpha = 1;
+              if (App.OperationAnimator) App.OperationAnimator.finishSession(sid);
               App.redrawAll({ frame: false });
             }
           }
@@ -1774,7 +1555,7 @@
       if (resultId && App.vectorList) {
         const resVec = App.vectorList.find(v => v.id === resultId);
         if (resVec) {
-          resVec.alpha = 0;
+          resVec.alpha = (op === "cross" && App.mode !== "3D") ? 1 : 0;
           App.redrawAll({ frame: false });
         }
       }
@@ -1788,6 +1569,14 @@
         if (targetItem && originalItem && v1 && vecRes) {
           const startVec = originalItem.vec ? originalItem.vec.map(Number) : (Array.isArray(v1) ? v1.map(Number) : [0, 0]);
           const targetVec = Array.isArray(vecRes) ? vecRes.map(Number) : [0, 0];
+          const sid = App.OperationAnimator ? App.OperationAnimator.startSession() : 0;
+          if (App.OperationAnimator) {
+            App.OperationAnimator.registerRestore(() => {
+              targetItem.vec = [...targetVec];
+              targetItem.alpha = 1;
+              originalItem.alpha = 1;
+            });
+          }
           targetItem.alpha = 0;
           targetItem.vec = [...startVec];
           originalItem.alpha = 0.3;
@@ -1796,6 +1585,7 @@
           const t0 = performance.now();
           const easeInOutCubic = (p) => p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
           function animNorm(now) {
+            if (App.OperationAnimator && !App.OperationAnimator.isSessionValid(sid)) return;
             const p = Math.min(1, (now - t0) / dur);
             const ease = easeInOutCubic(p);
             targetItem.vec = startVec.map((c, i) => Number(c) + (Number(targetVec[i]) - Number(c)) * ease);
@@ -1807,6 +1597,7 @@
               targetItem.vec = [...targetVec];
               targetItem.alpha = 1;
               originalItem.alpha = 1;
+              if (App.OperationAnimator) App.OperationAnimator.finishSession(sid);
               App.redrawAll({ frame: false });
             }
           }
@@ -1919,318 +1710,287 @@
     return item.vec;
   };
 
-  App.rankVectorsUI = async function () {
+  App.getCheckedVectorItems = function (container) {
+    const arr = [];
+    if (!container || !Array.isArray(App.vectorList)) return arr;
+    container
+      .querySelectorAll('input[type="checkbox"]:checked')
+      .forEach(function (cb) {
+        const id = Number(cb.value);
+        const it = App.vectorList.find(function (v) {
+          return v.id === id;
+        });
+        if (it) arr.push(it);
+      });
+    return arr;
+  };
+
+  App.rankVectorsUI = async function (opts) {
+    const options = opts && typeof opts === "object" && !("target" in opts) ? opts : {};
     const container = document.getElementById("rankChecklist");
-    if (typeof App.requireVectors === "function") {
-      if (!App.requireVectors()) return;
-    } else if (typeof App.handleEmptyListAction === "function" && App.handleEmptyListAction()) {
-      return;
+    if (!options.silentWhenEmpty) {
+      if (typeof App.requireVectors === "function") {
+        if (!App.requireVectors()) return;
+      } else if (typeof App.handleEmptyListAction === "function" && App.handleEmptyListAction()) {
+        return;
+      }
     }
+
+    const selectedItems = App.getCheckedVectorItems(container);
     const vectors = App.getCheckedVectors(container);
-    if (!vectors || !vectors.length) {
-      if (typeof App.showToast === "function") App.showToast("Hãy tick chọn ít nhất 1 vector!");
+    if (!selectedItems.length || !vectors.length) {
+      if (!options.silentWhenEmpty && typeof App.showToast === "function") {
+        App.showToast("Vui lòng tick chọn ít nhất 1 vector để tính hạng.", "warning");
+      }
       return;
     }
 
     const resBox = document.getElementById("result_rank");
     if (resBox) {
-      resBox.innerHTML = '<div style="color: var(--muted); font-size: 13px; padding: 6px 0;">Đang tính toán...</div>';
+      resBox.innerHTML = '<div style="color: var(--text-muted); font-size: 12px; padding: 6px 0;">Đang tính hạng hệ vector...</div>';
+    }
+
+    let apiRes = null;
+    try {
+      apiRes = await App.callAPI("rank", { vectors: vectors });
+    } catch (_) {
+      apiRes = null;
     }
 
     try {
-      const res = await App.callAPI("rank", { vectors: vectors });
-      App.currentRankData = res;
+      const gen = App.TasksGen && App.TasksGen.Rank;
+      const pack = gen && typeof gen.buildSolution === "function"
+        ? gen.buildSolution(apiRes, selectedItems)
+        : null;
+      const info = pack && pack.analysis
+        ? pack.analysis
+        : (gen && typeof gen.analyzeRank === "function" ? gen.analyzeRank(selectedItems) : null);
 
-      const r = typeof res.rank === "number" ? res.rank : (res.result ? res.result.rank : 0);
-      const m = vectors.length;
+      const r = info ? info.rank : (apiRes && typeof apiRes.rank === "number" ? apiRes.rank : 0);
+      const nDim = info ? info.n : ((selectedItems[0] && selectedItems[0].vec && selectedItems[0].vec.length) || 2);
+      App.currentRankData = apiRes || { vectors: vectors, dimension: nDim, num_vectors: selectedItems.length, rank: r };
 
-      const cardHtml = `
-        <div class="academic-result-card" style="margin-top: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--card);">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 13px; background: rgba(59, 130, 246, 0.12); border: 1px solid #3b82f6; color: #2563eb;">
-              <i class="ph ph-hash" style="font-size: 15px;"></i> Hạng của hệ vector: ${r}
-            </span>
-            <span style="font-size: 12px; color: var(--muted); font-weight: 600;">dim(span) = ${r}</span>
-          </div>
-          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
-            Không gian sinh bởi ${m} vector có số chiều bằng ${r}.
-          </div>
-        </div>
-      `;
-
-      if (resBox) {
-        resBox.innerHTML = cardHtml;
+      const primaryRows = [];
+      if (r > 0 && info) {
+        primaryRows.push({
+          labelHtml: "Hệ con độc lập tuyến tính cực đại",
+          latex: "B_{\\max} = \\left\\{" + info.maxSubsetSyms.join(",\\; ") + "\\right\\}"
+        });
+        primaryRows.push({
+          latex: info.maxSubsetDefsLatex.join(",\\quad ")
+        });
+      } else {
+        primaryRows.push({
+          latex: "B_{\\max} = \\varnothing,\\quad \\operatorname{span}(S) = \\left\\{\\mathbf{0}\\right\\}",
+          noteHtml: "Toàn bộ vector được chọn đều bằng vector không."
+        });
       }
 
-      // Show solution button
+      const secondaryRows = (info && Array.isArray(info.redundantRelationsLatex))
+        ? info.redundantRelationsLatex.map(function (tex) { return { latex: tex }; })
+        : [];
+
+      if (App.ResultCard && typeof App.ResultCard.mount === "function") {
+        App.ResultCard.mount(resBox, {
+          titleLeft: "Hạng của hệ: r(S) = " + r,
+          badgeRightLatex: "\\dim\\operatorname{span}(S) = " + r,
+          badgeTone: r > 0 ? "primary" : "neutral",
+          primaryRows: primaryRows,
+          secondarySection: secondaryRows.length > 0
+            ? {
+                titleHtml: "Biểu diễn vector dư thừa qua cơ sở cực đại",
+                rows: secondaryRows
+              }
+            : null,
+          footerHintHtml: "Bấm <b>Trực quan</b> để quan sát không gian sinh hoặc <b>Lời giải</b> để xem biến đổi bậc thang và RREF."
+        });
+      }
+
       const btnSol = document.getElementById("btnRankSolution");
       if (btnSol) {
         btnSol.style.display = "inline-flex";
       }
 
-      // Pre-build solution for Solution Panel
-      if (App.TasksGen && App.TasksGen.Rank && typeof App.TasksGen.Rank.buildSolution === "function") {
-        const pack = App.TasksGen.Rank.buildSolution(res, vectors);
+      if (pack) {
         App.cachedRankConfig = {
           title: pack.titleText || "Hạng của hệ vector",
-          math: pack.titleMath || `\\( \\mathbb{R}^{${res.dimension || (vectors[0] ? vectors[0].length : 0)}} \\)`,
+          math: pack.titleMath || ("\\mathbb{R}^{" + nDim + "}"),
           tab1Label: pack.tab1Label || "Cách 1: Ma trận bậc thang",
-          tab2Label: pack.tab2Label || "Cách 2: Hệ độc lập tuyến tính tối đại",
+          tab2Label: pack.tab2Label || "Cách 2: Hệ độc lập cực đại",
           showSubTabs: false,
           content1: pack.content1,
           content2: pack.content2,
-          autoOpen: false,
+          autoOpen: false
         };
+
+        if (App.SolutionSync && typeof App.SolutionSync.save === "function") {
+          App.SolutionSync.save("rank_vectors", App.SolutionSync.checklistSig("rankChecklist"), App.cachedRankConfig);
+        }
+
         if (typeof App.openSolutionPanel === "function") {
           App.openSolutionPanel(App.cachedRankConfig);
         }
+
+        if (!options.silentWhenEmpty && window.App && window.App.PaperLogger && typeof window.App.PaperLogger.log === "function") {
+          try {
+            App.PaperLogger.log(
+              "Hạng của hệ vector",
+              "\\operatorname{rank}(S) = " + r,
+              "",
+              App.cachedRankConfig,
+              { type: "rank", vectors: selectedItems.map(function (it) { return it.vec; }) }
+            );
+          } catch (_) {}
+        }
       }
     } catch (err) {
-      // Client-side fallback solver when API offline
-      try {
-        const is3D = vectors.some((v) => v.length >= 3);
-        const nDim = is3D ? 3 : 2;
-        const A = vectors.map((v) => v.slice(0, nDim));
-        const m = A.length;
-        const steps = [];
-        let r = 0;
-        for (let c = 0; c < nDim && r < m; c++) {
-          let maxR = r;
-          let maxV = Math.abs(A[r][c]);
-          for (let i = r + 1; i < m; i++) {
-            if (Math.abs(A[i][c]) > maxV) { maxV = Math.abs(A[i][c]); maxR = i; }
-          }
-          if (maxV < 1e-5) continue;
-          if (maxR !== r) {
-            const tmp = A[r]; A[r] = A[maxR]; A[maxR] = tmp;
-            steps.push({ latex_label: `h_${r + 1} \\leftrightarrow h_${maxR + 1}`, matrix: A.map((row) => row.slice()) });
-          }
-          const pv = A[r][c];
-          for (let i = r + 1; i < m; i++) {
-            if (Math.abs(A[i][c]) > 1e-5) {
-              const f = A[i][c] / pv;
-              for (let j = c; j < nDim; j++) { A[i][j] -= f * A[r][j]; if (Math.abs(A[i][j]) < 1e-10) A[i][j] = 0; }
-              const fStr = Math.abs(f - Math.round(f)) < 1e-4 ? String(Math.round(f)) : f.toFixed(2);
-              steps.push({ latex_label: `h_${i + 1} \\leftarrow h_${i + 1} - ${fStr} h_${r + 1}`, matrix: A.map((row) => row.slice()) });
-            }
-          }
-          r++;
-        }
-        const fallbackRes = {
-          vectors: vectors,
-          dimension: nDim,
-          num_vectors: m,
-          rank: r,
-          result: { rank: r },
-          method_matrix: { steps: steps }
-        };
-        App.currentRankData = fallbackRes;
-
-        const cardHtml = `
-          <div class="academic-result-card" style="margin-top: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--card);">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 13px; background: rgba(59, 130, 246, 0.12); border: 1px solid #3b82f6; color: #2563eb;">
-                <i class="ph ph-hash" style="font-size: 15px;"></i> Hạng của hệ vector: ${r}
-              </span>
-              <span style="font-size: 12px; color: var(--muted); font-weight: 600;">dim(span) = ${r}</span>
-            </div>
-            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
-              Không gian sinh bởi ${m} vector có số chiều bằng ${r}.
-            </div>
-          </div>
-        `;
-        if (resBox) resBox.innerHTML = cardHtml;
-
-        const btnSol = document.getElementById("btnRankSolution");
-        if (btnSol) btnSol.style.display = "inline-flex";
-
-        if (App.TasksGen && App.TasksGen.Rank && typeof App.TasksGen.Rank.buildSolution === "function") {
-          const pack = App.TasksGen.Rank.buildSolution(fallbackRes, vectors);
-          App.cachedRankConfig = {
-            title: pack.titleText || "Hạng của hệ vector",
-            math: pack.titleMath || `\\( \\mathbb{R}^{${nDim}} \\)`,
-            tab1Label: pack.tab1Label || "Cách 1: Ma trận bậc thang",
-            tab2Label: pack.tab2Label || "Cách 2: Hệ độc lập tuyến tính tối đại",
-            showSubTabs: false,
-            content1: pack.content1,
-            content2: pack.content2,
-            autoOpen: false,
-          };
-          if (typeof App.openSolutionPanel === "function") {
-            App.openSolutionPanel(App.cachedRankConfig);
-          }
-        }
-      } catch (innerErr) {
-        if (resBox) {
-          resBox.innerHTML = `<div style="color: #ef4444; font-size: 13px; padding: 6px 0;">Lỗi: ${err.message}</div>`;
-        }
-        if (typeof App.showToast === "function") App.showToast(err.message);
+      if (App.ResultCard && typeof App.ResultCard.mountError === "function") {
+        App.ResultCard.mountError(resBox, String(err && err.message ? err.message : err), "Không thể tính hạng hệ vector");
+      } else if (resBox) {
+        resBox.textContent = "Lỗi: " + err.message;
       }
+      if (typeof App.showToast === "function") App.showToast(err.message, "error");
     }
   };
 
-  App.linearIndependenceUI = async function () {
+  App.linearIndependenceUI = async function (opts) {
+    const options = opts && typeof opts === "object" && !("target" in opts) ? opts : {};
     const container = document.getElementById("indepChecklist");
-    if (typeof App.requireVectors === "function") {
-      if (!App.requireVectors()) return;
-    } else if (typeof App.handleEmptyListAction === "function" && App.handleEmptyListAction()) {
-      return;
+    if (!options.silentWhenEmpty) {
+      if (typeof App.requireVectors === "function") {
+        if (!App.requireVectors()) return;
+      } else if (typeof App.handleEmptyListAction === "function" && App.handleEmptyListAction()) {
+        return;
+      }
     }
+
+    const selectedItems = App.getCheckedVectorItems(container);
     const vectors = App.getCheckedVectors(container);
-    if (!vectors || !vectors.length) {
-      if (typeof App.showToast === "function") App.showToast("Hãy tick chọn ít nhất 1 vector!");
+    if (!selectedItems.length || !vectors.length) {
+      if (!options.silentWhenEmpty && typeof App.showToast === "function") {
+        App.showToast("Vui lòng tick chọn ít nhất 1 vector để kiểm tra.", "warning");
+      }
       return;
     }
 
     const resBox = document.getElementById("result_indep");
     if (resBox) {
-      resBox.innerHTML = '<div style="color: var(--muted); font-size: 13px; padding: 6px 0;">Đang kiểm tra...</div>';
+      resBox.innerHTML = '<div style="color: var(--text-muted); font-size: 12px; padding: 6px 0;">Đang kiểm tra tính độc lập tuyến tính...</div>';
+    }
+
+    let apiRes = null;
+    try {
+      apiRes = await App.callAPI("linear_independence", { vectors: vectors });
+    } catch (_) {
+      apiRes = null;
     }
 
     try {
-      const res = await App.callAPI("linear_independence", {
+      const gen = App.TasksGen && App.TasksGen.Indep;
+      const pack = gen && typeof gen.buildSolution === "function"
+        ? gen.buildSolution(apiRes, selectedItems)
+        : null;
+      const info = pack && pack.analysis
+        ? pack.analysis
+        : (gen && typeof gen.analyzeIndep === "function" ? gen.analyzeIndep(selectedItems) : null);
+
+      const m = info ? info.m : selectedItems.length;
+      const nDim = info ? info.n : ((selectedItems[0] && selectedItems[0].vec && selectedItems[0].vec.length) || 2);
+      const r = info ? info.rank : (apiRes && typeof apiRes.rank === "number" ? apiRes.rank : m);
+      const isIndep = info ? info.isIndependent : (r === m);
+
+      App.currentIndepData = apiRes || {
         vectors: vectors,
-      });
-      App.currentIndepData = res;
+        dimension: nDim,
+        num_vectors: m,
+        rank: r,
+        independent: isIndep
+      };
 
-      const n = vectors.length;
-      const r = typeof res.rank === "number" ? res.rank : (res.result ? res.result.rank : n);
-      const isIndep = res.independent !== undefined ? res.independent : (res.result ? res.result.is_independent : (r === n));
-      const statusText = isIndep ? "Độc lập tuyến tính" : "Phụ thuộc tuyến tính";
-      const badgeBg = isIndep ? "rgba(16, 185, 129, 0.12)" : "rgba(245, 158, 11, 0.12)";
-      const badgeBorder = isIndep ? "#10b981" : "#f59e0b";
-      const badgeColor = isIndep ? "#059669" : "#d97706";
-      const iconClass = isIndep ? "ph-check-circle" : "ph-warning-circle";
-
-      const cardHtml = `
-        <div class="academic-result-card" style="margin-top: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--card);">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 13px; background: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeColor};">
-              <i class="ph ${iconClass}" style="font-size: 15px;"></i> ${statusText}
-            </span>
-            <span style="font-size: 12px; color: var(--muted); font-weight: 600;">Hạng r = ${r} / ${n} vector</span>
-          </div>
-          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
-            ${isIndep ? "Hệ vector thỏa mãn điều kiện độc lập tuyến tính." : "Hệ vector tồn tại biểu diễn tuyến tính phụ thuộc."}
-          </div>
-        </div>
-      `;
-
-      if (resBox) {
-        resBox.innerHTML = cardHtml;
+      const primaryRows = [];
+      if (isIndep) {
+        const eqLhs = m === 1
+          ? ("c_1 " + (info ? info.syms[0] : "\\mathbf{v}_1") + " = \\mathbf{0}")
+          : ("c_1 " + (info ? info.syms[0] : "\\mathbf{v}_1") + " + \\dots + c_{" + m + "} " + (info ? info.syms[m - 1] : "\\mathbf{v}_{" + m + "}") + " = \\mathbf{0}");
+        const eqRhs = m === 1 ? "c_1 = 0" : ("c_1 = \\dots = c_{" + m + "} = 0");
+        primaryRows.push({
+          latex: eqLhs + " \\iff " + eqRhs,
+          noteHtml: "Phương trình thuần nhất chỉ có duy nhất nghiệm tầm thường."
+        });
+      } else {
+        primaryRows.push({
+          labelHtml: "Hệ thức phụ thuộc tuyến tính",
+          latex: info && info.depRelationLatex ? info.depRelationLatex : "\\operatorname{rank}(S) < m"
+        });
       }
 
-      // Show solution button
+      const secondaryRows = (!isIndep && info && info.depExpressLatex)
+        ? [{ latex: info.depExpressLatex }]
+        : [];
+
+      if (App.ResultCard && typeof App.ResultCard.mount === "function") {
+        App.ResultCard.mount(resBox, {
+          titleLeft: isIndep ? "Hệ độc lập tuyến tính" : "Hệ phụ thuộc tuyến tính",
+          badgeRightLatex: "\\operatorname{rank}(S) = " + r + " / " + m,
+          badgeTone: isIndep ? "success" : "warning",
+          primaryRows: primaryRows,
+          secondarySection: secondaryRows.length > 0
+            ? {
+                titleHtml: "Biểu diễn phụ thuộc tuyến tính",
+                rows: secondaryRows
+              }
+            : null,
+          footerHintHtml: "Bấm <b>Trực quan</b> để kiểm tra hình học hoặc <b>Lời giải</b> để xem khử Gauss và hệ phương trình thuần nhất."
+        });
+      }
+
       const btnSol = document.getElementById("btnIndepSolution");
       if (btnSol) {
         btnSol.style.display = "inline-flex";
       }
 
-      // Pre-build solution for Solution Panel
-      if (App.TasksGen && App.TasksGen.Indep && typeof App.TasksGen.Indep.buildSolution === "function") {
-        const pack = App.TasksGen.Indep.buildSolution(res, vectors);
+      if (pack) {
         App.cachedIndepConfig = {
-          title: pack.titleText || "Độc lập - phụ thuộc tuyến tính",
-          math: pack.titleMath || `\\( \\mathbb{R}^{${res.dimension || (vectors[0] ? vectors[0].length : 0)}} \\)`,
+          title: pack.titleText || "Khảo sát độc lập và phụ thuộc tuyến tính",
+          math: pack.titleMath || ("\\mathbb{R}^{" + nDim + "}"),
           tab1Label: pack.tab1Label || "Cách 1: Khử Gauss ma trận dòng",
           tab2Label: pack.tab2Label || "Cách 2: Hệ phương trình thuần nhất",
           showSubTabs: false,
           content1: pack.content1,
           content2: pack.content2,
-          autoOpen: false,
+          autoOpen: false
         };
+
+        if (App.SolutionSync && typeof App.SolutionSync.save === "function") {
+          App.SolutionSync.save("linear_independence", App.SolutionSync.checklistSig("indepChecklist"), App.cachedIndepConfig);
+        }
+
         if (typeof App.openSolutionPanel === "function") {
           App.openSolutionPanel(App.cachedIndepConfig);
         }
+
+        if (!options.silentWhenEmpty && window.App && window.App.PaperLogger && typeof window.App.PaperLogger.log === "function") {
+          try {
+            const logTex = isIndep
+              ? ("\\operatorname{rank}(S) = " + r + " = " + m)
+              : (info && info.depRelationLatex ? info.depRelationLatex : ("\\operatorname{rank}(S) = " + r + " < " + m));
+            App.PaperLogger.log(
+              isIndep ? "Khảo sát: Độc lập tuyến tính" : "Khảo sát: Phụ thuộc tuyến tính",
+              logTex,
+              "",
+              App.cachedIndepConfig,
+              { type: "indep", vectors: selectedItems.map(function (it) { return it.vec; }) }
+            );
+          } catch (_) {}
+        }
       }
     } catch (err) {
-      // Client-side fallback solver when API offline
-      try {
-        const is3D = vectors.some((v) => v.length >= 3);
-        const nDim = is3D ? 3 : 2;
-        const A = vectors.map((v) => v.slice(0, nDim));
-        const m = A.length;
-        const steps = [];
-        let r = 0;
-        for (let c = 0; c < nDim && r < m; c++) {
-          let maxR = r;
-          let maxV = Math.abs(A[r][c]);
-          for (let i = r + 1; i < m; i++) {
-            if (Math.abs(A[i][c]) > maxV) { maxV = Math.abs(A[i][c]); maxR = i; }
-          }
-          if (maxV < 1e-5) continue;
-          if (maxR !== r) {
-            const tmp = A[r]; A[r] = A[maxR]; A[maxR] = tmp;
-            steps.push({ latex_label: `h_${r + 1} \\leftrightarrow h_${maxR + 1}`, matrix: A.map((row) => row.slice()) });
-          }
-          const pv = A[r][c];
-          for (let i = r + 1; i < m; i++) {
-            if (Math.abs(A[i][c]) > 1e-5) {
-              const f = A[i][c] / pv;
-              for (let j = c; j < nDim; j++) { A[i][j] -= f * A[r][j]; if (Math.abs(A[i][j]) < 1e-10) A[i][j] = 0; }
-              const fStr = Math.abs(f - Math.round(f)) < 1e-4 ? String(Math.round(f)) : f.toFixed(2);
-              steps.push({ latex_label: `h_${i + 1} \\leftarrow h_${i + 1} - ${fStr} h_${r + 1}`, matrix: A.map((row) => row.slice()) });
-            }
-          }
-          r++;
-        }
-        const isIndep = r === m;
-        const fallbackRes = {
-          vectors: vectors,
-          dimension: nDim,
-          num_vectors: m,
-          rank: r,
-          independent: isIndep,
-          result: { rank: r, is_independent: isIndep },
-          method_matrix: { steps: steps }
-        };
-        App.currentIndepData = fallbackRes;
-
-        const statusText = isIndep ? "Độc lập tuyến tính" : "Phụ thuộc tuyến tính";
-        const badgeBg = isIndep ? "rgba(16, 185, 129, 0.12)" : "rgba(245, 158, 11, 0.12)";
-        const badgeBorder = isIndep ? "#10b981" : "#f59e0b";
-        const badgeColor = isIndep ? "#059669" : "#d97706";
-        const iconClass = isIndep ? "ph-check-circle" : "ph-warning-circle";
-
-        const cardHtml = `
-          <div class="academic-result-card" style="margin-top: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--card);">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 13px; background: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeColor};">
-                <i class="ph ${iconClass}" style="font-size: 15px;"></i> ${statusText}
-              </span>
-              <span style="font-size: 12px; color: var(--muted); font-weight: 600;">Hạng r = ${r} / ${m} vector</span>
-            </div>
-            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
-              ${isIndep ? "Hệ vector thỏa mãn điều kiện độc lập tuyến tính." : "Hệ vector tồn tại biểu diễn tuyến tính phụ thuộc."}
-            </div>
-          </div>
-        `;
-        if (resBox) resBox.innerHTML = cardHtml;
-
-        const btnSol = document.getElementById("btnIndepSolution");
-        if (btnSol) btnSol.style.display = "inline-flex";
-
-        if (App.TasksGen && App.TasksGen.Indep && typeof App.TasksGen.Indep.buildSolution === "function") {
-          const pack = App.TasksGen.Indep.buildSolution(fallbackRes, vectors);
-          App.cachedIndepConfig = {
-            title: pack.titleText || "Độc lập - phụ thuộc tuyến tính",
-            math: pack.titleMath || `\\( \\mathbb{R}^{${nDim}} \\)`,
-            tab1Label: pack.tab1Label || "Cách 1: Khử Gauss ma trận dòng",
-            tab2Label: pack.tab2Label || "Cách 2: Hệ phương trình thuần nhất",
-            showSubTabs: false,
-            content1: pack.content1,
-            content2: pack.content2,
-            autoOpen: false,
-          };
-          if (typeof App.openSolutionPanel === "function") {
-            App.openSolutionPanel(App.cachedIndepConfig);
-          }
-        }
-      } catch (innerErr) {
-        if (resBox) {
-          resBox.innerHTML = `<div style="color: #ef4444; font-size: 13px; padding: 6px 0;">Lỗi: ${err.message}</div>`;
-        }
+      if (App.ResultCard && typeof App.ResultCard.mountError === "function") {
+        App.ResultCard.mountError(resBox, String(err && err.message ? err.message : err), "Không thể kiểm tra hệ vector");
+      } else if (resBox) {
+        resBox.textContent = "Lỗi: " + err.message;
       }
+      if (typeof App.showToast === "function") App.showToast(err.message, "error");
     }
   };
 
@@ -2253,48 +2013,6 @@
   App.checkIndependenceUI = App.linearIndependenceUI;
   App.rankVecUI = App.rankVectorsUI;
 
-  App.coordinatesUI = async function () {
-    if (App.handleEmptyListAction()) return;
-    const v = App.selectIdToVector(document.getElementById("vCoordSelect"));
-    const basis = App.getCheckedVectors(
-      document.getElementById("basisCoordChecklist"),
-    );
-
-    if (!v) {
-      App.showToast("Chưa chọn vector cần tìm tọa độ!");
-      return;
-    }
-    if (!basis.length) {
-      App.showToast("Chọn hệ cơ sở (tick ít nhất 1 vector)!");
-      return;
-    }
-
-    try {
-      const res = await App.callAPI("coordinates", { vector: v, basis: basis });
-
-      // [FIX QUAN TRỌNG]: Ưu tiên lấy chuỗi đẹp từ Backend (pretty_coordinates)
-      const displayCoords = res.pretty_coordinates || res.coordinates;
-      if (!displayCoords) throw new Error("Không tìm thấy tọa độ.");
-
-      const latex = `\\left( ${displayCoords.join(",\\; ")} \\right)`;
-      
-      const resEl = document.getElementById("result_coord");
-      resEl.className = "";
-      resEl.style.padding = "0";
-      resEl.style.border = "none";
-      resEl.style.background = "transparent";
-      
-      resEl.innerHTML = App.renderUnifiedResult(
-        "TỌA ĐỘ",
-        `<math-field read-only>${latex}</math-field>`
-      );
-    } catch (err) {
-      document.getElementById("result_coord").innerText = "Lỗi: " + err.message;
-      App.showToast(err.message);
-    }
-  };
-
-  // --- INIT ---
   // --- INIT ---
   window.addEventListener("load", () => {
     // [FIX LỆCH PHA] 1. Đồng bộ trạng thái App.theme từ LocalStorage ngay lập tức
@@ -2314,9 +2032,9 @@
     if (document.getElementById("btnClearAll"))
       document.getElementById("btnClearAll").onclick = App.clearAllVectors;
     if (document.getElementById("btnIndep"))
-      document.getElementById("btnIndep").onclick = App.linearIndependenceUI;
+      document.getElementById("btnIndep").onclick = () => App.linearIndependenceUI();
     if (document.getElementById("btnRank"))
-      document.getElementById("btnRank").onclick = App.rankVectorsUI;
+      document.getElementById("btnRank").onclick = () => App.rankVectorsUI();
 
     function bindAcademicSolutionButtons() {
       // Bài 1: Độc lập tuyến tính
@@ -2357,38 +2075,42 @@
 
       const btnIndepSol = document.getElementById("btnIndepSolution");
       if (btnIndepSol) {
+        btnIndepSol.dataset.syncManaged = "1";
         btnIndepSol.onclick = () => {
-          if (typeof App.openSolutionPanel !== "function") return;
-          if (App.cachedIndepConfig) {
-            App.openSolutionPanel({ ...App.cachedIndepConfig, autoOpen: true });
-          } else {
-            App.openSolutionPanel({
-              title: "Độc lập - phụ thuộc tuyến tính",
-              tab1Label: "Cách 1",
-              tab2Label: "Cách 2",
-              showSubTabs: false,
-              content1: '<div class="sol-empty">Vui lòng chọn vector và bấm nút "Kiểm tra" trước.</div>',
-              autoOpen: true,
+          if (App.SolutionSync && typeof App.SolutionSync.openWithSync === "function") {
+            App.SolutionSync.openWithSync({
+              key: "linear_independence",
+              getSig: () => App.SolutionSync.checklistSig("indepChecklist"),
+              recomputeStatic: () => App.linearIndependenceUI({ silentWhenEmpty: true }),
+              emptyTitle: "Khảo sát độc lập và phụ thuộc tuyến tính",
+              emptyMath: "\\mathbb{R}^n",
+              emptyHintHtml: "Vui lòng tick chọn ít nhất 1 vector trong danh sách để kiểm tra tính độc lập tuyến tính."
             });
+            return;
+          }
+          if (typeof App.openSolutionPanel === "function" && App.cachedIndepConfig) {
+            App.openSolutionPanel({ ...App.cachedIndepConfig, autoOpen: true });
           }
         };
       }
 
       const btnRankSol = document.getElementById("btnRankSolution");
       if (btnRankSol) {
+        btnRankSol.dataset.syncManaged = "1";
         btnRankSol.onclick = () => {
-          if (typeof App.openSolutionPanel !== "function") return;
-          if (App.cachedRankConfig) {
-            App.openSolutionPanel({ ...App.cachedRankConfig, autoOpen: true });
-          } else {
-            App.openSolutionPanel({
-              title: "Hạng của hệ vector",
-              tab1Label: "Cách 1",
-              tab2Label: "Cách 2",
-              showSubTabs: false,
-              content1: '<div class="sol-empty">Vui lòng chọn vector và bấm nút "Tính hạng" trước.</div>',
-              autoOpen: true,
+          if (App.SolutionSync && typeof App.SolutionSync.openWithSync === "function") {
+            App.SolutionSync.openWithSync({
+              key: "rank_vectors",
+              getSig: () => App.SolutionSync.checklistSig("rankChecklist"),
+              recomputeStatic: () => App.rankVectorsUI({ silentWhenEmpty: true }),
+              emptyTitle: "Hạng của hệ vector",
+              emptyMath: "\\mathbb{R}^n",
+              emptyHintHtml: "Vui lòng tick chọn ít nhất 1 vector trong danh sách để tính hạng."
             });
+            return;
+          }
+          if (typeof App.openSolutionPanel === "function" && App.cachedRankConfig) {
+            App.openSolutionPanel({ ...App.cachedRankConfig, autoOpen: true });
           }
         };
       }
@@ -2734,6 +2456,26 @@
   });
 
   // --- HÀM QUẢN LÝ ẨN/HIỆN & DỌN RÁC (ĐÃ GỘP CHUẨN) ---
+  App.restoreCalcVisibility = function (skipRedraw = false) {
+    if (!Array.isArray(App.vectorList)) return;
+    let changed = false;
+    App.vectorList.forEach((v) => {
+      if (v._hiddenByCalc || v.visible === false) {
+        v.visible = true;
+        delete v._hiddenByCalc;
+        changed = true;
+      }
+      if (v.alpha !== undefined && v.alpha < 1) {
+        v.alpha = 1;
+        changed = true;
+      }
+    });
+    if (changed && !skipRedraw) {
+      if (typeof App.renderVectorList === "function") App.renderVectorList();
+      if (typeof App.redrawAll === "function") App.redrawAll({ frame: false });
+    }
+  };
+
   App.updateVisibilityByCalc = function () {
     const v1Sel = document.getElementById("v1Select");
     const v2Sel = document.getElementById("v2Select");
@@ -2741,12 +2483,21 @@
     const id1 = v1Sel ? Number(v1Sel.value) : 0;
     const id2 = v2Sel ? Number(v2Sel.value) : 0;
 
+    if (window.App?.OperationAnimator?.stop) {
+      window.App.OperationAnimator.stop({ clearStaticOverlays: true, skipRedraw: true });
+    }
+
     App.currentProjVisual = null;
     // 1. DỌN SẠCH RÁC HÌNH CHIẾU
     App.tempGhosts = []; // Xóa vết 2D
     if (App._currentProjLine3D && App._currentProjLine3D.parent) {
       App._currentProjLine3D.parent.remove(App._currentProjLine3D); // Xóa vết 3D
       App._currentProjLine3D = null;
+    }
+    if (App._projGroup3D && App._projGroup3D.parent) {
+      App._projGroup3D.clear();
+      App._projGroup3D.parent.remove(App._projGroup3D);
+      App._projGroup3D = null;
     }
     // [BỔ SUNG CHÍ MẠNG] TIÊU DIỆT TOÀN BỘ LABEL LƠ LỬNG
     if (App._activeAnimLabels && App._activeAnimLabels.length > 0) {
@@ -2759,8 +2510,13 @@
     App.vectorList.forEach((v) => {
       if (!hasSelection) {
         v.visible = true;
+        delete v._hiddenByCalc;
+      } else if (v.id === id1 || v.id === id2) {
+        v.visible = true;
+        delete v._hiddenByCalc;
       } else {
-        v.visible = v.id === id1 || v.id === id2;
+        v.visible = false;
+        v._hiddenByCalc = true;
       }
     });
 

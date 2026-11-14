@@ -107,6 +107,165 @@
       if (window.App.redrawAll) window.App.redrawAll({ frame: false }); // Vẽ lại để cập nhật 3D canvas
   };
 
+  let currentSessionId = 0;
+  let activeFlag = false;
+  const activeGroups3D = new Set();
+  const activeRAFs = new Set();
+  const activeTimeouts = new Set();
+  let restoreCallbacks = [];
+
+  function scheduleRAF(fn, sid = currentSessionId) {
+    const id = requestAnimationFrame(function (now) {
+      activeRAFs.delete(id);
+      if (sid !== currentSessionId) return;
+      fn(now);
+    });
+    activeRAFs.add(id);
+    return id;
+  }
+
+  function scheduleTimeout(fn, ms, sid = currentSessionId) {
+    const id = setTimeout(function () {
+      activeTimeouts.delete(id);
+      if (sid !== currentSessionId) return;
+      fn();
+    }, ms);
+    activeTimeouts.add(id);
+    return id;
+  }
+
+  App.OperationAnimator = {
+    startSession: function () {
+      this.stop({ clearStaticOverlays: false, skipRedraw: true });
+      currentSessionId++;
+      activeFlag = true;
+      App.isAnimPaused = false;
+      return currentSessionId;
+    },
+    getSessionId: function () {
+      return currentSessionId;
+    },
+    isSessionValid: function (sid) {
+      return activeFlag && sid === currentSessionId;
+    },
+    isActive: function () {
+      return activeFlag;
+    },
+    registerGroup3D: function (grp) {
+      if (!grp) return;
+      grp.userData = grp.userData || {};
+      grp.userData.isOpAnimGroup = true;
+      activeGroups3D.add(grp);
+    },
+    registerRestore: function (fn) {
+      if (typeof fn === "function") restoreCallbacks.push(fn);
+    },
+    scheduleRAF: function (fn, sid) {
+      return scheduleRAF(fn, sid !== undefined ? sid : currentSessionId);
+    },
+    scheduleTimeout: function (fn, ms, sid) {
+      return scheduleTimeout(fn, ms, sid !== undefined ? sid : currentSessionId);
+    },
+    finishSession: function (sid) {
+      if (sid !== currentSessionId) return;
+      activeFlag = false;
+      restoreCallbacks = [];
+      toggleComputeBtn(false);
+    },
+    stop: function (opts = {}) {
+      currentSessionId++;
+      activeFlag = false;
+      App.isAnimPaused = false;
+
+      activeRAFs.forEach((id) => cancelAnimationFrame(id));
+      activeRAFs.clear();
+      activeTimeouts.forEach((id) => clearTimeout(id));
+      activeTimeouts.clear();
+
+      if (restoreCallbacks.length > 0) {
+        const cbs = restoreCallbacks.slice();
+        restoreCallbacks = [];
+        cbs.forEach((fn) => {
+          try {
+            fn();
+          } catch (_) {}
+        });
+      }
+
+      activeGroups3D.forEach((grp) => {
+        try {
+          if (grp && grp.parent) grp.parent.remove(grp);
+        } catch (_) {}
+      });
+      activeGroups3D.clear();
+
+      if (window.Vec3D && Vec3D._mathGroup && Array.isArray(Vec3D._mathGroup.children)) {
+        for (let i = Vec3D._mathGroup.children.length - 1; i >= 0; i--) {
+          const ch = Vec3D._mathGroup.children[i];
+          if (ch && ch.userData && (ch.userData.isOpAnimGroup || ch.userData.isGhost)) {
+            Vec3D._mathGroup.remove(ch);
+          }
+        }
+      }
+
+      document.querySelectorAll(".vec-hud").forEach((el) => el.remove());
+
+      if (App._activeAnimLabels && App._activeAnimLabels.length > 0) {
+        App._activeAnimLabels.forEach((lbl) => {
+          if (lbl && lbl.parentNode) lbl.remove();
+        });
+        App._activeAnimLabels = [];
+      }
+      document.querySelectorAll(".vec-anim-label").forEach((el) => el.remove());
+
+      App.tempGhosts = [];
+
+      if (App._preReplayVectorList) {
+        App.cleanupReplayGhosts();
+      } else {
+        const replayHud = document.getElementById("replayHUD");
+        if (replayHud) replayHud.remove();
+      }
+
+      if (Array.isArray(App.vectorList)) {
+        App.vectorList.forEach((item) => {
+          item.alpha = 1;
+          if (window.Vec3D && Vec3D.threeVecMap) {
+            const g = Vec3D.threeVecMap.get(item.id);
+            if (g) {
+              g.visible = item.visible !== false;
+              g.scale.set(1, 1, 1);
+              setOpacity3D(g, 1);
+            }
+          }
+        });
+      }
+
+      toggleComputeBtn(false);
+
+      if (opts.clearStaticOverlays) {
+        App.currentProjVisual = null;
+        if (App._currentProjLine3D && App._currentProjLine3D.parent) {
+          App._currentProjLine3D.parent.remove(App._currentProjLine3D);
+          App._currentProjLine3D = null;
+        }
+        if (App._projGroup3D && App._projGroup3D.parent) {
+          App._projGroup3D.clear();
+          App._projGroup3D.parent.remove(App._projGroup3D);
+          App._projGroup3D = null;
+        }
+        if (typeof App.clearAngleOverlay === "function") App.clearAngleOverlay();
+        if (typeof App.refreshProjectionOverlay === "function") App.refreshProjectionOverlay();
+      } else {
+        if (App.currentAngleVisual3D) App.currentAngleVisual3D.visible = true;
+      }
+
+      if (!opts.skipRedraw) {
+        requestRedraw();
+      }
+    },
+  };
+
   // Khóa/Mở nút tính toán chống Spam
   function toggleComputeBtn(disable) {
       const btn = document.getElementById("btnCompute");
@@ -117,7 +276,6 @@
       }
       if (!disable && window.App) {
           if (App.unlockInteraction) App.unlockInteraction();
-          // Xóa dòng tự động dọn dẹp bóng ma
       }
   }
 
@@ -135,26 +293,27 @@
   }
 
   // Hàm chạy Tween Animation
-  function runTween(duration, easing, onUpdate, onComplete) {
+  function runTween(duration, easing, onUpdate, onComplete, sid = currentSessionId) {
     const start = performance.now();
     function loop(now) {
+      if (sid !== currentSessionId) return;
       const p = Math.min((now - start) / duration, 1);
       onUpdate(easing(p));
       requestRedraw();
       if (p < 1) {
-        requestAnimationFrame(loop);
+        scheduleRAF(loop, sid);
       } else if (onComplete) {
         onComplete();
       }
     }
-    requestAnimationFrame(loop);
+    scheduleRAF(loop, sid);
   }
 
   // Hàm ẩn các vector không liên quan (Fade Out)
   // keepIds: Danh sách ID các vector cần GIỮ LẠI (không ẩn)
-  function fadeUnrelatedVectors(keepIds, targetAlpha, callback) {
+  function fadeUnrelatedVectors(keepIds, targetAlpha, callback, sid = currentSessionId) {
     if (!App.vectorList) {
-      if (callback) callback();
+      if (callback && sid === currentSessionId) callback();
       return;
     }
 
@@ -167,7 +326,7 @@
     });
 
     if (targetVectors.length === 0) {
-      if (callback) callback();
+      if (callback && sid === currentSessionId) callback();
       return;
     }
 
@@ -190,6 +349,7 @@
         });
       },
       callback,
+      sid,
     );
   }
 
@@ -228,11 +388,23 @@
     const res = App.vectorList.find((v) => v.id === resId);
     if (!v1 || !v2 || !res) return;
 
+    const sid = App.OperationAnimator.startSession();
+    App.OperationAnimator.registerRestore(() => {
+      res.alpha = 1;
+      const g = get3DGroup(resId);
+      if (g) {
+        g.visible = true;
+        g.scale.set(1, 1, 1);
+        setOpacity3D(g, 1);
+      }
+    });
+
     App.currentProjVisual = null;
     if (App.refreshProjectionOverlay) App.refreshProjectionOverlay();
     const resG = get3DGroup(resId);
 
     fadeUnrelatedVectors([v1Id, v2Id, resId], 0.1, function () {
+      if (sid !== currentSessionId) return;
       const u = Vec3D.S3D.unitsPerWorld || 1;
       
       const getTip = (id, vec) => {
@@ -250,6 +422,7 @@
       const actionLen = Math.max(endP.length(), v2P.length()) + 0.5 * u;
 
       const animGroup = new THREE.Group();
+      App.OperationAnimator.registerGroup3D(animGroup);
       if (window.Vec3D) Vec3D._mathGroup.add(animGroup);
 
       const isDark = document.body.classList.contains("dark");
@@ -345,11 +518,14 @@
                 if (animGroup.parent) animGroup.parent.remove(animGroup); 
                 App.currentProjVisual = { v1Id, v2Id, resId }; 
                 if (App.refreshProjectionOverlay) App.refreshProjectionOverlay();
-                fadeUnrelatedVectors([v1Id, v2Id, resId], 1, () => requestRedraw());
-            });
-        });
-      });
-    });
+                fadeUnrelatedVectors([v1Id, v2Id, resId], 1, () => {
+                  App.OperationAnimator.finishSession(sid);
+                  requestRedraw();
+                }, sid);
+            }, sid);
+        }, sid);
+      }, sid);
+    }, sid);
   }
 
   // [Hệ 2D] Animation Hình chiếu (Đã Sửa Màu Thật & Giá)
@@ -359,10 +535,18 @@
     const res = App.vectorList.find((v) => v.id === resId);
     if (!v1 || !v2 || !res) return;
 
+    const sid = App.OperationAnimator.startSession();
+    const targetRes = [...res.vec];
+    App.OperationAnimator.registerRestore(() => {
+      res.vec = [...targetRes];
+      res.alpha = 1;
+    });
+
     App.currentProjVisual = null;
     if (App.refreshProjectionOverlay) App.refreshProjectionOverlay();
 
     fadeUnrelatedVectors([v1Id, v2Id, resId], 0.1, function () {
+      if (sid !== currentSessionId) return;
       const dropVec = [res.vec[0] - v1.vec[0], res.vec[1] - v1.vec[1]];
       const endPx = res.vec[0], endPy = res.vec[1];
       
@@ -390,7 +574,6 @@
       
       App.tempGhosts = [actionGhost, dropGhost];
 
-      const targetRes = [...res.vec];
       res.vec = targetRes; 
       res.alpha = 0; 
 
@@ -405,17 +588,20 @@
                 res.alpha = v;
                 requestRedraw();
             }, function() {
-                setTimeout(() => {
+                scheduleTimeout(() => {
                     res.alpha = 1;
                     App.tempGhosts = []; 
                     App.currentProjVisual = { v1Id, v2Id, resId };
                     if (App.refreshProjectionOverlay) App.refreshProjectionOverlay();
-                    fadeUnrelatedVectors([v1Id, v2Id, resId], 1, () => requestRedraw());
-                }, 400);
-            });
-        });
-      });
-    });
+                    fadeUnrelatedVectors([v1Id, v2Id, resId], 1, () => {
+                      App.OperationAnimator.finishSession(sid);
+                      requestRedraw();
+                    }, sid);
+                }, 400, sid);
+            }, sid);
+        }, sid);
+      }, sid);
+    }, sid);
   }
   // ==================================================================================
   // 4. XỬ LÝ 2D (2D IMPLEMENTATION)
@@ -469,12 +655,30 @@
   function runAnimAdd3D(v1Id, v2Id, resId) {
     const v1 = App.vectorList.find((v) => v.id === v1Id);
     const v2 = App.vectorList.find((v) => v.id === v2Id);
+    const res = App.vectorList.find((v) => v.id === resId);
     if (!v1 || !v2) return;
     const v1G = get3DGroup(v1Id);
     const v2G = get3DGroup(v2Id);
 
+    const sid = App.OperationAnimator.startSession();
+    App.OperationAnimator.registerRestore(() => {
+      if (res) res.alpha = 1;
+      const g = get3DGroup(resId);
+      if (g) {
+        g.visible = true;
+        g.scale.set(1, 1, 1);
+        setOpacity3D(g, 1);
+      }
+    });
+
     fadeUnrelatedVectors([v1Id, v2Id, resId], 0.1, function () {
+      if (sid !== currentSessionId) return;
       const ghost = createGhost3D(v2G, 0xffaa00);
+      if (!ghost || !v1G || !v1G.userData || !v1G.userData.tipLocal) {
+        App.OperationAnimator.finishSession(sid);
+        return;
+      }
+      App.OperationAnimator.registerGroup3D(ghost);
       if (window.Vec3D) Vec3D._mathGroup.add(ghost);
 
       const start = new THREE.Vector3(0, 0, 0);
@@ -515,18 +719,23 @@
                   function () {
                     if (ghost.parent) ghost.parent.remove(ghost);
                     fadeUnrelatedVectors([v1Id, v2Id, resId], 1, function () {
+                      App.OperationAnimator.finishSession(sid);
                       requestRedraw();
-                    });
+                    }, sid);
                   },
+                  sid,
                 );
               },
+              sid,
             );
           } else {
-            ghost.parent.remove(ghost);
+            if (ghost.parent) ghost.parent.remove(ghost);
+            App.OperationAnimator.finishSession(sid);
           }
         },
+        sid,
       );
-    });
+    }, sid);
   }
 
   function runAnimAdd2D(v1Id, v2Id, resId) {
@@ -535,7 +744,13 @@
     const res = App.vectorList.find((v) => v.id === resId);
     if (!v1 || !v2 || !res) return;
 
+    const sid = App.OperationAnimator.startSession();
+    App.OperationAnimator.registerRestore(() => {
+      res.alpha = 1;
+    });
+
     fadeUnrelatedVectors([v1Id, v2Id, resId], 0.1, function () {
+      if (sid !== currentSessionId) return;
       const g = {
         vec: v2.vec,
         colorCss: "#ffaa00",
@@ -572,46 +787,52 @@
                 function () {
                   App.tempGhosts = [];
                   fadeUnrelatedVectors([v1Id, v2Id, resId], 1, function () {
+                    App.OperationAnimator.finishSession(sid);
                     requestRedraw();
-                  });
+                  }, sid);
                 },
+                sid,
               );
             },
+            sid,
           );
         },
+        sid,
       );
-    });
+    }, sid);
   }
 
   // ==================================================================================
   // KỊCH BẢN HỌC THUẬT: TÍCH VÔ HƯỚNG (VECTOR SCALING & PERFECT HUD UX)
   // ==================================================================================
 
-  // LÕI HOẠT HỌA BẤT ĐỒNG BỘ (HỖ TRỢ PAUSE / PLAY)
+  // LÕI HOẠT HỌA BẤT ĐỒNG BỘ (HỖ TRỢ PAUSE / PLAY & HỦY PHIÊN)
   App.isAnimPaused = false;
 
-  async function waitAnim(ms) {
+  async function waitAnim(ms, sid = currentSessionId) {
       let start = performance.now();
       let elapsed = 0;
       return new Promise(resolve => {
           function check(now) {
+              if (sid !== currentSessionId) return resolve(false);
               if (App.isAnimPaused) {
                   start = now - elapsed; 
               } else {
                   elapsed = now - start;
-                  if (elapsed >= ms) return resolve();
+                  if (elapsed >= ms) return resolve(true);
               }
-              requestAnimationFrame(check);
+              scheduleRAF(check, sid);
           }
-          requestAnimationFrame(check);
+          scheduleRAF(check, sid);
       });
   }
 
-  async function runTweenAsync(duration, easing, onUpdate) {
+  async function runTweenAsync(duration, easing, onUpdate, sid = currentSessionId) {
       let start = performance.now();
       let elapsed = 0;
       return new Promise(resolve => {
           function loop(now) {
+              if (sid !== currentSessionId) return resolve(false);
               if (App.isAnimPaused) {
                   start = now - elapsed;
               } else {
@@ -619,30 +840,18 @@
                   const p = Math.min(elapsed / duration, 1);
                   onUpdate(easing(p));
                   requestRedraw();
-                  if (p >= 1) return resolve();
+                  if (p >= 1) return resolve(true);
               }
-              requestAnimationFrame(loop);
+              scheduleRAF(loop, sid);
           }
-          requestAnimationFrame(loop);
+          scheduleRAF(loop, sid);
       });
-  }
-  // Khóa/Mở nút tính toán chống Spam
-  function toggleComputeBtn(disable) {
-      const btn = document.getElementById("btnCompute");
-      if (btn) {
-          btn.disabled = disable;
-          btn.style.opacity = disable ? '0.5' : '1';
-          btn.style.cursor = disable ? 'not-allowed' : 'pointer';
-      }
-      if (!disable && window.App && App.unlockInteraction) {
-          App.unlockInteraction();
-      }
   }
 
   // ==================================================================================
   // HUD: CHUẨN HÓA TRÀN LỀ MOBILE & DESKTOP
   // ==================================================================================
-  function createVectoriaHUD() {
+  function createVectoriaHUD(sid = currentSessionId) {
     App.isAnimPaused = false; 
 
     if (!document.getElementById('vectoria-hud-style')) {
@@ -710,6 +919,8 @@
         document.head.appendChild(style);
     }
 
+    document.querySelectorAll('.vec-hud').forEach(el => el.remove());
+
     const hud = document.createElement('div');
     hud.className = 'vec-hud';
     hud.innerHTML = `
@@ -742,21 +953,23 @@
 
     let syncThemeId;
     const syncTheme = () => {
-        if (!hud.parentNode) return;
+        if (!hud.parentNode || sid !== currentSessionId) return;
         const isDark = document.body.classList.contains("dark");
         hud.style.background = isDark ? 'rgba(30, 30, 35, 0.5)' : 'rgba(255, 255, 255, 0.95)';
         hud.style.color = isDark ? '#ffffff' : '#222222';
-        syncThemeId = requestAnimationFrame(syncTheme);
+        syncThemeId = scheduleRAF(syncTheme, sid);
     };
     syncTheme();
 
-    requestAnimationFrame(() => { hud.style.opacity = '1'; hud.style.transform = 'translateY(0)'; });
+    scheduleRAF(() => { hud.style.opacity = '1'; hud.style.transform = 'translateY(0)'; }, sid);
 
     return {
         el: hud,
         setStep: (step, desc) => { 
-            document.getElementById('hud-step').innerHTML = step;
-            document.getElementById('hud-text').innerHTML = desc;
+            const stepEl = hud.querySelector('#hud-step');
+            const textEl = hud.querySelector('#hud-text');
+            if (stepEl) stepEl.innerHTML = step;
+            if (textEl) textEl.innerHTML = desc;
             hud.scrollTop = hud.scrollHeight;
         },
         close: () => {
@@ -774,12 +987,14 @@
     const v2 = App.vectorList.find((v) => v.id === v2Id);
     if (!v1 || !v2) return;
 
+    const sid = App.OperationAnimator.startSession();
     toggleComputeBtn(true); 
 
     App.currentProjVisual = null;
     if (App.refreshProjectionOverlay) App.refreshProjectionOverlay();
 
     fadeUnrelatedVectors([v1Id, v2Id], 0.1, function () {
+      if (sid !== currentSessionId) return;
       const initialU = Vec3D.S3D.unitsPerWorld || 1; 
       
       const getTip = (id, vec) => {
@@ -800,11 +1015,11 @@
       const distDash = v2P.distanceTo(p);
 
       const animGroup = new THREE.Group();
+      App.OperationAnimator.registerGroup3D(animGroup);
       if (window.Vec3D) Vec3D._mathGroup.add(animGroup);
 
       const isDarkInit = document.body.classList.contains("dark");
       const dashColorInit = isDarkInit ? 0x888888 : 0xaaaaaa;
-      const axisColorInit = isDarkInit ? 0x444444 : 0xdddddd; 
       const projColor = 0x0088cc; 
       const tubeThick = Math.max(0.015 * initialU, 0.05);
 
@@ -830,7 +1045,32 @@
       dashedTubeGroup.scale.set(1, 1, 0.001);
       animGroup.add(dashedTubeGroup);
 
-      // 2. VECTOR CHIẾU (Có đầu mũi tên)
+      // Góc vuông tại chân đường chiếu p
+      let sqGroup = new THREE.Group();
+      const dir1 = new THREE.Vector3().subVectors(v2P, p).normalize();
+      let dir2 = p.lengthSq() > 0.001 ? p.clone().multiplyScalar(-1).normalize() : uDir.clone();
+      if (dir1.lengthSq() > 0.1 && dir2.lengthSq() > 0.1) {
+        const sqSize = 0.15 * initialU;
+        const pA = p.clone().add(dir1.clone().multiplyScalar(sqSize));
+        const pB = p.clone().add(dir2.clone().multiplyScalar(sqSize));
+        const corner = p.clone().add(dir1.clone().multiplyScalar(sqSize)).add(dir2.clone().multiplyScalar(sqSize));
+        const createEdge = (pS, pE) => {
+          const d = pS.distanceTo(pE);
+          const geo = new THREE.CylinderGeometry(tubeThick * 0.5, tubeThick * 0.5, d, 6);
+          geo.translate(0, d / 2, 0);
+          geo.rotateX(Math.PI / 2);
+          const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: dashColorInit }));
+          mesh.position.copy(pS);
+          mesh.lookAt(pE);
+          return mesh;
+        };
+        sqGroup.add(createEdge(pA, corner));
+        sqGroup.add(createEdge(pB, corner));
+        sqGroup.visible = false;
+        animGroup.add(sqGroup);
+      }
+
+      // 2. VECTOR CHIẾU (Có đầu mũi tên, tự ẩn nếu độ dài = 0 khi 2 vector vuông góc)
       const projVectorGroup = new THREE.Group();
       const cylGeo = new THREE.CylinderGeometry(tubeThick * 1.5, tubeThick * 1.5, 1, 8); 
       cylGeo.translate(0, 0.5, 0);
@@ -844,71 +1084,69 @@
       projVectorGroup.add(cylMesh);
       projVectorGroup.add(coneMesh);
       projVectorGroup.position.set(0,0,0);
-      projVectorGroup.scale.set(1, 1, 0.001); 
+      projVectorGroup.visible = false;
       animGroup.add(projVectorGroup);
+
+      const updateProjVectorMesh = (currentLenWorld) => {
+        const absL = Math.abs(currentLenWorld);
+        if (absL < 1e-4) {
+          projVectorGroup.visible = false;
+          return;
+        }
+        projVectorGroup.visible = true;
+        const faceDir = currentLenWorld >= 0 ? uDir : uDir.clone().negate();
+        projVectorGroup.lookAt(projVectorGroup.position.clone().add(faceDir));
+        cylMesh.scale.set(1, 1, absL);
+        const coneRatio = Math.min(1, absL / Math.max(tubeThick * 7, 1e-4));
+        coneMesh.scale.setScalar(coneRatio);
+        coneMesh.position.set(0, 0, absL);
+        projVectorGroup.scale.set(1, 1, 1);
+      };
 
       // --- [QUAN TRỌNG] VÒNG LẶP ĐỒNG BỘ ZOOM VÀ BẤT TỬ THEME ---
       let syncFrameId;
       const syncZoomAndTheme = () => {
+          if (sid !== currentSessionId) return;
           if (window.Vec3D && Vec3D._mathGroup) {
-              // 1. Tự động "Hồi sinh" nếu bị hàm chuyển Theme xóa mất
               if (animGroup.parent !== Vec3D._mathGroup) {
                   Vec3D._mathGroup.add(animGroup);
               }
-              
-              // 2. Đồng bộ tỷ lệ Zoom
               if (Vec3D.S3D) {
                   const currentU = Vec3D.S3D.unitsPerWorld || 1;
                   const ratio = currentU / initialU; 
                   animGroup.scale.set(ratio, ratio, ratio); 
               }
-
-              // 3. Cập nhật màu sắc thời gian thực nếu đang chạy mà đổi Theme
               const isDarkNow = document.body.classList.contains("dark");
               const newDashC = isDarkNow ? 0x888888 : 0xaaaaaa;
               dashedTubeGroup.children.forEach(c => {
                   if (c.isMesh) c.material.color.setHex(newDashC);
               });
           }
-          syncFrameId = requestAnimationFrame(syncZoomAndTheme);
+          syncFrameId = scheduleRAF(syncZoomAndTheme, sid);
       };
       syncZoomAndTheme();
-      // ------------------------------------------------------------
 
-      const hud = createVectoriaHUD();
+      const hud = createVectoriaHUD(sid);
       
       hud.setStep("<i class='ph ph-arrow-down'></i> BƯỚC 1: PHÉP CHIẾU", `Hạ vuông góc v2 xuống giá của v1 để tạo <b>Vector hình chiếu</b>.`);
       
       runTween(1500, Easing.easeInOutCubic, function(v) {
         dashedTubeGroup.scale.set(1, 1, Math.max(0.001, v));
-        
-        const currentLenWorld = pLenWorld * v; 
-        const L = Math.max(0.001, Math.abs(currentLenWorld));
-        const faceDir = currentLenWorld >= 0 ? uDir : uDir.clone().negate();
-        
-        projVectorGroup.lookAt(projVectorGroup.position.clone().add(faceDir));
-        cylMesh.scale.set(1, 1, L);
-        coneMesh.position.set(0, 0, L); 
-        projVectorGroup.scale.set(1, 1, 1);
+        updateProjVectorMesh(pLenWorld * v);
       }, function() {
-        
-        setTimeout(() => {
+        sqGroup.visible = true;
+        scheduleTimeout(() => {
             hud.setStep("<i class='ph ph-corners-out'></i> BƯỚC 2: TỶ LỆ HÓA", `Nhân bản Vector chiếu lên gấp <b>||v1||</b> lần (hệ số ${uLenMath.toFixed(2)}).`);
             
             const rawDotWorld = pLenWorld * uLenMath; 
 
             runTween(2000, Easing.easeInOutCubic, function(v) {
                 const currentLenWorld = pLenWorld + (rawDotWorld - pLenWorld) * v; 
-                const L = Math.max(0.001, Math.abs(currentLenWorld));
-                const faceDir = currentLenWorld >= 0 ? uDir : uDir.clone().negate();
-
-                projVectorGroup.lookAt(projVectorGroup.position.clone().add(faceDir));
-                cylMesh.scale.set(1, 1, L);
-                coneMesh.position.set(0, 0, L);
+                updateProjVectorMesh(currentLenWorld);
             }, function() {
                 
-                setTimeout(() => {
-                    const signStr = resVal >= 0 ? "Cùng chiều" : "Ngược chiều";
+                scheduleTimeout(() => {
+                    const signStr = Math.abs(resVal) < 1e-6 ? "Trực giao (vuông góc)" : (resVal > 0 ? "Cùng chiều" : "Ngược chiều");
                     const formattedRes = App.formatScalar ? App.formatScalar(resVal) : resVal;
                     
                     hud.setStep("<i class='ph ph-check-circle'></i> KẾT LUẬN", `
@@ -919,24 +1157,26 @@
                     `);
                     
                     runTween(400, Easing.elasticOut, function(v) {
-                        const pulse = 1 + 0.05 * Math.sin(v * Math.PI);
-                        projVectorGroup.scale.set(pulse, pulse, 1);
+                        if (projVectorGroup.visible) {
+                          const pulse = 1 + 0.05 * Math.sin(v * Math.PI);
+                          projVectorGroup.scale.set(pulse, pulse, 1);
+                        }
                     }, function() {
-                        setTimeout(() => {
+                        scheduleTimeout(() => {
                             hud.close();
-                            cancelAnimationFrame(syncFrameId); // Hủy vòng lặp
+                            cancelAnimationFrame(syncFrameId);
                             if (animGroup.parent) animGroup.parent.remove(animGroup); 
                             fadeUnrelatedVectors([v1Id, v2Id], 1, () => {
+                                App.OperationAnimator.finishSession(sid);
                                 requestRedraw();
-                                toggleComputeBtn(false); 
-                            });
-                        }, 5000); 
-                    });
-                }, 500); 
-            });
-        }, 1500); 
-      });
-    });
+                            }, sid);
+                        }, 5000, sid); 
+                    }, sid);
+                }, 500, sid); 
+            }, sid);
+        }, 1500, sid); 
+      }, sid);
+    }, sid);
   }
 
   // [Hệ 2D] Tích vô hướng (Đã thêm cập nhật màu Theme Realtime)
@@ -945,12 +1185,14 @@
     const v2 = App.vectorList.find((v) => v.id === v2Id);
     if (!v1 || !v2) return;
 
+    const sid = App.OperationAnimator.startSession();
     toggleComputeBtn(true); 
 
     App.currentProjVisual = null;
     if (App.refreshProjectionOverlay) App.refreshProjectionOverlay();
 
     fadeUnrelatedVectors([v1Id, v2Id], 0.1, function () {
+      if (sid !== currentSessionId) return;
       
       const v1x = v1.vec[0], v1y = v1.vec[1];
       const v2x = v2.vec[0], v2y = v2.vec[1];
@@ -972,24 +1214,23 @@
       const dashColorInit = isDarkInit ? "#888888" : "#aaaaaa";
       const projColor = "#0088cc"; 
 
-      const dropGhost = { vec: [0,0], offset: [v2x, v2y], colorCss: dashColorInit, alpha: 0, isGhost: true, isDashed: true, noArrow: true };
+      const dropGhost = { vec: [0,0], offset: [v2x, v2y], colorCss: dashColorInit, alpha: 0, isGhost: true, isDashed: true, noArrow: true, isRightAngle: false };
       const projGhost = { vec: [0, 0], offset: [0, 0], colorCss: projColor, alpha: 0, isGhost: true, isDashed: false, noArrow: false, drawThick: true }; 
       
       App.tempGhosts = [dropGhost, projGhost];
-      const hud = createVectoriaHUD();
+      const hud = createVectoriaHUD(sid);
 
       // --- Vòng lặp cập nhật màu thời gian thực cho 2D Ghost ---
       let syncFrame2D;
       const syncTheme2D = () => {
+          if (sid !== currentSessionId) return;
           const isDarkNow = document.body.classList.contains("dark");
           dropGhost.colorCss = isDarkNow ? "#888888" : "#aaaaaa";
-          // Nếu tempGhosts đã bị dọn sạch thì tự dừng vòng lặp
           if (App.tempGhosts && App.tempGhosts.length > 0) {
-              syncFrame2D = requestAnimationFrame(syncTheme2D);
+              syncFrame2D = scheduleRAF(syncTheme2D, sid);
           }
       };
       syncTheme2D();
-      // ---------------------------------------------------------
       
       hud.setStep("<i class='ph ph-arrow-down'></i> BƯỚC 1: PHÉP CHIẾU", `Hạ vuông góc v2 xuống giá của v1 để tạo <b>Vector hình chiếu</b>.`);
       dropGhost.alpha = 1; projGhost.alpha = 1;
@@ -998,16 +1239,16 @@
           dropGhost.vec = [(px - v2x) * v, (py - v2y) * v];
           projGhost.vec = [px * v, py * v];
       }, function() {
-          
-          setTimeout(() => {
+          dropGhost.isRightAngle = true;
+          scheduleTimeout(() => {
               hud.setStep("<i class='ph ph-corners-out'></i> BƯỚC 2: TỶ LỆ HÓA", `Nhân bản Vector chiếu lên gấp <b>||v1||</b> lần (hệ số ${uLen.toFixed(2)}).`);
               
               runTween(2000, Easing.easeInOutCubic, function(v) {
                   projGhost.vec = [px + (finalPx - px) * v, py + (finalPy - py) * v];
               }, function() {
                   
-                  setTimeout(() => {
-                      const signStr = resVal >= 0 ? "Cùng chiều" : "Ngược chiều";
+                  scheduleTimeout(() => {
+                      const signStr = Math.abs(resVal) < 1e-6 ? "Trực giao (vuông góc)" : (resVal > 0 ? "Cùng chiều" : "Ngược chiều");
                       const formattedRes = App.formatScalar ? App.formatScalar(resVal) : resVal;
 
                       hud.setStep("<i class='ph ph-check-circle'></i> KẾT LUẬN", `
@@ -1019,20 +1260,20 @@
 
                       requestRedraw();
 
-                      setTimeout(() => {
+                      scheduleTimeout(() => {
                           hud.close();
-                          cancelAnimationFrame(syncFrame2D); // Hủy vòng lặp màu
+                          cancelAnimationFrame(syncFrame2D);
                           App.tempGhosts = [];
                           fadeUnrelatedVectors([v1Id, v2Id], 1, () => {
+                              App.OperationAnimator.finishSession(sid);
                               requestRedraw();
-                              toggleComputeBtn(false); 
-                          });
-                      }, 5000); 
-                  }, 500);
-              });
-          }, 1500);
-      });
-    });
+                          }, sid);
+                      }, 5000, sid); 
+                  }, 500, sid);
+              }, sid);
+          }, 1500, sid);
+      }, sid);
+    }, sid);
   }
 
   // ==================================================================================
@@ -1046,22 +1287,36 @@
     const res = App.vectorList.find((v) => v.id === resId);
     if (!v1 || !v2 || !res) return;
 
+    const sid = App.OperationAnimator.startSession();
+    App.OperationAnimator.registerRestore(() => {
+      res.alpha = 1;
+      const g = get3DGroup(resId);
+      if (g) {
+        g.visible = true;
+        g.scale.set(1, 1, 1);
+        setOpacity3D(g, 1);
+      }
+    });
+
     toggleComputeBtn(true);
     const initialU = Vec3D.S3D.unitsPerWorld || 1;
     const resG = get3DGroup(resId);
     if (resG) setOpacity3D(resG, 0);
 
     fadeUnrelatedVectors([v1Id, v2Id, resId], 0.1, async function () {
+        if (sid !== currentSessionId) return;
         const animGroup = new THREE.Group();
+        App.OperationAnimator.registerGroup3D(animGroup);
         Vec3D._mathGroup.add(animGroup);
 
         let syncFrameId;
         const syncZoomAndTheme = () => {
+            if (sid !== currentSessionId) return;
             if (window.Vec3D && Vec3D._mathGroup) {
                 if (animGroup.parent !== Vec3D._mathGroup) Vec3D._mathGroup.add(animGroup);
                 if (Vec3D.S3D) animGroup.scale.setScalar((Vec3D.S3D.unitsPerWorld || 1) / initialU);
             }
-            syncFrameId = requestAnimationFrame(syncZoomAndTheme);
+            syncFrameId = scheduleRAF(syncZoomAndTheme, sid);
         };
         syncZoomAndTheme();
 
@@ -1078,6 +1333,7 @@
 
         const createGhostTube = (pEnd) => {
             const d = origin.distanceTo(pEnd);
+            if (d < 0.001) return new THREE.Group();
             const geo = new THREE.CylinderGeometry(thick*0.8, thick*0.8, d, 8);
             geo.translate(0, d/2, 0); geo.rotateX(Math.PI/2);
             const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color: 0x888888, transparent: true, opacity: 0.6}));
@@ -1096,7 +1352,7 @@
         const rectMesh = new THREE.Mesh(rectGeo, rectMat);
         animGroup.add(rectMesh);
 
-        const hud = createVectoriaHUD();
+        const hud = createVectoriaHUD(sid);
         
         // --- SỐ LIỆU LATEX ---
         const fmt = (n) => {
@@ -1110,7 +1366,6 @@
         const resLen = Math.sqrt(cx**2 + cy**2 + cz**2);
         const formattedCoords = `[${fmt(cx)}, ${fmt(cy)}, ${fmt(cz)}]`;
 
-        // BẢNG MATHLIVE LATEX CHUẨN XỊN (CHỐNG GÃY DÒNG)
         const mathHtml = `
             <div class="math-block">
                 <div style="min-width: max-content; padding-bottom: 8px;">
@@ -1133,33 +1388,31 @@
 
         // BƯỚC 1: KHUNG CƠ SỞ
         hud.setStep("<i class='ph ph-stack'></i> BƯỚC 1: ĐỊNH NGHĨA MẶT PHẲNG", "Tịnh tiến các vector thành phần để thiết lập mặt phẳng cơ sở (chứa hình bình hành).");
-        await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
+        if (!(await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
             ghostV1.position.copy(origin).lerp(pB, v);
             ghostV2.position.copy(origin).lerp(pA, v);
-        });
+        }, sid))) return;
         
         verts[0]=0; verts[1]=0; verts[2]=0; 
         verts[3]=pA.x; verts[4]=pA.y; verts[5]=pA.z; 
-        // ... (Cập nhật tọa độ lưới)
         verts[6]=pA.x+pB.x; verts[7]=pA.y+pB.y; verts[8]=pA.z+pB.z; 
         verts[9]=pB.x; verts[10]=pB.y; verts[11]=pB.z; 
         rectGeo.attributes.position.needsUpdate = true;
 
-        await runTweenAsync(600, Easing.linear, (v) => rectMat.opacity = 0.5 * v);
-        await waitAnim(1000);
+        if (!(await runTweenAsync(600, Easing.linear, (v) => rectMat.opacity = 0.5 * v, sid))) return;
+        if (!(await waitAnim(1000, sid))) return;
 
         // BƯỚC 2: KHAI TRIỂN ĐẠI SỐ
         hud.setStep("<i class='ph ph-calculator'></i> BƯỚC 2: KHAI TRIỂN ĐỊNH THỨC", `Áp dụng định thức ma trận vuông để tính tọa độ Vector kết quả:${mathHtml}`);
-        if (resG) { resG.scale.set(0.001, 0.001, 0.001); setOpacity3D(resG, 1); }
+        res.alpha = 1;
+        if (resG) { resG.visible = true; resG.scale.set(0.001, 0.001, 0.001); setOpacity3D(resG, 1); }
         
-        // Ngâm 3.5 giây để user kịp nhấn Pause đọc công thức
-        await waitAnim(3500); 
+        if (!(await waitAnim(3500, sid))) return; 
 
-        // Vector đâm lên
-        await runTweenAsync(1500, Easing.elasticOut, (v) => {
+        if (!(await runTweenAsync(1500, Easing.elasticOut, (v) => {
             if (resG) resG.scale.set(v, v, v);
-        });
-        await waitAnim(1000);
+        }, sid))) return;
+        if (!(await waitAnim(1000, sid))) return;
 
         // BƯỚC 3: HỆ QUẢ HÌNH HỌC
         hud.setStep("<i class='ph ph-check-circle'></i> BƯỚC 3: TÍNH CHẤT HÌNH HỌC", `
@@ -1171,12 +1424,15 @@
             </ul>
         `);
 
-        await waitAnim(7000);
+        if (!(await waitAnim(7000, sid))) return;
         hud.close();
         cancelAnimationFrame(syncFrameId);
         if (animGroup.parent) animGroup.parent.remove(animGroup);
-        fadeUnrelatedVectors([v1Id, v2Id, resId], 1, () => { requestRedraw(); toggleComputeBtn(false); });
-    });
+        fadeUnrelatedVectors([v1Id, v2Id, resId], 1, () => {
+          App.OperationAnimator.finishSession(sid);
+          requestRedraw();
+        }, sid);
+    }, sid);
   }
 
   // ==================================================================================
@@ -1187,20 +1443,24 @@
   function runAnimNorm3D(vId, resVal) {
     const v = App.vectorList.find(x => x.id === vId);
     if (!v) return;
+    const sid = App.OperationAnimator.startSession();
     toggleComputeBtn(true);
 
     fadeUnrelatedVectors([vId], 0.1, async function () {
+        if (sid !== currentSessionId) return;
         const initialU = Vec3D.S3D.unitsPerWorld || 1;
         const animGroup = new THREE.Group();
+        App.OperationAnimator.registerGroup3D(animGroup);
         Vec3D._mathGroup.add(animGroup);
 
         let syncFrameId;
         const syncZoomAndTheme = () => {
+            if (sid !== currentSessionId) return;
             if (window.Vec3D && Vec3D._mathGroup) {
                 if (animGroup.parent !== Vec3D._mathGroup) Vec3D._mathGroup.add(animGroup);
                 if (Vec3D.S3D) animGroup.scale.setScalar((Vec3D.S3D.unitsPerWorld || 1) / initialU);
             }
-            syncFrameId = requestAnimationFrame(syncZoomAndTheme);
+            syncFrameId = scheduleRAF(syncZoomAndTheme, sid);
         };
         syncZoomAndTheme();
 
@@ -1216,7 +1476,7 @@
 
         const createScaffoldLine = (p1, p2, colorHex) => {
             const d = p1.distanceTo(p2);
-            if (d < 0.001) return new THREE.Group(); // Chống crash độ dài 0
+            if (d < 0.001) return new THREE.Group();
             const geo = new THREE.CylinderGeometry(thick*0.8, thick*0.8, d, 8);
             geo.translate(0, d / 2, 0); geo.rotateX(Math.PI / 2);
             const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0 }));
@@ -1281,12 +1541,11 @@
         const lblY = createLabel3D(`|y|=<span class="hl">${fmt(Math.abs(y))}</span>`, new THREE.Vector3(x, y/2, 0));
         const lblZ = createLabel3D(`|z|=<span class="hl">${fmt(Math.abs(z))}</span>`, new THREE.Vector3(x, y, z/2));
 
-        // [MŨI TIÊM CỨU MẠNG CHỐNG CRASH]
         const safeSetOpacity = (obj, val) => {
             if (obj && obj.material) obj.material.opacity = val;
         };
 
-        const hud = createVectoriaHUD();
+        const hud = createVectoriaHUD(sid);
         const normStr = resVal.toFixed(4).replace(/\.?0+$/, "");
 
         const mathHtmlBase = `
@@ -1298,16 +1557,15 @@
 
         hud.setStep("<i class='ph ph-shapes'></i> BƯỚC 1: PHÂN RÃ MẶT ĐÁY", `Từ hình chiếu dưới mặt phẳng tọa độ Oxy, ta tính được bình phương đường chéo:${mathHtmlBase}`);
         
-        await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
-            // Thay thế toàn bộ gán trực tiếp bằng hàm an toàn
+        if (!(await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
             safeSetOpacity(legX, v); 
             safeSetOpacity(legY, v); 
             safeSetOpacity(diagBase, v);
             sq1.children.forEach(c => safeSetOpacity(c, v));
             lblX.div.style.opacity = v; 
             lblY.div.style.opacity = v;
-        });
-        await waitAnim(2000);
+        }, sid))) return;
+        if (!(await waitAnim(2000, sid))) return;
 
         const mathHtmlTotal = `
             <div class="math-block">
@@ -1323,30 +1581,34 @@
 
         hud.setStep("<i class='ph ph-cube'></i> BƯỚC 2: ĐỊNH LÝ PYTHAGORAS", `Dựng tam giác vuông chứa đường chéo đáy và chiều cao z để tìm độ dài Vector:${mathHtmlTotal}`);
         
-        await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
-            // An toàn cho bước 2
+        if (!(await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
             safeSetOpacity(legZ, v);
             sq2.children.forEach(c => safeSetOpacity(c, v));
             lblZ.div.style.opacity = v;
-        });
-        await waitAnim(6000);
+        }, sid))) return;
+        if (!(await waitAnim(6000, sid))) return;
 
         hud.close();
         cancelAnimationFrame(syncFrameId);
         if (animGroup.parent) animGroup.parent.remove(animGroup);
         if (App._activeAnimLabels) App._activeAnimLabels.forEach(l => l.remove());
         App._activeAnimLabels = [];
-        fadeUnrelatedVectors([vId], 1, () => { requestRedraw(); toggleComputeBtn(false); });
-    });
+        fadeUnrelatedVectors([vId], 1, () => {
+          App.OperationAnimator.finishSession(sid);
+          requestRedraw();
+        }, sid);
+    }, sid);
   }
 
   // [HỆ 2D] ĐỘ DÀI VECTOR: Tối ưu chống Layout Thrashing
   function runAnimNorm2D(vId, resVal) {
     const v = App.vectorList.find(x => x.id === vId);
     if (!v) return;
+    const sid = App.OperationAnimator.startSession();
     toggleComputeBtn(true);
 
     fadeUnrelatedVectors([vId], 0.1, async function () {
+        if (sid !== currentSessionId) return;
         const x = v.vec[0], y = v.vec[1];
         const fmt = (n) => App.formatScalar ? App.formatScalar(n) : Number(n).toFixed(2).replace(/\.?0+$/, '');
         const normStr = resVal.toFixed(4).replace(/\.?0+$/, '');
@@ -1354,11 +1616,9 @@
         const isDark = document.body.classList.contains("dark");
         const techColor = isDark ? "#888888" : "#aaaaaa";
         
-        // noArrow = true tắt hẳn mũi tên để nhìn giống đoạn thẳng hình học
         const legX = { vec: [x, 0], offset: [0, 0], colorCss: techColor, alpha: 0, isGhost: true, isDashed: false, noArrow: true };
         const legY = { vec: [0, y], offset: [x, 0], colorCss: techColor, alpha: 0, isGhost: true, isDashed: false, noArrow: true };
         
-        // Ký hiệu góc vuông thủ công bằng 2 đoạn ngắn (chống mũi tên triệt để)
         const sqSize = 0.4; 
         const sX = x >= 0 ? 1 : -1; const sY = y >= 0 ? 1 : -1;
         const edge1 = { offset: [x - sqSize*sX, 0], vec: [0, sqSize*sY], colorCss: techColor, alpha: 0, isGhost: true, noArrow: true };
@@ -1385,12 +1645,12 @@
 
         let syncFrameId;
         const syncThemeAndPos = () => {
+            if (sid !== currentSessionId) return;
             const isDarkNow = document.body.classList.contains("dark");
             App.tempGhosts.forEach(g => g.colorCss = isDarkNow ? "#888888" : "#aaaaaa");
 
             const canvas = document.getElementById("canvas2d");
             if (canvas && window.Vec2D && Vec2D.S2D) {
-                // Tự tính toán không dùng getBoundingClientRect để chống giật lag
                 const dpr = window.devicePixelRatio || 1;
                 const w = canvas.width / dpr;
                 const h = canvas.height / dpr;
@@ -1406,11 +1666,11 @@
                 const pyY = cy - (y / 2) * unit;
                 lblY.style.transform = `translate(-50%, -50%) translate(${pyX + (x>=0? 35 : -35)}px, ${pyY}px)`;
             }
-            syncFrameId = requestAnimationFrame(syncThemeAndPos);
+            syncFrameId = scheduleRAF(syncThemeAndPos, sid);
         };
         syncThemeAndPos();
 
-        const hud = createVectoriaHUD();
+        const hud = createVectoriaHUD(sid);
         const mathHtml = `
             <div class="math-block">
                 <math-field read-only style="font-size: 15px; background: transparent; border: none; outline: none; margin-bottom: 8px; font-weight: bold;">
@@ -1425,22 +1685,25 @@
         `;
 
         hud.setStep("<i class='ph ph-bounding-box'></i> BƯỚC 1: DỰNG TAM GIÁC", "Phân rã vector thành hai thành phần tọa độ để tạo thành một tam giác vuông.");
-        await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
+        if (!(await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
             App.tempGhosts.forEach(g => g.alpha = v * 0.8);
             lblX.style.opacity = v; lblY.style.opacity = v;
-        });
-        await waitAnim(1500);
+        }, sid))) return;
+        if (!(await waitAnim(1500, sid))) return;
 
         hud.setStep("<i class='ph ph-calculator'></i> BƯỚC 2: CHUẨN EUCLID", `Áp dụng định lý Pythagoras tính độ dài cạnh huyền:${mathHtml}`);
-        await waitAnim(6000);
+        if (!(await waitAnim(6000, sid))) return;
 
         hud.close();
         cancelAnimationFrame(syncFrameId);
         if (App._activeAnimLabels) App._activeAnimLabels.forEach(l => l.remove());
         App._activeAnimLabels = [];
         App.tempGhosts = [];
-        fadeUnrelatedVectors([vId], 1, () => { requestRedraw(); toggleComputeBtn(false); });
-    });
+        fadeUnrelatedVectors([vId], 1, () => {
+          App.OperationAnimator.finishSession(sid);
+          requestRedraw();
+        }, sid);
+    }, sid);
   }
 
   // ==================================================================================
@@ -1452,20 +1715,24 @@
     const v1 = App.vectorList.find((v) => v.id === v1Id);
     const v2 = App.vectorList.find((v) => v.id === v2Id);
     if (!v1 || !v2) return;
+    const sid = App.OperationAnimator.startSession();
     toggleComputeBtn(true);
 
     fadeUnrelatedVectors([v1Id, v2Id], 0.1, async function () {
+        if (sid !== currentSessionId) return;
         const initialU = Vec3D.S3D.unitsPerWorld || 1;
         const animGroup = new THREE.Group();
+        App.OperationAnimator.registerGroup3D(animGroup);
         Vec3D._mathGroup.add(animGroup);
 
         let syncFrameId;
         const syncZoomAndTheme = () => {
+            if (sid !== currentSessionId) return;
             if (window.Vec3D && Vec3D._mathGroup) {
                 if (animGroup.parent !== Vec3D._mathGroup) Vec3D._mathGroup.add(animGroup);
                 if (Vec3D.S3D) animGroup.scale.setScalar(Vec3D.S3D.unitsPerWorld || 1);
             }
-            syncFrameId = requestAnimationFrame(syncZoomAndTheme);
+            syncFrameId = scheduleRAF(syncZoomAndTheme, sid);
         };
         syncZoomAndTheme();
 
@@ -1476,7 +1743,6 @@
         const A = toVec3Safe(v1.vec);
         const B = toVec3Safe(v2.vec);
         
-        // Toán học tính Toán
         const dot = A.dot(B);
         const lenA = A.length(); const lenB = B.length();
         const degVal = (radVal * 180) / Math.PI;
@@ -1486,11 +1752,9 @@
         const normA = A.clone().normalize();
         const normB = B.clone().normalize();
         
-        // Tìm pháp tuyến mặt phẳng chứa 2 vector
         let N = new THREE.Vector3().crossVectors(normA, normB).normalize();
-        if (N.lengthSq() < 0.001) N.set(0, 0, 1); // Trùng nhau thì lấy trục Z
+        if (N.lengthSq() < 0.001) N.set(0, 0, 1);
 
-        // Setup lưới xoay cho Hình quạt
         const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), N);
         const startXLocal = new THREE.Vector3(1, 0, 0).applyQuaternion(quaternion);
         const angleOffset = startXLocal.angleTo(normA);
@@ -1507,7 +1771,7 @@
         sectorMesh.setRotationFromQuaternion(finalQuat);
         animGroup.add(sectorMesh);
 
-        const hud = createVectoriaHUD();
+        const hud = createVectoriaHUD(sid);
         const mathHtml = `
             <div class="math-block">
                 <math-field read-only style="font-size: 14px; background:transparent; border:none; outline:none; font-weight:bold;">
@@ -1525,28 +1789,28 @@
 
         hud.setStep("<i class='ph ph-fan'></i> BƯỚC 1: QUÉT GÓC MẶT PHẲNG", "Mọi cặp vector cắt nhau đều tạo thành một mặt phẳng. Góc được đo bằng cách quét từ vector này sang vector kia trên mặt phẳng đó.");
         
-        // Animation Quét hình quạt (Thay đổi geometry để tạo cảm giác quét)
-        await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
+        if (!(await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
             const currentAngle = radVal * v;
-            // Recreate geometry is extremely fast, safe for animations
             sectorMesh.geometry.dispose();
             sectorMesh.geometry = new THREE.CircleGeometry(radius, 32, 0, Math.max(0.001, currentAngle));
-        });
-        await waitAnim(1000);
+        }, sid))) return;
+        if (!(await waitAnim(1000, sid))) return;
 
         hud.setStep("<i class='ph ph-calculator'></i> BƯỚC 2: CÔNG THỨC COSIN", `Đại số sử dụng Tích vô hướng và Độ dài để tính toán chính xác số đo góc:${mathHtml}`);
         
-        // Hiện lại Arc gốc đẹp đẽ
         if (App.currentAngleVisual3D) App.currentAngleVisual3D.visible = true;
         animGroup.remove(sectorMesh);
         
-        await waitAnim(7000);
+        if (!(await waitAnim(7000, sid))) return;
 
         hud.close();
         cancelAnimationFrame(syncFrameId);
         if (animGroup.parent) animGroup.parent.remove(animGroup);
-        fadeUnrelatedVectors([v1Id, v2Id], 1, () => { requestRedraw(); toggleComputeBtn(false); });
-    });
+        fadeUnrelatedVectors([v1Id, v2Id], 1, () => {
+          App.OperationAnimator.finishSession(sid);
+          requestRedraw();
+        }, sid);
+    }, sid);
   }
 
   // [HỆ 2D] QUÉT GÓC 2D
@@ -1554,17 +1818,25 @@
     const v1 = App.vectorList.find((v) => v.id === v1Id);
     const v2 = App.vectorList.find((v) => v.id === v2Id);
     if (!v1 || !v2) return;
+    const sid = App.OperationAnimator.startSession();
     toggleComputeBtn(true);
 
+    const a = [Number(v1.vec[0]||0), Number(v1.vec[1]||0)];
+    const b = [Number(v2.vec[0]||0), Number(v2.vec[1]||0)];
+    const degVal = (radVal * 180) / Math.PI;
+    App.OperationAnimator.registerRestore(() => {
+      if (App.currentAngleVisual2D) {
+        App.currentAngleVisual2D.b = b;
+        App.currentAngleVisual2D.deg = degVal;
+      }
+    });
+
     fadeUnrelatedVectors([v1Id, v2Id], 0.1, async function () {
-        const hud = createVectoriaHUD();
-        
-        const a = [Number(v1.vec[0]||0), Number(v1.vec[1]||0)];
-        const b = [Number(v2.vec[0]||0), Number(v2.vec[1]||0)];
+        if (sid !== currentSessionId) return;
+        const hud = createVectoriaHUD(sid);
         
         const dot = a[0]*b[0] + a[1]*b[1];
         const lenA = Math.hypot(a[0], a[1]); const lenB = Math.hypot(b[0], b[1]);
-        const degVal = (radVal * 180) / Math.PI;
         const fmt = (n) => App.formatScalar ? App.formatScalar(n) : Number(n).toFixed(2).replace(/\.?0+$/, "");
 
         const mathHtml = `
@@ -1584,32 +1856,31 @@
 
         hud.setStep("<i class='ph ph-fan'></i> BƯỚC 1: ĐO GÓC PHẲNG", "Tiến hành quét góc cung tròn từ Vector thứ nhất sang Vector thứ hai.");
         
-        // Animation xoay vector giả mạo (để mồi cho viewer2D tự quét cung tròn)
-        // viewer2D vẽ cung dựa vào App.currentAngleVisual2D {a, b}
-        await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
+        if (!(await runTweenAsync(1500, Easing.easeInOutCubic, (v) => {
             if (!App.currentAngleVisual2D) return;
-            // Interpolate vector B từ A tới B thực tế
             const currentB = [
                 a[0] + (b[0] - a[0]) * v,
                 a[1] + (b[1] - a[1]) * v
             ];
-            // Cập nhật ngầm để viewer2D vẽ cung đang nở ra
             App.currentAngleVisual2D.b = currentB;
-            // Cập nhật chữ số độ đang tăng dần
             App.currentAngleVisual2D.deg = degVal * v;
-        });
+        }, sid))) return;
         
-        // Trả lại trạng thái thật
-        App.currentAngleVisual2D.b = b;
-        App.currentAngleVisual2D.deg = degVal;
-        await waitAnim(1000);
+        if (App.currentAngleVisual2D) {
+            App.currentAngleVisual2D.b = b;
+            App.currentAngleVisual2D.deg = degVal;
+        }
+        if (!(await waitAnim(1000, sid))) return;
 
         hud.setStep("<i class='ph ph-calculator'></i> BƯỚC 2: CÔNG THỨC COSIN", `Góc được chứng minh thông qua định lý hình chiếu (Cosin):${mathHtml}`);
-        await waitAnim(7000);
+        if (!(await waitAnim(7000, sid))) return;
 
         hud.close();
-        fadeUnrelatedVectors([v1Id, v2Id], 1, () => { requestRedraw(); toggleComputeBtn(false); });
-    });
+        fadeUnrelatedVectors([v1Id, v2Id], 1, () => {
+          App.OperationAnimator.finishSession(sid);
+          requestRedraw();
+        }, sid);
+    }, sid);
   }
 
   // ==================================================================================
@@ -1631,6 +1902,9 @@
           if (App.lockInteraction) App.lockInteraction();
           runAnimCross3D(ids[0], ids[1], resValOrId);
       } else {
+          const res = App.vectorList && App.vectorList.find((v) => v.id === resValOrId);
+          if (res) res.alpha = 1;
+          requestRedraw();
           App.showToast("Cảnh báo: Tích có hướng chỉ được định nghĩa trong không gian 3D.", "warning");
           setTimeout(() => toggleComputeBtn(false), 500);
       }

@@ -636,7 +636,20 @@
     setSpeed(mult) {
       const val = parseFloat(mult);
       if (!isNaN(val) && val > 0) {
-        this._speed = val;
+        this._speed = Math.max(0.2, Math.min(2.5, val));
+        const lbl = document.getElementById("conicSpeedValue");
+        if (lbl) lbl.textContent = `${this._speed.toFixed(1)}×`;
+        const speedSlider = document.getElementById("conicSpeedSlider");
+        if (speedSlider) {
+          if (Math.abs(parseFloat(speedSlider.value) - this._speed) > 0.05) {
+            speedSlider.value = String(this._speed);
+          }
+          const min = parseFloat(speedSlider.min) || 0.2;
+          const max = parseFloat(speedSlider.max) || 2.5;
+          const pct = Math.max(0, Math.min(100, ((this._speed - min) / (max - min)) * 100));
+          speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+          speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+        }
       }
     },
 
@@ -898,7 +911,7 @@
           speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
           speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
         };
-        syncSliderPct(1.0);
+        syncSliderPct(parseFloat(speedSlider.value) || this._speed);
         speedSlider.addEventListener("input", (e) => {
           const v = parseFloat(e.target.value) || 1.0;
           syncSliderPct(v);
@@ -1893,5 +1906,9 @@
         }
       }
     }
+  };
+
+  App.stopConicAnimation = function () {
+    return App.ConicAnimator.stop();
   };
 })();

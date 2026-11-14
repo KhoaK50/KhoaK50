@@ -599,8 +599,8 @@
   <line x1="60.0" y1="45.0" x2="480.0" y2="45.0" stroke="var(--s12, #11181c)" stroke-width="2" />
 
   <!-- Hanging Box (Material / Chandelier) -->
-  <rect x="210.0" y="220" width="120.0" height="112.0" fill="#fce7f3" stroke="#db2777" stroke-width="2" rx="3" />
-  <text x="270" y="282.0" text-anchor="middle" font-size="15" font-weight="600" fill="#9d174d">Vật nặng</text>
+  <rect x="210.0" y="220" width="120.0" height="112.0" fill="rgba(219, 39, 119, 0.14)" stroke="#ec4899" stroke-width="2" rx="2" />
+  <text x="270" y="282.0" text-anchor="middle" font-size="15" font-weight="600" fill="var(--s12, #9d174d)">Vật nặng</text>
 
   <!-- Cables from ceiling to junction O -->
   <line x1="82.5" y1="45.0" x2="270" y2="220" stroke="var(--s12, #11181c)" stroke-width="2.2" stroke-linecap="round" />
@@ -627,12 +627,12 @@
 
   <!-- Angle Arcs (45 deg) -->
   <!-- Left Cable at A: from 0 deg downward to -45 deg -->
-  <path d="M 120.5 45.0 A 38 38 0 0 1 109.5 72.0 L 82.5 45.0 Z" fill="#86efac" fill-opacity="0.5" stroke="#16a34a" stroke-width="1.2" />
-  <text x="128.5" y="67.0" font-size="13" font-weight="600" fill="#15803d">45°</text>
+  <path d="M 120.5 45.0 A 38 38 0 0 1 109.5 72.0 L 82.5 45.0 Z" fill="rgba(22, 163, 74, 0.22)" stroke="#22c55e" stroke-width="1.3" />
+  <text x="128.5" y="67.0" font-size="13" font-weight="600" fill="var(--s12, #15803d)">45°</text>
 
   <!-- Right Cable at B: from 180 deg downward to 225 deg -->
-  <path d="M 430.5 72.0 A 38 38 0 0 1 419.5 45.0 L 457.5 45.0 Z" fill="#86efac" fill-opacity="0.5" stroke="#16a34a" stroke-width="1.2" />
-  <text x="389.5" y="67.0" font-size="13" font-weight="600" fill="#15803d">45°</text>
+  <path d="M 430.5 72.0 A 38 38 0 0 1 419.5 45.0 L 457.5 45.0 Z" fill="rgba(22, 163, 74, 0.22)" stroke="#22c55e" stroke-width="1.3" />
+  <text x="389.5" y="67.0" font-size="13" font-weight="600" fill="var(--s12, #15803d)">45°</text>
 
   <!-- Caption -->
   <text x="270" y="367.0" text-anchor="middle" font-size="15" font-style="italic" fill="var(--s11, #687076)">Hình 5.55</text>
@@ -679,6 +679,146 @@
     }
     if (code.includes('5.55') || code.includes('(-2.8, 2.5)') || code.includes('100\\text{ N}') || (code.includes('(-1.25, 1.25)') && code.includes('pink'))) {
       return svgDiagrams[10];
+    }
+
+    // 2. Lightweight 2D Geometric TikZ-to-SVG Interpreter (100% synced with admin_v2 vectoriaLatexRenderer)
+    if (!/\\(?:begin\{axis\}|addplot|tkzTab|tdplot|foreach|pgfmath)/.test(code)) {
+      const bodyMatch = /\\begin\{tikzpicture\}(?:\s*\[([^\]]*)\])?([\s\S]*?)\\end\{tikzpicture\}/.exec(code);
+      if (bodyMatch) {
+        const tikzOpts = bodyMatch[1] || '';
+        let scale = 1;
+        const scaleM = tikzOpts.match(/scale\s*=\s*([0-9.]+)/);
+        if (scaleM) scale = Math.max(0.25, Math.min(4, parseFloat(scaleM[1]) || 1));
+        const rawStmts = bodyMatch[2].split(';').map(function(s) { return s.trim(); }).filter(Boolean);
+        const namedCoords = new Map();
+        const shapes = [];
+        const labels = [];
+        const parsePt = function(ptTok) {
+          const cl = ptTok.trim().replace(/^\(|\)$/g, '').trim();
+          if (namedCoords.has(cl)) return namedCoords.get(cl);
+          if (cl.indexOf(':') !== -1) {
+            const sp = cl.split(':');
+            const ang = (parseFloat(sp[0]) * Math.PI) / 180;
+            const rad = parseFloat(sp[1]);
+            if (!isNaN(ang) && !isNaN(rad)) return { x: rad * Math.cos(ang), y: rad * Math.sin(ang) };
+          }
+          const parts = cl.split(',');
+          if (parts.length === 2) {
+            const px = parseFloat(parts[0]);
+            const py = parseFloat(parts[1]);
+            if (!isNaN(px) && !isNaN(py)) return { x: px, y: py };
+          }
+          return null;
+        };
+        const resolveCol = function(o) {
+          if (!o) return 'currentColor';
+          if (/\bred\b/i.test(o)) return '#e5484d';
+          if (/\bblue\b/i.test(o)) return '#0090ff';
+          if (/\b(?:green|teal|emerald)\b/i.test(o)) return '#30a46c';
+          if (/\b(?:orange|amber)\b/i.test(o)) return '#f76b15';
+          if (/\b(?:gray|grey)\b/i.test(o)) return 'var(--s7, #8b939a)';
+          return 'currentColor';
+        };
+        const cleanLbl = function(r) {
+          return r.replace(/\$/g, '')
+            .replace(/\\overrightarrow\s*\{([^}]*)\}/g, '$1\u20d7')
+            .replace(/\\vec\s*\{([^}]*)\}/g, '$1\u20d7')
+            .replace(/\\(?:mathbf|mathrm|text)\s*\{([^}]*)\}/g, '$1')
+            .replace(/\\[a-zA-Z]+/g, '').replace(/[{}]/g, '').trim();
+        };
+        for (let si = 0; si < rawStmts.length; si++) {
+          const stmt = rawStmts[si];
+          const cM = /^\\coordinate(?:\s*\[[^\]]*\])?\s*\(([^)]+)\)\s*at\s*\(([^)]+)\)/.exec(stmt);
+          if (cM) {
+            const pt = parsePt(cM[2]);
+            if (pt) namedCoords.set(cM[1].trim(), pt);
+            continue;
+          }
+          const nM = /^\\node(?:\s*\[([^\]]*)\])?(?:\s*\(([^)]+)\))?\s*at\s*\(([^)]+)\)\s*\{([\s\S]*)\}$/.exec(stmt);
+          if (nM) {
+            const pt = parsePt(nM[3]);
+            if (pt) {
+              if (nM[2]) namedCoords.set(nM[2].trim(), pt);
+              const tx = cleanLbl(nM[4]);
+              if (tx) labels.push({ pt: pt, text: tx, opts: nM[1] || '', color: resolveCol(nM[1] || '') });
+            }
+            continue;
+          }
+          const dM = /^\\(draw|fill|filldraw)(?:\s*\[([^\]]*)\])?\s+([\s\S]+)$/.exec(stmt);
+          if (dM) {
+            const dOpts = dM[2] || '';
+            let rest = dM[3].trim();
+            const inlineRe = /node(?:\s*\[([^\]]*)\])?\s*\{([^{}]*)\}/g;
+            let inm;
+            const pNodes = [];
+            while ((inm = inlineRe.exec(rest)) !== null) pNodes.push({ opts: inm[1] || '', rawText: inm[2] });
+            rest = rest.replace(/node(?:\s*\[[^\]]*\])?\s*\{[^{}]*\}/g, '').trim();
+            const ciM = /^\(([^)]+)\)\s*circle\s*(?:\(\s*([0-9.]+)(?:cm|pt)?\s*\)|\[\s*radius\s*=\s*([0-9.]+)\s*\])/.exec(rest);
+            if (ciM) {
+              const ctr = parsePt(ciM[1]);
+              const rad = parseFloat(ciM[2] || ciM[3]);
+              if (ctr && !isNaN(rad)) shapes.push({ type: 'circle', center: ctr, r: rad, isFill: dM[1] === 'fill' || (dM[1] === 'filldraw' && rad <= 0.12), isFillDraw: dM[1] === 'filldraw', color: resolveCol(dOpts) });
+              continue;
+            }
+            const closed = /--\s*cycle\s*$/.test(rest);
+            const pts = rest.replace(/--\s*cycle\s*$/, '').split('--').map(parsePt).filter(Boolean);
+            if (pts.length >= 2) {
+              shapes.push({ type: 'poly', pts: pts, closed: closed, isFill: dM[1] === 'fill' || dM[1] === 'filldraw', hasArrowEnd: /->/.test(dOpts), hasArrowStart: /<-/.test(dOpts), dashed: /dashed/.test(dOpts), thick: /thick/.test(dOpts) ? 2.1 : 1.6, color: resolveCol(dOpts) });
+              for (let pi = 0; pi < pNodes.length; pi++) {
+                const tx = cleanLbl(pNodes[pi].rawText);
+                if (!tx) continue;
+                const apt = /midway|pos\s*=\s*0\.5/.test(pNodes[pi].opts) ? { x: (pts[0].x + pts[pts.length - 1].x) / 2, y: (pts[0].y + pts[pts.length - 1].y) / 2 } : pts[pts.length - 1];
+                labels.push({ pt: apt, text: tx, opts: pNodes[pi].opts, color: resolveCol(dOpts) });
+              }
+            }
+          }
+        }
+        if (shapes.length > 0 || labels.length > 0) {
+          let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+          const exp = function(x, y, p) { const pad = p || 0; if (x - pad < minX) minX = x - pad; if (x + pad > maxX) maxX = x + pad; if (y - pad < minY) minY = y - pad; if (y + pad > maxY) maxY = y + pad; };
+          shapes.forEach(function(sh) { if (sh.type === 'circle') exp(sh.center.x, sh.center.y, sh.r); else sh.pts.forEach(function(p) { exp(p.x, p.y, 0); }); });
+          labels.forEach(function(lb) { exp(lb.pt.x, lb.pt.y, 0.35); });
+          if (isFinite(minX) && isFinite(minY)) {
+            const unitPx = 54 * scale, padPx = 42;
+            const svgW = Math.round(Math.max(1, maxX - minX) * unitPx + padPx * 2);
+            const svgH = Math.round(Math.max(1, maxY - minY) * unitPx + padPx * 2);
+            const sx = function(x) { return (padPx + (x - minX) * unitPx).toFixed(2); };
+            const sy = function(y) { return (padPx + (maxY - y) * unitPx).toFixed(2); };
+            const uid = Math.random().toString(36).slice(2, 7);
+            const parts = [];
+            shapes.forEach(function(sh) {
+              if (sh.type === 'circle') {
+                parts.push('<circle cx="' + sx(sh.center.x) + '" cy="' + sy(sh.center.y) + '" r="' + Math.max(3, sh.r * unitPx).toFixed(2) + '" fill="' + (sh.isFill ? sh.color : 'none') + '" fill-opacity="' + (sh.isFill && sh.r > 0.2 ? '0.14' : '1') + '" stroke="' + (sh.isFill && !sh.isFillDraw ? 'none' : sh.color) + '" stroke-width="1.6" />');
+              } else {
+                const ptStr = sh.pts.map(function(p) { return sx(p.x) + ',' + sy(p.y); }).join(' ');
+                const mk = sh.color === '#e5484d' ? 'red' : sh.color === '#0090ff' ? 'blue' : sh.color === '#30a46c' ? 'green' : sh.color === '#f76b15' ? 'orange' : 'cur';
+                const dash = sh.dashed ? ' stroke-dasharray="5,4"' : '';
+                const mE = sh.hasArrowEnd ? ' marker-end="url(#vt-arr-' + mk + '-' + uid + ')"' : '';
+                const mS = sh.hasArrowStart ? ' marker-start="url(#vt-arr-' + mk + '-' + uid + ')"' : '';
+                if (sh.closed) parts.push('<polygon points="' + ptStr + '" fill="' + (sh.isFill ? sh.color : 'none') + '" fill-opacity="' + (sh.isFill ? '0.12' : '0') + '" stroke="' + sh.color + '" stroke-width="' + sh.thick + '"' + dash + ' />');
+                else parts.push('<polyline points="' + ptStr + '" fill="none" stroke="' + sh.color + '" stroke-width="' + sh.thick + '"' + dash + mS + mE + ' />');
+              }
+            });
+            labels.forEach(function(lb) {
+              let dx = 0, dy = 5, anc = 'middle';
+              const o = lb.opts || '';
+              if (/above/.test(o)) dy = -10; else if (/below/.test(o)) dy = 18;
+              if (/right/.test(o)) { dx = 9; anc = 'start'; } else if (/left/.test(o)) { dx = -9; anc = 'end'; }
+              const safeTxt = lb.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              parts.push('<text x="' + (parseFloat(sx(lb.pt.x)) + dx).toFixed(2) + '" y="' + (parseFloat(sy(lb.pt.y)) + dy).toFixed(2) + '" text-anchor="' + anc + '" font-size="15" font-style="italic" font-weight="600" fill="' + lb.color + '">' + safeTxt + '</text>');
+            });
+            return '<div class="vectoria-diagram-container" style="text-align: center; margin: 22px auto; max-width: ' + Math.min(560, Math.max(280, svgW)) + 'px; width: 100%;">' +
+              '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: 0 auto; color: var(--s12, #11181c); font-family: var(--font-academic, serif);">' +
+              '<defs>' +
+              '<marker id="vt-arr-cur-' + uid + '" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="currentColor" /></marker>' +
+              '<marker id="vt-arr-red-' + uid + '" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#e5484d" /></marker>' +
+              '<marker id="vt-arr-blue-' + uid + '" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#0090ff" /></marker>' +
+              '<marker id="vt-arr-green-' + uid + '" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#30a46c" /></marker>' +
+              '<marker id="vt-arr-orange-' + uid + '" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#f76b15" /></marker>' +
+              '</defs>' + parts.join('') + '</svg></div>';
+          }
+        }
+      }
     }
 
     // Generic fallback for any future TikZ block (never spill raw LaTeX code)

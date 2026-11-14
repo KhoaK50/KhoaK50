@@ -114,8 +114,9 @@
         position: fixed;
         top: var(--topbar-h, 60px);
         left: 0;
-        width: 100vw;
+        width: 100%;
         height: calc(100vh - var(--topbar-h, 60px));
+        height: calc(100dvh - var(--topbar-h, 60px));
         overflow: hidden;
         background-color: var(--stage-bg);
         z-index: 1;
@@ -394,11 +395,28 @@
         }
 
         .chapter-scrubber {
-          right: 12px;
+          right: 8px;
+          gap: 6px;
+        }
+
+        .scrubber-percent {
+          font-size: 9.5px;
+          padding: 2px 5px;
         }
 
         .scrubber-rail {
-          height: 180px;
+          height: min(260px, calc(100dvh - var(--topbar-h, 60px) - 72px));
+          min-height: 212px;
+          padding: 2px 0;
+        }
+
+        .scrubber-node {
+          width: 21px;
+          height: 21px;
+        }
+
+        .node-num {
+          font-size: 9px;
         }
       }
     </style>

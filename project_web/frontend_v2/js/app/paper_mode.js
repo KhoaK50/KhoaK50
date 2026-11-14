@@ -43,16 +43,20 @@ const PaperMode = (() => {
     btnPaper.addEventListener('click', () => {
       isPaperMode = true;
       
-      // Dừng hoạt cảnh cơ sở / tọa độ nếu đang mở khi chuyển sang tab Ghi chép
+      // Dừng tất cả hoạt cảnh nếu đang mở khi chuyển sang tab Ghi chép
       if (window.App) {
-        if (typeof window.App.stopBasisAnimation === 'function') {
-          try { window.App.stopBasisAnimation(); } catch (_) {}
-        }
-        if (typeof window.App.stopCoordAnimation === 'function') {
-          try { window.App.stopCoordAnimation(); } catch (_) {}
-        }
-        if (typeof window.App.stopEigenAnimation === 'function') {
-          try { window.App.stopEigenAnimation(); } catch (_) {}
+        if (typeof window.App.stopAllAnimations === 'function') {
+          try { window.App.stopAllAnimations(null); } catch (_) {}
+        } else {
+          if (typeof window.App.stopBasisAnimation === 'function') {
+            try { window.App.stopBasisAnimation(); } catch (_) {}
+          }
+          if (typeof window.App.stopCoordAnimation === 'function') {
+            try { window.App.stopCoordAnimation(); } catch (_) {}
+          }
+          if (typeof window.App.stopEigenAnimation === 'function') {
+            try { window.App.stopEigenAnimation(); } catch (_) {}
+          }
         }
       }
 

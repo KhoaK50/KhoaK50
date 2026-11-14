@@ -253,12 +253,29 @@
 
     function updateSliderFill(slider) {
       if (!slider) return;
-      const min = Number(slider.min) || 0;
-      const max = Number(slider.max) || 100;
-      const val = Number(slider.value) || 0;
-      const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
-      slider.style.setProperty("--slider-pct", `${pct}%`);
+      const min = parseFloat(slider.min);
+      const max = parseFloat(slider.max);
+      const val = parseFloat(slider.value);
+      const minVal = !isNaN(min) ? min : 0;
+      const maxVal = !isNaN(max) ? max : 100;
+      const curVal = !isNaN(val) ? val : 0;
+      const pct = maxVal > minVal ? Math.max(0, Math.min(100, ((curVal - minVal) / (maxVal - minVal)) * 100)) : 50;
+      slider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+      slider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
     }
+    App.updateSliderFill = updateSliderFill;
+
+    // Đồng bộ tức thời thanh trượt tốc độ & dải progress fill cho mọi slider trên toàn ứng dụng
+    document.addEventListener("input", (e) => {
+      if (e.target && e.target.type === "range") {
+        updateSliderFill(e.target);
+      }
+    }, { passive: true });
+    document.addEventListener("change", (e) => {
+      if (e.target && e.target.type === "range") {
+        updateSliderFill(e.target);
+      }
+    }, { passive: true });
 
     if (settingGridContrastSlider) {
       settingGridContrastSlider.value = App.graphSettings.gridContrast;

@@ -1,222 +1,256 @@
 // ==========================================================================
 // FILE: frontend_v2/js/app/ui/tasks_generator/rank_generator.js
-// MO TA: Bo sinh loi giai chuan muc cho bai toan Tinh hang cua he vector
-// QUY CHUAN: Zero Em-dash (\u2014), Anti-Slop, Dual-Method (REF & Maximal Subset)
+// MÔ TẢ: Bộ sinh lời giải chuẩn mực cho bài toán Hạng của hệ vector
 // ==========================================================================
-(function () {
-  window.App = window.App || {};
-  App.TasksGen = App.TasksGen || {};
-  App.TasksGen.Rank = {};
+(function (root, factory) {
+  const mod = factory();
+  if (typeof window !== "undefined") {
+    window.App = window.App || {};
+    window.App.TasksGen = window.App.TasksGen || {};
+    window.App.TasksGen.Rank = mod;
+  }
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = mod;
+  }
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  "use strict";
 
-  // --- CAC HAM BO TRO FORMAT TOAN HOC ---
-  function fmtScalar(x) {
-    if (x === null || x === undefined) return "0";
-    if (typeof x === "string") {
-      let s = x.trim();
-      s = s.replace(/sqrt\(([^)]+)\)/g, "\\sqrt{$1}");
-      return s;
+  function getFmt() {
+    if (typeof window !== "undefined" && window.App && window.App.LatexFmt) {
+      return window.App.LatexFmt;
     }
-    if (typeof x === "number") {
-      if (Number.isInteger(x)) return String(x);
-      if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x));
-      // Tim phan so toi gian
-      for (let d = 2; d <= 100; d++) {
-        let n = x * d;
-        if (Math.abs(n - Math.round(n)) < 1e-5) {
-          let num = Math.round(n);
-          let sign = "";
-          if (num < 0 || d < 0) {
-            sign = "-";
-            num = Math.abs(num);
-          }
-          return `${sign}\\frac{${num}}{${Math.abs(d)}}`;
-        }
+    if (typeof require === "function") {
+      try {
+        return require("../../../utils/latex_format.js");
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  function toNumVec(item) {
+    const raw = item && Array.isArray(item.vec) ? item.vec : (Array.isArray(item) ? item : []);
+    return raw.map(function (x) {
+      const n = Number(x);
+      return Number.isFinite(n) ? n : 0;
+    });
+  }
+
+  function getVecSym(item, idx, fmt) {
+    if (item && !Array.isArray(item)) {
+      if (typeof window !== "undefined" && window.App && typeof window.App.getVectorName === "function") {
+        return fmt.normalizeVecSymbol(window.App.getVectorName(item), true);
       }
-      return String(Math.round(x * 10000) / 10000);
+      if (item.name) {
+        return fmt.normalizeVecSymbol(item.name, true);
+      }
     }
-    return String(x);
+    return "\\mathbf{v}_{" + (idx + 1) + "}";
   }
 
-  function vecToLatex(v) {
-    if (!Array.isArray(v)) return "\\vec{0}";
-    const items = v.map(fmtScalar);
-    return `\\left(${items.join(",\\, ")}\\right)`;
-  }
-
-  function matrixToLatex(rows) {
-    if (!Array.isArray(rows) || !rows.length) return "\\begin{pmatrix}\\end{pmatrix}";
-    const content = rows
-      .map((r) => (Array.isArray(r) ? r.map(fmtScalar).join(" & ") : fmtScalar(r)))
-      .join(" \\\\ ");
-    return `\\begin{pmatrix} ${content} \\end{pmatrix}`;
-  }
-
-  function subName(prefix, idx) {
-    return idx < 10 ? `${prefix}_${idx}` : `${prefix}_{${idx}}`;
-  }
-
-  function extractVectors(data, selectedVectors) {
-    if (data && Array.isArray(data.vectors) && data.vectors.length > 0) {
-      return data.vectors.map((row) => (Array.isArray(row) ? row.slice() : row));
+  function isZeroVec(v) {
+    for (let i = 0; i < v.length; i++) {
+      if (Math.abs(Number(v[i]) || 0) > 1e-9) return false;
     }
+    return true;
+  }
+
+  function resolveInputItems(data, selectedVectors) {
     if (Array.isArray(selectedVectors) && selectedVectors.length > 0) {
-      return selectedVectors.map((item) => {
-        if (item && Array.isArray(item.vec)) return item.vec.slice();
-        if (Array.isArray(item)) return item.slice();
-        return item;
-      });
+      return selectedVectors;
+    }
+    if (data && Array.isArray(data.vectors) && data.vectors.length > 0) {
+      return data.vectors;
     }
     return [];
   }
 
-  // --- CACH 1: PHUONG PHAP BIEN DOI SO CAP DUA VE MA TRAN BAC THANG (REF) ---
-  App.TasksGen.Rank.buildMethodMatrix = function (data, selectedVectors) {
-    const vecs = extractVectors(data, selectedVectors);
-    const m = vecs.length || (data && data.num_vectors) || 0;
-    const n = (vecs[0] && vecs[0].length) || (data && data.dimension) || 0;
+  function analyzeRank(selectedItemsOrVecs) {
+    const fmt = getFmt();
+    const items = Array.isArray(selectedItemsOrVecs) ? selectedItemsOrVecs : [];
+    const vecs = items.map(toNumVec);
+    const m = vecs.length;
+    const n = (vecs[0] && vecs[0].length) || 2;
+    const syms = items.map(function (it, i) { return getVecSym(it, i, fmt); });
 
-    const methodMat = data && data.method_matrix ? data.method_matrix : null;
-    const resultObj = data && data.result ? data.result : null;
-    const rank = typeof resultObj?.rank === "number" ? resultObj.rank : (typeof data?.rank === "number" ? data.rank : 0);
-
-    let html = `<div class="sol-step-container">`;
-
-    // 1. De bai & Thiet lap he vector
-    html += `<div class="sol-text">Trong không gian vector $\\mathbb{R}^{${n}}$, xét hệ $S$ gồm $${m}$ vector:</div>`;
-    const vecDefs = vecs
-      .map((v, i) => `${subName("v", i + 1)} = ${vecToLatex(v)}`)
-      .join(",\\; ");
-    html += `<div class="sol-math-block">\\[ S = \\left\\{ ${vecDefs} \\right\\} \\]</div>`;
-
-    // 2. Pha 1: Lap ma tran dong A
-    html += `<div class="sol-bold">Bước 1: Lập ma trận dòng từ hệ vector</div>`;
-    html += `<div class="sol-text">Lập ma trận $A$ kích thước $${m} \\times ${n}$ nhận các vector $v_1, \\dots, v_{${m}}$ làm các dòng:</div>`;
-    const matSetup = methodMat?.matrix_setup_latex || `A = ${matrixToLatex(vecs)}`;
-    html += `<div class="sol-math-block">\\[ ${matSetup} \\]</div>`;
-
-    // 3. Pha 2: Chuoi bien doi so cap theo dong dua ve ma tran bac thang (REF)
-    html += `<div class="sol-bold">Bước 2: Khử Gauss đưa ma trận về dạng bậc thang (REF)</div>`;
-    html += `<div class="sol-text">Sử dụng các phép biến đổi sơ cấp theo dòng ($h_i \\leftrightarrow h_j$, $h_i \\leftarrow h_i + c \\cdot h_j$) để đưa $A$ về dạng bậc thang:</div>`;
-
-    const steps = Array.isArray(methodMat?.steps) ? methodMat.steps : [];
-    if (steps.length > 0) {
-      let prevMatrix = vecs;
-      for (let i = 0; i < steps.length; i++) {
-        const st = steps[i];
-        const label = st.latex_label || "";
-        const nextMatrix = st.matrix || prevMatrix;
-
-        html += `<div style="margin-bottom: 12px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 4px; background: var(--card);">`;
-        html += `<div class="sol-bold" style="font-size: 0.95em; margin-bottom: 6px; color: var(--fg);">`;
-        html += `<i class="ph ph-arrow-right" style="color: #3b82f6;"></i> Phép biến đổi ${i + 1}: $${label ? label : "\\text{Biến đổi sơ cấp}"}$`;
-        html += `</div>`;
-        html += `<div class="sol-math-block" style="overflow-x: auto; padding: 4px 0;">`;
-        html += `\\[ ${matrixToLatex(prevMatrix)} \\xrightarrow{\\;${label}\\;} ${matrixToLatex(nextMatrix)} \\]`;
-        html += `</div>`;
-        html += `</div>`;
-
-        prevMatrix = nextMatrix;
+    const colMat = [];
+    for (let r = 0; r < n; r++) {
+      const row = [];
+      for (let c = 0; c < m; c++) {
+        row.push(vecs[c] && vecs[c][r] !== undefined ? vecs[c][r] : 0);
       }
-    } else {
-      html += `<div class="sol-text" style="font-style: italic; color: var(--muted);">(Ma trận ban đầu đã ở dạng bậc thang)</div>`;
+      colMat.push(row);
     }
 
-    // 4. Pha 3: Xac dinh phan tu tru va dem so dong khac 0
-    const echelonMat = methodMat?.echelon_matrix || (steps.length > 0 ? steps[steps.length - 1].matrix : vecs);
-    const pivots = Array.isArray(methodMat?.pivots) ? methodMat.pivots : [];
+    const rowGauss = fmt.gaussRrefWithSteps(vecs, { mode: "ref", rowSymbol: "d", bracket: "bmatrix" });
+    const colGauss = fmt.gaussRrefWithSteps(colMat, { mode: "rref", rowSymbol: "d", bracket: "bmatrix" });
+    const rank = rowGauss.rank;
+    const pivotCols = colGauss.pivotCols.slice();
+    const freeCols = colGauss.freeCols.slice();
 
-    html += `<div class="sol-bold" style="margin-top: 18px;">Bước 3: Xác định phần tử trụ và đếm số dòng khác không</div>`;
-    html += `<div class="sol-text">Ma trận bậc thang $E$ thu được sau quá trình khử Gauss:</div>`;
-    html += `<div class="sol-math-block">\\[ E = ${matrixToLatex(echelonMat)} \\]</div>`;
+    const maxSubsetSyms = pivotCols.map(function (cIdx) { return syms[cIdx]; });
+    const maxSubsetDefsLatex = pivotCols.map(function (cIdx) {
+      return syms[cIdx] + " = " + fmt.vecTupleLatex(vecs[cIdx]);
+    });
 
-    if (pivots.length > 0) {
-      const pivotCoords = pivots
-        .map((p) => `(${p[0] + 1},\\, ${p[1] + 1})`)
-        .join(",\\; ");
-      html += `<div class="sol-text">Tọa độ các phần tử trụ trên ma trận bậc thang: $${pivotCoords}$.</div>`;
-    }
-    html += `<div class="sol-text">Số dòng khác không của ma trận bậc thang $E$ là $r = ${rank}$.</div>`;
-
-    // 5. Pha 4: Ket luan toan hoc chuan muc
-    html += `<div class="sol-bold" style="margin-top: 18px;">Kết luận:</div>`;
-    const vecNames = Array.from({ length: m }, (_, i) => subName("v", i + 1)).join(",\\, ");
-    html += `<div class="sol-text" style="font-weight: 600; color: #2563eb;">`;
-    html += `Hạng của hệ vector $S$ bằng số dòng khác không của ma trận bậc thang $E$:`;
-    html += `</div>`;
-    html += `<div class="sol-math-block">\\[ \\mathrm{rank}(S) = \\mathrm{rank}(A) = ${rank} \\]</div>`;
-    html += `<div class="sol-text" style="margin-top: 6px;">`;
-    html += `Không gian con sinh bởi hệ vector có số chiều là: $\\dim(\\mathrm{span}(S)) = ${rank}$.`;
-    html += `</div>`;
-
-    html += `</div>`;
-    return html;
-  };
-
-  // --- CACH 2: PHUONG PHAP HE DOC LAP TUYEN TINH TOI DAI ---
-  App.TasksGen.Rank.buildMethodMaximalSubset = function (data, selectedVectors) {
-    const vecs = extractVectors(data, selectedVectors);
-    const m = vecs.length || (data && data.num_vectors) || 0;
-    const n = (vecs[0] && vecs[0].length) || (data && data.dimension) || 0;
-
-    const methodEq = data && (data.method_equation || data.method_definition) ? (data.method_equation || data.method_definition) : null;
-    const resultObj = data && data.result ? data.result : null;
-    const rank = typeof resultObj?.rank === "number" ? resultObj.rank : (typeof data?.rank === "number" ? data.rank : 0);
-
-    let html = `<div class="sol-step-container">`;
-
-    // 1. Pha 1: Co so ly thuyet ve he doc lap tuyen tinh toi dai
-    html += `<div class="sol-bold">Bước 1: Cơ sở lý thuyết về hệ độc lập tuyến tính tối đại</div>`;
-    html += `<div class="sol-text">`;
-    html += `Theo định nghĩa trong lý thuyết không gian vector, hạng của một hệ vector $S = \\{v_1, \\dots, v_{${m}}\\}$ chính là số lượng vector lớn nhất của một tập con độc lập tuyến tính chứa trong $S$.`;
-    html += `</div>`;
-
-    // 2. Pha 2: Xac dinh tap con doc lap tuyen tinh toi dai
-    html += `<div class="sol-bold" style="margin-top: 18px;">Bước 2: Xác định tập con độc lập tuyến tính tối đại S'</div>`;
-    html += `<div class="sol-text">`;
-    html += `Xếp các vector thành các cột của ma trận $V = A^T = \\begin{pmatrix} v_1 & v_2 & \\dots & v_{${m}} \\end{pmatrix}$. Khử Gauss-Jordan tìm các cột chứa phần tử trụ (pivot columns):`;
-    html += `</div>`;
-
-    const maxSubsetStr = methodEq?.maximal_independent_subset_latex || (rank > 0 ? `S' = \\{${Array.from({ length: rank }, (_, i) => subName("v", i + 1)).join(",\\; ")}\\}` : `S' = \\emptyset`);
-    html += `<div class="sol-math-block">\\[ ${maxSubsetStr} \\]</div>`;
-
-    // 3. Pha 3: So chieu cua khong gian sinh
-    html += `<div class="sol-bold" style="margin-top: 18px;">Bước 3: Mối liên hệ với không gian sinh Span(S)</div>`;
-    if (rank === 0) {
-      html += `<div class="sol-text">Hệ vector chỉ gồm vector không $\\vec{0}$, không gian sinh chỉ gồm vector không và có số chiều bằng 0.</div>`;
-    } else {
-      html += `<div class="sol-text">`;
-      html += `Do $S'$ là hệ độc lập tuyến tính tối đại trong $S$, mọi vector còn lại của $S$ đều là tổ hợp tuyến tính của các vector trong $S'$. Do đó:`;
-      html += `</div>`;
-      html += `<div class="sol-math-block">\\[ \\mathrm{span}(S) = \\mathrm{span}(S') \\implies \\dim(\\mathrm{span}(S)) = |S'| = ${rank} \\]</div>`;
+    const nonZeroRefRows = [];
+    for (let i = 0; i < rowGauss.refMatrix.length; i++) {
+      if (!isZeroVec(rowGauss.refMatrix[i])) {
+        nonZeroRefRows.push(rowGauss.refMatrix[i]);
+      }
     }
 
-    // 4. Pha 4: Ket luan toan hoc chuan muc
-    html += `<div class="sol-bold" style="margin-top: 18px;">Kết luận:</div>`;
-    html += `<div class="sol-text" style="font-weight: 600; color: #2563eb;">`;
-    html += `Số lượng vector độc lập tuyến tính cực đại trong hệ là $${rank}$, nên hạng của hệ vector $S$ bằng:`;
-    html += `</div>`;
-    html += `<div class="sol-math-block">\\[ \\mathrm{rank}(S) = ${rank} \\]</div>`;
-
-    html += `</div>`;
-    return html;
-  };
-
-  // --- HAM DONG GOI DUAL-METHOD SOLUTION ---
-  App.TasksGen.Rank.buildSolution = function (data, selectedVectors) {
-    const vecs = extractVectors(data, selectedVectors);
-    const n = (vecs[0] && vecs[0].length) || (data && data.dimension) || 3;
-
-    const content1 = App.TasksGen.Rank.buildMethodMatrix(data, selectedVectors);
-    const content2 = App.TasksGen.Rank.buildMethodMaximalSubset(data, selectedVectors);
+    const redundantRelationsLatex = [];
+    for (let fIdx = 0; fIdx < freeCols.length; fIdx++) {
+      const fc = freeCols[fIdx];
+      if (pivotCols.length === 0) {
+        redundantRelationsLatex.push(syms[fc] + " = \\mathbf{0}");
+      } else {
+        const coeffs = pivotCols.map(function (_, rIdx) {
+          return Number(colGauss.rrefMatrix[rIdx][fc] || 0);
+        });
+        redundantRelationsLatex.push(
+          syms[fc] + " = " + fmt.linearCombLatex(coeffs, maxSubsetSyms, { zeroFallback: "\\mathbf{0}" })
+        );
+      }
+    }
 
     return {
-      titleText: "Hạng của hệ vector",
-      titleMath: `\\( \\mathbb{R}^{${n}} \\)`,
-      tab1Label: "Cách 1: Ma trận bậc thang",
-      tab2Label: "Cách 2: Hệ độc lập tuyến tính tối đại",
-      showSubTabs: false,
-      content1: content1,
-      content2: content2,
+      vecs: vecs,
+      syms: syms,
+      m: m,
+      n: n,
+      colMat: colMat,
+      rowGauss: rowGauss,
+      colGauss: colGauss,
+      rank: rank,
+      pivotCols: pivotCols,
+      freeCols: freeCols,
+      maxSubsetSyms: maxSubsetSyms,
+      maxSubsetDefsLatex: maxSubsetDefsLatex,
+      nonZeroRefRows: nonZeroRefRows,
+      redundantRelationsLatex: redundantRelationsLatex
     };
+  }
+
+  // Cách 1: Biến đổi sơ cấp ma trận dòng đưa về dạng bậc thang (REF)
+  function buildMethodMatrix(data, selectedVectors) {
+    const fmt = getFmt();
+    const items = resolveInputItems(data, selectedVectors);
+    const info = analyzeRank(items);
+    const m = info.m;
+    const n = info.n;
+
+    if (m === 0) {
+      return fmt.wrapStepContainer("<div class=\"sol-empty\">Chưa có vector nào được chọn.</div>");
+    }
+
+    const vecDefs = info.vecs.map(function (v, i) {
+      return info.syms[i] + " = " + fmt.vecTupleLatex(v);
+    }).join(",\\quad ");
+
+    let html = "";
+    html += "<div class=\"sol-text\">Trong không gian \\(\\mathbb{R}^{" + n + "}\\), xét hệ \\(S = \\left\\{" + info.syms.join(",\\, ") + "\\right\\}\\) gồm \\(" + m + "\\) vector:</div>";
+    html += fmt.mathBlockHtml(vecDefs);
+
+    html += "<div class=\"sol-bold\">Bước 1: Lập ma trận dòng \\(A\\)</div>";
+    html += "<div class=\"sol-text\">Xếp các vector của hệ \\(S\\) thành các dòng của ma trận \\(A \\in \\mathbb{R}^{" + m + " \\times " + n + "}\\):</div>";
+    const initMatTex = fmt.matrixToLatex(info.vecs, { bracket: "bmatrix" });
+    html += fmt.mathBlockHtml("A = " + initMatTex);
+
+    html += "<div class=\"sol-bold\">Bước 2: Khử Gauss đưa \\(A\\) về dạng bậc thang dòng (REF)</div>";
+    html += "<div class=\"sol-text\">Các phép biến đổi sơ cấp trên dòng bảo toàn không gian dòng \\(\\operatorname{Row}(A) = \\operatorname{span}(S)\\) và giữ nguyên hạng:</div>";
+    html += fmt.renderGaussChainHtml(initMatTex, info.rowGauss.steps, "Biến đổi dòng");
+
+    const refTex = info.rowGauss.refMatrixLatex || fmt.matrixToLatex(info.rowGauss.refMatrix, { bracket: "bmatrix" });
+    html += "<div class=\"sol-bold\">Bước 3: Đếm số dòng khác không và xác định hạng</div>";
+    html += "<div class=\"sol-text\">Ma trận bậc thang \\(E\\) thu được là:</div>";
+    html += fmt.mathBlockHtml("E = " + refTex);
+
+    if (info.rowGauss.pivotCols.length > 0) {
+      const pivCoords = info.rowGauss.pivotCols.map(function (c, rIdx) {
+        return "(" + (rIdx + 1) + ",\\, " + (c + 1) + ")";
+      }).join(",\\; ");
+      html += "<div class=\"sol-text\">Vị trí các phần tử chốt trên \\(E\\): \\(" + pivCoords + "\\). Số dòng khác không của \\(E\\) bằng <b>" + info.rank + "</b>.</div>";
+    } else {
+      html += "<div class=\"sol-text\">Mọi dòng của \\(E\\) đều bằng \\(0\\) nên số dòng khác không bằng <b>0</b>.</div>";
+    }
+
+    html += "<div class=\"sol-bold\">Kết luận</div>";
+    html += "<div class=\"sol-bullet\"><span>Hạng của hệ vector \\(S\\) và số chiều không gian sinh \\(\\operatorname{span}(S)\\) là:</span></div>";
+    html += fmt.mathBlockHtml("\\operatorname{rank}(S) = \\operatorname{rank}(A) = \\dim\\operatorname{span}(S) = " + info.rank);
+
+    return fmt.wrapStepContainer(html);
+  }
+
+  // Cách 2: Khử Gauss - Jordan trên ma trận cột & Hệ con độc lập tuyến tính cực đại
+  function buildMethodMaximalSubset(data, selectedVectors) {
+    const fmt = getFmt();
+    const items = resolveInputItems(data, selectedVectors);
+    const info = analyzeRank(items);
+    const m = info.m;
+    const n = info.n;
+
+    if (m === 0) {
+      return fmt.wrapStepContainer("<div class=\"sol-empty\">Chưa có vector nào được chọn.</div>");
+    }
+
+    let html = "";
+    html += "<div class=\"sol-bold\">Bước 1: Lập ma trận cột \\(M = A^T\\)</div>";
+    html += "<div class=\"sol-text\">Theo định nghĩa, hạng \\(\\operatorname{rank}(S)\\) bằng số phần tử của một tập con độc lập tuyến tính cực đại \\(B_{\\max} \\subseteq S\\). Để xác định chính xác các vector thuộc \\(B_{\\max}\\), ta xếp các vector thành các cột của ma trận \\(M \\in \\mathbb{R}^{" + n + " \\times " + m + "}\\):</div>";
+    const colInitTex = fmt.matrixToLatex(info.colMat, { bracket: "bmatrix" });
+    html += fmt.mathBlockHtml("M = \\begin{bmatrix} " + info.syms.join(" & ") + " \\end{bmatrix} = " + colInitTex);
+
+    html += "<div class=\"sol-bold\">Bước 2: Đưa \\(M\\) về dạng bậc thang rút gọn (RREF)</div>";
+    html += fmt.renderGaussChainHtml(colInitTex, info.colGauss.steps, "Biến đổi dòng");
+
+    if (info.colGauss.steps.length > 0) {
+      const colRrefTex = info.colGauss.rrefMatrixLatex || fmt.matrixToLatex(info.colGauss.rrefMatrix, { bracket: "bmatrix" });
+      html += "<div class=\"sol-text\">Ma trận bậc thang rút gọn của \\(M\\) là:</div>";
+      html += fmt.mathBlockHtml("\\operatorname{RREF}(M) = " + colRrefTex);
+    }
+
+    html += "<div class=\"sol-bold\">Bước 3: Trích hệ con độc lập tuyến tính cực đại \\(B_{\\max}\\)</div>";
+    if (info.rank === 0) {
+      html += "<div class=\"sol-text\">Ma trận \\(\\operatorname{RREF}(M)\\) bằng ma trận không, không có cột chốt nào. Tất cả vector trong \\(S\\) đều bằng \\(\\mathbf{0}\\).</div>";
+      html += fmt.mathBlockHtml("B_{\\max} = \\varnothing,\\quad \\operatorname{span}(S) = \\left\\{\\mathbf{0}\\right\\}");
+    } else {
+      const pivHuman = info.pivotCols.map(function (c) { return String(c + 1); }).join(", ");
+      html += "<div class=\"sol-text\">Các cột chứa phần tử chốt nằm tại cột <b>" + pivHuman + "</b>, tương ứng chính xác với tập con độc lập tuyến tính cực đại từ hệ gốc:</div>";
+      html += fmt.mathBlockHtml("B_{\\max} = \\left\\{" + info.maxSubsetSyms.join(",\\; ") + "\\right\\} \\quad \\left(" + info.maxSubsetDefsLatex.join(",\\; ") + "\\right)");
+
+      if (info.redundantRelationsLatex.length > 0) {
+        html += "<div class=\"sol-text\">Các vector còn lại (ứng với cột không chốt) biểu diễn tuyến tính duy nhất qua \\(B_{\\max}\\) theo đúng các cột của \\(\\operatorname{RREF}(M)\\):</div>";
+        html += fmt.mathBlockHtml(info.redundantRelationsLatex.join(",\\quad "));
+      }
+      html += "<div class=\"sol-text\">Suy ra \\(\\operatorname{span}(S) = \\operatorname{span}(B_{\\max})\\) và \\(\\dim\\operatorname{span}(S) = \\left|B_{\\max}\\right| = " + info.rank + "\\).</div>";
+    }
+
+    html += "<div class=\"sol-bold\">Kết luận</div>";
+    html += "<div class=\"sol-bullet\"><span>Số lượng vector trong hệ con độc lập tuyến tính cực đại là \\(" + info.rank + "\\), vậy:</span></div>";
+    html += fmt.mathBlockHtml("\\operatorname{rank}(S) = \\dim\\operatorname{span}(S) = " + info.rank);
+
+    return fmt.wrapStepContainer(html);
+  }
+
+  function buildSolution(data, selectedVectors) {
+    const items = resolveInputItems(data, selectedVectors);
+    const info = analyzeRank(items);
+    return {
+      titleText: "Hạng của hệ vector",
+      titleMath: "\\mathbb{R}^{" + info.n + "}",
+      tab1Label: "Cách 1: Ma trận bậc thang",
+      tab2Label: "Cách 2: Hệ độc lập cực đại",
+      showSubTabs: false,
+      analysis: info,
+      content1: buildMethodMatrix(data, selectedVectors),
+      content2: buildMethodMaximalSubset(data, selectedVectors)
+    };
+  }
+
+  return {
+    analyzeRank: analyzeRank,
+    buildMethodMatrix: buildMethodMatrix,
+    buildMethodMaximalSubset: buildMethodMaximalSubset,
+    buildSolution: buildSolution
   };
-})();
+});

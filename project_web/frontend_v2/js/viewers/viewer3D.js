@@ -368,6 +368,10 @@
     
     // POINTER MOVE: Trượt Vector hoặc Hover phát hiện tọa độ
     const pointerMoveHandler = (e) => {
+      const isBlocked = typeof App.isInteractionBlocked === "function" && App.isInteractionBlocked();
+      if (isBlocked) {
+        Vec3D.S3D.draggedVectorId = null;
+      }
       if (Vec3D._isOrbiting && !Vec3D.S3D.draggedVectorId) return;
 
       if (!Vec3D.S3D.draggedVectorId) {
@@ -842,8 +846,8 @@
           (v.isImageMesh ? 1 : 0) !== c.isImg ||
           (v.showWireframe ? 1 : 0) !== c.wire ||
           (v.focus ? 1 : 0) !== c.focus ||
-          ((isBasisAnim && typeof v._basisAlpha === "number") ? v._basisAlpha : ((isCoordAnim && typeof v._coordAlpha === "number") ? v._coordAlpha : (v.alpha ?? 1))) !== c.alpha ||
-          ((isBasisAnim && v._basisColorCss) ? v._basisColorCss : ((isCoordAnim && v._coordColorCss) ? v._coordColorCss : (v.colorHex || v.colorCss || ""))) !== c.col ||
+          ((isBasisAnim && typeof v._basisAlpha === "number") ? v._basisAlpha : ((isCoordAnim && typeof v._coordAlpha === "number") ? v._coordAlpha : ((isIndepAnim && typeof v._indepAlpha === "number") ? v._indepAlpha : (v.alpha ?? 1)))) !== c.alpha ||
+          ((isBasisAnim && v._basisColorCss) ? v._basisColorCss : ((isCoordAnim && v._coordColorCss) ? v._coordColorCss : ((isIndepAnim && v._indepColorCss) ? v._indepColorCss : (v.colorHex || v.colorCss || "")))) !== c.col ||
           !vArr ||
           vArr[0] !== c.x ||
           vArr[1] !== c.y ||
@@ -864,8 +868,8 @@
           isImg: v.isImageMesh ? 1 : 0,
           wire: v.showWireframe ? 1 : 0,
           focus: v.focus ? 1 : 0,
-          alpha: (isBasisAnim && typeof v._basisAlpha === "number") ? v._basisAlpha : ((isCoordAnim && typeof v._coordAlpha === "number") ? v._coordAlpha : (v.alpha ?? 1)),
-          col: (isBasisAnim && v._basisColorCss) ? v._basisColorCss : ((isCoordAnim && v._coordColorCss) ? v._coordColorCss : (v.colorHex || v.colorCss || "")),
+          alpha: (isBasisAnim && typeof v._basisAlpha === "number") ? v._basisAlpha : ((isCoordAnim && typeof v._coordAlpha === "number") ? v._coordAlpha : ((isIndepAnim && typeof v._indepAlpha === "number") ? v._indepAlpha : (v.alpha ?? 1))),
+          col: (isBasisAnim && v._basisColorCss) ? v._basisColorCss : ((isCoordAnim && v._coordColorCss) ? v._coordColorCss : ((isIndepAnim && v._indepColorCss) ? v._indepColorCss : (v.colorHex || v.colorCss || ""))),
           x: vArr[0],
           y: vArr[1],
           z: vArr[2] ?? 0,
@@ -897,11 +901,19 @@
       document.body.classList.remove("mode-2d");
     }
     threeLayer.style.display = "block";
-    try {
-      threeLayer.focus({
-        preventScroll: true,
-      });
-    } catch (_) {}
+    const activeEl = document.activeElement;
+    const isTypingInControl =
+      activeEl &&
+      (["INPUT", "TEXTAREA", "SELECT"].includes(activeEl.tagName) ||
+        activeEl.tagName.toLowerCase() === "math-field" ||
+        activeEl.isContentEditable);
+    if (!isTypingInControl) {
+      try {
+        threeLayer.focus({
+          preventScroll: true,
+        });
+      } catch (_) {}
+    }
     Vec3D._hover3D = true;
 
     if (!Vec3D._animating) {
@@ -1094,6 +1106,8 @@
       const isCoordAnim = window.App && (App._coordAnimActive || (App.CoordAnimator && typeof App.CoordAnimator.isActive === "function" && App.CoordAnimator.isActive()));
       const isIndepAnim = window.App && (App._indepAnimActive || (App.IndepAnimator && typeof App.IndepAnimator.isActive === "function" && App.IndepAnimator.isActive()));
       const isRankAnim = window.App && (App._rankAnimActive || (App.RankAnimator && typeof App.RankAnimator.isActive === "function" && App.RankAnimator.isActive()));
+      const isGSAnim = window.App && (App._gsAnimActive || (App.GSAnimator && typeof App.GSAnimator.isActive === "function" && App.GSAnimator.isActive()));
+      const isLTAnim = window.App && (App._ltAnimActive || (App.LTAnimator && typeof App.LTAnimator.isActive === "function" && App.LTAnimator.isActive()));
       const isDark = (window.App && App.theme === "dark") || document.documentElement.classList.contains("dark") || (document.body && document.body.classList.contains("dark"));
       const labelColor = (isBasisAnim && it._basisColorCss)
         ? it._basisColorCss
@@ -1103,7 +1117,11 @@
             ? it._indepColorCss
             : ((isRankAnim && it._rankColorCss)
               ? it._rankColorCss
-              : (it.colorCss || it.colorHex || (isDark ? "#ffffff" : "#111827")))));
+              : ((isGSAnim && it._gsColorCss)
+                ? it._gsColorCss
+                : ((isLTAnim && it._ltColorCss)
+                  ? it._ltColorCss
+                  : (it.colorHex || it.colorCss || (isDark ? "#ffffff" : "#111827")))))));
 
       lbl.element.style.color = "var(--text-main, #edeef0)";
       lbl.element.style.setProperty("--vec-color", labelColor);
@@ -1616,6 +1634,7 @@
       const isIndepAnim = window.App && (App._indepAnimActive || (App.IndepAnimator && typeof App.IndepAnimator.isActive === "function" && App.IndepAnimator.isActive()));
       const isRankAnim = window.App && (App._rankAnimActive || (App.RankAnimator && typeof App.RankAnimator.isActive === "function" && App.RankAnimator.isActive()));
       const isGSAnim = window.App && (App._gsAnimActive || (App.GSAnimator && typeof App.GSAnimator.isActive === "function" && App.GSAnimator.isActive()));
+      const isLTAnim = window.App && (App._ltAnimActive || (App.LTAnimator && typeof App.LTAnimator.isActive === "function" && App.LTAnimator.isActive()));
       const v = toVec3(it.vec);
       let aItem = (isBasisAnim && typeof it._basisAlpha === "number")
         ? Math.max(0, Math.min(1, it._basisAlpha))
@@ -1627,7 +1646,9 @@
               ? Math.max(0, Math.min(1, it._rankAlpha))
               : ((isGSAnim && typeof it._gsAlpha === "number")
                 ? Math.max(0, Math.min(1, it._gsAlpha))
-                : (typeof it.alpha === "number" ? Math.max(0, Math.min(1, it.alpha)) : 1)))));
+                : ((isLTAnim && typeof it._ltAlpha === "number")
+                  ? Math.max(0, Math.min(1, it._ltAlpha))
+                  : (typeof it.alpha === "number" ? Math.max(0, Math.min(1, it.alpha)) : 1))))));
 
       // Dim others
       if (hasFocus && !it.focus) aItem *= 0.15;
@@ -1665,7 +1686,7 @@
       const DYN_HEAD_R = idealHeadR;
       const DYN_SHAFT_R = Math.min(idealShaftR, DYN_HEAD_R * 0.44);
       const shaftLen = Math.max(len - DYN_HEAD_H, 1e-6);
-      const colStr = (isBasisAnim && it._basisColorCss) ? it._basisColorCss : ((isCoordAnim && it._coordColorCss) ? it._coordColorCss : ((isIndepAnim && it._indepColorCss) ? it._indepColorCss : ((isRankAnim && it._rankColorCss) ? it._rankColorCss : ((isGSAnim && it._gsColorCss) ? it._gsColorCss : (it.colorHex || it.colorCss || "#ffffff")))));
+      const colStr = (isBasisAnim && it._basisColorCss) ? it._basisColorCss : ((isCoordAnim && it._coordColorCss) ? it._coordColorCss : ((isIndepAnim && it._indepColorCss) ? it._indepColorCss : ((isRankAnim && it._rankColorCss) ? it._rankColorCss : ((isGSAnim && it._gsColorCss) ? it._gsColorCss : ((isLTAnim && it._ltColorCss) ? it._ltColorCss : (it.colorHex || it.colorCss || "#ffffff"))))));
       const color = new THREE.Color(colStr);
 
       const group = new THREE.Group();
@@ -1846,9 +1867,11 @@
               ? it._rankColorCss
               : ((isGSAnim && it._gsColorCss)
                 ? it._gsColorCss
-                : (it.colorCss || it.colorHex || (isDark ? "#ffffff" : "#111827"))))));
+                : ((isLTAnim && it._ltColorCss)
+                  ? it._ltColorCss
+                  : (it.colorCss || it.colorHex || (isDark ? "#ffffff" : "#111827")))))));
 
-      el.style.color = "var(--text-main, #edeef0)";
+      el.style.color = labelColor;
       el.style.setProperty("--vec-color", labelColor);
       el.style.borderColor = labelColor;
       if (isHoveredOrFocused) {
@@ -3011,6 +3034,10 @@
     Vec3D._controls.update();
     Vec3D._renderer.render(Vec3D._scene, Vec3D._camera);
     Vec3D._labelRenderer.render(Vec3D._scene, Vec3D._camera);
+  };
+
+  Vec3D.render = function () {
+    Vec3D.hardRefresh3D(false);
   };
 
   Vec3D.setFOV = function (fovDeg = 24) {

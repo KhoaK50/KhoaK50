@@ -266,15 +266,50 @@
       .toast-text h4 { margin: 0 0 5px 0; font-size: 15px; color: var(--text-main); }
       .toast-text p { margin: 0; font-size: 13px; color: var(--text-muted); }
       .toast-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--success-base, #30a46c); width: 0; border-radius: 0 0 0 12px; }
+
+      @media (max-width: 640px) {
+        html, body {
+          max-width: 100%;
+          overflow-x: clip;
+        }
+        .saas-contact-wrapper {
+          padding: 28px 16px 40px;
+          gap: 32px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .saas-contact-left h1 {
+          font-size: 1.85rem;
+        }
+        .saas-contact-left p.desc {
+          font-size: 1rem;
+          margin-bottom: 24px;
+        }
+        .contact-card {
+          padding: 22px 16px;
+        }
+        #static-toast {
+          right: 12px;
+          left: 12px;
+          bottom: 16px;
+          max-width: calc(100vw - 24px);
+          box-sizing: border-box;
+        }
+      }
     </style>
     <link rel="stylesheet" href="css/global-search.css">
 </head>
   <body>
     <script>
-      if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.remove('light-theme');
-        document.body.classList.add('dark-theme', 'dark');
-      }
+      (function () {
+        try {
+          var theme = localStorage.getItem('vec_theme') || localStorage.getItem('theme');
+          if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.remove('light-theme');
+            document.body.classList.add('dark-theme', 'dark');
+          }
+        } catch (e) {}
+      })();
     </script>
     <!-- Topbar -->
     <header class="vec-topbar" id="globalTopbar">

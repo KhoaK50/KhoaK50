@@ -189,7 +189,7 @@
       const kLen = norm(to3D(k));
       if (kLen > 1e-6) {
         const u = k.map((coord) => coord / kLen);
-        [-3.2, -2.1, -1.05, 1.05, 2.1, 3.2].forEach((s) => {
+        [-2.2, 2.2].forEach((s) => {
           sampleKerPoints.push(u.map((c) => c * s));
         });
       }
@@ -198,15 +198,17 @@
       const k2 = to3D(kerBasis[1]);
       const l1 = norm(k1) || 1;
       const l2 = norm(k2) || 1;
-      [-2.0, 0, 2.0].forEach((s1) => {
-        [-2.0, 0, 2.0].forEach((s2) => {
-          if (Math.abs(s1) < 1e-3 && Math.abs(s2) < 1e-3) return;
-          sampleKerPoints.push([
-            (s1 * k1[0]) / l1 + (s2 * k2[0]) / l2,
-            (s1 * k1[1]) / l1 + (s2 * k2[1]) / l2,
-            (s1 * k1[2]) / l1 + (s2 * k2[2]) / l2
-          ]);
-        });
+      [
+        [-2.0, 0],
+        [2.0, 0],
+        [0, -2.0],
+        [0, 2.0]
+      ].forEach(([s1, s2]) => {
+        sampleKerPoints.push([
+          (s1 * k1[0]) / l1 + (s2 * k2[0]) / l2,
+          (s1 * k1[1]) / l1 + (s2 * k2[1]) / l2,
+          (s1 * k1[2]) / l1 + (s2 * k2[2]) / l2
+        ]);
       });
     }
 
@@ -232,18 +234,18 @@
   const PHASES = [
     {
       index: 0,
-      title: "Bước 1: Ánh xạ cơ sở chuẩn eⱼ → T(eⱼ) sinh ra các cột ma trận A",
-      desc: "Lưới không gian biến dạng liên tục từ ma trận đơn vị I sang ma trận A theo M(t) = (1 - t)I + tA. Các vector cơ sở chuẩn eⱼ dịch chuyển đến ảnh T(eⱼ), chính là các cột của A."
+      title: "Bước 1: Ánh xạ cơ sở chuẩn eⱼ → T(eⱼ) (các cột ma trận A)",
+      desc: "Ô đơn vị ban đầu [0,1]ⁿ (nét đứt xám) biến dạng thành hình bình hành căng bởi T(e₁), T(e₂). Mỗi vector cơ sở chuẩn eⱼ dịch chuyển đến cột thứ j của ma trận A."
     },
     {
       index: 1,
-      title: "Bước 2: Sự sụp đổ của hạt nhân Ker(T) = {x | Ax = 0} về gốc O",
-      desc: "Không gian hạt nhân Ker(T) (đỏ hoa hồng) chứa mọi vector bị ánh xạ triệt tiêu. Khi A tác động, toàn bộ các điểm trên Ker(T) bị nén dọc theo phương hạt nhân và hút tụt hoàn toàn về gốc tọa độ O."
+      title: "Bước 2: Hạt nhân Ker(T) = {x | Ax = 0} bị ép tụt về gốc O",
+      desc: "Các cột T(eⱼ) giữ nguyên làm mốc mờ phía sau. Đường nét đứt đỏ là phương hạt nhân Ker(T): mọi vector x_Ker nằm trên phương này khi nhân với A đều trượt thẳng về gốc tọa độ O(0,0)."
     },
     {
       index: 2,
-      title: "Bước 3: Kết tinh không gian ảnh Im(T) & Định lý Hạng - Số khuyết",
-      desc: "Không gian ảnh Im(T) = span(Cols(A)) (xanh lục bảo) là phần không gian còn trụ lại sau biến đổi. Số chiều bị ép mất dim Ker(T) cộng với số chiều ảnh dim Im(T) luôn bằng đúng số chiều nguồn n."
+      title: "Bước 3: Không gian ảnh Im(T) & Định lý Hạng - Số khuyết",
+      desc: "Không gian ảnh Im(T) = span(T(e₁), ..., T(eₙ)) (xanh lục bảo) là nơi toàn bộ các vector rơi xuống sau biến đổi. Số chiều bị ép về O cộng số chiều ảnh còn lại luôn bằng số chiều ban đầu."
     }
   ];
 
@@ -492,14 +494,12 @@
           vItem.alpha = vItem._ltAlpha;
           vItem.visible = norm(cur) > 1e-3;
         } else if (phase === 1) {
-          // O Buoc 2: Bien doi lai tu e_j -> T(e_j) trong nua sau de thay su nen cung hat nhan
-          const tCollapse = smoothstep((progress - 0.25) / 0.75);
-          const cur = lerpVec(ej, colj, tCollapse);
-          vItem.vec = cur.slice(0, d);
+          // O Buoc 2: Giu nguyen cac cot T(e_j) dung yen va lam mo (alpha = 0.28) de tap trung 100% vao Ker(T)
+          vItem.vec = colj.slice(0, d);
           vItem._customLabelLatex = `T(e_${j + 1})`;
-          vItem._ltAlpha = norm(cur) > 1e-3 ? 0.65 : 0.02;
+          vItem._ltAlpha = norm(colj) > 1e-3 ? 0.28 : 0.02;
           vItem.alpha = vItem._ltAlpha;
-          vItem.visible = norm(cur) > 1e-3;
+          vItem.visible = norm(colj) > 1e-3;
         } else if (phase === 2) {
           const isPivot = an.pivotCols.includes(j);
           vItem.vec = colj.slice(0, d);
@@ -510,19 +510,23 @@
         }
       }
 
-      // Vector mau tren Ker(T)
+      // Vector mau tren Ker(T):
+      // [0.00 .. 0.42]: Hien ro vector x_Ker dung yen tren phuong hat nhan
+      // [0.42 .. 0.96]: Ap dung A lam x_Ker truot doc theo Ker(T) thu ve goc O(0,0)
       const kItem = App.vectorList.find((v) => v.id === -9711);
       if (kItem) {
         if (phase === 1 && an.nullity > 0 && an.kerBasis.length > 0) {
           const kVec = to3D(an.kerBasis[0]);
           const kLen = norm(kVec);
           const scaledK = kLen > 1e-5 ? scaleVec(kVec, 2.2 / kLen) : kVec;
-          const tCollapse = smoothstep((progress - 0.25) / 0.75);
+          const pAppear = smoothstep(progress / 0.22);
+          const tCollapse = progress <= 0.42 ? 0 : smoothstep((progress - 0.42) / 0.54);
           const remain = Math.max(0, 1.0 - tCollapse);
           const curK = scaleVec(scaledK, remain);
           kItem.vec = curK.slice(0, d);
-          kItem.visible = remain > 0.04;
-          kItem._ltAlpha = Math.max(0.1, remain);
+          kItem._customLabelLatex = tCollapse > 0.55 ? "T(x_{\\text{Ker}}) \\to 0" : "x_{\\text{Ker}}";
+          kItem.visible = pAppear > 0.05 && remain > 0.05;
+          kItem._ltAlpha = Math.max(0.15, pAppear * (0.25 + 0.75 * remain));
           kItem.alpha = kItem._ltAlpha;
         } else {
           kItem.visible = false;
@@ -638,6 +642,17 @@
       this._speed = Math.max(0.2, Math.min(2.5, speed));
       const valEl = document.getElementById("ltSpeedValue");
       if (valEl) valEl.textContent = `${this._speed.toFixed(1)}×`;
+      const speedSlider = document.getElementById("ltSpeedSlider");
+      if (speedSlider) {
+        if (Math.abs(parseFloat(speedSlider.value) - this._speed) > 0.05) {
+          speedSlider.value = String(this._speed);
+        }
+        const min = parseFloat(speedSlider.min) || 0.2;
+        const max = parseFloat(speedSlider.max) || 2.5;
+        const pct = Math.max(0, Math.min(100, ((this._speed - min) / (max - min)) * 100));
+        speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+        speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+      }
     },
 
     runCurrentPhase() {
@@ -653,7 +668,7 @@
       }
 
       let lastTime = performance.now();
-      const baseDurations = [2600, 2900, 2500];
+      const baseDurations = [2800, 3400, 2600];
 
       const tick = (now) => {
         if (!this._active || this._paused) return;
@@ -719,6 +734,21 @@
           playBtn.style.color = "";
           playBtn.title = "Phát";
         }
+      }
+
+      const speedVal = document.getElementById("ltSpeedValue");
+      if (speedVal) speedVal.textContent = `${this._speed.toFixed(1)}×`;
+
+      const speedSlider = document.getElementById("ltSpeedSlider");
+      if (speedSlider) {
+        if (Math.abs(parseFloat(speedSlider.value) - this._speed) > 0.05) {
+          speedSlider.value = String(this._speed);
+        }
+        const min = parseFloat(speedSlider.min) || 0.2;
+        const max = parseFloat(speedSlider.max) || 2.5;
+        const pct = Math.max(0, Math.min(100, ((this._speed - min) / (max - min)) * 100));
+        speedSlider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+        speedSlider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
       }
 
       const pInfo = PHASES[this._currentPhase] || PHASES[0];
@@ -864,8 +894,18 @@
 
         const slider = document.getElementById("ltSpeedSlider");
         if (slider) {
+          const updateSliderStyle = (val) => {
+            const min = parseFloat(slider.min) || 0.2;
+            const max = parseFloat(slider.max) || 2.5;
+            const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+            slider.style.setProperty("--slider-pct", `${pct.toFixed(1)}%`);
+            slider.style.setProperty("--range-pct", `${pct.toFixed(1)}%`);
+          };
+          updateSliderStyle(parseFloat(slider.value) || this._speed);
           slider.addEventListener("input", (e) => {
-            this.setSpeed(parseFloat(e.target.value) || 1.0);
+            const val = parseFloat(e.target.value) || 1.0;
+            updateSliderStyle(val);
+            this.setSpeed(val);
           });
         }
       }
@@ -888,31 +928,11 @@
 
       ctx2d.save();
 
-      const drawDeformedGrid2D = (v1, v2, strokeStyle, fillStyle, borderStyle) => {
-        ctx2d.strokeStyle = strokeStyle;
-        ctx2d.lineWidth = 1.05;
-        ctx2d.beginPath();
-        for (let k = -8; k <= 8; k++) {
-          const sx1 = k * v2[0] - 12 * v1[0];
-          const sy1 = k * v2[1] - 12 * v1[1];
-          const ex1 = k * v2[0] + 12 * v1[0];
-          const ey1 = k * v2[1] + 12 * v1[1];
-          ctx2d.moveTo(wX(sx1), wY(sy1));
-          ctx2d.lineTo(wX(ex1), wY(ey1));
-
-          const sx2 = k * v1[0] - 12 * v2[0];
-          const sy2 = k * v1[1] - 12 * v2[1];
-          const ex2 = k * v1[0] + 12 * v2[0];
-          const ey2 = k * v1[1] + 12 * v2[1];
-          ctx2d.moveTo(wX(sx2), wY(sy2));
-          ctx2d.lineTo(wX(ex2), wY(ey2));
-        }
-        ctx2d.stroke();
-
-        // Hinh binh hanh don vi cang boi v1, v2
+      // Chi ve o binh hanh don vi cang boi (v1, v2) de tranh 34 duong luoi xoay chong cheo gay roi mat
+      const drawUnitCell2D = (v1, v2, fillStyle, borderStyle, lineWidth = 1.6) => {
         ctx2d.fillStyle = fillStyle;
         ctx2d.strokeStyle = borderStyle;
-        ctx2d.lineWidth = 1.6;
+        ctx2d.lineWidth = lineWidth;
         ctx2d.beginPath();
         ctx2d.moveTo(wX(0), wY(0));
         ctx2d.lineTo(wX(v1[0]), wY(v1[1]));
@@ -930,9 +950,9 @@
 
       if (this._currentPhase === 0) {
         // Bong mo o vuong don vi ban dau [0,1]^2
-        ctx2d.strokeStyle = "rgba(148, 163, 184, 0.45)";
+        ctx2d.strokeStyle = "rgba(148, 163, 184, 0.5)";
         ctx2d.fillStyle = "rgba(148, 163, 184, 0.06)";
-        ctx2d.lineWidth = 1.2;
+        ctx2d.lineWidth = 1.25;
         ctx2d.setLineDash([4, 4]);
         ctx2d.fillRect(wX(0), wY(1), px, px);
         ctx2d.strokeRect(wX(0), wY(1), px, px);
@@ -940,24 +960,30 @@
 
         const v1 = [(1 - t) * e1[0] + t * c1[0], (1 - t) * e1[1] + t * c1[1]];
         const v2 = [(1 - t) * e2[0] + t * c2[0], (1 - t) * e2[1] + t * c2[1]];
-        drawDeformedGrid2D(v1, v2, "rgba(2, 132, 199, 0.16)", "rgba(2, 132, 199, 0.15)", "rgba(2, 132, 199, 0.55)");
+        drawUnitCell2D(v1, v2, "rgba(2, 132, 199, 0.14)", "rgba(2, 132, 199, 0.65)", 1.7);
       } else if (this._currentPhase === 1) {
-        // Buoc 2: Hat nhan Ker(T) sup do ve goc O
-        const tCollapse = smoothstep((rawP - 0.25) / 0.75);
-        const v1 = [(1 - tCollapse) * e1[0] + tCollapse * c1[0], (1 - tCollapse) * e1[1] + tCollapse * c1[1]];
-        const v2 = [(1 - tCollapse) * e2[0] + tCollapse * c2[0], (1 - tCollapse) * e2[1] + tCollapse * c2[1]];
-        drawDeformedGrid2D(v1, v2, "rgba(148, 163, 184, 0.14)", "rgba(2, 132, 199, 0.08)", "rgba(2, 132, 199, 0.30)");
+        // Buoc 2: Giu tinh o binh hanh sau bien doi voi do mo thap de lam nen tinh
+        drawUnitCell2D(c1, c2, "rgba(2, 132, 199, 0.05)", "rgba(2, 132, 199, 0.22)", 1.2);
 
         if (an.nullity >= 1 && an.kerBasis.length >= 1) {
+          const pLine = smoothstep(rawP / 0.28);
           const k = an.kerBasis[0];
           const kLen = Math.hypot(k[0], k[1]) || 1;
           const kx = k[0] / kLen;
           const ky = k[1] / kLen;
-          const far = 30;
+          const far = 28 * pLine;
+
+          // Dai sang mo doc theo phuong Hat nhan Ker(T)
+          ctx2d.strokeStyle = "rgba(244, 63, 94, 0.14)";
+          ctx2d.lineWidth = 7.0;
+          ctx2d.beginPath();
+          ctx2d.moveTo(wX(-far * kx), wY(-far * ky));
+          ctx2d.lineTo(wX(far * kx), wY(far * ky));
+          ctx2d.stroke();
 
           // Duong thang Hat nhan Ker(T) di qua goc O
-          ctx2d.strokeStyle = "rgba(244, 63, 94, 0.85)";
-          ctx2d.lineWidth = 2.4;
+          ctx2d.strokeStyle = "rgba(244, 63, 94, 0.88)";
+          ctx2d.lineWidth = 2.2;
           ctx2d.setLineDash([7, 5]);
           ctx2d.beginPath();
           ctx2d.moveTo(wX(-far * kx), wY(-far * ky));
@@ -974,7 +1000,7 @@
           const imLen = Math.hypot(im[0], im[1]) || 1;
           const ix = im[0] / imLen;
           const iy = im[1] / imLen;
-          const far = 30 * pShow;
+          const far = 28 * pShow;
 
           // Ghost duong Ker(T) bi ep mat
           if (an.kerBasis.length >= 1) {
@@ -982,32 +1008,38 @@
             const kLen = Math.hypot(k[0], k[1]) || 1;
             const kx = k[0] / kLen;
             const ky = k[1] / kLen;
-            ctx2d.strokeStyle = "rgba(244, 63, 94, 0.42)";
-            ctx2d.lineWidth = 1.8;
+            ctx2d.strokeStyle = "rgba(244, 63, 94, 0.38)";
+            ctx2d.lineWidth = 1.6;
             ctx2d.setLineDash([6, 5]);
             ctx2d.beginPath();
-            ctx2d.moveTo(wX(-28 * kx), wY(-28 * ky));
-            ctx2d.lineTo(wX(28 * kx), wY(28 * ky));
+            ctx2d.moveTo(wX(-26 * kx), wY(-26 * ky));
+            ctx2d.lineTo(wX(26 * kx), wY(26 * ky));
             ctx2d.stroke();
             ctx2d.setLineDash([]);
           }
 
           // Duong thang Khong gian anh Im(T) (Xanh luc bao dam)
-          ctx2d.strokeStyle = "rgba(16, 185, 129, 0.25)";
-          ctx2d.lineWidth = 8.0;
+          ctx2d.strokeStyle = "rgba(16, 185, 129, 0.22)";
+          ctx2d.lineWidth = 7.5;
           ctx2d.beginPath();
           ctx2d.moveTo(wX(-far * ix), wY(-far * iy));
           ctx2d.lineTo(wX(far * ix), wY(far * iy));
           ctx2d.stroke();
 
           ctx2d.strokeStyle = "#10b981";
-          ctx2d.lineWidth = 2.8;
+          ctx2d.lineWidth = 2.6;
           ctx2d.beginPath();
           ctx2d.moveTo(wX(-far * ix), wY(-far * iy));
           ctx2d.lineTo(wX(far * ix), wY(far * iy));
           ctx2d.stroke();
         } else if (an.rank === 2) {
-          drawDeformedGrid2D(c1, c2, "rgba(16, 185, 129, 0.18)", "rgba(16, 185, 129, 0.16)", "rgba(16, 185, 129, 0.65)");
+          drawUnitCell2D(
+            c1,
+            c2,
+            `rgba(16, 185, 129, ${(0.16 * pShow).toFixed(3)})`,
+            `rgba(16, 185, 129, ${(0.72 * pShow).toFixed(3)})`,
+            1.8
+          );
         }
       }
 
@@ -1051,30 +1083,43 @@
         ctx2d.stroke();
         ctx2d.setLineDash([]);
       } else if (this._currentPhase === 1) {
-        const tCollapse = smoothstep((rawP - 0.25) / 0.75);
+        const pAppear = smoothstep(rawP / 0.22);
+        const tCollapse = rawP <= 0.42 ? 0 : smoothstep((rawP - 0.42) / 0.54);
         const remain = 1.0 - tCollapse;
 
-        // Vong tam ngam hap thu tai goc O(0,0)
-        ctx2d.strokeStyle = "rgba(244, 63, 94, 0.85)";
+        // Vong tam co dinh tai goc O(0,0) (khong nhap nhay gay roi)
+        ctx2d.strokeStyle = "rgba(244, 63, 94, 0.78)";
         ctx2d.lineWidth = 1.8;
         ctx2d.beginPath();
-        ctx2d.arc(cx, cy, 6 + 6 * Math.sin(rawP * Math.PI), 0, Math.PI * 2);
+        ctx2d.arc(cx, cy, 7.5, 0, Math.PI * 2);
         ctx2d.stroke();
 
         ctx2d.fillStyle = "#f43f5e";
         ctx2d.beginPath();
-        ctx2d.arc(cx, cy, 3.5, 0, Math.PI * 2);
+        ctx2d.arc(cx, cy, 3.8, 0, Math.PI * 2);
         ctx2d.fill();
 
-        // Cac hat mau tren Ker(T) bi hut tut ve goc O
-        if (an.nullity >= 1) {
+        // Dau vet vi tri ban dau cua x_Ker va 2 diem doi xung truot ve goc O(0,0)
+        if (an.nullity >= 1 && an.kerBasis.length >= 1 && pAppear > 0.05) {
+          const k = an.kerBasis[0];
+          const kLen = Math.hypot(k[0], k[1]) || 1;
+          const initX = (k[0] / kLen) * 2.2;
+          const initY = (k[1] / kLen) * 2.2;
+
+          // Bong mo vi tri xuat phat cua x_Ker de nguoi hoc luon thay diem bat dau truoc khi bi ep ve O
+          ctx2d.strokeStyle = `rgba(244, 63, 94, ${(0.45 * pAppear).toFixed(3)})`;
+          ctx2d.lineWidth = 1.4;
+          ctx2d.beginPath();
+          ctx2d.arc(wX(initX), wY(initY), 4.5, 0, Math.PI * 2);
+          ctx2d.stroke();
+
           an.sampleKerPoints.forEach((pt) => {
             const curX = pt[0] * remain;
             const curY = pt[1] * remain;
             const sx = wX(curX);
             const sy = wY(curY);
 
-            ctx2d.fillStyle = "#f43f5e";
+            ctx2d.fillStyle = `rgba(244, 63, 94, ${(0.88 * pAppear).toFixed(3)})`;
             ctx2d.beginPath();
             ctx2d.arc(sx, sy, 4.0, 0, Math.PI * 2);
             ctx2d.fill();
@@ -1190,34 +1235,44 @@
           addParallelepiped3D(v1, v2, v3, 0x0284c7, 0.16, 0.65);
         }
       } else if (this._currentPhase === 1) {
-        const tCollapse = smoothstep((rawP - 0.25) / 0.75);
+        const vFOV = (((window.Vec3D && Vec3D._camera && Vec3D._camera.fov) || 24) * Math.PI) / 180;
+        const screenH = Math.max(
+          1,
+          (window.Vec3D && Vec3D._renderer && Vec3D._renderer.domElement && Vec3D._renderer.domElement.clientHeight) || 760
+        );
+        const camDist = window.Vec3D && Vec3D._camera ? Vec3D._camera.position.length() : 16;
+        const worldPerPx = (2 * Math.tan(vFOV / 2) * camDist) / screenH;
+
+        const pLine = smoothstep(rawP / 0.28);
+        const tCollapse = rawP <= 0.42 ? 0 : smoothstep((rawP - 0.42) / 0.54);
         const remain = 1.0 - tCollapse;
 
         if (an.is3D) {
-          const v1 = lerpVec(std[0], c1, tCollapse);
-          const v2 = lerpVec(std[1], c2, tCollapse);
-          const v3 = lerpVec(std[2], c3, tCollapse);
-          addParallelepiped3D(v1, v2, v3, 0x0284c7, 0.08, 0.35);
+          // Giu tinh khoi hop sau bien doi voi do mo thap de tap trung vao Ker(T)
+          addParallelepiped3D(c1, c2, c3, 0x0284c7, 0.05, 0.22);
         }
 
-        // Diem goc O(0,0,0) mau do hoa hong
+        // Diem goc O(0,0,0) mau do hoa hong chuan kich thuoc pixel man hinh
+        const originR = Math.min(0.05 * u, 4.2 * worldPerPx);
         const originSph = new THREE.Mesh(
-          new THREE.SphereGeometry(0.14 * u, 16, 16),
+          new THREE.SphereGeometry(originR, 14, 14),
           new THREE.MeshBasicMaterial({ color: 0xf43f5e })
         );
         this._threeGroup.add(originSph);
+
+        const sampleR = Math.min(0.045 * u, 3.8 * worldPerPx);
 
         if (an.nullity === 1 && an.kerBasis.length >= 1) {
           const k = to3D(an.kerBasis[0]);
           const kLen = norm(k);
           if (kLen > 1e-4) {
-            const dir = scaleVec(k, (14 * u) / kLen);
+            const dir = scaleVec(k, (14 * u * pLine) / kLen);
             const pts = [new THREE.Vector3(-dir[0], -dir[1], -dir[2]), new THREE.Vector3(dir[0], dir[1], dir[2])];
             const lineGeom = new THREE.BufferGeometry().setFromPoints(pts);
             const lineMat = new THREE.LineDashedMaterial({
               color: 0xf43f5e,
-              dashSize: 0.35 * u,
-              gapSize: 0.18 * u
+              dashSize: Math.max(0.015 * u, 6 * worldPerPx),
+              gapSize: Math.max(0.01 * u, 4 * worldPerPx)
             });
             const line = new THREE.Line(lineGeom, lineMat);
             line.computeLineDistances();
@@ -1226,7 +1281,7 @@
             an.sampleKerPoints.forEach((pt) => {
               const p3 = to3D(pt);
               const sph = new THREE.Mesh(
-                new THREE.SphereGeometry(0.1 * u, 12, 12),
+                new THREE.SphereGeometry(sampleR, 12, 12),
                 new THREE.MeshBasicMaterial({ color: 0xf43f5e })
               );
               sph.position.set(p3[0] * remain * u, p3[1] * remain * u, p3[2] * remain * u);
@@ -1239,11 +1294,11 @@
           const nVec = cross(k1, k2);
           const nLen = norm(nVec);
           if (nLen > 1e-6) {
-            const planeGeom = new THREE.PlaneGeometry(14 * u, 14 * u);
+            const planeGeom = new THREE.PlaneGeometry(14 * u * pLine, 14 * u * pLine);
             const planeMat = new THREE.MeshBasicMaterial({
               color: 0xf43f5e,
               transparent: true,
-              opacity: 0.2,
+              opacity: 0.16,
               side: THREE.DoubleSide,
               depthWrite: false
             });
@@ -1257,7 +1312,7 @@
             an.sampleKerPoints.forEach((pt) => {
               const p3 = to3D(pt);
               const sph = new THREE.Mesh(
-                new THREE.SphereGeometry(0.1 * u, 12, 12),
+                new THREE.SphereGeometry(sampleR, 12, 12),
                 new THREE.MeshBasicMaterial({ color: 0xf43f5e })
               );
               sph.position.set(p3[0] * remain * u, p3[1] * remain * u, p3[2] * remain * u);
@@ -1266,6 +1321,14 @@
           }
         }
       } else if (this._currentPhase === 2) {
+        const vFOV = (((window.Vec3D && Vec3D._camera && Vec3D._camera.fov) || 24) * Math.PI) / 180;
+        const screenH = Math.max(
+          1,
+          (window.Vec3D && Vec3D._renderer && Vec3D._renderer.domElement && Vec3D._renderer.domElement.clientHeight) || 760
+        );
+        const camDist = window.Vec3D && Vec3D._camera ? Vec3D._camera.position.length() : 16;
+        const worldPerPx = (2 * Math.tan(vFOV / 2) * camDist) / screenH;
+
         // Buoc 3: Khong gian anh Im(T) 3D + Ghost Ker(T)
         if (an.nullity === 1 && an.kerBasis.length >= 1) {
           const k = to3D(an.kerBasis[0]);
@@ -1278,8 +1341,8 @@
               color: 0xf43f5e,
               transparent: true,
               opacity: 0.55,
-              dashSize: 0.35 * u,
-              gapSize: 0.18 * u
+              dashSize: Math.max(0.015 * u, 6 * worldPerPx),
+              gapSize: Math.max(0.01 * u, 4 * worldPerPx)
             });
             const line = new THREE.Line(lineGeom, lineMat);
             line.computeLineDistances();

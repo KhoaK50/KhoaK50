@@ -13,6 +13,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const DEFAULT_MOBILE_HEIGHT = '45vh';
 
     const onPointerDown = (e) => {
+        if (e.target && e.target.closest && e.target.closest('.mobile-split-modes')) {
+            return;
+        }
         isResizing = true;
         willSnapClose = false;
         
@@ -70,6 +73,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             
             appContainer.style.setProperty('--panel-height', `${newHeight}px`);
+            appContainer.classList.remove('panel-collapsed');
+            document.querySelectorAll('.split-mode-btn.active').forEach(b => b.classList.remove('active'));
             
             // Auto open if dragged larger
             if (!willSnapClose && window.isPanelCollapsed) {
@@ -106,6 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 // Mobile Snap Close
                 window.isPanelCollapsed = true;
+                appContainer.classList.add('panel-collapsed');
                 appContainer.style.setProperty('--panel-height', '0px');
                 const btnToggle = document.getElementById("btnTogglePanel");
                 if (btnToggle) btnToggle.innerHTML = '<i class="ph ph-caret-up"></i>';

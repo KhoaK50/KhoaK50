@@ -1,100 +1,142 @@
 // =========================================================================
 // topic4_euclidean_spaces.js - Module Chu De 4: Khong Gian Euclide
-// Khao sat su truc giao va Thuat toan truc giao hoa Gram - Schmidt 2D/3D
-// Tuan thu triet de Zero Em-dash (\u2014) va chuan muc Anti-Slop.
+// Khao sat su truc giao, Thuat toan Gram - Schmidt va Phan ra QR
+// Tuan thu Zero Em-dash, chuan muc Anti-Slop, UMD Node/Browser.
 // =========================================================================
-(function () {
-  window.App = window.App || {};
+(function (root, factory) {
+  const mod = factory();
+  if (typeof window !== "undefined") {
+    window.App = window.App || {};
+    window.App.TasksGen = window.App.TasksGen || {};
+    window.App.TasksGen.Topic4GS = mod;
+    window.App.Topic4Module = mod.Topic4Module;
+    window.App.computeGSFromItems = mod.computeGSFromItems;
+  }
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = mod;
+  }
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  "use strict";
 
-  function to3D(v) {
-    if (!v) return [0, 0, 0];
-    if (v.length >= 3) return [Number(v[0]) || 0, Number(v[1]) || 0, Number(v[2]) || 0];
-    return [Number(v[0]) || 0, Number(v[1]) || 0, 0];
+  const SYNC_KEY = "topic4_gs";
+
+  function getFmt() {
+    if (typeof window !== "undefined" && window.App && window.App.LatexFmt) {
+      return window.App.LatexFmt;
+    }
+    if (typeof require === "function") {
+      try {
+        return require("../../../utils/latex_format.js");
+      } catch (_) {}
+    }
+    return null;
   }
 
-  function dotProduct(a, b) {
-    return (a[0] || 0) * (b[0] || 0) + (a[1] || 0) * (b[1] || 0) + (a[2] || 0) * (b[2] || 0);
+  function getResultCardApi() {
+    if (typeof window !== "undefined" && window.App && window.App.ResultCard) {
+      return {
+        ResultCard: window.App.ResultCard,
+        SolutionSync: window.App.SolutionSync
+      };
+    }
+    if (typeof require === "function") {
+      try {
+        return require("../../ui/result_card_renderer.js");
+      } catch (_) {}
+    }
+    return { ResultCard: null, SolutionSync: null };
   }
 
-  function norm(a) {
-    return Math.sqrt(dotProduct(a, a));
+  function snap(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return 0;
+    if (Math.abs(n) <= 1e-10) return 0;
+    const r = Math.round(n);
+    if (Math.abs(n - r) <= 1e-10) return r === 0 ? 0 : r;
+    return n;
   }
 
-  function scaleVec(v, s) {
-    return [(v[0] || 0) * s, (v[1] || 0) * s, (v[2] || 0) * s];
+  function toDimVec(raw, dim) {
+    const arr = raw && Array.isArray(raw.vec) ? raw.vec : (Array.isArray(raw) ? raw : []);
+    const len = Math.max(dim, 3);
+    const out = new Array(len).fill(0);
+    for (let i = 0; i < len; i++) {
+      out[i] = snap(arr[i] !== undefined ? arr[i] : 0);
+    }
+    return out;
   }
 
-  function addVec(a, b) {
-    return [(a[0] || 0) + (b[0] || 0), (a[1] || 0) + (b[1] || 0), (a[2] || 0) + (b[2] || 0)];
+  function dotN(a, b, dim) {
+    let s = 0;
+    for (let i = 0; i < dim; i++) {
+      s += (Number(a[i]) || 0) * (Number(b[i]) || 0);
+    }
+    return snap(s);
   }
 
-  function subVec(a, b) {
-    return [(a[0] || 0) - (b[0] || 0), (a[1] || 0) - (b[1] || 0), (a[2] || 0) - (b[2] || 0)];
+  function normN(a, dim) {
+    return Math.sqrt(Math.max(0, dotN(a, a, dim)));
   }
 
-  function projVec(v, u) {
-    const dUU = dotProduct(u, u);
-    if (dUU < 1e-9) return [0, 0, 0];
-    const c = dotProduct(v, u) / dUU;
-    return scaleVec(u, c);
+  function scaleVecN(v, s, len) {
+    const out = new Array(len).fill(0);
+    for (let i = 0; i < len; i++) {
+      out[i] = snap((Number(v[i]) || 0) * s);
+    }
+    return out;
   }
 
-  function normalizeVec(v) {
-    const n = norm(v);
-    if (n < 1e-9) return [0, 0, 0];
-    return scaleVec(v, 1 / n);
+  function addVecN(a, b, len) {
+    const out = new Array(len).fill(0);
+    for (let i = 0; i < len; i++) {
+      out[i] = snap((Number(a[i]) || 0) + (Number(b[i]) || 0));
+    }
+    return out;
   }
 
-  function angleBetween(a, b) {
-    const na = norm(a);
-    const nb = norm(b);
-    if (na < 1e-9 || nb < 1e-9) return 0;
-    let cosVal = dotProduct(a, b) / (na * nb);
-    cosVal = Math.max(-1, Math.min(1, cosVal));
-    return Math.acos(cosVal) * (180 / Math.PI);
+  function subVecN(a, b, len) {
+    const out = new Array(len).fill(0);
+    for (let i = 0; i < len; i++) {
+      out[i] = snap((Number(a[i]) || 0) - (Number(b[i]) || 0));
+    }
+    return out;
   }
 
-  function formatScalar(val) {
-    if (!Number.isFinite(val) || Math.abs(val) < 1e-4) return "0";
-    if (Math.abs(val - Math.round(val)) < 1e-3) return String(Math.round(val));
-    for (let den = 2; den <= 16; den++) {
-      const num = Math.round(val * den);
-      if (Math.abs(val - num / den) < 1e-3) {
-        return num < 0 ? `-${Math.abs(num)}/${den}` : `${num}/${den}`;
+  function getVecSymbol(item, idx, fmt) {
+    if (item && !Array.isArray(item)) {
+      if (typeof window !== "undefined" && window.App && typeof window.App.getVectorName === "function") {
+        return fmt.normalizeVecSymbol(window.App.getVectorName(item), true);
+      }
+      if (item.name) {
+        return fmt.normalizeVecSymbol(item.name, true);
       }
     }
-    return val.toFixed(2).replace(/\.?0+$/, "");
+    return "\\mathbf{v}_{" + (idx + 1) + "}";
   }
 
-  function formatVecLatex(v, dim) {
-    const d = dim || 2;
-    const comps = [];
-    for (let i = 0; i < d; i++) {
-      comps.push(formatScalar(v[i] || 0));
-    }
-    return `\\begin{bmatrix} ${comps.join(" \\\\ ")} \\end{bmatrix}`;
-  }
-
-  // Lay danh sach vector da chon tu #gsChecklist (tra ve dung tham chieu item trong App.vectorList)
   function getGSSelectedItems() {
-    let container = document.getElementById("gsChecklist");
-    const vList = Array.isArray(App.vectorList) ? App.vectorList.filter((v) => v.id > 0) : [];
-    if (container && !container.querySelector('input[type="checkbox"]') && vList.length > 0) {
-      if (typeof App.renderExtraCalcOptions === "function") {
-        App.renderExtraCalcOptions();
+    if (typeof document === "undefined") return [];
+    const container = document.getElementById("gsChecklist");
+    const appRef = (typeof window !== "undefined" && window.App) ? window.App : {};
+    const vList = Array.isArray(appRef.vectorList) ? appRef.vectorList.filter(function (v) { return v.id > 0; }) : [];
+    if (container && !container.querySelector("input[type=\"checkbox\"]") && vList.length > 0) {
+      if (typeof appRef.renderExtraCalcOptions === "function") {
+        appRef.renderExtraCalcOptions();
       }
     }
     const items = [];
     if (container && vList.length > 0) {
-      container.querySelectorAll('input[type="checkbox"]:checked').forEach((cb) => {
+      container.querySelectorAll("input[type=\"checkbox\"]:checked").forEach(function (cb) {
         const id = Number(cb.value);
-        const found = vList.find((v) => v.id === id);
+        const found = vList.find(function (v) { return v.id === id; });
         if (found) items.push(found);
       });
-      if (items.length === 0 && vList.length >= 2) {
-        const autoPick = vList.slice(0, 3);
-        container.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
-          if (autoPick.some((it) => it.id === Number(cb.value))) cb.checked = true;
+      if (items.length === 0 && vList.length >= 1) {
+        const autoPick = vList.slice(0, Math.min(3, vList.length));
+        container.querySelectorAll("input[type=\"checkbox\"]").forEach(function (cb) {
+          if (autoPick.some(function (it) { return it.id === Number(cb.value); })) {
+            cb.checked = true;
+          }
         });
         return autoPick;
       }
@@ -102,414 +144,594 @@
     return items;
   }
 
-  // Thuc hien truc giao hoa Gram - Schmidt cho 2 hoac 3 vector
+  // Thuc hien truc giao hoa Gram - Schmidt tong quat (giu 100% tuong thich GSAnimator)
   function computeGSFromItems(items) {
-    const vectors = items.map((it) => to3D(it.vec || it));
-    const is3D = items.some((it) => {
-      const v = it.vec || it;
-      return v.length >= 3 && Math.abs(Number(v[2]) || 0) > 1e-4;
-    }) || vectors.length >= 3;
-    const dim = is3D ? 3 : 2;
+    const safeItems = Array.isArray(items) ? items : [];
+    let maxCoordLen = 2;
+    for (let i = 0; i < safeItems.length; i++) {
+      const raw = safeItems[i] && Array.isArray(safeItems[i].vec) ? safeItems[i].vec : safeItems[i];
+      if (Array.isArray(raw) && raw.length > maxCoordLen) {
+        maxCoordLen = raw.length;
+      }
+    }
+    const appMode3D = typeof window !== "undefined" && window.App && window.App.mode === "3D";
+    const is3D = maxCoordLen >= 3 || appMode3D;
+    const dim = maxCoordLen > 3 ? maxCoordLen : (is3D ? 3 : 2);
+    const storeLen = Math.max(dim, 3);
 
-    const v1 = vectors[0] || [0, 0, 0];
-    const v2 = vectors[1] || [0, 0, 0];
-    const v3 = vectors.length >= 3 ? vectors[2] : null;
+    const vectors = safeItems.map(function (it) { return toDimVec(it, dim); });
+    const steps = [];
+    const orthogonalBasis = [];
+    const collapsedIndices = [];
 
-    // u1 = v1
-    const u1 = [...v1];
-    const nU1 = norm(u1);
-    const nU1Sq = dotProduct(u1, u1);
+    for (let k = 0; k < vectors.length; k++) {
+      const vk = vectors[k];
+      let pk = new Array(storeLen).fill(0);
+      const projTerms = [];
 
-    // p1 = proj_{u1}(v2)
-    const p1 = projVec(v2, u1);
-    const u2 = subVec(v2, p1);
-    const nU2 = norm(u2);
-    const nU2Sq = dotProduct(u2, u2);
+      for (let j = 0; j < orthogonalBasis.length; j++) {
+        const basisItem = orthogonalBasis[j];
+        const uj = basisItem.u;
+        const dotVU = dotN(vk, uj, dim);
+        const normUSq = basisItem.normUSq;
+        const coeff = normUSq > 1e-11 ? snap(dotVU / normUSq) : 0;
+        const termVec = scaleVecN(uj, coeff, storeLen);
+        pk = addVecN(pk, termVec, storeLen);
+        projTerms.push({
+          fromStepIndex: basisItem.stepIndex,
+          basisIndex: basisItem.basisIndex,
+          u: uj,
+          dotVU: dotVU,
+          normUSq: normUSq,
+          coeff: coeff,
+          termVec: termVec
+        });
+      }
 
-    let p31 = [0, 0, 0];
-    let p32 = [0, 0, 0];
-    let p12 = [0, 0, 0];
-    let u3 = null;
-    let nU3 = 0;
-    let nU3Sq = 0;
+      const rawU = subVecN(vk, pk, storeLen);
+      const nUSq = dotN(rawU, rawU, dim);
+      const nU = Math.sqrt(Math.max(0, nUSq));
+      const isZero = nU < 1e-7;
+      const uk = isZero ? new Array(storeLen).fill(0) : rawU;
+      const ek = isZero ? new Array(storeLen).fill(0) : scaleVecN(uk, 1 / nU, storeLen);
+      const assignedBasisIndex = isZero ? null : (orthogonalBasis.length + 1);
 
-    if (v3) {
-      p31 = projVec(v3, u1);
-      p32 = projVec(v3, u2);
-      p12 = addVec(p31, p32);
-      u3 = subVec(v3, p12);
-      nU3 = norm(u3);
-      nU3Sq = dotProduct(u3, u3);
+      if (isZero) {
+        collapsedIndices.push(k + 1);
+      } else {
+        orthogonalBasis.push({
+          stepIndex: k + 1,
+          basisIndex: assignedBasisIndex,
+          v: vk,
+          p: pk,
+          u: uk,
+          e: ek,
+          normU: nU,
+          normUSq: nUSq
+        });
+      }
+
+      steps.push({
+        stepIndex: k + 1,
+        basisIndex: assignedBasisIndex,
+        v: vk,
+        p: pk,
+        u: uk,
+        e: ek,
+        normU: isZero ? 0 : nU,
+        normUSq: isZero ? 0 : nUSq,
+        isZero: isZero,
+        projTerms: projTerms
+      });
     }
 
-    const e1 = normalizeVec(u1);
-    const e2 = normalizeVec(u2);
-    const e3 = u3 ? normalizeVec(u3) : null;
+    const zero3 = new Array(storeLen).fill(0);
+    const v1 = vectors[0] || zero3.slice();
+    const v2 = vectors[1] || zero3.slice();
+    const v3 = vectors.length >= 3 ? vectors[2] : null;
+
+    const u1 = steps[0] ? steps[0].u : zero3.slice();
+    const u2 = steps[1] ? steps[1].u : zero3.slice();
+    const u3 = steps[2] ? steps[2].u : null;
+
+    const p1 = steps[1] ? steps[1].p : zero3.slice();
+    const p12 = steps[2] ? steps[2].p : zero3.slice();
+    const p31 = steps[2] && steps[2].projTerms[0] ? steps[2].projTerms[0].termVec : zero3.slice();
+    const p32 = steps[2] && steps[2].projTerms[1] ? steps[2].projTerms[1].termVec : zero3.slice();
+
+    const e1 = steps[0] ? steps[0].e : zero3.slice();
+    const e2 = steps[1] ? steps[1].e : zero3.slice();
+    const e3 = steps[2] ? steps[2].e : null;
+
+    const nU1 = steps[0] ? steps[0].normU : 0;
+    const nU2 = steps[1] ? steps[1].normU : 0;
+    const nU3 = steps[2] ? steps[2].normU : 0;
+
+    const nU1Sq = steps[0] ? steps[0].normUSq : 0;
+    const nU2Sq = steps[1] ? steps[1].normUSq : 0;
+    const nU3Sq = steps[2] ? steps[2].normUSq : 0;
 
     return {
-      items,
-      vectors,
-      is3D,
-      dim,
-      v1,
-      v2,
-      v3,
-      u1,
-      u2,
-      u3,
-      p1,
-      p31,
-      p32,
-      p12,
-      e1,
-      e2,
-      e3,
-      nU1,
-      nU2,
-      nU3,
-      nU1Sq,
-      nU2Sq,
-      nU3Sq
+      items: safeItems,
+      vectors: vectors,
+      is3D: is3D,
+      dim: dim,
+      steps: steps,
+      orthogonalBasis: orthogonalBasis,
+      collapsedIndices: collapsedIndices,
+      rank: orthogonalBasis.length,
+      v1: v1,
+      v2: v2,
+      v3: v3,
+      u1: u1,
+      u2: u2,
+      u3: u3,
+      p1: p1,
+      p31: p31,
+      p32: p32,
+      p12: p12,
+      e1: e1,
+      e2: e2,
+      e3: e3,
+      nU1: nU1,
+      nU2: nU2,
+      nU3: nU3,
+      nU1Sq: nU1Sq,
+      nU2Sq: nU2Sq,
+      nU3Sq: nU3Sq
     };
   }
 
-  // Hien thi bang ket qua math-Clean-Card dong bo
-  function renderGSInfoCard(res) {
-    const box = document.getElementById("result_gs_info");
-    if (!box || !res) return;
-
-    box.style.display = "block";
-    const mfStyle =
-      "background: var(--bg-paper, var(--card, #fff)); border: 1px solid var(--border-subtle, var(--border, #ccc)); border-radius: 4px; padding: 6px 12px; font-size: 1.05em; color: var(--text-main, var(--fg, #333)); pointer-events: none; width: 100%; box-sizing: border-box;";
-
+  function buildGSSidebarCard(res) {
+    const fmt = getFmt();
     const dim = res.dim;
-    const m = res.v3 ? 3 : 2;
+    const m = res.vectors.length;
+    const r = res.rank;
+    const hasDependent = res.collapsedIndices.length > 0;
+    const syms = res.items.map(function (it, idx) {
+      return getVecSymbol(it, idx, fmt);
+    });
 
-    const u1Latex = `u_1 = ${formatVecLatex(res.u1, dim)}`;
-    const u2Latex = `u_2 = ${formatVecLatex(res.u2, dim)}`;
-    const u3Latex = res.u3 ? `u_3 = ${formatVecLatex(res.u3, dim)}` : "";
-
-    const checkDot12 = Math.abs(dotProduct(res.u1, res.u2)).toFixed(4);
-    let checkDotsLatex = `\\langle u_1, u_2 \\rangle = ${checkDot12} \\approx 0`;
-    if (res.u3) {
-      const checkDot13 = Math.abs(dotProduct(res.u1, res.u3)).toFixed(4);
-      const checkDot23 = Math.abs(dotProduct(res.u2, res.u3)).toFixed(4);
-      checkDotsLatex += `, \\quad \\langle u_1, u_3 \\rangle = ${checkDot13}, \\quad \\langle u_2, u_3 \\rangle = ${checkDot23}`;
-    }
-
-    const e1Latex = `e_1 = ${formatVecLatex(res.e1, dim)}`;
-    const e2Latex = `e_2 = ${formatVecLatex(res.e2, dim)}`;
-    const e3Latex = res.e3 ? `e_3 = ${formatVecLatex(res.e3, dim)}` : "";
-
-    const uLatexItems = [
-      `<math-field read-only style="${mfStyle}">${u1Latex}</math-field>`,
-      `<math-field read-only style="${mfStyle}">${u2Latex}</math-field>`
-    ];
-    if (u3Latex) uLatexItems.push(`<math-field read-only style="${mfStyle}">${u3Latex}</math-field>`);
-
-    const eLatexItems = [
-      `<math-field read-only style="${mfStyle}">${e1Latex}</math-field>`,
-      `<math-field read-only style="${mfStyle}">${e2Latex}</math-field>`
-    ];
-    if (e3Latex) eLatexItems.push(`<math-field read-only style="${mfStyle}">${e3Latex}</math-field>`);
-
-    box.innerHTML = `
-      <div style="margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border-subtle, var(--border));">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: var(--bg-hover, rgba(0,0,0,0.03)); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle, var(--border));">
-          <span style="font-size: 0.78em; color: var(--text-muted, var(--muted)); font-weight: 700;">TRỰC GIAO HÓA GRAM - SCHMIDT: <strong style="color: var(--primary-base, var(--fg)); font-size: 1.15em;">${m} VECTOR</strong></span>
-          <span style="font-size: 0.8em; font-weight: 600; color: #10b981;">Đã trực giao hóa</span>
-        </div>
-
-        <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">CƠ SỞ TRỰC GIAO (ORTHOGONAL BASIS):</div>
-        <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
-          ${uLatexItems.join("")}
-          <math-field read-only style="${mfStyle}">${checkDotsLatex}</math-field>
-        </div>
-
-        <div style="border-top: 1px dashed var(--border-subtle, var(--border)); padding-top: 10px; margin-bottom: 10px;">
-          <div style="font-size: 0.78em; font-weight: 700; color: var(--text-muted, var(--muted)); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">CƠ SỞ TRỰC CHUẨN (ORTHONORMAL BASIS, R = 1):</div>
-          <div style="display: flex; flex-direction: column; gap: 6px;">
-            ${eLatexItems.join("")}
-          </div>
-        </div>
-
-        <div style="margin-top: 10px; font-size: 0.78em; color: var(--text-muted, var(--muted)); font-style: italic; text-align: center;">
-          Nhấn "Trực quan" để xem hoạt cảnh 3 bước hoặc "Lời giải" để xem chứng minh chi tiết!
-        </div>
-      </div>
-    `;
-  }
-
-  // Sinh loi giai KaTeX han lam chi tiet 2 Tab
-  function generateGramSchmidtSolution(items) {
-    const res = computeGSFromItems(items);
-    const dim = res.dim;
-    const v1 = res.v1;
-    const v2 = res.v2;
-    const v3 = res.v3;
-    const u1 = res.u1;
-    const u2 = res.u2;
-    const u3 = res.u3;
-    const e1 = res.e1;
-    const e2 = res.e2;
-    const e3 = res.e3;
-    const p1 = res.p1;
-
-    const dotV2U1 = dotProduct(v2, u1);
-    const coeff1 = res.nU1Sq > 1e-9 ? (dotV2U1 / res.nU1Sq).toFixed(4) : "0";
-
-    // TAB 1: Thuat toan truc giao hoa tieu chuan
-    let tab1Html = `
-      <div style="padding: 6px 0; font-size: 13.5px; line-height: 1.7; color: var(--fg);">
-        <p style="margin-bottom: 12px;">
-          Xét hệ vector $\\mathcal{S} = \\{ \\vec{v}_1, \\vec{v}_2 ${v3 ? ", \\vec{v}_3" : ""} \\} \\subset \\mathbb{R}^${dim}$ với tích vô hướng chính tắc:
-          $$\\vec{v}_1 = ${formatVecLatex(v1, dim)}, \\quad \\vec{v}_2 = ${formatVecLatex(v2, dim)} ${v3 ? `, \\quad \\vec{v}_3 = ${formatVecLatex(v3, dim)}` : ""}$$
-        </p>
-
-        <div style="background: var(--bg-hover); border-left: 3px solid var(--primary-base); padding: 10px 14px; margin-bottom: 14px; border-radius: 2px;">
-          <strong>Mục tiêu:</strong> Dùng thuật toán Gram - Schmidt biến đổi $\\mathcal{S}$ thành cơ sở trực giao $\\mathcal{B}_{ort} = \\{ \\vec{u}_1, \\vec{u}_2 ${v3 ? ", \\vec{u}_3" : ""} \\}$ thỏa mãn $\\langle \\vec{u}_i, \\vec{u}_j \\rangle = 0$ ($i \\neq j$) và chuẩn hóa thành cơ sở trực chuẩn $\\mathcal{B}_{norm} = \\{ \\vec{e}_i \\}$.
-        </div>
-
-        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-          Bước 1: Cố định vector trực giao thứ nhất
-        </h4>
-        <p>
-          Chọn vector đầu tiên làm trục chuẩn:
-          $$\\vec{u}_1 = \\vec{v}_1 = ${formatVecLatex(u1, dim)}$$
-          Bình phương độ dài và độ dài của $\\vec{u}_1$:
-          $$\\|\\vec{u}_1\\|^2 = \\langle \\vec{u}_1, \\vec{u}_1 \\rangle = ${res.nU1Sq.toFixed(2)}, \\quad \\|\\vec{u}_1\\| = \\sqrt{${res.nU1Sq.toFixed(2)}} \\approx ${res.nU1.toFixed(4)}$$
-        </p>
-
-        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-          Bước 2: Tìm hình chiếu và triệt tiêu thành phần song song
-        </h4>
-        <p>
-          Tích vô hướng giữa $\\vec{v}_2$ và $\\vec{u}_1$:
-          $$\\langle \\vec{v}_2, \\vec{u}_1 \\rangle = ${dotV2U1.toFixed(2)}$$
-          Hình chiếu trực giao của $\\vec{v}_2$ lên phương $\\vec{u}_1$:
-          $$\\vec{p}_1 = \\text{proj}_{\\vec{u}_1}(\\vec{v}_2) = \\frac{\\langle \\vec{v}_2, \\vec{u}_1 \\rangle}{\\|\\vec{u}_1\\|^2} \\vec{u}_1 = \\frac{${dotV2U1.toFixed(2)}}{${res.nU1Sq.toFixed(2)}} \\vec{u}_1 \\approx ${coeff1} ${formatVecLatex(u1, dim)} = ${formatVecLatex(p1, dim)}$$
-          Trừ bỏ hình chiếu để nhận vector trực giao $\\vec{u}_2$:
-          $$\\vec{u}_2 = \\vec{v}_2 - \\vec{p}_1 = ${formatVecLatex(v2, dim)} - ${formatVecLatex(p1, dim)} = ${formatVecLatex(u2, dim)}$$
-          Kiểm tra tính trực giao:
-          $$\\langle \\vec{u}_1, \\vec{u}_2 \\rangle = ${dotProduct(u1, u2).toFixed(4)} \\approx 0$$
-          Độ dài của $\\vec{u}_2$:
-          $$\\|\\vec{u}_2\\|^2 = ${res.nU2Sq.toFixed(2)}, \\quad \\|\\vec{u}_2\\| \\approx ${res.nU2.toFixed(4)}$$
-        </p>
-    `;
-
-    if (v3 && u3) {
-      const dotV3U1 = dotProduct(v3, u1);
-      const dotV3U2 = dotProduct(v3, u2);
-      const c31 = res.nU1Sq > 1e-9 ? (dotV3U1 / res.nU1Sq).toFixed(4) : "0";
-      const c32 = res.nU2Sq > 1e-9 ? (dotV3U2 / res.nU2Sq).toFixed(4) : "0";
-
-      tab1Html += `
-        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-          Bước 3: Mở rộng trực giao trong 3D cho vector thứ ba
-        </h4>
-        <p>
-          Hạ hình chiếu của $\\vec{v}_3$ xuống mặt phẳng $\\text{span}(\\vec{u}_1, \\vec{u}_2)$:
-          $$\\vec{p}_{12} = \\text{proj}_{\\vec{u}_1}(\\vec{v}_3) + \\text{proj}_{\\vec{u}_2}(\\vec{v}_3) = \\frac{\\langle \\vec{v}_3, \\vec{u}_1 \\rangle}{\\|\\vec{u}_1\\|^2} \\vec{u}_1 + \\frac{\\langle \\vec{v}_3, \\vec{u}_2 \\rangle}{\\|\\vec{u}_2\\|^2} \\vec{u}_2$$
-          $$\\vec{p}_{12} \\approx ${c31} \\vec{u}_1 + ${c32} \\vec{u}_2 = ${formatVecLatex(res.p12, dim)}$$
-          Rút phần dư trực giao $\\vec{u}_3$:
-          $$\\vec{u}_3 = \\vec{v}_3 - \\vec{p}_{12} = ${formatVecLatex(v3, dim)} - ${formatVecLatex(res.p12, dim)} = ${formatVecLatex(u3, dim)}$$
-          Kiểm tra tính trực giao với cả hai trục trước:
-          $$\\langle \\vec{u}_1, \\vec{u}_3 \\rangle = ${dotProduct(u1, u3).toFixed(4)} \\approx 0, \\quad \\langle \\vec{u}_2, \\vec{u}_3 \\rangle = ${dotProduct(u2, u3).toFixed(4)} \\approx 0$$
-          Độ dài của $\\vec{u}_3$:
-          $$\\|\\vec{u}_3\\|^2 = ${res.nU3Sq.toFixed(2)}, \\quad \\|\\vec{u}_3\\| \\approx ${res.nU3.toFixed(4)}$$
-        </p>
-      `;
-    }
-
-    tab1Html += `
-        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 2px; margin-top: 14px;">
-          <strong style="color: #10b981;">Kết luận Cơ sở Trực giao:</strong><br>
-          $$\\mathcal{B}_{ort} = \\left\\{ ${formatVecLatex(u1, dim)}, \\; ${formatVecLatex(u2, dim)} ${u3 ? `, \\; ${formatVecLatex(u3, dim)}` : ""} \\right\\}$$
-        </div>
-      </div>
-    `;
-
-    // TAB 2: Chuan hoa & Truc chuan hoa (Orthonormalization & QR)
-    let tab2Html = `
-      <div style="padding: 6px 0; font-size: 13.5px; line-height: 1.7; color: var(--fg);">
-        <p style="margin-bottom: 12px;">
-          Từ cơ sở trực giao $\\mathcal{B}_{ort} = \\{ \\vec{u}_1, \\vec{u}_2 ${u3 ? ", \\vec{u}_3" : ""} \\}$, chuẩn hóa từng vector về độ dài đơn vị $\\|\\vec{e}_i\\| = 1$:
-          $$\\vec{e}_i = \\frac{\\vec{u}_i}{\\|\\vec{u}_i\\|}$$
-        </p>
-
-        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-          Chuẩn hóa từng vector:
-        </h4>
-        <p>
-          $$\\vec{e}_1 = \\frac{1}{${res.nU1.toFixed(4)}} ${formatVecLatex(u1, dim)} = ${formatVecLatex(e1, dim)}$$
-          $$\\vec{e}_2 = \\frac{1}{${res.nU2.toFixed(4)}} ${formatVecLatex(u2, dim)} = ${formatVecLatex(e2, dim)}$$
-          ${u3 ? `$$\\vec{e}_3 = \\frac{1}{${res.nU3.toFixed(4)}} ${formatVecLatex(u3, dim)} = ${formatVecLatex(e3, dim)}$$` : ""}
-        </p>
-
-        <h4 style="color: var(--primary-base); font-size: 13px; text-transform: uppercase; margin: 14px 0 6px; letter-spacing: 0.5px;">
-          Kiểm tra tính trực chuẩn:
-        </h4>
-        <p>
-          Độ dài: $\\|\\vec{e}_1\\| = ${norm(e1).toFixed(4)}, \\quad \\|\\vec{e}_2\\| = ${norm(e2).toFixed(4)} ${e3 ? `, \\quad \\|\\vec{e}_3\\| = ${norm(e3).toFixed(4)}` : ""}$<br>
-          Tích vô hướng: $\\langle \\vec{e}_1, \\vec{e}_2 \\rangle = ${dotProduct(e1, e2).toFixed(4)} \\approx 0$ ${e3 ? `, \\quad \\langle \\vec{e}_1, \\vec{e}_3 \\rangle = ${dotProduct(e1, e3).toFixed(4)}, \\quad \\langle \\vec{e}_2, \\vec{e}_3 \\rangle = ${dotProduct(e2, e3).toFixed(4)}` : ""}
-        </p>
-
-        <div style="background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.3); padding: 12px; border-radius: 2px; margin-top: 14px;">
-          <strong style="color: #0284c7;">Cơ sở Trực chuẩn hoàn chỉnh:</strong><br>
-          $$\\mathcal{B}_{norm} = \\left\\{ ${formatVecLatex(e1, dim)}, \\; ${formatVecLatex(e2, dim)} ${e3 ? `, \\; ${formatVecLatex(e3, dim)}` : ""} \\right\\}$$
-        </div>
-      </div>
-    `;
-
-    if (typeof App.openSolutionPanel === "function") {
-      App.openSolutionPanel({
-        title: "Thuật Toán Trực Giao Hóa Gram - Schmidt",
-        math: "\\mathcal{B}_{ort} \\to \\mathcal{B}_{norm}",
-        content1: tab1Html,
-        content2: tab2Html,
-        tab1Label: "Trực giao hóa",
-        tab2Label: "Chuẩn hóa & Trực chuẩn",
-        showSubTabs: false
+    const primaryRows = [];
+    if (r === 0) {
+      primaryRows.push({
+        labelHtml: "Cơ sở trực chuẩn",
+        latex: "E = \\varnothing",
+        noteHtml: "Toàn bộ hệ đầu vào là vector không nên không gian con W chỉ gồm gốc tọa độ."
       });
-    } else if (typeof App.openCustomSolution === "function") {
-      App.openCustomSolution("Thuật Toán Trực Giao Hóa Gram - Schmidt", tab1Html);
     } else {
-      const solBody = document.getElementById("solutionBody");
-      const solOverlay = document.getElementById("solutionOverlay");
-      const solTitle = document.getElementById("solTitleText");
-      if (solTitle) solTitle.textContent = "Thuật Toán Trực Giao Hóa Gram - Schmidt";
-      if (solBody) solBody.innerHTML = tab1Html;
-      if (solOverlay) {
-        solOverlay.classList.add("is-open");
-        solOverlay.setAttribute("aria-hidden", "false");
-      }
-      if (window.renderMathInElement) {
-        renderMathInElement(solBody, {
-          delimiters: [
-            { left: "$$", right: "$$", display: true },
-            { left: "\\[", right: "\\]", display: true },
-            { left: "\\(", right: "\\)", display: false },
-            { left: "$", right: "$", display: false }
-          ]
+      for (let j = 0; j < res.orthogonalBasis.length; j++) {
+        const b = res.orthogonalBasis[j];
+        const eSlice = b.e.slice(0, dim);
+        const srcSym = syms[b.stepIndex - 1] || ("\\mathbf{v}_{" + b.stepIndex + "}");
+        primaryRows.push({
+          labelHtml: "Trục trực chuẩn thứ " + b.basisIndex + " (từ vector nguồn thứ " + b.stepIndex + ")",
+          latex: "\\mathbf{e}_{" + b.basisIndex + "} = " + fmt.vecTupleLatex(eSlice),
+          noteHtml: r < m ? ("Sinh từ phần dư trực giao của \\(" + srcSym + "\\).") : ""
         });
       }
     }
+
+    const secondaryRows = [];
+    if (r > 0) {
+      const ortLatex = res.orthogonalBasis.map(function (b) {
+        return "\\mathbf{u}_{" + b.basisIndex + "} = " + fmt.vecTupleLatex(b.u.slice(0, dim));
+      }).join(",\\quad ");
+      secondaryRows.push({
+        labelHtml: "Hệ cơ sở trực giao trước chuẩn hóa",
+        latex: ortLatex
+      });
+    }
+    if (hasDependent) {
+      const droppedSyms = res.collapsedIndices.map(function (stepIdx) {
+        return "\\(" + (syms[stepIdx - 1] || ("\\mathbf{v}_{" + stepIdx + "}")) + "\\)";
+      }).join(", ");
+      secondaryRows.push({
+        labelHtml: "Vector phụ thuộc tuyến tính bị loại",
+        noteHtml: "Đã loại bỏ " + droppedSyms + " do phần dư trực giao triệt tiêu về vector không."
+      });
+    }
+
+    return {
+      titleLeft: "Hệ cơ sở trực chuẩn E",
+      badgeRightLatex: "\\dim(W) = " + r + " / " + m,
+      badgeTone: r === 0 ? "danger" : (hasDependent ? "primary" : "success"),
+      primaryRows: primaryRows,
+      secondarySection: secondaryRows.length > 0 ? {
+        titleHtml: "Hệ trực giao trung gian & kiểm tra phụ thuộc",
+        rows: secondaryRows
+      } : null
+    };
   }
 
-  // Module dinh nghia cho Chu de 4
+  function renderGSInfoCard(res) {
+    const api = getResultCardApi();
+    if (!api.ResultCard || !res) return "";
+    const opts = buildGSSidebarCard(res);
+    return api.ResultCard.mount("result_gs_info", opts);
+  }
+
+  function buildMethod1Html(res, syms, fmt) {
+    const dim = res.dim;
+    const steps = res.steps;
+    const basis = res.orthogonalBasis;
+    const sections = [];
+
+    const inputDefs = steps.map(function (s, idx) {
+      return syms[idx] + " = " + fmt.vecTupleLatex(s.v.slice(0, dim));
+    }).join(",\\quad ");
+
+    sections.push(fmt.stepSectionHtml(
+      "Bước 1: Thiết lập bài toán trong không gian Euclide",
+      [
+        "<div class=\"sol-text\">Xét hệ gồm " + steps.length + " vector trong không gian Euclide \\(\\mathbb{R}^{" + dim + "}\\) trang bị tích vô hướng chính tắc \\(\\langle \\mathbf{x}, \\mathbf{y} \\rangle = \\sum_{i=1}^{" + dim + "} x_i y_i\\):</div>",
+        fmt.mathBlockHtml(inputDefs),
+        "<div class=\"sol-text\">Tại mỗi bước thứ \\(k\\), ta chiếu trực giao vector đang xét lên không gian con sinh bởi các trục trực giao \\(\\{\\mathbf{u}_1, \\dots, \\mathbf{u}_q\\}\\) đã thu được trước đó, rồi lấy phần dư trực giao \\(\\tilde{\\mathbf{u}}_k = " + (syms[0] ? "\\mathbf{v}_k" : "\\mathbf{v}_k") + " - \\mathbf{p}_k\\). Nếu \\(\\tilde{\\mathbf{u}}_k = \\mathbf{0}\\), vector đó phụ thuộc tuyến tính và bị loại bỏ; ngược lại ta đặt \\(\\mathbf{u}_{q+1} = \\tilde{\\mathbf{u}}_k\\) và chuẩn hóa \\(\\mathbf{e}_{q+1} = \\frac{1}{\\|\\mathbf{u}_{q+1}\\|}\\mathbf{u}_{q+1}\\).</div>"
+      ]
+    ));
+
+    for (let i = 0; i < steps.length; i++) {
+      const s = steps[i];
+      const k = s.stepIndex;
+      const vSym = syms[i];
+      const vCol = fmt.vecTupleLatex(s.v.slice(0, dim), { colMode: true });
+      const uCol = fmt.vecTupleLatex(s.u.slice(0, dim), { colMode: true });
+      const stepParts = [];
+
+      if (s.projTerms.length === 0) {
+        stepParts.push(
+          "<div class=\"sol-text\">Do chưa có trục trực giao nào được dựng trước đó, phần dư trực giao trùng với chính vector \\(" + vSym + "\\):</div>",
+          fmt.mathBlockHtml("\\tilde{\\mathbf{u}}_{" + k + "} = " + vSym + " = " + vCol)
+        );
+      } else {
+        const innerLines = s.projTerms.map(function (t) {
+          return (
+            "\\langle " + vSym + ",\\; \\mathbf{u}_{" + t.basisIndex + "} \\rangle = " + fmt.scalarToLatex(t.dotVU) +
+            ",\\quad \\|\\mathbf{u}_{" + t.basisIndex + "}\\|^2 = " + fmt.scalarToLatex(t.normUSq) +
+            " \\implies \\frac{\\langle " + vSym + ",\\; \\mathbf{u}_{" + t.basisIndex + "} \\rangle}{\\|\\mathbf{u}_{" + t.basisIndex + "}\\|^2} = " + fmt.scalarToLatex(t.coeff)
+          );
+        });
+        stepParts.push(
+          "<div class=\"sol-text\">Tính các hệ số chiếu trực giao của \\(" + vSym + "\\) lên từng trục đã dựng:</div>",
+          fmt.mathBlockHtml(innerLines.join(" \\\\[6pt] "))
+        );
+
+        const formulaSum = s.projTerms.map(function (t) {
+          return "\\frac{\\langle " + vSym + ",\\; \\mathbf{u}_{" + t.basisIndex + "} \\rangle}{\\|\\mathbf{u}_{" + t.basisIndex + "}\\|^2}\\mathbf{u}_{" + t.basisIndex + "}";
+        }).join(" + ");
+
+        const coeffArr = s.projTerms.map(function (t) { return t.coeff; });
+        const uSymArr = s.projTerms.map(function (t) { return "\\mathbf{u}_{" + t.basisIndex + "}"; });
+        const combTex = fmt.linearCombLatex(coeffArr, uSymArr, { keepZeros: true });
+        const pCol = fmt.vecTupleLatex(s.p.slice(0, dim), { colMode: true });
+
+        stepParts.push(
+          "<div class=\"sol-text\">Tổng hợp hình chiếu vuông góc \\(\\mathbf{p}_{" + k + "}\\) và khử thành phần song song:</div>",
+          fmt.mathBlockHtml(
+            "\\mathbf{p}_{" + k + "} = " + formulaSum + " = " + combTex + " = " + pCol
+          ),
+          fmt.mathBlockHtml(
+            "\\tilde{\\mathbf{u}}_{" + k + "} = " + vSym + " - \\mathbf{p}_{" + k + "} = " + vCol + " - " + pCol + " = " + uCol
+          )
+        );
+      }
+
+      if (s.isZero) {
+        stepParts.push(
+          "<div class=\"sol-note-box\">Vì \\(\\tilde{\\mathbf{u}}_{" + k + "} = \\mathbf{0}\\), vector \\(" + vSym + "\\) là tổ hợp tuyến tính của các trục trực giao đi trước nên bị loại khỏi cơ sở.</div>"
+        );
+      } else {
+        const bIdx = s.basisIndex;
+        const normSqTex = fmt.scalarToLatex(s.normUSq);
+        const normTex = fmt.scalarToLatex(s.normU);
+        const invNormTex = fmt.scalarToLatex(1 / s.normU);
+        const eCol = fmt.vecTupleLatex(s.e.slice(0, dim), { colMode: true });
+        stepParts.push(
+          "<div class=\"sol-text\">Vì \\(\\tilde{\\mathbf{u}}_{" + k + "} \\neq \\mathbf{0}\\), ta nhận \\(\\mathbf{u}_{" + bIdx + "} = \\tilde{\\mathbf{u}}_{" + k + "}\\) làm trục trực giao thứ " + bIdx + ", tính chuẩn và chuẩn hóa đơn vị:</div>",
+          fmt.mathBlockHtml(
+            "\\|\\mathbf{u}_{" + bIdx + "}\\|^2 = " + normSqTex + ",\\quad \\|\\mathbf{u}_{" + bIdx + "}\\| = " + normTex
+          ),
+          fmt.mathBlockHtml(
+            "\\mathbf{e}_{" + bIdx + "} = \\frac{1}{\\|\\mathbf{u}_{" + bIdx + "}\\|}\\mathbf{u}_{" + bIdx + "} = " + invNormTex + "\\," + uCol + " = " + eCol
+          )
+        );
+      }
+
+      sections.push(fmt.stepSectionHtml(
+        "Bước " + (i + 2) + ": Xét vector thứ " + k + " là \\(" + vSym + "\\)",
+        stepParts
+      ));
+    }
+
+    const ortSetLatex = basis.length > 0
+      ? "\\left\\{ " + basis.map(function (b) { return "\\mathbf{u}_{" + b.basisIndex + "} = " + fmt.vecTupleLatex(b.u.slice(0, dim)); }).join(",\\; ") + " \\right\\}"
+      : "\\varnothing";
+    const normSetLatex = basis.length > 0
+      ? "\\left\\{ " + basis.map(function (b) { return "\\mathbf{e}_{" + b.basisIndex + "} = " + fmt.vecTupleLatex(b.e.slice(0, dim)); }).join(",\\; ") + " \\right\\}"
+      : "\\varnothing";
+
+    sections.push(fmt.stepSectionHtml(
+      "Bước " + (steps.length + 2) + ": Kết luận cơ sở trực giao và cơ sở trực chuẩn",
+      [
+        "<div class=\"sol-text\">Không gian con \\(W = \\span\\{" + syms.join(",\\; ") + "\\}\\) có số chiều \\(\\dim(W) = " + basis.length + "\\):</div>",
+        fmt.mathBlockHtml("B_{\\perp} = " + ortSetLatex),
+        fmt.mathBlockHtml("E = " + normSetLatex)
+      ]
+    ));
+
+    return fmt.wrapStepContainer(sections.join(""));
+  }
+
+  function buildMethod2Html(res, syms, fmt) {
+    const dim = res.dim;
+    const m = res.vectors.length;
+    const r = res.rank;
+    const basis = res.orthogonalBasis;
+
+    const A = [];
+    for (let i = 0; i < dim; i++) {
+      const row = [];
+      for (let j = 0; j < m; j++) {
+        row.push(snap(res.vectors[j][i]));
+      }
+      A.push(row);
+    }
+    const ALatex = fmt.matrixToLatex(A);
+
+    if (r === 0) {
+      return fmt.wrapStepContainer(
+        fmt.stepSectionHtml("Bước 1: Ma trận cột của hệ vector", [
+          "<div class=\"sol-text\">Ghép các vector đầu vào thành các cột của ma trận \\(A \\in \\mathbb{R}^{" + dim + " \\times " + m + "}\\):</div>",
+          fmt.mathBlockHtml("A = " + ALatex),
+          "<div class=\"sol-text\">Vì \\(A = O_{" + dim + " \\times " + m + "}\\) có hạng \\(\\rank(A) = 0\\), không tồn tại cột trực chuẩn nào (\\(E = \\varnothing\\)).</div>"
+        ])
+      );
+    }
+
+    const Q = [];
+    for (let i = 0; i < dim; i++) {
+      const row = [];
+      for (let j = 0; j < r; j++) {
+        row.push(snap(basis[j].e[i]));
+      }
+      Q.push(row);
+    }
+
+    // QtQ = Q^T * Q (r x r)
+    const QtQ = [];
+    for (let i = 0; i < r; i++) {
+      const row = [];
+      for (let j = 0; j < r; j++) {
+        row.push(dotN(basis[i].e, basis[j].e, dim));
+      }
+      QtQ.push(row);
+    }
+
+    // R = Q^T * A (r x m)
+    const R = [];
+    for (let i = 0; i < r; i++) {
+      const row = [];
+      for (let k = 0; k < m; k++) {
+        row.push(dotN(basis[i].e, res.vectors[k], dim));
+      }
+      R.push(row);
+    }
+
+    // QR = Q * R (dim x m)
+    const QR = [];
+    for (let i = 0; i < dim; i++) {
+      const row = [];
+      for (let k = 0; k < m; k++) {
+        let s = 0;
+        for (let j = 0; j < r; j++) {
+          s += Q[i][j] * R[j][k];
+        }
+        row.push(snap(s));
+      }
+      QR.push(row);
+    }
+
+    const QLatex = fmt.matrixToLatex(Q);
+    const QtQLatex = fmt.matrixToLatex(QtQ);
+    const RLatex = fmt.matrixToLatex(R);
+    const QRLatex = fmt.matrixToLatex(QR);
+
+    const sections = [];
+    sections.push(fmt.stepSectionHtml(
+      "Bước 1: Lập ma trận cột \\(A\\) và ma trận trực chuẩn \\(Q\\)",
+      [
+        "<div class=\"sol-text\">Xếp các vector ban đầu làm các cột của \\(A \\in \\mathbb{R}^{" + dim + " \\times " + m + "}\\) và các vector cơ sở trực chuẩn \\(\\mathbf{e}_1, \\dots, \\mathbf{e}_{" + r + "}\\) làm các cột của \\(Q \\in \\mathbb{R}^{" + dim + " \\times " + r + "}\\):</div>",
+        fmt.mathBlockHtml("A = " + ALatex + ",\\qquad Q = " + QLatex)
+      ]
+    ));
+
+    sections.push(fmt.stepSectionHtml(
+      "Bước 2: Kiểm chứng tính trực chuẩn thông qua ma trận Gram \\(Q^T Q\\)",
+      [
+        "<div class=\"sol-text\">Hệ cột của \\(Q\\) là hệ trực chuẩn khi và chỉ khi \\(\\langle \\mathbf{e}_i, \\mathbf{e}_j \\rangle = \\delta_{ij}\\), tức là \\(Q^T Q = I_{" + r + "}\\):</div>",
+        fmt.mathBlockHtml("Q^T Q = " + QtQLatex + " = I_{" + r + "}")
+      ]
+    ));
+
+    const rShapeDesc = r === m
+      ? "ma trận tam giác trên khả nghịch với các phần tử đường chéo chính dương \\(r_{jj} = \\|\\mathbf{u}_j\\| > 0\\)"
+      : "ma trận hình thang trên cỡ \\(" + r + " \\times " + m + "\\) phản ánh chính xác tổ hợp biểu diễn các cột phụ thuộc";
+
+    sections.push(fmt.stepSectionHtml(
+      "Bước 3: Xác định ma trận hệ số \\(R = Q^T A\\) và kiểm chứng \\(A = QR\\)",
+      [
+        "<div class=\"sol-text\">Chiếu từng cột của \\(A\\) lên cơ sở trực chuẩn \\(E\\) bằng phép nhân \\(R = Q^T A\\) với \\(r_{jk} = \\langle \\mathbf{e}_j, " + (syms[0] ? "\\mathbf{v}_k" : "\\mathbf{v}_k") + " \\rangle\\). Ta thu được " + rShapeDesc + ":</div>",
+        fmt.mathBlockHtml("R = Q^T A = " + RLatex),
+        "<div class=\"sol-text\">Nhân kiểm chứng lại tích \\(Q R\\):</div>",
+        fmt.mathBlockHtml("Q R = " + QLatex + RLatex + " = " + QRLatex + " = A"),
+        "<div class=\"sol-text\">Đẳng thức \\(A = Q R\\) và \\(Q^T Q = I_{" + r + "}\\) khẳng định kết quả trực chuẩn hóa hoàn toàn chính xác.</div>"
+      ]
+    ));
+
+    return fmt.wrapStepContainer(sections.join(""));
+  }
+
+  function buildGSSolution(items) {
+    const fmt = getFmt();
+    const res = computeGSFromItems(items);
+    const dim = res.dim;
+    const syms = res.items.map(function (it, idx) {
+      return getVecSymbol(it, idx, fmt);
+    });
+
+    const content1 = buildMethod1Html(res, syms, fmt);
+    const content2 = buildMethod2Html(res, syms, fmt);
+
+    const logLatex = res.rank > 0
+      ? "E = \\left\\{ " + res.orthogonalBasis.map(function (b) { return fmt.vecTupleLatex(b.e.slice(0, dim)); }).join(",\\; ") + " \\right\\}"
+      : "E = \\varnothing";
+
+    return {
+      analysis: res,
+      cardOptions: buildGSSidebarCard(res),
+      logLatex: logLatex,
+      modalConfig: {
+        title: "Trực giao hóa Gram - Schmidt & Phân rã QR",
+        math: "W = \\span\\{" + syms.join(",\\; ") + "\\} \\subset \\mathbb{R}^{" + dim + "}",
+        tab1Label: "Cách 1: Thuật toán Gram - Schmidt từng bước",
+        tab2Label: "Cách 2: Phân rã ma trận A = QR & Kiểm chứng",
+        showSubTabs: false,
+        content1: content1,
+        content2: content2,
+        content2Sub: ""
+      }
+    };
+  }
+
+  function currentChecklistSignature() {
+    const api = getResultCardApi();
+    if (api.SolutionSync && typeof api.SolutionSync.checklistSig === "function") {
+      return api.SolutionSync.checklistSig("gsChecklist");
+    }
+    return "";
+  }
+
+  // Module dieu hanh Chu de 4 tren giao dien
   const Topic4Module = {
     _isInitialized: false,
 
     init: function () {
-      if (this._isInitialized) return;
+      if (this._isInitialized || typeof document === "undefined") return;
       const btnOrth = document.getElementById("btnGSOrthogonalize");
       const btnAnim = document.getElementById("btnGSAnimate");
       const btnSol = document.getElementById("btnGSSolution");
-      if (!btnOrth && !btnAnim) return;
+      if (!btnOrth && !btnAnim && !btnSol) return;
       this._isInitialized = true;
 
-      // Nút Trực giao hóa
+      const self = this;
+
       if (btnOrth) {
-        btnOrth.addEventListener("click", () => {
+        btnOrth.addEventListener("click", function () {
           if (typeof App.requireVectors === "function" && !App.requireVectors()) return;
           const items = getGSSelectedItems();
-          if (!items || items.length < 2) {
+          if (!items || items.length < 1) {
             if (typeof App.showToast === "function") {
-              App.showToast("Hãy chọn ít nhất 2 vector để trực giao hóa Gram - Schmidt!", "warning");
+              App.showToast("Hãy chọn ít nhất 1 vector để trực giao hóa Gram - Schmidt.", "warning");
             }
             return;
           }
-          this.execute();
+          self.execute({ logHistory: true });
         });
       }
 
-      // Nút Trực quan hoạt cảnh 3 bước
       if (btnAnim) {
-        btnAnim.addEventListener("click", () => {
+        btnAnim.addEventListener("click", function () {
           if (typeof App.requireVectors === "function" && !App.requireVectors()) return;
           const items = getGSSelectedItems();
           if (!items || items.length < 2) {
             if (typeof App.showToast === "function") {
-              App.showToast("Hãy chọn ít nhất 2 vector để trực giao hóa Gram - Schmidt!", "warning");
+              App.showToast("Hãy chọn ít nhất 2 vector để phát hoạt cảnh chiếu trực giao 3 bước.", "warning");
             }
             return;
           }
-          this.execute();
+          self.execute({ logHistory: false });
           if (App.GSAnimator && typeof App.GSAnimator.start === "function") {
             App.GSAnimator.start(items);
           }
         });
       }
 
-      // Nút Lời giải KaTeX
       if (btnSol) {
-        btnSol.addEventListener("click", () => {
-          if (typeof App.requireVectors === "function" && !App.requireVectors()) return;
-          const items = getGSSelectedItems();
-          if (!items || items.length < 2) {
-            if (typeof App.showToast === "function") {
-              App.showToast("Hãy chọn ít nhất 2 vector để trực giao hóa Gram - Schmidt!", "warning");
-            }
-            return;
+        btnSol.dataset.syncManaged = "1";
+        btnSol.addEventListener("click", function () {
+          const api = getResultCardApi();
+          if (api.SolutionSync && typeof api.SolutionSync.openWithSync === "function") {
+            api.SolutionSync.openWithSync({
+              key: SYNC_KEY,
+              getSig: currentChecklistSignature,
+              recomputeStatic: function () {
+                self.execute({ silent: true, logHistory: false });
+              },
+              emptyTitle: "Trực giao hóa Gram - Schmidt",
+              emptyHintHtml: "Hãy tạo và tích chọn ít nhất <b>1 vector</b> trong danh sách để xem lời giải trực giao hóa chi tiết."
+            });
           }
-          generateGramSchmidtSolution(items);
-        });
-      }
-
-      // Checkbox các lớp hiển thị phụ
-      const chkOrig = document.getElementById("chkGSShowOrig");
-      if (chkOrig) {
-        chkOrig.addEventListener("change", () => {
-          if (window.Vec2D && Vec2D.draw2DAllVectors) Vec2D.draw2DAllVectors();
-          else if (window.Vec3D && Vec3D.hardRefresh3D) Vec3D.hardRefresh3D(false);
-        });
-      }
-
-      const chkProj = document.getElementById("chkGSShowProj");
-      if (chkProj) {
-        chkProj.addEventListener("change", () => {
-          if (window.Vec2D && Vec2D.draw2DAllVectors) Vec2D.draw2DAllVectors();
-          else if (window.Vec3D && Vec3D.hardRefresh3D) Vec3D.hardRefresh3D(false);
-        });
-      }
-
-      const chkNorm = document.getElementById("chkGSNormalize");
-      if (chkNorm) {
-        chkNorm.addEventListener("change", () => {
-          this.execute();
         });
       }
     },
 
-    execute: function () {
+    execute: function (opts) {
+      const options = opts || {};
       if (!this._isInitialized) this.init();
 
+      const api = getResultCardApi();
       const items = getGSSelectedItems();
-      if (!items || items.length < 2) {
-        const box = document.getElementById("result_gs_info");
-        if (box) {
-          box.style.display = "block";
-          box.innerHTML = `
-            <div style="padding: 10px; background: var(--bg-hover); border: 1px dashed var(--border); border-radius: 4px; font-size: 12px; color: var(--muted); text-align: center;">
-              Chưa đủ vector để trực giao hóa. Hãy chọn ít nhất 2 vector trong danh sách ở trên!
-            </div>
-          `;
+      if (!items || items.length < 1) {
+        if (api.ResultCard) {
+          api.ResultCard.mountError(
+            "result_gs_info",
+            "Hãy tích chọn ít nhất <b>1 vector</b> trong danh sách phía trên để trực giao hóa Gram - Schmidt.",
+            "Chưa chọn vector"
+          );
         }
-        return;
+        return null;
       }
 
-      const res = computeGSFromItems(items);
-      renderGSInfoCard(res);
-
-      if (App.mode === "2D" && window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {
-        Vec2D.draw2DAllVectors();
-      } else if (window.Vec3D && typeof Vec3D.hardRefresh3D === "function") {
-        Vec3D.hardRefresh3D(false);
+      const pack = buildGSSolution(items);
+      if (api.ResultCard) {
+        api.ResultCard.mount("result_gs_info", pack.cardOptions);
       }
+
+      if (api.SolutionSync) {
+        api.SolutionSync.save(SYNC_KEY, currentChecklistSignature(), pack.modalConfig);
+      }
+      if (typeof App.openSolutionPanel === "function") {
+        App.openSolutionPanel(Object.assign({}, pack.modalConfig, { autoOpen: false }));
+      }
+
+      if (options.logHistory !== false && window.App && window.App.PaperLogger && typeof window.App.PaperLogger.log === "function") {
+        window.App.PaperLogger.log(
+          "Trực giao hóa Gram - Schmidt",
+          pack.logLatex,
+          "",
+          pack.modalConfig,
+          { type: "gram_schmidt", count: items.length }
+        );
+      }
+
+      if (!options.silent) {
+        if (App.mode === "2D" && window.Vec2D && typeof Vec2D.draw2DAllVectors === "function") {
+          Vec2D.draw2DAllVectors();
+        } else if (window.Vec3D && typeof Vec3D.hardRefresh3D === "function") {
+          Vec3D.hardRefresh3D(false);
+        }
+      }
+
+      return pack;
     },
 
     onTaskSelect: function (taskId) {
-      if (taskId === "topic4_gram_schmidt" || taskId === "s21" || taskId === "topic4_orthogonality" || taskId === "s20") {
+      if (
+        taskId === "topic4_gram_schmidt" ||
+        taskId === "s21" ||
+        taskId === "topic4_orthogonality" ||
+        taskId === "s20"
+      ) {
         if (typeof App.renderExtraCalcOptions === "function") {
           App.renderExtraCalcOptions();
         }
@@ -522,15 +744,24 @@
     }
   };
 
-  if (typeof App.registerTopicModule === "function") {
-    App.registerTopicModule("t4", Topic4Module);
-  } else {
-    window.addEventListener("DOMContentLoaded", function () {
-      if (typeof App.registerTopicModule === "function") {
-        App.registerTopicModule("t4", Topic4Module);
-      }
-    });
+  if (typeof window !== "undefined") {
+    window.App = window.App || {};
+    if (typeof window.App.registerTopicModule === "function") {
+      window.App.registerTopicModule("t4", Topic4Module);
+    } else if (typeof window.addEventListener === "function") {
+      window.addEventListener("DOMContentLoaded", function () {
+        if (typeof window.App.registerTopicModule === "function") {
+          window.App.registerTopicModule("t4", Topic4Module);
+        }
+      });
+    }
   }
 
-  App.Topic4Module = Topic4Module;
-})();
+  return {
+    computeGSFromItems: computeGSFromItems,
+    buildGSSidebarCard: buildGSSidebarCard,
+    buildGSSolution: buildGSSolution,
+    renderGSInfoCard: renderGSInfoCard,
+    Topic4Module: Topic4Module
+  };
+});
